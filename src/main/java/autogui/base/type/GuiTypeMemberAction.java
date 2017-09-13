@@ -1,4 +1,4 @@
-package autogui.base;
+package autogui.base.type;
 
 public class GuiTypeMemberAction extends GuiTypeMember {
     protected String methodName;

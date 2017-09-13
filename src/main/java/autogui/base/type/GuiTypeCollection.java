@@ -1,11 +1,14 @@
-package autogui.base;
+package autogui.base.type;
 
 public class GuiTypeCollection implements GuiTypeElement {
     protected String name;
     protected GuiTypeElement elementType;
 
-    public GuiTypeCollection(String name, GuiTypeElement elementType) {
+    public GuiTypeCollection(String name) {
         this.name = name;
+    }
+
+    public void setElementType(GuiTypeElement elementType) {
         this.elementType = elementType;
     }
 

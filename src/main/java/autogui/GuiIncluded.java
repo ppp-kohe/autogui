@@ -1,4 +1,4 @@
-package autogui.base;
+package autogui;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

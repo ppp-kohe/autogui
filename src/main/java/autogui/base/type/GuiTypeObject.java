@@ -1,7 +1,8 @@
-package autogui.base;
+package autogui.base.type;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GuiTypeObject implements GuiTypeElement {
@@ -47,5 +48,11 @@ public class GuiTypeObject implements GuiTypeElement {
 
     public void setActions(List<GuiTypeMemberAction> actions) {
         this.actions = actions;
+    }
+
+    @Override
+    public List<GuiTypeElement> getChildren() {
+        return Stream.concat(getProperties().stream(), getActions().stream())
+                .collect(Collectors.toList());
     }
 }

@@ -1,6 +1,6 @@
-package autogui.base;
+package autogui.base.type;
 
-public abstract class GuiTypeMember {
+public abstract class GuiTypeMember implements GuiTypeElement {
     protected String name;
     /** nullable */
     protected GuiTypeObject owner;
