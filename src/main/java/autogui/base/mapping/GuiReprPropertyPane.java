@@ -23,7 +23,7 @@ public class GuiReprPropertyPane implements GuiRepresentation {
 
     @Override
     public boolean match(GuiMappingContext context) {
-        if (context.isSourceProperty()) {
+        if (context.isTypeElementProperty()) {
             GuiReprPropertyPane rule = createForContext(context);
             boolean matched = false;
 

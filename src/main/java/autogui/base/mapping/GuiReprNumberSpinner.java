@@ -3,8 +3,8 @@ package autogui.base.mapping;
 public class GuiReprNumberSpinner implements GuiRepresentation {
     @Override
     public boolean match(GuiMappingContext context) {
-        if (context.isSourceProperty()) {
-            Class<?> cls = context.getSourcePropertyTypeAsClass();
+        if (context.isTypeElementProperty()) {
+            Class<?> cls = context.getTypeElementPropertyTypeAsClass();
             if (Number.class.isAssignableFrom(cls) || isPrimitiveNumberClass(cls)) {
                 context.setRepresentation(this);
                 return true;

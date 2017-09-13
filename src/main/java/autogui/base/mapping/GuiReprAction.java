@@ -3,7 +3,7 @@ package autogui.base.mapping;
 public class GuiReprAction implements GuiRepresentation {
     @Override
     public boolean match(GuiMappingContext context) {
-        if (context.isSourceAction()) {
+        if (context.isTypeElementAction()) {
             context.setRepresentation(this);
             return true;
         } else {

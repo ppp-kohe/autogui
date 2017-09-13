@@ -8,6 +8,11 @@ public class GuiTypeCollection implements GuiTypeElement {
         this.name = name;
     }
 
+    public GuiTypeCollection(String name, GuiTypeElement elementType) {
+        this.name = name;
+        this.elementType = elementType;
+    }
+
     public void setElementType(GuiTypeElement elementType) {
         this.elementType = elementType;
     }

@@ -13,6 +13,14 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         super(name);
     }
 
+    public GuiTypeMemberProperty(String name, String setterName, String getterName, String fieldName, GuiTypeElement type) {
+        super(name);
+        this.setterName = setterName;
+        this.getterName = getterName;
+        this.fieldName = fieldName;
+        this.type = type;
+    }
+
     public void setSetterName(String setterName) {
         this.setterName = setterName;
     }

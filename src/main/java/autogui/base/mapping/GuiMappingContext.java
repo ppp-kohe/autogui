@@ -11,27 +11,36 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class GuiMappingContext {
-    protected GuiTypeElement source;
+    protected GuiTypeElement typeElement;
     protected GuiRepresentation representation;
 
     protected GuiMappingContext parent;
     protected List<GuiMappingContext> children;
 
-    public GuiMappingContext(GuiTypeElement source) {
-        this.source = source;
+    protected Object source;
+    protected List<SourceUpdateListener> listeners = Collections.emptyList();
+
+    public GuiMappingContext(GuiTypeElement typeElement) {
+        this.typeElement = typeElement;
     }
 
-    public GuiMappingContext(GuiTypeElement source, GuiMappingContext parent) {
-        this.source = source;
+    public GuiMappingContext(GuiTypeElement typeElement, GuiMappingContext parent) {
+        this.typeElement = typeElement;
         this.parent = parent;
+    }
+
+    public GuiMappingContext(GuiTypeElement typeElement, GuiRepresentation representation, Object source) {
+        this.typeElement = typeElement;
+        this.representation = representation;
+        this.source = source;
     }
 
     public void setRepresentation(GuiRepresentation representation) {
         this.representation = representation;
     }
 
-    public GuiTypeElement getSource() {
-        return source;
+    public GuiTypeElement getTypeElement() {
+        return typeElement;
     }
 
     public GuiRepresentation getRepresentation() {
@@ -51,7 +60,7 @@ public class GuiMappingContext {
     }
 
     public List<GuiMappingContext> createChildCandidates() {
-        return source.getChildren().stream()
+        return typeElement.getChildren().stream()
                 .map(e -> new GuiMappingContext(e, this))
                 .collect(Collectors.toList());
     }
@@ -70,10 +79,10 @@ public class GuiMappingContext {
     }
 
     public boolean isRecursive() {
-        GuiTypeElement s = getSource();
+        GuiTypeElement s = getTypeElement();
         GuiMappingContext ctx = getParent();
         while (ctx != null) {
-            if (ctx.getSource().equals(s)) {
+            if (ctx.getTypeElement().equals(s)) {
                 return true;
             }
             ctx = ctx.getParent();
@@ -81,30 +90,102 @@ public class GuiMappingContext {
         return false;
     }
 
+    public GuiMappingContext getRoot() {
+        GuiMappingContext ctx = this;
+        while (ctx.getParent() != null) {
+            ctx = ctx.getParent();
+        }
+        return ctx;
+    }
+
 
     ///////////////////////
 
-    public boolean isSourceProperty() {
-        return source instanceof GuiTypeMemberProperty;
+    public boolean isTypeElementProperty() {
+        return typeElement instanceof GuiTypeMemberProperty;
     }
 
-    public String getSourcePropertyTypeName() {
-        return ((GuiTypeMemberProperty) source).getType().getName();
+    public String getTypeElementPropertyTypeName() {
+        return ((GuiTypeMemberProperty) typeElement).getType().getName();
     }
 
-    public Class<?> getSourcePropertyTypeAsClass() {
+    public Class<?> getTypeElementPropertyTypeAsClass() {
         try {
-            return Class.forName(getSourcePropertyTypeName());
+            return Class.forName(getTypeElementPropertyTypeName());
         } catch (Exception ex) {
             return Object.class;
         }
     }
 
-    public boolean isSourceAction() {
-        return source instanceof GuiTypeMemberAction;
+    public boolean isTypeElementAction() {
+        return typeElement instanceof GuiTypeMemberAction;
     }
 
-    public boolean isSourceObject() {
-        return source instanceof GuiTypeObject;
+    public boolean isTypeElementObject() {
+        return typeElement instanceof GuiTypeObject;
+    }
+
+    ///////////////////////
+
+
+    public void setSource(Object source) {
+        this.source = source;
+    }
+
+    public Object getSource() {
+        return source;
+    }
+
+    public interface SourceUpdateListener {
+        void update(GuiMappingContext cause, Object newValue);
+    }
+
+    public void addSourceUpdateListener(SourceUpdateListener listener) {
+        if (listeners.isEmpty()) {
+            listeners = Collections.singletonList(listener);
+        } else if (listeners.size() == 1) {
+            ArrayList<SourceUpdateListener> ls = new ArrayList<>(3);
+            ls.addAll(listeners);
+            ls.add(listener);
+            listeners = ls;
+        } else {
+            listeners.add(listener);
+        }
+    }
+
+    public void removeSourceUpdateListener(SourceUpdateListener listener) {
+        int i = listeners.indexOf(listener);
+        if (i != -1) {
+            if (listeners.size() == 1) {
+                listeners = Collections.emptyList();
+            } else {
+                listeners.remove(i);
+            }
+        }
+    }
+
+    public List<SourceUpdateListener> getListeners() {
+        return listeners;
+    }
+
+    public void updateSourceFromGui(Object newValue) {
+        this.source = newValue;
+        GuiMappingContext ctx = getRoot();
+        List<GuiMappingContext> updated = new ArrayList<>();
+        ctx.collectUpdatedSource(this, updated);
+
+        updated.forEach(c -> c.getListeners()
+                .forEach(l -> l.update(this, c.getSource())));
+    }
+
+    public void collectUpdatedSource(GuiMappingContext cause, List<GuiMappingContext> updated) {
+        if (this != cause) {
+            if (getRepresentation().update(this)) {
+                updated.add(this);
+            }
+
+            getChildren()
+                    .forEach(c -> c.collectUpdatedSource(cause, updated));
+        }
     }
 }

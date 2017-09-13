@@ -13,7 +13,7 @@ public class GuiReprObjectPane implements GuiRepresentation {
 
     @Override
     public boolean match(GuiMappingContext context) {
-        if (context.isSourceObject() && !context.isRecursive()) {
+        if (context.isTypeElementObject() && !context.isRecursive()) {
             context.setRepresentation(this);
             for (GuiMappingContext subContext : context.createChildCandidates()) {
                 if (subRepresentation.match(subContext)) {
