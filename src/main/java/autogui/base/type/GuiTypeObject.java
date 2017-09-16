@@ -6,20 +6,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class GuiTypeObject implements GuiTypeElement {
-    protected String name;
+/**
+ * an object type, which has actions and properties.
+ *
+ * children: actions and properties
+ */
+public class GuiTypeObject extends GuiTypeValue {
     protected List<GuiTypeMemberProperty> properties;
     protected List<GuiTypeMemberAction> actions;
 
-    public GuiTypeObject(String name) {
-        this.name = name;
+    public GuiTypeObject(Class<?> type) {
+        super(type);
         this.properties = new ArrayList<>();
         this.actions = new ArrayList<>();
     }
 
-    @Override
-    public String getName() {
-        return name;
+    public GuiTypeObject(String name) {
+        super(name);
+        this.properties = new ArrayList<>();
+        this.actions = new ArrayList<>();
     }
 
     public List<GuiTypeMemberProperty> getProperties() {
@@ -37,10 +42,6 @@ public class GuiTypeObject implements GuiTypeElement {
         return Stream.concat(getProperties().stream(), getActions().stream())
                 .filter(m -> m.getName().equals(name))
                 .findFirst().orElse(null);
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public void setProperties(List<GuiTypeMemberProperty> properties) {

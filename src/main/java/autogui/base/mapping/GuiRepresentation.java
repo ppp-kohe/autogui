@@ -6,8 +6,10 @@ public interface GuiRepresentation {
     boolean match(GuiMappingContext context);
 
     /** invoke the associated method and check the returned value whether it is updated or not.
-     *   if updated, update the source of context. */
-    boolean update(GuiMappingContext context);
+     *   if updated, update the source of context.
+     *   This is non-recursive operation; {@link GuiMappingContext} recursively calls this method.
+     *    The source of parent is already updated by the order of the calls. */
+    boolean checkAndUpdateSource(GuiMappingContext context);
 
     GuiReprNone NONE = new GuiReprNone();
 
@@ -17,7 +19,7 @@ public interface GuiRepresentation {
             return false;
         }
         @Override
-        public boolean update(GuiMappingContext context) {
+        public boolean checkAndUpdateSource(GuiMappingContext context) {
             return false;
         }
     }
@@ -25,14 +27,16 @@ public interface GuiRepresentation {
     static GuiReprSet getDefaultSet() {
         GuiReprSet set = new GuiReprSet();
 
-        set.add(new GuiReprNumberSpinner(),
-                new GuiReprBooleanCheckbox(),
-                new GuiReprStringField());
+        set.add(new GuiReprValueNumberSpinner(),
+                new GuiReprValueBooleanCheckbox(),
+                new GuiReprValueStringField(),
+                new GuiReprValueFilePathField());
 
         set.add(new GuiReprObjectPane(set),
                 new GuiReprPropertyPane(set),
-                new GuiReprAction(),
-                new GuiReprValueLabel());
+                new GuiReprAction());
+
+        set.add(new GuiReprValueLabel());
 
         return set;
     }

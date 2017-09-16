@@ -13,6 +13,23 @@ public class GuiTypeBuilder {
             Integer.class, Short.class, Byte.class, Long.class, Character.class, Boolean.class,
             Float.class, Double.class, CharSequence.class);
 
+    protected List<Class<?>> valueTypes = new ArrayList<>(langValueTypes);
+
+    public GuiTypeBuilder() {
+    }
+
+    public GuiTypeBuilder(List<Class<?>> valueTypes) {
+        this.valueTypes = valueTypes;
+    }
+
+    public void setValueTypes(List<Class<?>> valueTypes) {
+        this.valueTypes = valueTypes;
+    }
+
+    public List<Class<?>> getValueTypes() {
+        return valueTypes;
+    }
+
     public GuiTypeElement get(Type type) {
         GuiTypeElement e = typeElements.get(type);
         if (e == null) {
@@ -32,7 +49,8 @@ public class GuiTypeBuilder {
         } else if (type instanceof ParameterizedType) {
             ParameterizedType pType = (ParameterizedType) type;
             Class<?> rawType = getClass(pType);
-            if (Collection.class.isAssignableFrom(rawType)) {
+            if (Collection.class.isAssignableFrom(rawType) &&
+                    pType.getActualTypeArguments().length == 1) { //currently only support C<E>
                 return createCollectionFromType(pType);
             } else {
                 return createFromClass(rawType);
@@ -58,14 +76,14 @@ public class GuiTypeBuilder {
 
     public GuiTypeCollection createCollectionFromType(ParameterizedType type) {
         Class<?> rawType = getClass(type);
-        GuiTypeCollection collectionType = new GuiTypeCollection(rawType.getName());
+        GuiTypeCollection collectionType = new GuiTypeCollection(rawType);
         put(type, collectionType);
         collectionType.setElementType(get(type.getActualTypeArguments()[0]));
         return collectionType;
     }
 
     public GuiTypeObject createObjectFromClass(Class<?> cls) {
-        GuiTypeObject objType = new GuiTypeObject(cls.getName());
+        GuiTypeObject objType = new GuiTypeObject(cls);
         put(cls, objType);
 
         Map<String, MemberDefinitions> definitionsMap = new HashMap<>();
@@ -119,7 +137,7 @@ public class GuiTypeBuilder {
     }
 
     public boolean isValueType(Class<?> cls) {
-        return cls.isPrimitive() || langValueTypes.contains(cls);
+        return cls.isPrimitive() || valueTypes.contains(cls);
     }
 
     public boolean isExcludedType(Class<?> cls) {
@@ -132,33 +150,54 @@ public class GuiTypeBuilder {
         Method setter = definitions.getLast(this::isSetterMethod);
         if (fld != null || setter != null || getter != null) {
             //property
-            GuiTypeMemberProperty property = new GuiTypeMemberProperty(definitions.name);
-            property.setOwner(objType);
-
-            Type type = null;
-            if (fld != null) {
-                property.setFieldName(fld.getName());
-                type = fld.getGenericType();
-            }
-            if (setter != null) {
-                property.setSetterName(setter.getName());
-                type = setter.getGenericParameterTypes()[0];
-            }
-            if (getter != null) {
-                property.setGetterName(getter.getName());
-                type = getter.getGenericReturnType();
-            }
-
-            property.setType(get(type));
-
-            objType.getProperties().add(property);
+            createMemberProperty(objType, definitions.name, fld, getter, setter);
         } else {
-            GuiTypeMemberAction action = new GuiTypeMemberAction(definitions.name,
-                    definitions.methods.get(definitions.methods.size() - 1).getName());
-            action.setOwner(objType);
-
-            objType.getActions().add(action);
+            Method method = definitions.getLast(this::isActionMethod);
+            boolean isList = false;
+            if (method == null) {
+                method = definitions.getLast(this::isActionListMethod);
+                isList = true;
+            }
+            if (method != null) {
+                createMemberAction(objType, definitions.name, method, isList);
+            }
         }
+    }
+
+    public void createMemberProperty(GuiTypeObject objType, String name, Field fld, Method getter, Method setter) {
+        //property
+        GuiTypeMemberProperty property = new GuiTypeMemberProperty(name);
+        property.setOwner(objType);
+
+        Type type = null;
+        if (fld != null) {
+            property.setField(fld);
+            type = fld.getGenericType();
+        }
+        if (setter != null) {
+            property.setSetter(setter);
+            type = setter.getGenericParameterTypes()[0];
+        }
+        if (getter != null) {
+            property.setGetter(getter);
+            type = getter.getGenericReturnType();
+        }
+
+        property.setType(get(type));
+
+        objType.getProperties().add(property);
+    }
+
+    public void createMemberAction(GuiTypeObject objType, String name, Method method, boolean isList) {
+        GuiTypeMemberAction action;
+        if (isList) {
+            ParameterizedType pType = (ParameterizedType) method.getGenericParameterTypes()[1];
+            action = new GuiTypeMemberActionList(name, get(pType.getActualTypeArguments()[0]), method);
+        } else {
+            action = new GuiTypeMemberAction(name, method);
+        }
+        action.setOwner(objType);
+        objType.getActions().add(action);
     }
 
     public boolean isMemberField(Field f) {
@@ -221,6 +260,25 @@ public class GuiTypeBuilder {
 
     public boolean isSetterMethod(Method m) {
         return m.getName().startsWith("set") && m.getParameterCount() == 1;
+    }
+
+    public boolean isActionMethod(Method m) {
+        return m.getParameterCount() == 0;
+    }
+
+    public boolean isActionListMethod(Method m) {
+        if (m.getParameterCount() == 1) {
+            Type t = m.getGenericParameterTypes()[0];
+            if (t instanceof ParameterizedType) {
+                Class<?> rawType = getClass(t);
+                return rawType.isAssignableFrom(List.class) && !rawType.equals(Object.class) &&
+                            ((ParameterizedType) t).getActualTypeArguments().length == 1;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 
     public Class<?> getClass(Type type) {

@@ -1,15 +1,23 @@
 package autogui.base.type;
 
-public class GuiTypeCollection implements GuiTypeElement {
-    protected String name;
+public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
     protected GuiTypeElement elementType;
 
     public GuiTypeCollection(String name) {
-        this.name = name;
+        super(name);
     }
 
     public GuiTypeCollection(String name, GuiTypeElement elementType) {
-        this.name = name;
+        super(name);
+        this.elementType = elementType;
+    }
+
+    public GuiTypeCollection(Class<?> type) {
+        super(type);
+    }
+
+    public GuiTypeCollection(Class<?> type, GuiTypeElement elementType) {
+        super(type);
         this.elementType = elementType;
     }
 
@@ -17,10 +25,6 @@ public class GuiTypeCollection implements GuiTypeElement {
         this.elementType = elementType;
     }
 
-    @Override
-    public String getName() {
-        return name;
-    }
 
     public GuiTypeElement getElementType() {
         return elementType;

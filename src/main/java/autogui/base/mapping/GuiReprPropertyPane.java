@@ -1,8 +1,10 @@
 package autogui.base.mapping;
 
+import java.util.Objects;
+
 /** [propertyName: [  propertyValueField  ] ]
  * */
-public class GuiReprPropertyPane implements GuiRepresentation {
+public class GuiReprPropertyPane extends GuiReprValue {
     protected GuiRepresentation subRepresentations;
 
     public GuiReprPropertyPane(GuiRepresentation subRepresentations) {
@@ -49,5 +51,24 @@ public class GuiReprPropertyPane implements GuiRepresentation {
 
     public GuiReprPropertyPane createForContext(GuiMappingContext context) {
         return new GuiReprPropertyPane();
+    }
+
+    public boolean checkAndUpdateSourceFromChild(GuiMappingContext child) {
+        Object prev = child.getSource();
+        Object next = child.getParentSource();
+        if (!Objects.equals(prev, next)) {
+            child.setSource(next);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void updateFromGuiChild(GuiMappingContext child, Object newValue) {
+        updateFromGui(child.getParent(), newValue);
+    }
+
+    public boolean isEditableFromChild(GuiMappingContext context) {
+        return isEditable(context.getParent());
     }
 }

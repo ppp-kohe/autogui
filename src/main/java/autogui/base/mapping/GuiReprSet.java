@@ -26,4 +26,15 @@ public class GuiReprSet implements GuiRepresentation {
         }
         return false;
     }
+
+    /** the class is basically used for matching; so the definition of the method is useless. */
+    @Override
+    public boolean checkAndUpdateSource(GuiMappingContext context) {
+        for (GuiRepresentation representation : representations) {
+            if (representation.checkAndUpdateSource(context)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

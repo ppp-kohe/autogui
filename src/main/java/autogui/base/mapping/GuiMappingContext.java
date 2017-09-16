@@ -1,15 +1,47 @@
 package autogui.base.mapping;
 
-import autogui.base.type.GuiTypeElement;
-import autogui.base.type.GuiTypeMemberAction;
-import autogui.base.type.GuiTypeMemberProperty;
-import autogui.base.type.GuiTypeObject;
+import autogui.base.type.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * a tree node describing a mapping between {@link GuiTypeElement} and {@link GuiRepresentation}.
+ *  The tree constructs an abstract GUI representation of an object tree (like HTML DOM tree).
+ *
+ *  <p>
+ *      First, an instance of this class is created with a {@link GuiTypeElement} tree of a target object:
+ *       {@link #GuiMappingContext(GuiTypeElement)}.
+ *        The type-element tree can be obtained by GuiTypeBuilder.
+ *  <p>
+ *      Second, {@link GuiReprSet} receives the unmapped context object, and constructs sub-trees.
+ *       The sub-trees are created by {@link #createChildCandidates()} and
+ *         matched with {@link GuiReprSet#match(GuiMappingContext)}.
+ *          The only matched sub-context becomes an actual child of a context by {@link #addToParent()}.
+ *          Also, if matched, the context becomes to have a {@link GuiRepresentation}.
+ *       The entry point of construction can be the match method of {@link GuiRepresentation#getDefaultSet()}.
+ *
+ *  <p>
+ *      Third, concrete entities of {@link GuiRepresentation}s, like GuiSwingView, can create concrete GUI components.
+ *       Then the components can compute updating of their displays by using retained mapped objects and listeners,
+ *         which can be obtained by {@link #getSource()} and {@link #getListeners()}.
+ *
+ *        <ol>
+ *            <li> a GUI component can call {@link #updateSourceFromRoot(GuiMappingContext)}
+ *              with passing an associated context.
+ *               Note, {@link #updateSourceFromRoot()}) is the no-source version and can be used for obtaining initial values.
+ *            <li>
+ *              The method obtains the root context by {@link #getRoot()},
+ *            <li>
+ *              and traverses the tree and collects updated contexts, by {@link #collectUpdatedSource(GuiMappingContext, List)}.
+ *            <li>
+ *               {@link GuiRepresentation#checkAndUpdateSource(GuiMappingContext)} do the actual computation of checking the update.
+ *            <li>
+ *                After that, {@link SourceUpdateListener#update(GuiMappingContext, Object)} of each updated context will be called.
+ *        </ol>
+ */
 public class GuiMappingContext {
     protected GuiTypeElement typeElement;
     protected GuiRepresentation representation;
@@ -33,6 +65,10 @@ public class GuiMappingContext {
         this.typeElement = typeElement;
         this.representation = representation;
         this.source = source;
+    }
+
+    public GuiMappingContext(GuiTypeElement typeElement, GuiRepresentation representation) {
+        this(typeElement, representation, null);
     }
 
     public void setRepresentation(GuiRepresentation representation) {
@@ -98,6 +134,10 @@ public class GuiMappingContext {
         return ctx;
     }
 
+    public String getName() {
+        return typeElement.getName();
+    }
+
 
     ///////////////////////
 
@@ -105,25 +145,55 @@ public class GuiMappingContext {
         return typeElement instanceof GuiTypeMemberProperty;
     }
 
-    public String getTypeElementPropertyTypeName() {
-        return ((GuiTypeMemberProperty) typeElement).getType().getName();
-    }
-
     public Class<?> getTypeElementPropertyTypeAsClass() {
-        try {
-            return Class.forName(getTypeElementPropertyTypeName());
-        } catch (Exception ex) {
+        GuiTypeElement e = ((GuiTypeMemberProperty) typeElement).getType();
+        if (e instanceof GuiTypeValue) {
+            return ((GuiTypeValue) e).getType();
+        } else {
             return Object.class;
         }
     }
 
     public boolean isTypeElementAction() {
-        return typeElement instanceof GuiTypeMemberAction;
+        return typeElement instanceof GuiTypeMemberAction && !isTypeElementActionList();
+    }
+
+    public boolean isTypeElementActionList() {
+        return typeElement instanceof GuiTypeMemberActionList;
     }
 
     public boolean isTypeElementObject() {
         return typeElement instanceof GuiTypeObject;
     }
+
+    public boolean isTypeElementValue() {
+        return typeElement instanceof GuiTypeValue && !isTypeElementObject() && !isTypeElementCollection();
+    }
+
+    public boolean isTypeElementCollection() {
+        return typeElement instanceof GuiTypeCollection;
+    }
+
+    public Class<?> getTypeElementValueAsClass() {
+        return ((GuiTypeValue) typeElement).getType();
+    }
+
+    public GuiTypeMemberProperty getTypeElementAsProperty() {
+        return (GuiTypeMemberProperty) typeElement;
+    }
+
+    public GuiTypeMemberAction getTypeElementAsAction() {
+        return (GuiTypeMemberAction) typeElement;
+    }
+
+    public GuiTypeMemberActionList getTypeElementAsActionList() {
+        return (GuiTypeMemberActionList) typeElement;
+    }
+
+    public GuiTypeValue getTypeElementValue() {
+        return (GuiTypeValue) typeElement;
+    }
+
 
     ///////////////////////
 
@@ -170,9 +240,17 @@ public class GuiMappingContext {
 
     public void updateSourceFromGui(Object newValue) {
         this.source = newValue;
+        updateSourceFromRoot(this);
+    }
+
+    public void updateSourceFromRoot() {
+        updateSourceFromRoot(null);
+    }
+
+    public void updateSourceFromRoot(GuiMappingContext cause) {
         GuiMappingContext ctx = getRoot();
         List<GuiMappingContext> updated = new ArrayList<>();
-        ctx.collectUpdatedSource(this, updated);
+        ctx.collectUpdatedSource(cause, updated);
 
         updated.forEach(c -> c.getListeners()
                 .forEach(l -> l.update(this, c.getSource())));
@@ -180,12 +258,42 @@ public class GuiMappingContext {
 
     public void collectUpdatedSource(GuiMappingContext cause, List<GuiMappingContext> updated) {
         if (this != cause) {
-            if (getRepresentation().update(this)) {
+            if (getRepresentation().checkAndUpdateSource(this)) {
                 updated.add(this);
             }
-
-            getChildren()
-                    .forEach(c -> c.collectUpdatedSource(cause, updated));
         }
+        getChildren()
+                .forEach(c -> c.collectUpdatedSource(cause, updated));
+    }
+
+    public String getDisplayName() {
+        return getName(); //TODO
+    }
+
+    public void errorWhileUpdateSource(Throwable error) {
+        //TODO
+    }
+
+    public boolean isParentPropertyPane() {
+        return getParent() != null &&
+                getParent().getRepresentation() instanceof GuiReprPropertyPane;
+    }
+
+
+    public GuiReprPropertyPane getParentPropertyPane() {
+        return (GuiReprPropertyPane) getParent().getRepresentation();
+    }
+
+    public boolean isParentValuePane() {
+        return getParent() != null &&
+                getParent().getRepresentation() instanceof GuiReprValue;
+    }
+
+    public GuiReprValue getParentValuePane() {
+        return (GuiReprValue) getParent().getRepresentation();
+    }
+
+    public Object getParentSource() {
+        return getParent() != null ? getParent().getSource() : null;
     }
 }

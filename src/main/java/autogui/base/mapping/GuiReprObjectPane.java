@@ -1,6 +1,6 @@
 package autogui.base.mapping;
 
-public class GuiReprObjectPane implements GuiRepresentation {
+public class GuiReprObjectPane extends GuiReprValue {
     protected GuiRepresentation subRepresentation;
 
     public GuiReprObjectPane(GuiRepresentation subRepresentation) {
@@ -25,4 +25,5 @@ public class GuiReprObjectPane implements GuiRepresentation {
             return false;
         }
     }
+
 }
