@@ -190,6 +190,10 @@ public class GuiMappingContext {
         return (GuiTypeMemberActionList) typeElement;
     }
 
+    public GuiTypeCollection getTypeElementCollection() {
+        return (GuiTypeCollection) typeElement;
+    }
+
     public GuiTypeValue getTypeElementValue() {
         return (GuiTypeValue) typeElement;
     }

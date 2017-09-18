@@ -1,5 +1,8 @@
 package autogui.base.type;
 
+import java.util.Collections;
+import java.util.List;
+
 public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
     protected GuiTypeElement elementType;
 
@@ -33,5 +36,14 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
     @Override
     public String toString() {
         return "collection(" + elementType + ")";
+    }
+
+    @Override
+    public List<GuiTypeElement> getChildren() {
+        if (elementType != null) {
+            return Collections.singletonList(elementType);
+        } else {
+            return Collections.emptyList();
+        }
     }
 }

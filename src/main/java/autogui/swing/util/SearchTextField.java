@@ -2,6 +2,8 @@ package autogui.swing.util;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.color.ColorSpace;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.geom.RoundRectangle2D;
@@ -30,6 +32,7 @@ public class SearchTextField extends JComponent {
 
     protected List<CategorizedPopup.CategorizedPopupItem> currentSearchedItems;
     protected SearchTask currentTask;
+    protected List<SearchedItemsListener> searchedItemsListeners;
 
     protected static ImageIcon emptyIcon;
 
@@ -67,8 +70,32 @@ public class SearchTextField extends JComponent {
         void publishSearch(List<CategorizedPopup.CategorizedPopupItem> intermediateResult);
     }
 
+    public interface SearchedItemsListener {
+        void updateCurrentSearchedItems(List<CategorizedPopup.CategorizedPopupItem> items, boolean done);
+    }
+
+    public static class SearchTextFieldModelEmpty implements SearchTextFieldModel {
+        @Override
+        public List<CategorizedPopup.CategorizedPopupItem> getCandidates(String text, SearchTextFieldPublisher publisher) {
+            return new ArrayList<>();
+        }
+
+        @Override
+        public void select(CategorizedPopup.CategorizedPopupItem item) { }
+
+        @Override
+        public CategorizedPopup.CategorizedPopupItem getSelection() {
+            return null;
+        }
+    }
+
+    public SearchTextField() {
+        this(new SearchTextFieldModelEmpty());
+    }
+
     public SearchTextField(SearchTextFieldModel model) {
         this.model = model;
+        this.searchedItemsListeners = new ArrayList<>(3);
         init();
     }
 
@@ -110,17 +137,34 @@ public class SearchTextField extends JComponent {
 
 
     public void initPopup() {
-        popup = new CategorizedPopup(this::getSearchedItems, this::selectSearchedItemFromGui);
+        popup = new CategorizedPopup(
+                CategorizedPopup.getSupplierWithActions(
+                        TextPopupExtension.getEditActions(field), this::getSearchedItems),
+                this::selectSearchedItemFromGui);
         popupButton = new JButton(popup);
         popup.setButton(popupButton);
 
-        //TODO
+        new TextPopupExtension(field, TextPopupExtension.getDefaultKeyMatcher(), popup::show);
+        addSearchItemsListener(getPopupUpdateListener(popup));
+    }
+
+    public SearchedItemsListener getPopupUpdateListener(CategorizedPopup popup) {
+        return (items,done) -> {
+            if (popup.getMenu().isVisible()) {
+                popup.setupMenu(popup.getMenu());
+                if (!done) {
+                    popup.getMenu().add(popup.getMenuBuilder().createLabel("Adding..."));
+                }
+                popup.getMenu().pack();
+            }
+        };
     }
 
     public void initLayout() {
         super.setBackground(Color.white);
         backgroundPainter = new SearchBackgroundPainter(this);
 
+        setLayout(new BorderLayout());
         add(icon, BorderLayout.WEST);
         add(field, BorderLayout.CENTER);
         add(popupButton, BorderLayout.EAST);
@@ -173,26 +217,46 @@ public class SearchTextField extends JComponent {
         return currentTask;
     }
 
+    public void addSearchItemsListener(SearchedItemsListener itemsListener) {
+        searchedItemsListeners.add(itemsListener);
+    }
+
+    public void removeSearchItemsListener(SearchedItemsListener itemsListener) {
+        searchedItemsListeners.remove(itemsListener);
+    }
+
+    public List<SearchedItemsListener> getSearchedItemsListeners() {
+        return searchedItemsListeners;
+    }
+
     ////////////////////
 
     /** After editing text or action performed, this method will be executed under the scheduler thread */
     public void updateField(List<Object> events) {
         try {
-            SwingUtilities.invokeAndWait(this::updateFieldInEvent);
+            boolean modified = isUpdateFieldModifiedEvents(events);
+            SwingUtilities.invokeLater(() -> updateFieldInEvent(modified));
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
 
+    public boolean isUpdateFieldModifiedEvents(List<Object> events) {
+        return events.stream()
+                .anyMatch(e -> !(e instanceof ActionEvent || e instanceof FocusEvent));
+    }
+
     /** executed under event thread:
      *  start a new search task in background */
-    public void updateFieldInEvent() {
-        String text = field.getText();
-        if (currentTask != null && !currentTask.isDone()) {
-            currentTask.cancel(true);
+    public void updateFieldInEvent(boolean modified) {
+        if (modified || currentSearchedItems == null) {
+            String text = field.getText();
+            if (currentTask != null && !currentTask.isDone()) {
+                currentTask.cancel(true);
+            }
+            currentTask = createSearchTask(text);
+            currentTask.execute();
         }
-        currentTask = createSearchTask(text);
-        currentTask.execute();
     }
 
     public SearchTask createSearchTask(String text) {
@@ -200,8 +264,16 @@ public class SearchTextField extends JComponent {
     }
 
     /** set the searched items from the background task: it might be an intermediate result */
-    public void setCurrentSearchedItems(List<CategorizedPopup.CategorizedPopupItem> currentSearchedItems) {
+    public void setCurrentSearchedItems(List<CategorizedPopup.CategorizedPopupItem> currentSearchedItems, boolean done) {
         this.currentSearchedItems = currentSearchedItems;
+        searchedItemsListeners.forEach(l -> l.updateCurrentSearchedItems(currentSearchedItems, done));
+    }
+
+    public void setCurrentSearchedItems(List<CategorizedPopup.CategorizedPopupItem> currentSearchedItems, boolean done,
+                                        CategorizedPopup.CategorizedPopupItem selection) {
+        this.currentSearchedItems = currentSearchedItems;
+        selectSearchedItemFromModel(selection);
+        searchedItemsListeners.forEach(l -> l.updateCurrentSearchedItems(currentSearchedItems, done));
     }
 
     public List<CategorizedPopup.CategorizedPopupItem> getSearchedItems() {
@@ -250,9 +322,13 @@ public class SearchTextField extends JComponent {
     }
 
     public void setTextFromSearchedItem(CategorizedPopup.CategorizedPopupItem item) {
+        setTextWithoutUpdateField(item.getName());
+    }
+
+    public void setTextWithoutUpdateField(String text) {
         editingRunner.setEnabled(false);
         try {
-            field.setText(item.getName());
+            field.setText(text);
         } finally {
             editingRunner.setEnabled(true);
         }
@@ -274,6 +350,10 @@ public class SearchTextField extends JComponent {
             this.text = text;
         }
 
+        public String getText() {
+            return text;
+        }
+
         @Override
         protected List<CategorizedPopup.CategorizedPopupItem> doInBackground() throws Exception {
             try{
@@ -287,15 +367,14 @@ public class SearchTextField extends JComponent {
         protected void process(List<List<CategorizedPopup.CategorizedPopupItem>> chunks) {
             int last = chunks.size() - 1;
             if (last >= 0) {
-                field.setCurrentSearchedItems(chunks.get(last));
+                field.setCurrentSearchedItems(chunks.get(last), false);
             }
         }
 
         @Override
         protected void done() {
             try {
-                field.setCurrentSearchedItems(get());
-                field.selectSearchedItemFromModel(field.getModel().getSelection());
+                field.setCurrentSearchedItems(get(), true, field.getModel().getSelection());
             } catch (CancellationException ex) {
                 //nothing
             } catch (Exception ex) {
@@ -347,13 +426,17 @@ public class SearchTextField extends JComponent {
             focusColor = UIManager.getColor("Focus.color");
             if (focusColor == null) {
                 focusColor = new Color(100, 100, 100);
+            } else {
+                float[] hsb = new float[3];
+                hsb = Color.RGBtoHSB(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), hsb);
+                focusColor = Color.getHSBColor(hsb[0] * 0.97f, hsb[1] * 0.72f, hsb[2]);
             }
         }
 
         public void initStrokes() {
-            strokes = new BasicStroke[5];
-            for (int i = 0; i < 5; ++i) {
-                strokes[i] = new BasicStroke(5 - i);
+            strokes = new BasicStroke[2];
+            for (int i = 0; i < strokes.length; ++i) {
+                strokes[i] = new BasicStroke(strokes.length - i);
             }
         }
 
@@ -445,7 +528,7 @@ public class SearchTextField extends JComponent {
         }
 
         public void paintFocusStrokes(Graphics2D g2, RoundRectangle2D rr) {
-            Color color2 = new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 40);
+            Color color2 = new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 150);
             g2.setColor(color2);
             for (BasicStroke s : strokes) {
                 g2.setStroke(s);

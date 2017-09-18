@@ -84,6 +84,10 @@ public class ScheduledTaskRunner<EventType> {
         }
     }
 
+    public void shutdown() {
+        this.executor.shutdown();
+    }
+
     public static class EditingRunner extends ScheduledTaskRunner<Object>
             implements DocumentListener, KeyListener, ActionListener, FocusListener {
         public EditingRunner(long delay, Consumer<List<Object>> consumer) {

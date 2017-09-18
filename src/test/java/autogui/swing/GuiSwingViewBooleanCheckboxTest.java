@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import javax.swing.*;
 
-public class GuiSwingBooleanCheckboxTest extends GuiSwingTestCase {
+public class GuiSwingViewBooleanCheckboxTest extends GuiSwingTestCase {
     @Test
     public void testValue() {
         GuiSwingViewBooleanCheckbox box = new GuiSwingViewBooleanCheckbox();

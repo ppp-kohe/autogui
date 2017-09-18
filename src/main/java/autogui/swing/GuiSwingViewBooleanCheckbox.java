@@ -40,6 +40,7 @@ public class GuiSwingViewBooleanCheckbox implements GuiSwingView {
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
             GuiReprValueBooleanCheckbox repr = (GuiReprValueBooleanCheckbox) context.getRepresentation();
+            //setSelected seems not to cause ActionEvent
             setSelected(repr.toUpdateValue(context, newValue));
         }
     }

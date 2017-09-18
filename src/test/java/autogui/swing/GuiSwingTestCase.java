@@ -2,6 +2,7 @@ package autogui.swing;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
@@ -9,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class GuiSwingTestCase {
+    protected Robot robot;
 
     public JFrame testFrame(JComponent pane) {
         JFrame frame = new JFrame("test");
@@ -18,6 +20,50 @@ public class GuiSwingTestCase {
         frame.setVisible(true);
 
         return frame;
+    }
+
+    public Robot getRobot() {
+        if (robot == null) {
+            try {
+                robot = new Robot();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        return robot;
+    }
+
+    public void keyType(String text) {
+        Robot robot = getRobot();
+        robot.delay(10);
+        for (char c : text.toCharArray()) {
+            int code = KeyStroke.getKeyStroke(c).getKeyCode();
+            if (Character.isUpperCase(c)) {
+                robot.keyPress(KeyEvent.VK_SHIFT);
+            }
+            robot.delay(10);
+            robot.keyPress(Character.toUpperCase(c));
+            robot.delay(10);
+            robot.keyRelease(Character.toUpperCase(c));
+            robot.delay(10);
+            if (Character.isUpperCase(c)) {
+                getRobot().keyRelease(KeyEvent.VK_SHIFT);
+            }
+            robot.delay(10);
+        }
+    }
+
+    public void keyTypeAtOnce(int... codes) {
+        Robot robot = getRobot();
+        robot.delay(10);
+        for (int code : codes) {
+            robot.keyPress(code);
+            robot.delay(10);
+        }
+        for (int code : codes) {
+            robot.keyRelease(code);
+            robot.delay(10);
+        }
     }
 
     public void run(Runnable r) {
