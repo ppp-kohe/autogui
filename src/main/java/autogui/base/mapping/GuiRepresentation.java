@@ -27,13 +27,16 @@ public interface GuiRepresentation {
     static GuiReprSet getDefaultSet() {
         GuiReprSet set = new GuiReprSet();
 
-        set.add(new GuiReprValueNumberSpinner(),
-                new GuiReprValueBooleanCheckbox(),
-                new GuiReprValueStringField(),
+        set.add(new GuiReprValueBooleanCheckbox(),
+                new GuiReprValueDocumentEditor(),
+                new GuiReprValueEnumComboBox(),
                 new GuiReprValueFilePathField(),
-                new GuiReprValueEnumComboBox());
+                new GuiReprValueImagePane(),
+                new GuiReprValueNumberSpinner(),
+                new GuiReprValueStringField());
 
-        set.add(new GuiReprObjectPane(set),
+        set.add(new GuiReprCollectionTable(null), //TODO
+                new GuiReprObjectPane(set),
                 new GuiReprPropertyPane(set),
                 new GuiReprAction());
 

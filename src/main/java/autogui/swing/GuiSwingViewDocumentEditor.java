@@ -58,7 +58,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            updateText(this, context, newValue);
+            SwingUtilities.invokeLater(() ->updateText(this, context, newValue));
         }
     }
 
@@ -72,7 +72,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            updateText(this, context, newValue);
+            SwingUtilities.invokeLater(() -> updateText(this, context, newValue));
         }
     }
 }

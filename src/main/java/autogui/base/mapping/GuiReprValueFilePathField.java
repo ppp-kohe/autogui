@@ -8,4 +8,10 @@ public class GuiReprValueFilePathField extends GuiReprValue {
     public boolean matchValueType(Class<?> cls) {
         return File.class.isAssignableFrom(cls) || Path.class.isAssignableFrom(cls);
     }
+
+    public Path toUpdateValue(GuiMappingContext context, Object value) {
+        return (Path) value;
+    }
+
+
 }

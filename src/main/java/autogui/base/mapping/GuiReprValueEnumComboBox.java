@@ -1,6 +1,7 @@
 package autogui.base.mapping;
 
 public class GuiReprValueEnumComboBox extends GuiReprValue {
+
     @Override
     public boolean matchValueType(Class<?> cls) {
         return cls.isEnum();

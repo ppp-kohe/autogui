@@ -30,8 +30,12 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
             setRenderer(new PropertyEnumListRenderer(context));
 
+            setEnabled(((GuiReprValueEnumComboBox) context.getRepresentation())
+                    .isEditable(context));
+
             context.addSourceUpdateListener(this);
             update(context, context.getSource());
+            addItemListener(this);
         }
 
         public static Object[] getEnumConstants(GuiMappingContext context) {
@@ -41,7 +45,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            setSelectedItem(newValue);
+            SwingUtilities.invokeLater(() -> setSelectedItem(newValue));
         }
 
         @Override

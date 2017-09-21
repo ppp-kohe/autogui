@@ -2,14 +2,18 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueImagePane;
-import autogui.swing.util.MenuBuilder;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 public class GuiSwingViewImagePane implements GuiSwingView {
     @Override
@@ -33,18 +37,36 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         protected Image image;
         protected Dimension imageSize = new Dimension(1, 1);
         protected float maxImageScale = 1f;
+        protected boolean editable;
+        protected ImageActionPopupMenu popupMenu;
 
         public ImagePropertyPane(GuiMappingContext context) {
             this.context = context;
 
+            setEditable(((GuiReprValueImagePane) context.getRepresentation())
+                    .isEditable(context));
+
             context.addSourceUpdateListener(this);
             update(context, context.getSource());
+
+            popupMenu = new ImageActionPopupMenu(this);
+            addMouseListener(popupMenu.createMouseHandler());
+
+            setTransferHandler(new ImageTransferHandler(this));
+        }
+
+        public boolean isEditable() {
+            return editable;
+        }
+
+        public void setEditable(boolean editable) {
+            this.editable = editable;
         }
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
-            setImage(img.updateValue(context, newValue));
+            SwingUtilities.invokeLater(() -> setImageWithoutContextUpdate(img.updateValue(context, newValue)));
         }
 
         public void setMaxImageScale(float maxImageScale) {
@@ -59,13 +81,19 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             return image;
         }
 
-        public void setImage(Image image) {
+        public void setImageWithoutContextUpdate(Image image) {
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
             this.image = image;
             imageSize = img.getSize(context, image);
             setPreferredSize(imageSize);
             revalidate();
             repaint();
+        }
+
+        public void setImage(Image image) {
+            setImageWithoutContextUpdate(image);
+            GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
+            img.updateFromGui(context, image);
         }
 
         public Dimension getImageSize() {
@@ -81,7 +109,6 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 Dimension size = getScaledImageSize(imageSize, paneSize);
                 int left = (paneSize.width - size.width) / 2;
                 int top = (paneSize.height - size.height) / 2;
-
 
                 try {
                     while (!g.drawImage(image, left, top, size.width, size.height, this)) {
@@ -117,14 +144,35 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public void setupMenu() {
             menu.removeAll();
-            menu.add(createSizeInfo(propertyPane.getSize()));
+            menu.add(createSizeInfo(propertyPane.getImageSize()));
             menu.add(new ImageCopyAction(propertyPane.getImage()));
+            menu.add(new ImagePasteAction(propertyPane));
         }
 
         public JLabel createSizeInfo(Dimension size) {
             JLabel label = new JLabel();
             label.setText(String.format("Size: %,d x %,d", size.width, size.height));
             return label;
+        }
+
+        public MouseAdapter createMouseHandler() {
+            return new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    handle(e);
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    handle(e);
+                }
+
+                public void handle(MouseEvent e) {
+                    if (e.isPopupTrigger()) {
+                        show(propertyPane, e.getX(), e.getY());
+                    }
+                }
+            };
         }
     }
 
@@ -147,6 +195,31 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
                 ImageSelection selection = new ImageSelection(image);
                 board.setContents(selection, selection);
+            }
+        }
+    }
+
+    public static class ImagePasteAction extends AbstractAction {
+        protected ImagePropertyPane pane;
+
+        public ImagePasteAction(ImagePropertyPane pane) {
+            putValue(NAME, "Paste");
+            this.pane = pane;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return pane.isEditable();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
+            try {
+                Image img = (Image) clip.getData(DataFlavor.imageFlavor);
+                pane.setImage(img);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
             }
         }
     }
@@ -189,4 +262,79 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
 
+    public static class ImageTransferHandler extends TransferHandler {
+        protected ImagePropertyPane imagePane;
+
+        public ImageTransferHandler(ImagePropertyPane imagePane) {
+            this.imagePane = imagePane;
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            return imagePane.isEditable() &&
+                    (support.isDataFlavorSupported(DataFlavor.imageFlavor) ||
+                        support.isDataFlavorSupported(DataFlavor.javaFileListFlavor));
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            if (support.isDataFlavorSupported(DataFlavor.imageFlavor)) {
+                return select(getTransferableAsImage(support, DataFlavor.imageFlavor));
+            } else if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                return select(loadTransferableFilesAsImage(support, DataFlavor.javaFileListFlavor));
+            } else {
+                return false;
+            }
+        }
+
+        public Image getTransferableAsImage(TransferSupport support, DataFlavor flavor) {
+            try {
+                return (Image) support.getTransferable().getTransferData(flavor);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        public Image loadTransferableFilesAsImage(TransferSupport support, DataFlavor flavor) {
+            try {
+                List<File> fs = (List<File>) support.getTransferable().getTransferData(flavor);
+                if (fs != null && !fs.isEmpty()) {
+                    try {
+                        return ImageIO.read(fs.get(0));
+                    } catch (Exception ex) {
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        public boolean select(Image image) {
+            if (image != null) {
+                imagePane.setImage(image);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            if (c.equals(imagePane)) {
+                return COPY;
+            }
+            return super.getSourceActions(c);
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            return new ImageSelection(imagePane.getImage());
+        }
+
+
+    }
 }
