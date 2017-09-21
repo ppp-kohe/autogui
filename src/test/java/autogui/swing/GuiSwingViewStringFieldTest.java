@@ -26,7 +26,7 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
         context.setRepresentation(new GuiReprValueStringField());
         context.updateSourceFromRoot();
 
-        JComponent c = (JComponent) runGet(() -> {
+        JComponent c = runGet(() -> {
             JComponent comp = fld.createView(context);
             testFrame(comp).setSize(400, 100);
             return comp;

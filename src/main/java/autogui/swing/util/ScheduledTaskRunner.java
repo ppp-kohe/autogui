@@ -1,5 +1,7 @@
 package autogui.swing.util;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
@@ -89,7 +91,7 @@ public class ScheduledTaskRunner<EventType> {
     }
 
     public static class EditingRunner extends ScheduledTaskRunner<Object>
-            implements DocumentListener, KeyListener, ActionListener, FocusListener {
+            implements DocumentListener, KeyListener, ActionListener, FocusListener, ChangeListener {
         public EditingRunner(long delay, Consumer<List<Object>> consumer) {
             super(delay, consumer);
         }
@@ -139,6 +141,11 @@ public class ScheduledTaskRunner<EventType> {
         public void focusLost(FocusEvent e) {
             //leave the editing target
             runImmediately(e);
+        }
+
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            schedule(e);
         }
     }
 }

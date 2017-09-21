@@ -30,7 +30,8 @@ public interface GuiRepresentation {
         set.add(new GuiReprValueNumberSpinner(),
                 new GuiReprValueBooleanCheckbox(),
                 new GuiReprValueStringField(),
-                new GuiReprValueFilePathField());
+                new GuiReprValueFilePathField(),
+                new GuiReprValueEnumComboBox());
 
         set.add(new GuiReprObjectPane(set),
                 new GuiReprPropertyPane(set),

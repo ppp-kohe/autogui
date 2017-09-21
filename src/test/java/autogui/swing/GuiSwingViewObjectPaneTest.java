@@ -45,6 +45,14 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         Assert.assertFalse(src.value.hello);
         Assert.assertTrue(src.value.world);
 
+        JButton action = runQuery(pane, query(JToolBar.class, 0).cat(JButton.class, 0));
+        System.err.println(action);
+        run(action::doClick);
+
+        Assert.assertEquals(1, src.value.testValue);
+
+        Assert.assertTrue(helloBox.isSelected());
+        Assert.assertFalse(worldBox.isSelected());
     }
 
     public static class TestObj {
@@ -60,6 +68,8 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         public void test() {
             System.out.println("action " + testValue);
             testValue++;
+            hello = !hello;
+            world = !world;
         }
     }
 

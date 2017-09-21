@@ -55,6 +55,11 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             }
         }
 
+        public PropertyPane(GuiMappingContext context, boolean showName, JComponent content) {
+            this(context, showName);
+            setContent(content);
+        }
+
         public void initNameLabel() {
             JLabel label = new JLabel(context.getDisplayName());
 

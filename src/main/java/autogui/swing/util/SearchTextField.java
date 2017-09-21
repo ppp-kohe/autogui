@@ -53,13 +53,13 @@ public class SearchTextField extends JComponent {
          *       return results;
          *   </pre>
          * */
-        List<CategorizedPopup.CategorizedPopupItem> getCandidates(String text, SearchTextFieldPublisher publisher);
+        List<CategorizedPopup.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher);
 
         /** The method is executed under the event dispatching thread.
          *   The user selects the item from a menu and then this method will be called. */
         void select(CategorizedPopup.CategorizedPopupItem item);
 
-        /** After {@link #getCandidates(String, SearchTextFieldPublisher)},
+        /** After {@link #getCandidates(String, boolean, SearchTextFieldPublisher)},
          *    an exact matching item might be found, and then the method returns the item.
          *    The method is executed under the event dispatching thread. */
         CategorizedPopup.CategorizedPopupItem getSelection();
@@ -76,7 +76,7 @@ public class SearchTextField extends JComponent {
 
     public static class SearchTextFieldModelEmpty implements SearchTextFieldModel {
         @Override
-        public List<CategorizedPopup.CategorizedPopupItem> getCandidates(String text, SearchTextFieldPublisher publisher) {
+        public List<CategorizedPopup.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher) {
             return new ArrayList<>();
         }
 
@@ -139,13 +139,18 @@ public class SearchTextField extends JComponent {
     public void initPopup() {
         popup = new CategorizedPopup(
                 CategorizedPopup.getSupplierWithActions(
-                        TextPopupExtension.getEditActions(field), this::getSearchedItems),
+                        getPopupEditActions(),
+                        this::getSearchedItems),
                 this::selectSearchedItemFromGui);
         popupButton = new JButton(popup);
         popup.setButton(popupButton);
 
         new TextPopupExtension(field, TextPopupExtension.getDefaultKeyMatcher(), popup::show);
         addSearchItemsListener(getPopupUpdateListener(popup));
+    }
+
+    public List<Action> getPopupEditActions() {
+        return TextPopupExtension.getEditActions(field);
     }
 
     public SearchedItemsListener getPopupUpdateListener(CategorizedPopup popup) {
@@ -229,6 +234,10 @@ public class SearchTextField extends JComponent {
         return searchedItemsListeners;
     }
 
+    public boolean isEditable() {
+        return isEnabled() && getField().isEnabled() && getField().isEditable();
+    }
+
     ////////////////////
 
     /** After editing text or action performed, this method will be executed under the scheduler thread */
@@ -243,7 +252,11 @@ public class SearchTextField extends JComponent {
 
     public boolean isUpdateFieldModifiedEvents(List<Object> events) {
         return events.stream()
-                .anyMatch(e -> !(e instanceof ActionEvent || e instanceof FocusEvent));
+                .anyMatch(this::isUpdateFieldModifiedEvent);
+    }
+
+    public boolean isUpdateFieldModifiedEvent(Object e) {
+        return !(e instanceof ActionEvent || e instanceof FocusEvent);
     }
 
     /** executed under event thread:
@@ -357,7 +370,7 @@ public class SearchTextField extends JComponent {
         @Override
         protected List<CategorizedPopup.CategorizedPopupItem> doInBackground() throws Exception {
             try{
-                return field.getModel().getCandidates(text, this);
+                return field.getModel().getCandidates(text, field.isEditable(), this);
             } catch (CancellationException ex) {
                 return new ArrayList<>();
             }

@@ -7,24 +7,22 @@ import java.util.Objects;
 public class GuiReprValue implements GuiRepresentation {
     @Override
     public boolean match(GuiMappingContext context) {
-        if (context.isTypeElementProperty()) {
-            Class<?> cls = context.getTypeElementPropertyTypeAsClass();
-            if (matchValueType(cls)) {
-                context.setRepresentation(this);
-                return true;
-            } else {
-                return false;
-            }
-        } else if (context.isTypeElementValue()) {
-            Class<?> cls = context.getTypeElementValueAsClass();
-            if (matchValueType(cls)) {
-                context.setRepresentation(this);
-                return true;
-            } else {
-                return false;
-            }
+        Class<?> cls = getValueType(context);
+        if (cls != null && matchValueType(cls)) {
+            context.setRepresentation(this);
+            return true;
         } else {
             return false;
+        }
+    }
+
+    public Class<?> getValueType(GuiMappingContext context) {
+        if (context.isTypeElementProperty()) {
+            return context.getTypeElementPropertyTypeAsClass();
+        } else if (context.isTypeElementValue()) {
+            return context.getTypeElementValueAsClass();
+        } else {
+            return null;
         }
     }
 

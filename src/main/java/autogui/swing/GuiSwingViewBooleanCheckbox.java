@@ -24,11 +24,12 @@ public class GuiSwingViewBooleanCheckbox implements GuiSwingView {
 
             setEnabled(repr.isEditable(context));
             context.addSourceUpdateListener(this);
-            setSelected(repr.toUpdateValue(context, context.getSource()));
 
             if (context.isTypeElementProperty()) {
                 setText(context.getDisplayName());
             }
+
+            update(context, context.getSource());
         }
 
         @Override
@@ -41,7 +42,7 @@ public class GuiSwingViewBooleanCheckbox implements GuiSwingView {
         public void update(GuiMappingContext cause, Object newValue) {
             GuiReprValueBooleanCheckbox repr = (GuiReprValueBooleanCheckbox) context.getRepresentation();
             //setSelected seems not to cause ActionEvent
-            setSelected(repr.toUpdateValue(context, newValue));
+            SwingUtilities.invokeLater(() -> setSelected(repr.toUpdateValue(context, newValue)));
         }
     }
 }

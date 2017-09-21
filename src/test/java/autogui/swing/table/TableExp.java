@@ -2,28 +2,28 @@ package autogui.swing.table;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class TableExp {
     public static void main(String[] args) {
         JFrame frame = new JFrame("table");
         {
-            DefaultTableColumnModel columnModel = new DefaultTableColumnModel();
-
-            TableColumn col1 = new TableColumn(0, 100);
-            col1.setHeaderValue("Hello");
-            columnModel.addColumn(col1);
-
-            TableColumn col2 = new TableColumn(1, 100);
-            col2.setHeaderValue("World");
-            columnModel.addColumn(col2);
-
-            JTable table = new JTable(new TableModel(), columnModel);
-            table.setAutoCreateRowSorter(true);
-
-            frame.add(new JScrollPane(table));
+            ObjectTableModel model = new ObjectTableModel(() ->
+                    IntStream.range(0, 100)
+                        .mapToObj(i ->
+                                IntStream.range(0, 10).mapToObj(j -> "data-" + i + "-" + j)
+                                    .collect(Collectors.toList()))
+                        .collect(Collectors.toList()),
+                    IntStream.range(0, 10)
+                        .mapToObj(j -> {
+                            return ObjectTableColumn.<List<Object>,Object>createLabel("hello",
+                                    o -> o.get(j),
+                                    (o,v) -> o.set(j, v));
+                        })
+                        .collect(Collectors.toList()));
+            frame.add(model.initTableWithScroll());
         }
         frame.pack();
         frame.setVisible(true);

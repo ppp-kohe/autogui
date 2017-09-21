@@ -12,6 +12,12 @@ import java.util.Objects;
  *     public R setP(E e) { ... }
  *     public E getP() { ... }
  * </pre>
+ *
+ * <pre>
+ *     public R setP(boolean e) { ... }
+ *     public boolean isP() { ... }
+ * </pre>
+ *
  * <pre>
  *     public E p;
  * </pre>

@@ -45,6 +45,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             setColumnModel(model.getColumnModel());
 
             context.addSourceUpdateListener(this);
+
+            update(context, context.getSource());
         }
 
         public JScrollPane initAfterAddingColumns() {
@@ -64,6 +66,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             GuiReprCollectionTable repr = (GuiReprCollectionTable) context.getRepresentation();
             source = repr.toUpdateValue(context, newValue);
             getObjectTableModel().setSourceFromSupplier();
+            SwingUtilities.invokeLater(getObjectTableModel()::fireTableDataChanged);
         }
     }
 }

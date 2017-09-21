@@ -37,10 +37,15 @@ public class ObjectTableModel extends AbstractTableModel {
     }
 
     public ObjectTableModel(Supplier<List<?>> sourceSupplier, List<ObjectTableColumn> columns, JTable table) {
-        this.columns = columns;
         this.sourceSupplier = sourceSupplier;
         this.table = table;
         columnModel = new DefaultTableColumnModel();
+        if (columns != null) {
+            this.columns = columns;
+            addTableColumnFromColumns();
+        } else {
+            this.columns = new ArrayList<>();
+        }
         setSourceFromSupplier();
     }
 
@@ -77,6 +82,18 @@ public class ObjectTableModel extends AbstractTableModel {
         columns.add(column);
         columnModel.addColumn(column.getTableColumn());
         column.getTableColumn().setModelIndex(index);
+    }
+
+    public void addTableColumnFromColumns() {
+        if (columns != null) {
+            int i = 0;
+            for (ObjectTableColumn column : columns) {
+                columnModel.addColumn(column.getTableColumn());
+                column.getTableColumn().setModelIndex(i);
+                ;
+                ++i;
+            }
+        }
     }
 
     public List<ObjectTableColumn> getColumns() {

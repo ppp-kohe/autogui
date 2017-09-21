@@ -40,7 +40,7 @@ public class GuiTypeBuilder {
 
     /**
      *
-     * @param type
+     * @param type for creation
      * @return nullable
      */
     public GuiTypeElement create(Type type) {
@@ -254,7 +254,9 @@ public class GuiTypeBuilder {
     }
 
     public boolean isGetterMethod(Method m) {
-        return (m.getName().startsWith("is") || m.getName().startsWith("get")) && m.getParameterCount() == 0 &&
+        return ((m.getName().startsWith("is") && m.getReturnType().equals(boolean.class)) ||
+                    m.getName().startsWith("get")) &&
+                m.getParameterCount() == 0 &&
                 !m.getReturnType().equals(void.class);
     }
 

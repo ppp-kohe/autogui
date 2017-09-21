@@ -3,6 +3,12 @@ package autogui.base.type;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * <pre>
+ *     Collection&lt;E&gt;
+ * </pre>
+ *  the type is Collection, and its sub-types
+ */
 public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
     protected GuiTypeElement elementType;
 

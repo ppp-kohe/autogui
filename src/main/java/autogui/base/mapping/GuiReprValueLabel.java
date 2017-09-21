@@ -1,5 +1,9 @@
 package autogui.base.mapping;
 
-public class GuiReprValueLabel extends GuiReprValue {
+import java.util.Objects;
 
+public class GuiReprValueLabel extends GuiReprValue {
+    public String toUpdateValue(GuiMappingContext context, Object newValue) {
+        return Objects.toString(newValue);
+    }
 }

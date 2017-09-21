@@ -1,5 +1,9 @@
 package autogui.base.type;
 
+/**
+ * primitive types, their associated boxed types, String, ...
+ *   specified by {@link GuiTypeBuilder#getValueTypes()}
+ */
 public class GuiTypeValue implements GuiTypeElement {
     protected String name;
 

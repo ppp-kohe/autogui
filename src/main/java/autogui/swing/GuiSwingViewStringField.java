@@ -36,13 +36,14 @@ public class GuiSwingViewStringField implements GuiSwingView {
             GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
             getField().setEditable(str.isEditable(context));
             context.addSourceUpdateListener(this);
+
+            update(context, context.getSource());
         }
 
         @Override
         public void updateFieldInEvent(boolean modified) {
             super.updateFieldInEvent(modified);
             if (modified) {
-                System.err.println("update");
                 GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
                 str.updateFromGui(context, getField().getText());
             }
@@ -51,7 +52,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
             GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
-            setTextWithoutUpdateField(str.toUpdateValue(context, newValue));
+            SwingUtilities.invokeLater(() -> setTextWithoutUpdateField(str.toUpdateValue(context, newValue)));
         }
     }
 }

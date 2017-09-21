@@ -20,6 +20,7 @@ public class GuiReprAction implements GuiRepresentation {
         try {
             Object target = context.getParentValuePane().getUpdatedValue(context.getParent(), true);
             context.getTypeElementAsAction().execute(target);
+            context.updateSourceFromRoot();
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
         }

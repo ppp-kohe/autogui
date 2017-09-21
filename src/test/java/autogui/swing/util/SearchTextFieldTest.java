@@ -69,7 +69,7 @@ public class SearchTextFieldTest extends GuiSwingTestCase {
 
     public class TestModel implements SearchTextField.SearchTextFieldModel {
         @Override
-        public List<CategorizedPopup.CategorizedPopupItem> getCandidates(String text, SearchTextField.SearchTextFieldPublisher publisher) {
+        public List<CategorizedPopup.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextField.SearchTextFieldPublisher publisher) {
             startCount.incrementAndGet();
             finishCount.set(0);
             List<CategorizedPopup.CategorizedPopupItem> items = new ArrayList<>();
