@@ -52,4 +52,22 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
             return Collections.emptyList();
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        GuiTypeCollection that = (GuiTypeCollection) o;
+
+        return elementType != null ? elementType.equals(that.elementType) : that.elementType == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (elementType != null ? elementType.hashCode() : 0);
+        return result;
+    }
 }

@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +34,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
     public boolean isComponentResizable(GuiMappingContext context) {
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingView view = (GuiSwingView) mapperSet.view(subContext);
-            if (view.isComponentResizable(subContext)) {
+            if (view != null && view.isComponentResizable(subContext)) {
                 return true;
             }
         }
@@ -53,6 +54,11 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             if (showName) {
                 initNameLabel();
             }
+
+            new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+                menu.removeAll();
+                menu.add(GuiSwingContextInfo.get().getInfoLabel(context));
+            }); //TODO
         }
 
         public PropertyPane(GuiMappingContext context, boolean showName, JComponent content) {

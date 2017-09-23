@@ -38,10 +38,6 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             addItemListener(this);
         }
 
-        public static Object[] getEnumConstants(GuiMappingContext context) {
-            Class<?> e = ((GuiReprValueEnumComboBox) context.getRepresentation()).getValueType(context);
-            return e.getEnumConstants();
-        }
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
@@ -54,6 +50,11 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             GuiReprValueEnumComboBox box = (GuiReprValueEnumComboBox) context.getRepresentation();
             box.updateFromGui(context, item);
         }
+    }
+
+    public static Object[] getEnumConstants(GuiMappingContext context) {
+        Class<?> e = ((GuiReprValueEnumComboBox) context.getRepresentation()).getValueType(context);
+        return e.getEnumConstants();
     }
 
     public static class PropertyEnumListRenderer extends DefaultListCellRenderer {

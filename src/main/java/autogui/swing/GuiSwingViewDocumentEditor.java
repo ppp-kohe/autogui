@@ -2,7 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueDocumentEditor;
-import autogui.swing.util.TextPopupExtension;
+import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import javax.swing.text.Document;
@@ -33,7 +33,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         l.update(context, context.getSource());
         pane.setPreferredSize(new Dimension(400, 400));
 
-        TextPopupExtension.installDefault(pane);
+        PopupExtensionText.installDefault(pane);
 
         if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
             pane.setFont(new Font("Menlo", Font.PLAIN, 14));

@@ -68,6 +68,11 @@ public class ObjectTableColumn {
 
     //////////////// setter for table column
 
+    public ObjectTableColumn withTableColumn(TableColumn column) {
+        setTableColumn(column);
+        return this;
+    }
+
     public ObjectTableColumn withRowHeight(int rowHeight) {
         setRowHeight(rowHeight);
         return this;

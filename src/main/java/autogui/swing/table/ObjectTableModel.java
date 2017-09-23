@@ -90,7 +90,6 @@ public class ObjectTableModel extends AbstractTableModel {
             for (ObjectTableColumn column : columns) {
                 columnModel.addColumn(column.getTableColumn());
                 column.getTableColumn().setModelIndex(i);
-                ;
                 ++i;
             }
         }
@@ -151,7 +150,7 @@ public class ObjectTableModel extends AbstractTableModel {
         table.setRowHeight(height);
     }
 
-    public JScrollPane initTableScrollPane(JTable table) {
+    public JScrollPane initTableScrollPane(JComponent table) {
         JScrollPane scrollPane = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         int width = getColumns().stream()
                 .mapToInt(e -> e.getTableColumn().getWidth())

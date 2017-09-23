@@ -42,11 +42,11 @@ public class SearchTextFieldFilePath extends SearchTextField {
     @Override
     public List<Action> getPopupEditActions() {
         return Arrays.asList(
-                new TextPopupExtension.TextCutAction(field),
-                new TextPopupExtension.TextCopyAction(field),
+                new PopupExtensionText.TextCutAction(field),
+                new PopupExtensionText.TextCopyAction(field),
                 new FileCopyAllAction(this),
                 new FilePasteAction(this),
-                new TextPopupExtension.TextSelectAllAction(field),
+                new PopupExtensionText.TextSelectAllAction(field),
                 new DesktopOpenAction(this),
                 new DesktopRevealAction(this),
                 new OpenDialogAction(this));
@@ -58,7 +58,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
     public Path getFile() {
-        CategorizedPopup.CategorizedPopupItem item = getModel().getSelection();
+        PopupCategorized.CategorizedPopupItem item = getModel().getSelection();
         if (item instanceof FileItem) {
             return ((FileItem) item).getPath();
         } else {
@@ -68,11 +68,11 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     @Override
     public boolean isUpdateFieldModifiedEvent(Object e) {
-        return super.isUpdateFieldModifiedEvent(e) || e instanceof CategorizedPopup.CategorizedPopupItem;
+        return super.isUpdateFieldModifiedEvent(e) || e instanceof PopupCategorized.CategorizedPopupItem;
     }
 
     @Override
-    public void setTextFromSearchedItem(CategorizedPopup.CategorizedPopupItem item) {
+    public void setTextFromSearchedItem(PopupCategorized.CategorizedPopupItem item) {
         if (item instanceof FileItem) {
             setTextWithoutUpdateField(((FileItem) item).getPath().toString());
         } else {
@@ -320,11 +320,11 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
     public static class SearchTextFieldModelFilePath implements SearchTextFieldModel {
-        protected CategorizedPopup.CategorizedPopupItem selection;
+        protected PopupCategorized.CategorizedPopupItem selection;
 
         @Override
-        public List<CategorizedPopup.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher) {
-            List<CategorizedPopup.CategorizedPopupItem> items = new ArrayList<>();
+        public List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher) {
+            List<PopupCategorized.CategorizedPopupItem> items = new ArrayList<>();
             try {
                 Path path = Paths.get(text);
                 selection = getFileItem(path, "Current", false);
@@ -430,17 +430,17 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
 
         @Override
-        public void select(CategorizedPopup.CategorizedPopupItem item) {
+        public void select(PopupCategorized.CategorizedPopupItem item) {
             this.selection = item;
         }
 
         @Override
-        public CategorizedPopup.CategorizedPopupItem getSelection() {
+        public PopupCategorized.CategorizedPopupItem getSelection() {
             return selection;
         }
     }
 
-    public static class FileItem implements CategorizedPopup.CategorizedPopupItem {
+    public static class FileItem implements PopupCategorized.CategorizedPopupItem {
         protected Path path;
         protected Function<Path,Icon> iconGetter;
         protected String category;
@@ -475,7 +475,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
-    public static class FileInfoItem implements CategorizedPopup.CategorizedPopupItemLabel {
+    public static class FileInfoItem implements PopupCategorized.CategorizedPopupItemLabel {
         protected Path path;
 
         public FileInfoItem(Path path) {

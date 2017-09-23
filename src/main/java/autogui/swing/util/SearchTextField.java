@@ -2,7 +2,6 @@ package autogui.swing.util;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -27,10 +26,10 @@ public class SearchTextField extends JComponent {
     protected JTextField field;
     protected ScheduledTaskRunner.EditingRunner editingRunner;
 
-    protected CategorizedPopup popup;
+    protected PopupExtensionText popup;
     protected JButton popupButton;
 
-    protected List<CategorizedPopup.CategorizedPopupItem> currentSearchedItems;
+    protected List<PopupCategorized.CategorizedPopupItem> currentSearchedItems;
     protected SearchTask currentTask;
     protected List<SearchedItemsListener> searchedItemsListeners;
 
@@ -53,38 +52,38 @@ public class SearchTextField extends JComponent {
          *       return results;
          *   </pre>
          * */
-        List<CategorizedPopup.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher);
+        List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher);
 
         /** The method is executed under the event dispatching thread.
          *   The user selects the item from a menu and then this method will be called. */
-        void select(CategorizedPopup.CategorizedPopupItem item);
+        void select(PopupCategorized.CategorizedPopupItem item);
 
         /** After {@link #getCandidates(String, boolean, SearchTextFieldPublisher)},
          *    an exact matching item might be found, and then the method returns the item.
          *    The method is executed under the event dispatching thread. */
-        CategorizedPopup.CategorizedPopupItem getSelection();
+        PopupCategorized.CategorizedPopupItem getSelection();
     }
 
     public interface SearchTextFieldPublisher {
         boolean isSearchCancelled();
-        void publishSearch(List<CategorizedPopup.CategorizedPopupItem> intermediateResult);
+        void publishSearch(List<PopupCategorized.CategorizedPopupItem> intermediateResult);
     }
 
     public interface SearchedItemsListener {
-        void updateCurrentSearchedItems(List<CategorizedPopup.CategorizedPopupItem> items, boolean done);
+        void updateCurrentSearchedItems(List<PopupCategorized.CategorizedPopupItem> items, boolean done);
     }
 
     public static class SearchTextFieldModelEmpty implements SearchTextFieldModel {
         @Override
-        public List<CategorizedPopup.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher) {
+        public List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher) {
             return new ArrayList<>();
         }
 
         @Override
-        public void select(CategorizedPopup.CategorizedPopupItem item) { }
+        public void select(PopupCategorized.CategorizedPopupItem item) { }
 
         @Override
-        public CategorizedPopup.CategorizedPopupItem getSelection() {
+        public PopupCategorized.CategorizedPopupItem getSelection() {
             return null;
         }
     }
@@ -137,28 +136,27 @@ public class SearchTextField extends JComponent {
 
 
     public void initPopup() {
-        popup = new CategorizedPopup(
-                CategorizedPopup.getSupplierWithActions(
+        PopupCategorized categorized = new PopupCategorized(
+                PopupCategorized.getSupplierWithActions(
                         getPopupEditActions(),
                         this::getSearchedItems),
                 this::selectSearchedItemFromGui);
-        popupButton = new JButton(popup);
-        popup.setButton(popupButton);
 
-        new TextPopupExtension(field, TextPopupExtension.getDefaultKeyMatcher(), popup::show);
-        addSearchItemsListener(getPopupUpdateListener(popup));
+        popup = new PopupExtensionText(field, PopupExtensionText.getDefaultKeyMatcher(), categorized);
+        popupButton = new JButton(popup.getAction());
+        addSearchItemsListener(getPopupUpdateListener(popup, categorized));
     }
 
     public List<Action> getPopupEditActions() {
-        return TextPopupExtension.getEditActions(field);
+        return PopupExtensionText.getEditActions(field);
     }
 
-    public SearchedItemsListener getPopupUpdateListener(CategorizedPopup popup) {
+    public SearchedItemsListener getPopupUpdateListener(PopupExtensionText popup, PopupCategorized categorized) {
         return (items,done) -> {
             if (popup.getMenu().isVisible()) {
-                popup.setupMenu(popup.getMenu());
+                popup.setupMenu();
                 if (!done) {
-                    popup.getMenu().add(popup.getMenuBuilder().createLabel("Adding..."));
+                    popup.getMenu().add(categorized.getMenuBuilder().createLabel("Adding..."));
                 }
                 popup.getMenu().pack();
             }
@@ -198,7 +196,7 @@ public class SearchTextField extends JComponent {
         return model;
     }
 
-    public CategorizedPopup getPopup() {
+    public PopupExtensionText getPopup() {
         return popup;
     }
 
@@ -277,20 +275,20 @@ public class SearchTextField extends JComponent {
     }
 
     /** set the searched items from the background task: it might be an intermediate result */
-    public void setCurrentSearchedItems(List<CategorizedPopup.CategorizedPopupItem> currentSearchedItems, boolean done) {
+    public void setCurrentSearchedItems(List<PopupCategorized.CategorizedPopupItem> currentSearchedItems, boolean done) {
         this.currentSearchedItems = currentSearchedItems;
         searchedItemsListeners.forEach(l -> l.updateCurrentSearchedItems(currentSearchedItems, done));
     }
 
-    public void setCurrentSearchedItems(List<CategorizedPopup.CategorizedPopupItem> currentSearchedItems, boolean done,
-                                        CategorizedPopup.CategorizedPopupItem selection) {
+    public void setCurrentSearchedItems(List<PopupCategorized.CategorizedPopupItem> currentSearchedItems, boolean done,
+                                        PopupCategorized.CategorizedPopupItem selection) {
         this.currentSearchedItems = currentSearchedItems;
         selectSearchedItemFromModel(selection);
         searchedItemsListeners.forEach(l -> l.updateCurrentSearchedItems(currentSearchedItems, done));
     }
 
-    public List<CategorizedPopup.CategorizedPopupItem> getSearchedItems() {
-        List<CategorizedPopup.CategorizedPopupItem> items = currentSearchedItems;
+    public List<PopupCategorized.CategorizedPopupItem> getSearchedItems() {
+        List<PopupCategorized.CategorizedPopupItem> items = currentSearchedItems;
         if (items == null) {
             return Collections.emptyList();
         } else {
@@ -298,17 +296,17 @@ public class SearchTextField extends JComponent {
         }
     }
 
-    public void selectSearchedItemFromGui(CategorizedPopup.CategorizedPopupItem item) {
+    public void selectSearchedItemFromGui(PopupCategorized.CategorizedPopupItem item) {
         model.select(item);
         setIconFromSearchedItem(item);
         setTextFromSearchedItem(item);
     }
 
-    public void selectSearchedItemFromModel(CategorizedPopup.CategorizedPopupItem item) {
+    public void selectSearchedItemFromModel(PopupCategorized.CategorizedPopupItem item) {
         setIconFromSearchedItem(item);
     }
 
-    public void setIconFromSearchedItem(CategorizedPopup.CategorizedPopupItem item) {
+    public void setIconFromSearchedItem(PopupCategorized.CategorizedPopupItem item) {
         icon.setIcon(convertIcon(item == null ? null : item.getIcon()));
     }
 
@@ -334,7 +332,7 @@ public class SearchTextField extends JComponent {
         return icon;
     }
 
-    public void setTextFromSearchedItem(CategorizedPopup.CategorizedPopupItem item) {
+    public void setTextFromSearchedItem(PopupCategorized.CategorizedPopupItem item) {
         setTextWithoutUpdateField(item.getName());
     }
 
@@ -353,7 +351,7 @@ public class SearchTextField extends JComponent {
     }
 
 
-    public static class SearchTask extends SwingWorker<List<CategorizedPopup.CategorizedPopupItem>, List<CategorizedPopup.CategorizedPopupItem>>
+    public static class SearchTask extends SwingWorker<List<PopupCategorized.CategorizedPopupItem>, List<PopupCategorized.CategorizedPopupItem>>
         implements SearchTextFieldPublisher {
         protected SearchTextField field;
         protected String text;
@@ -368,7 +366,7 @@ public class SearchTextField extends JComponent {
         }
 
         @Override
-        protected List<CategorizedPopup.CategorizedPopupItem> doInBackground() throws Exception {
+        protected List<PopupCategorized.CategorizedPopupItem> doInBackground() throws Exception {
             try{
                 return field.getModel().getCandidates(text, field.isEditable(), this);
             } catch (CancellationException ex) {
@@ -377,7 +375,7 @@ public class SearchTextField extends JComponent {
         }
 
         @Override
-        protected void process(List<List<CategorizedPopup.CategorizedPopupItem>> chunks) {
+        protected void process(List<List<PopupCategorized.CategorizedPopupItem>> chunks) {
             int last = chunks.size() - 1;
             if (last >= 0) {
                 field.setCurrentSearchedItems(chunks.get(last), false);
@@ -401,7 +399,7 @@ public class SearchTextField extends JComponent {
         }
 
         @Override
-        public void publishSearch(List<CategorizedPopup.CategorizedPopupItem> intermediateResult) {
+        public void publishSearch(List<PopupCategorized.CategorizedPopupItem> intermediateResult) {
             publish(new ArrayList<>(intermediateResult));
         }
     }

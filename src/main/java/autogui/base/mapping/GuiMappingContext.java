@@ -97,7 +97,7 @@ public class GuiMappingContext {
 
     public List<GuiMappingContext> createChildCandidates() {
         return typeElement.getChildren().stream()
-                .map(e -> new GuiMappingContext(e, this))
+                .map(this::createChildCandidate)
                 .collect(Collectors.toList());
     }
 
@@ -106,6 +106,10 @@ public class GuiMappingContext {
             children = new ArrayList<>();
         }
         return children;
+    }
+
+    public GuiMappingContext createChildCandidate(GuiTypeElement typeElement) {
+        return new GuiMappingContext(typeElement, this);
     }
 
     public void addToParent() {
@@ -166,8 +170,10 @@ public class GuiMappingContext {
         return typeElement instanceof GuiTypeObject;
     }
 
+    /** it includes {@link GuiTypeObject} and {@link GuiTypeCollection}
+     *    which are subtypes of {@link GuiTypeValue} */
     public boolean isTypeElementValue() {
-        return typeElement instanceof GuiTypeValue && !isTypeElementObject() && !isTypeElementCollection();
+        return typeElement instanceof GuiTypeValue;
     }
 
     public boolean isTypeElementCollection() {
@@ -261,13 +267,17 @@ public class GuiMappingContext {
     }
 
     public void collectUpdatedSource(GuiMappingContext cause, List<GuiMappingContext> updated) {
+        boolean thisUpdated = false;
         if (this != cause) {
             if (getRepresentation().checkAndUpdateSource(this)) {
                 updated.add(this);
+                thisUpdated = true;
             }
         }
-        getChildren()
-                .forEach(c -> c.collectUpdatedSource(cause, updated));
+        if (getRepresentation().continueCheckAndUpdateSourceForChildren(this, thisUpdated)) {
+            getChildren()
+                    .forEach(c -> c.collectUpdatedSource(cause, updated));
+        }
     }
 
     public String getDisplayName() {
@@ -299,5 +309,16 @@ public class GuiMappingContext {
 
     public Object getParentSource() {
         return getParent() != null ? getParent().getSource() : null;
+    }
+
+
+    public boolean isParentCollectionTable() {
+        return getParent() != null &&
+                getParent().getRepresentation() instanceof GuiReprCollectionTable;
+    }
+
+    public boolean isParentCollectionElement() {
+        return getParent() != null &&
+                getParent().getRepresentation() instanceof GuiReprCollectionElement;
     }
 }

@@ -5,7 +5,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +20,7 @@ public class SearchTextFieldTest extends GuiSwingTestCase {
     AtomicInteger cancelCount = new AtomicInteger();
     AtomicInteger startCount = new AtomicInteger();
     AtomicInteger finishCount = new AtomicInteger();
-    CategorizedPopup.CategorizedPopupItem selectedItem;
+    PopupCategorized.CategorizedPopupItem selectedItem;
 
     String selectedName;
 
@@ -59,7 +58,7 @@ public class SearchTextFieldTest extends GuiSwingTestCase {
             ++i;
         }
 
-        JMenuItem item = TextPopupExtensionTest.getMenu(fld.getPopup().getMenu(), "item-10");
+        JMenuItem item = PopupExtensionTextTest.getMenu(fld.getPopup().getMenu(), "item-10");
         run(item::doClick);
 
         fld.getPopup().getMenu().setVisible(false);
@@ -69,10 +68,10 @@ public class SearchTextFieldTest extends GuiSwingTestCase {
 
     public class TestModel implements SearchTextField.SearchTextFieldModel {
         @Override
-        public List<CategorizedPopup.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextField.SearchTextFieldPublisher publisher) {
+        public List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextField.SearchTextFieldPublisher publisher) {
             startCount.incrementAndGet();
             finishCount.set(0);
-            List<CategorizedPopup.CategorizedPopupItem> items = new ArrayList<>();
+            List<PopupCategorized.CategorizedPopupItem> items = new ArrayList<>();
             for (int i = 0; i < 100; ++i) {
                 if (publisher.isSearchCancelled()) {
                     cancelCount.incrementAndGet();
@@ -96,17 +95,17 @@ public class SearchTextFieldTest extends GuiSwingTestCase {
         }
 
         @Override
-        public void select(CategorizedPopup.CategorizedPopupItem item) {
+        public void select(PopupCategorized.CategorizedPopupItem item) {
             selectedItem = item;
         }
 
         @Override
-        public CategorizedPopup.CategorizedPopupItem getSelection() {
+        public PopupCategorized.CategorizedPopupItem getSelection() {
             return selectedItem;
         }
     }
 
-    public class TestItem implements CategorizedPopup.CategorizedPopupItemMenu {
+    public class TestItem implements PopupCategorized.CategorizedPopupItemMenu {
         protected String name;
         protected String category;
 
@@ -131,7 +130,7 @@ public class SearchTextFieldTest extends GuiSwingTestCase {
         }
 
         @Override
-        public JComponent getMenuItem(CategorizedPopup sender) {
+        public JComponent getMenuItem(PopupCategorized sender) {
             return new JMenuItem(new TestAction(name));
         }
     }

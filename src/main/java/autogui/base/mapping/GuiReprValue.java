@@ -2,8 +2,6 @@ package autogui.base.mapping;
 
 import autogui.base.type.GuiTypeValue;
 
-import java.util.Objects;
-
 public class GuiReprValue implements GuiRepresentation {
     @Override
     public boolean match(GuiMappingContext context) {
@@ -63,21 +61,34 @@ public class GuiReprValue implements GuiRepresentation {
     public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Exception {
         Object prev = context.getSource();
         if (context.isTypeElementProperty()) {
-            Object src = context.getParentSource();
+            Object src = getParentSource(context, executeParent);
             return context.getTypeElementAsProperty().executeGet(src, prev);
         } else {
             if (context.isParentPropertyPane()) {
-                if (executeParent) {
-                    return context.getParentPropertyPane()
-                            .getUpdatedValue(context.getParent(), true);
-                } else {
-                    return context.getParent().getSource();
-                }
+                return getParentSource(context, executeParent);
             } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
                 return context.getTypeElementValue().updatedValue(prev);
             }
         }
         return null;
+    }
+
+    public Object getParentSource(GuiMappingContext context, boolean executeParent) throws Exception {
+        if (executeParent) {
+            if (context.isParentPropertyPane()) {
+                return context.getParentPropertyPane()
+                        .getUpdatedValue(context.getParent(), true);
+            } else if (context.isParentCollectionElement()) {
+                throw new UnsupportedOperationException("parent is a collection: it requires an index: " + context); //TODO
+            } else if (context.isParentValuePane()) {
+                return context.getParentValuePane()
+                        .getUpdatedValue(context.getParent(), true);
+            } else {
+                return context.getParentSource();
+            }
+        } else {
+            return context.getParentSource();
+        }
     }
 
 
@@ -92,6 +103,8 @@ public class GuiReprValue implements GuiRepresentation {
             }
         } else if (context.isParentPropertyPane()) {
             context.getParentPropertyPane().updateFromGuiChild(context, newValue);
+        } else if (context.isParentCollectionElement()) {
+            //TODO nothing?
         } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
             Object prev = context.getSource();
             Object next = context.getTypeElementValue().writeValue(prev, newValue);

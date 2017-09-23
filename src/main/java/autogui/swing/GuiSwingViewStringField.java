@@ -2,13 +2,10 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueStringField;
-import autogui.swing.util.CategorizedPopup;
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.SearchTextField;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class GuiSwingViewStringField implements GuiSwingView {
     @Override
@@ -38,6 +35,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
             context.addSourceUpdateListener(this);
 
             update(context, context.getSource());
+            //TODO GuiSwingContextInfo
         }
 
         @Override

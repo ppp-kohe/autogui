@@ -1,10 +1,17 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.swing.util.PopupExtension;
 import autogui.swing.util.ResizableFlowLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class GuiSwingViewObjectPane implements GuiSwingView {
     protected GuiSwingMapperSet mapperSet;
@@ -78,6 +85,11 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             add(contentPane, BorderLayout.CENTER);
 
             context.addSourceUpdateListener(this);
+
+            new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+                menu.removeAll();
+                menu.add(GuiSwingContextInfo.get().getInfoLabel(context));
+            }); //TODO
         }
 
         public void initContentPane() {
@@ -175,4 +187,5 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             setBorderPainted(false);
         }
     }
+
 }

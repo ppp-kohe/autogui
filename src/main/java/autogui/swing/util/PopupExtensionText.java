@@ -6,84 +6,40 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class TextPopupExtension implements KeyListener, MouseListener {
-    protected JTextComponent textComponent;
-    protected Predicate<KeyEvent> keyMatcher;
-    protected PopupRunner popupRunner;
-
-    public static TextPopupExtension installDefault(JTextComponent textComponent) {
-        return new TextPopupExtension(textComponent,
+public class PopupExtensionText extends PopupExtension {
+    public static PopupExtensionText installDefault(JTextComponent textComponent) {
+        return new PopupExtensionText(textComponent,
                 getDefaultKeyMatcher(),
                 getServiceDefaultMenu(textComponent));
     }
 
-    public static Predicate<KeyEvent> getDefaultKeyMatcher() {
-        return TextPopupExtension.getKeyCode(KeyEvent.VK_SPACE, KeyEvent.CTRL_DOWN_MASK)
-                .or(TextPopupExtension.getKeyCode(KeyEvent.VK_F5, 0));
-    }
-
-    public interface PopupRunner {
-        void show(Component component, int x, int y);
-    }
-
-    public TextPopupExtension(JTextComponent textComponent, Predicate<KeyEvent> keyMatcher, PopupRunner runner) {
-        this.textComponent = textComponent;
-        this.keyMatcher = keyMatcher;
-        this.popupRunner = runner;
-        if (textComponent != null) {
-            addListenersToTextComponent();
-        }
-    }
-
-    /** called from constructor */
-    public void addListenersToTextComponent() {
-        textComponent.addKeyListener(this);
-        textComponent.addMouseListener(this);
+    public PopupExtensionText(JTextComponent textComponent, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder builder) {
+        super(textComponent, keyMatcher, builder);
     }
 
     public JTextComponent getTextComponent() {
-        return textComponent;
+        return (JTextComponent) getPane();
     }
 
-    public Predicate<KeyEvent> getKeyMatcher() {
-        return keyMatcher;
-    }
-
-    public PopupRunner getPopupRunner() {
-        return popupRunner;
-    }
-
-    public void setTextComponent(JTextComponent textComponent) {
-        this.textComponent = textComponent;
-    }
-
-    public void setKeyMatcher(Predicate<KeyEvent> keyMatcher) {
-        this.keyMatcher = keyMatcher;
-    }
-
-    public void setPopupRunner(PopupRunner popupRunner) {
-        this.popupRunner = popupRunner;
-    }
 
     ////////////////
 
     @Override
-    public void keyPressed(KeyEvent e) {
-        if (keyMatcher != null && keyMatcher.test(e)) {
-            e.consume();
-            int sel = textComponent.getSelectionStart();
-            try {
-                Rectangle rect = textComponent.modelToView(sel); //TODO in JDK9, replaced by modelToView2D
-                popupRunner.show(textComponent, rect.x, rect.y + rect.height);
-            } catch (BadLocationException ex) {
-                error(ex);
-            }
+    public void showByKey(KeyEvent e, Component comp) {
+        JTextComponent textComponent = getTextComponent();
+        int sel = textComponent.getSelectionStart();
+        try {
+            Rectangle rect = textComponent.modelToView(sel); //TODO in JDK9, replaced by modelToView2D
+            show(textComponent, rect.x, rect.y + rect.height);
+        } catch (BadLocationException ex) {
+            error(ex);
         }
     }
 
@@ -91,97 +47,27 @@ public class TextPopupExtension implements KeyListener, MouseListener {
         System.err.println("error: " + ex);
     }
 
-    @Override
-    public void keyReleased(KeyEvent e) { }
-    @Override
-    public void keyTyped(KeyEvent e) { }
-
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-        if (popupRunner != null && e.isPopupTrigger()) {
-            popupRunner.show(e.getComponent(), e.getX(), e.getY());
-        }
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) { }
-    @Override
-    public void mouseReleased(MouseEvent e) { }
-    @Override
-    public void mouseEntered(MouseEvent e) { }
-    @Override
-    public void mouseExited(MouseEvent e) { }
 
     ////////////////////
 
-    /**
-     * @param keyCode a key code such as KeyEvent.VK_SPACE
-     * @param modifiersEx extended modifiers such as KeyEvent.CTRL_DOWN_MASK, or 0
-     * @return a predicate matching with the parameters
-     */
-    public static PredicateKeyMatcher getKeyCode(int keyCode, int modifiersEx) {
-        return new PredicateKeyMatcher(keyCode, modifiersEx);
-    }
 
-    /** keyCode and modifierEx: ALT_DOWN_MASK, ... */
-    public static class PredicateKeyMatcher implements Predicate<KeyEvent> {
-        protected int keyCode;
-        protected int modifiersEx;
-
-        public PredicateKeyMatcher(int keyCode, int modifiersEx) {
-            this.keyCode = keyCode;
-            this.modifiersEx = modifiersEx;
-        }
-
-        public int getKeyCode() {
-            return keyCode;
-        }
-
-        public int getModifiersEx() {
-            return modifiersEx;
-        }
-
-        @Override
-        public boolean test(KeyEvent keyEvent) {
-            return keyEvent.getKeyCode() == keyCode &&
-                    (modifiersEx == 0 || (keyEvent.getModifiersEx() & modifiersEx) != 0);
-        }
-    }
-
-    /** a {@link PopupRunner} which has typical actions for the text component*/
+    /** a {@link PopupExtension.PopupMenuBuilder} which has typical actions for the text component*/
     public static TextServiceDefaultMenu getServiceDefaultMenu(JTextComponent component) {
         return new TextServiceDefaultMenu(component);
     }
 
-    public static class TextServiceDefaultMenu implements PopupRunner {
-        protected JTextComponent textComponent;
-        protected JPopupMenu menu;
+    public static class TextServiceDefaultMenu implements PopupMenuBuilder {
         protected List<JMenuItem> editActions;
 
         public TextServiceDefaultMenu(JTextComponent textComponent) {
-            this(textComponent, new JPopupMenu());
-        }
-
-        public TextServiceDefaultMenu(JTextComponent textComponent, JPopupMenu menu) {
-            this.textComponent = textComponent;
-            this.menu = menu;
-            initEditActions();
+            initEditActions(textComponent);
         }
 
         /** called from constructor */
-        public void initEditActions() {
-            editActions = TextPopupExtension.getEditActions(textComponent).stream()
+        public void initEditActions(JTextComponent textComponent) {
+            editActions = PopupExtensionText.getEditActions(textComponent).stream()
                     .map(JMenuItem::new)
                     .collect(Collectors.toList());
-        }
-
-        public JTextComponent getTextComponent() {
-            return textComponent;
-        }
-
-        public JPopupMenu getMenu() {
-            return menu;
         }
 
         public List<JMenuItem> getEditActions() {
@@ -189,12 +75,7 @@ public class TextPopupExtension implements KeyListener, MouseListener {
         }
 
         @Override
-        public void show(Component component, int x, int y) {
-            setupMenu(menu);
-            menu.show(component, x, y);
-        }
-
-        public void setupMenu(JPopupMenu menu) {
+        public void build(PopupExtension sender, JPopupMenu menu) {
             menu.removeAll();
             MenuBuilder builder = getMenuBuilder();
             builder.addMenuItems(menu, editActions, null);

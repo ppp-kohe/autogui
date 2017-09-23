@@ -1,5 +1,7 @@
 package autogui.base.mapping;
 
+import java.util.List;
+
 public class GuiReprAction implements GuiRepresentation {
     @Override
     public boolean match(GuiMappingContext context) {
@@ -20,6 +22,17 @@ public class GuiReprAction implements GuiRepresentation {
         try {
             Object target = context.getParentValuePane().getUpdatedValue(context.getParent(), true);
             context.getTypeElementAsAction().execute(target);
+            context.updateSourceFromRoot();
+        } catch (Throwable ex) {
+            context.errorWhileUpdateSource(ex);
+        }
+    }
+
+    public void executeActionForTargets(GuiMappingContext context, List<?> targets) {
+        try {
+            for (Object target : targets) {
+                context.getTypeElementAsAction().execute(target);
+            }
             context.updateSourceFromRoot();
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);

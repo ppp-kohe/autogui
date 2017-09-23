@@ -1,12 +1,19 @@
 package autogui.swing;
 
 import autogui.base.mapping.*;
+import autogui.swing.table.GuiSwingTableColumnBoolean;
 
 public interface GuiSwingElement {
 
     static GuiSwingMapperSet getDefaultMapperSet() {
         GuiSwingMapperSet set = new GuiSwingMapperSet();
-        set.addReprClass(GuiReprValueBooleanCheckbox.class, new GuiSwingViewBooleanCheckbox())
+
+        set.addReprClassTableColumn(GuiReprValueBooleanCheckBox.class, new GuiSwingTableColumnBoolean())
+            .addReprClass(GuiReprCollectionElement.class, new GuiSwingViewCollectionTable.TableColumnSetDefault(set))
+            .addReprClass(GuiReprActionList.class, null); //nothing: handled by a sibling GuiSwingViewCollectionTable
+
+
+        set.addReprClass(GuiReprValueBooleanCheckBox.class, new GuiSwingViewBooleanCheckBox())
             .addReprClass(GuiReprValueDocumentEditor.class, new GuiSwingViewDocumentEditor())
             .addReprClass(GuiReprValueEnumComboBox.class, new GuiSwingViewEnumComboBox())
             .addReprClass(GuiReprValueFilePathField.class, new GuiSwingViewFilePathField())

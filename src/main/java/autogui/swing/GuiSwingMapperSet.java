@@ -20,6 +20,11 @@ public class GuiSwingMapperSet {
         return this;
     }
 
+    public GuiSwingMapperSet addReprClassTableColumn(Class<? extends GuiRepresentation> reprClass, GuiSwingElement view) {
+        mappers.add(new MapperReprClassTableColumn(reprClass, view));
+        return this;
+    }
+
     public GuiSwingMapperSet add(Mapper... mappers) {
         this.mappers.addAll(Arrays.asList(mappers));
         return this;
@@ -55,6 +60,17 @@ public class GuiSwingMapperSet {
         @Override
         public GuiSwingElement view(GuiMappingContext context) {
             return view;
+        }
+    }
+
+    public static class MapperReprClassTableColumn extends MapperReprClass {
+        public MapperReprClassTableColumn(Class<? extends GuiRepresentation> reprClass, GuiSwingElement view) {
+            super(reprClass, view);
+        }
+
+        @Override
+        public boolean match(GuiMappingContext context) {
+            return context.isParentCollectionElement() && super.match(context);
         }
     }
 }

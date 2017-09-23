@@ -14,15 +14,6 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
     public boolean match(GuiMappingContext context) {
         if (context.isTypeElementCollection()) {
             context.setRepresentation(this);
-            // [Collection(List), Object(E), GuiReprCollectionTable] : GuiSwingViewCollectionTable
-            //    -> [Object(E), GuiReprObjectPane]                   : null? dummy?              //List<E> & class E { String prop; }
-            //        -> [Property(E, prop), GuiReprValueStringField]  : GuiSwingTableColumnString
-
-            //or  -> [Value(String), GuiReprValueStringField]         : GuiSwingTableColumnString  //List<String>
-
-            //or  -> [Collection(Object[]), Object(E), GuiReprCollectionTable] : null? dummy?     //List<E[]>
-            //        -> [Property(E, prop), GuiReprValueStringField]  : GuiSwingTableColumnString
-
             for (GuiMappingContext subContext : context.createChildCandidates()) {
                 if (subRepresentation.match(subContext)) {
                     subContext.addToParent();

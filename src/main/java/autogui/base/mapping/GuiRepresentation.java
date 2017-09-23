@@ -11,6 +11,10 @@ public interface GuiRepresentation {
      *    The source of parent is already updated by the order of the calls. */
     boolean checkAndUpdateSource(GuiMappingContext context);
 
+    default boolean continueCheckAndUpdateSourceForChildren(GuiMappingContext context, boolean parentUpdate) {
+        return true;
+    }
+
     GuiReprNone NONE = new GuiReprNone();
 
     class GuiReprNone implements GuiRepresentation {
@@ -27,7 +31,9 @@ public interface GuiRepresentation {
     static GuiReprSet getDefaultSet() {
         GuiReprSet set = new GuiReprSet();
 
-        set.add(new GuiReprValueBooleanCheckbox(),
+        set.add(new GuiReprCollectionElement(set));
+
+        set.add(new GuiReprValueBooleanCheckBox(),
                 new GuiReprValueDocumentEditor(),
                 new GuiReprValueEnumComboBox(),
                 new GuiReprValueFilePathField(),
@@ -35,10 +41,11 @@ public interface GuiRepresentation {
                 new GuiReprValueNumberSpinner(),
                 new GuiReprValueStringField());
 
-        set.add(new GuiReprCollectionTable(null), //TODO
+        set.add(new GuiReprCollectionTable(set),
                 new GuiReprObjectPane(set),
                 new GuiReprPropertyPane(set),
-                new GuiReprAction());
+                new GuiReprAction(),
+                new GuiReprActionList());
 
         set.add(new GuiReprValueLabel());
 

@@ -1,6 +1,6 @@
 package autogui.base.mapping;
 
-public class GuiReprValueBooleanCheckbox extends GuiReprValue {
+public class GuiReprValueBooleanCheckBox extends GuiReprValue {
 
     @Override
     public boolean matchValueType(Class<?> cls) {

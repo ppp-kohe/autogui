@@ -3,9 +3,11 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
 import autogui.swing.util.NamedPane;
+import autogui.swing.util.PopupExtension;
 import autogui.swing.util.ScheduledTaskRunner;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
 public class GuiSwingViewNumberSpinner implements GuiSwingView {
@@ -35,6 +37,12 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
             context.addSourceUpdateListener(this);
             update(context, context.getSource());
+
+            PopupExtension ext = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+                menu.removeAll();
+                menu.add(GuiSwingContextInfo.get().getInfoLabel(context));
+            }); //TODO
+            ext.addListenersTo(field);
         }
 
         public static SpinnerNumberModel createModel(GuiMappingContext context) {

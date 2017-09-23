@@ -1,7 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValueBooleanCheckbox;
+import autogui.base.mapping.GuiReprValueBooleanCheckBox;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
 import org.junit.Assert;
@@ -9,18 +9,22 @@ import org.junit.Test;
 
 import javax.swing.*;
 
-public class GuiSwingViewBooleanCheckboxTest extends GuiSwingTestCase {
+public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
+    public static void main(String[] args) {
+        new GuiSwingViewBooleanCheckBoxTest().testProp();
+    }
+
     @Test
     public void testValue() {
-        GuiSwingViewBooleanCheckbox box = new GuiSwingViewBooleanCheckbox();
+        GuiSwingViewBooleanCheckBox box = new GuiSwingViewBooleanCheckBox();
 
         TestBooleanValue value = new TestBooleanValue();
         GuiMappingContext context = new GuiMappingContext(value);
-        context.setRepresentation(new GuiReprValueBooleanCheckbox());
+        context.setRepresentation(new GuiReprValueBooleanCheckBox());
         context.updateSourceFromRoot();
 
-        GuiSwingViewBooleanCheckbox.PropertyCheckBox propertyPane = runGet(() -> {
-            GuiSwingViewBooleanCheckbox.PropertyCheckBox p = (GuiSwingViewBooleanCheckbox.PropertyCheckBox) box.createView(context);
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox propertyPane = runGet(() -> {
+            GuiSwingViewBooleanCheckBox.PropertyCheckBox p = (GuiSwingViewBooleanCheckBox.PropertyCheckBox) box.createView(context);
             JFrame frame = testFrame(p);
             return p;
         });
@@ -32,15 +36,15 @@ public class GuiSwingViewBooleanCheckboxTest extends GuiSwingTestCase {
 
     @Test
     public void testProp() {
-        GuiSwingViewBooleanCheckbox box = new GuiSwingViewBooleanCheckbox();
+        GuiSwingViewBooleanCheckBox box = new GuiSwingViewBooleanCheckBox();
 
         TestBooleanProp prop = new TestBooleanProp();
         GuiMappingContext context = new GuiMappingContext(prop);
-        context.setRepresentation(new GuiReprValueBooleanCheckbox());
+        context.setRepresentation(new GuiReprValueBooleanCheckBox());
         context.updateSourceFromRoot();
 
-        GuiSwingViewBooleanCheckbox.PropertyCheckBox propertyPane = runGet(() -> {
-            GuiSwingViewBooleanCheckbox.PropertyCheckBox p = (GuiSwingViewBooleanCheckbox.PropertyCheckBox) box.createView(context);
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox propertyPane = runGet(() -> {
+            GuiSwingViewBooleanCheckBox.PropertyCheckBox p = (GuiSwingViewBooleanCheckBox.PropertyCheckBox) box.createView(context);
             JFrame frame = testFrame(p);
             return p;
         });

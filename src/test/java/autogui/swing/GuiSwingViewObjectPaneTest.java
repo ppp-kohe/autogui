@@ -8,7 +8,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
     public static void main(String[] args) {
@@ -31,8 +30,8 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
             return p;
         });
 
-        GuiSwingViewBooleanCheckbox.PropertyCheckBox helloBox = runQuery(pane, query(JComponent.class, 0).cat(GuiSwingViewBooleanCheckbox.PropertyCheckBox.class, 0));
-        GuiSwingViewBooleanCheckbox.PropertyCheckBox worldBox = runQuery(pane, query(JComponent.class, 0).cat(GuiSwingViewBooleanCheckbox.PropertyCheckBox.class, 1));
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox helloBox = runQuery(pane, query(JComponent.class, 0).cat(GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, 0));
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox worldBox = runQuery(pane, query(JComponent.class, 0).cat(GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, 1));
 
         Assert.assertTrue(helloBox.isSelected());
         Assert.assertFalse(worldBox.isSelected());

@@ -9,13 +9,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-public class TextPopupExtensionTest extends GuiSwingTestCase {
+public class PopupExtensionTextTest extends GuiSwingTestCase {
     public static void main(String[] args) throws Exception {
-        new TextPopupExtensionTest().testDefault();
+        new PopupExtensionTextTest().testDefault();
     }
 
-    TextPopupExtension ext;
-    TextPopupExtension.TextServiceDefaultMenu defMenu;
+    PopupExtensionText ext;
+    PopupExtensionText.TextServiceDefaultMenu defMenu;
 
     int count;
 
@@ -37,8 +37,8 @@ public class TextPopupExtensionTest extends GuiSwingTestCase {
             JPanel pane = new JPanel();
 
             JTextField field = new JTextField(20);
-            ext = TextPopupExtension.installDefault(field);
-            defMenu = (TextPopupExtension.TextServiceDefaultMenu) ext.getPopupRunner();
+            ext = PopupExtensionText.installDefault(field);
+            defMenu = (PopupExtensionText.TextServiceDefaultMenu) ext.getMenuBuilder();
             defMenu.getEditActions().add(new JMenuItem(new TestAction()));
             pane.add(field);
 
@@ -54,7 +54,7 @@ public class TextPopupExtensionTest extends GuiSwingTestCase {
         keyType("HELLO");
         keyTypeAtOnce(KeyEvent.VK_CONTROL, KeyEvent.VK_SPACE);
 
-        JPopupMenu menu = defMenu.getMenu();
+        JPopupMenu menu = ext.getMenu();
 
         Assert.assertTrue(runGet(menu::isVisible));
 
