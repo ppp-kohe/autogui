@@ -113,10 +113,13 @@ public class MenuBuilder {
         }
     }
 
-    public JLabel createLabel(String name) {
+    public JComponent createLabel(String name) {
+        JComponent comp = new JPanel(new FlowLayout(FlowLayout.LEADING, 3, 3));
         JLabel label = new JLabel(name);
-        label.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10));
+        label.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 10));
         label.setForeground(Color.darkGray);
-        return label;
+        comp.add(label);
+        comp.setOpaque(false);
+        return comp;
     }
 }

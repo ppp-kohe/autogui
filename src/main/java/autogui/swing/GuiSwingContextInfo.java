@@ -13,7 +13,7 @@ public class GuiSwingContextInfo {
         return instance;
     }
 
-    public JLabel getInfoLabel(GuiMappingContext context) {
+    public JComponent getInfoLabel(GuiMappingContext context) {
         return MenuBuilder.get().createLabel(getInfo(context));
     }
 

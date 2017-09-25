@@ -1,6 +1,7 @@
 package autogui.base.mapping;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public class GuiReprValueNumberSpinner extends GuiReprValue {
     @Override
@@ -27,6 +28,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
                 retType.equals(double.class) ||
                 retType.equals(Float.class) ||
                 retType.equals(Double.class) ||
-                BigDecimal.class.isAssignableFrom(retType);
+                BigDecimal.class.isAssignableFrom(retType) ||
+                Number.class.equals(retType);
     }
 }

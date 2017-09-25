@@ -255,6 +255,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public boolean isDataFlavorSupported(DataFlavor flavor) {
+            System.err.println("isDataFlavorSupported: " + flavor);
             return Arrays.stream(flavors)
                     .anyMatch(flavor::equals);
         }
