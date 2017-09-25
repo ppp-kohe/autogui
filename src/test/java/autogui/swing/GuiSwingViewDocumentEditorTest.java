@@ -1,0 +1,181 @@
+package autogui.swing;
+
+import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValueDocumentEditor;
+import autogui.base.type.GuiTypeMemberProperty;
+import autogui.base.type.GuiTypeValue;
+import org.junit.Assert;
+import org.junit.Test;
+
+import javax.swing.*;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.Document;
+import javax.swing.text.GapContent;
+import javax.swing.text.PlainDocument;
+
+public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
+    public static void main(String[] args) throws Exception {
+        new GuiSwingViewDocumentEditorTest().testBuilder();
+    }
+
+    @Test
+    public void test() throws Exception {
+        GuiSwingViewDocumentEditor doc = new GuiSwingViewDocumentEditor();
+
+        TestDocProp prop = new TestDocProp();
+        GuiMappingContext context = new GuiMappingContext(prop);
+        context.setRepresentation(new GuiReprValueDocumentEditor());
+        JComponent c = runGet(() -> {
+            JComponent comp = doc.createView(context);
+            testFrame(comp);
+            return comp;
+        });
+
+        context.updateSourceFromRoot();
+
+        GuiSwingViewDocumentEditor.PropertyDocumentEditorPane pane = runQuery(c,
+                query(JScrollPane.class, 0)
+                        .cat(JViewport.class, 0)
+                        .cat(GuiSwingViewDocumentEditor.PropertyDocumentEditorPane.class, 0));
+        run(() -> {
+            try {
+                System.err.println("Pane doc: " + System.identityHashCode(pane.getDocument()));
+                System.err.println("prop doc: " + System.identityHashCode(prop.builder));
+                pane.getDocument().insertString(0, "Hello, world", null);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        Thread.sleep(1000);
+
+        String str = prop.builder.getText(0, prop.builder.getLength());
+        Assert.assertEquals("Hello, world", str);
+    }
+
+
+
+    @Test
+    public void testContent() throws Exception {
+        GuiSwingViewDocumentEditor doc = new GuiSwingViewDocumentEditor();
+
+        TestContentProp prop = new TestContentProp();
+        GuiMappingContext context = new GuiMappingContext(prop);
+        context.setRepresentation(new GuiReprValueDocumentEditor());
+        JComponent c = runGet(() -> {
+            JComponent comp = doc.createView(context);
+            testFrame(comp);
+            return comp;
+        });
+
+        context.updateSourceFromRoot();
+
+        GuiSwingViewDocumentEditor.PropertyDocumentEditorPane pane = runQuery(c,
+                query(JScrollPane.class, 0)
+                        .cat(JViewport.class, 0)
+                        .cat(GuiSwingViewDocumentEditor.PropertyDocumentEditorPane.class, 0));
+        run(() -> {
+            try {
+                pane.getDocument().insertString(0, "Hello, world", null);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        Thread.sleep(1000);
+
+        String str = prop.content.getString(0, prop.content.length());
+        Assert.assertEquals("Hello, world", str.trim());
+    }
+
+
+    @Test
+    public void testBuilder() throws Exception {
+        GuiSwingViewDocumentEditor doc = new GuiSwingViewDocumentEditor();
+
+        TestBuilderProp prop = new TestBuilderProp();
+        GuiMappingContext context = new GuiMappingContext(prop);
+        context.setRepresentation(new GuiReprValueDocumentEditor());
+        JComponent c = runGet(() -> {
+            JComponent comp = doc.createView(context);
+            testFrame(comp);
+            return comp;
+        });
+
+        context.updateSourceFromRoot();
+
+        GuiSwingViewDocumentEditor.PropertyDocumentEditorPane pane = runQuery(c,
+                query(JScrollPane.class, 0)
+                        .cat(JViewport.class, 0)
+                        .cat(GuiSwingViewDocumentEditor.PropertyDocumentEditorPane.class, 0));
+        run(() -> {
+            try {
+                pane.getDocument().insertString(0, "Hello, world", null);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        Thread.sleep(1000);
+
+        String str = prop.content.toString();
+        Assert.assertEquals("Hello, world", str.trim());
+    }
+
+    public static class TestDocProp extends GuiTypeMemberProperty {
+        public Document builder = new PlainDocument();
+        public TestDocProp() {
+            super("hello");
+            setType(new GuiTypeValue(Document.class));
+        }
+
+        @Override
+        public Object executeSet(Object target, Object value) throws Exception {
+            builder = (Document) value;
+            return null;
+        }
+
+        @Override
+        public Object executeGet(Object target, Object prevValue) throws Exception {
+            return compareGet(prevValue, builder);
+        }
+    }
+
+    public static class TestContentProp extends GuiTypeMemberProperty {
+        public AbstractDocument.Content content = new GapContent();
+
+        public TestContentProp() {
+            super("hello");
+        }
+
+        @Override
+        public Object executeSet(Object target, Object value) throws Exception {
+            content = (AbstractDocument.Content) content;
+            return null;
+        }
+
+        @Override
+        public Object executeGet(Object target, Object prevValue) throws Exception {
+            return compareGet(prevValue, content);
+        }
+    }
+
+    public static class TestBuilderProp extends GuiTypeMemberProperty {
+        public StringBuilder content = new StringBuilder();
+
+        public TestBuilderProp() {
+            super("hello");
+        }
+
+        @Override
+        public Object executeSet(Object target, Object value) throws Exception {
+            content = (StringBuilder) content;
+            return null;
+        }
+
+        @Override
+        public Object executeGet(Object target, Object prevValue) throws Exception {
+            return compareGet(prevValue, content);
+        }
+    }
+}

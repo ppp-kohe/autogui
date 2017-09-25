@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueLabel;
 import autogui.swing.util.NamedPane;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,12 +26,20 @@ public class GUiSwingViewLabel implements GuiSwingView {
 
         public PropertyLabel(GuiMappingContext context) {
             this.context = context;
+            putClientProperty("html.disable", Boolean.TRUE);
             setMinimumSize(new Dimension(100, 20));
             setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
             context.addSourceUpdateListener(this);
 
             update(context, context.getSource());
+
+            PopupExtension ext = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+                menu.removeAll();
+                menu.add(GuiSwingContextInfo.get().getInfoLabel(context));
+                menu.revalidate();
+            });
+            ext.addListenersTo(this);
         }
 
         @Override

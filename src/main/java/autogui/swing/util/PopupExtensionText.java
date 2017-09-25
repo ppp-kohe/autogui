@@ -37,7 +37,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     @Override
     public void addListenersTo(JComponent pane) {
         super.addListenersTo(pane);
-        pane.addFocusListener(this);
+        //pane.addFocusListener(this); //this overwrites effect of selectAll(), but no re-selection causes entire selection of tab focus gain
+
     }
 
     ////////////////
@@ -68,7 +69,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     }
 
     public static class TextServiceDefaultMenu implements PopupMenuBuilder {
-        protected List<JMenuItem> editActions;
+        protected List<JComponent> editActions;
 
         public TextServiceDefaultMenu(JTextComponent textComponent) {
             initEditActions(textComponent);
@@ -81,7 +82,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                     .collect(Collectors.toList());
         }
 
-        public List<JMenuItem> getEditActions() {
+        public List<JComponent> getEditActions() {
             return editActions;
         }
 

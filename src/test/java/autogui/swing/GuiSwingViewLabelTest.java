@@ -4,6 +4,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueLabel;
 import autogui.base.type.GuiTypeCollection;
 import autogui.base.type.GuiTypeMemberProperty;
+import autogui.base.type.GuiTypeValue;
 import autogui.swing.util.NamedPane;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,12 +35,15 @@ public class GuiSwingViewLabelTest extends GuiSwingTestCase {
 
         GUiSwingViewLabel.PropertyLabel lbl = runQuery(c, query(GUiSwingViewLabel.PropertyLabel.class, 0));
         Assert.assertEquals("value-1", runGet(lbl::getText));
+
+
     }
 
     public static class TestObj extends GuiTypeMemberProperty {
         int count;
         public TestObj() {
             super("hello");
+            setType(new GuiTypeValue(getClass()));
         }
 
         @Override

@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueImagePane;
+import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
 
 import javax.imageio.ImageIO;
@@ -13,6 +14,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -40,7 +42,6 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         protected Dimension imageSize = new Dimension(1, 1);
         protected float maxImageScale = 1f;
         protected boolean editable;
-        protected ImageActionPopupMenu popupMenu;
 
         public PropertyImagePane(GuiMappingContext context) {
             this.context = context;
@@ -51,10 +52,22 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             context.addSourceUpdateListener(this);
             update(context, context.getSource());
 
-            popupMenu = new ImageActionPopupMenu(this);
-            addMouseListener(popupMenu.createMouseHandler());
+            JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
+            PopupExtension ext = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+                menu.removeAll();
+                menu.add(label);
+                menu.add(createSizeInfo(getImageSize()));
+                menu.add(new ImageCopyAction(getImage()));
+                menu.add(new ImagePasteAction(this));
+                menu.revalidate();
+            });
+            ext.addListenersTo(this);
 
             setTransferHandler(new ImageTransferHandler(this));
+        }
+
+        public JComponent createSizeInfo(Dimension size) {
+            return MenuBuilder.get().createLabel(String.format("Size: %,d x %,d", size.width, size.height));
         }
 
         public boolean isEditable() {
@@ -137,55 +150,6 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public void setSwingViewValue(Object value) {
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
             setImageWithoutContextUpdate(img.updateValue(context, value));
-        }
-    }
-
-    public static class ImageActionPopupMenu {
-        protected JPopupMenu menu;
-        protected PropertyImagePane propertyPane;
-
-        public ImageActionPopupMenu(PropertyImagePane propertyPane) {
-            this.propertyPane = propertyPane;
-            menu = new JPopupMenu();
-            new PopupExtension.MenuKeySelector().addToMenu(menu);
-        }
-
-        public void show(Component comp, int x, int y) {
-            setupMenu();
-            menu.show(comp, x, y);
-        }
-
-        public void setupMenu() {
-            menu.removeAll();
-            menu.add(createSizeInfo(propertyPane.getImageSize()));
-            menu.add(new ImageCopyAction(propertyPane.getImage()));
-            menu.add(new ImagePasteAction(propertyPane));
-        }
-
-        public JLabel createSizeInfo(Dimension size) {
-            JLabel label = new JLabel();
-            label.setText(String.format("Size: %,d x %,d", size.width, size.height));
-            return label;
-        }
-
-        public MouseAdapter createMouseHandler() {
-            return new MouseAdapter() {
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    handle(e);
-                }
-
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                    handle(e);
-                }
-
-                public void handle(MouseEvent e) {
-                    if (e.isPopupTrigger()) {
-                        show(propertyPane, e.getX(), e.getY());
-                    }
-                }
-            };
         }
     }
 

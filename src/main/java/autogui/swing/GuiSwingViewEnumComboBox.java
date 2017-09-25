@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueEnumComboBox;
 import autogui.swing.util.NamedPane;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,6 +37,14 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             context.addSourceUpdateListener(this);
             update(context, context.getSource());
             addItemListener(this);
+
+            JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
+            PopupExtension ext = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender,menu) -> {
+                menu.removeAll();
+                menu.add(info);
+                menu.revalidate();
+            });
+            ext.addListenersTo(this);
         }
 
 

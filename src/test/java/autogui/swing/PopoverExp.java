@@ -37,6 +37,7 @@ public class PopoverExp {
 
         JPopupMenu menu = new JPopupMenu();
         {
+            menu.setFocusable(true);
             menu.add("Hello");
 
             JPanel mPane = new JPanel();
@@ -46,6 +47,7 @@ public class PopoverExp {
                 mPane.setPreferredSize(new Dimension(300, 100));
             }
             mPane.setOpaque(false);
+            mPane.setFocusable(true);
 
             menu.add(mPane);
 

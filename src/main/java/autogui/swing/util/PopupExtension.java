@@ -10,6 +10,7 @@ import java.awt.event.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 public class PopupExtension implements MouseListener, KeyListener, ActionListener {
     protected JPopupMenu menu;
@@ -36,6 +37,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder) {
         this(pane, keyMatcher, menuBuilder, new JPopupMenu());
         new MenuKeySelector().addToMenu(menu);
+        //new PopupMenuHidingFix(menu);
     }
 
     public void addListenersToPane() {
@@ -137,6 +139,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     @Override
     public void mousePressed(MouseEvent e) {
         if (e.isPopupTrigger()) {
+            e.consume();
             show(e.getComponent(), e.getX(), e.getY());
         }
     }
@@ -267,9 +270,9 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
             if ((code == KeyEvent.VK_BACK_SPACE || code == KeyEvent.VK_DELETE) && noModifiers) {
                 clearBuffer();
                 return true;
-            } else if (c == '\t' && noModifiers) {
+            } else if (c == ' ' && noModifiers) {
                 return true;
-            } else if (c <= 0x1F && c != '\t') {
+            } else if (c <= 0x1F) {
                 return false;
             } else {
                 if (c != KeyEvent.CHAR_UNDEFINED && noModifiers) {
@@ -381,8 +384,18 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
             }
         }
 
+        private Pattern spaces = Pattern.compile(" +");
+
         public boolean matchText(String text, String str) {
-            return text.toLowerCase().startsWith(str);
+            String low = text.toLowerCase();
+            if (low.startsWith(str)) {
+                return true;
+            } else if (low.contains(" ")) {
+                String shrink = spaces.matcher(low).replaceAll("");
+                return shrink.startsWith(str);
+            } else {
+                return false;
+            }
         }
     }
 

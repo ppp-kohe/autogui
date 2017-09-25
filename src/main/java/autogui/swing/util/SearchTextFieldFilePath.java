@@ -12,6 +12,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -578,10 +579,10 @@ public class SearchTextFieldFilePath extends SearchTextField {
                         .collect(Collectors.joining("\n"));
 
                     if (str.contains("\n")) {
-                        return "<html>" +
+                        return "<html><pre>" +
                                 Arrays.stream(str.split("\\n"))
                                     .collect(Collectors.joining("<br>"))
-                                + "</html>";
+                                + "</pre></html>";
                     } else {
                         return str;
                     }
@@ -598,7 +599,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
             times.add("Modified: " + toFileTime(time));
             try {
                 BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
-                times.add("Created: " + toFileTime(attrs.creationTime()));
+                times.add(0, " Created: " + toFileTime(attrs.creationTime()));
                 times.add("Accessed: " + toFileTime(attrs.lastAccessTime()));
             } catch (Exception ex) {
                 //nothing
@@ -609,7 +610,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         public String toFileTime(FileTime time) {
             LocalDateTime l = LocalDateTime.ofInstant(time.toInstant(), ZoneId.systemDefault());
-            return l.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            return l.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
         }
 
         public String getNameSize() throws Exception {

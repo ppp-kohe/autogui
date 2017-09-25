@@ -34,7 +34,13 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
             update(context, context.getSource());
 
-            new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> { }); //TODO
+            JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
+            PopupExtension ext = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+                menu.removeAll();
+                menu.add(info);
+                menu.revalidate();
+            });
+            ext.addListenersTo(this);
         }
 
         @Override

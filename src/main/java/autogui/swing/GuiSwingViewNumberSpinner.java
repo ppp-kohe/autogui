@@ -2,12 +2,11 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
-import autogui.swing.util.NamedPane;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.ScheduledTaskRunner;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -39,22 +38,15 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
             addChangeListener(editingRunner);
 
-            Arrays.stream(((TypedSpinnerNumberModel) getModel()).getChangeListeners())
-                    .forEach(System.out::println);
-
             JTextField field = ((DefaultEditor) getEditor()).getTextField();
             field.addActionListener(editingRunner);
 
             context.addSourceUpdateListener(this);
             update(context, context.getSource());
 
-            NumberSettingPane settingPane = new NumberSettingPane((TypedSpinnerNumberModel) getModel());
 
-            PopupExtension ext = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-                menu.removeAll();
-                menu.add(GuiSwingContextInfo.get().getInfoLabel(context));
-                menu.add(settingPane);
-            }); //TODO
+            PopupExtensionText ext = new PopupExtensionText(field, PopupExtension.getDefaultKeyMatcher(),
+                    new TextServiceDefaultMenuSpinner(context, (TypedSpinnerNumberModel) getModel(), field));
             ext.addListenersTo(field);
         }
 
@@ -83,6 +75,26 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         @Override
         public void setSwingViewValue(Object value) {
             setValue(value);
+        }
+    }
+
+    public static class TextServiceDefaultMenuSpinner extends PopupExtensionText.TextServiceDefaultMenu {
+        protected GuiMappingContext context;
+        protected NumberSettingPane settingPane;
+
+        public TextServiceDefaultMenuSpinner(GuiMappingContext context, TypedSpinnerNumberModel model, JTextComponent textComponent) {
+            super(textComponent);
+            this.context = context;
+            editActions.add(0, GuiSwingContextInfo.get().getInfoLabel(context));
+
+            settingPane = new NumberSettingPane(model);
+            editActions.add(settingPane);
+        }
+
+        @Override
+        public void build(PopupExtension sender, JPopupMenu menu) {
+            menu.setFocusable(true);
+            super.build(sender, menu);
         }
     }
 

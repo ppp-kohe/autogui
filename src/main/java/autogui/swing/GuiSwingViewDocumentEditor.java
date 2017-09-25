@@ -2,11 +2,13 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueDocumentEditor;
+import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import javax.swing.text.Document;
 import java.awt.*;
+import java.util.List;
 
 public class GuiSwingViewDocumentEditor implements GuiSwingView {
     @Override
@@ -33,7 +35,15 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         l.update(context, context.getSource());
         pane.setPreferredSize(new Dimension(400, 400));
 
-        PopupExtensionText.installDefault(pane);
+        JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
+        List<Action> actions = PopupExtensionText.getEditActions(pane);
+        PopupExtensionText ext = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+            menu.removeAll();
+            menu.add(info);
+            actions.forEach(menu::add);
+            menu.revalidate();
+        });
+        ext.addListenersTo(pane);
 
         if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
             pane.setFont(new Font("Menlo", Font.PLAIN, 14));
@@ -43,7 +53,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static void updateText(JEditorPane pane, GuiMappingContext context, Object newValue) {
         GuiReprValueDocumentEditor docEditor = (GuiReprValueDocumentEditor) context.getRepresentation();
         Document doc = docEditor.toUpdateValue(context, newValue);
-        if (pane.getDocument() != doc) {
+        if (pane.getDocument() != doc && doc != null) {
             pane.setDocument(doc);
         }
     }
