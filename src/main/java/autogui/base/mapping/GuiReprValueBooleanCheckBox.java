@@ -7,7 +7,7 @@ public class GuiReprValueBooleanCheckBox extends GuiReprValue {
         return cls.equals(Boolean.class) || cls.equals(boolean.class);
     }
 
-    public boolean toUpdateValue(GuiMappingContext context, Object newValue) {
+    public Boolean toUpdateValue(GuiMappingContext context, Object newValue) {
         if (newValue == null) {
             return false;
         } else {

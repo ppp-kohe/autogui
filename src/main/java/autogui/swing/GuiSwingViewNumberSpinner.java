@@ -21,7 +21,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
     }
 
-    public static class PropertyNumberSpinner extends JSpinner implements GuiMappingContext.SourceUpdateListener {
+    public static class PropertyNumberSpinner extends JSpinner
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
         protected ScheduledTaskRunner.EditingRunner editingRunner;
 
@@ -65,7 +66,17 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setValue(newValue));
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        }
+
+        @Override
+        public Object getSwingViewValue() {
+            return getValue();
+        }
+
+        @Override
+        public void setSwingViewValue(Object value) {
+            setValue(value);
         }
     }
 }

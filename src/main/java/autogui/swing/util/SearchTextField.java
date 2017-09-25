@@ -7,11 +7,12 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * <pre>
@@ -62,6 +63,10 @@ public class SearchTextField extends JComponent {
          *    an exact matching item might be found, and then the method returns the item.
          *    The method is executed under the event dispatching thread. */
         PopupCategorized.CategorizedPopupItem getSelection();
+
+        default boolean isFixedCategorySize() {
+            return false;
+        }
     }
 
     public interface SearchTextFieldPublisher {
@@ -136,15 +141,29 @@ public class SearchTextField extends JComponent {
 
 
     public void initPopup() {
-        PopupCategorized categorized = new PopupCategorized(
-                PopupCategorized.getSupplierWithActions(
-                        getPopupEditActions(),
+        PopupCategorized categorized = initPopupCategorized(
+                PopupCategorized.getSupplierWithMenuItems(
+                        getPopupEditMenuItems(),
                         this::getSearchedItems),
                 this::selectSearchedItemFromGui);
 
         popup = new PopupExtensionText(field, PopupExtensionText.getDefaultKeyMatcher(), categorized);
         popupButton = new JButton(popup.getAction());
         addSearchItemsListener(getPopupUpdateListener(popup, categorized));
+    }
+
+    public PopupCategorized initPopupCategorized(Supplier<? extends Collection<PopupCategorized.CategorizedPopupItem>> itemSupplier,
+                                                 Consumer<PopupCategorized.CategorizedPopupItem> itemConsumer) {
+        return model.isFixedCategorySize() ?
+                new PopupCategorized.PopupCategorizedFixed(itemSupplier, itemConsumer) :
+                new PopupCategorized(itemSupplier, itemConsumer);
+
+    }
+
+    public List<? extends JComponent> getPopupEditMenuItems() {
+        return getPopupEditActions().stream()
+                .map(JMenuItem::new)
+                .collect(Collectors.toList());
     }
 
     public List<Action> getPopupEditActions() {
@@ -280,11 +299,12 @@ public class SearchTextField extends JComponent {
         searchedItemsListeners.forEach(l -> l.updateCurrentSearchedItems(currentSearchedItems, done));
     }
 
-    public void setCurrentSearchedItems(List<PopupCategorized.CategorizedPopupItem> currentSearchedItems, boolean done,
+    /** called once when the search is done */
+    public void setCurrentSearchedItems(List<PopupCategorized.CategorizedPopupItem> currentSearchedItems,
                                         PopupCategorized.CategorizedPopupItem selection) {
         this.currentSearchedItems = currentSearchedItems;
         selectSearchedItemFromModel(selection);
-        searchedItemsListeners.forEach(l -> l.updateCurrentSearchedItems(currentSearchedItems, done));
+        searchedItemsListeners.forEach(l -> l.updateCurrentSearchedItems(currentSearchedItems, true));
     }
 
     public List<PopupCategorized.CategorizedPopupItem> getSearchedItems() {
@@ -296,12 +316,14 @@ public class SearchTextField extends JComponent {
         }
     }
 
+    /** update model selection and also GUI display */
     public void selectSearchedItemFromGui(PopupCategorized.CategorizedPopupItem item) {
         model.select(item);
         setIconFromSearchedItem(item);
         setTextFromSearchedItem(item);
     }
 
+    /** called when the search is done, and update only the icon */
     public void selectSearchedItemFromModel(PopupCategorized.CategorizedPopupItem item) {
         setIconFromSearchedItem(item);
     }
@@ -385,7 +407,7 @@ public class SearchTextField extends JComponent {
         @Override
         protected void done() {
             try {
-                field.setCurrentSearchedItems(get(), true, field.getModel().getSelection());
+                field.setCurrentSearchedItems(get(), field.getModel().getSelection());
             } catch (CancellationException ex) {
                 //nothing
             } catch (Exception ex) {

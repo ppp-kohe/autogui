@@ -14,7 +14,8 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         return new PropertyCheckBox(context);
     }
 
-    public static class PropertyCheckBox extends JCheckBox implements ActionListener, GuiMappingContext.SourceUpdateListener {
+    public static class PropertyCheckBox extends JCheckBox
+            implements ActionListener, GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
 
         public PropertyCheckBox(GuiMappingContext context) {
@@ -44,9 +45,19 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        }
+
+        @Override
+        public Object getSwingViewValue() {
+            return isSelected();
+        }
+
+        @Override
+        public void setSwingViewValue(Object value) {
             GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
             //setSelected seems not to cause ActionEvent
-            SwingUtilities.invokeLater(() -> setSelected(repr.toUpdateValue(context, newValue)));
+            setSelected(repr.toUpdateValue(context, value));
         }
     }
 }

@@ -10,4 +10,11 @@ public interface GuiSwingView extends GuiSwingElement {
     default boolean isComponentResizable(GuiMappingContext context) {
         return false;
     }
+
+
+    interface ValuePane {
+        Object getSwingViewValue();
+        /** processed under the event thread */
+        void setSwingViewValue(Object value);
+    }
 }

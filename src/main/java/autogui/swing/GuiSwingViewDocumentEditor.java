@@ -13,7 +13,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
         JComponent text = doc.isStyledDocument(context) ?
-                new PropertyTextPane(context) : new PropertyEditorPane(context);
+                new PropertyDocumentTextPane(context) : new PropertyDocumentEditorPane(context);
         JScrollPane pane = new JScrollPane(text, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         if (context.isTypeElementProperty()) {
             return new GuiSwingViewPropertyPane.PropertyPane(context, true, pane);
@@ -48,31 +48,58 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
     }
 
-    public static class PropertyEditorPane extends JEditorPane implements GuiMappingContext.SourceUpdateListener {
+    public static Object sourceValue(JEditorPane pane, GuiMappingContext context) {
+        GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
+        return doc.toSourceValue(context, pane.getDocument());
+    }
+
+    public static class PropertyDocumentEditorPane extends JEditorPane
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
 
-        public PropertyEditorPane(GuiMappingContext context) {
+        public PropertyDocumentEditorPane(GuiMappingContext context) {
             this.context = context;
             initText(this, context);
         }
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() ->updateText(this, context, newValue));
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        }
+
+        @Override
+        public Object getSwingViewValue() {
+            return sourceValue(this, context);
+        }
+
+        @Override
+        public void setSwingViewValue(Object value) {
+            updateText(this, context, value);
         }
     }
 
-    public static class PropertyTextPane extends JTextPane implements GuiMappingContext.SourceUpdateListener {
+    public static class PropertyDocumentTextPane extends JTextPane
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
 
-        public PropertyTextPane(GuiMappingContext context) {
+        public PropertyDocumentTextPane(GuiMappingContext context) {
             this.context = context;
             initText(this, context);
         }
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> updateText(this, context, newValue));
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        }
+
+        @Override
+        public Object getSwingViewValue() {
+            return sourceValue(this, context);
+        }
+
+        @Override
+        public void setSwingViewValue(Object value) {
+            updateText(this, context, value);
         }
     }
 }

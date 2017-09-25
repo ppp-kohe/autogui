@@ -123,4 +123,10 @@ public class GuiReprValue implements GuiRepresentation {
             return false;
         }
     }
+
+    /** subclass can change to returned type and convert the value to the type.
+     * a typical use case is just down-casting and converting null to an empty object. */
+    public Object toUpdateValue(GuiMappingContext context, Object value) {
+        return value;
+    }
 }

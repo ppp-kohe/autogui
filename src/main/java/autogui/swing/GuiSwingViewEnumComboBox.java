@@ -21,7 +21,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     }
 
     public static class PropertyEnumComboBox extends JComboBox<Object>
-            implements GuiMappingContext.SourceUpdateListener, ItemListener {
+            implements GuiMappingContext.SourceUpdateListener, ItemListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
 
         public PropertyEnumComboBox(GuiMappingContext context) {
@@ -41,7 +41,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSelectedItem(newValue));
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
         }
 
         @Override
@@ -49,6 +49,16 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             Object item = getSelectedItem();
             GuiReprValueEnumComboBox box = (GuiReprValueEnumComboBox) context.getRepresentation();
             box.updateFromGui(context, item);
+        }
+
+        @Override
+        public Object getSwingViewValue() {
+            return getSelectedItem();
+        }
+
+        @Override
+        public void setSwingViewValue(Object value) {
+            setSelectedItem(value);
         }
     }
 

@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueImagePane;
+import autogui.swing.util.PopupExtension;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -18,7 +19,7 @@ import java.util.List;
 public class GuiSwingViewImagePane implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
-        ImagePropertyPane imagePane = new ImagePropertyPane(context);
+        PropertyImagePane imagePane = new PropertyImagePane(context);
         JComponent pane = new JScrollPane(imagePane);
         if (context.isTypeElementProperty()) {
             return new GuiSwingViewPropertyPane.PropertyPane(context, true, pane);
@@ -32,7 +33,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         return true;
     }
 
-    public static class ImagePropertyPane extends JComponent implements GuiMappingContext.SourceUpdateListener {
+    public static class PropertyImagePane extends JComponent
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
         protected Image image;
         protected Dimension imageSize = new Dimension(1, 1);
@@ -40,7 +42,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         protected boolean editable;
         protected ImageActionPopupMenu popupMenu;
 
-        public ImagePropertyPane(GuiMappingContext context) {
+        public PropertyImagePane(GuiMappingContext context) {
             this.context = context;
 
             setEditable(((GuiReprValueImagePane) context.getRepresentation())
@@ -65,8 +67,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
-            SwingUtilities.invokeLater(() -> setImageWithoutContextUpdate(img.updateValue(context, newValue)));
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
         }
 
         public void setMaxImageScale(float maxImageScale) {
@@ -126,15 +127,27 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             float p = Math.min(pw < ph ? pw : ph, maxImageScale);
             return new Dimension((int) (srcSize.width * p), (int) (srcSize.height * p));
         }
+
+        @Override
+        public Object getSwingViewValue() {
+            return getImage();
+        }
+
+        @Override
+        public void setSwingViewValue(Object value) {
+            GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
+            setImageWithoutContextUpdate(img.updateValue(context, value));
+        }
     }
 
     public static class ImageActionPopupMenu {
         protected JPopupMenu menu;
-        protected ImagePropertyPane propertyPane;
+        protected PropertyImagePane propertyPane;
 
-        public ImageActionPopupMenu(ImagePropertyPane propertyPane) {
+        public ImageActionPopupMenu(PropertyImagePane propertyPane) {
             this.propertyPane = propertyPane;
             menu = new JPopupMenu();
+            new PopupExtension.MenuKeySelector().addToMenu(menu);
         }
 
         public void show(Component comp, int x, int y) {
@@ -200,9 +213,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImagePasteAction extends AbstractAction {
-        protected ImagePropertyPane pane;
+        protected PropertyImagePane pane;
 
-        public ImagePasteAction(ImagePropertyPane pane) {
+        public ImagePasteAction(PropertyImagePane pane) {
             putValue(NAME, "Paste");
             this.pane = pane;
         }
@@ -263,9 +276,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
 
     public static class ImageTransferHandler extends TransferHandler {
-        protected ImagePropertyPane imagePane;
+        protected PropertyImagePane imagePane;
 
-        public ImageTransferHandler(ImagePropertyPane imagePane) {
+        public ImageTransferHandler(PropertyImagePane imagePane) {
             this.imagePane = imagePane;
         }
 

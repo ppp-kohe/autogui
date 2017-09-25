@@ -26,22 +26,28 @@ import java.util.List;
 public class MenuBuilder {
     protected static MenuBuilder instance = new MenuBuilder();
 
-    protected int maxItems = 30;
+    protected int[] maxItems = { 30 };
 
     public static MenuBuilder get() {
         return instance;
     }
 
-    public int getMaxItems() {
+    public MenuBuilder() { }
+
+    public MenuBuilder(int... maxItems) {
+        this.maxItems = maxItems;
+    }
+
+    public int[] getMaxItems() {
         return maxItems;
     }
 
-    public void setMaxItems(int maxItems) {
+    public void setMaxItems(int... maxItems) {
         this.maxItems = maxItems;
     }
 
     public AddingProcess addingProcess(JComponent root, int size) {
-        return new AddingProcess(root, maxItems, size);
+        return new AddingProcess(root, size, maxItems);
     }
 
     public void addMenuItems(JComponent menu, List<? extends JComponent> items) {
@@ -71,13 +77,15 @@ public class MenuBuilder {
     public static class AddingProcess {
         protected JComponent menu;
         protected int count;
-        protected int max;
+        protected int[] max;
         protected int size;
+        protected int level;
 
-        public AddingProcess(JComponent menu, int max, int size) {
+        public AddingProcess(JComponent menu, int size, int... max) {
             this.menu = menu;
             this.count = 0;
             this.max = max;
+            this.level = 0;
             this.size = size;
         }
 
@@ -92,11 +100,15 @@ public class MenuBuilder {
             menu.add(item);
             ++count;
             --size;
-            if (count >= max) {
+            if (count >= max[level]) {
                 count = 0;
                 JMenu subMenu = new JMenu(size <= 0 ? "..." : (size + " Items"));
+                subMenu.setForeground(Color.darkGray);
                 menu.add(subMenu);
                 menu = subMenu;
+                if (level + 1 < max.length) {
+                    ++level;
+                }
             }
         }
     }

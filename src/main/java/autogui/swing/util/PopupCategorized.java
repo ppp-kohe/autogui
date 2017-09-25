@@ -1,8 +1,10 @@
 package autogui.swing.util;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -119,21 +121,14 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
                 ++size;
             }
 
-            MenuBuilder menuBuilder = getMenuBuilder();
-            MenuBuilder.AddingProcess process = menuBuilder.addingProcess(menu, size);
-            for (Map.Entry<String, List<JComponent>> e : categorizedMenuItems.entrySet()) {
-                if (e.getKey() != null && e.getKey().equals(CATEGORY_LABEL)) {
-                    menuBuilder.addMenuItems(process, e.getValue(), null);
-                } else {
-                    menuBuilder.addMenuItems(process, e.getValue(), e.getKey());
-                }
-            }
+            buildCategories(sender, menu, categorizedMenuItems, size);
 
             if (size == 0) {
-                menu.add(menuBuilder.createLabel("Nothing"));
+                menu.add(getMenuBuilder().createLabel("Nothing"));
             }
         }
     }
+
 
     public MenuBuilder getMenuBuilder() {
         return MenuBuilder.get();
@@ -146,6 +141,19 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
             return ((CategorizedPopupItemMenu) item).getMenuItem(this);
         } else {
             return new JMenuItem(new SearchPopupAction(this, item));
+        }
+    }
+
+    public void buildCategories(PopupExtension sender, JPopupMenu menu,
+                                Map<String,List<JComponent>> categorizedMenuItems, int totalSize) {
+        MenuBuilder menuBuilder = getMenuBuilder();
+        MenuBuilder.AddingProcess process = menuBuilder.addingProcess(menu, totalSize);
+        for (Map.Entry<String, List<JComponent>> e : categorizedMenuItems.entrySet()) {
+            if (e.getKey() != null && e.getKey().equals(CATEGORY_LABEL)) {
+                menuBuilder.addMenuItems(process, e.getValue(), null);
+            } else {
+                menuBuilder.addMenuItems(process, e.getValue(), e.getKey());
+            }
         }
     }
 
@@ -171,6 +179,33 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
             if (popup != null) {
                 popup.select(item);
             }
+        }
+    }
+
+    public static class PopupCategorizedFixed extends PopupCategorized {
+        public PopupCategorizedFixed(Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier) {
+            super(itemSupplier);
+        }
+
+        public PopupCategorizedFixed(Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier, Consumer<CategorizedPopupItem> itemConsumer) {
+            super(itemSupplier, itemConsumer);
+        }
+
+        public void buildCategories(PopupExtension sender, JPopupMenu menu,
+                                    Map<String,List<JComponent>> categorizedMenuItems, int totalSize) {
+            MenuBuilder menuBuilder = getMenuBuilder();
+            for (Map.Entry<String, List<JComponent>> e : categorizedMenuItems.entrySet()) {
+                if (e.getKey() != null && e.getKey().equals(CATEGORY_LABEL)) {
+                    menuBuilder.addMenuItems(menu, e.getValue(), null);
+                } else {
+                    menuBuilder.addMenuItems(menu, e.getValue(), e.getKey());
+                }
+            }
+        }
+
+        @Override
+        public MenuBuilder getMenuBuilder() {
+            return new MenuBuilder(15, 50);
         }
     }
 }

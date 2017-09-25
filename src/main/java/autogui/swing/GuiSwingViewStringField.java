@@ -6,6 +6,9 @@ import autogui.swing.util.NamedPane;
 import autogui.swing.util.SearchTextField;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GuiSwingViewStringField implements GuiSwingView {
     @Override
@@ -23,11 +26,14 @@ public class GuiSwingViewStringField implements GuiSwingView {
         return false;
     }
 
-    public static class PropertyTextPane extends SearchTextField implements GuiMappingContext.SourceUpdateListener {
+    public static class PropertyTextPane extends SearchTextField
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
 
         public PropertyTextPane(GuiMappingContext context) {
             this.context = context;
+            initLazy();
+
             getIcon().setVisible(false);
 
             GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
@@ -36,6 +42,22 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
             update(context, context.getSource());
             //TODO GuiSwingContextInfo
+        }
+
+        @Override
+        public void init() {
+            //nothing
+        }
+
+        public void initLazy() {
+            super.init();
+        }
+
+        @Override
+        public List<? extends JComponent> getPopupEditMenuItems() {
+            return Stream.concat(Stream.of(GuiSwingContextInfo.get().getInfoLabel(context)),
+                    super.getPopupEditMenuItems().stream())
+                    .collect(Collectors.toList());
         }
 
         @Override
@@ -49,8 +71,18 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        }
+
+        @Override
+        public Object getSwingViewValue() {
+            return getField().getText();
+        }
+
+        @Override
+        public void setSwingViewValue(Object value) {
             GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
-            SwingUtilities.invokeLater(() -> setTextWithoutUpdateField(str.toUpdateValue(context, newValue)));
+            setTextWithoutUpdateField(str.toUpdateValue(context, value));
         }
     }
 }

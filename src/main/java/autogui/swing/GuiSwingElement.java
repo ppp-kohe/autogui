@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.*;
 import autogui.swing.table.GuiSwingTableColumnBoolean;
+import autogui.swing.table.GuiSwingTableColumnString;
 
 public interface GuiSwingElement {
 
@@ -9,6 +10,7 @@ public interface GuiSwingElement {
         GuiSwingMapperSet set = new GuiSwingMapperSet();
 
         set.addReprClassTableColumn(GuiReprValueBooleanCheckBox.class, new GuiSwingTableColumnBoolean())
+            .addReprClassTableColumn(GuiReprValueStringField.class, new GuiSwingTableColumnString())
             .addReprClass(GuiReprCollectionElement.class, new GuiSwingViewCollectionTable.TableColumnSetDefault(set))
             .addReprClass(GuiReprActionList.class, null); //nothing: handled by a sibling GuiSwingViewCollectionTable
 

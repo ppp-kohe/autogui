@@ -20,8 +20,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         if (value instanceof Document) {
             return (Document) value;
         } else if (value instanceof AbstractDocument.Content) {
-            return new DefaultStyledDocument((AbstractDocument.Content) value,
-                    StyleContext.getDefaultStyleContext());
+            return new ContentWrappingDocument((AbstractDocument.Content) value);
         } else if (value instanceof StringBuilder) {
             return toUpdateValue(context, new StringBuilderContent((StringBuilder) value));
         } else {
@@ -29,10 +28,34 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
     }
 
+    public Object toSourceValue(GuiMappingContext context, Document document) {
+        Class<?> cls = context.getTypeElementValue().getType();
+        if (Document.class.isAssignableFrom(cls)) {
+            return document;
+        } else if (AbstractDocument.Content.class.isAssignableFrom(cls)) {
+            return ((ContentWrappingDocument) document).getContentValue();
+        } else if (StringBuilder.class.isAssignableFrom(cls)) {
+            return ((StringBuilderContent) ((ContentWrappingDocument) document).getContentValue())
+                    .getBuffer();
+        } else {
+            return document; //error
+        }
+    }
+
     public boolean isStyledDocument(GuiMappingContext context) {
         return StyledDocument.class.isAssignableFrom(getValueType(context));
     }
 
+    public static class ContentWrappingDocument extends DefaultStyledDocument {
+        protected Content value;
+        public ContentWrappingDocument(Content c) {
+            super(c, StyleContext.getDefaultStyleContext());
+            this.value = c;
+        }
+        public Content getContentValue() {
+            return value;
+        }
+    }
 
     public static class StringBuilderContent implements AbstractDocument.Content {
         protected final StringBuilder buffer;
@@ -43,6 +66,10 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
             if (buffer.length() == 0) {
                 buffer.append('\n');
             }
+        }
+
+        public StringBuilder getBuffer() {
+            return buffer;
         }
 
         @Override

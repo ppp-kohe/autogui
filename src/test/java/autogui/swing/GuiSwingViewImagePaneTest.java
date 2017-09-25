@@ -63,10 +63,10 @@ public class GuiSwingViewImagePaneTest extends GuiSwingTestCase {
         }
         g.dispose();
         Thread.sleep(1000);
-        GuiSwingViewImagePane.ImagePropertyPane imgPane = runQuery(component,
+        GuiSwingViewImagePane.PropertyImagePane imgPane = runQuery(component,
                 query(JScrollPane.class, 0)
                         .cat(JViewport.class, 0)
-                        .cat(GuiSwingViewImagePane.ImagePropertyPane.class, 0));
+                        .cat(GuiSwingViewImagePane.PropertyImagePane.class, 0));
         run(() -> imgPane.setImage(image2));
         System.err.println(imgPane);
 

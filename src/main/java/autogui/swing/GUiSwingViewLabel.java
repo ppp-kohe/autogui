@@ -18,8 +18,10 @@ public class GUiSwingViewLabel implements GuiSwingView {
         }
     }
 
-    public static class PropertyLabel extends JLabel implements GuiMappingContext.SourceUpdateListener {
+    public static class PropertyLabel extends JLabel
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
+        protected Object value;
 
         public PropertyLabel(GuiMappingContext context) {
             this.context = context;
@@ -33,9 +35,19 @@ public class GUiSwingViewLabel implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            GuiReprValueLabel label = (GuiReprValueLabel) context.getRepresentation();
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        }
 
-            SwingUtilities.invokeLater(() -> setText(label.toUpdateValue(context, newValue)));
+        @Override
+        public Object getSwingViewValue() {
+            return value;
+        }
+
+        @Override
+        public void setSwingViewValue(Object value) {
+            GuiReprValueLabel label = (GuiReprValueLabel) context.getRepresentation();
+            this.value = value;
+            setText(label.toUpdateValue(context, value));
         }
     }
 }

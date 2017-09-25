@@ -24,7 +24,11 @@ import java.util.stream.Stream;
 public class SearchTextFieldFilePath extends SearchTextField {
 
     public SearchTextFieldFilePath() {
-        super(new SearchTextFieldModelFilePath());
+        this(new SearchTextFieldModelFilePath());
+    }
+
+    public SearchTextFieldFilePath(SearchTextFieldModelFilePath model) {
+        super(model);
     }
 
     @Override
@@ -53,8 +57,12 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
     public void setFile(Path file) {
-        selectSearchedItemFromGui(((SearchTextFieldModelFilePath) getModel())
-                .getFileItem(file, null, true));
+        selectSearchedItemFromGui(getFileItem(file));
+    }
+
+    public FileItem getFileItem(Path file) {
+        return ((SearchTextFieldModelFilePath) getModel())
+                .getFileItem(file, null, true);
     }
 
     public Path getFile() {
@@ -73,12 +81,36 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     @Override
     public void setTextFromSearchedItem(PopupCategorized.CategorizedPopupItem item) {
-        if (item instanceof FileItem) {
-            setTextWithoutUpdateField(((FileItem) item).getPath().toString());
+        if (item == null) {
+            setTextWithoutUpdateField("");
+        } else if (item instanceof FileItem) {
+            Path path = ((FileItem) item).getPath();
+            setTextWithoutUpdateField(toPathString(path));
         } else {
             setTextWithoutUpdateField(item.getName());
         }
         editingRunner.schedule(item);
+    }
+
+    public static String toPathString(Path p) {
+        if (p == null) {
+            return "";
+        } else {
+            return p.toString();
+        }
+    }
+
+    public static String toFileNameString(Path p) {
+        if (p == null) {
+            return "";
+        } else {
+            Path f = p.getFileName();
+            if (f == null) {
+                return "";
+            } else {
+                return f.toString();
+            }
+        }
     }
 
     public static class FileTransferHandler extends TransferHandler {
@@ -323,21 +355,43 @@ public class SearchTextFieldFilePath extends SearchTextField {
         protected PopupCategorized.CategorizedPopupItem selection;
 
         @Override
+        public boolean isFixedCategorySize() {
+            return true;
+        }
+
+        @Override
         public List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher) {
             List<PopupCategorized.CategorizedPopupItem> items = new ArrayList<>();
             try {
                 Path path = Paths.get(text);
                 selection = getFileItem(path, "Current", false);
 
+                if (publisher.isSearchCancelled()) {
+                    return items;
+                }
+
                 boolean exists = Files.exists(path);
                 if (exists) {
                     items.add(new FileInfoItem(path));
                 }
 
+                if (publisher.isSearchCancelled()) {
+                    return items;
+                }
+
                 if (editable) {
-                    items.addAll(getCompletionItems(path));
+                    items.addAll(getCompletionItems(text, path));
+                    if (publisher.isSearchCancelled()) {
+                        return items;
+                    }
                     items.addAll(getParentItems(path));
+                    if (publisher.isSearchCancelled()) {
+                        return items;
+                    }
                     items.addAll(getChildItems(path));
+                    if (publisher.isSearchCancelled()) {
+                        return items;
+                    }
                     items.addAll(getDefaultItems());
                 }
 
@@ -347,11 +401,18 @@ public class SearchTextFieldFilePath extends SearchTextField {
             }
         }
 
-        public List<FileItem> getCompletionItems(Path path) {
+        public List<FileItem> getCompletionItems(String text, Path path) {
             try {
-                Path dir = path.getParent();
-                String head = path.getFileName().toString().toLowerCase();
-                if (Files.isDirectory(dir)) {
+                Path dir;
+                String head;
+                if (Stream.of("/", "\\", ":").anyMatch(text::endsWith)) {
+                    dir = path;
+                    head = "";
+                } else {
+                    dir = path.getParent();
+                    head = toFileNameString(path).toLowerCase();
+                }
+                if (dir != null && Files.isDirectory(dir)) {
                     return Files.list(dir)
                             .filter(p -> p.getFileName().toString().toLowerCase().startsWith(head))
                             .map(p -> getFileItem(p, "Candidate", true))
@@ -363,6 +424,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 return Collections.emptyList();
             }
         }
+
+
 
         public List<FileItem> getParentItems(Path path) {
             Path p = path.toAbsolutePath().getParent();
@@ -388,11 +451,26 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 } else {
                     category = "Child";
                 }
-                return Files.list(path) //TODO sort?
+                return Files.list(path)
+                        .sorted(this::compare)
                         .map(p -> getFileItem(p, category, true))
                         .collect(Collectors.toList());
             } catch (Exception ex) {
                 return Collections.emptyList();
+            }
+        }
+
+        public int compare(Path p1, Path p2) {
+            String f1 = toFileNameString(p1);
+            String f2 = toFileNameString(p2);
+            boolean f1dot = f1.startsWith(".");
+            boolean f2dot = f2.startsWith(".");
+            if (f1dot && !f2dot) {
+                return 1;
+            } else if (!f1dot && f2dot) {
+                return -1;
+            } else {
+                return f1.compareTo(f2);
             }
         }
 
@@ -426,7 +504,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
 
         public FileItem getFileItem(Path path, String category, boolean nameOnly) {
-            return new FileItem(path, null, category);
+            return new FileItem(path, null, category, nameOnly);
         }
 
         @Override
@@ -440,20 +518,27 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
+
     public static class FileItem implements PopupCategorized.CategorizedPopupItem {
         protected Path path;
         protected Function<Path,Icon> iconGetter;
         protected String category;
+        protected boolean nameOnly;
 
-        public FileItem(Path path, Function<Path, Icon> iconGetter, String category) {
+        public FileItem(Path path, Function<Path, Icon> iconGetter, String category, boolean nameOnly) {
             this.path = path;
             this.iconGetter = iconGetter;
             this.category = category;
+            this.nameOnly = nameOnly;
         }
 
         @Override
         public String getName() {
-            return path.getFileName().toString();
+            if (nameOnly) {
+                return toFileNameString(path);
+            } else {
+                return toPathString(path);
+            }
         }
 
         @Override
@@ -463,7 +548,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         @Override
         public String getCategory() {
-            return null;
+            return category;
         }
 
         public Path getPath() {
@@ -484,7 +569,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         @Override
         public String getName() {
-            if (Files.exists(path)) {
+            if (path != null && !path.toString().isEmpty() && Files.exists(path)) {
                 try {
                     String str = Stream.of(
                             getNameTime(),
@@ -528,8 +613,12 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
 
         public String getNameSize() throws Exception {
-            long size = Files.size(path);
-            return formatFileSize(size);
+            if (Files.isDirectory(path)) {
+                return Files.list(path).count()  + " items";
+            } else {
+                long size = Files.size(path);
+                return formatFileSize(size);
+            }
         }
 
         public String getNamePermission() throws Exception {

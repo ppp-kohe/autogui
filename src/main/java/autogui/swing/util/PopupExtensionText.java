@@ -7,13 +7,19 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class PopupExtensionText extends PopupExtension {
+public class PopupExtensionText extends PopupExtension implements FocusListener {
+    protected int selectionStart;
+    protected int selectionEnd;
+    protected int documentLength;
+
     public static PopupExtensionText installDefault(JTextComponent textComponent) {
         return new PopupExtensionText(textComponent,
                 getDefaultKeyMatcher(),
@@ -28,6 +34,11 @@ public class PopupExtensionText extends PopupExtension {
         return (JTextComponent) getPane();
     }
 
+    @Override
+    public void addListenersTo(JComponent pane) {
+        super.addListenersTo(pane);
+        pane.addFocusListener(this);
+    }
 
     ////////////////
 
@@ -96,6 +107,38 @@ public class PopupExtensionText extends PopupExtension {
                 new TextPasteAction(textComponent),
                 new TextSelectAllAction(textComponent));
     }
+
+    /////////////
+
+    @Override
+    public void focusGained(FocusEvent e) {
+        if (selectionStart >= 0) {
+            JTextComponent text = getTextComponent();
+            int start = selectionStart;
+            int end = selectionEnd;
+            boolean expandEnd = (end >= documentLength);
+            int len = text.getDocument().getLength();
+            if (expandEnd) {
+                end = len;
+            }
+            start = Math.max(Math.min(start, len), 0);
+            end = Math.max(Math.min(end, len), 0);
+
+            text.setSelectionStart(start);
+            text.setSelectionEnd(end);
+        }
+    }
+
+    @Override
+    public void focusLost(FocusEvent e) {
+        JTextComponent text = getTextComponent();
+        int start = text.getSelectionStart();
+        int end = text.getSelectionEnd();
+        selectionStart = start;
+        selectionEnd = end;
+        documentLength = text.getDocument().getLength();
+    }
+
 
     ///////////// text actions for a specific target
 
