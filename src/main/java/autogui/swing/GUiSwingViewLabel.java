@@ -34,12 +34,14 @@ public class GUiSwingViewLabel implements GuiSwingView {
 
             update(context, context.getSource());
 
+            JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
             PopupExtension ext = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.removeAll();
-                menu.add(GuiSwingContextInfo.get().getInfoLabel(context));
+                menu.add(info);
                 menu.revalidate();
             });
             ext.addListenersTo(this);
+            setInheritsPopupMenu(true);
         }
 
         @Override

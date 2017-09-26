@@ -44,10 +44,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             menu.revalidate();
         });
         ext.addListenersTo(pane);
-
-        if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
-            pane.setFont(new Font("Menlo", Font.PLAIN, 14));
-        }
+        pane.setInheritsPopupMenu(true);
     }
 
     public static void updateText(JEditorPane pane, GuiMappingContext context, Object newValue) {
@@ -86,6 +83,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public void setSwingViewValue(Object value) {
             updateText(this, context, value);
         }
+
     }
 
     public static class PropertyDocumentTextPane extends JTextPane
@@ -112,4 +110,6 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             updateText(this, context, value);
         }
     }
+
+
 }

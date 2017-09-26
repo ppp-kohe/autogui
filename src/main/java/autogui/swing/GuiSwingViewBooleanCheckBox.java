@@ -41,6 +41,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
                 menu.revalidate();
             });
             ext.addListenersTo(this);
+            setInheritsPopupMenu(true);
         }
 
         @Override

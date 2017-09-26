@@ -10,10 +10,12 @@ import java.awt.event.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 public class PopupExtension implements MouseListener, KeyListener, ActionListener {
-    protected JPopupMenu menu;
+    /** the supplier is frequently called and expected to return same menu object */
+    protected Supplier<JPopupMenu> menu;
     protected JComponent pane;
     protected Predicate<KeyEvent> keyMatcher;
     protected PopupMenuBuilder menuBuilder;
@@ -25,6 +27,11 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     }
 
     public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder, JPopupMenu menu) {
+        this(pane, keyMatcher, menuBuilder,
+                menu == null ? new DefaultPopupGetter(pane) : () -> menu);
+    }
+
+    public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder, Supplier<JPopupMenu> menu) {
         this.pane = pane;
         this.keyMatcher = keyMatcher;
         this.menuBuilder = menuBuilder;
@@ -35,8 +42,8 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     }
 
     public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder) {
-        this(pane, keyMatcher, menuBuilder, new JPopupMenu());
-        new MenuKeySelector().addToMenu(menu);
+        this(pane, keyMatcher, menuBuilder, new DefaultPopupGetter(pane));
+        new MenuKeySelector().addToMenu(menu.get());
         //new PopupMenuHidingFix(menu);
     }
 
@@ -48,6 +55,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         pane.addMouseListener(this);
         pane.addKeyListener(this);
     }
+
 
 
     ////////////////
@@ -94,13 +102,34 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     //////////////////
 
+    public static class DefaultPopupGetter implements Supplier<JPopupMenu> {
+        protected JComponent component;
+        protected JPopupMenu menu;
+
+        public DefaultPopupGetter(JComponent component) {
+            this.component = component;
+        }
+
+        @Override
+        public JPopupMenu get() {
+            if (menu == null) {
+                if (component != null) {
+                    menu = component.getComponentPopupMenu();
+                }
+                if (menu == null) {
+                    menu = new JPopupMenu();
+                }
+            }
+            return menu;
+        }
+    }
 
     public Predicate<KeyEvent> getKeyMatcher() {
         return keyMatcher;
     }
 
     public JPopupMenu getMenu() {
-        return menu;
+        return menu.get();
     }
 
     public PopupMenuBuilder getMenuBuilder() {
@@ -187,11 +216,11 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     public void show(Component comp, int x, int y) {
         setupMenu();
-        menu.show(comp, x, y);
+        menu.get().show(comp, x, y);
     }
 
     public void setupMenu() {
-        menuBuilder.build(this, menu);
+        menuBuilder.build(this, menu.get());
     }
 
     /////////////////

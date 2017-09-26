@@ -31,10 +31,10 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
 
         context.updateSourceFromRoot();
 
-        GuiSwingViewDocumentEditor.PropertyDocumentEditorPane pane = runQuery(c,
+        JEditorPane pane = runQuery(c,
                 query(JScrollPane.class, 0)
                         .cat(JViewport.class, 0)
-                        .cat(GuiSwingViewDocumentEditor.PropertyDocumentEditorPane.class, 0));
+                        .cat(JEditorPane.class, 0));
         run(() -> {
             try {
                 System.err.println("Pane doc: " + System.identityHashCode(pane.getDocument()));
@@ -68,10 +68,10 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
 
         context.updateSourceFromRoot();
 
-        GuiSwingViewDocumentEditor.PropertyDocumentEditorPane pane = runQuery(c,
+        JEditorPane pane = runQuery(c,
                 query(JScrollPane.class, 0)
                         .cat(JViewport.class, 0)
-                        .cat(GuiSwingViewDocumentEditor.PropertyDocumentEditorPane.class, 0));
+                        .cat(JEditorPane.class, 0));
         run(() -> {
             try {
                 pane.getDocument().insertString(0, "Hello, world", null);
@@ -102,10 +102,11 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
 
         context.updateSourceFromRoot();
 
-        GuiSwingViewDocumentEditor.PropertyDocumentEditorPane pane = runQuery(c,
+        JEditorPane pane = runQuery(c,
                 query(JScrollPane.class, 0)
                         .cat(JViewport.class, 0)
-                        .cat(GuiSwingViewDocumentEditor.PropertyDocumentEditorPane.class, 0));
+                        .cat(JEditorPane.class, 0));
+
         runError(() -> pane.getDocument().insertString(0, "Hello\n, world", null));
 
         Thread.sleep(1000);

@@ -3,6 +3,7 @@ package autogui.swing.mapping;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 
+import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -11,6 +12,8 @@ import javax.swing.undo.UndoableEdit;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.stream.IntStream;
 
 /** the representation depends on some Swing classes(java.desktop module)  */
 public class GuiReprValueDocumentEditor extends GuiReprValue {
@@ -19,6 +22,49 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         return Document.class.isAssignableFrom(cls) ||
                 AbstractDocument.Content.class.isAssignableFrom(cls) ||
                 StringBuilder.class.isAssignableFrom(cls);
+    }
+
+    @Override
+    public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Exception {
+        return new SwingInvoker(() -> super.getUpdatedValue(context, executeParent)).run();
+    }
+
+    public static class SwingInvoker {
+        public Object result;
+        public Exception exception;
+
+        protected Callable<?> runnable;
+
+        public SwingInvoker(Callable<?> runnable) {
+            this.runnable = runnable;
+        }
+
+        public Object run() throws Exception {
+            if (SwingUtilities.isEventDispatchThread()) {
+                return runnable.call();
+            } else {
+                SwingUtilities.invokeAndWait(() -> {
+                    try {
+                        result = runnable.call();
+                    } catch (Exception ex) {
+                        exception = ex;
+                    }
+                });
+                if (exception != null) {
+                    throw exception;
+                } else {
+                    return result;
+                }
+            }
+        }
+
+        public Object runNoError() {
+            try {
+                return run();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
     }
 
     public Document toUpdateValue(GuiMappingContext context, Object value) {
@@ -48,15 +94,39 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     public boolean isStyledDocument(GuiMappingContext context) {
-        return StyledDocument.class.isAssignableFrom(getValueType(context));
+        //return StyledDocument.class.isAssignableFrom(getValueType(context));
+        return true; //enables style change
     }
 
     public static class ContentWrappingDocument extends DefaultStyledDocument {
         protected Content value;
+
+        public static TabSet tabSet;
+
         public ContentWrappingDocument(Content c) {
             super(c, new StyleContext());
             this.value = c;
+            initDefaultStyle();
         }
+
+        public void initDefaultStyle() {
+            if (tabSet == null) {
+                tabSet = new TabSet(IntStream.range(0, 100)
+                        .mapToObj(i -> new TabStop(i * 32))
+                        .toArray(TabStop[]::new));
+            }
+            Style style = getStyle(StyleContext.DEFAULT_STYLE);
+
+            StyleConstants.setTabSet(style, tabSet);
+            StyleConstants.setFontSize(style, 14);
+            String os = System.getProperty("os.name", "?").toLowerCase();
+            if (os.contains("mac")) {
+                StyleConstants.setFontFamily(style, "Menlo");
+            }
+            System.err.println("style: " + style);
+            setParagraphAttributes(0, getLength(), style, true);
+        }
+
         public Content getContentValue() {
             return value;
         }
@@ -123,7 +193,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
 
         protected void updatePositions(int pos, int adj) {
             if (adj >= 0 && pos == 0) {
-                pos = 1;
+                pos = 1; //it seems important
             }
             for (Iterator<WeakReference<ContentPosition>> iter = positions.iterator(); iter.hasNext();) {
                 ContentPosition existing = iter.next().get();

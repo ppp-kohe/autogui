@@ -86,10 +86,13 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
             context.addSourceUpdateListener(this);
 
+            JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
             new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.removeAll();
-                menu.add(GuiSwingContextInfo.get().getInfoLabel(context));
+                menu.add(info);
+                menu.revalidate();
             }); //TODO
+            setInheritsPopupMenu(true);
         }
 
         public void initContentPane() {

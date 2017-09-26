@@ -61,6 +61,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             ext.addListenersTo(this);
 
             setTransferHandler(new ImageTransferHandler(this));
+            setInheritsPopupMenu(true);
         }
 
         public JComponent createSizeInfo(Dimension size) {

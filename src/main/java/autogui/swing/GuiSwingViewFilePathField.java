@@ -37,6 +37,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
 
             context.addSourceUpdateListener(this);
             update(context, context.getSource());
+            setInheritsPopupMenu(true);
         }
 
         @Override

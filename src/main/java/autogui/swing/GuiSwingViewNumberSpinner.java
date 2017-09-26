@@ -48,6 +48,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             PopupExtensionText ext = new PopupExtensionText(field, PopupExtension.getDefaultKeyMatcher(),
                     new TextServiceDefaultMenuSpinner(context, (TypedSpinnerNumberModel) getModel(), field));
             ext.addListenersTo(field);
+            setInheritsPopupMenu(true);
         }
 
         public static SpinnerNumberModel createModel(GuiMappingContext context) {

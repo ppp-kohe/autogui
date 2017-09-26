@@ -42,6 +42,8 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
             update(context, context.getSource());
             //TODO GuiSwingContextInfo
+
+            setInheritsPopupMenu(true);
         }
 
         @Override
