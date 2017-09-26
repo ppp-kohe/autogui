@@ -1,9 +1,9 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValueImagePane;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
+import autogui.swing.mapping.GuiReprValueImagePane;
 import org.junit.Assert;
 import org.junit.Test;
 

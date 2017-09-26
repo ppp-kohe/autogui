@@ -3,7 +3,9 @@ package autogui.swing;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -68,6 +70,25 @@ public class GuiSwingTestCase {
 
     public void run(Runnable r) {
         runGet(() -> { r.run(); return null;} );
+    }
+
+    interface RunWithError {
+        void run() throws Exception;
+    }
+
+    public void runError(RunWithError r) throws Exception {
+        List<Exception> list = new ArrayList<>();
+        runGet(() -> {
+            try {
+                r.run();
+            } catch (Exception ex) {
+                list.add(ex);
+            }
+            return null;
+        });
+        if (!list.isEmpty()) {
+            throw list.get(0);
+        }
     }
 
     public <T> T runGet(final Callable<T> r) {

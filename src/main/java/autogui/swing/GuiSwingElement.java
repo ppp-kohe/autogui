@@ -1,6 +1,8 @@
 package autogui.swing;
 
 import autogui.base.mapping.*;
+import autogui.swing.mapping.GuiReprValueDocumentEditor;
+import autogui.swing.mapping.GuiReprValueImagePane;
 import autogui.swing.table.GuiSwingTableColumnBoolean;
 import autogui.swing.table.GuiSwingTableColumnString;
 

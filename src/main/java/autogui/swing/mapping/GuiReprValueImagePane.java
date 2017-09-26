@@ -1,4 +1,7 @@
-package autogui.base.mapping;
+package autogui.swing.mapping;
+
+import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -6,6 +9,7 @@ import java.awt.image.ImageObserver;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/** the representation depends on some AWT classes (java.desktop module) */
 public class GuiReprValueImagePane extends GuiReprValue {
     @Override
     public boolean matchValueType(Class<?> cls) {

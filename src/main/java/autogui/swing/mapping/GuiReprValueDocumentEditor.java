@@ -1,14 +1,18 @@
-package autogui.base.mapping;
+package autogui.swing.mapping;
+
+import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 
 import javax.swing.text.*;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.io.Serializable;
+import java.lang.ref.WeakReference;
+import java.util.*;
 
+/** the representation depends on some Swing classes(java.desktop module)  */
 public class GuiReprValueDocumentEditor extends GuiReprValue {
     @Override
     public boolean matchValueType(Class<?> cls) {
@@ -50,7 +54,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     public static class ContentWrappingDocument extends DefaultStyledDocument {
         protected Content value;
         public ContentWrappingDocument(Content c) {
-            super(c, StyleContext.getDefaultStyleContext());
+            super(c, new StyleContext());
             this.value = c;
         }
         public Content getContentValue() {
@@ -58,9 +62,10 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
     }
 
-    public static class StringBuilderContent implements AbstractDocument.Content {
+    public static class StringBuilderContent implements AbstractDocument.Content, Serializable {
         protected final StringBuilder buffer;
-        protected List<ContentPosition> positions = new ArrayList<>();
+        transient protected char[] array;
+        transient protected List<WeakReference<ContentPosition>> positions = new ArrayList<>();
 
         public StringBuilderContent(StringBuilder buffer) {
             this.buffer = buffer;
@@ -76,13 +81,8 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         @Override
         public Position createPosition(int offset) throws BadLocationException {
             ContentPosition pos = new ContentPosition(offset);
-            int n = Collections.binarySearch(positions, pos);
-            if (n < 0) {
-                positions.add(-n - 1, pos);
-                return pos;
-            } else {
-                return positions.get(n);
-            }
+            positions.add(new WeakReference<>(pos));
+            return pos;
         }
 
         @Override
@@ -101,8 +101,9 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
             }
             return run(() -> {
                 buffer.insert(where, str);
+                array = null;
                 updatePositions(where, str.length());
-                return new ContentInsertEdit(this, createPosition(where), str.length(), str);
+                return new ContentInsertEdit(this, where, str.length(), str);
             });
         }
 
@@ -114,20 +115,35 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
             return run(() -> {
                 String removed = buffer.substring(where, where + nItems);
                 buffer.delete(where, where + nItems);
-                updatePositions(where + nItems, -nItems);
-                return new ContentRemoveEdit(this, createPosition(where), nItems, removed);
+                array = null;
+                updatePositions(where, -nItems);
+                return new ContentRemoveEdit(this, where, nItems, removed);
             });
         }
 
         protected void updatePositions(int pos, int adj) {
-            int n = Collections.binarySearch(positions, new ContentPosition(pos));
-            if (n < 0) {
-                n = -n - 1;
-            } else {
-                n++;
+            if (adj >= 0 && pos == 0) {
+                pos = 1;
             }
-            for (int i = n, l = positions.size(); i < l; ++i) {
-                positions.get(i).offset += adj;
+            for (Iterator<WeakReference<ContentPosition>> iter = positions.iterator(); iter.hasNext();) {
+                ContentPosition existing = iter.next().get();
+                if (existing != null) {
+                    if (adj < 0) {
+                        //remove
+                        if (existing.offset >= (pos - adj)) {
+                            existing.offset += adj;
+                        } else if (existing.offset >= pos) {
+                            existing.offset = pos;
+                        }
+                    } else {
+                        //insert
+                        if (existing.offset >= pos) {
+                            existing.offset += adj;
+                        }
+                    }
+                } else {
+                    iter.remove();
+                }
             }
         }
 
@@ -136,7 +152,10 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
             if (where + len > length()) {
                 throw new BadLocationException("Invalid range", length());
             }
-            return run(() -> buffer.substring(where, where + len));
+            return run(() -> {
+                String s = buffer.substring(where, where + len);
+                return s;
+            });
         }
 
         @Override
@@ -144,8 +163,10 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
             if (where + len > length()) {
                 throw new BadLocationException("Invalid range", length());
             }
-            //TODO optimize
-            run(() -> txt.array = buffer.toString().toCharArray());
+            if (array == null) {
+                array = buffer.toString().toCharArray();
+            }
+            run(() -> txt.array = array);
             txt.offset = where;
             txt.count = len;
         }
@@ -162,7 +183,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         T get() throws BadLocationException;
     }
 
-    public static class ContentPosition implements Position, Comparable<ContentPosition> {
+    public static class ContentPosition implements Position {
         public int offset;
 
         public ContentPosition(int offset) {
@@ -175,20 +196,20 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
 
         @Override
-        public int compareTo(ContentPosition o) {
-            return Integer.compare(offset, o.offset);
+        public String toString() {
+            return Integer.toString(offset);
         }
     }
 
     public static class ContentInsertEdit extends AbstractUndoableEdit {
         protected StringBuilderContent content;
-        protected Position position;
+        protected int offset;
         protected int length;
         protected String str;
 
-        public ContentInsertEdit(StringBuilderContent content, Position position, int length, String str) {
+        public ContentInsertEdit(StringBuilderContent content, int offset, int length, String str) {
             this.content = content;
-            this.position = position;
+            this.offset = offset;
             this.length = length;
             this.str = str;
         }
@@ -197,8 +218,8 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         public void undo() throws CannotUndoException {
             super.undo();
             try {
-                str = content.getString(position.getOffset(), length);
-                content.remove(position.getOffset(), length);
+                str = content.getString(offset, length);
+                content.remove(offset, length);
             } catch (Exception ex){
                 throw new CannotUndoException();
             }
@@ -208,7 +229,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         public void redo() throws CannotRedoException {
             super.redo();
             try {
-                content.insertString(position.getOffset(), str);
+                content.insertString(offset, str);
             } catch (Exception ex) {
                 throw new CannotRedoException();
             }
@@ -217,13 +238,13 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
 
     public static class ContentRemoveEdit extends AbstractUndoableEdit {
         protected StringBuilderContent content;
-        protected Position position;
+        protected int offset;
         protected int length;
         protected String str;
 
-        public ContentRemoveEdit(StringBuilderContent content, Position position, int length, String str) {
+        public ContentRemoveEdit(StringBuilderContent content, int offset, int length, String str) {
             this.content = content;
-            this.position = position;
+            this.offset = offset;
             this.length = length;
             this.str = str;
         }
@@ -231,7 +252,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         public void undo() throws CannotUndoException {
             super.undo();
             try {
-                content.insertString(position.getOffset(), str);
+                content.insertString(offset, str);
             } catch (Exception ex){
                 throw new CannotUndoException();
             }
@@ -241,8 +262,8 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         public void redo() throws CannotRedoException {
             super.redo();
             try {
-                str = content.getString(position.getOffset(), length);
-                content.remove(position.getOffset(), length);
+                str = content.getString(offset, length);
+                content.remove(offset, length);
             } catch (Exception ex) {
                 throw new CannotRedoException();
             }

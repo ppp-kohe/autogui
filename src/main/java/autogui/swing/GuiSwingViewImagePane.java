@@ -1,7 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValueImagePane;
+import autogui.swing.mapping.GuiReprValueImagePane;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
 
@@ -10,11 +10,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 

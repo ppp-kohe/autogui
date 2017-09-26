@@ -1,7 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValueDocumentEditor;
+import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
 

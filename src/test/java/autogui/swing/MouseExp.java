@@ -1,7 +1,5 @@
 package autogui.swing;
 
-import autogui.base.mapping.GuiReprValueImagePane;
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
