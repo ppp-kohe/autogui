@@ -65,7 +65,9 @@ public class GuiReprValue implements GuiRepresentation {
             return context.getTypeElementAsProperty().executeGet(src, prev);
         } else {
             if (context.isParentPropertyPane()) {
-                return getParentSource(context, executeParent);
+                //GuiReprPropertyPane matches to GuiTypeMemberProperty, and it has compareGet(p,n)
+                return context.getParent().getTypeElementAsProperty()
+                        .compareGet(prev, getParentSource(context, executeParent));
             } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
                 return context.getTypeElementValue().updatedValue(prev);
             }

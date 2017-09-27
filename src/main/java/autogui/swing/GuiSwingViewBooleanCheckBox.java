@@ -7,6 +7,8 @@ import autogui.swing.util.PopupExtension;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.EventObject;
+import java.util.function.Consumer;
 
 public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     @Override
@@ -65,6 +67,11 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
             GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
             //setSelected seems not to cause ActionEvent
             setSelected(repr.toUpdateValue(context, value));
+        }
+
+        @Override
+        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
+            addActionListener(eventHandler::accept);
         }
     }
 }

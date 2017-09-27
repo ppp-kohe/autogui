@@ -1,15 +1,17 @@
 package autogui.swing;
 
-import autogui.base.mapping.*;
-import autogui.swing.table.*;
+import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprAction;
+import autogui.base.mapping.GuiReprActionList;
+import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.swing.table.GuiSwingTableColumnSet;
+import autogui.swing.table.ObjectTableModel;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 public class GuiSwingViewCollectionTable implements GuiSwingView {
@@ -48,37 +50,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             }
         }
         return table.initAfterAddingColumns(actions);
-    }
-
-    public static class TableColumnSetDefault implements GuiSwingTableColumnSet {
-        protected GuiSwingMapperSet columnMappingSet;
-
-        public TableColumnSetDefault(GuiSwingMapperSet columnMappingSet) {
-            this.columnMappingSet = columnMappingSet;
-        }
-
-        @Override
-        public void createColumns(GuiMappingContext context, ObjectTableModel model) {
-            for (GuiMappingContext subContext : context.getChildren()) {
-                GuiSwingElement subView = columnMappingSet.view(subContext);
-                if (subView != null && subView instanceof GuiSwingTableColumn) {
-                    model.addColumn(((GuiSwingTableColumn) subView).createColumn(subContext));
-                }
-            }
-        }
-
-        @Override
-        public List<Action> createColumnActions(GuiMappingContext context, Supplier<Boolean> selectionEmpty,
-                                                Supplier<List<?>> selectionItems) {
-            List<Action> actions = new ArrayList<>();
-            for (GuiMappingContext subContext : context.getChildren()) {
-                GuiSwingElement subView = columnMappingSet.view(subContext);
-                if (subView != null && subView instanceof GuiSwingAction) {
-                    actions.add(new TableSelectionAction(subContext, selectionEmpty, selectionItems));
-                }
-            }
-            return actions;
-        }
     }
 
     @Override
@@ -216,44 +187,4 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
     }
 
-    public static class ObjectTableColumnValue extends ObjectTableColumn {
-        protected GuiMappingContext context;
-
-        /**
-         * the representation of the context must be a sub-type of {@link GuiReprValue}.
-         * view must be a {@link autogui.swing.GuiSwingView.ValuePane} */
-        public ObjectTableColumnValue(GuiMappingContext context, JComponent view) {
-            this(context, view, view);
-        }
-
-        public ObjectTableColumnValue(GuiMappingContext context, JComponent view, JComponent editorView) {
-            this.context = context;
-
-            ObjectTableCellEditor editor = (editorView == null ? null : new ObjectTableCellEditor(editorView));
-            GuiReprValue value = (GuiReprValue) context.getRepresentation();
-            setTableColumn(new TableColumn(0, 64, new ObjectTableCellEditor(view),
-                    value.isEditable(context) ? editor : null));
-            getTableColumn().setHeaderValue(context.getDisplayName());
-        }
-
-        @Override
-        public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
-            GuiReprValue field = (GuiReprValue) context.getRepresentation();
-            GuiReprCollectionElement col = (GuiReprCollectionElement) context.getParent().getRepresentation();
-            try {
-                return field.toUpdateValue(context,
-                        col.getCellValue(context.getParent(), context, rowObject, rowIndex, columnIndex));
-            } catch (Exception ex) {
-                context.errorWhileUpdateSource(ex);
-                return null;
-            }
-        }
-
-        @Override
-        public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
-            GuiReprCollectionElement col = (GuiReprCollectionElement) context.getParent().getRepresentation();
-            col.updateCellFromGui(context.getParent(), context, rowObject, rowIndex, columnIndex, newColumnValue);
-            return null;
-        }
-    }
 }

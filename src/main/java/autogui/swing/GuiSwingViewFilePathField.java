@@ -9,7 +9,9 @@ import autogui.swing.util.SearchTextFieldFilePath;
 import javax.swing.*;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.EventObject;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -93,6 +95,11 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
                     .toUpdateValue(context, value);
             FileItem item = getFileItem(path);
             selectSearchedItemWithoutUpdateContext(item);
+        }
+
+        @Override
+        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
+            getField().addActionListener(eventHandler::accept);
         }
     }
 }

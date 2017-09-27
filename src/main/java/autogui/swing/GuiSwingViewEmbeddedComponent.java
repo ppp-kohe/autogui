@@ -4,6 +4,8 @@ import autogui.base.mapping.GuiMappingContext;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.EventObject;
+import java.util.function.Consumer;
 
 public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
     @Override

@@ -10,10 +10,13 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EventObject;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 public class GuiSwingViewNumberSpinner implements GuiSwingView {
     @Override
@@ -76,6 +79,11 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         @Override
         public void setSwingViewValue(Object value) {
             setValue(value);
+        }
+
+        @Override
+        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
+            ((JTextField) getEditor()).addActionListener(eventHandler::accept);
         }
     }
 

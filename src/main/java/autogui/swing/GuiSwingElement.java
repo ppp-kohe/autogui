@@ -4,6 +4,7 @@ import autogui.base.mapping.*;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.mapping.GuiReprValueImagePane;
 import autogui.swing.table.GuiSwingTableColumnBoolean;
+import autogui.swing.table.GuiSwingTableColumnSetDefault;
 import autogui.swing.table.GuiSwingTableColumnString;
 
 public interface GuiSwingElement {
@@ -13,7 +14,7 @@ public interface GuiSwingElement {
 
         set.addReprClassTableColumn(GuiReprValueBooleanCheckBox.class, new GuiSwingTableColumnBoolean())
             .addReprClassTableColumn(GuiReprValueStringField.class, new GuiSwingTableColumnString())
-            .addReprClass(GuiReprCollectionElement.class, new GuiSwingViewCollectionTable.TableColumnSetDefault(set))
+            .addReprClass(GuiReprCollectionElement.class, new GuiSwingTableColumnSetDefault(set))
             .addReprClass(GuiReprActionList.class, null); //nothing: handled by a sibling GuiSwingViewCollectionTable
 
 

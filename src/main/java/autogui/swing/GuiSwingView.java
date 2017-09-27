@@ -3,6 +3,8 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 
 import javax.swing.*;
+import java.util.EventObject;
+import java.util.function.Consumer;
 
 public interface GuiSwingView extends GuiSwingElement {
     JComponent createView(GuiMappingContext context);
@@ -16,5 +18,8 @@ public interface GuiSwingView extends GuiSwingElement {
         Object getSwingViewValue();
         /** processed under the event thread */
         void setSwingViewValue(Object value);
+
+        default void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
+        }
     }
 }

@@ -6,7 +6,9 @@ import autogui.swing.util.NamedPane;
 import autogui.swing.util.SearchTextField;
 
 import javax.swing.*;
+import java.util.EventObject;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -85,6 +87,11 @@ public class GuiSwingViewStringField implements GuiSwingView {
         public void setSwingViewValue(Object value) {
             GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
             setTextWithoutUpdateField(str.toUpdateValue(context, value));
+        }
+
+        @Override
+        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
+            getField().addActionListener(eventHandler::accept);
         }
     }
 }

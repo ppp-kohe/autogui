@@ -2,7 +2,6 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.GuiSwingViewLabel;
-import autogui.swing.GuiSwingViewCollectionTable;
 import autogui.swing.GuiSwingViewStringField;
 
 import javax.swing.*;
@@ -12,23 +11,25 @@ import java.util.Comparator;
 public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context) {
-        return new GuiSwingViewCollectionTable.ObjectTableColumnValue(context,
-                new GuiSwingViewLabel.PropertyLabel(context),
-                new ColumnTextPane(context))
+        GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context);
+        label.setOpaque(true);
+        return new ObjectTableColumnValue(context,
+                label,
+                new ColumnEditTextPane(context))
                     .withComparator(Comparator.comparing(String.class::cast));
     }
 
-    public static class ColumnTextPane extends GuiSwingViewStringField.PropertyTextPane {
-        public ColumnTextPane(GuiMappingContext context) {
+    public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyTextPane {
+        public ColumnEditTextPane(GuiMappingContext context) {
             super(context);
         }
 
         @Override
         public void initLayout() {
             initBackgroundPainter();
+            setOpaque(true);
             setLayout(new BorderLayout());
             add(field, BorderLayout.CENTER);
-            field.setBorder(BorderFactory.createEmptyBorder());
         }
 
         @Override

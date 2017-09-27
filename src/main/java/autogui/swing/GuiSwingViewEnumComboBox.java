@@ -9,6 +9,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.EventObject;
+import java.util.function.Consumer;
 
 public class GuiSwingViewEnumComboBox implements GuiSwingView {
     @Override
@@ -69,6 +71,11 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         @Override
         public void setSwingViewValue(Object value) {
             setSelectedItem(value);
+        }
+
+        @Override
+        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
+            addItemListener(eventHandler::accept);
         }
     }
 
