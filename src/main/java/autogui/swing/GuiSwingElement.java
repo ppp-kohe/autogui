@@ -27,7 +27,7 @@ public interface GuiSwingElement {
             .addReprClass(GuiReprPropertyPane.class, new GuiSwingViewPropertyPane(set))
             .addReprClass(GuiReprObjectPane.class, new GuiSwingViewObjectPane(set))
             .addReprClass(GuiReprAction.class, new GuiSwingActionDefault())
-            .addReprClass(GuiRepresentation.class, new GUiSwingViewLabel());
+            .addReprClass(GuiRepresentation.class, new GuiSwingViewLabel());
         return set;
     }
 }

@@ -321,4 +321,8 @@ public class GuiMappingContext {
         return getParent() != null &&
                 getParent().getRepresentation() instanceof GuiReprCollectionElement;
     }
+
+    public boolean isCollectionElement() {
+        return getRepresentation() != null && getRepresentation() instanceof GuiReprCollectionElement;
+    }
 }

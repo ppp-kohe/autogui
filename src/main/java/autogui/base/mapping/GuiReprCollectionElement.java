@@ -7,9 +7,14 @@ public class GuiReprCollectionElement implements GuiRepresentation {
         this.representation = representation;
     }
 
+    public GuiRepresentation getRepresentation() {
+        return representation;
+    }
+
     @Override
     public boolean match(GuiMappingContext context) {
-        if (context.isParentCollectionTable()) {
+        if (context.isParentCollectionTable() && !context.isCollectionElement()) {
+            context.setRepresentation(this); //temporarly set this for avoiding self recursion with checking isCollectionElement()
             if (representation.match(context)) {
                 //overwrites the matched and set representation with wrapping it
                 GuiRepresentation elementRepr = context.getRepresentation();

@@ -15,6 +15,11 @@ import java.util.function.Supplier;
 public class GuiSwingViewCollectionTable implements GuiSwingView {
     protected GuiSwingMapperSet columnMapperSet;
 
+
+    public GuiSwingViewCollectionTable(GuiSwingMapperSet columnMapperSet) {
+        this.columnMapperSet = columnMapperSet;
+    }
+
     @Override
     public JComponent createView(GuiMappingContext context) {
         CollectionTable table = new CollectionTable(context);
@@ -218,13 +223,17 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
          * the representation of the context must be a sub-type of {@link GuiReprValue}.
          * view must be a {@link autogui.swing.GuiSwingView.ValuePane} */
         public ObjectTableColumnValue(GuiMappingContext context, JComponent view) {
+            this(context, view, view);
+        }
+
+        public ObjectTableColumnValue(GuiMappingContext context, JComponent view, JComponent editorView) {
             this.context = context;
 
-            ObjectTableCellEditor editor = new ObjectTableCellEditor(view);
-
+            ObjectTableCellEditor editor = (editorView == null ? null : new ObjectTableCellEditor(editorView));
             GuiReprValue value = (GuiReprValue) context.getRepresentation();
-            setTableColumn(new TableColumn(0, 64, editor,
+            setTableColumn(new TableColumn(0, 64, new ObjectTableCellEditor(view),
                     value.isEditable(context) ? editor : null));
+            getTableColumn().setHeaderValue(context.getDisplayName());
         }
 
         @Override

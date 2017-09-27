@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueLabel;
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupExtension;
@@ -8,7 +9,7 @@ import autogui.swing.util.PopupExtension;
 import javax.swing.*;
 import java.awt.*;
 
-public class GUiSwingViewLabel implements GuiSwingView {
+public class GuiSwingViewLabel implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
         PropertyLabel label = new PropertyLabel(context);
@@ -56,9 +57,9 @@ public class GUiSwingViewLabel implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(Object value) {
-            GuiReprValueLabel label = (GuiReprValueLabel) context.getRepresentation();
+            GuiReprValue label = (GuiReprValue) context.getRepresentation();
             this.value = value;
-            setText(label.toUpdateValue(context, value));
+            setText((String) label.toUpdateValue(context, value));
         }
     }
 }

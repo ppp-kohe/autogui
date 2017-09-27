@@ -183,13 +183,17 @@ public class SearchTextField extends JComponent {
     }
 
     public void initLayout() {
-        super.setBackground(Color.white);
-        backgroundPainter = new SearchBackgroundPainter(this);
+        setBackgroundWithoutInit(Color.white);
+        initBackgroundPainter();
 
         setLayout(new BorderLayout());
         add(icon, BorderLayout.WEST);
         add(field, BorderLayout.CENTER);
         add(popupButton, BorderLayout.EAST);
+    }
+
+    public void initBackgroundPainter() {
+        backgroundPainter = new SearchBackgroundPainterBordered(this);
     }
 
     @Override
@@ -209,6 +213,10 @@ public class SearchTextField extends JComponent {
     public void setBackground(Color bg) {
         super.setBackground(bg);
         backgroundPainter.init();
+    }
+
+    public void setBackgroundWithoutInit(Color bg) {
+        super.setBackground(bg);
     }
 
     public SearchTextFieldModel getModel() {
@@ -427,12 +435,18 @@ public class SearchTextField extends JComponent {
     }
 
     public static class SearchBackgroundPainter {
+        public void setChild(JComponent child) { }
+        public void init() { }
+        public void paintComponent(Graphics g) { }
+    }
+
+    public static class SearchBackgroundPainterBordered extends SearchBackgroundPainter {
         protected JComponent component;
         protected Color[] gradientColors;
         protected Color focusColor;
         protected BasicStroke[] strokes;
 
-        public SearchBackgroundPainter(JComponent component) {
+        public SearchBackgroundPainterBordered(JComponent component) {
             this.component = component;
             component.setLayout(new BorderLayout());
             component.setBorder(BorderFactory.createEmptyBorder(7, 5, 7, 5));
