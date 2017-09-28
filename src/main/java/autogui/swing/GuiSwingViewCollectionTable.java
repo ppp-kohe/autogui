@@ -5,6 +5,7 @@ import autogui.base.mapping.GuiReprAction;
 import autogui.base.mapping.GuiReprActionList;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.table.GuiSwingTableColumnSet;
+import autogui.swing.table.GuiSwingTableColumnSetDefault;
 import autogui.swing.table.ObjectTableModel;
 
 import javax.swing.*;
@@ -33,8 +34,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
                 columnSet.createColumns(subContext, table.getObjectTableModel());
 
-                actions.addAll(columnSet.createColumnActions(subContext,
-                        table::isSelectionEmpty, table::getSourceSelection));
+                actions.addAll(columnSet.createColumnActions(subContext, table));
             }
         }
 
@@ -44,8 +44,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     siblingContext.getTypeElementAsActionList().getElementType()
                             .equals(context.getTypeElementCollection().getElementType())) {
                     //takes multiple selected items
-                    actions.add(new TableSelectionListAction(siblingContext,
-                            table::isSelectionEmpty, table::getSourceSelection));
+                    actions.add(new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table));
                 }
             }
         }
@@ -58,7 +57,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class CollectionTable extends JTable
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane,
+                        GuiSwingTableColumnSet.TableSelectionSource {
         protected GuiMappingContext context;
         protected List<?> source;
 
@@ -75,7 +75,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             update(context, context.getSource());
         }
 
-        public JScrollPane initAfterAddingColumns(List<Action> actions) {
+        public JComponent initAfterAddingColumns(List<Action> actions) {
             ObjectTableModel model = getObjectTableModel();
             model.initTableWithoutScrollPane(this);
             if (actions.isEmpty()) {
@@ -86,11 +86,19 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     JToolBar actionToolBar = new JToolBar();
                     actionToolBar.setFloatable(false);
                     actionToolBar.setOpaque(false);
+
+                    actions.forEach(actionToolBar::add);
+
                     pane.add(actionToolBar, BorderLayout.PAGE_START);
 
-                    pane.add(this, BorderLayout.CENTER);
+                    getSelectionModel().addListSelectionListener(e -> {
+                        boolean enabled = !isSelectionEmpty();
+                        actions.forEach(a -> a.setEnabled(a.isEnabled()));
+                    });
+
+                    pane.add(model.initTableScrollPane(this), BorderLayout.CENTER);
                 }
-                return model.initTableScrollPane(pane);
+                return pane;
             }
         }
 
@@ -107,7 +115,27 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
         }
 
-        public List<?> getSourceSelection() {
+        @Override
+        public Object getSwingViewValue() {
+            return getSource();
+        }
+
+        @Override
+        public void setSwingViewValue(Object value) {
+            GuiReprCollectionTable repr = (GuiReprCollectionTable) context.getRepresentation();
+            source = repr.toUpdateValue(context, value);
+            getObjectTableModel().setSourceFromSupplier();
+        }
+
+        /////////////////
+
+        @Override
+        public boolean isSelectionEmpty() {
+            return getSelectionModel().isSelectionEmpty();
+        }
+
+        @Override
+        public List<?> getSelectedItems() {
             ListSelectionModel sel = getSelectionModel();
             List<Object> selected = new ArrayList<>();
             if (source != null) {
@@ -120,71 +148,21 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             return selected;
         }
 
-        public boolean isSelectionEmpty() {
-            return getSelectionModel().isSelectionEmpty();
-        }
-
         @Override
-        public Object getSwingViewValue() {
-            return getSource();
-        }
-
-        @Override
-        public void setSwingViewValue(Object value) {
-            GuiReprCollectionTable repr = (GuiReprCollectionTable) context.getRepresentation();
-            source = repr.toUpdateValue(context, value);
-            getObjectTableModel().setSourceFromSupplier();
-            getObjectTableModel().fireTableDataChanged();
-        }
-    }
-
-
-
-    public static class TableSelectionListAction extends GuiSwingActionDefault.ExecutionAction {
-        protected GuiMappingContext context;
-        protected Supplier<Boolean> selectionEmpty;
-        protected Supplier<List<?>> selectionItems;
-
-        public TableSelectionListAction(GuiMappingContext context, Supplier<Boolean> selectionEmpty,
-                                    Supplier<List<?>> selectionItems) {
-            super(context);
-            this.selectionEmpty = selectionEmpty;
-            this.selectionItems = selectionItems;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return !selectionEmpty.get();
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            setEnabled(false);
-            try {
-                ((GuiReprActionList) context.getRepresentation())
-                        .executeActionForList(context, selectionItems.get());
-            } finally {
-                setEnabled(true);
+        public void selectionActionFinished() {
+            ListSelectionModel sel = getSelectionModel();
+            List<Integer> is = new ArrayList<>();
+            for (int i = sel.getMinSelectionIndex(), max = sel.getMaxSelectionIndex(); i <= max; ++i) {
+                if (i >= 0 && sel.isSelectedIndex(i)) {
+                    is.add(i);
+                }
             }
-        }
-    }
 
-    public static class TableSelectionAction extends TableSelectionListAction {
-        public TableSelectionAction(GuiMappingContext context, Supplier<Boolean> selectionEmpty,
-                                    Supplier<List<?>> selectionItems) {
-            super(context, selectionEmpty, selectionItems);
+            getObjectTableModel().refreshRows(is.stream()
+                    .mapToInt(Integer::intValue).toArray());
         }
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            setEnabled(false);
-            try {
-                ((GuiReprAction) context.getRepresentation())
-                        .executeActionForTargets(context, selectionItems.get());
-            } finally {
-                setEnabled(true);
-            }
-        }
     }
+
 
 }

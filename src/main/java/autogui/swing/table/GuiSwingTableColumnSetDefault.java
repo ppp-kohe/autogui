@@ -1,12 +1,12 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.swing.GuiSwingAction;
-import autogui.swing.GuiSwingElement;
-import autogui.swing.GuiSwingMapperSet;
-import autogui.swing.GuiSwingViewCollectionTable;
+import autogui.base.mapping.GuiReprAction;
+import autogui.base.mapping.GuiReprActionList;
+import autogui.swing.*;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -30,15 +30,66 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     }
 
     @Override
-    public List<Action> createColumnActions(GuiMappingContext context, Supplier<Boolean> selectionEmpty,
-                                            Supplier<List<?>> selectionItems) {
+    public List<Action> createColumnActions(GuiMappingContext context, TableSelectionSource source) {
         List<Action> actions = new ArrayList<>();
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement subView = columnMappingSet.view(subContext);
             if (subView != null && subView instanceof GuiSwingAction) {
-                actions.add(new GuiSwingViewCollectionTable.TableSelectionAction(subContext, selectionEmpty, selectionItems));
+                actions.add(new TableSelectionAction(subContext, source));
             }
         }
         return actions;
+    }
+
+
+    public static class TableSelectionListAction extends GuiSwingActionDefault.ExecutionAction {
+        protected GuiMappingContext context;
+        protected TableSelectionSource source;
+
+        public TableSelectionListAction(GuiMappingContext context, TableSelectionSource source) {
+            super(context);
+            this.source = source;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return !source.isSelectionEmpty();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            setEnabled(false);
+            try {
+                ((GuiReprActionList) context.getRepresentation())
+                        .executeActionForList(context, source.getSelectedItems());
+            } finally {
+                source.selectionActionFinished();
+                setEnabled(true);
+            }
+        }
+    }
+
+    public static class TableSelectionAction extends TableSelectionListAction {
+        public TableSelectionAction(GuiMappingContext context, TableSelectionSource source) {
+            super(context, source);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            System.err.println("enabled? !" + source.isSelectionEmpty());
+            return !source.isSelectionEmpty();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            setEnabled(false);
+            try {
+                ((GuiReprAction) context.getRepresentation())
+                        .executeActionForTargets(context, source.getSelectedItems());
+            } finally {
+                source.selectionActionFinished();
+                setEnabled(true);
+            }
+        }
     }
 }

@@ -70,4 +70,14 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
         result = 31 * result + (elementType != null ? elementType.hashCode() : 0);
         return result;
     }
+
+    /** it also checks identity of 2 collections */
+    @Override
+    public boolean equals(Object prevValue, Object nextValue) {
+        if (prevValue == nextValue) {
+            return true;
+        } else {
+            return super.equals(prevValue, nextValue);
+        }
+    }
 }

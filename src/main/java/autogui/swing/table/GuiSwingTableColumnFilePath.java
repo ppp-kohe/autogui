@@ -3,6 +3,8 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.GuiSwingViewFilePathField;
 import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.SearchTextField;
+import autogui.swing.util.SearchTextFieldFilePath;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -10,37 +12,27 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context) {
 
         return new ObjectTableColumnValue(context,
-                new ColumnEditFilePath(context, false),
-                new ColumnEditFilePath(context, true))
+                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, false)),
+                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, true)))
                 .withComparator(Comparator.comparing(Path.class::cast));
     }
 
     public static class ColumnEditFilePath extends GuiSwingViewFilePathField.PropertyFilePathPane {
         protected boolean editor;
         public ColumnEditFilePath(GuiMappingContext context, boolean editor) {
-            super(context);
+            super(context, editor ?
+                    new SearchTextFieldModelFilePath() :
+                    new SearchTextFieldModelFilePathEmpty());
             this.editor = editor;
-        }
-
-        //TODO
-        @Override
-        public void setIconFromSearchedItem(PopupCategorized.CategorizedPopupItem item) {
-            BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR);
-            Graphics2D g = icon.createGraphics();
-            g.setColor(new Color(0, 0,0 ,0));
-            g.fillRect(0, 0, 16, 16);
-            RoundRectangle2D.Float rr = new RoundRectangle2D.Float(3, 3, 10, 10, 4, 4);
-            g.setColor(Color.blue);
-            g.fill(rr);
-            g.dispose();
-            this.icon.setIcon(new ImageIcon(icon));
         }
 
         @Override
@@ -50,10 +42,10 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             add(icon, BorderLayout.WEST);
             add(field, BorderLayout.CENTER);
             setOpaque(true);
-            getField().setOpaque(true);
-            getIcon().setOpaque(true);
             if (!editor) {
                 getField().setBorder(BorderFactory.createEmptyBorder());
+                getField().setOpaque(true);
+                getIcon().setOpaque(true);
                 setBorder(BorderFactory.createEmptyBorder());
             }
         }
@@ -75,6 +67,24 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             super.setForeground(fg);
             icon.setForeground(fg);
             field.setForeground(fg);
+        }
+
+        @Override
+        public void selectSearchedItemFromModel(PopupCategorized.CategorizedPopupItem item) {
+            super.selectSearchedItemFromModel(item);
+        }
+    }
+
+    public static class SearchTextFieldModelFilePathEmpty extends SearchTextFieldFilePath.SearchTextFieldModelFilePath {
+        @Override
+        public boolean isBackgroundTask() {
+            return false;
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextField.SearchTextFieldPublisher publisher) {
+            setSelection(text);
+            return new ArrayList<>();
         }
     }
 }

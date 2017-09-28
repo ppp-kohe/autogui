@@ -1,10 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.*;
-import autogui.base.type.GuiTypeCollection;
-import autogui.base.type.GuiTypeMemberProperty;
-import autogui.base.type.GuiTypeObject;
-import autogui.base.type.GuiTypeValue;
+import autogui.base.type.*;
 import autogui.swing.table.GuiSwingTableColumnBoolean;
 import autogui.swing.table.GuiSwingTableColumnSetDefault;
 import autogui.swing.table.GuiSwingTableColumnString;
@@ -30,6 +27,8 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         set.add(repr);
         set.add(new GuiReprPropertyPane(set));
         set.add(new GuiReprObjectPane(set));
+        set.add(new GuiReprAction());
+        set.add(new GuiReprActionList());
 
         return set;
     }
@@ -80,6 +79,8 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         sSet.addReprClass(GuiReprCollectionTable.class, new GuiSwingViewCollectionTable(sSet));
         sSet.addReprClass(GuiReprObjectPane.class, new GuiSwingViewObjectPane(sSet));
         sSet.addReprClass(GuiReprPropertyPane.class, new GuiSwingViewPropertyPane(sSet));
+        sSet.addReprClass(GuiReprAction.class, new GuiSwingActionDefault());
+        sSet.addReprClass(GuiReprActionList.class, new GuiSwingActionDefault());
 
         context.updateSourceFromRoot();
 
@@ -90,8 +91,11 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
             return comp;
         });
 
-        GuiSwingViewCollectionTable.CollectionTable table = runQuery(component, query(JScrollPane.class, 0)
-                .cat(JViewport.class, 0).cat(GuiSwingViewCollectionTable.CollectionTable.class, 0));
+        GuiSwingViewCollectionTable.CollectionTable table = runQuery(component,
+                query(JPanel.class, 0)
+                .cat(JScrollPane.class, 0)
+                .cat(JViewport.class, 0)
+                .cat(GuiSwingViewCollectionTable.CollectionTable.class, 0));
         table.getSelectionModel().addListSelectionListener(e ->
                 System.out.println(table.getSelectionModel().getMinSelectionIndex() + "-"  +table.getSelectionModel().getMaxSelectionIndex()));
     }
@@ -107,6 +111,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
 
             GuiTypeObject e = new GuiTypeObject(TestElem.class);
             e.addProperties(new TestStrProp(), new TestBoolProp());
+            e.addActions(new TestAction());
             setType(new GuiTypeCollection(List.class, e));
         }
 
@@ -193,6 +198,17 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         }
     }
 
+    public static class TestAction extends GuiTypeMemberActionList {
+        public TestAction() {
+            super("run", new GuiTypeValue(TestElem.class), "run");
+        }
+
+        @Override
+        public Object execute(Object target, List<?> selectedItems) throws Exception {
+            return super.execute(target, selectedItems);
+        }
+    }
+
     public static class TestElem {
         public String hello;
         public boolean world;
@@ -200,6 +216,11 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         public TestElem(String hello, boolean world) {
             this.hello = hello;
             this.world = world;
+        }
+
+        public void run() {
+            hello += "!";
+            world = !world;
         }
     }
 }

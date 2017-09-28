@@ -212,12 +212,6 @@ public class ObjectTableColumn {
     }
 
 
-    public static void setFocusBorder(JComponent component, boolean hasFocus) {
-        if (hasFocus) {
-            component.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
-        } else {
-            component.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
-        }
-    }
+
 
 }

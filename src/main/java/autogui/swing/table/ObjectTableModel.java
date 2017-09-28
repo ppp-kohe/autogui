@@ -57,8 +57,10 @@ public class ObjectTableModel extends AbstractTableModel {
         return futureWaiter;
     }
 
+    /** refresh the table contents */
     public void setSourceFromSupplier() {
         source = sourceSupplier.get();
+        refreshData();
     }
 
     public void setTable(JTable table) {
@@ -176,7 +178,7 @@ public class ObjectTableModel extends AbstractTableModel {
         return columnModel.getColumnCount();
     }
 
-    public void buildDataArray() {
+    public boolean buildDataArray() {
         List<?> src = source;
         if (src == null) {
             src = Collections.emptyList();
@@ -189,6 +191,9 @@ public class ObjectTableModel extends AbstractTableModel {
                 data.length != rows ||
                 data.length > 0 && data[0].length != cols) {
             data = new Object[rows][cols];
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -295,6 +300,19 @@ public class ObjectTableModel extends AbstractTableModel {
     ///////////////////////
 
     /** executed under event thread */
+    public void refreshData() {
+        if (!buildDataArray()) {
+            for (int i = 0, l = data.length; i < l; ++i) {
+                clearRowData(i);
+            }
+            fireTableRowsUpdatedAll();
+        } else {
+            //changed row size
+            fireTableDataChanged();
+        }
+    }
+
+    /** executed under event thread */
     public void refreshRow(int rowIndex) {
         clearRowData(rowIndex);
         fireTableRowsUpdated(rowIndex, rowIndex);
@@ -303,9 +321,7 @@ public class ObjectTableModel extends AbstractTableModel {
     public void clearRowData(int rowIndex) {
         Object[] rowData = data[rowIndex];
         //clear row data for re-taking value from source
-        for (int i = 0, l = rowData.length; i < l; ++i) {
-            rowData[i] = null;
-        }
+        Arrays.fill(rowData, null);
     }
 
     /** executed under event thread */

@@ -67,11 +67,26 @@ public class SearchTextField extends JComponent {
         default boolean isFixedCategorySize() {
             return false;
         }
+
+        default boolean isBackgroundTask() {
+            return true;
+        }
     }
 
     public interface SearchTextFieldPublisher {
         boolean isSearchCancelled();
         void publishSearch(List<PopupCategorized.CategorizedPopupItem> intermediateResult);
+    }
+
+    public static class SearchTextFieldPublisherEmpty implements SearchTextFieldPublisher {
+        @Override
+        public boolean isSearchCancelled() {
+            return false;
+        }
+
+        @Override
+        public void publishSearch(List<PopupCategorized.CategorizedPopupItem> intermediateResult) {
+        }
     }
 
     public interface SearchedItemsListener {
@@ -90,6 +105,11 @@ public class SearchTextField extends JComponent {
         @Override
         public PopupCategorized.CategorizedPopupItem getSelection() {
             return null;
+        }
+
+        @Override
+        public boolean isBackgroundTask() {
+            return false;
         }
     }
 
@@ -295,8 +315,15 @@ public class SearchTextField extends JComponent {
             if (currentTask != null && !currentTask.isDone()) {
                 currentTask.cancel(true);
             }
-            currentTask = createSearchTask(text);
-            currentTask.execute();
+            if (model.isBackgroundTask()) {
+                currentTask = createSearchTask(text);
+                currentTask.execute();
+            } else {
+                //immediate
+                setCurrentSearchedItems(
+                        model.getCandidates(text, field.isEditable(), new SearchTextFieldPublisherEmpty()),
+                        model.getSelection());
+            }
         }
     }
 
@@ -327,7 +354,10 @@ public class SearchTextField extends JComponent {
         }
     }
 
-    /** update model selection and also GUI display */
+    /** the user selects the item from the menu.
+     * update selection in the model and also GUI display.
+     * This is the task using a supplied item supplied by the model.
+     *  So, it does not cause a further update that leads to a background task */
     public void selectSearchedItemFromGui(PopupCategorized.CategorizedPopupItem item) {
         model.select(item);
         setIconFromSearchedItem(item);

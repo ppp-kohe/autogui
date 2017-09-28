@@ -78,7 +78,12 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(Object value) {
-            setValue(value);
+            editingRunner.setEnabled(false);
+            try {
+                setValue(value);
+            } finally {
+                editingRunner.setEnabled(true);
+            }
         }
 
         @Override

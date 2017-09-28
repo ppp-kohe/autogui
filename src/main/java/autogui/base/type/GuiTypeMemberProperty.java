@@ -159,8 +159,15 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         throw new UnsupportedOperationException("no getter: " + name);
     }
 
+    /** use equals of type */
     public Object compareGet(Object prevValue, Object newValue) {
-        if (Objects.equals(prevValue, newValue)) {
+        boolean eq;
+        if (type != null && type instanceof GuiTypeValue) {
+            eq = ((GuiTypeValue) type).equals(prevValue, newValue);
+        } else {
+            eq = Objects.equals(prevValue, newValue);
+        }
+        if (eq) {
             return GuiTypeValue.NO_UPDATE;
         } else {
             return newValue;

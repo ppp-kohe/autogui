@@ -31,6 +31,11 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         protected GuiMappingContext context;
 
         public PropertyFilePathPane(GuiMappingContext context) {
+            this(context, new SearchTextFieldModelFilePath());
+        }
+
+        public PropertyFilePathPane(GuiMappingContext context, SearchTextFieldModelFilePath model) {
+            super(model);
             this.context = context;
             initLazy();
 
@@ -58,22 +63,23 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
                     .collect(Collectors.toList());
         }
 
+        /** update property: the user selects the item fromthe menu, and then update the target property */
         @Override
         public void selectSearchedItemFromGui(PopupCategorized.CategorizedPopupItem item) {
             super.selectSearchedItemFromGui(item);
-            //updated
             GuiReprValueFilePathField path = (GuiReprValueFilePathField) context.getRepresentation();
             path.updateFromGui(context, getFile());
         }
 
+        /** update property: search done, and then the matched item will be set to the target property*/
         @Override
         public void selectSearchedItemFromModel(PopupCategorized.CategorizedPopupItem item) {
             super.selectSearchedItemFromModel(item);
-            //updated
             GuiReprValueFilePathField path = (GuiReprValueFilePathField) context.getRepresentation();
             path.updateFromGui(context, getFile());
         }
 
+        /** no property update */
         public void selectSearchedItemWithoutUpdateContext(PopupCategorized.CategorizedPopupItem item) {
             super.selectSearchedItemFromGui(item);
             //no update callback

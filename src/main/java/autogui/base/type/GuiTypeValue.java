@@ -1,5 +1,7 @@
 package autogui.base.type;
 
+import java.util.Objects;
+
 /**
  * primitive types, their associated boxed types, String, ...
  *   specified by {@link GuiTypeBuilder#getValueTypes()}
@@ -77,5 +79,10 @@ public class GuiTypeValue implements GuiTypeElement {
     @Override
     public int hashCode() {
         return name != null ? name.hashCode() : 0;
+    }
+
+    /** check equality 2 objects: default implementation is calling (shallow) equals */
+    public boolean equals(Object prevValue, Object nextValue) {
+        return Objects.equals(prevValue, nextValue);
     }
 }

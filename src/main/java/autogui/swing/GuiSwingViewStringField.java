@@ -43,7 +43,6 @@ public class GuiSwingViewStringField implements GuiSwingView {
             context.addSourceUpdateListener(this);
 
             update(context, context.getSource());
-            //TODO GuiSwingContextInfo
 
             setInheritsPopupMenu(true);
         }

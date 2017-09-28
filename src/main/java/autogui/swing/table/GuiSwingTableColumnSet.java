@@ -10,6 +10,11 @@ import java.util.function.Supplier;
 public interface GuiSwingTableColumnSet extends GuiSwingElement {
     void createColumns(GuiMappingContext context, ObjectTableModel model);
 
-    List<Action> createColumnActions(GuiMappingContext context, Supplier<Boolean> selectionEmpty,
-                                     Supplier<List<?>> selectionItems);
+    List<Action> createColumnActions(GuiMappingContext context, TableSelectionSource source);
+
+    interface TableSelectionSource {
+        boolean isSelectionEmpty();
+        List<?> getSelectedItems();
+        void selectionActionFinished();
+    }
 }

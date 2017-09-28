@@ -16,7 +16,9 @@ public interface GuiSwingView extends GuiSwingElement {
 
     interface ValuePane {
         Object getSwingViewValue();
-        /** processed under the event thread */
+        /** updates GUI display,
+         *   and it does NOT update the target model value.
+         * processed under the event thread */
         void setSwingViewValue(Object value);
 
         default void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {

@@ -6,6 +6,7 @@ import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingView;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -125,7 +126,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             if (component instanceof GuiSwingView.ValuePane) {
                 ((GuiSwingView.ValuePane) component).setSwingViewValue(value);
             }
-            component.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
+            component.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createEmptyBorder(0, 5, 0, 3),
+                    BorderFactory.createCompoundBorder(
+                            getTableFocusBorder(),
+                            BorderFactory.createEmptyBorder(0, 5, 0, 2))));
             return component;
         }
 
@@ -150,4 +155,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
     }
 
+
+    public static Border getTableFocusBorder() {
+        return UIManager.getBorder("Table.focusCellHighlightBorder");
+    }
 }

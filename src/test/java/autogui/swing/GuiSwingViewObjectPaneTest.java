@@ -30,8 +30,10 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
             return p;
         });
 
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox helloBox = runQuery(pane, query(JComponent.class, 0).cat(GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, 0));
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox worldBox = runQuery(pane, query(JComponent.class, 0).cat(GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, 1));
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox helloBox = runQuery(pane, query(JComponent.class, 0)
+                .cat(JComponent.class, 0).cat(GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, 0));
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox worldBox = runQuery(pane, query(JComponent.class, 0)
+                .cat(JComponent.class, 1).cat(GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, 0));
 
         Assert.assertTrue(helloBox.isSelected());
         Assert.assertFalse(worldBox.isSelected());

@@ -57,8 +57,13 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 new OpenDialogAction(this));
     }
 
+    /** the method is a simulated GUI task originally caused by the user.
+     *   thus, it will cause a new background search task
+     * */
     public void setFile(Path file) {
-        selectSearchedItemFromGui(getFileItem(file));
+        FileItem item = getFileItem(file);
+        selectSearchedItemFromGui(item);
+        editingRunner.schedule(item);
     }
 
     public FileItem getFileItem(Path file) {
@@ -90,7 +95,6 @@ public class SearchTextFieldFilePath extends SearchTextField {
         } else {
             setTextWithoutUpdateField(item.getName());
         }
-        editingRunner.schedule(item);
     }
 
     public static String toPathString(Path p) {
@@ -364,8 +368,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         public List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher) {
             List<PopupCategorized.CategorizedPopupItem> items = new ArrayList<>();
             try {
-                Path path = Paths.get(text);
-                selection = getFileItem(path, "Current", false);
+                Path path = setSelection(text);
 
                 if (publisher.isSearchCancelled()) {
                     return items;
@@ -400,6 +403,12 @@ public class SearchTextFieldFilePath extends SearchTextField {
             } catch (InvalidPathException ex) {
                 return items;
             }
+        }
+
+        public Path setSelection(String text) {
+            Path path = Paths.get(text);
+            selection = getFileItem(path, "Current", false);
+            return path;
         }
 
         public List<FileItem> getCompletionItems(String text, Path path) {

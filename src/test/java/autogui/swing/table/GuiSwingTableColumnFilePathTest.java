@@ -52,8 +52,10 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
             return comp;
         });
 
-        GuiSwingViewCollectionTable.CollectionTable table = runQuery(component, query(JScrollPane.class, 0)
-                .cat(JViewport.class, 0).cat(GuiSwingViewCollectionTable.CollectionTable.class, 0));
+        GuiSwingViewCollectionTable.CollectionTable table = runQuery(component,
+                query(JScrollPane.class, 0)
+                .cat(JViewport.class, 0)
+                .cat(GuiSwingViewCollectionTable.CollectionTable.class, 0));
         table.getSelectionModel().addListSelectionListener(e ->
                 System.out.println(table.getSelectionModel().getMinSelectionIndex() + "-"  +table.getSelectionModel().getMaxSelectionIndex()));
     }
@@ -132,7 +134,7 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
         @Override
         public Object executeGet(Object target, Object prevValue) throws Exception {
             TestPathElem e = (TestPathElem) target;
-            System.err.println("get hello: " + target + " prev: " + prevValue);
+            System.err.println("get world: " + target + " prev: " + prevValue);
             if (e != null) {
                 return compareGet(prevValue, e.world);
             } else {
@@ -143,7 +145,7 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
         @Override
         public Object executeSet(Object target, Object value) throws Exception {
             TestPathElem e = (TestPathElem) target;
-            System.err.println("set hello: " + target + " " + value);
+            System.err.println("set world: " + target + " " + value);
             if (e != null) {
                 e.world = (Path) value;
             }
