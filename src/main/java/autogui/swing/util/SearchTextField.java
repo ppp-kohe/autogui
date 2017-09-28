@@ -112,8 +112,11 @@ public class SearchTextField extends JComponent {
 
     public void initIcon() {
         icon = new JButton(getEmptyIcon());
+        icon.setPreferredSize(new Dimension(16, 16));
+        icon.setBorderPainted(false);
         icon.setOpaque(false);
         icon.setFocusable(false);
+        icon.setBackground(new Color(0, 0, 0, 0));
     }
 
     public Icon getEmptyIcon() {

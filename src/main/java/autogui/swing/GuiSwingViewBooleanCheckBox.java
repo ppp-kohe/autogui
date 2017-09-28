@@ -5,6 +5,7 @@ import autogui.base.mapping.GuiReprValueBooleanCheckBox;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EventObject;
@@ -13,7 +14,13 @@ import java.util.function.Consumer;
 public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
-        return new PropertyCheckBox(context);
+        //wraps the check-box by a panel with flow layout: the size of check-box becomes its preferred size.
+        //  mouse clicks only pointing within bounds of the check-box will be processed
+        JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEADING));
+        pane.setOpaque(false);
+        pane.setBorder(BorderFactory.createEmptyBorder());
+        pane.add(new PropertyCheckBox(context));
+        return pane;
     }
 
     public static class PropertyCheckBox extends JCheckBox

@@ -59,6 +59,40 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         return null;
     }
 
+    public static class ObjectTableCellRenderer implements TableCellRenderer {
+        protected JComponent component;
+
+        /** component must be {@link GuiSwingView.ValuePane }*/
+        public ObjectTableCellRenderer(JComponent component) {
+            this.component = component;
+        }
+
+        public JComponent getComponent() {
+            return component;
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setTableColor(table, component, isSelected);
+            if (component instanceof GuiSwingView.ValuePane) {
+                ((GuiSwingView.ValuePane) component).setSwingViewValue(value);
+            }
+
+            component.setBorder(BorderFactory.createMatteBorder(0, 10, 0, 5, component.getBackground()));
+            return component;
+        }
+    }
+
+    public static void setTableColor(JTable table, JComponent component, boolean isSelected) {
+        if (isSelected) {
+            component.setForeground(table.getSelectionForeground());
+            component.setBackground(table.getSelectionBackground());
+        } else {
+            component.setForeground(table.getForeground());
+            component.setBackground(table.getBackground());
+        }
+    }
+
     public static class ObjectTableCellEditor extends AbstractCellEditor implements TableCellEditor {
         protected JComponent component;
         protected int clickCount = 2;
@@ -91,7 +125,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             if (component instanceof GuiSwingView.ValuePane) {
                 ((GuiSwingView.ValuePane) component).setSwingViewValue(value);
             }
-            setFocusBorder(component, true);
+            component.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
             return component;
         }
 
@@ -116,33 +150,4 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
     }
 
-    public static class ObjectTableCellRenderer implements TableCellRenderer {
-        protected JComponent component;
-
-        /** component must be {@link GuiSwingView.ValuePane }*/
-        public ObjectTableCellRenderer(JComponent component) {
-            this.component = component;
-        }
-
-        public JComponent getComponent() {
-            return component;
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            if (isSelected) {
-                component.setForeground(table.getSelectionForeground());
-                component.setBackground(table.getSelectionBackground());
-            } else {
-                component.setForeground(table.getForeground());
-                component.setBackground(table.getBackground());
-            }
-            setFocusBorder(component, hasFocus);
-            if (component instanceof GuiSwingView.ValuePane) {
-                ((GuiSwingView.ValuePane) component).setSwingViewValue(value);
-            }
-            component.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
-            return component;
-        }
-    }
 }

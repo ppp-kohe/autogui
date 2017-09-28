@@ -1,17 +1,12 @@
 package autogui.swing.table;
 
-import autogui.swing.GuiSwingView;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.Comparator;
-import java.util.EventObject;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -221,7 +216,7 @@ public class ObjectTableColumn {
         if (hasFocus) {
             component.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
         } else {
-            component.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+            component.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
         }
     }
 

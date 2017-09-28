@@ -14,14 +14,16 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context);
         label.setOpaque(true);
         return new ObjectTableColumnValue(context,
-                label,
-                new ColumnEditTextPane(context))
+                new ColumnEditTextPane(context, false),
+                new ColumnEditTextPane(context, true))
                     .withComparator(Comparator.comparing(String.class::cast));
     }
 
     public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyTextPane {
-        public ColumnEditTextPane(GuiMappingContext context) {
+        protected boolean editor;
+        public ColumnEditTextPane(GuiMappingContext context, boolean editor) {
             super(context);
+            this.editor = editor;
         }
 
         @Override
@@ -30,6 +32,11 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             setOpaque(true);
             setLayout(new BorderLayout());
             add(field, BorderLayout.CENTER);
+            if (!editor) {
+                getField().setBorder(BorderFactory.createEmptyBorder());
+                getField().setOpaque(true);
+                setBorder(BorderFactory.createEmptyBorder());
+            }
         }
 
         @Override

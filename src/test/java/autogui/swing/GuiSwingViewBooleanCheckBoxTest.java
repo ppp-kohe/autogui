@@ -8,6 +8,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseEvent;
 
 public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
     public static void main(String[] args) {
@@ -23,11 +25,15 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
         context.setRepresentation(new GuiReprValueBooleanCheckBox());
         context.updateSourceFromRoot();
 
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox propertyPane = runGet(() -> {
-            GuiSwingViewBooleanCheckBox.PropertyCheckBox p = (GuiSwingViewBooleanCheckBox.PropertyCheckBox) box.createView(context);
+        JComponent pp = runGet(() -> {
+            JComponent p = box.createView(context);
             JFrame frame = testFrame(p);
             return p;
         });
+
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox propertyPane = runQuery(pp, query(GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, 0));
+
+
         Assert.assertTrue(runGet(propertyPane::isSelected));
 
         run(propertyPane::doClick);
@@ -43,11 +49,20 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
         context.setRepresentation(new GuiReprValueBooleanCheckBox());
         context.updateSourceFromRoot();
 
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox propertyPane = runGet(() -> {
-            GuiSwingViewBooleanCheckBox.PropertyCheckBox p = (GuiSwingViewBooleanCheckBox.PropertyCheckBox) box.createView(context);
+        JComponent pp = runGet(() -> {
+            JComponent p = box.createView(context);
             JFrame frame = testFrame(p);
+
+            JCheckBox c = new JCheckBox() {
+                @Override
+                protected void processMouseEvent(MouseEvent e) {
+                    super.processMouseEvent(e);
+                }
+            };
             return p;
         });
+
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox propertyPane = runQuery(pp, query(GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, 0));
 
         Assert.assertTrue(runGet(propertyPane::isSelected));
 
@@ -55,8 +70,8 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
         Assert.assertFalse(prop.booleanValue().value);
 
         Assert.assertEquals("hello", propertyPane.getText());
-    }
 
+    }
 
     public static class TestBooleanValue extends GuiTypeValue {
         public boolean value = true;
