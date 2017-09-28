@@ -82,23 +82,34 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 return model.initTableScrollPane(this);
             } else {
                 JPanel pane = new JPanel(new BorderLayout());
-                {
-                    JToolBar actionToolBar = new JToolBar();
-                    actionToolBar.setFloatable(false);
-                    actionToolBar.setOpaque(false);
-
-                    actions.forEach(actionToolBar::add);
-
-                    pane.add(actionToolBar, BorderLayout.PAGE_START);
-
-                    getSelectionModel().addListSelectionListener(e -> {
-                        boolean enabled = !isSelectionEmpty();
-                        actions.forEach(a -> a.setEnabled(a.isEnabled()));
-                    });
-
-                    pane.add(model.initTableScrollPane(this), BorderLayout.CENTER);
-                }
+                pane.add(initActionToolBar(actions), BorderLayout.PAGE_START);
+                pane.add(model.initTableScrollPane(this), BorderLayout.CENTER);
                 return pane;
+            }
+        }
+
+        public JToolBar initActionToolBar(List<Action> actions) {
+            JToolBar actionToolBar = new JToolBar();
+            actionToolBar.setFloatable(false);
+            actionToolBar.setOpaque(false);
+
+            getSelectionModel().addListSelectionListener(e -> {
+                boolean enabled = !isSelectionEmpty();
+                actions.forEach(a -> a.setEnabled(enabled));
+            });
+
+            actions.forEach(a -> initAction(actionToolBar, a));
+
+            return actionToolBar;
+        }
+
+        public void initAction(JToolBar actionToolBar, Action action) {
+            actionToolBar.add(new GuiSwingViewObjectPane.ActionButton(action));
+            action.setEnabled(false);
+
+            String name = (String) action.getValue(Action.NAME);
+            if (name != null) {
+                getActionMap().put(name, action);
             }
         }
 

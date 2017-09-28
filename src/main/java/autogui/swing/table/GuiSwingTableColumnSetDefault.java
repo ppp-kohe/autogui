@@ -43,17 +43,11 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
 
     public static class TableSelectionListAction extends GuiSwingActionDefault.ExecutionAction {
-        protected GuiMappingContext context;
         protected TableSelectionSource source;
 
         public TableSelectionListAction(GuiMappingContext context, TableSelectionSource source) {
             super(context);
             this.source = source;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return !source.isSelectionEmpty();
         }
 
         @Override
@@ -72,12 +66,6 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     public static class TableSelectionAction extends TableSelectionListAction {
         public TableSelectionAction(GuiMappingContext context, TableSelectionSource source) {
             super(context, source);
-        }
-
-        @Override
-        public boolean isEnabled() {
-            System.err.println("enabled? !" + source.isSelectionEmpty());
-            return !source.isSelectionEmpty();
         }
 
         @Override

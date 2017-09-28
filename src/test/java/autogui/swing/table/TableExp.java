@@ -1,7 +1,8 @@
 package autogui.swing.table;
 
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -23,26 +24,38 @@ public class TableExp {
                                     (o,v) -> o.set(j, v));
                         })
                         .collect(Collectors.toList()));
-            frame.add(model.initTableWithScroll());
+            JTable table = new JTable(model);
+
+            JPanel pane = new JPanel(new BorderLayout());
+
+            TestAction ta = new TestAction(table);
+            table.getSelectionModel().addListSelectionListener(e -> {
+                ta.setEnabled(!table.getSelectionModel().isSelectionEmpty());
+            });
+
+            JToolBar toolBar = new JToolBar();
+            toolBar.add(ta);
+            pane.add(toolBar, BorderLayout.PAGE_START);
+            pane.add(new JScrollPane(table));
+
+            frame.add(pane);
         }
         frame.pack();
         frame.setVisible(true);
     }
 
-    static class TableModel extends AbstractTableModel {
-        @Override
-        public int getRowCount() {
-            return 100;
+    static class TestAction extends AbstractAction {
+        JTable table;
+
+        public TestAction(JTable table) {
+            putValue(NAME, "Hello");
+            setEnabled(false);
+            this.table = table;
         }
 
         @Override
-        public int getColumnCount() {
-            return 10;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            return "data-" + columnIndex + "-" + rowIndex;
+        public void actionPerformed(ActionEvent e) {
+            System.out.println("action");
         }
     }
 }

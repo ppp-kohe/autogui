@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import javax.swing.*;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -198,14 +199,16 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         }
     }
 
-    public static class TestAction extends GuiTypeMemberActionList {
+    public static class TestAction extends GuiTypeMemberAction {
         public TestAction() {
-            super("run", new GuiTypeValue(TestElem.class), "run");
+            super("run", (String) null);
         }
 
         @Override
-        public Object execute(Object target, List<?> selectedItems) throws Exception {
-            return super.execute(target, selectedItems);
+        public Object execute(Object target) throws Exception {
+            System.err.println("run " + target);
+            ((TestElem) target).run();
+            return null;
         }
     }
 
