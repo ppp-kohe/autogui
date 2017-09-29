@@ -8,6 +8,9 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -94,15 +97,14 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
     public static class TextServiceDefaultMenuSpinner extends PopupExtensionText.TextServiceDefaultMenu {
         protected GuiMappingContext context;
-        protected NumberSettingPane settingPane;
 
         public TextServiceDefaultMenuSpinner(GuiMappingContext context, TypedSpinnerNumberModel model, JTextComponent textComponent) {
             super(textComponent);
             this.context = context;
-            editActions.add(0, GuiSwingContextInfo.get().getInfoLabel(context));
-
-            settingPane = new NumberSettingPane(model);
-            editActions.add(settingPane);
+            GuiSwingContextInfo info = GuiSwingContextInfo.get();
+            editActions.add(0, info.getInfoLabel(context));
+            editActions.add(new JPopupMenu.Separator());
+            editActions.add(new JMenuItem(new NumberSettingAction(info.getInfoLabel(context), model)));
         }
 
         @Override
@@ -284,6 +286,32 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
     }
 
+
+    ///////////////////
+
+    public static class NumberSettingAction extends AbstractAction {
+        protected NumberSettingPane pane;
+        protected JFrame frame;
+        public NumberSettingAction(JComponent label, TypedSpinnerNumberModel model) {
+            putValue(NAME, "Settings...");
+            pane = new NumberSettingPane(model);
+            frame = new JFrame();
+            frame.setType(Window.Type.UTILITY);
+            {
+                JPanel contentPane = new JPanel(new BorderLayout());
+                contentPane.add(label, BorderLayout.NORTH);
+                contentPane.add(pane, BorderLayout.CENTER);
+                frame.setContentPane(contentPane);
+            }
+            frame.pack();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            frame.setVisible(true);
+        }
+    }
+
     public static class NumberSettingPane extends JPanel {
         protected SpinnerNumberModel model;
         protected JSpinner minSpinner;
@@ -293,9 +321,9 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected boolean disableChange = false;
 
         public NumberSettingPane(TypedSpinnerNumberModel model) {
-            setLayout(new FlowLayout(FlowLayout.LEADING));
             setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
             setOpaque(false);
+            setFocusable(false);
             this.model = model;
 
             minSpinner = new JSpinner(new TypedSpinnerNumberModel(model.getType()));
@@ -312,17 +340,22 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             maxSpinner.setPreferredSize(spinnerSize);
             stepSpinner.setPreferredSize(spinnerSize);
 
-            minSpinner.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 25));
-            maxSpinner.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 25));
-            stepSpinner.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-
-            add(new JLabel("Min:"));
-            add(minSpinner);
-            add(new JLabel("Max:"));
-            add(maxSpinner);
-            add(new JLabel("Step:"));
-            add(stepSpinner);
+            setLayout(new ResizableFlowLayout(false).setFitHeight(true));
+            ResizableFlowLayout.add(this,
+                    pane(new JLabel("Min:"), minSpinner), false);
+            ResizableFlowLayout.add(this,
+                    pane(new JLabel("Max:"), maxSpinner), false);
+            ResizableFlowLayout.add(this,
+                    pane(new JLabel("Step:"), stepSpinner), false);
             updateFromModel(null);
+        }
+        private JPanel pane(JComponent label, JComponent value) {
+            Dimension min = value.getMinimumSize();
+            min.width = 100;
+            value.setMinimumSize(min);
+            return ResizableFlowLayout.create(true)
+                    .add(label).add(value, true)
+                    .getContainer();
         }
 
         public void updateFromModel(ChangeEvent e) {

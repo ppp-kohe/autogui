@@ -95,7 +95,10 @@ public class MenuBuilder {
 
         public void add(JComponent item) {
             if (item instanceof JMenuItem) {
-                item.setEnabled(((JMenuItem) item).getAction().isEnabled());;
+                Action a = ((JMenuItem) item).getAction();
+                if (a != null) {
+                    item.setEnabled(a.isEnabled());
+                }
             }
             menu.add(item);
             ++count;

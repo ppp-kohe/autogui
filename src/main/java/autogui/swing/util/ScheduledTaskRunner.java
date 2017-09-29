@@ -25,10 +25,25 @@ public class ScheduledTaskRunner<EventType> {
 
     protected boolean enabled = true;
 
+    public static ScheduledExecutorService sharedExecutor;
+
     public ScheduledTaskRunner(long delay, Consumer<List<EventType>> consumer) {
         this.delay = delay;
-        executor = Executors.newSingleThreadScheduledExecutor();
+        executor = getSharedExecutor();
         this.consumer = consumer;
+    }
+
+    public ScheduledTaskRunner(long delay, Consumer<List<EventType>> consumer, ScheduledExecutorService executor) {
+        this.delay = delay;
+        this.executor = executor;
+        this.consumer = consumer;
+    }
+
+    public static ScheduledExecutorService getSharedExecutor() {
+        if (sharedExecutor == null) {
+            sharedExecutor = Executors.newScheduledThreadPool(4);
+        }
+        return sharedExecutor;
     }
 
     public Consumer<List<EventType>> getConsumer() {
@@ -86,8 +101,8 @@ public class ScheduledTaskRunner<EventType> {
         }
     }
 
-    public void shutdown() {
-        this.executor.shutdown();
+    public ScheduledExecutorService getExecutor() {
+        return executor;
     }
 
     public static class EditingRunner extends ScheduledTaskRunner<Object>
