@@ -26,6 +26,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     public static class PropertyCheckBox extends JCheckBox
             implements ActionListener, GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
+        protected PopupExtension popup;
 
         public PropertyCheckBox(GuiMappingContext context) {
             addActionListener(this);
@@ -44,13 +45,15 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
             update(context, context.getSource());
 
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
-            PopupExtension ext = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-                menu.removeAll();
-                menu.add(info);
-                menu.revalidate();
+            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+                menu.accept(info);
             });
-            ext.addListenersTo(this);
             setInheritsPopupMenu(true);
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
         }
 
         @Override

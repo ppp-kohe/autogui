@@ -8,7 +8,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
@@ -32,7 +31,6 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
         });
 
         GuiSwingViewBooleanCheckBox.PropertyCheckBox propertyPane = runQuery(pp, query(GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, 0));
-
 
         Assert.assertTrue(runGet(propertyPane::isSelected));
 

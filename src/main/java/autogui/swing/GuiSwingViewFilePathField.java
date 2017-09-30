@@ -4,6 +4,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueFilePathField;
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupExtension;
 import autogui.swing.util.SearchTextFieldFilePath;
 
 import javax.swing.*;
@@ -37,14 +38,20 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         public PropertyFilePathPane(GuiMappingContext context, SearchTextFieldModelFilePath model) {
             super(model);
             this.context = context;
-            initLazy();
 
             getField().setEditable(((GuiReprValueFilePathField) context.getRepresentation())
                     .isEditable(context));
 
+            initLazy();
+
             context.addSourceUpdateListener(this);
             update(context, context.getSource());
             setInheritsPopupMenu(true);
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
         }
 
         @Override

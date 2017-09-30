@@ -106,9 +106,8 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
     }
 
     @Override
-    public void build(PopupExtension sender, JPopupMenu menu) {
+    public void build(PopupExtension sender, Consumer<Object> menu) {
         Iterable<CategorizedPopupItem> items = itemSupplier.get();
-        menu.removeAll();
         if (items != null) {
             Map<String,List<JComponent>> categorizedMenuItems = new LinkedHashMap<>();
             categorizedMenuItems.put(CATEGORY_LABEL, new ArrayList<>());
@@ -124,7 +123,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
             buildCategories(sender, menu, categorizedMenuItems, size);
 
             if (size == 0) {
-                menu.add(getMenuBuilder().createLabel("Nothing"));
+                menu.accept(getMenuBuilder().createLabel("Nothing"));
             }
         }
     }
@@ -144,7 +143,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         }
     }
 
-    public void buildCategories(PopupExtension sender, JPopupMenu menu,
+    public void buildCategories(PopupExtension sender, Consumer<Object> menu,
                                 Map<String,List<JComponent>> categorizedMenuItems, int totalSize) {
         MenuBuilder menuBuilder = getMenuBuilder();
         MenuBuilder.AddingProcess process = menuBuilder.addingProcess(menu, totalSize);
@@ -191,7 +190,8 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
             super(itemSupplier, itemConsumer);
         }
 
-        public void buildCategories(PopupExtension sender, JPopupMenu menu,
+        @Override
+        public void buildCategories(PopupExtension sender, Consumer<Object> menu,
                                     Map<String,List<JComponent>> categorizedMenuItems, int totalSize) {
             MenuBuilder menuBuilder = getMenuBuilder();
             for (Map.Entry<String, List<JComponent>> e : categorizedMenuItems.entrySet()) {

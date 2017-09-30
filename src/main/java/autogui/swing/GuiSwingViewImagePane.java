@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.mapping.GuiReprValueImagePane;
 import autogui.swing.util.MenuBuilder;
+import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
 import javax.imageio.ImageIO;
@@ -13,7 +14,9 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class GuiSwingViewImagePane implements GuiSwingView {
     @Override
@@ -40,6 +43,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         protected float maxImageScale = 1f;
         protected boolean editable;
 
+        protected PopupExtension popup;
+
         public PropertyImagePane(GuiMappingContext context) {
             this.context = context;
 
@@ -50,15 +55,12 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             update(context, context.getSource());
 
             JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
-            PopupExtension ext = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-                menu.removeAll();
-                menu.add(label);
-                menu.add(createSizeInfo(getImageSize()));
-                menu.add(new ImageCopyAction(getImage()));
-                menu.add(new ImagePasteAction(this));
-                menu.revalidate();
+            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+                menu.accept(label);
+                menu.accept(createSizeInfo(getImageSize()));
+                menu.accept(new ImageCopyAction(getImage()));
+                menu.accept(new ImagePasteAction(this));
             });
-            ext.addListenersTo(this);
 
             setTransferHandler(new ImageTransferHandler(this));
             setInheritsPopupMenu(true);
@@ -66,6 +68,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public JComponent createSizeInfo(Dimension size) {
             return MenuBuilder.get().createLabel(String.format("Size: %,d x %,d", size.width, size.height));
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
         }
 
         public boolean isEditable() {
@@ -97,9 +104,13 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
             this.image = image;
             imageSize = img.getSize(context, image);
-            setPreferredSize(imageSize);
+            setPreferredSizeFromImageSize();
             revalidate();
             repaint();
+        }
+
+        public void setPreferredSizeFromImageSize() {
+            setPreferredSize(imageSize);
         }
 
         public void setImage(Image image) {

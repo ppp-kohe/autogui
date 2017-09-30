@@ -29,7 +29,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         return true;
     }
 
-    public static void initText(JEditorPane pane, GuiMappingContext context) {
+    public static PopupExtension initText(JEditorPane pane, GuiMappingContext context) {
         GuiMappingContext.SourceUpdateListener l = (GuiMappingContext.SourceUpdateListener) pane;
         context.addSourceUpdateListener(l);
         l.update(context, context.getSource());
@@ -38,13 +38,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
         List<Action> actions = PopupExtensionText.getEditActions(pane);
         PopupExtensionText ext = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-            menu.removeAll();
-            menu.add(info);
-            actions.forEach(menu::add);
-            menu.revalidate();
+            menu.accept(info);
+            actions.forEach(menu::accept);
         });
-        ext.addListenersTo(pane);
         pane.setInheritsPopupMenu(true);
+        return ext;
     }
 
     public static void updateText(JEditorPane pane, GuiMappingContext context, Object newValue) {
@@ -63,10 +61,16 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static class PropertyDocumentEditorPane extends JEditorPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
+        protected PopupExtension popup;
 
         public PropertyDocumentEditorPane(GuiMappingContext context) {
             this.context = context;
-            initText(this, context);
+            popup = initText(this, context);
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
         }
 
         @Override
@@ -89,10 +93,16 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static class PropertyDocumentTextPane extends JTextPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
+        protected PopupExtension popup;
 
         public PropertyDocumentTextPane(GuiMappingContext context) {
             this.context = context;
-            initText(this, context);
+            popup = initText(this, context);
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
         }
 
         @Override

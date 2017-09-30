@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Arrays;
 import java.util.EventObject;
 import java.util.function.Consumer;
 
@@ -27,6 +28,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             implements GuiMappingContext.SourceUpdateListener, ItemListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
         protected boolean listenerEnabled = true;
+        protected PopupExtension popup;
 
         public PropertyEnumComboBox(GuiMappingContext context) {
             super(getEnumConstants(context));
@@ -42,15 +44,22 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             addItemListener(this);
 
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
-            PopupExtension ext = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender,menu) -> {
-                menu.removeAll();
-                menu.add(info);
-                menu.revalidate();
+            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender,menu) -> {
+                menu.accept(info);
             });
-            ext.addListenersTo(this);
+
+            //it supposes that the combo-box has a button that describes popup selection
+            Arrays.stream(getComponents())
+                    .filter(JButton.class::isInstance)
+                    .forEach(c -> c.addMouseListener(popup));
+
             setInheritsPopupMenu(true);
         }
 
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
+        }
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {

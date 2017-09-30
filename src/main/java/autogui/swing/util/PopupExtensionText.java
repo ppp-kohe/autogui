@@ -12,6 +12,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -87,8 +88,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
 
         @Override
-        public void build(PopupExtension sender, JPopupMenu menu) {
-            menu.removeAll();
+        public void build(PopupExtension sender, Consumer<Object> menu) {
             MenuBuilder builder = getMenuBuilder();
             builder.addMenuItems(menu, editActions, null);
         }

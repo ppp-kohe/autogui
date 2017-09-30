@@ -1,5 +1,8 @@
 package autogui.swing.table;
 
+import autogui.swing.GuiSwingView;
+import autogui.swing.util.PopupExtension;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
@@ -10,6 +13,7 @@ import java.util.Comparator;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ObjectTableColumn {
     protected TableColumn tableColumn;
@@ -128,6 +132,29 @@ public class ObjectTableColumn {
         return this;
     }
 
+    /** returns {@link TableColumn#getCellRenderer()} if the renderer is a {@link PopupMenuBuilderSource} itself.
+     *  <p>
+     *  Note: the actions added by the builder will only work with single (last) value of the renderer,
+     *    set by {@link autogui.swing.GuiSwingView.ValuePane#setSwingViewValue(Object)}.
+     *    So when the action is invoked,
+     *       it will need to iterate over the selected rows, set the target value and invoke the action for each row.
+     *       After the each action invoked, it might need to check the value.
+     *  */
+    public PopupMenuBuilderSource getMenuBuilderSource() {
+        TableCellRenderer r = getTableColumn().getCellRenderer();
+        if (r instanceof PopupMenuBuilderSource) {
+            return (PopupMenuBuilderSource) r;
+        } else {
+            return null;
+        }
+    }
+
+    public interface PopupMenuBuilderSource {
+        GuiSwingView.ValuePane getMenuTargetPane();
+        PopupExtension.PopupMenuBuilder getMenuBuilder();
+    }
+
+
     ////////////////
 
     public static class ObjectTableColumnRowIndex extends ObjectTableColumn {
@@ -142,7 +169,7 @@ public class ObjectTableColumn {
         }
     }
 
-    public static class NumberRenderer extends DefaultTableCellRenderer {
+    public static class NumberRenderer extends DefaultTableCellRenderer  {
         public NumberRenderer() {
             setHorizontalAlignment(JLabel.RIGHT);
         }

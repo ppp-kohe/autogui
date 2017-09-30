@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueStringField;
 import autogui.swing.util.NamedPane;
+import autogui.swing.util.PopupExtension;
 import autogui.swing.util.SearchTextField;
 
 import javax.swing.*;
@@ -54,6 +55,11 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         public void initLazy() {
             super.init();
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
         }
 
         @Override

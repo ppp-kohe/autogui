@@ -44,6 +44,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
     public static class PropertyPane extends JComponent {
         protected GuiMappingContext context;
         protected JComponent content;
+        protected PopupExtension popup;
 
         public PropertyPane(GuiMappingContext context, boolean showName) {
             this.context = context;
@@ -56,10 +57,8 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             }
 
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
-            new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-                menu.removeAll();
-                menu.add(info);
-                menu.revalidate();
+            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+                menu.accept(info);
             }); //TODO
             setInheritsPopupMenu(true);
         }

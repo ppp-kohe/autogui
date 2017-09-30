@@ -4,6 +4,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionElement;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingView;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -60,7 +61,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         return null;
     }
 
-    public static class ObjectTableCellRenderer implements TableCellRenderer {
+    public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource {
         protected JComponent component;
 
         /** component must be {@link GuiSwingView.ValuePane }*/
@@ -81,6 +82,24 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
             component.setBorder(BorderFactory.createMatteBorder(0, 10, 0, 5, component.getBackground()));
             return component;
+        }
+
+        @Override
+        public GuiSwingView.ValuePane getMenuTargetPane() {
+            if (component instanceof GuiSwingView.ValuePane) {
+                return (GuiSwingView.ValuePane) component;
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getMenuBuilder() {
+            if (component instanceof GuiSwingView.ValuePane) {
+                return ((GuiSwingView.ValuePane) component).getSwingMenuBuilder();
+            } else {
+                return null;
+            }
         }
     }
 

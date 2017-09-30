@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,12 +27,18 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
     public static class PropertyEmbeddedPane extends JComponent
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
+        protected PopupExtension popup;
 
         public PropertyEmbeddedPane(GuiMappingContext context) {
             setLayout(new BorderLayout());
             this.context = context;
             update(context, context.getSource());
             setPreferredSize(new Dimension(300, 200));
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return (sender, menu) -> {};
         }
 
         @Override

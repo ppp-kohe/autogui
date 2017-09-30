@@ -24,6 +24,9 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         public ColumnEditTextPane(GuiMappingContext context, boolean editor) {
             super(context);
             this.editor = editor;
+            if (!editor) {
+                getField().setEditable(false);
+            }
         }
 
         @Override

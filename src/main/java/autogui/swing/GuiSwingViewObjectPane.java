@@ -10,6 +10,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -76,6 +78,8 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         protected JToolBar actionToolBar;
         protected JComponent contentPane;
         protected JComponent resizableSubComponents;
+        protected PopupExtension popup;
+        protected List<Action> actions = new ArrayList<>();
 
         public ObjectPane(GuiMappingContext context) {
             this.context = context;
@@ -87,10 +91,10 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             context.addSourceUpdateListener(this);
 
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
-            new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-                menu.removeAll();
-                menu.add(info);
-                menu.revalidate();
+            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+                menu.accept(info);
+                menu.accept(new JPopupMenu.Separator());
+                actions.forEach(menu::accept);
             }); //TODO
             setInheritsPopupMenu(true);
         }
@@ -101,6 +105,10 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             ResizableFlowLayout layout = new ResizableFlowLayout(false, 10);
             layout.setFitHeight(true);
             contentPane.setLayout(layout);
+        }
+
+        public List<Action> getActions() {
+            return actions;
         }
 
         public JComponent getContentPane() {
@@ -174,6 +182,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
                 initActionToolBar();
             }
             actionToolBar.add(new ActionButton(action));
+            actions.add(action);
         }
 
         public void initActionToolBar() {

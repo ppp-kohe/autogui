@@ -9,6 +9,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -23,7 +24,13 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     protected Action action;
 
     public interface PopupMenuBuilder {
-        void build(PopupExtension sender, JPopupMenu menu);
+        void build(PopupExtension sender, Consumer<Object> menu);
+
+        default void buildWithClear(PopupExtension sender, JPopupMenu menu) {
+            menu.removeAll();
+            build(sender, new MenuBuilder.MenuAppender(menu));
+            menu.revalidate();
+        }
     }
 
     public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder, JPopupMenu menu) {
@@ -136,6 +143,10 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         return menuBuilder;
     }
 
+    public void setMenuBuilder(PopupMenuBuilder menuBuilder) {
+        this.menuBuilder = menuBuilder;
+    }
+
     public JComponent getPane() {
         return pane;
     }
@@ -220,7 +231,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     }
 
     public void setupMenu() {
-        menuBuilder.build(this, menu.get());
+        menuBuilder.buildWithClear(this, menu.get());
     }
 
     /////////////////

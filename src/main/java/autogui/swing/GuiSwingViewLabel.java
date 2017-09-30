@@ -24,6 +24,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
         protected Object value;
+        protected PopupExtension popup;
 
         public PropertyLabel(GuiMappingContext context) {
             this.context = context;
@@ -36,13 +37,15 @@ public class GuiSwingViewLabel implements GuiSwingView {
             update(context, context.getSource());
 
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
-            PopupExtension ext = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-                menu.removeAll();
-                menu.add(info);
-                menu.revalidate();
+            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
+                menu.accept(info);
             });
-            ext.addListenersTo(this);
             setInheritsPopupMenu(true);
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
         }
 
         @Override
@@ -59,7 +62,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
         public void setSwingViewValue(Object value) {
             GuiReprValue label = (GuiReprValue) context.getRepresentation();
             this.value = value;
-            setText((String) label.toUpdateValue(context, value));
+            setText("" + label.toUpdateValue(context, value));
         }
     }
 }

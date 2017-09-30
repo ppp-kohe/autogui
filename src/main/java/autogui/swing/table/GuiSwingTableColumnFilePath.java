@@ -19,7 +19,6 @@ import java.util.List;
 public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context) {
-
         return new ObjectTableColumnValue(context,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, false)),
                 new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, true)))
@@ -33,6 +32,9 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
                     new SearchTextFieldModelFilePath() :
                     new SearchTextFieldModelFilePathEmpty());
             this.editor = editor;
+            if (!editor) {
+                getField().setEditable(false);
+            }
         }
 
         @Override

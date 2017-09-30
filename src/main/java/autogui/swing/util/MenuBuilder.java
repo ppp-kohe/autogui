@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * <pre>
@@ -46,42 +47,42 @@ public class MenuBuilder {
         this.maxItems = maxItems;
     }
 
-    public AddingProcess addingProcess(JComponent root, int size) {
+    public AddingProcess addingProcess(Consumer<Object> root, int size) {
         return new AddingProcess(root, size, maxItems);
     }
 
-    public void addMenuItems(JComponent menu, List<? extends JComponent> items) {
+    public void addMenuItems(Consumer<Object> menu, List<? extends JComponent> items) {
         addMenuItems(menu, items, null, items.size());
     }
 
-    public void addMenuItems(JComponent menu, List<? extends JComponent> items, String title) {
+    public void addMenuItems(Consumer<Object> menu, List<? extends JComponent> items, String title) {
         addMenuItems(menu, items, title, items.size());
     }
 
-    public void addMenuItems(JComponent menu, List<? extends JComponent> items, String title, int maxSize) {
+    public void addMenuItems(Consumer<Object> menu, List<? extends JComponent> items, String title, int maxSize) {
         AddingProcess process = addingProcess(menu, maxSize);
         addMenuItems(process, items, title);
     }
 
     public void addMenuItems(AddingProcess process, List<? extends JComponent> items, String title) {
-        JComponent menu = process.getMenu();
-        if (menu.getComponentCount() > 0 && !items.isEmpty()) {
-            menu.add(new JPopupMenu.Separator());
+        Consumer<Object>  menu = process.getMenu();
+        if (process.getCount() > 0 && !items.isEmpty()) {
+            menu.accept(new JPopupMenu.Separator());
         }
         if (title != null) {
-            menu.add(createLabel(title));
+            menu.accept(createLabel(title));
         }
         items.forEach(process::add);
     }
 
     public static class AddingProcess {
-        protected JComponent menu;
+        protected Consumer<Object> menu;
         protected int count;
         protected int[] max;
         protected int size;
         protected int level;
 
-        public AddingProcess(JComponent menu, int size, int... max) {
+        public AddingProcess(Consumer<Object> menu, int size, int... max) {
             this.menu = menu;
             this.count = 0;
             this.max = max;
@@ -89,23 +90,27 @@ public class MenuBuilder {
             this.size = size;
         }
 
-        public JComponent getMenu() {
+        public Consumer<Object> getMenu() {
             return menu;
+        }
+
+        public int getCount() {
+            return count;
         }
 
         public void add(JComponent item) {
             if (item instanceof JMenuItem) {
                 item.setEnabled(((JMenuItem) item).getAction().isEnabled());;
             }
-            menu.add(item);
+            menu.accept(item);
             ++count;
             --size;
             if (count >= max[level]) {
                 count = 0;
                 JMenu subMenu = new JMenu(size <= 0 ? "..." : (size + " Items"));
                 subMenu.setForeground(Color.darkGray);
-                menu.add(subMenu);
-                menu = subMenu;
+                menu.accept(subMenu);
+                menu = new MenuAppender(subMenu);
                 if (level + 1 < max.length) {
                     ++level;
                 }
@@ -121,5 +126,34 @@ public class MenuBuilder {
         comp.add(label);
         comp.setOpaque(false);
         return comp;
+    }
+
+    public MenuAppender createAppender(JComponent menu) {
+        return new MenuAppender(menu);
+    }
+
+    public static class MenuAppender implements Consumer<Object> {
+        protected JComponent menu;
+
+        public MenuAppender(JComponent menu) {
+            this.menu = menu;
+        }
+
+        @Override
+        public void accept(Object o) {
+            if (o instanceof Action) {
+                if (menu instanceof JMenu) {
+                    ((JMenu) menu).add((Action) o);
+                } else if (menu instanceof JPopupMenu) {
+                    ((JPopupMenu) menu).add((Action) o);
+                } else {
+                    menu.add(new JMenuItem((Action) o));
+                }
+            } else if (o instanceof JMenuItem) {
+                menu.add((JMenuItem) o);
+            } else if (o instanceof JComponent) {
+                menu.add((JComponent) o);
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.util.EventObject;
@@ -23,5 +24,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
         default void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
         }
+
+        PopupExtension.PopupMenuBuilder getSwingMenuBuilder();
     }
 }

@@ -1,18 +1,23 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprAction;
-import autogui.base.mapping.GuiReprActionList;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.table.GuiSwingTableColumnSet;
 import autogui.swing.table.GuiSwingTableColumnSetDefault;
+import autogui.swing.table.ObjectTableColumn;
 import autogui.swing.table.ObjectTableModel;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class GuiSwingViewCollectionTable implements GuiSwingView {
@@ -61,6 +66,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                         GuiSwingTableColumnSet.TableSelectionSource {
         protected GuiMappingContext context;
         protected List<?> source;
+        protected PopupExtensionCollection popup;
+        protected List<Action> actions = new ArrayList<>();
 
         public CollectionTable(GuiMappingContext context) {
             this.context = context;
@@ -72,10 +79,20 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             context.addSourceUpdateListener(this);
 
+            JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
+            List<JComponent> items = new ArrayList<>();
+            items.add(label);
+            //TODO ?
+            popup = new PopupExtensionCollection(this, PopupExtension.getDefaultKeyMatcher(), items);
+
+            setCellSelectionEnabled(true);
+            setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
             update(context, context.getSource());
         }
 
         public JComponent initAfterAddingColumns(List<Action> actions) {
+            this.actions.addAll(actions);
             ObjectTableModel model = getObjectTableModel();
             model.initTableWithoutScrollPane(this);
             if (actions.isEmpty()) {
@@ -111,6 +128,15 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (name != null) {
                 getActionMap().put(name, action);
             }
+        }
+
+        public List<Action> getActions() {
+            return actions;
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
         }
 
         public ObjectTableModel getObjectTableModel() {
@@ -152,7 +178,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (source != null) {
                 for (int i = sel.getMinSelectionIndex(), max = sel.getMaxSelectionIndex(); i <= max; ++i) {
                     if (i >= 0 && sel.isSelectedIndex(i)) {
-                        selected.add(source.get(i));
+                        selected.add(source.get(convertRowIndexToModel(i)));
                     }
                 }
             }
@@ -165,15 +191,177 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             List<Integer> is = new ArrayList<>();
             for (int i = sel.getMinSelectionIndex(), max = sel.getMaxSelectionIndex(); i <= max; ++i) {
                 if (i >= 0 && sel.isSelectedIndex(i)) {
-                    is.add(i);
+                    is.add(convertRowIndexToModel(i));
                 }
             }
 
             getObjectTableModel().refreshRows(is.stream()
                     .mapToInt(Integer::intValue).toArray());
         }
+    }
+
+    public static class PopupExtensionCollection extends PopupExtension {
+        protected CollectionTable table;
+        protected int targetColumnIndex = -1;
+        protected int lastClickColumnIndex = 0;
+
+        public PopupExtensionCollection(CollectionTable pane, Predicate<KeyEvent> keyMatcher, List<JComponent> items) {
+            super(pane, keyMatcher, null);
+            this.table = pane;
+            setMenuBuilder(new CollectionColumnMenuSupplier(table, () -> {
+                List<JComponent> comps = new ArrayList<>();
+                comps.addAll(items);
+                table.getActions().stream()
+                        .map(JMenuItem::new)
+                        .forEach(comps::add);
+                return comps;
+            }));
+        }
+
+        public CollectionTable getTable() {
+            return table;
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            int viewColumn = table.columnAtPoint(e.getPoint());
+            lastClickColumnIndex = table.convertColumnIndexToView(viewColumn);
+            if (e.isPopupTrigger()) {
+                targetColumnIndex = lastClickColumnIndex;
+            }
+            super.mousePressed(e);
+        }
+
+        @Override
+        public void showByKey(KeyEvent e, Component comp) {
+            int row = table.getSelectedRow();
+            int col = table.getSelectedColumn();
+            if (col < 0) {
+                col = lastClickColumnIndex;
+            } else {
+                targetColumnIndex = table.convertColumnIndexToModel(col);
+            }
+            if (row != -1) {
+                Rectangle rect = table.getCellRect(row, col, true);
+                int x = rect.x + rect.width / 3;
+                int y = rect.y + rect.height;
+                show(comp, x, y);
+            } else {
+                super.showByKey(e, comp);
+            }
+        }
+
+        /** model index*/
+        public int getTargetColumnIndex() {
+            return targetColumnIndex;
+        }
+
+        public ObjectTableColumn getTargetColumn() {
+            if (targetColumnIndex >= 0 &&
+                    targetColumnIndex < table.getObjectTableModel().getColumnCount()) {
+                return table.getObjectTableModel().getColumns().get(targetColumnIndex);
+            } else {
+                return null;
+            }
+        }
+    }
+
+    public static class CollectionColumnMenuSupplier implements PopupExtension.PopupMenuBuilder {
+        protected CollectionTable table;
+        protected Supplier<? extends Collection<JComponent>> items;
+
+        public CollectionColumnMenuSupplier(CollectionTable table, Supplier<? extends Collection<JComponent>> items) {
+            this.table = table;
+            this.items = items;
+        }
+
+        @Override
+        public void build(PopupExtension sender, Consumer<Object> menu) {
+            if (items != null) {
+                items.get().forEach(menu::accept);
+            }
+
+            if (sender instanceof PopupExtensionCollection) {
+                ObjectTableColumn column = ((PopupExtensionCollection) sender).getTargetColumn();
+                ObjectTableColumn.PopupMenuBuilderSource src = (column == null ? null : column.getMenuBuilderSource());
+                if (src != null) {
+                    PopupExtension.PopupMenuBuilder builder = src.getMenuBuilder();
+                    if (builder != null) {
+                        builder.build(sender, new CollectionRowsActionBuilder(table, column, menu));
+                    }
+                }
+            }
+        }
 
     }
 
+    public static class CollectionRowsActionBuilder implements Consumer<Object> {
+        protected CollectionTable table;
+        protected ObjectTableColumn column;
+        protected Consumer<Object> menu;
 
+        public CollectionRowsActionBuilder(CollectionTable table, ObjectTableColumn column, Consumer<Object> menu) {
+            this.table = table;
+            this.column = column;
+            this.menu = menu;
+        }
+
+        @Override
+        public void accept(Object o) {
+            if (o instanceof Action) {
+                addAction((Action) o);
+            } else if (o instanceof JMenuItem) {
+                Action action = ((JMenuItem) o).getAction();
+                addAction(action);
+            } else {
+                menu.accept(o);
+            }
+        }
+
+        public void addAction(Action a) {
+            menu.accept(new CollectionRowsAction(table, column, a));
+        }
+    }
+
+    public static class CollectionRowsAction extends AbstractAction {
+        protected CollectionTable table;
+        protected ObjectTableColumn column;
+        protected Action action;
+
+        public CollectionRowsAction(CollectionTable table, ObjectTableColumn column, Action action) {
+            this.table = table;
+            this.column = column;
+            this.action = action;
+            putValue(NAME, action.getValue(NAME));
+            putValue(Action.LARGE_ICON_KEY, action.getValue(LARGE_ICON_KEY));
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return !table.isSelectionEmpty() && action.isEnabled();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            ObjectTableColumn.PopupMenuBuilderSource source = (column == null ? null : column.getMenuBuilderSource());
+            ValuePane valuePane = (source == null ? null : source.getMenuTargetPane());
+
+            for (int row : table.getSelectedRows()) {
+                Object prev = null;
+                if (valuePane != null) {
+                    int modelRow = table.convertRowIndexToModel(row);
+                    prev = table.getObjectTableModel().getValueAt(modelRow, table.getObjectTableModel().getColumns().indexOf(column));
+                    //TODO future value?
+                    valuePane.setSwingViewValue(prev);
+                }
+                //TODO how to handle copy action? : copy, copy, copy,... they overwrites the clipboard contents. For file path, aggregate those copies as single-copy as a file-path-list
+                action.actionPerformed(e);
+                if (valuePane != null) {
+                    Object next = valuePane.getSwingViewValue();
+                    //TODO compare?
+
+                }
+            }
+        }
+    }
 }
