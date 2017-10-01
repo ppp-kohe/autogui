@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.type.GuiTypeValue;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
@@ -40,6 +41,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         PopupExtensionText ext = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
             menu.accept(info);
             actions.forEach(menu::accept);
+            if (pane instanceof ValuePane) {
+                menu.accept(new GuiSwingJsonTransfer.JsonCopyAction((ValuePane) pane, context));
+            }
         });
         pane.setInheritsPopupMenu(true);
         return ext;

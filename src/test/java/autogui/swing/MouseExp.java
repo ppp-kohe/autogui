@@ -3,8 +3,10 @@ package autogui.swing;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.awt.event.*;
 import java.io.File;
@@ -14,10 +16,11 @@ import java.util.List;
 public class MouseExp {
     public static void main(String[] args) {
         JFrame frame = new JFrame();
+        DragPane dragPane;
         {
             JPanel  pane = new JPanel();
 
-            pane.add(new DragPane());
+            pane.add(dragPane = new DragPane());
 
             JButton btn = new JButton("Test");
             pane.add(btn);
@@ -39,6 +42,10 @@ public class MouseExp {
             addMouseListener(this);
             th = DragSource.getDragThreshold();
             setTransferHandler(new ImageTransferHandler(this));
+            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this,
+                    DnDConstants.ACTION_COPY, e -> {
+                        getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
+                    });
         }
         int th;
         int pressX;
@@ -47,14 +54,15 @@ public class MouseExp {
 
         @Override
         public void mouseDragged(MouseEvent e) {
-            if (start) {
-                int dx = Math.abs(e.getX() - pressX);
-                int dy = Math.abs(e.getY() - pressY);
-                if (dx >= th || dy >= th) {
-                    getTransferHandler().exportAsDrag(this, e, TransferHandler.COPY);
-                }
-            }
+//            if (start) {
+//                int dx = Math.abs(e.getX() - pressX);
+//                int dy = Math.abs(e.getY() - pressY);
+//                if (dx >= th || dy >= th) {
+//                    getTransferHandler().exportAsDrag(this, e, TransferHandler.COPY);
+//                }
+//            }
         }
+
 
         public void setImage(Image image) {
             this.image = image;
@@ -203,12 +211,24 @@ public class MouseExp {
 
         @Override
         protected Transferable createTransferable(JComponent c) {
+            setDragImage(imagePane.image);
             return new GuiSwingViewImagePane.ImageSelection(imagePane.image);
         }
+
 
         @Override
         protected void exportDone(JComponent source, Transferable data, int action) {
             super.exportDone(source, data, action);
         }
+
+        @Override
+        public Icon getVisualRepresentation(Transferable t) {
+            System.err.println("visual: " + t);
+            if (t instanceof GuiSwingViewImagePane.ImageSelection) {
+                return new ImageIcon(((GuiSwingViewImagePane.ImageSelection) t).getImage());
+            }
+            return super.getVisualRepresentation(t);
+        }
+
     }
 }

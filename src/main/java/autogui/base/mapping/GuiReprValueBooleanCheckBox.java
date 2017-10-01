@@ -14,4 +14,19 @@ public class GuiReprValueBooleanCheckBox extends GuiReprValue {
             return (Boolean) newValue;
         }
     }
+
+    /**
+     *
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return Boolean
+     */
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        if (source instanceof Boolean) {
+            return source;
+        } else {
+            return null;
+        }
+    }
 }

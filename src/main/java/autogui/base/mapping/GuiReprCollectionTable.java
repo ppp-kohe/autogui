@@ -1,5 +1,6 @@
 package autogui.base.mapping;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,5 +32,22 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
         } else {
             return (List<?>) newValue;
         }
+    }
+
+    /**
+     *
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return List: { elementJson, ... }.  Note: null elements are skipped
+     */
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        for (GuiMappingContext elementContext : context.getChildren()) {
+            Object obj = elementContext.getRepresentation().toJson(elementContext, source);
+            if (obj != null) {
+                return obj;
+            }
+        }
+        return null;
     }
 }

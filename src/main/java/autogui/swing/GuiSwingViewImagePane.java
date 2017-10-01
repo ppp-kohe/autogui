@@ -60,6 +60,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 menu.accept(createSizeInfo(getImageSize()));
                 menu.accept(new ImageCopyAction(getImage()));
                 menu.accept(new ImagePasteAction(this));
+                menu.accept(new GuiSwingJsonTransfer.JsonCopyAction(this, context));
             });
 
             setTransferHandler(new ImageTransferHandler(this));
@@ -219,6 +220,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public ImageSelection(Image image) {
             this.image = image;
+        }
+
+        public Image getImage() {
+            return image;
         }
 
         @Override

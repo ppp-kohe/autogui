@@ -31,6 +31,21 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
                 BigDecimal.class.isAssignableFrom(retType);
     }
 
+    /**
+     *
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return Number or String (for BigInteger and BigDecimal)
+     */
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        if (source instanceof BigInteger || source instanceof BigDecimal) {
+            return source.toString();
+        } else {
+            return toUpdateValue(context, source);
+        }
+    }
+
     public interface NumberType {
         Class<? extends Number> getNumberClass();
         /** the maximum value, it might be an Infinity */

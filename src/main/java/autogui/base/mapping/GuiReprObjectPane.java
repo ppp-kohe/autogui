@@ -1,5 +1,10 @@
 package autogui.base.mapping;
 
+import autogui.base.type.GuiTypeValue;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class GuiReprObjectPane extends GuiReprValue {
     protected GuiRepresentation subRepresentation;
 
@@ -26,4 +31,37 @@ public class GuiReprObjectPane extends GuiReprValue {
         }
     }
 
+    /**
+     *
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return Map: { propertyName: propertyJson }
+     */
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        return toJsonFromObject(context, source);
+    }
+
+    public static Object toJsonFromObject(GuiMappingContext context, Object source) {
+        Map<String, Object> map = new HashMap<>(context.getChildren().size());
+        for (GuiMappingContext subContext : context.getChildren()) {
+            if (subContext.isTypeElementProperty()) {
+                GuiRepresentation subRepr = subContext.getRepresentation();
+                try {
+                    Object prevValue = subContext.getSource();
+                    Object nextValue = subContext.getTypeElementAsProperty().executeGet(source, prevValue);
+                    if (nextValue != null && nextValue.equals(GuiTypeValue.NO_UPDATE)) {
+                        nextValue = prevValue;
+                    }
+                    Object subObj = subRepr.toJson(subContext, nextValue);
+                    if (subObj != null) {
+                        map.put(subContext.getName(), subObj);
+                    }
+                } catch (Exception ex) {
+                    //nothing
+                }
+            }
+        }
+        return map;
+    }
 }

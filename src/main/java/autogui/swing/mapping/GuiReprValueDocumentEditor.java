@@ -80,7 +80,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     public Object toSourceValue(GuiMappingContext context, Document document) {
-        Class<?> cls = context.getTypeElementValue().getType();
+        Class<?> cls = this.getValueType(context);
         if (Document.class.isAssignableFrom(cls)) {
             return document;
         } else if (AbstractDocument.Content.class.isAssignableFrom(cls)) {
@@ -96,6 +96,35 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     public boolean isStyledDocument(GuiMappingContext context) {
         //return StyledDocument.class.isAssignableFrom(getValueType(context));
         return true; //enables style change
+    }
+
+    /**
+     *
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return document text String
+     */
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        if (source instanceof Document) {
+            Document doc = (Document) source;
+            try {
+                return doc.getText(0, doc.getLength());
+            } catch (Exception ex) {
+                return null;
+            }
+        } else if (source instanceof AbstractDocument.Content) {
+            AbstractDocument.Content content = (AbstractDocument.Content) source;
+            try {
+                return content.getString(0, content.length());
+            } catch (Exception ex) {
+                return null;
+            }
+        } else if (source instanceof StringBuilder) {
+            return source.toString();
+        } else {
+            return null;
+        }
     }
 
     public static class ContentWrappingDocument extends DefaultStyledDocument {

@@ -23,4 +23,9 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
             return null;
         }).runNoError();
     }
+
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        return null;
+    }
 }

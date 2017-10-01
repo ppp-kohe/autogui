@@ -15,4 +15,19 @@ public class GuiReprValueStringField extends GuiReprValue {
             return "";
         }
     }
+
+    /**
+     *
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return String
+     */
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        if (source instanceof String) {
+            return source;
+        } else {
+            return null;
+        }
+    }
 }

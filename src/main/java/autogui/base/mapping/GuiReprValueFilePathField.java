@@ -10,8 +10,25 @@ public class GuiReprValueFilePathField extends GuiReprValue {
     }
 
     public Path toUpdateValue(GuiMappingContext context, Object value) {
-        return (Path) value;
+        if (value instanceof File) {
+            return ((File) value).toPath();
+        } else {
+            return (Path) value;
+        }
     }
 
-
+    /**
+     *
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return path String
+     */
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        if (source != null) {
+            return toUpdateValue(context, source).toString();
+        } else {
+            return null;
+        }
+    }
 }

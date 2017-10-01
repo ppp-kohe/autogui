@@ -37,4 +37,9 @@ public class GuiReprSet implements GuiRepresentation {
         }
         return false;
     }
+
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        return null;
+    }
 }

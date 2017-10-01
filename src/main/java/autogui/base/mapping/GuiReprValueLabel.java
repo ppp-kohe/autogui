@@ -6,4 +6,15 @@ public class GuiReprValueLabel extends GuiReprValue {
     public String toUpdateValue(GuiMappingContext context, Object newValue) {
         return Objects.toString(newValue);
     }
+
+    /**
+     *
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return always null
+     */
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        return null;
+    }
 }

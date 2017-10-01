@@ -1,5 +1,10 @@
 package autogui.base.mapping;
 
+import autogui.base.type.GuiTypeValue;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class GuiReprCollectionElement implements GuiRepresentation {
     protected GuiRepresentation representation;
 
@@ -14,7 +19,7 @@ public class GuiReprCollectionElement implements GuiRepresentation {
     @Override
     public boolean match(GuiMappingContext context) {
         if (context.isParentCollectionTable() && !context.isCollectionElement()) {
-            context.setRepresentation(this); //temporarly set this for avoiding self recursion with checking isCollectionElement()
+            context.setRepresentation(this); //temporally set this for avoiding self recursion with checking isCollectionElement()
             if (representation.match(context)) {
                 //overwrites the matched and set representation with wrapping it
                 GuiRepresentation elementRepr = context.getRepresentation();
@@ -53,7 +58,12 @@ public class GuiReprCollectionElement implements GuiRepresentation {
     public Object getCellValue(GuiMappingContext context, GuiMappingContext subContext,
                                Object src, int rowIndex, int columnIndex) throws Exception {
         if (subContext.isTypeElementProperty()) {
-            return subContext.getTypeElementAsProperty().executeGet(src, null);
+            Object val =  subContext.getTypeElementAsProperty().executeGet(src, null);
+            if (val != null && val.equals(GuiTypeValue.NO_UPDATE)) {
+                return null;
+            } else {
+                return val;
+            }
         } else {
             if (representation instanceof GuiReprPropertyPane) {
                 return src;
@@ -78,5 +88,28 @@ public class GuiReprCollectionElement implements GuiRepresentation {
         } else if (subContext.isTypeElementValue() || subContext.isTypeElementObject() || subContext.isTypeElementCollection()) {
             subContext.getTypeElementValue().writeValue(null, newValue);
         }
+    }
+
+    /**
+     *
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return List: { elementJson, ... }.  Note: null elements are skipped
+     */
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        List<?> list = (List<?>) source;
+        List<Object> array = new ArrayList<>(list.size());
+        for (Object element : list) {
+            //there are several cases of wrapped repr:
+            //   regular object element: element(object) { property,... }
+            //   value object element: element(String) { String } //child-repr == wrapped-repr
+            // In both cases, the wrapped repr. can properly handle an element as its source
+            Object e = getRepresentation().toJson(context, element);
+            if (e != null) {
+                array.add(e);
+            }
+        }
+        return array;
     }
 }

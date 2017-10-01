@@ -131,4 +131,9 @@ public class GuiReprValue implements GuiRepresentation {
     public Object toUpdateValue(GuiMappingContext context, Object value) {
         return value;
     }
+
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        return null;
+    }
 }

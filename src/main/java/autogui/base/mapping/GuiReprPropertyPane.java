@@ -1,5 +1,7 @@
 package autogui.base.mapping;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /** [propertyName: [  propertyValueField  ] ]
@@ -70,5 +72,15 @@ public class GuiReprPropertyPane extends GuiReprValue {
 
     public boolean isEditableFromChild(GuiMappingContext context) {
         return isEditable(context.getParent());
+    }
+
+    /**
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return Map: { propertyName: propertyJson, ... }
+     */
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        return GuiReprObjectPane.toJsonFromObject(context, source);
     }
 }

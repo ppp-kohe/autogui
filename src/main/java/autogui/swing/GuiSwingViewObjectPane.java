@@ -73,7 +73,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
      *   ... ]
      *  </pre>
      */
-    public static class ObjectPane extends JPanel implements GuiMappingContext.SourceUpdateListener {
+    public static class ObjectPane extends JPanel implements GuiMappingContext.SourceUpdateListener, ValuePane {
         protected GuiMappingContext context;
         protected JToolBar actionToolBar;
         protected JComponent contentPane;
@@ -97,6 +97,8 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
                 actions.forEach(menu::accept);
             }); //TODO
             setInheritsPopupMenu(true);
+
+            actions.add(new GuiSwingJsonTransfer.JsonCopyAction(this, context));
         }
 
         public void initContentPane() {
@@ -190,6 +192,23 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             actionToolBar.setFloatable(false);
             actionToolBar.setOpaque(false);
             add(actionToolBar, BorderLayout.PAGE_START);
+        }
+
+        @Override
+        public Object getSwingViewValue() {
+            return context.getSource();
+        }
+
+        @Override
+        public void setSwingViewValue(Object value) {
+            context.setSource(value);
+            revalidate();
+            repaint();
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
         }
     }
 

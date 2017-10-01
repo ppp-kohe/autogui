@@ -27,4 +27,9 @@ public class GuiReprActionList implements GuiRepresentation {
             context.errorWhileUpdateSource(ex);
         }
     }
+
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        return null;
+    }
 }

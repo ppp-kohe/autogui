@@ -3,9 +3,13 @@ package autogui.swing.mapping;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
+import java.awt.image.RenderedImage;
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -86,6 +90,55 @@ public class GuiReprValueImagePane extends GuiReprValue {
                     || ((infoflags & (ImageObserver.WIDTH | ImageObserver.HEIGHT)) != 0);
             finish.set(f);
             return !f;
+        }
+    }
+
+    /**
+     *
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return image bytes encoded as PNG base64 String.
+     *   For non-RenderedImage, it temporally creates a BufferedImage and renders the source to the image.
+     */
+    @Override
+    public Object toJson(GuiMappingContext context, Object source) {
+        RenderedImage img = getRenderedImage(context, source);
+        if (img != null) {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            try {
+                ImageIO.write(img, "png", bytes);
+                return Base64.getEncoder().encodeToString(bytes.toByteArray());
+            } catch (Exception ex) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    public RenderedImage getRenderedImage(GuiMappingContext context, Object source) {
+        if (source instanceof RenderedImage) { //including BufferedImage
+            return (RenderedImage) source;
+        } else if (source instanceof Image) {
+            Image image = (Image) source;
+            Dimension size = getSize(context, image);
+            BufferedImage tmp = new BufferedImage(size.width, size.height, BufferedImage.TYPE_4BYTE_ABGR);
+            Graphics2D g = tmp.createGraphics();
+            {
+                int count = 0;
+                while (!g.drawImage(image, 0, 0, null) &&
+                        count < 100_000) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (Exception ex) {
+                        break;
+                    }
+                    ++count;
+                }
+            }
+            g.dispose();
+            return tmp;
+        } else {
+            return null;
         }
     }
 }

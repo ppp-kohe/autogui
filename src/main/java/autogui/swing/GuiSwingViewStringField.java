@@ -64,7 +64,10 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         @Override
         public List<? extends JComponent> getPopupEditMenuItems() {
-            return Stream.concat(Stream.of(GuiSwingContextInfo.get().getInfoLabel(context)),
+            return Stream.concat(
+                    Stream.of(
+                            GuiSwingContextInfo.get().getInfoLabel(context),
+                            new JMenuItem(new GuiSwingJsonTransfer.JsonCopyAction(this, context))),
                     super.getPopupEditMenuItems().stream())
                     .collect(Collectors.toList());
         }

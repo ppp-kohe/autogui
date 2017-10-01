@@ -15,6 +15,15 @@ public interface GuiRepresentation {
         return true;
     }
 
+    /**
+     *
+     * @param context a context holds the representation
+     * @param source  the converted object
+     * @return JSON objects representing the source;
+     *    {@link String}, {@link Number}, {@link Boolean}, {@link java.util.List}, {@link java.util.Map} or null
+     */
+    Object toJson(GuiMappingContext context, Object source);
+
     GuiReprNone NONE = new GuiReprNone();
 
     class GuiReprNone implements GuiRepresentation {
@@ -25,6 +34,11 @@ public interface GuiRepresentation {
         @Override
         public boolean checkAndUpdateSource(GuiMappingContext context) {
             return false;
+        }
+
+        @Override
+        public Object toJson(GuiMappingContext context, Object source) {
+            return null;
         }
     }
 

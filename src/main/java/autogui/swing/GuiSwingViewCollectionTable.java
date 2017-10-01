@@ -9,12 +9,12 @@ import autogui.swing.table.ObjectTableModel;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -362,6 +362,43 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
                 }
             }
+        }
+    }
+
+    public static class TableTarget {
+        protected JTable table;
+        protected int column; //model
+
+        public TableTarget(JTable table, int column) {
+            this.table = table;
+            this.column = column;
+        }
+
+        public Object getSelectedCellValue() {
+            int row = table.getSelectedRow();
+            if (row < 0) {
+                return null;
+            } else {
+                int modelRow = table.convertRowIndexToModel(row);
+                return table.getModel().getValueAt(modelRow, column);
+            }
+        }
+
+        public Map<Integer,Object> getSelectedCellValues() {
+            int[] rows = table.getSelectedRows();
+            Map<Integer, Object> map = new HashMap<>(rows.length);
+            TableModel model = table.getModel();
+            for (int row : rows) {
+                int modelRow = table.convertRowIndexToView(row);
+                map.put(modelRow, model.getValueAt(modelRow, column));
+            }
+            return map;
+        }
+
+        public void setCellValues(Map<Integer,Object> rowToValues) {
+            TableModel model = table.getModel();
+            rowToValues.forEach((modelRow, value) ->
+                    model.setValueAt(value, modelRow, column));
         }
     }
 }

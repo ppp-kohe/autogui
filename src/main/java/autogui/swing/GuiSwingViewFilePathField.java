@@ -39,10 +39,10 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
             super(model);
             this.context = context;
 
+            initLazy();
             getField().setEditable(((GuiReprValueFilePathField) context.getRepresentation())
                     .isEditable(context));
 
-            initLazy();
 
             context.addSourceUpdateListener(this);
             update(context, context.getSource());
