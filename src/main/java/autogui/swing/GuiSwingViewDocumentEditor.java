@@ -17,7 +17,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
         JComponent text = doc.isStyledDocument(context) ?
                 new PropertyDocumentTextPane(context) : new PropertyDocumentEditorPane(context);
-        JScrollPane pane = new JScrollPane(text, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane pane = new GuiSwingView.ValueScrollPane(text, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         if (context.isTypeElementProperty()) {
             return new GuiSwingViewPropertyPane.PropertyPane(context, true, pane);
         } else {
@@ -32,20 +32,26 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
     public static PopupExtension initText(JEditorPane pane, GuiMappingContext context) {
         GuiMappingContext.SourceUpdateListener l = (GuiMappingContext.SourceUpdateListener) pane;
+        //context update
         context.addSourceUpdateListener(l);
+        //initial update
         l.update(context, context.getSource());
+
         pane.setPreferredSize(new Dimension(400, 400));
 
+        //popup
         JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
         List<Action> actions = PopupExtensionText.getEditActions(pane);
         PopupExtensionText ext = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
             menu.accept(info);
             actions.forEach(menu::accept);
             if (pane instanceof ValuePane) {
-                menu.accept(new GuiSwingJsonTransfer.JsonCopyAction((ValuePane) pane, context));
+                GuiSwingJsonTransfer.getActions((ValuePane) pane, context)
+                    .forEach(menu::accept);
             }
         });
         pane.setInheritsPopupMenu(true);
+
         return ext;
     }
 

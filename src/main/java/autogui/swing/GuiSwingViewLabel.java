@@ -2,19 +2,21 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
-import autogui.base.mapping.GuiReprValueLabel;
-import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragSource;
 
 public class GuiSwingViewLabel implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
         PropertyLabel label = new PropertyLabel(context);
         if (context.isTypeElementProperty()) {
-            return new NamedPane(context.getDisplayName(), label);
+            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), label);
         } else {
             return label;
         }
@@ -32,15 +34,23 @@ public class GuiSwingViewLabel implements GuiSwingView {
             setMinimumSize(new Dimension(100, 20));
             setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
+            //context update
             context.addSourceUpdateListener(this);
-
+            //inital update
             update(context, context.getSource());
 
+            //popup
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.accept(info);
             });
             setInheritsPopupMenu(true);
+
+            //drag
+            setTransferHandler(new LabelTransferHandler(this));
+            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, e -> {
+                getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
+            });
         }
 
         @Override
@@ -63,6 +73,34 @@ public class GuiSwingViewLabel implements GuiSwingView {
             GuiReprValue label = (GuiReprValue) context.getRepresentation();
             this.value = value;
             setText("" + label.toUpdateValue(context, value));
+        }
+
+        public String getValueAsString() {
+            GuiReprValue label = (GuiReprValue) context.getRepresentation();;
+            return "" + label.toUpdateValue(context, getSwingViewValue());
+        }
+    }
+
+    public static class LabelTransferHandler extends  TransferHandler {
+        protected PropertyLabel pane;
+
+        public LabelTransferHandler(PropertyLabel pane) {
+            this.pane = pane;
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            return false;
+        }
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return COPY;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            return new StringSelection(pane.getValueAsString());
         }
     }
 }

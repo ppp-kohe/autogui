@@ -3,8 +3,11 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionElement;
 import autogui.base.mapping.GuiReprValue;
+import autogui.swing.GuiSwingActionDefault;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionText;
+import autogui.swing.util.SearchTextFieldFilePath;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -12,10 +15,15 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.nio.file.Path;
 import java.util.EventObject;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class ObjectTableColumnValue extends ObjectTableColumn {
     protected GuiMappingContext context;
@@ -39,6 +47,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         setTableColumn(new TableColumn(0, 64, renderer,
                 value.isEditable(context) ? editor : null));
         getTableColumn().setHeaderValue(context.getDisplayName());
+
+        if (renderer instanceof ObjectTableCellRenderer) {
+            ((ObjectTableCellRenderer) renderer).setOwnerColumn(this);
+        }
     }
 
     @Override
@@ -63,6 +75,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
     public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource {
         protected JComponent component;
+        protected ObjectTableColumn ownerColumn;
 
         /** component must be {@link GuiSwingView.ValuePane }*/
         public ObjectTableCellRenderer(JComponent component) {
@@ -71,6 +84,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         public JComponent getComponent() {
             return component;
+        }
+
+        public void setOwnerColumn(ObjectTableColumn ownerColumn) {
+            this.ownerColumn = ownerColumn;
+        }
+
+        public ObjectTableColumn getOwnerColumn() {
+            return ownerColumn;
         }
 
         @Override
@@ -96,7 +117,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         @Override
         public PopupExtension.PopupMenuBuilder getMenuBuilder() {
             if (component instanceof GuiSwingView.ValuePane) {
-                return ((GuiSwingView.ValuePane) component).getSwingMenuBuilder();
+                PopupExtension.PopupMenuBuilder rendererPaneOriginalBuilder = ((GuiSwingView.ValuePane) component).getSwingMenuBuilder();;
+                return new ObjectTableColumnActionBuilder(getOwnerColumn(), rendererPaneOriginalBuilder);
             } else {
                 return null;
             }
@@ -178,4 +200,191 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     public static Border getTableFocusBorder() {
         return UIManager.getBorder("Table.focusCellHighlightBorder");
     }
+
+
+    public static class ObjectTableColumnActionBuilder implements PopupExtension.PopupMenuBuilder {
+        protected ObjectTableColumn column;
+        protected PopupExtension.PopupMenuBuilder paneOriginalBuilder;
+
+        public ObjectTableColumnActionBuilder(ObjectTableColumn column, PopupExtension.PopupMenuBuilder paneOriginalBuilder) {
+            this.column = column;
+            this.paneOriginalBuilder = paneOriginalBuilder;
+        }
+
+        @Override
+        public void build(PopupExtension sender, Consumer<Object> menu) {
+            JComponent pane = sender.getPane();
+            if (pane instanceof JTable &&
+                    ((JTable) pane).getModel() instanceof ObjectTableModel) {
+                JTable table = (JTable) pane;
+
+                paneOriginalBuilder.build(sender, new CollectionRowsActionBuilder(table, column, menu));
+            }
+        }
+    }
+
+    public static class CollectionRowsActionBuilder implements Consumer<Object> {
+        protected JTable table;
+        protected ObjectTableColumn column;
+        protected Consumer<Object> menu;
+        protected TableTarget target;
+
+        public CollectionRowsActionBuilder(JTable table, ObjectTableColumn column, Consumer<Object> menu) {
+            this.table = table;
+            this.column = column;
+            this.menu = menu;
+            target = new TableTarget(table, column.getTableColumn().getModelIndex());
+        }
+
+        @Override
+        public void accept(Object o) {
+            if (o instanceof Action) {
+                addAction((Action) o);
+            } else if (o instanceof JMenuItem) {
+                Action action = ((JMenuItem) o).getAction();
+                addAction(action);
+            } else {
+                menu.accept(o);
+            }
+        }
+
+        public void addAction(Action a) {
+            if (a instanceof TableTargetAction) {
+                menu.accept(new TableTargetExecutionAction((TableTargetAction) a, target));
+
+            } else if (a instanceof PopupExtensionText.TextCopyAllAction) {
+                menu.accept(new TableTargetInvocationAction(a, target,
+                        (e, t) -> ((PopupExtensionText.TextCopyAllAction) a).actionPerformedOnTable(e,
+                                t.getSelectedCellValues().values())));
+
+            } else if (a instanceof PopupExtensionText.TextPasteAllAction) {
+                menu.accept(new TableTargetInvocationAction(a, target,
+                        (e, t) -> ((PopupExtensionText.TextPasteAllAction) a)
+                                .pasteLines(t::setSelectedCellValuesLoop)));
+
+            } else if (a instanceof SearchTextFieldFilePath.FileListEditAction) {
+                menu.accept(new TableTargetInvocationAction(a, target,
+                        (e, t) -> ((SearchTextFieldFilePath.FileListEditAction) a)
+                                .run(t::setSelectedCellValuesLoop)));
+
+            } else if (a instanceof SearchTextFieldFilePath.FileListAction) {
+                menu.accept(new TableTargetInvocationAction(a, target,
+                        (e, t) -> ((SearchTextFieldFilePath.FileListAction) a)
+                                .run(t.getSelectedCellValues().values().stream()
+                                        .map(Path.class::cast)
+                                        .collect(Collectors.toList()))));
+
+            } else if (a instanceof GuiSwingActionDefault.ExecutionAction) {
+                menu.accept(new TableRowsRepeatAction(table, column, a));
+            }
+            //else : disabled
+        }
+    }
+
+    public static class TableTargetExecutionAction extends AbstractAction {
+        protected TableTargetAction action;
+        protected TableTarget target;
+
+        public TableTargetExecutionAction(TableTargetAction action, TableTarget target) {
+            this.action = action;
+            this.target = target;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return !target.isSelectionEmpty();
+        }
+
+        @Override
+        public Object getValue(String key) {
+            return action.getValue(key);
+        }
+
+        public TableTarget getTarget() {
+            return target;
+        }
+
+        public TableTargetAction getAction() {
+            return action;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            action.actionPerformedOnTable(e, target);
+        }
+    }
+
+    public static class TableTargetInvocationAction extends AbstractAction {
+        protected Action action;
+        protected TableTarget target;
+        protected BiConsumer<ActionEvent, TableTarget> invoker;
+
+        public TableTargetInvocationAction(Action action, TableTarget target, BiConsumer<ActionEvent, TableTarget> invoker) {
+            this.action = action;
+            this.target = target;
+            this.invoker = invoker;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return !target.isSelectionEmpty();
+        }
+
+        @Override
+        public Object getValue(String key) {
+            return action.getValue(key);
+        }
+
+        public TableTarget getTarget() {
+            return target;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            invoker.accept(e, target);
+        }
+    }
+
+
+    public static class TableRowsRepeatAction extends AbstractAction {
+        protected JTable table;
+        protected ObjectTableColumn column;
+        protected Action action;
+
+        public TableRowsRepeatAction(JTable table, ObjectTableColumn column, Action action) {
+            this.table = table;
+            this.column = column;
+            this.action = action;
+            putValue(NAME, action.getValue(NAME));
+            putValue(Action.LARGE_ICON_KEY, action.getValue(LARGE_ICON_KEY));
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return !table.getSelectionModel().isSelectionEmpty() && action.isEnabled();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            ObjectTableColumn.PopupMenuBuilderSource source = (column == null ? null : column.getMenuBuilderSource());
+            GuiSwingView.ValuePane valuePane = (source == null ? null : source.getMenuTargetPane());
+
+            for (int row : table.getSelectedRows()) {
+                Object prev = null;
+                if (valuePane != null) {
+                    int modelRow = table.convertRowIndexToModel(row);
+                    prev = table.getModel().getValueAt(modelRow, column.getTableColumn().getModelIndex());
+                    //TODO future value?
+                    valuePane.setSwingViewValue(prev);
+                }
+                action.actionPerformed(e);
+                if (valuePane != null) {
+                    Object next = valuePane.getSwingViewValue();
+                    //TODO compare?
+
+                }
+            }
+        }
+    }
+
 }

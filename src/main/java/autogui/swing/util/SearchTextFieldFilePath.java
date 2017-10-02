@@ -3,6 +3,8 @@ package autogui.swing.util;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +45,9 @@ public class SearchTextFieldFilePath extends SearchTextField {
         FileTransferHandler handler = new FileTransferHandler(this);
         setTransferHandler(handler);
         getField().setTransferHandler(handler);
+        DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(getField(), DnDConstants.ACTION_COPY, e -> {
+            getTransferHandler().exportAsDrag(getField(), e.getTriggerEvent(), TransferHandler.COPY);
+        });
     }
 
     @Override
@@ -128,17 +133,31 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         @Override
         public boolean canImport(TransferSupport support) {
-            return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
+            return component.getField().isEnabled() &&
+                    support.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
+                    support.isDataFlavorSupported(DataFlavor.stringFlavor);
         }
 
         @Override
         public boolean importData(TransferSupport support) {
-            return Arrays.stream(support.getDataFlavors())
-                    .filter(DataFlavor.javaFileListFlavor::equals)
-                    .map(f -> getTransferDataAsFiles(support, f))
-                    .map(this::select)
-                    .findFirst()
-                    .orElse(false);
+            if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                return Arrays.stream(support.getDataFlavors())
+                        .filter(DataFlavor.javaFileListFlavor::equals)
+                        .map(f -> getTransferDataAsFiles(support, f))
+                        .map(this::select)
+                        .findFirst()
+                        .orElse(false);
+            } else if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                try {
+                    String str = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+                    String line = str.split("\\n")[0];
+                    return select(Collections.singletonList(Paths.get(line.trim()).toFile()));
+                } catch (Exception ex) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
         }
 
         @SuppressWarnings("unchecked")
@@ -156,6 +175,21 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 return true;
             }  else {
                 return false;
+            }
+        }
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return COPY;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            Path path = component.getFile();
+            if (path != null) {
+                return new FileSelection(Collections.singletonList(path));
+            } else {
+                return null;
             }
         }
     }

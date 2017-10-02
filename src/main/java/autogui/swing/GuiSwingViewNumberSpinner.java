@@ -2,7 +2,10 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
-import autogui.swing.util.*;
+import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionText;
+import autogui.swing.util.ResizableFlowLayout;
+import autogui.swing.util.ScheduledTaskRunner;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -10,6 +13,11 @@ import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.text.*;
 import java.util.EventObject;
@@ -22,7 +30,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyNumberSpinner spinner = new PropertyNumberSpinner(context);
         if (context.isTypeElementProperty()) {
-            return new NamedPane(context.getDisplayName(), spinner);
+            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), spinner);
         } else {
             return spinner;
         }
@@ -171,19 +179,36 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public PropertyNumberSpinner(GuiMappingContext context) {
             super(createModel(context));
             this.context = context;
-            editingRunner = new ScheduledTaskRunner.EditingRunner(500, this::updateNumber);
 
+            //value update
+            editingRunner = new ScheduledTaskRunner.EditingRunner(500, this::updateNumber);
             addChangeListener(editingRunner);
 
+            //value update: text
             JTextField field = ((DefaultEditor) getEditor()).getTextField();
             field.addActionListener(editingRunner);
 
+            //context update
             context.addSourceUpdateListener(this);
+            //initial update
             update(context, context.getSource());
 
-            popup = new PopupExtensionText(field, PopupExtension.getDefaultKeyMatcher(),
-                    new TextServiceDefaultMenuSpinner(context, (TypedSpinnerNumberModel) getModel(), field));
+            //popup actions
+            TextServiceDefaultMenuSpinner menu = new TextServiceDefaultMenuSpinner(context,
+                    (TypedSpinnerNumberModel) getModel(), field);
+            menu.getEditActions().addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
+
+            //popup
+            popup = new PopupExtensionText(field, PopupExtension.getDefaultKeyMatcher(), menu);
             setInheritsPopupMenu(true);
+
+            //drag drop
+            NumberTransferHandler h = new NumberTransferHandler(this);
+            setTransferHandler(h);
+            field.setTransferHandler(h);
+            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, e -> {
+                getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
+            });
         }
 
         @Override
@@ -193,7 +218,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public static TypedSpinnerNumberModel createModel(GuiMappingContext context) {
             GuiReprValueNumberSpinner repr = (GuiReprValueNumberSpinner) context.getRepresentation();
-            return new TypedSpinnerNumberModel(repr.getType(repr.getValueType(context)));
+            return new TypedSpinnerNumberModel(GuiReprValueNumberSpinner.getType(repr.getValueType(context)));
         }
 
         public void updateNumber(List<Object> events) {
@@ -244,6 +269,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             editActions.add(0, info.getInfoLabel(context));
             editActions.add(new JPopupMenu.Separator());
             editActions.add(new JMenuItem(new NumberSettingAction(info.getInfoLabel(context), model)));
+
         }
 
     }
@@ -344,6 +370,52 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
     }
 
+
+    public static class NumberTransferHandler extends TransferHandler {
+        protected PropertyNumberSpinner pane;
+
+        public NumberTransferHandler(PropertyNumberSpinner pane) {
+            this.pane = pane;
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            return pane.getEditorField().isEditValid() &&
+                    support.isDataFlavorSupported(DataFlavor.stringFlavor);
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                try {
+                    String data = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+                    Object val = pane.getEditorField().getFormatter().stringToValue(data);
+                    pane.setSwingViewValue(val);
+                    return true;
+                } catch (Exception ex) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return COPY;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            Object val = pane.getSwingViewValue();
+            try {
+                String str = pane.getEditorField().getFormatter().valueToString(val);
+                return new StringSelection(str);
+            } catch (Exception ex) {
+                return null;
+            }
+        }
+    }
 
     ///////////////////
 

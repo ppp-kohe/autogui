@@ -2,25 +2,18 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.swing.table.GuiSwingTableColumnSet;
-import autogui.swing.table.GuiSwingTableColumnSetDefault;
-import autogui.swing.table.ObjectTableColumn;
-import autogui.swing.table.ObjectTableModel;
+import autogui.swing.table.*;
+import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
-import autogui.swing.util.PopupExtensionText;
-import autogui.swing.util.SearchTextFieldFilePath;
 
 import javax.swing.*;
-import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import java.util.function.*;
-import java.util.stream.Collectors;
 
 public class GuiSwingViewCollectionTable implements GuiSwingView {
     protected GuiSwingMapperSet columnMapperSet;
@@ -74,23 +67,29 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public CollectionTable(GuiMappingContext context) {
             this.context = context;
 
+            //model
             ObjectTableModel model = new ObjectTableModel(this::getSource);
             model.setTable(this);
             setModel(model);
             setColumnModel(model.getColumnModel());
 
+            //update context
             context.addSourceUpdateListener(this);
 
+            //popup
             JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
             List<JComponent> items = new ArrayList<>();
             items.add(label);
-            //TODO ?
             popup = new PopupExtensionCollection(this, PopupExtension.getDefaultKeyMatcher(), items);
 
+            //cell selection
             setCellSelectionEnabled(true);
             setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
+            //initial update
             update(context, context.getSource());
+
+            //TODO drag drop
         }
 
         public JComponent initAfterAddingColumns(List<Action> actions) {
@@ -98,13 +97,22 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             ObjectTableModel model = getObjectTableModel();
             model.initTableWithoutScrollPane(this);
             if (actions.isEmpty()) {
-                return model.initTableScrollPane(this);
+                return initTableScrollPane();
             } else {
-                JPanel pane = new JPanel(new BorderLayout());
+                JPanel pane = new GuiSwingView.ValueWrappingPane(initTableScrollPane());
                 pane.add(initActionToolBar(actions), BorderLayout.PAGE_START);
-                pane.add(model.initTableScrollPane(this), BorderLayout.CENTER);
                 return pane;
             }
+        }
+
+
+        public JScrollPane initTableScrollPane() {
+            JScrollPane scrollPane = new GuiSwingView.ValueScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            int width = getObjectTableModel().getColumns().stream()
+                    .mapToInt(e -> e.getTableColumn().getWidth())
+                    .sum();
+            scrollPane.setPreferredSize(new Dimension(width, Math.max(scrollPane.getPreferredSize().height, 100)));
+            return scrollPane;
         }
 
         public JToolBar initActionToolBar(List<Action> actions) {
@@ -289,7 +297,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 if (src != null) {
                     PopupExtension.PopupMenuBuilder builder = src.getMenuBuilder();
                     if (builder != null) {
-                        builder.build(sender, new CollectionRowsActionBuilder(table, column, menu));
+                        builder.build(sender, new MenuTitleAppender("Column: " + column.getTableColumn().getHeaderValue(), menu));
                     }
                 }
             }
@@ -297,240 +305,24 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
     }
 
-    public static class CollectionRowsActionBuilder implements Consumer<Object> {
-        protected CollectionTable table;
-        protected ObjectTableColumn column;
-        protected Consumer<Object> menu;
-        protected TableTarget target;
+    public static class MenuTitleAppender implements Consumer<Object> {
+        protected Consumer<Object> appender;
+        protected boolean added = false;
+        protected String title;
 
-        public CollectionRowsActionBuilder(CollectionTable table, ObjectTableColumn column, Consumer<Object> menu) {
-            this.table = table;
-            this.column = column;
-            this.menu = menu;
-            target = new TableTarget(table, table.getObjectTableModel().getColumns().indexOf(column));
+        public MenuTitleAppender(String title, Consumer<Object> appender) {
+            this.title = title;
+            this.appender = appender;
         }
 
         @Override
         public void accept(Object o) {
-            if (o instanceof Action) {
-                addAction((Action) o);
-            } else if (o instanceof JMenuItem) {
-                Action action = ((JMenuItem) o).getAction();
-                addAction(action);
-            } else {
-                menu.accept(o);
+            if (title != null && !added) {
+                appender.accept(new JPopupMenu.Separator());
+                appender.accept(MenuBuilder.get().createLabel(title));
+                added = true;
             }
-        }
-
-        public void addAction(Action a) {
-            if (a instanceof TableTargetAction) {
-                menu.accept(new TableTargetExecutionAction((TableTargetAction) a, target));
-
-            } else if (a instanceof PopupExtensionText.TextCopyAllAction) {
-                menu.accept(new TableTargetInvocationAction(a, target,
-                        (e, t) -> ((PopupExtensionText.TextCopyAllAction) a).actionPerformedOnTable(e,
-                                t.getSelectedCellValues().values())));
-
-            } else if (a instanceof PopupExtensionText.TextPasteAllAction) {
-                menu.accept(new TableTargetInvocationAction(a, target,
-                        (e, t) -> ((PopupExtensionText.TextPasteAllAction) a)
-                                .pasteLines(t::setSelectedCellValuesLoop)));
-
-            } else if (a instanceof SearchTextFieldFilePath.FileListEditAction) {
-                menu.accept(new TableTargetInvocationAction(a, target,
-                        (e, t) -> ((SearchTextFieldFilePath.FileListEditAction) a)
-                                .run(t::setSelectedCellValuesLoop)));
-
-            } else if (a instanceof SearchTextFieldFilePath.FileListAction) {
-                menu.accept(new TableTargetInvocationAction(a, target,
-                        (e, t) -> ((SearchTextFieldFilePath.FileListAction) a)
-                                .run(t.getSelectedCellValues().values().stream()
-                                        .map(Path.class::cast)
-                                        .collect(Collectors.toList()))));
-
-            } else if (a instanceof GuiSwingActionDefault.ExecutionAction) {
-                menu.accept(new CollectionRowsAction(table, column, a));
-            }
-        }
-    }
-
-    public static class CollectionRowsAction extends AbstractAction {
-        protected CollectionTable table;
-        protected ObjectTableColumn column;
-        protected Action action;
-
-        public CollectionRowsAction(CollectionTable table, ObjectTableColumn column, Action action) {
-            this.table = table;
-            this.column = column;
-            this.action = action;
-            putValue(NAME, action.getValue(NAME));
-            putValue(Action.LARGE_ICON_KEY, action.getValue(LARGE_ICON_KEY));
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return !table.isSelectionEmpty() && action.isEnabled();
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            ObjectTableColumn.PopupMenuBuilderSource source = (column == null ? null : column.getMenuBuilderSource());
-            ValuePane valuePane = (source == null ? null : source.getMenuTargetPane());
-
-            for (int row : table.getSelectedRows()) {
-                Object prev = null;
-                if (valuePane != null) {
-                    int modelRow = table.convertRowIndexToModel(row);
-                    prev = table.getObjectTableModel().getValueAt(modelRow, table.getObjectTableModel().getColumns().indexOf(column));
-                    //TODO future value?
-                    valuePane.setSwingViewValue(prev);
-                }
-                action.actionPerformed(e);
-                if (valuePane != null) {
-                    Object next = valuePane.getSwingViewValue();
-                    //TODO compare?
-
-                }
-            }
-        }
-    }
-
-    public static class TableTargetExecutionAction extends AbstractAction {
-        protected TableTargetAction action;
-        protected TableTarget target;
-
-        public TableTargetExecutionAction(TableTargetAction action, TableTarget target) {
-            this.action = action;
-            this.target = target;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return !target.isSelectionEmpty();
-        }
-
-        @Override
-        public Object getValue(String key) {
-            return action.getValue(key);
-        }
-
-        public TableTarget getTarget() {
-            return target;
-        }
-
-        public TableTargetAction getAction() {
-            return action;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            action.actionPerformedOnTable(e, target);
-        }
-    }
-
-    public static class TableTargetInvocationAction extends AbstractAction {
-        protected Action action;
-        protected TableTarget target;
-        protected BiConsumer<ActionEvent, TableTarget> invoker;
-
-        public TableTargetInvocationAction(Action action, TableTarget target, BiConsumer<ActionEvent, TableTarget> invoker) {
-            this.action = action;
-            this.target = target;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return !target.isSelectionEmpty();
-        }
-
-        @Override
-        public Object getValue(String key) {
-            return action.getValue(key);
-        }
-
-        public TableTarget getTarget() {
-            return target;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            invoker.accept(e, target);
-        }
-    }
-
-    public interface TableTargetAction extends Action {
-        void actionPerformedOnTable(ActionEvent e, TableTarget target);
-    }
-
-    public static class TableTarget {
-        protected JTable table;
-        /** model index */
-        protected int column;
-
-        public TableTarget(JTable table, int column) {
-            this.table = table;
-            this.column = column;
-        }
-
-        public boolean isSelectionEmpty() {
-            return table.getSelectionModel().isSelectionEmpty();
-        }
-
-        public Object getSelectedCellValue() {
-            int row = table.getSelectedRow();
-            if (row < 0) {
-                return null;
-            } else {
-                int modelRow = table.convertRowIndexToModel(row);
-                return table.getModel().getValueAt(modelRow, column);
-            }
-        }
-
-        public Map<Integer,Object> getSelectedCellValues() {
-            int[] rows = table.getSelectedRows();
-            Map<Integer, Object> map = new TreeMap<>();
-            TableModel model = table.getModel();
-            for (int row : rows) {
-                int modelRow = table.convertRowIndexToView(row);
-                map.put(modelRow, model.getValueAt(modelRow, column));
-            }
-            return map;
-        }
-
-        public List<Integer> getSelectedRows() {
-            return Arrays.stream(table.getSelectedRows())
-                    .map(table::convertRowIndexToModel)
-                    .sorted()
-                    .boxed()
-                    .collect(Collectors.toList());
-        }
-
-        public void setCellValues(Map<Integer,?> rowToValues) {
-            TableModel model = table.getModel();
-            rowToValues.forEach((modelRow, value) ->
-                    model.setValueAt(value, modelRow, column));
-        }
-
-        public void setSelectedCellValues(Function<Integer, Object> rowToNewValue) {
-            TableModel model = table.getModel();
-            for (int row : getSelectedRows()) {
-                int modelRow = table.convertRowIndexToModel(row);
-                model.setValueAt(rowToNewValue.apply(modelRow), modelRow, column);
-            }
-        }
-
-        public void setSelectedCellValuesLoop(List<?> rowValues) {
-            if (!rowValues.isEmpty()) {
-                TableModel model = table.getModel();
-                int size = rowValues.size();
-                int i = 0;
-                for (int row : getSelectedRows()) {
-                    int modelRow = table.convertRowIndexToModel(row);
-                    Object value = rowValues.get(i % size);
-                    model.setValueAt(value, modelRow, column);
-                    ++i;
-                }
-            }
+            appender.accept(o);
         }
     }
 }

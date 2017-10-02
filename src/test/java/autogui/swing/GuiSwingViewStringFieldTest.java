@@ -42,6 +42,10 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
 
         prop.value = "HELLO";
         run(context::updateSourceFromRoot);
+
+        System.out.println(t.getField().getDragEnabled());
+        System.out.println(t.getField().getDropMode());
+        System.out.println(t.getField().getTransferHandler());
     }
 
     public static class TestStringProp extends GuiTypeMemberProperty {

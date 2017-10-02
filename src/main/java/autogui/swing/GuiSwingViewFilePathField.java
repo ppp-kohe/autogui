@@ -9,6 +9,7 @@ import autogui.swing.util.SearchTextFieldFilePath;
 
 import javax.swing.*;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
@@ -21,7 +22,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyFilePathPane field = new PropertyFilePathPane(context);
         if (context.isTypeElementProperty()) {
-            return new NamedPane(context.getDisplayName(), field);
+            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), field);
         } else {
             return field;
         }
@@ -38,14 +39,17 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         public PropertyFilePathPane(GuiMappingContext context, SearchTextFieldModelFilePath model) {
             super(model);
             this.context = context;
-
             initLazy();
+            //editable
             getField().setEditable(((GuiReprValueFilePathField) context.getRepresentation())
                     .isEditable(context));
 
-
+            //update context
             context.addSourceUpdateListener(this);
+            //initial update
             update(context, context.getSource());
+
+            //popup
             setInheritsPopupMenu(true);
         }
 
@@ -65,9 +69,12 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
 
         @Override
         public List<? extends JComponent> getPopupEditMenuItems() {
-            return Stream.concat(Stream.of(GuiSwingContextInfo.get().getInfoLabel(context)),
-                    super.getPopupEditMenuItems().stream())
-                    .collect(Collectors.toList());
+            //popup menus
+            List<JComponent> menus = new ArrayList<>();
+            menus.add(GuiSwingContextInfo.get().getInfoLabel(context));
+            menus.addAll(super.getPopupEditMenuItems());
+            menus.addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
+            return menus;
         }
 
         /** update property: the user selects the item fromthe menu, and then update the target property */

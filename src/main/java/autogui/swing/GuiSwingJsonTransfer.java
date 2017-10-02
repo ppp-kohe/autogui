@@ -2,6 +2,8 @@ package autogui.swing;
 
 import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
+import autogui.swing.table.TableTarget;
+import autogui.swing.table.TableTargetAction;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +18,18 @@ import java.util.stream.Collectors;
 
 public class GuiSwingJsonTransfer {
 
-    public static class JsonCopyAction extends AbstractAction implements GuiSwingViewCollectionTable.TableTargetAction {
+    public static List<JMenuItem> getActionMenuItems(GuiSwingView.ValuePane component, GuiMappingContext context) {
+        return getActions(component, context).stream()
+                .map(JMenuItem::new)
+                .collect(Collectors.toList());
+
+    }
+
+    public static List<Action> getActions(GuiSwingView.ValuePane component, GuiMappingContext context) {
+        return Collections.singletonList(new JsonCopyAction(component, context));
+    }
+
+    public static class JsonCopyAction extends AbstractAction implements TableTargetAction {
         protected GuiSwingView.ValuePane component;
         protected GuiMappingContext context;
 
@@ -44,7 +57,7 @@ public class GuiSwingJsonTransfer {
         }
 
         @Override
-        public void actionPerformedOnTable(ActionEvent e, GuiSwingViewCollectionTable.TableTarget target) {
+        public void actionPerformedOnTable(ActionEvent e, TableTarget target) {
             Map<Integer,Object> map = target.getSelectedCellValues();
             //suppose the map preserves order of values, and skip null element
             copy(map.values().stream()

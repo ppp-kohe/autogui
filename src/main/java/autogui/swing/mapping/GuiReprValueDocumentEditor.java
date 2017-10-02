@@ -161,6 +161,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
     }
 
+    //TODO this is a worst way for implementing a text editor.
     public static class StringBuilderContent implements AbstractDocument.Content, Serializable {
         protected final StringBuilder buffer;
         transient protected char[] array;

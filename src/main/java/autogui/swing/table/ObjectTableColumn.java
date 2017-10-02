@@ -132,7 +132,7 @@ public class ObjectTableColumn {
         return this;
     }
 
-    /** returns {@link TableColumn#getCellRenderer()} if the renderer is a {@link PopupMenuBuilderSource} itself.
+    /** returns {@link TableColumn#getCellRenderer()} if the renderer is an {@link PopupMenuBuilderSource} itself.
      *  <p>
      *  Note: the actions added by the builder will only work with single (last) value of the renderer,
      *    set by {@link autogui.swing.GuiSwingView.ValuePane#setSwingViewValue(Object)}.

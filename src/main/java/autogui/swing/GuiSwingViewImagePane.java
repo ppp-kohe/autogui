@@ -2,27 +2,29 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.mapping.GuiReprValueImagePane;
+import autogui.swing.table.TableTarget;
+import autogui.swing.table.TableTargetAction;
 import autogui.swing.util.MenuBuilder;
-import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class GuiSwingViewImagePane implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
         PropertyImagePane imagePane = new PropertyImagePane(context);
-        JComponent pane = new JScrollPane(imagePane);
+        JComponent pane = new GuiSwingView.ValueScrollPane(imagePane);
         if (context.isTypeElementProperty()) {
             return new GuiSwingViewPropertyPane.PropertyPane(context, true, pane);
         } else {
@@ -48,23 +50,32 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public PropertyImagePane(GuiMappingContext context) {
             this.context = context;
 
+            //editable
             setEditable(((GuiReprValueImagePane) context.getRepresentation())
                     .isEditable(context));
 
+            //context update
             context.addSourceUpdateListener(this);
+            //initial update
             update(context, context.getSource());
 
+            //popup
             JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.accept(label);
                 menu.accept(createSizeInfo(getImageSize()));
                 menu.accept(new ImageCopyAction(getImage()));
                 menu.accept(new ImagePasteAction(this));
-                menu.accept(new GuiSwingJsonTransfer.JsonCopyAction(this, context));
+                GuiSwingJsonTransfer.getActions(this, context)
+                        .forEach(menu::accept);
             });
-
-            setTransferHandler(new ImageTransferHandler(this));
             setInheritsPopupMenu(true);
+
+            //drag drop
+            setTransferHandler(new ImageTransferHandler(this));
+            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, e -> {
+                getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
+            });
         }
 
         public JComponent createSizeInfo(Dimension size) {
@@ -163,7 +174,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
-    public static class ImageCopyAction extends AbstractAction implements GuiSwingViewCollectionTable.TableTargetAction {
+    public static class ImageCopyAction extends AbstractAction implements TableTargetAction {
         protected Image image;
 
         public ImageCopyAction(Image image) {
@@ -190,7 +201,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
-        public void actionPerformedOnTable(ActionEvent e, GuiSwingViewCollectionTable.TableTarget target) {
+        public void actionPerformedOnTable(ActionEvent e, TableTarget target) {
             Object o = target.getSelectedCellValue();
             if (o instanceof Image) {
                 copy((Image) o);
@@ -198,7 +209,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
-    public static class ImagePasteAction extends AbstractAction implements GuiSwingViewCollectionTable.TableTargetAction {
+    public static class ImagePasteAction extends AbstractAction implements TableTargetAction {
         protected PropertyImagePane pane;
 
         public ImagePasteAction(PropertyImagePane pane) {
@@ -227,7 +238,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
-        public void actionPerformedOnTable(ActionEvent e, GuiSwingViewCollectionTable.TableTarget target) {
+        public void actionPerformedOnTable(ActionEvent e, TableTarget target) {
             paste(img -> target.setSelectedCellValues(r -> img));
         }
     }
@@ -300,6 +311,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             }
         }
 
+
         public Image getTransferableAsImage(TransferSupport support, DataFlavor flavor) {
             try {
                 return (Image) support.getTransferable().getTransferData(flavor);
@@ -345,9 +357,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         protected Transferable createTransferable(JComponent c) {
-            return new ImageSelection(imagePane.getImage());
+            Image img = imagePane.getImage();
+            Dimension size = imagePane.getScaledImageSize(imagePane.getImageSize(), new Dimension(100, 100));
+            setDragImage(img.getScaledInstance(size.width , size.height, Image.SCALE_DEFAULT));
+            return new ImageSelection(img);
         }
-
 
     }
 }

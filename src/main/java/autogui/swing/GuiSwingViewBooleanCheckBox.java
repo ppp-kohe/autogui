@@ -6,17 +6,21 @@ import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EventObject;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
         //wraps the check-box by a panel with flow layout: the size of check-box becomes its preferred size.
         //  mouse clicks only pointing within bounds of the check-box will be processed
-        JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEADING));
+        JPanel pane = new GuiSwingView.ValueWrappingPane(new FlowLayout(FlowLayout.LEADING));
         pane.setOpaque(false);
         pane.setBorder(BorderFactory.createEmptyBorder());
         pane.add(new PropertyCheckBox(context));
@@ -33,22 +37,37 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
             this.context = context;
             setName(context.getName());
 
+            //editable
             GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
-
             setEnabled(repr.isEditable(context));
+
+            //context update
             context.addSourceUpdateListener(this);
 
+            //set name label
             if (context.isTypeElementProperty()) {
                 setText(context.getDisplayName());
             }
 
+            //initial value
             update(context, context.getSource());
 
+            //popup
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.accept(info);
+                GuiSwingJsonTransfer.getActions(this, context)
+                        .forEach(menu::accept);
             });
             setInheritsPopupMenu(true);
+
+            //drag drop
+            BooleanTransferHandler h = new BooleanTransferHandler(this);
+            setTransferHandler(h);
+            //TODO drag does not work properly
+            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, e -> {
+                getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
+            });
         }
 
         @Override
@@ -82,6 +101,44 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         @Override
         public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
             addActionListener(eventHandler::accept);
+        }
+    }
+
+    public static class BooleanTransferHandler extends TransferHandler {
+        protected PropertyCheckBox pane;
+
+        public BooleanTransferHandler(PropertyCheckBox pane) {
+            this.pane = pane;
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            return pane.isEnabled() &&
+                    support.isDataFlavorSupported(DataFlavor.stringFlavor);
+        }
+
+        static Pattern numPattern = Pattern.compile("\\d+");
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                try {
+                    String data = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+                    data = data.toLowerCase();
+                    if (data.equals("true") || numPattern.matcher(data).matches()) {
+                        pane.setSwingViewValue(true);
+                        return true;
+                    } else if (data.equals("false") || data.equals("0")) {
+                        pane.setSwingViewValue(false);
+                        return true;
+                    }
+                    return false;
+                } catch (Exception ex) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
         }
     }
 }

@@ -84,21 +84,22 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         public ObjectPane(GuiMappingContext context) {
             this.context = context;
             setLayout(new BorderLayout());
-
             initContentPane();
             add(contentPane, BorderLayout.CENTER);
 
+            //context update
             context.addSourceUpdateListener(this);
 
+            //popup
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.accept(info);
                 menu.accept(new JPopupMenu.Separator());
                 actions.forEach(menu::accept);
-            }); //TODO
+                GuiSwingJsonTransfer.getActions(this, context)
+                        .forEach(menu::accept);
+            });
             setInheritsPopupMenu(true);
-
-            actions.add(new GuiSwingJsonTransfer.JsonCopyAction(this, context));
         }
 
         public void initContentPane() {

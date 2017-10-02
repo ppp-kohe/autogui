@@ -7,11 +7,15 @@ import autogui.swing.util.PopupExtension;
 import autogui.swing.util.SearchTextField;
 
 import javax.swing.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragSource;
+import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GuiSwingViewStringField implements GuiSwingView {
     @Override
@@ -36,16 +40,27 @@ public class GuiSwingViewStringField implements GuiSwingView {
         public PropertyTextPane(GuiMappingContext context) {
             this.context = context;
             initLazy();
-
             getIcon().setVisible(false);
 
+            //editable
             GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
             getField().setEditable(str.isEditable(context));
-            context.addSourceUpdateListener(this);
 
+            //context update
+            context.addSourceUpdateListener(this);
+            //initial update
             update(context, context.getSource());
 
+            //popup menu
             setInheritsPopupMenu(true);
+
+            //drag drop
+            StringTransferHandler h = new StringTransferHandler(this);
+            setTransferHandler(h);
+            getField().setTransferHandler(h);
+            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(getField(), DnDConstants.ACTION_COPY, e -> {
+                getTransferHandler().exportAsDrag(getField(), e.getTriggerEvent(), TransferHandler.COPY);
+            });
         }
 
         @Override
@@ -64,12 +79,11 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         @Override
         public List<? extends JComponent> getPopupEditMenuItems() {
-            return Stream.concat(
-                    Stream.of(
-                            GuiSwingContextInfo.get().getInfoLabel(context),
-                            new JMenuItem(new GuiSwingJsonTransfer.JsonCopyAction(this, context))),
-                    super.getPopupEditMenuItems().stream())
-                    .collect(Collectors.toList());
+            List<JComponent> menus = new ArrayList<>();
+            menus.add(GuiSwingContextInfo.get().getInfoLabel(context));
+            menus.addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
+            menus.addAll(super.getPopupEditMenuItems());
+            return menus;
         }
 
         @Override
@@ -100,6 +114,59 @@ public class GuiSwingViewStringField implements GuiSwingView {
         @Override
         public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
             getField().addActionListener(eventHandler::accept);
+        }
+    }
+
+    /** handle entire text */
+    public static class StringTransferHandler extends TransferHandler {
+        protected PropertyTextPane pane;
+
+        public StringTransferHandler(PropertyTextPane pane) {
+            this.pane = pane;
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            return pane.getField().isEnabled() &&
+                    support.isDataFlavorSupported(DataFlavor.stringFlavor);
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                return importString(
+                        getTransferableAsString(support, DataFlavor.stringFlavor));
+            } else {
+                return false;
+            }
+        }
+
+        public String getTransferableAsString(TransferSupport support, DataFlavor flavor) {
+            try {
+                return (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        public boolean importString(String str) {
+            if (str != null) {
+                pane.setSwingViewValue(str);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return COPY;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            String text = (String) pane.getSwingViewValue();
+            return new StringSelection(text);
         }
     }
 }
