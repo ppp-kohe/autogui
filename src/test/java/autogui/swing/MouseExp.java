@@ -23,6 +23,7 @@ public class MouseExp {
             pane.add(dragPane = new DragPane());
 
             JButton btn = new JButton("Test");
+            btn.addActionListener(e -> paste());
             pane.add(btn);
 
 
@@ -31,6 +32,13 @@ public class MouseExp {
         frame.pack();
 
         frame.setVisible(true);
+    }
+
+    public static void paste() {
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        System.out.println("-----------------------------------");
+        Arrays.stream(clipboard.getAvailableDataFlavors())
+                .forEach(e -> System.out.println("flavor: " + e));
     }
 
     static class DragPane extends JPanel implements MouseListener, MouseMotionListener {

@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -160,72 +161,118 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
 
-    public static class FilePasteAction extends AbstractAction {
+    public static abstract class FileListEditAction extends AbstractAction {
         protected SearchTextFieldFilePath component;
 
-        public FilePasteAction(SearchTextFieldFilePath component) {
-            putValue(NAME, "Paste Value");
+        public FileListEditAction(String name, SearchTextFieldFilePath component) {
             this.component = component;
+            putValue(NAME, name);
         }
-
         @Override
         public boolean isEnabled() {
-            return component.isEditable();
+            return super.isEnabled() && component.isEditable();
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public void actionPerformed(ActionEvent e) {
+            run(fs -> component.setFile(fs.get(0)));
+        }
+
+        public abstract void run(Consumer<List<Path>> files);
+    }
+
+
+    public static class FilePasteAction extends FileListEditAction {
+
+        public FilePasteAction(SearchTextFieldFilePath component) {
+            super("Paste Value", component);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            run(fs -> {
+                if (fs == null) {
+                    component.getField().paste();
+                } else {
+                    component.setFile(fs.get(0));
+                }
+            });
+        }
+
+        /**
+         * @param proc  it will receive null if the clipboard does not support listing files.
+         *                if non-null, the list will have least one element.
+         */
+        @SuppressWarnings("unchecked")
+        @Override
+        public void run(Consumer<List<Path>> proc) {
             Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
             if (board.isDataFlavorAvailable(DataFlavor.javaFileListFlavor)) {
                 try {
                     List<File> files = (List<File>) board.getData(DataFlavor.javaFileListFlavor);
                     if (files != null && files.size() > 0) {
-                        component.setFile(files.get(0).toPath());
+                        proc.accept(files.stream()
+                                .map(File::toPath)
+                                .collect(Collectors.toList()));
                     }
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
             } else {
-                component.getField().paste();
+                proc.accept(null);
             }
         }
     }
 
-    public static class FileCopyAllAction extends AbstractAction {
+    public static abstract class FileListAction extends AbstractAction {
         protected SearchTextFieldFilePath component;
 
-        public FileCopyAllAction(SearchTextFieldFilePath component) {
-            putValue(NAME, "Copy Value");
+        public FileListAction(String name, SearchTextFieldFilePath component) {
             this.component = component;
+            putValue(NAME, name);
         }
-
         @Override
         public boolean isEnabled() {
-            return component.getFile() != null;
+            return super.isEnabled() && component.getFile() != null;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
             Path file = component.getFile();
             if (file != null) {
-                FileSelection selection = new FileSelection(file);
+                run(Collections.singletonList(file));
+            }
+        }
+
+        public abstract void run(List<Path> files);
+    }
+
+    public static class FileCopyAllAction extends FileListAction {
+
+        public FileCopyAllAction(SearchTextFieldFilePath component) {
+            super("Copy Value", component);
+        }
+
+        @Override
+        public void run(List<Path> list) {
+            Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
+            if (list != null) {
+                FileSelection selection = new FileSelection(list);
                 board.setContents(selection, selection);
             }
         }
     }
 
     public static class FileSelection implements Transferable, ClipboardOwner {
-        protected Path file;
+        protected List<Path> files;
 
         protected static DataFlavor[] flavors = {
                 DataFlavor.javaFileListFlavor,
                 DataFlavor.stringFlavor
         };
 
-        public FileSelection(Path file) {
-            this.file = file;
+        public FileSelection(List<Path> files) {
+            this.files = files;
         }
 
         @Override
@@ -243,9 +290,13 @@ public class SearchTextFieldFilePath extends SearchTextField {
         public Object getTransferData(DataFlavor flavor)
                 throws UnsupportedFlavorException, IOException {
             if (DataFlavor.stringFlavor.equals(flavor)) {
-                return file.toString();
+                return files.stream()
+                        .map(Object::toString)
+                        .collect(Collectors.joining("\n"));
             } else if (DataFlavor.javaFileListFlavor.equals(flavor)) {
-                return Collections.singletonList(file.toFile());
+                return files.stream()
+                        .map(Path::toFile)
+                        .collect(Collectors.toList());
             }
             throw new UnsupportedFlavorException(flavor);
         }
@@ -255,36 +306,41 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
 
-    public static class DesktopOpenAction extends AbstractAction {
-        protected SearchTextFieldFilePath component;
+    public static class DesktopOpenAction extends FileListAction {
 
         public DesktopOpenAction(SearchTextFieldFilePath component) {
-            putValue(NAME, "Open In Desktop");
-            this.component = component;
+            super("Open In Desktop", component);
         }
 
         @Override
         public boolean isEnabled() {
-            return component.getFile() != null && Desktop.isDesktopSupported();
+            return super.isEnabled() && Desktop.isDesktopSupported();
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void run(List<Path> files) {
             try {
-                Desktop.getDesktop().open(component.getFile().toFile());
+                Desktop desktop = Desktop.getDesktop();
+                files.stream()
+                        .map(Path::toFile)
+                        .forEach(p -> {
+                            try {
+                                desktop.open(p);
+                            } catch (Exception ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        });
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
         }
     }
 
-    public static class DesktopRevealAction extends AbstractAction {
-        protected SearchTextFieldFilePath component;
+    public static class DesktopRevealAction extends FileListAction {
         protected Function<Path,List<String>> commandGenerator;
 
         public DesktopRevealAction(SearchTextFieldFilePath component) {
-            putValue(NAME, "Reveal In Desktop");
-            this.component = component;
+            super("Reveal In Desktop", component);
             initCommand();
         }
 
@@ -305,53 +361,61 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
 
         @Override
-        public boolean isEnabled() {
-            return super.isEnabled() && component.getFile() != null;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            try {
-                Process p = new ProcessBuilder(commandGenerator.apply(component.getFile().toAbsolutePath()))
-                        .start();
-                p.waitFor(1, TimeUnit.SECONDS);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
+        public void run(List<Path> files) {
+            for (Path file : files) {
+                try {
+                    Process p = new ProcessBuilder(commandGenerator.apply(file.toAbsolutePath()))
+                            .start();
+                    p.waitFor(1, TimeUnit.SECONDS);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         }
     }
 
-    public static class OpenDialogAction extends AbstractAction {
-        protected SearchTextFieldFilePath component;
+    public static class OpenDialogAction extends FileListEditAction {
         protected JFileChooser fileChooser;
 
         public OpenDialogAction(SearchTextFieldFilePath component) {
-            putValue(NAME, "Select...");
-            this.component = component;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return component.isEditable();
+            super("Select...", component);
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            setup(component.getFile());
+            super.actionPerformed(e);
+        }
+
+        @Override
+        public void run(Consumer<List<Path>> setter) {
+            setup(null);
+            fileChooser.setMultiSelectionEnabled(false);
+
+            int r = fileChooser.showOpenDialog(component);
+            if (r == JFileChooser.APPROVE_OPTION) {
+                if (fileChooser.isMultiSelectionEnabled()) {
+                    File[] fs = fileChooser.getSelectedFiles();
+                    setter.accept(Arrays.stream(fs)
+                            .map(File::toPath)
+                            .collect(Collectors.toList()));
+                } else {
+                    File f = fileChooser.getSelectedFile();
+                    setter.accept(Collections.singletonList(f.toPath()));
+                }
+            }
+        }
+
+        private void setup(Path path) {
             if (fileChooser == null) {
                 fileChooser = new JFileChooser();
                 fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
             }
-            Path path = component.getFile();
             if (path != null && Files.exists(path)) {
                 if (!Files.isDirectory(path)) {
                     path = path.getParent();
                 }
                 fileChooser.setCurrentDirectory(path.toFile());
-            }
-            int r = fileChooser.showOpenDialog(component);
-            if (r == JFileChooser.APPROVE_OPTION) {
-                File f = fileChooser.getSelectedFile();
-                component.setFile(f.toPath());
             }
         }
     }

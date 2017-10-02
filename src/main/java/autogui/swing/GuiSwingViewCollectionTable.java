@@ -7,6 +7,8 @@ import autogui.swing.table.GuiSwingTableColumnSetDefault;
 import autogui.swing.table.ObjectTableColumn;
 import autogui.swing.table.ObjectTableModel;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionText;
+import autogui.swing.util.SearchTextFieldFilePath;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -14,11 +16,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
+import java.util.stream.Collectors;
 
 public class GuiSwingViewCollectionTable implements GuiSwingView {
     protected GuiSwingMapperSet columnMapperSet;
@@ -299,11 +301,13 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected CollectionTable table;
         protected ObjectTableColumn column;
         protected Consumer<Object> menu;
+        protected TableTarget target;
 
         public CollectionRowsActionBuilder(CollectionTable table, ObjectTableColumn column, Consumer<Object> menu) {
             this.table = table;
             this.column = column;
             this.menu = menu;
+            target = new TableTarget(table, table.getObjectTableModel().getColumns().indexOf(column));
         }
 
         @Override
@@ -319,7 +323,34 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void addAction(Action a) {
-            menu.accept(new CollectionRowsAction(table, column, a));
+            if (a instanceof TableTargetAction) {
+                menu.accept(new TableTargetExecutionAction((TableTargetAction) a, target));
+
+            } else if (a instanceof PopupExtensionText.TextCopyAllAction) {
+                menu.accept(new TableTargetInvocationAction(a, target,
+                        (e, t) -> ((PopupExtensionText.TextCopyAllAction) a).actionPerformedOnTable(e,
+                                t.getSelectedCellValues().values())));
+
+            } else if (a instanceof PopupExtensionText.TextPasteAllAction) {
+                menu.accept(new TableTargetInvocationAction(a, target,
+                        (e, t) -> ((PopupExtensionText.TextPasteAllAction) a)
+                                .pasteLines(t::setSelectedCellValuesLoop)));
+
+            } else if (a instanceof SearchTextFieldFilePath.FileListEditAction) {
+                menu.accept(new TableTargetInvocationAction(a, target,
+                        (e, t) -> ((SearchTextFieldFilePath.FileListEditAction) a)
+                                .run(t::setSelectedCellValuesLoop)));
+
+            } else if (a instanceof SearchTextFieldFilePath.FileListAction) {
+                menu.accept(new TableTargetInvocationAction(a, target,
+                        (e, t) -> ((SearchTextFieldFilePath.FileListAction) a)
+                                .run(t.getSelectedCellValues().values().stream()
+                                        .map(Path.class::cast)
+                                        .collect(Collectors.toList()))));
+
+            } else if (a instanceof GuiSwingActionDefault.ExecutionAction) {
+                menu.accept(new CollectionRowsAction(table, column, a));
+            }
         }
     }
 
@@ -354,7 +385,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     //TODO future value?
                     valuePane.setSwingViewValue(prev);
                 }
-                //TODO how to handle copy action? : copy, copy, copy,... they overwrites the clipboard contents. For file path, aggregate those copies as single-copy as a file-path-list
                 action.actionPerformed(e);
                 if (valuePane != null) {
                     Object next = valuePane.getSwingViewValue();
@@ -365,13 +395,85 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
     }
 
+    public static class TableTargetExecutionAction extends AbstractAction {
+        protected TableTargetAction action;
+        protected TableTarget target;
+
+        public TableTargetExecutionAction(TableTargetAction action, TableTarget target) {
+            this.action = action;
+            this.target = target;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return !target.isSelectionEmpty();
+        }
+
+        @Override
+        public Object getValue(String key) {
+            return action.getValue(key);
+        }
+
+        public TableTarget getTarget() {
+            return target;
+        }
+
+        public TableTargetAction getAction() {
+            return action;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            action.actionPerformedOnTable(e, target);
+        }
+    }
+
+    public static class TableTargetInvocationAction extends AbstractAction {
+        protected Action action;
+        protected TableTarget target;
+        protected BiConsumer<ActionEvent, TableTarget> invoker;
+
+        public TableTargetInvocationAction(Action action, TableTarget target, BiConsumer<ActionEvent, TableTarget> invoker) {
+            this.action = action;
+            this.target = target;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return !target.isSelectionEmpty();
+        }
+
+        @Override
+        public Object getValue(String key) {
+            return action.getValue(key);
+        }
+
+        public TableTarget getTarget() {
+            return target;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            invoker.accept(e, target);
+        }
+    }
+
+    public interface TableTargetAction extends Action {
+        void actionPerformedOnTable(ActionEvent e, TableTarget target);
+    }
+
     public static class TableTarget {
         protected JTable table;
-        protected int column; //model
+        /** model index */
+        protected int column;
 
         public TableTarget(JTable table, int column) {
             this.table = table;
             this.column = column;
+        }
+
+        public boolean isSelectionEmpty() {
+            return table.getSelectionModel().isSelectionEmpty();
         }
 
         public Object getSelectedCellValue() {
@@ -386,7 +488,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public Map<Integer,Object> getSelectedCellValues() {
             int[] rows = table.getSelectedRows();
-            Map<Integer, Object> map = new HashMap<>(rows.length);
+            Map<Integer, Object> map = new TreeMap<>();
             TableModel model = table.getModel();
             for (int row : rows) {
                 int modelRow = table.convertRowIndexToView(row);
@@ -395,10 +497,40 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             return map;
         }
 
-        public void setCellValues(Map<Integer,Object> rowToValues) {
+        public List<Integer> getSelectedRows() {
+            return Arrays.stream(table.getSelectedRows())
+                    .map(table::convertRowIndexToModel)
+                    .sorted()
+                    .boxed()
+                    .collect(Collectors.toList());
+        }
+
+        public void setCellValues(Map<Integer,?> rowToValues) {
             TableModel model = table.getModel();
             rowToValues.forEach((modelRow, value) ->
                     model.setValueAt(value, modelRow, column));
+        }
+
+        public void setSelectedCellValues(Function<Integer, Object> rowToNewValue) {
+            TableModel model = table.getModel();
+            for (int row : getSelectedRows()) {
+                int modelRow = table.convertRowIndexToModel(row);
+                model.setValueAt(rowToNewValue.apply(modelRow), modelRow, column);
+            }
+        }
+
+        public void setSelectedCellValuesLoop(List<?> rowValues) {
+            if (!rowValues.isEmpty()) {
+                TableModel model = table.getModel();
+                int size = rowValues.size();
+                int i = 0;
+                for (int row : getSelectedRows()) {
+                    int modelRow = table.convertRowIndexToModel(row);
+                    Object value = rowValues.get(i % size);
+                    model.setValueAt(value, modelRow, column);
+                    ++i;
+                }
+            }
         }
     }
 }

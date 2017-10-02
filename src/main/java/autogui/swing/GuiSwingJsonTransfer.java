@@ -10,11 +10,13 @@ import java.awt.event.ActionEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class GuiSwingJsonTransfer {
 
-    public static class JsonCopyAction extends AbstractAction {
+    public static class JsonCopyAction extends AbstractAction implements GuiSwingViewCollectionTable.TableTargetAction {
         protected GuiSwingView.ValuePane component;
         protected GuiMappingContext context;
 
@@ -28,6 +30,10 @@ public class GuiSwingJsonTransfer {
         public void actionPerformed(ActionEvent e) {
             Object value = component.getSwingViewValue();
             Object map = context.getRepresentation().toJson(context, value);
+            copy(map);
+        }
+
+        public void copy(Object map) {
             if (map != null) {
                 String src = JsonWriter.create().write(map).toSource();
                 Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -36,6 +42,18 @@ public class GuiSwingJsonTransfer {
                 board.setContents(data, data);
             }
         }
+
+        @Override
+        public void actionPerformedOnTable(ActionEvent e, GuiSwingViewCollectionTable.TableTarget target) {
+            Map<Integer,Object> map = target.getSelectedCellValues();
+            //suppose the map preserves order of values, and skip null element
+            copy(map.values().stream()
+                    .map(v -> context.getRepresentation().toJson(context, v))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()));
+        }
+
+
     }
 
     /** default representation: InputStream */

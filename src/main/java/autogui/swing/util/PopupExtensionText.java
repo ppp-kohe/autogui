@@ -5,13 +5,16 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -212,10 +215,49 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            String data = field.getText();
+            copy(field.getText());
+        }
+
+        public void actionPerformedOnTable(ActionEvent e, Collection<Object> values) {
+            copy(values.stream()
+                    .map(Object::toString)
+                    .collect(Collectors.joining("\n")));
+        }
+
+        public void copy(String data) {
             Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
             StringSelection sel = new StringSelection(data);
             board.setContents(sel, sel);
+        }
+    }
+
+    public static class TextPasteAllAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        protected JTextComponent field;
+        public TextPasteAllAction(JTextComponent field) {
+            putValue(NAME, "Paste Value");
+            this.field = field;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            paste(field::setText);
+        }
+
+        public void pasteLines(Consumer<List<String>> setter) {
+            paste(s -> setter.accept(Arrays.asList(s.split("\\n"))));
+        }
+
+        public void paste(Consumer<String> setter) {
+            Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
+            if (board.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+                try {
+                    String data = (String) board.getData(DataFlavor.stringFlavor);
+                    setter.accept(data);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
         }
     }
 

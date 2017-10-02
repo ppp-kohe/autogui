@@ -13,9 +13,9 @@ import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class GuiSwingViewImagePane implements GuiSwingView {
@@ -163,7 +163,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
-    public static class ImageCopyAction extends AbstractAction {
+    public static class ImageCopyAction extends AbstractAction implements GuiSwingViewCollectionTable.TableTargetAction {
         protected Image image;
 
         public ImageCopyAction(Image image) {
@@ -178,15 +178,27 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            copy(this.image);
+        }
+
+        public void copy(Image image) {
             if (image != null) {
                 Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
                 ImageSelection selection = new ImageSelection(image);
                 board.setContents(selection, selection);
             }
         }
+
+        @Override
+        public void actionPerformedOnTable(ActionEvent e, GuiSwingViewCollectionTable.TableTarget target) {
+            Object o = target.getSelectedCellValue();
+            if (o instanceof Image) {
+                copy((Image) o);
+            }
+        }
     }
 
-    public static class ImagePasteAction extends AbstractAction {
+    public static class ImagePasteAction extends AbstractAction implements GuiSwingViewCollectionTable.TableTargetAction {
         protected PropertyImagePane pane;
 
         public ImagePasteAction(PropertyImagePane pane) {
@@ -201,13 +213,22 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            paste(pane::setImage);
+        }
+
+        public void paste(Consumer<Image> c) {
             Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
             try {
                 Image img = (Image) clip.getData(DataFlavor.imageFlavor);
-                pane.setImage(img);
+                c.accept(img);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
+        }
+
+        @Override
+        public void actionPerformedOnTable(ActionEvent e, GuiSwingViewCollectionTable.TableTarget target) {
+            paste(img -> target.setSelectedCellValues(r -> img));
         }
     }
 
