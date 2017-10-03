@@ -188,7 +188,9 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     public void mouseClicked(MouseEvent e) { }
 
     @Override
-    public void mouseReleased(MouseEvent e) { }
+    public void mouseReleased(MouseEvent e) {
+        mousePressed(e);
+    }
 
     @Override
     public void mouseEntered(MouseEvent e) { }

@@ -2,6 +2,7 @@ package autogui.swing.table;
 
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -9,6 +10,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.Comparator;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
@@ -150,7 +152,10 @@ public class ObjectTableColumn {
     }
 
     public interface PopupMenuBuilderSource {
-        GuiSwingView.ValuePane getMenuTargetPane();
+        default GuiSwingView.ValuePane getMenuTargetPane() {
+            return null;
+        }
+
         PopupExtension.PopupMenuBuilder getMenuBuilder();
     }
 
@@ -159,8 +164,9 @@ public class ObjectTableColumn {
 
     public static class ObjectTableColumnRowIndex extends ObjectTableColumn {
         public ObjectTableColumnRowIndex() {
-            tableColumn = new TableColumn(0, 64, new NumberRenderer(), null);
+            tableColumn = new TableColumn(0, 64, new NumberRenderer(this), null);
             tableColumn.setHeaderValue("#");
+            withComparator(new GuiSwingTableColumnNumber.NumberComparator());
         }
 
         @Override
@@ -169,8 +175,12 @@ public class ObjectTableColumn {
         }
     }
 
-    public static class NumberRenderer extends DefaultTableCellRenderer  {
-        public NumberRenderer() {
+    public static class NumberRenderer extends DefaultTableCellRenderer
+            implements PopupMenuBuilderSource {
+        protected ObjectTableColumn column;
+
+        public NumberRenderer(ObjectTableColumn column) {
+            this.column = column;
             setHorizontalAlignment(JLabel.RIGHT);
         }
 
@@ -182,6 +192,36 @@ public class ObjectTableColumn {
                     row, column);
             setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
             return this;
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getMenuBuilder() {
+            return new ObjectTableColumnValue.ObjectTableColumnActionBuilder(column, (sender, menu) -> {
+                menu.accept(new NumberCopyAction());
+            });
+        }
+    }
+
+    public static class NumberCopyAction extends PopupExtensionText.TextCopyAllAction
+            implements TableTargetAction {
+
+        public NumberCopyAction() {
+            super(null);
+            putValue(NAME, "Copy Indexes");
+        }
+
+        @Override
+        public void actionPerformedOnTable(ActionEvent e, TableTarget target) {
+            actionPerformedOnTable(e, target.getSelectedCellValues().values());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Object src = e.getSource();
+            if (src instanceof JLabel) {
+                String text = ((JLabel) src).getText();
+                copy(text);
+            }
         }
     }
 

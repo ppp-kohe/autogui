@@ -269,7 +269,6 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             editActions.add(0, info.getInfoLabel(context));
             editActions.add(new JPopupMenu.Separator());
             editActions.add(new JMenuItem(new NumberSettingAction(info.getInfoLabel(context), model)));
-
         }
 
     }
