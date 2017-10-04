@@ -1,20 +1,22 @@
 package autogui.swing.util;
 
 import javax.swing.*;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.Utilities;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -25,6 +27,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     protected int documentLength;
 
     public static PopupExtensionText installDefault(JTextComponent textComponent) {
+        putInputEditActions(textComponent);
         return new PopupExtensionText(textComponent,
                 getDefaultKeyMatcher(),
                 getServiceDefaultMenu(textComponent));
@@ -109,7 +112,35 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                 new TextCopyAction(textComponent),
                 new TextCopyAllAction(textComponent),
                 new TextPasteAction(textComponent),
+                new TextPasteAllAction(textComponent),
                 new TextSelectAllAction(textComponent));
+    }
+
+    //////////////
+
+    /** component is optional */
+    public static List<Action> getInputEditActions(JTextComponent component) {
+        return Arrays.asList(
+                new TextDeleteNextWordAction(component),
+                new TextDeletePreviousWordAction(component),
+                new TextDeleteToLineEndAction(component),
+                new TextPasteHistoryAction(component));
+    }
+
+    public static void putInputEditActions(JTextComponent component) {
+        component.addCaretListener(defaultHistory);
+        putInputEditActionsToKeys(component.getInputMap(), component);
+        putInputEditActionsToMap(component.getActionMap(), component);
+    }
+
+    public static void putInputEditActionsToMap(ActionMap map, JTextComponent component) {
+        getInputEditActions(component)
+            .forEach(a -> map.put(a.getValue(Action.NAME), a));
+    }
+
+    public static void putInputEditActionsToKeys(InputMap map, JTextComponent component) {
+        getInputEditActions(component)
+            .forEach(a -> map.put((KeyStroke) a.getValue(Action.ACCELERATOR_KEY), a.getValue(Action.NAME)));
     }
 
     /////////////
@@ -152,6 +183,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         protected JTextComponent field;
         public TextCutAction(JTextComponent field) {
             putValue(NAME, "Cut");
+            //TODO key binding
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_X,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.field = field;
         }
 
@@ -172,6 +207,9 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         protected JTextComponent field;
         public TextCopyAction(JTextComponent field) {
             putValue(NAME, "Copy");
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.field = field;
         }
 
@@ -191,6 +229,9 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         protected JTextComponent field;
         public TextPasteAction(JTextComponent field) {
             putValue(NAME, "Paste");
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.field = field;
         }
 
@@ -210,6 +251,9 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         protected JTextComponent field;
         public TextCopyAllAction(JTextComponent field) {
             putValue(NAME, "Copy Value");
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | InputEvent.SHIFT_DOWN_MASK));
             this.field = field;
         }
 
@@ -236,6 +280,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         protected JTextComponent field;
         public TextPasteAllAction(JTextComponent field) {
             putValue(NAME, "Paste Value");
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() |
+                            InputEvent.SHIFT_DOWN_MASK));
             this.field = field;
         }
 
@@ -267,6 +315,9 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
         public TextSelectAllAction(JTextComponent field) {
             putValue(NAME, "Select All");
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_A,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.field = field;
         }
 
@@ -275,6 +326,203 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             field.selectAll();
         }
     }
+
+    //////// text action with history buffer
+
+    public abstract static class TextAbstractHistoryAction extends AbstractAction {
+        protected JTextComponent field;
+
+        public TextAbstractHistoryAction(String name, JTextComponent field) {
+            putValue(NAME, name);
+            this.field = field;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JTextComponent target;
+            if (field == null && e.getSource() instanceof JTextComponent) {
+                target = (JTextComponent) e.getSource();
+            } else if (field != null) {
+                target = field;
+            } else {
+                return;
+            }
+
+            if (!target.isEditable() || !target.isEnabled()) {
+                return;
+            }
+
+            try {
+                actionPerformedOnText(target);
+            } catch (Exception ex) {
+                //ignore
+            }
+        }
+
+        public abstract void actionPerformedOnText(JTextComponent target) throws BadLocationException;
+
+        public void cut(JTextComponent target, int from, int to) throws BadLocationException {
+            if (from > to) {
+                int tmp = to;
+                to = from;
+                from = tmp;
+            }
+            if (from >= 0 && to >= 0) {
+                String removedText = target.getDocument().getText(from, to - from);
+                target.getDocument().remove(from, to - from);
+                putKillBuffer(removedText);
+            }
+        }
+
+        public void putKillBuffer(String str) {
+            defaultHistory.put(str);
+        }
+    }
+
+    public static class TextDeleteToLineEndAction extends TextAbstractHistoryAction {
+
+        public TextDeleteToLineEndAction(JTextComponent field) {
+            super("delete-line-end", field);
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_K,
+                            InputEvent.CTRL_DOWN_MASK));
+        }
+
+        @Override
+        public void actionPerformedOnText(JTextComponent target) throws BadLocationException {
+            int sel = target.getSelectionStart();
+            int end = Utilities.getRowEnd(target, sel);
+            if (end == sel) {
+                //remove new line
+                try {
+                    end = Utilities.getRowStart(target, end + 1);
+                } catch (BadLocationException ex) {
+                    //nothing
+                }
+            }
+            cut(target, sel, end);
+        }
+    }
+
+    public static class TextDeleteNextWordAction extends TextAbstractHistoryAction {
+        public TextDeleteNextWordAction(JTextComponent field) {
+            super("delete-next-word", field);
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_DELETE,
+                            InputEvent.ALT_DOWN_MASK));
+        }
+
+        @Override
+        public void actionPerformedOnText(JTextComponent target) throws BadLocationException {
+            int sel = target.getSelectionStart();
+            int end = Utilities.getNextWord(target, sel);
+            try {
+                int lineEnd = Utilities.getRowEnd(target, sel);
+                if (lineEnd < end && sel != lineEnd) {
+                    end = lineEnd;
+                }
+            } catch (BadLocationException ex) {
+                //
+            }
+            if (end < 0) {
+                end = Utilities.getRowEnd(target, sel);
+            }
+            cut(target, sel, end);
+        }
+    }
+
+    public static class TextDeletePreviousWordAction extends TextAbstractHistoryAction {
+        public TextDeletePreviousWordAction(JTextComponent field) {
+            super("delete-previous-word", field);
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE,
+                            InputEvent.ALT_DOWN_MASK));
+        }
+
+        @Override
+        public void actionPerformedOnText(JTextComponent target) throws BadLocationException {
+            int sel = target.getSelectionStart();
+            int end = Utilities.getPreviousWord(target, sel);
+            try {
+                int lineStart = Utilities.getRowStart(target, sel);
+                if (end < lineStart && sel != lineStart) {
+                    end = lineStart;
+                }
+            } catch (BadLocationException ex) {
+                //
+            }
+            if (end < 0) {
+                end = Utilities.getRowStart(target, sel);
+            }
+            cut(target, sel, end);
+        }
+    }
+
+    public static class TextPasteHistoryAction extends TextAbstractHistoryAction {
+        public TextPasteHistoryAction(JTextComponent field) {
+            super("yank", field);
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_Y,
+                            InputEvent.CTRL_DOWN_MASK));
+        }
+
+        @Override
+        public void actionPerformedOnText(JTextComponent target) throws BadLocationException {
+            try {
+                String content = defaultHistory.take();
+                target.replaceSelection(content);
+            } catch (Exception ex) {
+                //nothing
+            }
+        }
+    }
+
+    public static TextInputHistory defaultHistory = new TextInputHistory();
+
+    public static class TextInputHistory implements CaretListener {
+        protected List<TextInputEdit> buffer = new ArrayList<>();
+        protected int nextPosition = -1;
+
+        public void put(String str) {
+            if (!buffer.isEmpty()) {
+                TextInputEdit prev = buffer.get(0);
+                if (nextPosition == prev.position) {
+                    //remove next
+                    prev.text += str;
+                } else if (nextPosition == prev.position - prev.text.length()) {
+                    //remove prev
+                    prev.position = nextPosition;
+                    prev.text = str + prev.text;
+                } else {
+                    buffer.add(0, new TextInputEdit(nextPosition, str));
+                }
+            } else {
+                buffer.add(0, new TextInputEdit(nextPosition, str));
+            }
+            while (buffer.size() > 1000) {
+                buffer.remove(buffer.size() - 1);
+            }
+        }
+        public String take() {
+            return buffer.get(0).text;
+        }
+
+        @Override
+        public void caretUpdate(CaretEvent e) {
+            nextPosition = e.getDot();
+        }
+    }
+
+    public static class TextInputEdit {
+        public int position;
+        public String text;
+
+        public TextInputEdit(int position, String text) {
+            this.position = position;
+            this.text = text;
+        }
+    }
+
 //
 //    public static class TextTabStopFitAction extends AbstractAction {
 //        private static final long serialVersionUID = 1L;
