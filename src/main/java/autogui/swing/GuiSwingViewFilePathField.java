@@ -22,7 +22,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyFilePathPane field = new PropertyFilePathPane(context);
         if (context.isTypeElementProperty()) {
-            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), field);
+            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), context.getName(), field);
         } else {
             return field;
         }

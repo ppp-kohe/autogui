@@ -53,7 +53,7 @@ public class GuiReprObjectPane extends GuiReprValue {
                     if (nextValue != null && nextValue.equals(GuiTypeValue.NO_UPDATE)) {
                         nextValue = prevValue;
                     }
-                    Object subObj = subRepr.toJson(subContext, nextValue);
+                    Object subObj = subRepr.toJsonWithNamed(subContext, nextValue);
                     if (subObj != null) {
                         map.put(subContext.getName(), subObj);
                     }

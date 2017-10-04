@@ -1,11 +1,14 @@
 package autogui.swing.util;
 
+import javax.naming.NameParser;
 import javax.swing.*;
 
 public class NamedPane extends JComponent {
     protected String displayName;
     protected JLabel label;
     protected JComponent contentPane;
+
+    public NamedPane() { }
 
     public NamedPane(String displayName) {
         this.displayName = displayName;

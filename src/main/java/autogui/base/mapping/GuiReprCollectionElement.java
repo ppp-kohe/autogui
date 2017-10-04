@@ -105,7 +105,7 @@ public class GuiReprCollectionElement implements GuiRepresentation {
             //   regular object element: element(object) { property,... }
             //   value object element: element(String) { String } //child-repr == wrapped-repr
             // In both cases, the wrapped repr. can properly handle an element as its source
-            Object e = getRepresentation().toJson(context, element);
+            Object e = getRepresentation().toJsonWithNamed(context, element);
             if (e != null) {
                 array.add(e);
             }

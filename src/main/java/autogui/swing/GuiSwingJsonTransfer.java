@@ -2,6 +2,8 @@ package autogui.swing;
 
 import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.GuiRepresentation;
 import autogui.swing.table.TableTarget;
 import autogui.swing.table.TableTargetAction;
 
@@ -42,7 +44,7 @@ public class GuiSwingJsonTransfer {
         @Override
         public void actionPerformed(ActionEvent e) {
             Object value = component.getSwingViewValue();
-            Object map = context.getRepresentation().toJson(context, value);
+            Object map = context.getRepresentation().toJsonWithNamed(context, value);
             copy(map);
         }
 
@@ -61,12 +63,10 @@ public class GuiSwingJsonTransfer {
             Map<Integer,Object> map = target.getSelectedCellValues();
             //suppose the map preserves order of values, and skip null element
             copy(map.values().stream()
-                    .map(v -> context.getRepresentation().toJson(context, v))
+                    .map(v -> context.getRepresentation().toJsonWithNamed(context, v))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList()));
         }
-
-
     }
 
     /** default representation: InputStream */

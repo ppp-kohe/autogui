@@ -43,7 +43,7 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
         for (GuiMappingContext elementContext : context.getChildren()) {
-            Object obj = elementContext.getRepresentation().toJson(elementContext, source);
+            Object obj = elementContext.getRepresentation().toJsonWithNamed(elementContext, source);
             if (obj != null) {
                 return obj;
             }

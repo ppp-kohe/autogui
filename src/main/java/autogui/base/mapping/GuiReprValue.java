@@ -2,6 +2,9 @@ package autogui.base.mapping;
 
 import autogui.base.type.GuiTypeValue;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class GuiReprValue implements GuiRepresentation {
     @Override
     public boolean match(GuiMappingContext context) {
@@ -136,4 +139,25 @@ public class GuiReprValue implements GuiRepresentation {
     public Object toJson(GuiMappingContext context, Object source) {
         return null;
     }
+
+    public static class NamedValue {
+        public String name;
+        public Object value;
+
+        public NamedValue(String name, Object value) {
+            this.name = name;
+            this.value = value;
+        }
+
+        public Map<String, Object> toJson() {
+            return toJson(value);
+        }
+
+        public Map<String, Object> toJson(Object value) {
+            Map<String,Object> map = new LinkedHashMap<>();
+            map.put(name, value);
+            return map;
+        }
+    }
+
 }

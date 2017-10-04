@@ -15,6 +15,20 @@ public interface GuiRepresentation {
         return true;
     }
 
+    /** the source might be a {@link autogui.base.mapping.GuiReprValue.NamedValue},
+     *   then it unwraps the named value, calls {@link #toJson(GuiMappingContext, Object)},
+     *     and it returns Map with the name.
+     *   otherwise, it simply calls toJson and returns the result.
+     * */
+    default Object toJsonWithNamed(GuiMappingContext context, Object source) {
+        if (source instanceof GuiReprValue.NamedValue) {
+            GuiReprValue.NamedValue named = (GuiReprValue.NamedValue) source;
+            return named.toJson(toJson(context, named.value));
+        } else {
+            return toJson(context, source);
+        }
+    }
+
     /**
      *
      * @param context a context holds the representation

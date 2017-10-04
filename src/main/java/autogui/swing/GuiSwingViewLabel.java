@@ -16,7 +16,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyLabel label = new PropertyLabel(context);
         if (context.isTypeElementProperty()) {
-            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), label);
+            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), context.getName(), label);
         } else {
             return label;
         }

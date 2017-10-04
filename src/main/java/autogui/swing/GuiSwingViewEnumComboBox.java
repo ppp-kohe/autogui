@@ -27,7 +27,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyEnumComboBox box = new PropertyEnumComboBox(context);
         if (context.isTypeElementProperty()) {
-            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), box);
+            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), context.getName(), box);
         } else {
             return box;
         }

@@ -7,8 +7,11 @@ import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
-import javax.swing.text.Document;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.text.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 public class GuiSwingViewDocumentEditor implements GuiSwingView {
@@ -52,7 +55,59 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         });
         pane.setInheritsPopupMenu(true);
 
+        //selection highlight
+        pane.setCaret(new DefaultCaret() {
+            SelectionHighlightPainter painter = new SelectionHighlightPainter();
+            @Override
+            protected Highlighter.HighlightPainter getSelectionPainter() {
+                return painter;
+            }
+        });
+
         return ext;
+    }
+
+    static class SelectionHighlightPainter extends DefaultHighlighter.DefaultHighlightPainter {
+        public SelectionHighlightPainter() {
+            super(UIManager.getColor("TextPane.selectionBackground"));
+        }
+
+        @Override
+        public Shape paintLayer(Graphics g, int offs0, int offs1, Shape bounds, JTextComponent c, View view) {
+            try {
+                if (offs0 > offs1) {
+                    int tmp = offs0;
+                    offs0 = offs1;
+                    offs1 = tmp;
+                }
+
+                Rectangle startRect = c.modelToView(offs0);
+                Rectangle endRect = c.modelToView(offs1);
+
+                int startLeft = startRect.x;
+                int endRight = endRect.x + endRect.width;
+                int startTop = startRect.y;
+                int endBottom = endRect.y + endRect.height;
+
+                Graphics2D g2 = (Graphics2D) g;
+
+                Color color = (getColor() == null ? c.getSelectionColor() : getColor());
+                g2.setColor(color);
+
+                int startBottom = startRect.y + startRect.height;
+
+                if (startBottom != endBottom) {
+                    endRight = c.getWidth();
+                }
+                Rectangle2D.Float selRect = new Rectangle2D.Float(startLeft, startTop, endRight - startLeft, startBottom - startTop);
+                g2.fill(selRect);
+                return selRect;
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                return bounds;
+            }
+
+        }
     }
 
     public static void updateText(JEditorPane pane, GuiMappingContext context, Object newValue) {
@@ -131,5 +186,19 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
     }
 
+    ///////////
 
+    public static class DocumentSettingPane extends JPanel {
+        protected JEditorPane pane;
+
+        public DocumentSettingPane(JEditorPane pane) {
+            setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
+            this.pane = pane;
+            if (pane.getDocument() instanceof StyledDocument) {
+                StyledDocument doc = (StyledDocument) pane.getDocument();
+                Style style = doc.getStyle(StyleContext.DEFAULT_STYLE);
+
+            }
+        }
+    }
 }

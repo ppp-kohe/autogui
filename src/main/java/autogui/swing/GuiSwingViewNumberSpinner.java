@@ -30,7 +30,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyNumberSpinner spinner = new PropertyNumberSpinner(context);
         if (context.isTypeElementProperty()) {
-            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), spinner);
+            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), context.getName(), spinner);
         } else {
             return spinner;
         }
@@ -454,7 +454,6 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public NumberSettingPane(TypedSpinnerNumberModel model) {
             setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
             setOpaque(false);
-            setFocusable(false);
             this.model = model;
 
             minCheckBox = new JCheckBox("Min:");

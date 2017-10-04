@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupExtension;
 
@@ -8,6 +9,9 @@ import javax.naming.NameParser;
 import javax.swing.*;
 import java.awt.*;
 import java.util.EventObject;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class GuiSwingViewPropertyPane implements GuiSwingView {
@@ -27,7 +31,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
                 GuiSwingView view = (GuiSwingView) e;
                 JComponent subComp = view.createView(subContext);
                 if (subComp != null) {
-                    pane.setContent(subComp);
+                    pane.setContentPane(subComp);
                 }
             }
         }
@@ -45,17 +49,16 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         return false;
     }
 
-    public static class PropertyPane extends JComponent implements ValuePane {
+    public static class PropertyPane extends NamedPropertyPane implements ValuePane {
         protected GuiMappingContext context;
-        protected JComponent content;
         protected PopupExtension popup;
 
         public PropertyPane(GuiMappingContext context, boolean showName) {
+            super(context.getDisplayName(), context.getName());
             this.context = context;
             setLayout(new BorderLayout());
             setOpaque(false);
             setBorder(BorderFactory.createEmptyBorder());
-            setName(context.getName());
             if (showName) {
                 initNameLabel();
             }
@@ -72,36 +75,24 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
 
         public PropertyPane(GuiMappingContext context, boolean showName, JComponent content) {
             this(context, showName);
-            setContent(content);
+            setContentPane(content);
         }
 
         public void initNameLabel() {
-            JLabel label = new JLabel(context.getDisplayName());
+            label = new JLabel(displayName);
 
             label.setName(context.getName() + ".label");
             label.setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
             add(label, BorderLayout.NORTH);
         }
 
-        public void setContent(JComponent content) {
-            this.content = content;
-            add(this.content, BorderLayout.CENTER);
-        }
-
         @Override
-        public Object getSwingViewValue() {
-            if (content != null && content instanceof ValuePane) {
-                return ((ValuePane) content).getSwingViewValue();
+        public void setContentPane(JComponent content) {
+            if (this.contentPane != null) {
+                remove(contentPane);
             }
-            return context.getSource();
-        }
-
-        @Override
-        public void setSwingViewValue(Object value) {
-            if (content != null && content instanceof ValuePane) {
-                ((ValuePane) content).setSwingViewValue(value);
-            }
-            context.setSource(value);
+            this.contentPane = content;
+            add(this.contentPane, BorderLayout.CENTER);
         }
 
         @Override
@@ -109,29 +100,29 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             return popup.getMenuBuilder();
         }
 
-
-        @Override
-        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
-            if (content != null && content instanceof ValuePane) {
-                ((ValuePane) content).addSwingEditFinishHandler(eventHandler);
-            }
-        }
     }
 
     public static class NamedPropertyPane extends NamedPane implements ValuePane {
 
-        public NamedPropertyPane(String displayName) {
+        public NamedPropertyPane() { }
+
+        public NamedPropertyPane(String displayName, String name) {
             super(displayName);
+            setName(name);
         }
 
-        public NamedPropertyPane(String displayName, JComponent contentPane) {
+        public NamedPropertyPane(String displayName, String name, JComponent contentPane) {
             super(displayName, contentPane);
+            setName(name);
         }
 
         @Override
         public Object getSwingViewValue() {
             if (contentPane != null && contentPane instanceof ValuePane) {
-                return ((ValuePane) contentPane).getSwingViewValue();
+                Object value = ((ValuePane) contentPane).getSwingViewValue();
+                if (value != null) {
+                    return new GuiReprValue.NamedValue(getName(), value);
+                }
             }
             return null;
         }
@@ -139,7 +130,9 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         @Override
         public void setSwingViewValue(Object value) {
             if (contentPane != null && contentPane instanceof ValuePane) {
-                ((ValuePane) contentPane).setSwingViewValue(value);
+                if (value != null && value instanceof GuiReprValue.NamedValue) {
+                    ((ValuePane) contentPane).setSwingViewValue(((GuiReprValue.NamedValue) value).value);
+                }
             }
         }
 
