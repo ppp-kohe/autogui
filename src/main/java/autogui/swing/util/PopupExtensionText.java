@@ -4,7 +4,6 @@ import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Utilities;
 import java.awt.*;
@@ -12,11 +11,12 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -113,7 +113,9 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                 new TextCopyAllAction(textComponent),
                 new TextPasteAction(textComponent),
                 new TextPasteAllAction(textComponent),
-                new TextSelectAllAction(textComponent));
+                new TextSelectAllAction(textComponent),
+                new TextLoadAction(textComponent),
+                new TextSaveAction(textComponent));
     }
 
     //////////////
@@ -141,6 +143,28 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     public static void putInputEditActionsToKeys(InputMap map, JTextComponent component) {
         getInputEditActions(component)
             .forEach(a -> map.put((KeyStroke) a.getValue(Action.ACCELERATOR_KEY), a.getValue(Action.NAME)));
+    }
+
+
+    /**
+     * usually, it will register "Copy Value" and "Paste Value"
+     */
+    public static void putUnregisteredEditActions(JTextComponent component) {
+        List<Action> actions = getEditActions(component);
+        InputMap inputMap = component.getInputMap();
+        ActionMap actionMap = component.getActionMap();
+        for (Action a : actions) {
+            KeyStroke k = (KeyStroke) a.getValue(Action.ACCELERATOR_KEY);
+            if (k != null) {
+                Object existing = inputMap.get(k);
+                if (existing == null) {
+                    Object name = a.getValue(Action.NAME);
+                    inputMap.put(k, name);
+                    actionMap.put(name, a);
+                }
+            }
+        }
+
     }
 
     /////////////
@@ -183,7 +207,6 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         protected JTextComponent field;
         public TextCutAction(JTextComponent field) {
             putValue(NAME, "Cut");
-            //TODO key binding
             putValue(Action.ACCELERATOR_KEY,
                     KeyStroke.getKeyStroke(KeyEvent.VK_X,
                         Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
@@ -481,45 +504,142 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     public static class TextInputHistory implements CaretListener {
         protected List<TextInputEdit> buffer = new ArrayList<>();
+        protected Object nextSource;
         protected int nextPosition = -1;
 
         public void put(String str) {
             if (!buffer.isEmpty()) {
                 TextInputEdit prev = buffer.get(0);
-                if (nextPosition == prev.position) {
+                if (nextPosition == prev.position &&
+                        nextSource == prev.source) {
                     //remove next
                     prev.text += str;
-                } else if (nextPosition == prev.position - prev.text.length()) {
+                } else if (nextPosition == prev.position - prev.text.length() &&
+                        nextSource == prev.source) {
                     //remove prev
                     prev.position = nextPosition;
                     prev.text = str + prev.text;
                 } else {
-                    buffer.add(0, new TextInputEdit(nextPosition, str));
+                    buffer.add(0, new TextInputEdit(nextSource, nextPosition, str));
                 }
             } else {
-                buffer.add(0, new TextInputEdit(nextPosition, str));
+                buffer.add(0, new TextInputEdit(nextSource, nextPosition, str));
             }
             while (buffer.size() > 1000) {
                 buffer.remove(buffer.size() - 1);
             }
         }
+
         public String take() {
             return buffer.get(0).text;
         }
 
         @Override
         public void caretUpdate(CaretEvent e) {
+            nextSource = e.getSource();
             nextPosition = e.getDot();
         }
     }
 
     public static class TextInputEdit {
+        public Object source;
         public int position;
         public String text;
 
-        public TextInputEdit(int position, String text) {
+        public TextInputEdit(Object source, int position, String text) {
+            this.source = source;
             this.position = position;
             this.text = text;
+        }
+    }
+
+    ////////////
+
+    public static class TextLoadAction extends AbstractAction {
+        protected JTextComponent field;
+        protected static JFileChooser fileChooser;
+        protected static Charset charset = StandardCharsets.UTF_8;
+
+        public TextLoadAction(JTextComponent field) {
+            putValue(NAME, "Load...");
+            this.field = field;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return field.isEnabled() && field.isEditable();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String str = load();
+            if (str != null) {
+                field.setText(str);
+            }
+        }
+
+        public String load() {
+            JFileChooser fileChooser = getFileChooser();
+            int r = fileChooser.showOpenDialog(field);
+            if (r == JFileChooser.APPROVE_OPTION) {
+                Path path = fileChooser.getSelectedFile().toPath();
+                try {
+                    return new String(Files.readAllBytes(path), charset);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+            return null;
+        }
+
+        public static JFileChooser getFileChooser() {
+            if (fileChooser == null) {
+                fileChooser = new JFileChooser();
+                JPanel pane = new JPanel();
+                SortedMap<String,Charset> map = Charset.availableCharsets();
+                JComboBox<String> box = new JComboBox<>(map.keySet()
+                        .toArray(new String[map.size()]));
+                box.setSelectedItem(StandardCharsets.UTF_8.displayName());
+                box.addActionListener(e -> {
+                    charset = map.get((String) box.getSelectedItem());
+                });
+                pane.add(new JLabel("Encoding:"));
+                pane.add(box);
+                fileChooser.add(pane);
+            }
+            return fileChooser;
+        }
+    }
+
+    public static class TextSaveAction extends TextLoadAction {
+        public TextSaveAction(JTextComponent component) {
+            super(component);
+            putValue(NAME, "Save...");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFileChooser fileChooser = getFileChooser();
+            int r = fileChooser.showSaveDialog(field);
+            if (r == JFileChooser.APPROVE_OPTION) {
+                Path path = fileChooser.getSelectedFile().toPath();
+                if (Files.exists(path)) {
+                    int op = JOptionPane.showConfirmDialog(field, path.toString() + " exists. Overwrites?",
+                            "File Saving", JOptionPane.OK_CANCEL_OPTION);
+                    if (op == JOptionPane.OK_OPTION) {
+                        save(path);
+                    }
+                }
+            }
+        }
+
+        public void save(Path path) {
+            String text = field.getText();
+            try {
+                Files.write(path, Collections.singletonList(text), charset);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 

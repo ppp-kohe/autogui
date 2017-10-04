@@ -1,18 +1,30 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.type.GuiTypeValue;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
+import autogui.swing.util.ResizableFlowLayout;
 
 import javax.swing.*;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.text.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.geom.Rectangle2D;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 public class GuiSwingViewDocumentEditor implements GuiSwingView {
     @Override
@@ -20,7 +32,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
         JComponent text = doc.isStyledDocument(context) ?
                 new PropertyDocumentTextPane(context) : new PropertyDocumentEditorPane(context);
-        JScrollPane pane = new GuiSwingView.ValueScrollPane(text, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        JScrollPane pane = new GuiSwingView.ValueScrollPane(text,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         if (context.isTypeElementProperty()) {
             return new GuiSwingViewPropertyPane.PropertyPane(context, true, pane);
         } else {
@@ -40,20 +54,30 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         //initial update
         l.update(context, context.getSource());
 
-        pane.setPreferredSize(new Dimension(400, 400));
+        pane.setMinimumSize(new Dimension(1, 1));
 
         //popup
         JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
+        JComponent infoForSetting = GuiSwingContextInfo.get().getInfoLabel(context);
         List<Action> actions = PopupExtensionText.getEditActions(pane);
         PopupExtensionText ext = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
             menu.accept(info);
             actions.forEach(menu::accept);
+
+            menu.accept(new JPopupMenu.Separator());
             if (pane instanceof ValuePane) {
                 GuiSwingJsonTransfer.getActions((ValuePane) pane, context)
                     .forEach(menu::accept);
             }
+
+            menu.accept(new JPopupMenu.Separator());
+            menu.accept(new DocumentSettingAction(infoForSetting, pane));
         });
         pane.setInheritsPopupMenu(true);
+
+        //key-binding
+        PopupExtensionText.putInputEditActions(pane);
+        PopupExtensionText.putUnregisteredEditActions(pane);
 
         //selection highlight
         pane.setCaret(new DefaultCaret() {
@@ -67,7 +91,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         return ext;
     }
 
-    static class SelectionHighlightPainter extends DefaultHighlighter.DefaultHighlightPainter {
+    public static class SelectionHighlightPainter extends DefaultHighlighter.DefaultHighlightPainter {
         public SelectionHighlightPainter() {
             super(UIManager.getColor("TextPane.selectionBackground"));
         }
@@ -123,10 +147,20 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         return doc.toSourceValue(context, pane.getDocument());
     }
 
+    public static Dimension preferredSize(JTextComponent field, boolean wrapLine) {
+        Dimension dim = field.getUI().getPreferredSize(field);
+        Component parent = SwingUtilities.getUnwrappedParent(field);
+        if (!wrapLine && parent != null) {
+            dim = new Dimension(Math.max(dim.width, parent.getSize().width), dim.height);
+        }
+        return dim;
+    }
+
     public static class PropertyDocumentEditorPane extends JEditorPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
         protected PopupExtension popup;
+        protected boolean wrapLine = true;
 
         public PropertyDocumentEditorPane(GuiMappingContext context) {
             this.context = context;
@@ -153,12 +187,26 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             updateText(this, context, value);
         }
 
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return wrapLine;
+        }
+
+        public void setWrapLine(boolean wrapLine) {
+            this.wrapLine = wrapLine;
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            return GuiSwingViewDocumentEditor.preferredSize(this, wrapLine);
+        }
     }
 
     public static class PropertyDocumentTextPane extends JTextPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
         protected GuiMappingContext context;
         protected PopupExtension popup;
+        protected boolean wrapLine = true;
 
         public PropertyDocumentTextPane(GuiMappingContext context) {
             this.context = context;
@@ -184,21 +232,297 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public void setSwingViewValue(Object value) {
             updateText(this, context, value);
         }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return wrapLine;
+        }
+
+        public void setWrapLine(boolean wrapLine) {
+            this.wrapLine = wrapLine;
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            return GuiSwingViewDocumentEditor.preferredSize(this, wrapLine);
+        }
     }
 
     ///////////
 
-    public static class DocumentSettingPane extends JPanel {
+    public static class TextWrapTextAction extends AbstractAction {
+        protected JTextComponent field;
+
+        public TextWrapTextAction(JTextComponent field) {
+            putValue(NAME, "Wrap Line");
+            this.field = field;
+            putValue(SELECTED_KEY, isWrapLine(scroll(field.getParent())));
+        }
+
+        public void updateSelected() {
+            putValue(SELECTED_KEY, isWrapLine(scroll(field.getParent())));
+        }
+
+        public JScrollPane scroll(Container c) {
+            if (c == null) {
+                return null;
+            } else if (c instanceof JViewport) {
+                JViewport port = (JViewport) c;
+
+                return scroll(c.getParent());
+            } else if (c instanceof JScrollPane) {
+                return (JScrollPane) c;
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JScrollPane pane = scroll(field.getParent());
+            boolean f = isWrapLine(pane);
+            setWrapLine(pane, !f);
+        }
+
+        public boolean isWrapLine(JScrollPane pane) {
+            if (pane == null) {
+                return true;
+            } else {
+                return pane.getHorizontalScrollBarPolicy() == ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+            }
+        }
+
+        public void setWrapLine(JScrollPane pane, boolean f) {
+            if (pane != null) {
+                pane.setHorizontalScrollBarPolicy(f ?
+                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER :
+                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+                if (field instanceof PropertyDocumentEditorPane) {
+                    ((PropertyDocumentEditorPane) field).setWrapLine(f);
+                } else if (field instanceof PropertyDocumentTextPane) {
+                    ((PropertyDocumentTextPane) field).setWrapLine(f);
+                }
+                pane.revalidate();
+            }
+        }
+    }
+
+
+    public static class DocumentSettingAction extends AbstractAction {
+        protected DocumentSettingPane pane;
+        protected JPanel contentPane;
+        public DocumentSettingAction(JComponent label, JEditorPane editorPane) {
+            putValue(NAME, "Settings...");
+            pane = new DocumentSettingPane(editorPane);
+            contentPane = new JPanel(new BorderLayout());
+            contentPane.add(label, BorderLayout.NORTH);
+            contentPane.add(pane, BorderLayout.CENTER);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFrame frame = GuiSwingViewNumberSpinner.getSettingWindow();
+            frame.setContentPane(contentPane);
+            frame.pack();
+            frame.setVisible(true);
+        }
+    }
+
+    public static class DocumentSettingPane extends JPanel implements ItemListener, ChangeListener {
         protected JEditorPane pane;
+        protected Map<String, Font> nameFonts = new HashMap<>();
+
+        protected JComboBox<String> fontFamily;
+        protected JSpinner fontSize;
+        protected JPopupMenu fontStyleMenu;
+        protected JSpinner lineSpacing;
+
+        protected Action styleItalic;
+        protected Action styleBold;
+
 
         public DocumentSettingPane(JEditorPane pane) {
             setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
             this.pane = pane;
+
+            //font name
+            GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            fontFamily = new JComboBox<>(env.getAvailableFontFamilyNames());
+            fontFamily.setRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    setFont(getListFont((String) value));
+                    return this;
+                }
+            });
+            fontFamily.addItemListener(this);
+
+            //font size
+            fontSize = new JSpinner(new SpinnerNumberModel(14, 0, 400, 1));
+            fontSize.addChangeListener(this);
+
+            //font style
+            styleBold = new StyleSetAction("Bold", StyleConstants.isBold(getTargetStyle()), a -> updateStyle());
+            styleItalic = new StyleSetAction("Italic", StyleConstants.isBold(getTargetStyle()), a -> updateStyle());
+            fontStyleMenu = new JPopupMenu();
+            fontStyleMenu.add(new JCheckBoxMenuItem(styleBold));
+            fontStyleMenu.add(new JCheckBoxMenuItem(styleItalic));
+
+            TextWrapTextAction action = new TextWrapTextAction(pane);
+            fontStyleMenu.add(new JCheckBoxMenuItem(action));
+            //delay checking after component setting-up
+            new Timer(200, e -> action.updateSelected())
+                    .start();
+
+            JButton styleButton = new JButton("Style");
+            PopupButtonListener buttonListener = new PopupButtonListener(styleButton, fontStyleMenu);
+            styleButton.addActionListener(buttonListener);
+            fontStyleMenu.addPopupMenuListener(buttonListener);
+
+            //line spacing
+            lineSpacing = new JSpinner(new SpinnerNumberModel(StyleConstants.getLineSpacing(getTargetStyle()),
+                    Short.MIN_VALUE, Short.MAX_VALUE, 0.1f));
+            lineSpacing.addChangeListener(this);
+
+            ////
+            setLayout(new ResizableFlowLayout(false).setFitHeight(true));
+            LabelGroup g = new LabelGroup();
+            ResizableFlowLayout.add(this,
+                    ResizableFlowLayout.create(true)
+                            .add(g.label("Font:")).add(fontFamily, true).getContainer(), false);
+            ResizableFlowLayout.add(this,
+                    ResizableFlowLayout.create(true)
+                            .add(g.label("Font Size:")).add(fontSize, true).add(styleButton).getContainer(), false);
+            ResizableFlowLayout.add(this,
+                    ResizableFlowLayout.create(true)
+                            .add(g.label("Style:")).add(styleButton, true).getContainer(), false);
+            ResizableFlowLayout.add(this,
+                    ResizableFlowLayout.create(true)
+                            .add(g.label("Line Spacing:")).add(lineSpacing, true).getContainer(), false);
+            g.fitWidth();
+            updateStyle();
+        }
+
+        public Font getListFont(String family) {
+            return nameFonts.computeIfAbsent(family,
+                    n -> new Font(family, Font.PLAIN, 14));
+        }
+
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                updateStyle();
+            }
+        }
+
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            updateStyle();
+        }
+
+        public void updateStyle() {
+            Style style = getTargetStyle();
+            StyleConstants.setLineSpacing(style, ((Number) lineSpacing.getValue()).floatValue());
+            StyleConstants.setFontFamily(style, (String) fontFamily.getSelectedItem());
+            StyleConstants.setFontSize(style, ((Number) fontSize.getValue()).intValue());
+            StyleConstants.setBold(style, (Boolean) styleBold.getValue(Action.SELECTED_KEY));
+            StyleConstants.setItalic(style, (Boolean) styleItalic.getValue(Action.SELECTED_KEY));
+            System.err.println("update");
+            pane.repaint();
+        }
+
+        public Style getTargetStyle() {
             if (pane.getDocument() instanceof StyledDocument) {
                 StyledDocument doc = (StyledDocument) pane.getDocument();
-                Style style = doc.getStyle(StyleContext.DEFAULT_STYLE);
-
+                return doc.getStyle(StyleContext.DEFAULT_STYLE);
+            } else {
+                return null;
             }
+        }
+    }
+
+    public static class LabelGroup {
+        protected List<JComponent> items = new ArrayList<>();
+        protected int align;
+
+        public LabelGroup() {
+            this(FlowLayout.RIGHT);
+        }
+
+        public LabelGroup(int align) {
+            this.align = align;
+        }
+
+        public JComponent label(String name) {
+            JPanel pane = new JPanel(new FlowLayout(align));
+            pane.add(new JLabel(name));
+            return add(pane);
+        }
+
+        public JComponent add(JComponent component) {
+            items.add(component);
+            return component;
+        }
+
+        public void fitWidth() {
+            Dimension dim = new Dimension();
+            for (JComponent item : items){
+                Dimension p = item.getPreferredSize();
+                dim.width = Math.max(p.width, dim.width);
+            }
+
+            for (JComponent item : items){
+                Dimension p = item.getPreferredSize();
+                p.width = dim.width;
+                item.setPreferredSize(p);
+            }
+        }
+    }
+
+    public static class PopupButtonListener implements ActionListener, PopupMenuListener {
+        protected Instant cancelTime = Instant.EPOCH;
+        protected JComponent button;
+        protected JPopupMenu menu;
+
+        public PopupButtonListener(JComponent button, JPopupMenu menu) {
+            this.button = button;
+            this.menu = menu;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Duration d = Duration.between(cancelTime, Instant.now());
+            if (d.compareTo(Duration.ofMillis(100)) > 0) {
+                menu.show(button, 0, button.getHeight());
+            }
+        }
+
+        @Override
+        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            cancelTime = Instant.EPOCH;
+        }
+
+        @Override
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) { }
+
+        @Override
+        public void popupMenuCanceled(PopupMenuEvent e) {
+            cancelTime = Instant.now();
+        }
+    }
+
+    public static class StyleSetAction extends AbstractAction {
+        protected Consumer<StyleSetAction> callback;
+        public StyleSetAction(String name, boolean initVal, Consumer<StyleSetAction> callback) {
+            putValue(NAME, name);
+            putValue(SELECTED_KEY, initVal);
+            this.callback = callback;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            callback.accept(this);
         }
     }
 }

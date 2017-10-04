@@ -8,6 +8,7 @@ import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
@@ -371,7 +372,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
     public static class DesktopRevealAction extends FileListAction {
-        protected Function<Path,List<String>> commandGenerator;
+        protected Consumer<Path> command;
+
 
         public DesktopRevealAction(SearchTextFieldFilePath component) {
             super("Reveal In Desktop", component);
@@ -382,21 +384,36 @@ public class SearchTextFieldFilePath extends SearchTextField {
             //open -R path
             //explorer.exe /select,path
             //nautilus path
+            //in Java9: Desktop.browseFileDirectory(File)
             if (Desktop.isDesktopSupported()) {
-                String name = System.getProperty("os.name", "?").toLowerCase();
-                if (name.startsWith("mac")) {
-                    commandGenerator = (path) -> Arrays.asList("open", "-R", path.toString());
-                } else if (name.startsWith("windows")) {
-                    commandGenerator = (path) -> Arrays.asList("explorer", "/select," + path.toString());
-                } else {
-                    commandGenerator = (path) -> Arrays.asList("nautilus", path.toString());
+                try {
+                    Desktop desk = Desktop.getDesktop();
+                    //TODO replace: command = path -> desk.browseFileDirectory(path.toFile());
+                    Method method = Desktop.class.getMethod("browseFileDirectory", File.class);
+                    command = path -> {
+                        try {
+                            method.invoke(desk, path.toFile());
+                        } catch (Exception ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    };
+                } catch (Exception ex) {
+                    Function<Path,List<String>> commandGenerator;
+                    String name = System.getProperty("os.name", "?").toLowerCase();
+                    if (name.startsWith("mac")) {
+                        commandGenerator = (path) -> Arrays.asList("open", "-R", path.toString());
+                    } else if (name.startsWith("windows")) {
+                        commandGenerator = (path) -> Arrays.asList("explorer", "/select," + path.toString());
+                    } else {
+                        commandGenerator = (path) -> Arrays.asList("nautilus", path.toString());
+                    }
+                    command = processCommand(commandGenerator);
                 }
             }
         }
 
-        @Override
-        public void run(List<Path> files) {
-            for (Path file : files) {
+        public Consumer<Path> processCommand(Function<Path, List<String>> commandGenerator) {
+            return file -> {
                 try {
                     Process p = new ProcessBuilder(commandGenerator.apply(file.toAbsolutePath()))
                             .start();
@@ -404,6 +421,13 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
+            };
+        }
+
+        @Override
+        public void run(List<Path> files) {
+            for (Path file : files) {
+                command.accept(file);
             }
         }
     }

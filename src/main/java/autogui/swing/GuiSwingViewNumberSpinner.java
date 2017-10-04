@@ -418,25 +418,32 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
     ///////////////////
 
+    public static JFrame settingWindow;
+
+    public static JFrame getSettingWindow() {
+        if (settingWindow == null) {
+            settingWindow = new JFrame();
+            settingWindow.setType(Window.Type.UTILITY);
+        }
+        return settingWindow;
+    }
+
     public static class NumberSettingAction extends AbstractAction {
         protected NumberSettingPane pane;
-        protected JFrame frame;
+        protected JPanel contentPane;
         public NumberSettingAction(JComponent label, TypedSpinnerNumberModel model) {
             putValue(NAME, "Settings...");
             pane = new NumberSettingPane(model);
-            frame = new JFrame();
-            frame.setType(Window.Type.UTILITY);
-            {
-                JPanel contentPane = new JPanel(new BorderLayout());
-                contentPane.add(label, BorderLayout.NORTH);
-                contentPane.add(pane, BorderLayout.CENTER);
-                frame.setContentPane(contentPane);
-            }
-            frame.pack();
+            contentPane = new JPanel(new BorderLayout());
+            contentPane.add(label, BorderLayout.NORTH);
+            contentPane.add(pane, BorderLayout.CENTER);
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            JFrame frame = getSettingWindow();
+            frame.setContentPane(contentPane);
+            frame.pack();
             frame.setVisible(true);
         }
     }
