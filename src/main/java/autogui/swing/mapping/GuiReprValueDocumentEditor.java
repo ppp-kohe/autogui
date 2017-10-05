@@ -152,7 +152,6 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
             if (os.contains("mac")) {
                 StyleConstants.setFontFamily(style, "Menlo");
             }
-            System.err.println("style: " + style);
             setParagraphAttributes(0, getLength(), style, true);
         }
 

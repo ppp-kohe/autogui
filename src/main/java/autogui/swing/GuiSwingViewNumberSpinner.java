@@ -2,10 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.PopupExtensionText;
-import autogui.swing.util.ResizableFlowLayout;
-import autogui.swing.util.ScheduledTaskRunner;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -418,16 +415,6 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
     ///////////////////
 
-    public static JFrame settingWindow;
-
-    public static JFrame getSettingWindow() {
-        if (settingWindow == null) {
-            settingWindow = new JFrame();
-            settingWindow.setType(Window.Type.UTILITY);
-        }
-        return settingWindow;
-    }
-
     public static class NumberSettingAction extends AbstractAction {
         protected NumberSettingPane pane;
         protected JPanel contentPane;
@@ -441,10 +428,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            JFrame frame = getSettingWindow();
-            frame.setContentPane(contentPane);
-            frame.pack();
-            frame.setVisible(true);
+            SettingsWindow.get().show(pane, contentPane);
         }
     }
 
@@ -476,28 +460,21 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             stepSpinner.addChangeListener(this::updateFromGui);
             model.addChangeListener(this::updateFromModel);
 
-            Dimension spinnerSize = new Dimension(150, 32);
+            Dimension spinnerSize = new Dimension(150, 28);
             minSpinner.setPreferredSize(spinnerSize);
             maxSpinner.setPreferredSize(spinnerSize);
             stepSpinner.setPreferredSize(spinnerSize);
 
-            setLayout(new ResizableFlowLayout(false).setFitHeight(true));
-            ResizableFlowLayout.add(this,
-                    pane(minCheckBox, minSpinner), false);
-            ResizableFlowLayout.add(this,
-                    pane(maxCheckBox, maxSpinner), false);
-            ResizableFlowLayout.add(this,
-                    pane(new JLabel("Step:"), stepSpinner), false);
-            updateFromModel(null);
-        }
+            minSpinner.setMinimumSize(new Dimension(100, minSpinner.getMinimumSize().height));
+            maxSpinner.setMinimumSize(new Dimension(100, maxSpinner.getMinimumSize().height));
+            stepSpinner.setMinimumSize(new Dimension(100, stepSpinner.getMinimumSize().height));
 
-        private JPanel pane(JComponent label, JComponent value) {
-            Dimension min = value.getMinimumSize();
-            min.width = 100;
-            value.setMinimumSize(min);
-            return ResizableFlowLayout.create(true)
-                    .add(label).add(value, true)
-                    .getContainer();
+            updateFromModel(null);
+            new SettingsWindow.LabelGroup(this)
+                    .addRow(minCheckBox, minSpinner)
+                    .addRow(maxCheckBox, maxSpinner)
+                    .addRow("Step:", stepSpinner)
+                    .fitWidth();
         }
 
         public void updateFromModel(ChangeEvent e) {

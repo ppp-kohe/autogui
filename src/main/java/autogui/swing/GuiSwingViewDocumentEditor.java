@@ -4,7 +4,8 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
-import autogui.swing.util.ResizableFlowLayout;
+import autogui.swing.util.ScheduledTaskRunner;
+import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -13,14 +14,10 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +57,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
         JComponent infoForSetting = GuiSwingContextInfo.get().getInfoLabel(context);
         List<Action> actions = PopupExtensionText.getEditActions(pane);
+        DocumentSettingAction settingAction = new DocumentSettingAction(infoForSetting, pane);
         PopupExtensionText ext = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
             menu.accept(info);
             actions.forEach(menu::accept);
@@ -71,7 +69,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             }
 
             menu.accept(new JPopupMenu.Separator());
-            menu.accept(new DocumentSettingAction(infoForSetting, pane));
+            menu.accept(settingAction);
         });
         pane.setInheritsPopupMenu(true);
 
@@ -321,10 +319,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            JFrame frame = GuiSwingViewNumberSpinner.getSettingWindow();
-            frame.setContentPane(contentPane);
-            frame.pack();
-            frame.setVisible(true);
+            SettingsWindow.get().show(pane, contentPane);
         }
     }
 
@@ -339,10 +334,15 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         protected Action styleItalic;
         protected Action styleBold;
+        protected boolean updateDisabled;
 
+        protected SettingsWindow.ColorButton backgroundColor;
+        protected SettingsWindow.ColorButton foregroundColor;
+
+        protected ScheduledTaskRunner.EditingRunner updater;
 
         public DocumentSettingPane(JEditorPane pane) {
-            setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
+            setBorder(BorderFactory.createEmptyBorder(3, 10, 10, 10));
             this.pane = pane;
 
             //font name
@@ -385,23 +385,22 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                     Short.MIN_VALUE, Short.MAX_VALUE, 0.1f));
             lineSpacing.addChangeListener(this);
 
-            ////
-            setLayout(new ResizableFlowLayout(false).setFitHeight(true));
-            LabelGroup g = new LabelGroup();
-            ResizableFlowLayout.add(this,
-                    ResizableFlowLayout.create(true)
-                            .add(g.label("Font:")).add(fontFamily, true).getContainer(), false);
-            ResizableFlowLayout.add(this,
-                    ResizableFlowLayout.create(true)
-                            .add(g.label("Font Size:")).add(fontSize, true).add(styleButton).getContainer(), false);
-            ResizableFlowLayout.add(this,
-                    ResizableFlowLayout.create(true)
-                            .add(g.label("Style:")).add(styleButton, true).getContainer(), false);
-            ResizableFlowLayout.add(this,
-                    ResizableFlowLayout.create(true)
-                            .add(g.label("Line Spacing:")).add(lineSpacing, true).getContainer(), false);
-            g.fitWidth();
-            updateStyle();
+            updater = new ScheduledTaskRunner.EditingRunner(500, l -> updateStyle());
+
+            //color
+            backgroundColor = new SettingsWindow.ColorButton(Color.white, updater::schedule);
+            foregroundColor = new SettingsWindow.ColorButton(Color.black, updater::schedule);
+
+            new SettingsWindow.LabelGroup(this)
+                .addRow("Font:", fontFamily)
+                .addRow("Font Size:", fontSize)
+                .addRow("Style:", styleButton)
+                .addRow("Line Spacing:", lineSpacing)
+                .addRowFixed("Font Color:", foregroundColor)
+                .addRowFixed("Background:", backgroundColor)
+                .fitWidth();
+
+            updateFromStyle();
         }
 
         public Font getListFont(String family) {
@@ -422,60 +421,56 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         public void updateStyle() {
+            if (updateDisabled) {
+                return;
+            }
+            StyledDocument doc = getTargetDocument();
             Style style = getTargetStyle();
-            StyleConstants.setLineSpacing(style, ((Number) lineSpacing.getValue()).floatValue());
-            StyleConstants.setFontFamily(style, (String) fontFamily.getSelectedItem());
-            StyleConstants.setFontSize(style, ((Number) fontSize.getValue()).intValue());
-            StyleConstants.setBold(style, (Boolean) styleBold.getValue(Action.SELECTED_KEY));
-            StyleConstants.setItalic(style, (Boolean) styleItalic.getValue(Action.SELECTED_KEY));
-            System.err.println("update");
+            if (style != null) {
+                StyleConstants.setLineSpacing(style, ((Number) lineSpacing.getValue()).floatValue());
+                StyleConstants.setFontFamily(style, (String) fontFamily.getSelectedItem());
+                StyleConstants.setFontSize(style, ((Number) fontSize.getValue()).intValue());
+                StyleConstants.setBold(style, (Boolean) styleBold.getValue(Action.SELECTED_KEY));
+                StyleConstants.setItalic(style, (Boolean) styleItalic.getValue(Action.SELECTED_KEY));
+                pane.setBackground(backgroundColor.getColor());
+                StyleConstants.setForeground(style, foregroundColor.getColor());
+                doc.setParagraphAttributes(0, doc.getLength(), style, true);
+            }
             pane.repaint();
         }
 
-        public Style getTargetStyle() {
+        public void updateFromStyle() {
+            updateDisabled = true;
+            try {
+                Style style = getTargetStyle();
+                if (style != null) {
+                    lineSpacing.setValue(StyleConstants.getLineSpacing(style));
+                    fontFamily.setSelectedItem(StyleConstants.getFontFamily(style));
+                    fontSize.setValue(StyleConstants.getFontSize(style));
+                    styleBold.putValue(Action.SELECTED_KEY, StyleConstants.isBold(style));
+                    styleItalic.putValue(Action.SELECTED_KEY, StyleConstants.isItalic(style));
+                    backgroundColor.setColorWithoutUpdate(pane.getBackground());
+                    foregroundColor.setColorWithoutUpdate(StyleConstants.getForeground(style));
+                }
+            } finally {
+                updateDisabled = false;
+            }
+        }
+
+        public StyledDocument getTargetDocument() {
             if (pane.getDocument() instanceof StyledDocument) {
-                StyledDocument doc = (StyledDocument) pane.getDocument();
-                return doc.getStyle(StyleContext.DEFAULT_STYLE);
+                return (StyledDocument) pane.getDocument();
             } else {
                 return null;
             }
         }
-    }
 
-    public static class LabelGroup {
-        protected List<JComponent> items = new ArrayList<>();
-        protected int align;
-
-        public LabelGroup() {
-            this(FlowLayout.RIGHT);
-        }
-
-        public LabelGroup(int align) {
-            this.align = align;
-        }
-
-        public JComponent label(String name) {
-            JPanel pane = new JPanel(new FlowLayout(align));
-            pane.add(new JLabel(name));
-            return add(pane);
-        }
-
-        public JComponent add(JComponent component) {
-            items.add(component);
-            return component;
-        }
-
-        public void fitWidth() {
-            Dimension dim = new Dimension();
-            for (JComponent item : items){
-                Dimension p = item.getPreferredSize();
-                dim.width = Math.max(p.width, dim.width);
-            }
-
-            for (JComponent item : items){
-                Dimension p = item.getPreferredSize();
-                p.width = dim.width;
-                item.setPreferredSize(p);
+        public Style getTargetStyle() {
+            StyledDocument doc = getTargetDocument();
+            if (doc != null) {
+                return doc.getStyle(StyleContext.DEFAULT_STYLE);
+            } else {
+                return null;
             }
         }
     }
@@ -525,4 +520,5 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             callback.accept(this);
         }
     }
+
 }
