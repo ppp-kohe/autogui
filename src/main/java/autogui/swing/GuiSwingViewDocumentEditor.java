@@ -2,25 +2,22 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.PopupExtensionText;
-import autogui.swing.util.ScheduledTaskRunner;
-import autogui.swing.util.SettingsWindow;
+import autogui.swing.util.*;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
+import javax.swing.Timer;
+import javax.swing.event.*;
 import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.geom.Rectangle2D;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 public class GuiSwingViewDocumentEditor implements GuiSwingView {
@@ -137,6 +134,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         Document doc = docEditor.toUpdateValue(context, newValue);
         if (pane.getDocument() != doc && doc != null) {
             pane.setDocument(doc);
+
+            //line numbering
+            new LineNumberPane(pane).install();
         }
     }
 
@@ -248,6 +248,19 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
     ///////////
 
+
+    public static JScrollPane scroll(Container c) {
+        if (c == null) {
+            return null;
+        } else if (c instanceof JViewport) {
+            return scroll(c.getParent());
+        } else if (c instanceof JScrollPane) {
+            return (JScrollPane) c;
+        } else {
+            return null;
+        }
+    }
+
     public static class TextWrapTextAction extends AbstractAction {
         protected JTextComponent field;
 
@@ -259,20 +272,6 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public void updateSelected() {
             putValue(SELECTED_KEY, isWrapLine(scroll(field.getParent())));
-        }
-
-        public JScrollPane scroll(Container c) {
-            if (c == null) {
-                return null;
-            } else if (c instanceof JViewport) {
-                JViewport port = (JViewport) c;
-
-                return scroll(c.getParent());
-            } else if (c instanceof JScrollPane) {
-                return (JScrollPane) c;
-            } else {
-                return null;
-            }
         }
 
         @Override
@@ -433,6 +432,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 StyleConstants.setBold(style, (Boolean) styleBold.getValue(Action.SELECTED_KEY));
                 StyleConstants.setItalic(style, (Boolean) styleItalic.getValue(Action.SELECTED_KEY));
                 pane.setBackground(backgroundColor.getColor());
+                pane.setCaretColor(foregroundColor.getColor());
                 StyleConstants.setForeground(style, foregroundColor.getColor());
                 doc.setParagraphAttributes(0, doc.getLength(), style, true);
             }
@@ -520,5 +520,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             callback.accept(this);
         }
     }
+
+
+    ///////////////////
 
 }
