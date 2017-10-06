@@ -605,7 +605,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                 });
                 pane.add(new JLabel("Encoding:"));
                 pane.add(box);
-                fileChooser.add(pane);
+                fileChooser.setAccessory(pane);
             }
             return fileChooser;
         }

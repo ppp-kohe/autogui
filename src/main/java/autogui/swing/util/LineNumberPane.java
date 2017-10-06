@@ -43,6 +43,7 @@ public class LineNumberPane extends JComponent implements DocumentListener {
 
     public void install() {
         field.getDocument().addDocumentListener(this);
+        field.addCaretListener(e -> repaint());
         installToScrollPane(scroll(field.getParent()));
     }
 
@@ -140,7 +141,14 @@ public class LineNumberPane extends JComponent implements DocumentListener {
 
     public void updatePreferredSize() {
         int size = linePosition.size();
-        int width = Integer.toString(size).length() * 14;
+        int len = Integer.toString(size).length();
+        Font font = getFont();
+        int width;
+        if (font != null) {
+            width = (int) (font.getSize2D() * len + 8);
+        } else {
+            width = 10 * len + 8;
+        }
         setPreferredSize(new Dimension(width, field.getPreferredSize().height));
     }
 
@@ -150,6 +158,8 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         super.paintComponent(g);
         try {
+            int selStart = field.getSelectionStart();
+            int selEnd = field.getSelectionEnd();
 
             Rectangle textRect = field.getVisibleRect();
             Rectangle selfRect = getVisibleRect();
@@ -163,12 +173,19 @@ public class LineNumberPane extends JComponent implements DocumentListener {
             int selfOffsetY = selfRect.y - textRect.y;
 
             g.setFont(getFont());
-            g.setColor(Color.gray);
+
             int lineIndex = Math.max(0, findPosition(startIndex) - 1);
-            int endLineIndex = Math.min(linePosition.size(), findPosition(endIndex));
+            int lines = linePosition.size();
+            int endLineIndex = Math.min(lines, findPosition(endIndex));
             for (int i = lineIndex; i < endLineIndex; ++i) {
-                int pos = linePosition.get(i);
-                Rectangle lineRect = field.modelToView(pos);
+                int lineStart = linePosition.get(i);
+                int lineEnd = i + 1 < lines ? linePosition.get(i + 1) - 1 : Integer.MAX_VALUE;
+                if (overlap(lineStart, lineEnd, selStart, selEnd)) {
+                    g.setColor(Color.black);
+                } else {
+                    g.setColor(Color.gray);
+                }
+                Rectangle lineRect = field.modelToView(lineStart);
                 int y = lineRect.y + selfOffsetY;
                 g.drawString(Integer.toString(i + 1), 4, y + 12);
             }
@@ -176,5 +193,10 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    private boolean overlap(int s1, int e1, int s2, int e2) {
+        return (s1 <= s2 && s2 <= e1) || (s1 <= e2 && e2 <= e1) ||
+                (s2 <= s1 && s1 <= e2) || (s2 <= e1 && e1 <= e2) ;
     }
 }

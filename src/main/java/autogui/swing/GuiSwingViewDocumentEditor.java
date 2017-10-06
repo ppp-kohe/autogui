@@ -196,7 +196,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public Dimension getPreferredSize() {
-            return GuiSwingViewDocumentEditor.preferredSize(this, wrapLine);
+            try {
+                return GuiSwingViewDocumentEditor.preferredSize(this, wrapLine);
+            } catch (Exception ex) {
+                return getSize();
+            }
         }
     }
 
@@ -242,7 +246,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public Dimension getPreferredSize() {
-            return GuiSwingViewDocumentEditor.preferredSize(this, wrapLine);
+            try {
+                return GuiSwingViewDocumentEditor.preferredSize(this, wrapLine);
+            } catch (Exception ex) {
+                return getSize();
+            }
         }
     }
 
