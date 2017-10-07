@@ -266,6 +266,14 @@ public class GuiMappingContext {
                 .forEach(l -> l.update(this, c.getSource())));
     }
 
+    public void updateSourceSubTree() {
+        List<GuiMappingContext> updated = new ArrayList<>();
+        collectUpdatedSource(null, updated);
+
+        updated.forEach(c -> c.getListeners()
+                .forEach(l -> l.update(this, c.getSource())));
+    }
+
     public void collectUpdatedSource(GuiMappingContext cause, List<GuiMappingContext> updated) {
         boolean thisUpdated = false;
         if (this != cause) {

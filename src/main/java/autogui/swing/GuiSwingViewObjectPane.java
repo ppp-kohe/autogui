@@ -6,14 +6,8 @@ import autogui.swing.util.ResizableFlowLayout;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 public class GuiSwingViewObjectPane implements GuiSwingView {
     protected GuiSwingMapperSet mapperSet;
@@ -210,6 +204,11 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         @Override
         public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
             return popup.getMenuBuilder();
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
         }
     }
 

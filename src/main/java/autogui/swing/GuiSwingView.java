@@ -23,10 +23,34 @@ public interface GuiSwingView extends GuiSwingElement {
          * processed under the event thread */
         void setSwingViewValue(Object value);
 
-        default void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
-        }
+        default void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) { }
 
         PopupExtension.PopupMenuBuilder getSwingMenuBuilder();
+
+        default ValueScrollPane wrapScrollPane(boolean verticalAlways, boolean horizontalAlways) {
+            return new ValueScrollPane(asComponent(),
+                    verticalAlways ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    horizontalAlways ? ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        }
+
+        default ValueWrappingPane wrapPane() {
+            return new ValueWrappingPane(asComponent());
+        }
+
+        GuiMappingContext getContext();
+
+        default GuiSwingViewPropertyPane.PropertyPane wrapProperty() {
+            return new GuiSwingViewPropertyPane.PropertyPane(getContext(), true, asComponent());
+        }
+
+        default GuiSwingViewPropertyPane.NamedPropertyPane wrapNamed() {
+            return new GuiSwingViewPropertyPane.NamedPropertyPane(getContext().getDisplayName(), getContext().getName(),
+                    asComponent());
+        }
+
+        default JComponent asComponent() {
+            return (JComponent) this;
+        }
     }
 
     class ValueScrollPane extends JScrollPane implements ValuePane {
@@ -68,6 +92,11 @@ public interface GuiSwingView extends GuiSwingElement {
             if (pane != null) {
                 pane.addSwingEditFinishHandler(eventHandler);
             }
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return pane == null ? null : pane.getContext();
         }
     }
 
@@ -118,6 +147,11 @@ public interface GuiSwingView extends GuiSwingElement {
             if (pane != null) {
                 pane.addSwingEditFinishHandler(eventHandler);
             }
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return pane == null ? null : pane.getContext();
         }
     }
 }

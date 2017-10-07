@@ -5,8 +5,10 @@ import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.*;
 
 import javax.swing.*;
-import javax.swing.Timer;
-import javax.swing.event.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -16,23 +18,22 @@ import java.awt.event.ItemListener;
 import java.awt.geom.Rectangle2D;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class GuiSwingViewDocumentEditor implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
         GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
-        JComponent text = doc.isStyledDocument(context) ?
+        ValuePane text = doc.isStyledDocument(context) ?
                 new PropertyDocumentTextPane(context) : new PropertyDocumentEditorPane(context);
-
-        JScrollPane pane = new GuiSwingView.ValueScrollPane(text,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        ValuePane pane = text.wrapScrollPane(true, false);
         if (context.isTypeElementProperty()) {
-            return new GuiSwingViewPropertyPane.PropertyPane(context, true, pane);
+            return pane.wrapProperty();
         } else {
-            return pane;
+            return pane.asComponent();
         }
     }
 
@@ -54,7 +55,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
         JComponent infoForSetting = GuiSwingContextInfo.get().getInfoLabel(context);
         List<Action> actions = PopupExtensionText.getEditActions(pane);
-        DocumentSettingAction settingAction = new DocumentSettingAction(infoForSetting, pane);
+        DocumentSettingAction settingAction = (pane instanceof JTextPane ? new DocumentSettingAction(infoForSetting, pane) : null);
         PopupExtensionText ext = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
             menu.accept(info);
             actions.forEach(menu::accept);
@@ -65,8 +66,10 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                     .forEach(menu::accept);
             }
 
-            menu.accept(new JPopupMenu.Separator());
-            menu.accept(settingAction);
+            if (settingAction != null) {
+                menu.accept(new JPopupMenu.Separator());
+                menu.accept(settingAction);
+            }
         });
         pane.setInheritsPopupMenu(true);
 
@@ -202,6 +205,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 return getSize();
             }
         }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
+        }
     }
 
     public static class PropertyDocumentTextPane extends JTextPane
@@ -251,6 +259,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             } catch (Exception ex) {
                 return getSize();
             }
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
         }
     }
 

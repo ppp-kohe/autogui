@@ -2,7 +2,10 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
-import autogui.swing.util.*;
+import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionText;
+import autogui.swing.util.ScheduledTaskRunner;
+import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -27,7 +30,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyNumberSpinner spinner = new PropertyNumberSpinner(context);
         if (context.isTypeElementProperty()) {
-            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), context.getName(), spinner);
+            return spinner.wrapNamed();
         } else {
             return spinner;
         }
@@ -254,6 +257,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             return ((DefaultEditor) getEditor()).getTextField();
         }
 
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
+        }
     }
 
     public static class TextServiceDefaultMenuSpinner extends PopupExtensionText.TextServiceDefaultMenu {

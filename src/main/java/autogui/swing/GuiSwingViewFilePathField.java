@@ -2,7 +2,6 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueFilePathField;
-import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.SearchTextFieldFilePath;
@@ -10,19 +9,16 @@ import autogui.swing.util.SearchTextFieldFilePath;
 import javax.swing.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GuiSwingViewFilePathField implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
         PropertyFilePathPane field = new PropertyFilePathPane(context);
         if (context.isTypeElementProperty()) {
-            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), context.getName(), field);
+            return field.wrapNamed();
         } else {
             return field;
         }
@@ -120,6 +116,11 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         @Override
         public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
             getField().addActionListener(eventHandler::accept);
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
         }
     }
 }

@@ -2,7 +2,6 @@ package autogui.swing.util;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 

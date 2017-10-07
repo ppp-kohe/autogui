@@ -16,7 +16,7 @@ import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -24,11 +24,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
         PropertyImagePane imagePane = new PropertyImagePane(context);
-        JComponent pane = new GuiSwingView.ValueScrollPane(imagePane);
+        ValuePane pane = new GuiSwingView.ValueScrollPane(imagePane);
         if (context.isTypeElementProperty()) {
-            return new GuiSwingViewPropertyPane.PropertyPane(context, true, pane);
+            return pane.wrapProperty();
         } else {
-            return pane;
+            return pane.asComponent();
         }
     }
 
@@ -76,6 +76,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, e -> {
                 getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
             });
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
         }
 
         public JComponent createSizeInfo(Dimension size) {

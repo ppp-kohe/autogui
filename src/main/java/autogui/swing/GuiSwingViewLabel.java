@@ -16,7 +16,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyLabel label = new PropertyLabel(context);
         if (context.isTypeElementProperty()) {
-            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), context.getName(), label);
+            return label.wrapNamed();
         } else {
             return label;
         }
@@ -78,6 +78,11 @@ public class GuiSwingViewLabel implements GuiSwingView {
         public String getValueAsString() {
             GuiReprValue label = (GuiReprValue) context.getRepresentation();;
             return "" + label.toUpdateValue(context, getSwingViewValue());
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
         }
     }
 

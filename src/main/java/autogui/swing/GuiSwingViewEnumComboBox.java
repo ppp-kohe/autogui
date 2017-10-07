@@ -2,7 +2,6 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueEnumComboBox;
-import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
@@ -17,7 +16,6 @@ import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -27,7 +25,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyEnumComboBox box = new PropertyEnumComboBox(context);
         if (context.isTypeElementProperty()) {
-            return new GuiSwingViewPropertyPane.NamedPropertyPane(context.getDisplayName(), context.getName(), box);
+            return box.wrapNamed();
         } else {
             return box;
         }
@@ -116,6 +114,11 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         @Override
         public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
             addItemListener(eventHandler::accept);
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
         }
     }
 

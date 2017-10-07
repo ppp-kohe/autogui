@@ -15,7 +15,6 @@ import java.util.Comparator;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class ObjectTableColumn {
     protected TableColumn tableColumn;

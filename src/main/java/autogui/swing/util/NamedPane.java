@@ -1,6 +1,5 @@
 package autogui.swing.util;
 
-import javax.naming.NameParser;
 import javax.swing.*;
 
 public class NamedPane extends JComponent {

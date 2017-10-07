@@ -48,8 +48,10 @@ public class LineNumberPane extends JComponent implements DocumentListener {
     }
 
     public void installToScrollPane(JScrollPane scrollPane) {
-        scrollPane.setRowHeaderView(this);
-        scrollPane.getViewport().addChangeListener(e -> repaint());
+        if (scrollPane != null) {
+            scrollPane.setRowHeaderView(this);
+            scrollPane.getViewport().addChangeListener(e -> repaint());
+        }
     }
 
     public void build() {

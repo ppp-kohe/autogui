@@ -58,7 +58,7 @@ public class GuiReprCollectionElement implements GuiRepresentation {
     public Object getCellValue(GuiMappingContext context, GuiMappingContext subContext,
                                Object src, int rowIndex, int columnIndex) throws Exception {
         if (subContext.isTypeElementProperty()) {
-            Object val =  subContext.getTypeElementAsProperty().executeGet(src, null);
+            Object val =  subContext.getTypeElementAsProperty().executeGetList(rowIndex, src, null);
             if (val != null && val.equals(GuiTypeValue.NO_UPDATE)) {
                 return null;
             } else {
@@ -68,7 +68,7 @@ public class GuiReprCollectionElement implements GuiRepresentation {
             if (representation instanceof GuiReprPropertyPane) {
                 return src;
             } else if (subContext.isTypeElementValue() || subContext.isTypeElementObject() || subContext.isTypeElementCollection()) {
-                return subContext.getTypeElementValue().updatedValue(null);
+                return subContext.getTypeElementValue().updatedValueList(rowIndex, null);
             }
         }
         return null;
@@ -79,14 +79,14 @@ public class GuiReprCollectionElement implements GuiRepresentation {
                                   Object src, int rowIndex, int columnIndex, Object newValue) {
         if (subContext.isTypeElementProperty()) {
             try {
-                subContext.getTypeElementAsProperty().executeSet(src, newValue);
+                subContext.getTypeElementAsProperty().executeSetList(rowIndex, src, newValue);
             } catch (Exception ex) {
                 subContext.errorWhileUpdateSource(ex);
             }
         } else if (representation instanceof GuiReprPropertyPane) {
             ((GuiReprPropertyPane) representation).updateFromGuiChild(subContext, newValue);
         } else if (subContext.isTypeElementValue() || subContext.isTypeElementObject() || subContext.isTypeElementCollection()) {
-            subContext.getTypeElementValue().writeValue(null, newValue);
+            subContext.getTypeElementValue().writeValueList(rowIndex, null, newValue);
         }
     }
 

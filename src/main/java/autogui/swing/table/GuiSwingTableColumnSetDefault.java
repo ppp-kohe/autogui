@@ -3,13 +3,15 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprAction;
 import autogui.base.mapping.GuiReprActionList;
-import autogui.swing.*;
+import autogui.swing.GuiSwingAction;
+import autogui.swing.GuiSwingActionDefault;
+import autogui.swing.GuiSwingElement;
+import autogui.swing.GuiSwingMapperSet;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     protected GuiSwingMapperSet columnMappingSet;

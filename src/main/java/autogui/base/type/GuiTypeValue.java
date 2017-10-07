@@ -51,6 +51,10 @@ public class GuiTypeValue implements GuiTypeElement {
         return null;
     }
 
+    public Object updatedValueList(int index, Object prevValue) {
+        return updatedValue(prevValue);
+    }
+
     public boolean isWritable(Object value) {
         return true;
     }
@@ -58,6 +62,10 @@ public class GuiTypeValue implements GuiTypeElement {
     /** returns a new value */
     public Object writeValue(Object prevValue, Object newValue) {
         return newValue;
+    }
+
+    public Object writeValueList(int index, Object prevValue, Object newValue) {
+        return writeValue(prevValue, newValue);
     }
 
     public static NoUpdate NO_UPDATE = NoUpdate.NoUpdate;

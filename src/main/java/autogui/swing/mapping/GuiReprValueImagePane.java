@@ -119,6 +119,16 @@ public class GuiReprValueImagePane extends GuiReprValue {
         if (source instanceof RenderedImage) { //including BufferedImage
             return (RenderedImage) source;
         } else if (source instanceof Image) {
+            return getBufferedImage(context, source);
+        } else {
+            return null;
+        }
+    }
+
+    public BufferedImage getBufferedImage(GuiMappingContext context, Object source) {
+        if (source instanceof BufferedImage) {
+            return (BufferedImage) source;
+        } else if (source instanceof Image) {
             Image image = (Image) source;
             Dimension size = getSize(context, image);
             BufferedImage tmp = new BufferedImage(size.width, size.height, BufferedImage.TYPE_4BYTE_ABGR);
@@ -140,5 +150,19 @@ public class GuiReprValueImagePane extends GuiReprValue {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public void updateFromGui(GuiMappingContext context, Object newValue) {
+        Class<?> valueType = getValueType(context);
+        //image conversion
+        if (valueType != null) {
+            if (BufferedImage.class.isAssignableFrom(valueType)) {
+                newValue = getBufferedImage(context, newValue);
+            } else if (RenderedImage.class.isAssignableFrom(valueType)) {
+                newValue = getBufferedImage(context, newValue);
+            }
+        }
+        super.updateFromGui(context, newValue);
     }
 }

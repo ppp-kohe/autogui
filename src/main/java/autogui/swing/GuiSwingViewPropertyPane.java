@@ -5,13 +5,9 @@ import autogui.base.mapping.GuiReprValue;
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupExtension;
 
-import javax.naming.NameParser;
 import javax.swing.*;
 import java.awt.*;
 import java.util.EventObject;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 
 public class GuiSwingViewPropertyPane implements GuiSwingView {
@@ -100,6 +96,10 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             return popup.getMenuBuilder();
         }
 
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
+        }
     }
 
     public static class NamedPropertyPane extends NamedPane implements ValuePane {
@@ -149,6 +149,15 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
             if (contentPane != null && contentPane instanceof ValuePane) {
                 ((ValuePane) contentPane).addSwingEditFinishHandler(eventHandler);
+            }
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            if (contentPane != null && contentPane instanceof ValuePane) {
+                return ((ValuePane) contentPane).getContext();
+            } else {
+                return null;
             }
         }
     }

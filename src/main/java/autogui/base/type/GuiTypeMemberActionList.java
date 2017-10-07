@@ -1,7 +1,6 @@
 package autogui.base.type;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.List;
 
 /**

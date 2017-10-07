@@ -94,8 +94,8 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     public boolean isStyledDocument(GuiMappingContext context) {
-        //return StyledDocument.class.isAssignableFrom(getValueType(context));
-        return true; //enables style change
+        return StyledDocument.class.isAssignableFrom(getValueType(context));
+        //return true; //enables style change
     }
 
     /**
@@ -157,6 +157,23 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
 
         public Content getContentValue() {
             return value;
+        }
+
+        /** compare values by equals(Object) for detecting change of a property:
+         *   default impl. of equals of Content only compares their references */
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ContentWrappingDocument that = (ContentWrappingDocument) o;
+
+            return value != null ? value.equals(that.value) : that.value == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return value != null ? value.hashCode() : 0;
         }
     }
 
@@ -276,6 +293,22 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
             }
         }
 
+        /**
+         * compare only StringBuilder references for detecting change of the property */
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            StringBuilderContent that = (StringBuilderContent) o;
+
+            return buffer == that.buffer;
+        }
+
+        @Override
+        public int hashCode() {
+            return buffer != null ? buffer.hashCode() : 0;
+        }
     }
 
     public interface EditSupplier<T> {

@@ -4,7 +4,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;

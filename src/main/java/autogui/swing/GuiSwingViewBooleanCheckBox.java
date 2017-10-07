@@ -102,6 +102,11 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
             addActionListener(eventHandler::accept);
         }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
+        }
     }
 
     public static class BooleanTransferHandler extends TransferHandler {

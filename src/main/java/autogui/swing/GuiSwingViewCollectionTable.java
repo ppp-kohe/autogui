@@ -2,18 +2,23 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.swing.table.*;
+import autogui.swing.table.GuiSwingTableColumnSet;
+import autogui.swing.table.GuiSwingTableColumnSetDefault;
+import autogui.swing.table.ObjectTableColumn;
+import autogui.swing.table.ObjectTableModel;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.function.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class GuiSwingViewCollectionTable implements GuiSwingView {
     protected GuiSwingMapperSet columnMapperSet;
@@ -106,13 +111,17 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
 
-        public JScrollPane initTableScrollPane() {
-            JScrollPane scrollPane = new GuiSwingView.ValueScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        public ValueScrollPane initTableScrollPane() {
+            ValueScrollPane scrollPane = new GuiSwingView.ValueScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            initTableScrollPane(scrollPane);
+            return scrollPane;
+        }
+
+        public void initTableScrollPane(JScrollPane scrollPane) {
             int width = getObjectTableModel().getColumns().stream()
                     .mapToInt(e -> e.getTableColumn().getWidth())
                     .sum();
             scrollPane.setPreferredSize(new Dimension(width, Math.max(scrollPane.getPreferredSize().height, 100)));
-            return scrollPane;
         }
 
         public JToolBar initActionToolBar(List<Action> actions) {
@@ -207,6 +216,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             getObjectTableModel().refreshRows(is.stream()
                     .mapToInt(Integer::intValue).toArray());
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
         }
     }
 

@@ -2,8 +2,6 @@ package autogui.swing;
 
 import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
-import autogui.base.mapping.GuiRepresentation;
 import autogui.swing.table.TableTarget;
 import autogui.swing.table.TableTargetAction;
 

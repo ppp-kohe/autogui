@@ -115,6 +115,11 @@ public class GuiSwingViewStringField implements GuiSwingView {
         public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
             getField().addActionListener(eventHandler::accept);
         }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
+        }
     }
 
     /** handle entire text */

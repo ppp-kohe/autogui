@@ -1,17 +1,13 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewBooleanCheckBox;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.EventObject;
-import java.util.function.Consumer;
 
 public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
     @Override

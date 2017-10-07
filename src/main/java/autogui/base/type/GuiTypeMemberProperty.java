@@ -191,4 +191,20 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     public boolean isWritable() {
         return getSetter() != null || getField() != null;
     }
+
+    /**
+     * The default implementation is just call to {@link #executeGet(Object, Object)}
+     * @param index  index of the target in the list
+     * @param target  an element object
+     * @param prevValue it might be null
+     * @return property value of the target which is an element of a list
+     * @throws Exception on error
+     */
+    public Object executeGetList(int index, Object target, Object prevValue) throws Exception {
+       return executeGet(target, prevValue);
+    }
+
+    public Object executeSetList(int index, Object target, Object value) throws Exception {
+        return executeSet(target, value);
+    }
 }

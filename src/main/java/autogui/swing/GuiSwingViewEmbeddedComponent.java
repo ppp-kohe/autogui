@@ -5,17 +5,15 @@ import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.EventObject;
-import java.util.function.Consumer;
 
 public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
-        JComponent comp = new PropertyEmbeddedPane(context);
+        ValuePane comp = new PropertyEmbeddedPane(context);
         if (context.isTypeElementProperty()) {
-            return new GuiSwingViewPropertyPane.PropertyPane(context, true, comp);
+            return comp.wrapProperty();
         } else {
-            return comp;
+            return comp.asComponent();
         }
     }
 
@@ -39,6 +37,11 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         @Override
         public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
             return (sender, menu) -> {};
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
         }
 
         @Override

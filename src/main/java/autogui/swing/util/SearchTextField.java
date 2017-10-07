@@ -492,7 +492,7 @@ public class SearchTextField extends JComponent {
         }
 
         public void initGradientColors() {
-            int gradMax = 4;
+            int gradMax = 3;
 
             List<Color> cs = new ArrayList<Color>();
             for (int i = 0; i < gradMax; ++i) {
@@ -505,18 +505,18 @@ public class SearchTextField extends JComponent {
         public void initFocusColor() {
             focusColor = UIManager.getColor("Focus.color");
             if (focusColor == null) {
-                focusColor = new Color(100, 100, 100);
+                focusColor = new Color(150, 150, 150);
             } else {
                 float[] hsb = new float[3];
                 hsb = Color.RGBtoHSB(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), hsb);
-                focusColor = Color.getHSBColor(hsb[0] * 0.97f, hsb[1] * 0.72f, hsb[2]);
+                focusColor = Color.getHSBColor(hsb[0] * 0.97f, hsb[1] * 0.53f, hsb[2]);
             }
         }
 
         public void initStrokes() {
-            strokes = new BasicStroke[2];
+            strokes = new BasicStroke[3];
             for (int i = 0; i < strokes.length; ++i) {
-                strokes[i] = new BasicStroke(strokes.length - i);
+                strokes[i] = new BasicStroke(strokes.length / 2.0f);
             }
         }
 
@@ -575,7 +575,7 @@ public class SearchTextField extends JComponent {
             int y = 2;
             int width = component.getWidth() - 4;
             int height = component.getHeight() - 4;
-            int arc = 5;
+            float arc = 4;
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             RoundRectangle2D rr = new RoundRectangle2D.Float(x, y, width - 1, height - 1, arc, arc);
@@ -602,8 +602,8 @@ public class SearchTextField extends JComponent {
                 RoundRectangle2D rp = new RoundRectangle2D.Float(x + i, y + i, width - (2 * i), height - (2 * i), arcW, arcH);
                 g2.fill(rp);
             }
-            g2.setColor(new Color(150, 150, 150));
-            g2.setStroke(new BasicStroke(1));
+            g2.setColor(new Color(200, 200, 200));
+            g2.setStroke(new BasicStroke(0.7f));
             g2.draw(rr);
         }
 
