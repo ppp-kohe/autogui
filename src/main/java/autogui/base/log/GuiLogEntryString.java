@@ -1,0 +1,25 @@
+package autogui.base.log;
+
+import java.time.Instant;
+
+public class GuiLogEntryString implements GuiLogEntry {
+    protected Instant time;
+    protected String data;
+
+    public GuiLogEntryString(String data) {
+        this(Instant.now(), data);
+    }
+
+    public GuiLogEntryString(Instant time, String data) {
+        this.time = time;
+        this.data = data;
+    }
+
+    public Instant getTime() {
+        return time;
+    }
+
+    public String getData() {
+        return data;
+    }
+}
