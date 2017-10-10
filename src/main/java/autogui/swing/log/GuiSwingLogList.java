@@ -9,18 +9,21 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class GuiSwingLogList extends JList<GuiLogEntry> {
     protected Timer activePainter;
+    protected GuiSwingLogEventDispatcher eventDispatcher;
 
     public GuiSwingLogList(GuiSwingLogManager manager) {
         super(new GuiSwingLogListModel());
         setOpaque(true);
 
-        GuiSwingLogEventDispatcher event = new GuiSwingLogEventDispatcher(this);
-        addMouseListener(event);
-        addMouseMotionListener(event);
+        eventDispatcher = new GuiSwingLogEventDispatcher(this);
+        addMouseListener(eventDispatcher);
+        addMouseMotionListener(eventDispatcher);
 
         getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -122,6 +125,12 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         return getModel().getElementAt(row);
     }
 
+    /////////////// find
+
+    public void findText(String str, boolean forward) {
+        eventDispatcher.findText(str, forward);
+    }
+
     /////////////////
 
     public Rectangle getTargetEntryRect(int target) {
@@ -218,7 +227,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         protected GuiSwingLogList table;
         protected CellRendererPane rendererPane;
         protected Point pressPoint;
-        protected int columnIndex = 0;
+        protected String lastFind;
 
         public GuiSwingLogEventDispatcher(GuiSwingLogList table) {
             this.table = table;
@@ -390,6 +399,78 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         @Override
         public void mouseMoved(MouseEvent e) { }
 
+        public void findText(String str, boolean forward) {
+            //TODO backward
+            if (Objects.equals(lastFind, str)) {
+                boolean found = false;
+                int[] is = table.getSelectedIndices();
+                int lastIndex = 0;
+                if (is != null) {
+                    //TODO reverse if backward
+                    for (int i : is) {
+                        if (findNext(i, forward)) {
+                            found = true;
+                            lastIndex = i;
+                            break;
+                        }
+                    }
+                }
+                if (!found) {
+                    findLoop(lastIndex, str);
+                }
+            } else {
+                //TODO reverse
+                findLoop(table.getFirstVisibleIndex(), str);
+            }
+            lastFind = str;
+        }
 
+        public void findLoop(int start, String str) {
+            int count = 0;
+            for (int i = start, l = table.getRowCount(); i < l; ++i) {
+                count += find(str, i);
+                if (count > 0) {
+                    table.scrollRectToVisible(table.getCellRect(i));
+                    table.setSelectedIndex(i);
+                    break;
+                }
+            }
+            if (count == 0) {
+                for (int i = 0; i < start; ++i) {
+                    count += find(str, i);
+                    if (count > 0) {
+                        table.scrollRectToVisible(table.getCellRect(i));
+                        table.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+        }
+
+        private int find(String str, int i) {
+            GuiLogEntry e = table.getValueAt(i);
+            int[] count = new int[] {0};
+            if (e instanceof GuiSwingLogEntry) {
+                GuiSwingLogEntry se = (GuiSwingLogEntry) e;
+                runEntry(i, se, r -> {
+                    count[0] += r.findText(se, str);
+                });
+            }
+            return count[0];
+        }
+
+        private boolean findNext(int i, boolean next) {
+            GuiLogEntry e = table.getValueAt(i);
+            int[] count = new int[] {0};
+            if (e instanceof GuiSwingLogEntry) {
+                GuiSwingLogEntry se = (GuiSwingLogEntry) e;
+                runEntry(i, se, r -> {
+                    if (next ? r.focusNextFound() : r.focusPreviousFound()) {
+                        count[0] = 1;
+                    }
+                });
+            }
+            return count[0] > 0;
+        }
     }
 }

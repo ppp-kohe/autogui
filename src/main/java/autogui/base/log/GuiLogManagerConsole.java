@@ -3,9 +3,8 @@ package autogui.base.log;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.time.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Duration;
+import java.time.Instant;
 
 public class GuiLogManagerConsole extends GuiLogManager {
     protected PrintStream out = System.err;
@@ -31,27 +30,39 @@ public class GuiLogManagerConsole extends GuiLogManager {
     @Override
     public GuiLogEntryString logString(String str) {
         GuiLogEntryString s = super.logString(str);
+        showString(s);
+        return s;
+    }
+
+    public void showString(GuiLogEntryString s) {
         out.format("%s %s\n", formatTime(s.getTime()), s.getData());
         lastEntry = s;
-        return s;
     }
 
     @Override
     public GuiLogEntryException logError(Throwable ex) {
         GuiLogEntryException e = super.logError(ex);
+        showError(e);
+        return e;
+    }
+
+    public void showError(GuiLogEntryException e) {
         out.print(formatTime(e.getTime()) + " !!! ");
         e.getException().printStackTrace(out);
         out.flush();
         lastEntry = e;
-        return e;
     }
 
     @Override
     public GuiLogEntryProgress logProgress() {
         GuiLogEntryProgress p = super.logProgress();
+        showProgress(p);
+        return p;
+    }
+
+    public void showProgress(GuiLogEntryProgress p) {
         out.print(formatTime(p.getTime()) + " # \n\n");
         lastEntry = p;
-        return p;
     }
 
     @Override

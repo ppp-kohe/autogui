@@ -45,6 +45,14 @@ public class ListExp extends GuiSwingTestCase {
                 bar.setFloatable(false);
                 bar.add(new AddAction(list, manager));
                 bar.add(new AddProgressAction(list, manager));
+
+                JTextField findField = new JTextField(20);
+                bar.add(findField);
+                findField.addActionListener(e -> {
+                    boolean back = (e.getModifiers() & KeyEvent.SHIFT_DOWN_MASK) != 0;
+                    String str = findField.getText();
+                    list.findText(str, !back);
+                });
                 pane.add(bar, BorderLayout.NORTH);
 
                 GuiSwingLogStatusBar status = new GuiSwingLogStatusBar(manager);
@@ -61,6 +69,7 @@ public class ListExp extends GuiSwingTestCase {
             frame.setSize(400, 800);
         });
     }
+
 
     static class AddAction extends AbstractAction {
         GuiSwingLogList list;

@@ -26,5 +26,19 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
         default void mousePressed(GuiSwingLogEntry entry, Point point) {}
         default void mouseDragged(GuiSwingLogEntry entry, Point point) {}
         default void mouseReleased(GuiSwingLogEntry entry, Point point) {}
+
+
+        default int findText(GuiSwingLogEntry entry, String text) {
+            return 0;
+        }
+
+        default boolean focusNextFound() {
+            return false;
+        }
+
+        default boolean focusPreviousFound() {
+            return false;
+        }
     }
+
 }

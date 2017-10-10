@@ -5,16 +5,26 @@ import autogui.base.log.GuiLogEntryProgress;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements GuiSwingLogEntry {
+    protected Selections selections = new Selections();
 
     @Override
     public LogEntryRenderer getRenderer(GuiSwingLogManager manager, ContainerType type) {
         return new GuiSwingLogProgressRenderer(manager, type);
+    }
+
+    public Selections getSelections() {
+        return selections;
     }
 
     public static class GuiSwingLogProgressRenderer extends JComponent
@@ -34,6 +44,9 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         protected boolean selected;
 
         protected GuiLogEntryProgress previousState = new GuiSwingLogEntryProgress();
+
+        protected Object messageHighlightKey;
+        protected Object message2HighlightKey;
 
         public GuiSwingLogProgressRenderer(GuiSwingLogManager manager, ContainerType type) {
             this.manager = manager;
@@ -64,6 +77,11 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             messageContainer = new JPanel(new BorderLayout());
             messageContainer.setOpaque(false);
             messageContainer.add(message);
+
+            if (type.equals(ContainerType.List)) {
+                messageHighlightKey = GuiSwingLogEntryString.addHighlight(message);
+                message2HighlightKey = GuiSwingLogEntryString.addHighlight(message2);
+            }
 
             init(type.equals(ContainerType.StatusBar));
         }
@@ -167,6 +185,11 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                                 manager.formatDuration(lastValue.getTime(), Instant.now())));
                     }
                 }
+                if (lastValue instanceof GuiSwingLogEntryProgress) {
+                    Selections sel = ((GuiSwingLogEntryProgress) lastValue).getSelections();
+                    GuiSwingLogEntryString.setHighlight(message, messageHighlightKey, selected, sel.message[0], sel.message[1]);
+                    GuiSwingLogEntryString.setHighlight(message2, message2HighlightKey, selected, sel.message2[0], sel.message2[1]);
+                }
             } else {
                 if (previousState.isFinished()) {
                     setLayoutToProgress();
@@ -174,6 +197,8 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 progressBar.setIndeterminate(true);
                 message.setText("");
                 message2.setText("");
+                GuiSwingLogEntryString.setHighlight(message, messageHighlightKey, true, 0, 0);
+                GuiSwingLogEntryString.setHighlight(message2, message2HighlightKey, true, 0, 0);
             }
             setPreviousState(lastValue);
         }
@@ -222,6 +247,55 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         @Override
         public boolean isShowing() {
             return true;
+        }
+
+        @Override
+        public void mousePressed(GuiSwingLogEntry entry, Point point) {
+            GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
+            p.getSelections().clear();
+            select(0, point, this, p.getSelections());
+        }
+
+        @Override
+        public void mouseDragged(GuiSwingLogEntry entry, Point point) {
+            GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
+            select(1, point, this, p.getSelections());
+        }
+
+        public void select(int selectionIndex, Point p, JComponent comp, Selections selections) {
+            if (comp instanceof JTextComponent) {
+                JTextComponent text = (JTextComponent) comp;
+
+                Rectangle bounds = text.getBounds();
+                Point viewPoint = new Point(p);
+                if (bounds.getMaxY() <= viewPoint.getY()) {
+                    viewPoint.x = (int) bounds.getMaxX() + 1;
+                } else if (viewPoint.getY() <= bounds.getY()){
+                    viewPoint.x = (int) bounds.getX() - 1;
+                }
+
+                int pos = text.viewToModel(viewPoint);
+                if (comp == message) {
+                    selections.message[selectionIndex] = pos;
+                } else if (comp == message2) {
+                    selections.message2[selectionIndex] = pos;
+                }
+            }
+            for (Component c : comp.getComponents()) {
+                if (c instanceof JComponent) {
+                    select(selectionIndex, SwingUtilities.convertPoint(comp, p, c), (JComponent) c, selections);
+                }
+            }
+        }
+    }
+
+    public static class Selections {
+        public int[] message = new int[] {-1, -1};
+        public int[] message2 = new int[] {-1, -1};
+
+        public void clear() {
+            Arrays.fill(message, -1);
+            Arrays.fill(message2, -1);
         }
     }
 

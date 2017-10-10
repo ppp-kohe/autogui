@@ -11,35 +11,57 @@ import java.util.function.Consumer;
 
 public class GuiSwingLogManager extends GuiLogManager {
     protected List<Consumer<GuiLogEntry>> views = new ArrayList<>();
+    protected GuiLogManagerConsole console;
 
     /** view might accept same entries */
     public void addView(Consumer<GuiLogEntry> view) {
         views.add(view);
     }
 
+    public void setConsole(GuiLogManagerConsole console) {
+        this.console = console;
+    }
+
+    public GuiLogManagerConsole getConsole() {
+        return console;
+    }
+
     @Override
     public GuiLogEntryString logString(String str) {
         GuiLogEntryString e = new GuiSwingLogEntryString(str);
+        if (console != null) {
+            console.showString(e);
+        }
         show(e);
         return e;
     }
 
     @Override
     public GuiLogEntryException logError(Throwable ex) {
+        GuiLogEntryException e = super.logError(ex);
+        if (console != null) {
+            console.showError(e);
+        }
         //TODO
-        return super.logError(ex);
+        return e;
     }
 
     @Override
     public GuiLogEntryProgress logProgress() {
         GuiSwingLogEntryProgress p = new GuiSwingLogEntryProgress();
         p.addListener(this::updateProgress);
+        if (console != null) {
+            console.showProgress(p);
+        }
         show(p);
         return p;
     }
 
     @Override
     public void updateProgress(GuiLogEntryProgress p) {
+        if (console != null) {
+            console.updateProgress(p);
+        }
         show(p);
     }
 
