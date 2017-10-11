@@ -9,9 +9,12 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class GuiSwingLogList extends JList<GuiLogEntry> {
     protected Timer activePainter;
@@ -27,7 +30,6 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-        //addComponentListener(new GuiSwingLogListResize());
         setCellRenderer(new GuiSwingLogManager.GuiSwingLogRenderer(manager, GuiSwingLogEntry.ContainerType.List));
     }
 
@@ -179,10 +181,6 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                     .anyMatch(GuiLogEntry::isActive);
         }
 
-        public void reload() {
-            fireTableDataChanged();
-        }
-
         public void fireTableDataChanged() {
             fireContentsChanged(this, 0, getRowCount() - 1);
         }
@@ -214,20 +212,13 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
     }
 
 
-    public static class GuiSwingLogListResize extends ComponentAdapter {
-        @Override
-        public void componentResized(ComponentEvent e) {
-            ((GuiSwingLogList) e.getComponent())
-                    .getLogListModel()
-                    .reload();
-        }
-    }
-
     public static class GuiSwingLogEventDispatcher implements MouseListener, MouseMotionListener {
         protected GuiSwingLogList table;
         protected CellRendererPane rendererPane;
         protected Point pressPoint;
-        protected String lastFind;
+        protected int pressIndex;
+
+        protected FindState findState = new FindState();
 
         public GuiSwingLogEventDispatcher(GuiSwingLogList table) {
             this.table = table;
@@ -264,15 +255,16 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         @Override
         public void mousePressed(MouseEvent e) {
+            table.setValueIsAdjusting(true);
             pressPoint = e.getPoint();
 
             int row = table.rowAtPoint(pressPoint);
+            pressIndex = row;
+
             Rectangle cellRect = table.getCellRect(row);
             GuiSwingLogEntry entry = getEntry(pressPoint);
-            if (entry == null) {
-                table.getSelectionModel().clearSelection();
-            } else {
-                table.getSelectionModel().setLeadSelectionIndex(row);
+            if (entry != null) {
+                table.getSelectionModel().addSelectionInterval(row, row);
                 runEntry(row, entry, r -> {
                     r.mousePressed(entry, convert(cellRect, pressPoint));
                 });
@@ -304,13 +296,14 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             GuiSwingLogEntry entry = getEntry(point);
 
             if (pressPoint != null && !pressPoint.equals(point)) {
-                table.getSelectionModel().setAnchorSelectionIndex(Math.min(row, table.getRowCount() - 1));
+                table.getSelectionModel().addSelectionInterval(pressIndex, row);
                 drag(pressPoint, point);
             }
             runEntry(row, entry, r -> {
                 r.mouseReleased(entry, convert(cellRect, point));
             });
             pressPoint = null;
+            table.setValueIsAdjusting(false);
         }
 
         @Override
@@ -320,7 +313,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             Rectangle cellRect = table.getCellRect(row);
             GuiSwingLogEntry entry = getEntry(dragPoint);
             if (pressPoint != null) {
-                table.getSelectionModel().setAnchorSelectionIndex(Math.min(row, table.getRowCount() - 1));
+                table.getSelectionModel().addSelectionInterval(pressIndex, row);
                 drag(pressPoint, dragPoint);
             } else {
                 runEntry(row, entry, r -> {
@@ -335,12 +328,17 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             int rowFrom = table.rowAtPoint(from);
             int rowTo = table.rowAtPoint(to);
 
+            if (table.getRowCount() == 0) {
+                return;
+            }
+
             if (rowFrom < 0) {
                 rowFrom = upToDown ? 0 : table.getRowCount() - 1;
             }
             if (rowTo < 0) {
                 rowTo = upToDown ? table.getRowCount() - 1 : 0;
             }
+
 
             Rectangle bounds = new Rectangle(
                     Math.min(from.x, to.x), Math.min(from.y, to.y),
@@ -404,77 +402,73 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         public void mouseMoved(MouseEvent e) { }
 
         public void findText(String str, boolean forward) {
-            //TODO backward
-            if (Objects.equals(lastFind, str)) {
-                boolean found = false;
-                int[] is = table.getSelectedIndices();
-                int lastIndex = 0;
-                if (is != null) {
-                    //TODO reverse if backward
-                    for (int i : is) {
-                        if (findNext(i, forward)) {
-                            found = true;
-                            lastIndex = i;
-                            break;
-                        }
-                    }
-                }
-                if (!found) {
-                    findLoop(lastIndex, str);
-                }
+            findState.text = str;
+            int i;
+            if (findState.entryIndex < 0 && forward) {
+                i = this.table.getFirstVisibleIndex();
+            } else if (findState.entryIndex < 0 /*&& !forward*/) {
+                i = this.table.getLastVisibleIndex();
             } else {
-                //TODO reverse
-                findLoop(table.getFirstVisibleIndex(), str);
+                i = findState.entryIndex;
             }
-            lastFind = str;
+
+            findTextRows(str, forward, i,
+                    forward ? (table.getRowCount() - 1) : 0);
+
+            if (!findState.found()) {
+                //loop
+                findTextRows(str, true,
+                        forward ? 0 : (table.getRowCount() - 1),
+                        forward ? (i - 1) : (i + 1));
+
+            }
+
+            if (!findState.found()) {
+                findState.entryIndex = -1;
+            } else {
+                table.scrollRectToVisible(table.getCellRect(findState.entryIndex));
+                table.getSelectionModel().clearSelection();
+                table.getSelectionModel().addSelectionInterval(findState.entryIndex, findState.entryIndex);
+            }
         }
 
-        public void findLoop(int start, String str) {
-            int count = 0;
-            for (int i = start, l = table.getRowCount(); i < l; ++i) {
-                count += find(str, i);
-                if (count > 0) {
-                    table.scrollRectToVisible(table.getCellRect(i));
-                    table.setSelectedIndex(i);
-                    break;
+        public void findTextRows(String str, boolean forward, int startRow, int endRow) {
+            for (int i = startRow;
+                    forward ? i <= endRow : i >= endRow;
+                    i += (forward ? 1 : -1)) {
+                if (i < 0) {
+                    continue;
                 }
-            }
-            if (count == 0) {
-                for (int i = 0; i < start; ++i) {
-                    count += find(str, i);
-                    if (count > 0) {
-                        table.scrollRectToVisible(table.getCellRect(i));
-                        table.setSelectedIndex(i);
+
+                GuiLogEntry rowValue = table.getValueAt(i);
+                if (rowValue instanceof GuiSwingLogEntry) {
+                    GuiSwingLogEntry e = (GuiSwingLogEntry) rowValue;
+                    int row = i;
+                    runEntry(i, e, r -> {
+                        findState.entryIndex = row;
+                        if (r.findText(e, str) > 0) {
+                            findState.entryFocusIndex = r.focusNextFound(e, findState.entryFocusIndex, forward);
+                        } else {
+                            findState.entryFocusIndex = null;
+                        }
+                    });
+
+                    if (findState.found()) {
                         break;
                     }
                 }
             }
         }
 
-        private int find(String str, int i) {
-            GuiLogEntry e = table.getValueAt(i);
-            int[] count = new int[] {0};
-            if (e instanceof GuiSwingLogEntry) {
-                GuiSwingLogEntry se = (GuiSwingLogEntry) e;
-                runEntry(i, se, r -> {
-                    count[0] += r.findText(se, str);
-                });
-            }
-            return count[0];
-        }
+    }
 
-        private boolean findNext(int i, boolean next) {
-            GuiLogEntry e = table.getValueAt(i);
-            int[] count = new int[] {0};
-            if (e instanceof GuiSwingLogEntry) {
-                GuiSwingLogEntry se = (GuiSwingLogEntry) e;
-                runEntry(i, se, r -> {
-                    if (next ? r.focusNextFound() : r.focusPreviousFound()) {
-                        count[0] = 1;
-                    }
-                });
-            }
-            return count[0] > 0;
+    public static class FindState {
+        public String text;
+        public int entryIndex = -1;
+        public Object entryFocusIndex;
+
+        public boolean found() {
+            return entryIndex != -1 && entryFocusIndex != null;
         }
     }
 }

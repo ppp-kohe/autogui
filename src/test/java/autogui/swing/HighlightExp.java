@@ -1,6 +1,5 @@
 package autogui.swing;
 
-import autogui.swing.log.GuiSwingLogEntry;
 import autogui.swing.log.GuiSwingLogEntryString;
 
 import javax.swing.*;
@@ -23,25 +22,59 @@ public class HighlightExp extends GuiSwingTestCase {
             JPanel pane = new JPanel(new BorderLayout());
 
             PaneList text = new PaneList();
-            pane.add(text);
+            pane.add(new JScrollPane(text));
 
-            text.addMouseListener(new MouseAdapter() {
+            MouseAdapter a = new MouseAdapter() {
+                int from;
+                int end;
                 @Override
                 public void mousePressed(MouseEvent e) {
-                    System.err.println("press");
-                    text.runEntry(0, o -> {
-                        int n = text.text.viewToModel(e.getPoint());
-                        System.err.println(n);
-                        text.setHighlight(0, n);
-                    });
+                    int i = text.locationToIndex(e.getPoint());
+                    System.err.println("press " + i);
+                    if (i >= 0) {
+                        text.runEntry(i, o -> {
+                            int n = text.text.viewToModel(e.getPoint());
+                            System.err.println(n);
+                            text.setHighlight(0, n);
+                        });
+                        text.getSelectionModel().addSelectionInterval(i, i);
+                    }
+                    from = i;
                 }
-            });
 
-            JButton btn = new JButton("rand");
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    int i = text.locationToIndex(e.getPoint());
+                    end = i;
+                    if (from >= 0 && end >= 0) {
+                        text.getSelectionModel().addSelectionInterval(from, end);
+                    }
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    int i = text.locationToIndex(e.getPoint());
+                    end = i;
+                    if (from >= 0 && end >= 0) {
+                        text.getSelectionModel().addSelectionInterval(from, end);
+                    }
+                }
+            };
+            text.addMouseListener(a);
+            text.addMouseMotionListener(a);
+
+            JButton btn = new JButton("Action");
             btn.addActionListener(e -> {
                 //text.randomChange();
-                //text.repaint();
-                text.runEntry(0, o -> text.randomChange());
+//                //text.repaint();
+//                text.getSelectionModel().setAnchorSelectionIndex(5);
+//                text.getSelectionModel().setLeadSelectionIndex(10);
+                System.err.println("anchor " + text.getSelectionModel().getAnchorSelectionIndex()
+                        + " lead " + text.getSelectionModel().getLeadSelectionIndex());
+                text.getSelectionModel().addSelectionInterval(5, 10);
+                System.err.println("anchor " + text.getSelectionModel().getAnchorSelectionIndex()
+                        + " lead " + text.getSelectionModel().getLeadSelectionIndex());
+
             });
             pane.add(btn, BorderLayout.NORTH);
 
@@ -69,20 +102,18 @@ public class HighlightExp extends GuiSwingTestCase {
 
     static class PaneList extends JList {
         public JTextPane text;
-        public Object h;
         CellRendererPane rendererPane = new CellRendererPane();
+        GuiSwingLogEntryString.TextPaneCellSupport support;
 
         public PaneList() {
+            setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             text = new JTextPane();
-
+            text.setOpaque(true);
+            support = new GuiSwingLogEntryString.TextPaneCellSupport(text);
             DefaultListModel m = new DefaultListModel();
             try {
-                String text1 = Files.readAllLines(Paths.get("autogui.iml")).stream().collect(Collectors.joining("\n"));
-                String text2 = Files.readAllLines(Paths.get("pom.xml")).stream().collect(Collectors.joining("\n"));
-
-                m.addElement(text1);
-                m.addElement(text2);
-
+                Files.readAllLines(Paths.get("pom.xml"))
+                        .forEach(m::addElement);
             } catch (Exception ex) {
             }
 
@@ -92,31 +123,28 @@ public class HighlightExp extends GuiSwingTestCase {
             setCellRenderer(new ListCellRenderer() {
                 @Override
                 public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                    //randomChange();
-                    //text.setText(value.toString());
-
                     try {
-                        //text.getHighlighter().removeAllHighlights();
-                        StyledDocument doc = text.getStyledDocument();
-                        doc.remove(0, doc.getLength());
-                        doc.insertString(0, value.toString(), null);
-                        //text.updateUI();
-                        text.invalidate();
-                        //h = text.getHighlighter().addHighlight(0, 0, new Painter(Color.blue));
-                        randomChange();
-                    } catch (Exception ex) {
+                        text.setText(value.toString());
 
+                        StyledDocument doc = text.getStyledDocument();
+
+                        Style s = doc.getStyle(StyleContext.DEFAULT_STYLE);
+                        StyleConstants.setBold(s, true);
+                        StyleConstants.setBackground(s, isSelected ? Color.blue : Color.gray);
+                        StyleConstants.setForeground(s, isSelected ? Color.white : Color.darkGray);
+                        doc.setLogicalStyle(0, s);
+                        text.invalidate();
+                        //randomChange();
+                    } catch (Exception ex) {
+                    }
+                    if (isSelected) {
+                        text.setBackground(Color.blue);
+                    } else {
+                        text.setBackground(Color.white);
                     }
                     return text;
                 }
             });
-            try {
-                Color c = UIManager.getColor("TextPane.selectionBackground");
-                h = text.getHighlighter().addHighlight(0, 100,
-                        new Painter(c));
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
             System.err.println(text.getHighlighter().getHighlights().length);
         }
 
@@ -137,10 +165,10 @@ public class HighlightExp extends GuiSwingTestCase {
             int len = doc.getLength();
             int start = (int) (Math.random() * len);
             int sLen = (int) ((len - start) * Math.random());
-            GuiSwingLogEntryString.setHighlight(text, h, true, start, start + sLen);
+            support.setSelectionHighlight(true, start, start + sLen);
         }
         public void setHighlight(int s, int e) {
-            GuiSwingLogEntryString.setHighlight(text, h, true, s, e);
+            support.setSelectionHighlight(true, s, e);
         }
 
 
@@ -149,7 +177,7 @@ public class HighlightExp extends GuiSwingTestCase {
     static class Pane extends JComponent {
         CellRendererPane cell = new CellRendererPane();
         public JTextPane text;
-        public Object h;
+        GuiSwingLogEntryString.TextPaneCellSupport support;
 
         public Pane() {
             text = new JTextPane();
@@ -158,13 +186,7 @@ public class HighlightExp extends GuiSwingTestCase {
             } catch (Exception ex) {
             }
 
-            try {
-                Color c = UIManager.getColor("TextPane.selectionBackground");
-                h = text.getHighlighter().addHighlight(0, 100,
-                        new Painter(c));
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            support = new GuiSwingLogEntryString.TextPaneCellSupport(text);
         }
 
         public void randomChange() {
@@ -172,7 +194,7 @@ public class HighlightExp extends GuiSwingTestCase {
             int len = doc.getLength();
             int start = (int) (Math.random() * len);
             int sLen = (int) ((len - start) * Math.random());
-            GuiSwingLogEntryString.setHighlight(text, h, true, start, start + sLen);
+            support.setSelectionHighlight(true, start, start + sLen);
         }
 
         @Override

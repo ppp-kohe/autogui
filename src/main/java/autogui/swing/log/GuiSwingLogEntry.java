@@ -28,16 +28,16 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
         default void mouseReleased(GuiSwingLogEntry entry, Point point) {}
 
 
-        default int findText(GuiSwingLogEntry entry, String text) {
+        /** returns &gt;0 value if it has matched string */
+        default int findText(GuiSwingLogEntry entry, String findKeyword) {
             return 0;
         }
 
-        default boolean focusNextFound() {
-            return false;
-        }
-
-        default boolean focusPreviousFound() {
-            return false;
+        /** prevIndex might be different from the returned one for  same renderer (and same entry).
+         *   As a precondition, findText(entry, text) is called for the entry before.
+         *   it focuses a next ( or previous if !forward) target if found, or null */
+        default Object focusNextFound(GuiSwingLogEntry entry, Object prevIndex, boolean forward) {
+            return null;
         }
     }
 

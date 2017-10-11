@@ -83,7 +83,7 @@ public class ListExp extends GuiSwingTestCase {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            maanager.logString("hello\nworld");
+            maanager.logString("hello!!!!\nworld!!!!!");
         }
     }
 

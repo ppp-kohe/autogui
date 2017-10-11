@@ -22,4 +22,9 @@ public class GuiLogEntryString implements GuiLogEntry {
     public String getData() {
         return data;
     }
+
+    @Override
+    public String toString() {
+        return "[" + time + "] " + data;
+    }
 }

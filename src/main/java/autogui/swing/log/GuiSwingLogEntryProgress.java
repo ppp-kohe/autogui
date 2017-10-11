@@ -7,31 +7,35 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 
 public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements GuiSwingLogEntry {
-    protected Selections selections = new Selections();
+    protected Map<JTextComponent,int[]> selections = new HashMap<>(2);
 
     @Override
     public LogEntryRenderer getRenderer(GuiSwingLogManager manager, ContainerType type) {
         return new GuiSwingLogProgressRenderer(manager, type);
     }
 
-    public Selections getSelections() {
+    public Map<JTextComponent, int[]> getSelections() {
         return selections;
     }
 
     public static class GuiSwingLogProgressRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
         protected JProgressBar progressBar;
-        protected JTextField message;
-        protected JTextField message2;
+        protected JTextPane message;
+        protected JTextPane message2;
+        protected GuiSwingLogEntryString.TextPaneCellSupport messageSupport;
+        protected GuiSwingLogEntryString.TextPaneCellSupport message2Support;
+
         protected boolean message2Layout = false;
         protected boolean leftToRight;
         protected GuiLogEntryProgress lastValue;
@@ -45,8 +49,8 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
         protected GuiLogEntryProgress previousState = new GuiSwingLogEntryProgress();
 
-        protected Object messageHighlightKey;
-        protected Object message2HighlightKey;
+        protected Style timeStyle;
+        protected Style timeStyle2;
 
         public GuiSwingLogProgressRenderer(GuiSwingLogManager manager, ContainerType type) {
             this.manager = manager;
@@ -57,13 +61,13 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             Font font = GuiSwingLogManager.getFont();
 
             progressBar = new JProgressBar(0, 1000_000);
-            message = new JTextField();
+            message = new JTextPane();
             message.setBorder(BorderFactory.createEmptyBorder());
             message.setFont(font);
             message.setEditable(false);
             message.setOpaque(false);
 
-            message2 = new JTextField();
+            message2 = new JTextPane();
             message2.setBorder(BorderFactory.createEmptyBorder());
             message2.setFont(font);
             message2.setEditable(false);
@@ -79,9 +83,13 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             messageContainer.add(message);
 
             if (type.equals(ContainerType.List)) {
-                messageHighlightKey = GuiSwingLogEntryString.addHighlight(message);
-                message2HighlightKey = GuiSwingLogEntryString.addHighlight(message2);
+                messageSupport = new GuiSwingLogEntryString.TextPaneCellSupport(message);
+                message2Support = new GuiSwingLogEntryString.TextPaneCellSupport(message2);
             }
+
+            timeStyle = GuiSwingLogEntryString.getTimeStyle(message.getStyledDocument());
+            timeStyle2 = GuiSwingLogEntryString.getTimeStyle(message2.getStyledDocument());
+            StyleConstants.setForeground(timeStyle2, new Color(82, 116, 213));
 
             init(type.equals(ContainerType.StatusBar));
         }
@@ -153,20 +161,21 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
 
         public void updateByLastValue() {
-            if (lastValue != null) {
-                message.setText(String.format("%s # %s",
-                        manager.formatTime(lastValue.getTime()),
-                        lastValue.getMessage()));
-                if (lastValue.isFinished()) {
+            message.setText(formatMessageText(lastValue));
+            message.invalidate();
 
+            message2.setText(formatProgressText(lastValue));
+            message2.invalidate();
+
+            if (lastValue != null) {
+                GuiSwingLogEntryString.setHeaderStyle(message, "] ", timeStyle);
+
+                if (lastValue.isFinished()) {
                     if (!previousState.isFinished()) {
                         setLayoutToFinish();
                     }
 
-                    message2.setText(String.format("%s # finished: +%s",
-                            manager.formatTime(lastValue.getEndTime()),
-                            manager.formatDuration(lastValue.getTime(), lastValue.getEndTime())));
-
+                    GuiSwingLogEntryString.setHeaderStyle(message2, "] ", timeStyle2);
                 } else {
                     if (previousState.isFinished()) {
                         setLayoutToProgress();
@@ -176,31 +185,67 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                     progressBar.setValue(lastValue.getValue());
                     progressBar.setMaximum(lastValue.getMaximum());
                     progressBar.setMinimum(lastValue.getMinimum());
-                    if (lastValue.isIndeterminate()) {
-                        message2.setText(String.format("# +%s",
-                                manager.formatDuration(lastValue.getTime(), Instant.now())));
-                    } else {
-                        message2.setText(String.format("# %2d%% +%s",
-                                (int) (lastValue.getValueP() * 100),
-                                manager.formatDuration(lastValue.getTime(), Instant.now())));
-                    }
-                }
-                if (lastValue instanceof GuiSwingLogEntryProgress) {
-                    Selections sel = ((GuiSwingLogEntryProgress) lastValue).getSelections();
-                    GuiSwingLogEntryString.setHighlight(message, messageHighlightKey, selected, sel.message[0], sel.message[1]);
-                    GuiSwingLogEntryString.setHighlight(message2, message2HighlightKey, selected, sel.message2[0], sel.message2[1]);
                 }
             } else {
                 if (previousState.isFinished()) {
                     setLayoutToProgress();
                 }
                 progressBar.setIndeterminate(true);
-                message.setText("");
-                message2.setText("");
-                GuiSwingLogEntryString.setHighlight(message, messageHighlightKey, true, 0, 0);
-                GuiSwingLogEntryString.setHighlight(message2, message2HighlightKey, true, 0, 0);
             }
+
+            setSelectionHighlight();
+
             setPreviousState(lastValue);
+        }
+
+        public String formatMessageText(GuiLogEntryProgress p) {
+            if (p != null){
+                return String.format("%s # %s",
+                        manager.formatTime(p.getTime()),
+                        p.getMessage());
+            } else {
+                return "";
+            }
+        }
+
+        public String formatProgressText(GuiLogEntryProgress p) {
+            if (p != null) {
+                if (p.isFinished()) {
+                    return String.format("%s # finished: +%s",
+                            manager.formatTime(p.getEndTime()),
+                            manager.formatDuration(p.getTime(), p.getEndTime()));
+                } else {
+                    if (p.isIndeterminate()) {
+                        return String.format("# +%s",
+                                manager.formatDuration(p.getTime(), Instant.now()));
+                    } else {
+                        return String.format("# %2d%% +%s",
+                                (int) (p.getValueP() * 100),
+                                manager.formatDuration(p.getTime(), Instant.now()));
+                    }
+                }
+            } else {
+                return "";
+            }
+        }
+
+        public void setSelectionHighlight() {
+            if (lastValue != null && lastValue instanceof GuiSwingLogEntryProgress && selected) {
+                GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) lastValue;
+                if (messageSupport != null) {
+                    messageSupport.setSelectionHighlight(p.getSelections());
+                }
+                if (message2Support != null) {
+                    message2Support.setSelectionHighlight(p.getSelections());
+                }
+            } else {
+                if (messageSupport != null) {
+                    messageSupport.setSelectionHighlightClear();
+                }
+                if (message2Support != null) {
+                    message2Support.setSelectionHighlightClear();
+                }
+            }
         }
 
         public void setLayoutToFinish() {
@@ -253,51 +298,44 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         public void mousePressed(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
             p.getSelections().clear();
-            select(0, point, this, p.getSelections());
+            GuiSwingLogEntryString.TextPaneCellSupport.click(p.getSelections(), true, point, this);
         }
 
         @Override
         public void mouseDragged(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
-            select(1, point, this, p.getSelections());
+            GuiSwingLogEntryString.TextPaneCellSupport.click(p.getSelections(), false, point, this);
         }
 
-        public void select(int selectionIndex, Point p, JComponent comp, Selections selections) {
-            if (comp instanceof JTextComponent) {
-                JTextComponent text = (JTextComponent) comp;
-
-                Rectangle bounds = text.getBounds();
-                Point viewPoint = new Point(p);
-                if (bounds.getMaxY() <= viewPoint.getY()) {
-                    viewPoint.x = (int) bounds.getMaxX() + 1;
-                } else if (viewPoint.getY() <= bounds.getY()){
-                    viewPoint.x = (int) bounds.getX() - 1;
-                }
-
-                int pos = text.viewToModel(viewPoint);
-                if (comp == message) {
-                    selections.message[selectionIndex] = pos;
-                } else if (comp == message2) {
-                    selections.message2[selectionIndex] = pos;
-                }
+        @Override
+        public int findText(GuiSwingLogEntry entry, String findKeyword) {
+            GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
+            if (messageSupport != null) {
+                List<Integer> i1 = messageSupport.findText(formatMessageText(p), findKeyword);
+                List<Integer> i2 = message2Support.findText(formatProgressText(p), findKeyword);
+                return i1.size() + i2.size();
+            } else {
+                return 0;
             }
-            for (Component c : comp.getComponents()) {
-                if (c instanceof JComponent) {
-                    select(selectionIndex, SwingUtilities.convertPoint(comp, p, c), (JComponent) c, selections);
+        }
+
+        @Override
+        public Object focusNextFound(GuiSwingLogEntry entry, Object prevIndex, boolean forward) {
+            GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
+            if (messageSupport != null) {
+                List<GuiSwingLogEntryString.TextPaneCellSupport> supports = Arrays.asList(messageSupport, message2Support);
+                GuiSwingLogEntryString.TextPaneCellMatch m = GuiSwingLogEntryString.nextFindMatchedList(
+                        supports, prevIndex, forward, entry);
+                if (m != null) {
+                    GuiSwingLogEntryString.TextPaneCellSupport support = supports.get(((Integer) m.key(1)));
+                    int[] range = support.getFindMatchedRange(m);
+                    p.getSelections().clear();
+                    p.getSelections().put(support.pane, range);
                 }
+                return m;
+            } else {
+                return null;
             }
         }
     }
-
-    public static class Selections {
-        public int[] message = new int[] {-1, -1};
-        public int[] message2 = new int[] {-1, -1};
-
-        public void clear() {
-            Arrays.fill(message, -1);
-            Arrays.fill(message2, -1);
-        }
-    }
-
-
 }
