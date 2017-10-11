@@ -272,6 +272,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             if (entry == null) {
                 table.getSelectionModel().clearSelection();
             } else {
+                table.getSelectionModel().setLeadSelectionIndex(row);
                 runEntry(row, entry, r -> {
                     r.mousePressed(entry, convert(cellRect, pressPoint));
                 });
@@ -281,7 +282,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         public void runEntry(int row, GuiSwingLogEntry entry, Consumer<GuiSwingLogEntry.LogEntryRenderer> runner) {
             GuiSwingLogEntry.LogEntryRenderer r = getEntryRenderer(entry);
             if (r != null) {
-                Component cell = r.getTableCellRenderer().getListCellRendererComponent(table, entry, -1, false, true);
+                Component cell = r.getTableCellRenderer()
+                        .getListCellRendererComponent(table, entry, -1, false, true);
                 rendererPane.add(cell);
                 cell.setBounds(table.getCellRect(row));
                 runner.accept(r);
@@ -302,6 +304,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             GuiSwingLogEntry entry = getEntry(point);
 
             if (pressPoint != null && !pressPoint.equals(point)) {
+                table.getSelectionModel().setAnchorSelectionIndex(Math.min(row, table.getRowCount() - 1));
                 drag(pressPoint, point);
             }
             runEntry(row, entry, r -> {
@@ -317,6 +320,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             Rectangle cellRect = table.getCellRect(row);
             GuiSwingLogEntry entry = getEntry(dragPoint);
             if (pressPoint != null) {
+                table.getSelectionModel().setAnchorSelectionIndex(Math.min(row, table.getRowCount() - 1));
                 drag(pressPoint, dragPoint);
             } else {
                 runEntry(row, entry, r -> {
