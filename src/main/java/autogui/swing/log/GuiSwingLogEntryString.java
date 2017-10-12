@@ -204,7 +204,8 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
 
         @Override
         public void mouseReleased(GuiSwingLogEntry entry, Point point) {
-
+            GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
+            str.setSelectionTo(viewToModel(point));
         }
 
         @Override

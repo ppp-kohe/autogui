@@ -182,6 +182,13 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             fireContentsChanged(this, 0, getRowCount() - 1);
         }
 
+        public void fireRowChanged(GuiLogEntry entry) {
+            int i = entries.indexOf(entry);
+            if (i >= 0) {
+                fireContentsChanged(this, i, i);
+            }
+        }
+
         public boolean contains(GuiLogEntry entry) {
             return entries.contains(entry);
         }
@@ -340,11 +347,12 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             Rectangle bounds = new Rectangle(
                     Math.min(from.x, to.x), Math.min(from.y, to.y),
                     Math.abs(to.x - from.x), Math.abs(to.y - from.y));
-            if (rowFrom <= rowTo) {
+            if (rowFrom < rowTo ||
+                    (rowFrom == rowTo && from.y <= to.y)) { //within same item, up to down
                 for (int i = rowFrom; i <= rowTo; ++i) {
                     drag(i, false, i == rowFrom, i == rowTo, bounds, to.x);
                 }
-            } else {
+            } else { //a lower item to an upper item, or with same item, down to up
                 for (int i = rowFrom; i >= rowTo; --i) {
                     drag(i, true, i == rowTo, i == rowFrom, bounds, to.x);
                 }

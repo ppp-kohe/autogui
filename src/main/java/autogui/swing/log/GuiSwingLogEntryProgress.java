@@ -375,7 +375,6 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
         @Override
         public void actionPerformed(ActionEvent e) {
-            System.err.println("stop");
             renderer.stop();
         }
     }
