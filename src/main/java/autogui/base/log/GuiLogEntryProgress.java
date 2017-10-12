@@ -1,12 +1,14 @@
 package autogui.base.log;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class GuiLogEntryProgress implements GuiLogEntry {
+public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
     protected int minimum = 0;
     protected int maximum = Integer.MAX_VALUE;
     protected int value;
@@ -163,6 +165,11 @@ public class GuiLogEntryProgress implements GuiLogEntry {
 
     public boolean isFinished() {
         return endTime != null;
+    }
+
+    @Override
+    public void close() {
+        finish();
     }
 
     public void finish() {

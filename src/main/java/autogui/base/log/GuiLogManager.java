@@ -49,6 +49,18 @@ public class GuiLogManager {
         return new GuiLogEntryException(ex);
     }
 
+    /**
+     * <pre>
+     *     try (GuiLogEntryProgress p = manager.logProgress();) {
+     *         for (...) {
+     *             //those methods will cause a runtime-exception if the thread is interrupted.
+     *             p.addValueP(0.01f)
+     *               .setMessage("running ...");
+     *             ...
+     *         }
+     *     } catch (Exception ex) { ... }
+     * </pre>
+     */
     public GuiLogEntryProgress logProgress() {
         GuiLogEntryProgress p = new GuiLogEntryProgress();
         p.addListener(this::updateProgress);

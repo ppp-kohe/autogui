@@ -45,6 +45,7 @@ public class ListExp extends GuiSwingTestCase {
                 bar.setFloatable(false);
                 bar.add(new AddAction(list, manager));
                 bar.add(new AddProgressAction(list, manager));
+                bar.add(new AddErrorAction(list, manager));
 
                 JTextField findField = new JTextField(20);
                 bar.add(findField);
@@ -101,20 +102,34 @@ public class ListExp extends GuiSwingTestCase {
         public void actionPerformed(ActionEvent e) {
             new Thread() {
                 public void run() {
-                    try {
-                        GuiLogEntryProgress p = maanager.logProgress(100);
+                    try (GuiLogEntryProgress p = maanager.logProgress(100);) {
                         for (int i = 0; i < 100; ++i) {
                             p.addValue(1);
                             p.setMessage("hello " + i +" : " + p.getValueP());
                             Thread.sleep(400);
                         }
-                        p.finish();
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 }
             }.start();
 
+        }
+    }
+
+    static class AddErrorAction extends AbstractAction {
+        GuiSwingLogList list;
+        GuiSwingLogManager manager;
+
+        public AddErrorAction(GuiSwingLogList list, GuiSwingLogManager manager) {
+            super("Add Error");
+            this.list = list;
+            this.manager = manager;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            manager.logError(new RuntimeException("hello, world"));
         }
     }
 

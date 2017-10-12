@@ -5,11 +5,11 @@ import autogui.base.log.GuiLogEntryProgress;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.time.Instant;
@@ -31,10 +31,10 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
     public static class GuiSwingLogProgressRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
         protected JProgressBar progressBar;
+        protected JButton stopButton;
         protected JTextPane message;
         protected JTextPane message2;
-        protected GuiSwingLogEntryString.TextPaneCellSupport messageSupport;
-        protected GuiSwingLogEntryString.TextPaneCellSupport message2Support;
+        protected TextPaneCellSupport.TextPaneCellSupportList supports;
 
         protected boolean message2Layout = false;
         protected boolean leftToRight;
@@ -52,6 +52,8 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         protected Style timeStyle;
         protected Style timeStyle2;
 
+        protected GuiLogEntryProgress stopPressed;
+
         public GuiSwingLogProgressRenderer(GuiSwingLogManager manager, ContainerType type) {
             this.manager = manager;
             setBorder(BorderFactory.createEmptyBorder(7, 10, 3, 20));
@@ -61,6 +63,10 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             Font font = GuiSwingLogManager.getFont();
 
             progressBar = new JProgressBar(0, 1000_000);
+            stopButton = new JButton(new ProgressStopAction(this));
+            stopButton.setBorderPainted(false);
+            stopButton.setPreferredSize(new Dimension(64, 15));
+
             message = new JTextPane();
             message.setBorder(BorderFactory.createEmptyBorder());
             message.setFont(font);
@@ -76,15 +82,15 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             progressContainer = new JPanel(new BorderLayout());
             progressContainer.setOpaque(false);
             progressContainer.add(progressBar, BorderLayout.CENTER);
-            progressContainer.add(message2, BorderLayout.EAST);
+
+            progressContainer.add(progressAccessory(), BorderLayout.EAST);
 
             messageContainer = new JPanel(new BorderLayout());
             messageContainer.setOpaque(false);
             messageContainer.add(message);
 
             if (type.equals(ContainerType.List)) {
-                messageSupport = new GuiSwingLogEntryString.TextPaneCellSupport(message);
-                message2Support = new GuiSwingLogEntryString.TextPaneCellSupport(message2);
+                supports = new TextPaneCellSupport.TextPaneCellSupportList(message, message2);
             }
 
             timeStyle = GuiSwingLogEntryString.getTimeStyle(message.getStyledDocument());
@@ -232,18 +238,12 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         public void setSelectionHighlight() {
             if (lastValue != null && lastValue instanceof GuiSwingLogEntryProgress && selected) {
                 GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) lastValue;
-                if (messageSupport != null) {
-                    messageSupport.setSelectionHighlight(p.getSelections());
-                }
-                if (message2Support != null) {
-                    message2Support.setSelectionHighlight(p.getSelections());
+                if (supports != null) {
+                    supports.setSelectionHighlights(p.getSelections());
                 }
             } else {
-                if (messageSupport != null) {
-                    messageSupport.setSelectionHighlightClear();
-                }
-                if (message2Support != null) {
-                    message2Support.setSelectionHighlightClear();
+                if (supports != null) {
+                    supports.setSelectionHighlightsClear();
                 }
             }
         }
@@ -259,10 +259,20 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         public void setLayoutToProgress() {
             progressContainer.removeAll();
             progressContainer.add(progressBar, BorderLayout.CENTER);
-            progressContainer.add(message2, BorderLayout.EAST);
+
+            progressContainer.add(progressAccessory(), BorderLayout.EAST);
             progressBar.setEnabled(true);
             message2Layout = false;
             message2.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+        }
+
+        public JComponent progressAccessory() {
+            JPanel progressTailPane = new JPanel(new FlowLayout());
+            progressTailPane.add(stopButton);
+            progressTailPane.add(message2);
+            progressTailPane.setOpaque(false);
+            progressTailPane.setBorder(BorderFactory.createEmptyBorder());
+            return progressTailPane;
         }
 
         public void setPreviousState(GuiLogEntryProgress p) {
@@ -298,22 +308,33 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         public void mousePressed(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
             p.getSelections().clear();
-            GuiSwingLogEntryString.TextPaneCellSupport.click(p.getSelections(), true, point, this);
+            TextPaneCellSupport.click(p.getSelections(), true, point, this);
+
+            Point stopPoint = SwingUtilities.convertPoint(this, point, stopButton);
+            stopPressed = stopButton.contains(stopPoint) ? p : null;
+        }
+
+        @Override
+        public void mouseReleased(GuiSwingLogEntry entry, Point point) {
+            if (stopPressed != null) {
+                stopButton.doClick();
+            }
         }
 
         @Override
         public void mouseDragged(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
-            GuiSwingLogEntryString.TextPaneCellSupport.click(p.getSelections(), false, point, this);
+            TextPaneCellSupport.click(p.getSelections(), false, point, this);
         }
 
         @Override
         public int findText(GuiSwingLogEntry entry, String findKeyword) {
             GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
-            if (messageSupport != null) {
-                List<Integer> i1 = messageSupport.findText(formatMessageText(p), findKeyword);
-                List<Integer> i2 = message2Support.findText(formatProgressText(p), findKeyword);
-                return i1.size() + i2.size();
+            if (supports != null) {
+                List<List<Integer>> is = supports.findTexts(findKeyword, formatMessageText(p), formatProgressText(p));
+                return is.stream()
+                        .mapToInt(List::size)
+                        .sum();
             } else {
                 return 0;
             }
@@ -322,12 +343,10 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         @Override
         public Object focusNextFound(GuiSwingLogEntry entry, Object prevIndex, boolean forward) {
             GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
-            if (messageSupport != null) {
-                List<GuiSwingLogEntryString.TextPaneCellSupport> supports = Arrays.asList(messageSupport, message2Support);
-                GuiSwingLogEntryString.TextPaneCellMatch m = GuiSwingLogEntryString.nextFindMatchedList(
-                        supports, prevIndex, forward, entry);
+            if (supports != null) {
+                TextPaneCellSupport.TextPaneCellMatchList m = supports.nextFindMatchedList(prevIndex, forward, entry);
                 if (m != null) {
-                    GuiSwingLogEntryString.TextPaneCellSupport support = supports.get(((Integer) m.key(1)));
+                    TextPaneCellSupport support = supports.getSupport(m.getSupportIndex());
                     int[] range = support.getFindMatchedRange(m);
                     p.getSelections().clear();
                     p.getSelections().put(support.pane, range);
@@ -336,6 +355,28 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             } else {
                 return null;
             }
+        }
+
+        public void stop() {
+            if (stopPressed != null) {
+                Thread t = stopPressed.getThread();
+                if (t != null && !stopPressed.isFinished()) {
+                    t.interrupt();
+                }
+            }
+        }
+    }
+
+    public static class ProgressStopAction extends AbstractAction {
+        protected GuiSwingLogProgressRenderer renderer;
+        public ProgressStopAction(GuiSwingLogProgressRenderer renderer) {
+            putValue(NAME, "Stop");
+            this.renderer = renderer;
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            System.err.println("stop");
+            renderer.stop();
         }
     }
 }

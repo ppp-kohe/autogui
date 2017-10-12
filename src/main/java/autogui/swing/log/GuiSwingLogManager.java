@@ -38,11 +38,11 @@ public class GuiSwingLogManager extends GuiLogManager {
 
     @Override
     public GuiLogEntryException logError(Throwable ex) {
-        GuiLogEntryException e = super.logError(ex);
+        GuiLogEntryException e = new GuiSwingLogEntryException(ex);
         if (console != null) {
             console.showError(e);
         }
-        //TODO
+        show(e);
         return e;
     }
 

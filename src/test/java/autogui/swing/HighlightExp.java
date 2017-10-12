@@ -1,6 +1,6 @@
 package autogui.swing;
 
-import autogui.swing.log.GuiSwingLogEntryString;
+import autogui.swing.log.TextPaneCellSupport;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -103,13 +103,13 @@ public class HighlightExp extends GuiSwingTestCase {
     static class PaneList extends JList {
         public JTextPane text;
         CellRendererPane rendererPane = new CellRendererPane();
-        GuiSwingLogEntryString.TextPaneCellSupport support;
+        TextPaneCellSupport support;
 
         public PaneList() {
             setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             text = new JTextPane();
             text.setOpaque(true);
-            support = new GuiSwingLogEntryString.TextPaneCellSupport(text);
+            support = new TextPaneCellSupport(text);
             DefaultListModel m = new DefaultListModel();
             try {
                 Files.readAllLines(Paths.get("pom.xml"))
@@ -177,7 +177,7 @@ public class HighlightExp extends GuiSwingTestCase {
     static class Pane extends JComponent {
         CellRendererPane cell = new CellRendererPane();
         public JTextPane text;
-        GuiSwingLogEntryString.TextPaneCellSupport support;
+        TextPaneCellSupport support;
 
         public Pane() {
             text = new JTextPane();
@@ -186,7 +186,7 @@ public class HighlightExp extends GuiSwingTestCase {
             } catch (Exception ex) {
             }
 
-            support = new GuiSwingLogEntryString.TextPaneCellSupport(text);
+            support = new TextPaneCellSupport(text);
         }
 
         public void randomChange() {
