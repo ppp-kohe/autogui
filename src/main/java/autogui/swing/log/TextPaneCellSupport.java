@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class TextPaneCellSupport {
     protected JTextPane pane;
@@ -279,26 +278,23 @@ public class TextPaneCellSupport {
                     return new TextPaneCellMatchList(m, fixedKeys.length);
                 } else {
                     supportIndex += (forward ? 1 : -1);
-                    while (0 <= supportIndex && supportIndex < supports.size()) {
-                        m = supports.get(supportIndex)
-                                .nextFindMatched(null, forward, fixedKeysAndSupportIndex(fixedKeys, supportIndex));
-                        if (m != null) {
-                            return new TextPaneCellMatchList(m, fixedKeys.length);
-                        }
-                        supportIndex += (forward ? 1 : -1);
-                    }
-                    return null;
+                    return nextFindMatchedListSupport(supportIndex, forward, fixedKeys);
                 }
             } else {
-                int supportIndex = forward ? 0 : supports.size() - 1;
+                return nextFindMatchedListSupport(forward ? 0 : supports.size() - 1, forward, fixedKeys);
+            }
+        }
+
+        private TextPaneCellMatchList nextFindMatchedListSupport(int supportIndex, boolean forward, Object[] fixedKeys) {
+            while (0 <= supportIndex && supportIndex < supports.size()) {
                 TextPaneCellMatch m = supports.get(supportIndex)
                         .nextFindMatched(null, forward, fixedKeysAndSupportIndex(fixedKeys, supportIndex));
                 if (m != null) {
                     return new TextPaneCellMatchList(m, fixedKeys.length);
-                } else {
-                    return null;
                 }
+                supportIndex += (forward ? 1 : -1);
             }
+            return null;
         }
 
         private static Object[] fixedKeysAndSupportIndex(Object[] fixedKeys, int supportIndex) {
@@ -326,6 +322,10 @@ public class TextPaneCellSupport {
 
         public TextPaneCellSupport getSupport(int i) {
             return supports.get(i);
+        }
+
+        public void setFindHighlights() {
+            supports.forEach(TextPaneCellSupport::setFindHighlights);
         }
     }
 }

@@ -212,7 +212,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         public int findText(GuiSwingLogEntry entry, String findKeyword) {
             GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
             String text = formatString(str);
-            return support.findText(text, findKeyword).size();
+            return support.findText(findKeyword, text).size();
         }
 
         @Override

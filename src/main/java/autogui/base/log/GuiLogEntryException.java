@@ -22,4 +22,9 @@ public class GuiLogEntryException implements GuiLogEntry {
     public Throwable getException() {
         return exception;
     }
+
+    @Override
+    public String toString() {
+        return "[" + getTime() + "] !!! " + getException();
+    }
 }

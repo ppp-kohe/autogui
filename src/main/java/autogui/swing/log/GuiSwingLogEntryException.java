@@ -167,6 +167,9 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
                 lastValue = ex;
                 setDocument(ex);
 
+                if (supports != null) {
+                    supports.setFindHighlights();
+                }
                 setSelectionHighlights(ex);
             }
             return this;
@@ -403,7 +406,9 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         public int findText(GuiSwingLogEntry entry, String findKeyword) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
             if (supports != null) {
-                setDocument(ex);
+                if (lastValue != ex) {
+                    setDocument(ex);
+                }
                 List<List<Integer>> is = supports.findTexts(findKeyword,
                         message.getText(), stackTrace.getText());
                 return is.stream()

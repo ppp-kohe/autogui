@@ -203,6 +203,16 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         return !isFinished();
     }
 
+    @Override
+    public String toString() {
+        return "[" + getTime() + "] # " +
+                getValue() +"/(" + getMinimum() + ".." + getMaximum() +"): " +
+                String.format("%.3f", getValueP()) +
+                (isIndeterminate() ? " I" : "") +
+                (isFinished() ? " [" + getEndTime() + "]" : "") +
+                (thread != null ? " @" + getThread().getName() : "") + getMessage();
+    }
+
     public static class GuiLogEntryProgressInterruptedException extends RuntimeException {
 
     }

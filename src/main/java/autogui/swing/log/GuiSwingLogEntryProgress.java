@@ -200,6 +200,9 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             }
 
             setSelectionHighlight();
+            if (supports != null) {
+                supports.setFindHighlights();
+            }
 
             setPreviousState(lastValue);
         }

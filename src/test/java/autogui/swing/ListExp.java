@@ -49,10 +49,16 @@ public class ListExp extends GuiSwingTestCase {
 
                 JTextField findField = new JTextField(20);
                 bar.add(findField);
-                findField.addActionListener(e -> {
-                    boolean back = (e.getModifiers() & KeyEvent.SHIFT_DOWN_MASK) != 0;
-                    String str = findField.getText();
-                    list.findText(str, !back);
+                findField.addKeyListener(new KeyAdapter() {
+                    @Override
+                    public void keyReleased(KeyEvent e) {
+                        boolean back = e.isShiftDown();
+                        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                            String str = findField.getText();
+                            System.err.println("find " + str + " back=" + back);
+                            list.findText(str, !back);
+                        }
+                    }
                 });
                 pane.add(bar, BorderLayout.NORTH);
 

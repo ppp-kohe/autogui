@@ -475,5 +475,10 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         public boolean found() {
             return entryIndex != -1 && entryFocusIndex != null;
         }
+
+        @Override
+        public String toString() {
+            return "<" + text + "> : entry=" + entryIndex + " focus=" + entryFocusIndex;
+        }
     }
 }
