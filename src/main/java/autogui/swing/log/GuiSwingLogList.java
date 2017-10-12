@@ -3,18 +3,13 @@ package autogui.swing.log;
 import autogui.base.log.GuiLogEntry;
 
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class GuiSwingLogList extends JList<GuiLogEntry> {
     protected Timer activePainter;
@@ -89,7 +84,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         if (first <= index && index <= last + 1) { //visible
             int target = Math.max(model.getRowCount() - 1, last + 1);
-            scrollRectToVisible(getTargetEntryRect(target));
+            scrollRectToVisible(getTargetEntryRectForScroll(target));
         }
     }
 
@@ -135,15 +130,17 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
     /////////////////
 
-    public Rectangle getTargetEntryRect(int target) {
+    public Rectangle getTargetEntryRectForScroll(int target) {
         Point location = indexToLocation(target);
+        Rectangle visibleRect = getVisibleRect();
         Dimension size;
         if (target + 1 < getRowCount()) {
             Point nextLocation = indexToLocation(target + 1);
-            size = new Dimension(getWidth(), Math.max(nextLocation.y - location.y, 16));
-        } else {
-            size = getVisibleRect().getSize();
-            location = new Point(size.width, size.height);
+            size = new Dimension(visibleRect.width, Math.max(nextLocation.y - location.y, 16));
+            location = new Point(visibleRect.x, location.y);
+        } else { //bottom
+            size = visibleRect.getSize();
+            location = new Point(visibleRect.x, size.height - 1);
         }
         return new Rectangle(location, size);
     }

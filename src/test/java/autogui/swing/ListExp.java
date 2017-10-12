@@ -39,7 +39,7 @@ public class ListExp extends GuiSwingTestCase {
 
                 GuiSwingLogList list = new GuiSwingLogList(manager);
                 manager.addView(list::addLogEntry);
-                pane.add(new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+                pane.add(new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.CENTER);
 
                 JToolBar bar = new JToolBar();
                 bar.setFloatable(false);
