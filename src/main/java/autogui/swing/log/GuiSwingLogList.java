@@ -197,6 +197,19 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         }
     }
 
+    public void showPopup(Point p) {
+        JPopupMenu menu = getComponentPopupMenu();
+        if (menu == null) {
+            menu = new JPopupMenu();
+            setComponentPopupMenu(menu);
+        }
+        menu.removeAll();
+        menu.add(getCopyAction());
+        menu.add(new JPopupMenu.Separator());
+        menu.add(getClearAction());
+        menu.show(this, p.x, p.y);
+    }
+
     public static class GuiSwingLogListModel extends AbstractListModel<GuiLogEntry> {
         protected int entryLimit = -1;
         protected java.util.List<GuiLogEntry> entries = new ArrayList<>();
@@ -342,7 +355,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         public void selectionChange(int from, int to) {
             ListSelectionModel sel = table.getSelectionModel();
             for (int i = from; i <= to; ++i) {
-                if (i >= 0 && !sel.isSelectedIndex(i)) {
+                if (i >= 0 && !sel.isSelectedIndex(i) && i < table.getRowCount()) {
                     GuiLogEntry e = table.getValueAt(i);
                     if (e instanceof GuiSwingLogEntry) {
                         ((GuiSwingLogEntry) e).clearSelection();
@@ -389,6 +402,10 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         @Override
         public void mousePressed(MouseEvent e) {
+            if (e.isPopupTrigger()) {
+                table.showPopup(e.getPoint());
+                return;
+            }
             table.setValueIsAdjusting(true);
             pressPoint = e.getPoint();
 
@@ -424,6 +441,10 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         @Override
         public void mouseReleased(MouseEvent e) {
+            if (e.isPopupTrigger()) {
+                table.showPopup(e.getPoint());
+                return;
+            }
             Point point = e.getPoint();
             int row = table.rowAtPoint(point);
             Rectangle cellRect = table.getCellRect(row);
