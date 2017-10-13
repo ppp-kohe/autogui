@@ -19,6 +19,7 @@ public class GuiLogManagerConsole extends GuiLogManager {
         return out;
     }
 
+    /** if true, control code with CSI will be printed (default) */
     public void setControlSequence(boolean controlSequence) {
         this.controlSequence = controlSequence;
     }

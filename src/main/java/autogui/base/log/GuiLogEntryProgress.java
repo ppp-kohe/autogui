@@ -8,6 +8,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * <pre>
+ *     [time] minimum|=========value - - - - |maximum : valueP %, message
+ *     or
+ *     [time] |- - - indeterminate - - - | message
+ *     =&gt;
+ *     [time] message
+ *     [endTime] 100%
+ * </pre>
+ */
 public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
     protected int minimum = 0;
     protected int maximum = Integer.MAX_VALUE;
@@ -25,6 +35,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         thread = Thread.currentThread();
     }
 
+    /** the listener will receive the progress when its valueP is updated */
     public GuiLogEntryProgress addListener(Consumer<GuiLogEntryProgress> listener) {
         if (listeners == null) {
             listeners = new ArrayList<>(3);
@@ -54,6 +65,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         }
     }
 
+    /** it might cause {@link GuiLogEntryProgressInterruptedException} */
     public GuiLogEntryProgress setMinimum(int minimum) {
         checkInterruption();
         boolean change = this.minimum == minimum;
@@ -68,6 +80,8 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         return this;
     }
 
+
+    /** it might cause {@link GuiLogEntryProgressInterruptedException} */
     public GuiLogEntryProgress setMaximum(int maximum) {
         boolean change = this.maximum == maximum;
         this.maximum = maximum;
@@ -82,14 +96,17 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
     }
 
     /**
+     *  it might cause {@link GuiLogEntryProgressInterruptedException}
      * @param p  0 to 1.0
      * @return this
+     *
      */
     public GuiLogEntryProgress setValueP(double p) {
         return setValue((int) ((maximum - minimum) * p));
     }
 
-    public GuiLogEntryProgress setValue(int n) {
+    /**  it might cause {@link GuiLogEntryProgressInterruptedException} */
+     public GuiLogEntryProgress setValue(int n) {
         if (value != n) {
             value = n;
             fireChange();
@@ -99,6 +116,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
     }
 
     /**
+     *  it might cause {@link GuiLogEntryProgressInterruptedException}
      * @param p 0 to 1.0
      * @return this
      */
@@ -106,11 +124,13 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         return addValue((int) ((maximum - minimum) * p));
     }
 
-    public GuiLogEntryProgress addValue(int n) {
+    /**  it might cause {@link GuiLogEntryProgressInterruptedException} */
+     public GuiLogEntryProgress addValue(int n) {
         return setValue(value + n);
     }
 
-    public GuiLogEntryProgress setIndeterminate(boolean indeterminate) {
+    /**  it might cause {@link GuiLogEntryProgressInterruptedException} */
+     public GuiLogEntryProgress setIndeterminate(boolean indeterminate) {
         if (indeterminate != this.indeterminate) {
             this.indeterminate = indeterminate;
             fireChange();
@@ -119,7 +139,8 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         return this;
     }
 
-    public GuiLogEntryProgress setMessage(String message) {
+    /**  it might cause {@link GuiLogEntryProgressInterruptedException} */
+     public GuiLogEntryProgress setMessage(String message) {
         this.message = message;
         checkInterruption();
         return this;
@@ -163,6 +184,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         return message;
     }
 
+    /** true if endTime is set */
     public boolean isFinished() {
         return endTime != null;
     }
@@ -172,6 +194,9 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         finish();
     }
 
+    /**  it might cause {@link GuiLogEntryProgressInterruptedException}.
+     *  endTime will be set. value becomes maximum
+     * */
     public void finish() {
         endTime = Instant.now();
         value = maximum;
@@ -188,10 +213,13 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         return this;
     }
 
+    /** by default, the current thread of constructor sender */
     public Thread getThread() {
         return thread;
     }
 
+    /** if the current thread is equal to the thread of the progress, and the thread is interrupted,
+     *     it causes {@link GuiLogEntryProgressInterruptedException}. */
     public void checkInterruption() {
         if (thread == Thread.currentThread() && Thread.interrupted()) {
             throw new GuiLogEntryProgressInterruptedException();

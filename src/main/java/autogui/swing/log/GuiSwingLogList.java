@@ -154,8 +154,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
     }
 
     public static class GuiSwingLogListModel extends AbstractListModel<GuiLogEntry> {
-        java.util.List<GuiLogEntry> entries = new ArrayList<>();
-
+        protected java.util.List<GuiLogEntry> entries = new ArrayList<>();
 
         @Override
         public int getSize() {
@@ -465,7 +464,13 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             } else if (findState.entryIndex < 0 /*&& !forward*/) {
                 return this.table.getLastVisibleIndex();
             } else {
-                return findState.entryIndex;
+                Rectangle cell = findState.entryIndex < table.getRowCount() ?
+                        table.getCellRect(findState.entryIndex) : null;
+                if (cell != null && table.getVisibleRect().intersects(cell)) { //visible?
+                    return findState.entryIndex;
+                } else {
+                    return this.table.getFirstVisibleIndex();
+                }
             }
         }
 

@@ -55,25 +55,6 @@ public class GuiSwingLogStatusBar extends JComponent {
             //clear, add, layout, paint
             Component c = renderer.getTableCellRendererComponent(null, entry,  false, false, 0, 0);
             cellRendererPane.paintComponent(g, c, this, 0, 0, getWidth(), getHeight(), true);
-//
-//            if (getComponentCount() == 0 || getComponent(0) != c) {
-//                //removeAll();
-//                if (c != null && c != entryComponent) {
-//                    System.err.println("c = " + c);
-//                    entryComponent = c;
-//                    c.setLocation(0, 0);
-//                    add(c);
-//                    c.setSize(getSize());
-//                    c.doLayout();
-//                    removeAll();
-//                    c.print(g);
-//                    return;
-//                }
-//            }
-//            if (entryComponent != null) {
-//                System.err.println("entry " + entryComponent);
-//                entryComponent.print(g);
-//            }
         }
     }
 
