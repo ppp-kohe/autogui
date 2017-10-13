@@ -95,6 +95,24 @@ public class TextPaneCellSupport {
         }
     }
 
+    public String getSelectedText(int from, int to, boolean emptyForOutOfBounds) {
+        if (from >= 0 && to >= 0) {
+            int len = pane.getDocument().getLength();
+            if (from > to) {
+                int tmp = to;
+                to = from;
+                from = tmp;
+            }
+            int off = Math.min(from, len);
+            try {
+                return pane.getDocument().getText(off, Math.min(to, len) - off);
+            } catch (Exception ex) {
+                //
+            }
+        }
+        return emptyForOutOfBounds ? "" : pane.getText();
+    }
+
     /** set the highlight painter to locations matched by the findPattern.
      *   it automatically reuses or adds findHighlightKeys */
     public void setFindHighlights(Pattern findPattern, Highlighter.HighlightPainter findPainter) {
@@ -395,5 +413,23 @@ public class TextPaneCellSupport {
             supports.forEach(TextPaneCellSupport::setFindHighlights);
         }
 
+
+        /** if selectionMap == null, then it takes entire text of each pane */
+        public List<String> getSelectedTexts(Map<JTextComponent, int[]> selectionMap) {
+            List<String> lines = new ArrayList<>(supports.size());
+            for (TextPaneCellSupport support : supports) {
+                if (selectionMap == null) {
+                    lines.add(support.getPane().getText());
+                } else {
+                    int[] range = selectionMap.get(support.getPane());
+                    if (range != null) {
+                        lines.add(support.getSelectedText(range[0], range[1], true));
+                    } else {
+                        lines.add("");
+                    }
+                }
+            }
+            return lines;
+        }
     }
 }

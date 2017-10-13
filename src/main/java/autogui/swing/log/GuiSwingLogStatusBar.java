@@ -1,19 +1,19 @@
 package autogui.swing.log;
 
 import autogui.base.log.GuiLogEntry;
-import autogui.base.log.GuiLogManager;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.function.Consumer;
 
 public class GuiSwingLogStatusBar extends JComponent {
     protected GuiLogEntry entry;
     protected Component entryComponent;
 
-    protected TableCellRenderer renderer;
+    protected GuiSwingLogManager.GuiSwingLogRenderer renderer;
     protected Timer activePainter;
 
     protected CellRendererPane cellRendererPane;
@@ -42,6 +42,10 @@ public class GuiSwingLogStatusBar extends JComponent {
         if (addManagerAsView) {
             manager.addView(this::addLogEntry);
         }
+
+        EventDispatcher e = new EventDispatcher(this);
+        addMouseListener(e);
+        addMouseMotionListener(e);
     }
 
     public void setEntry(GuiLogEntry entry) {
@@ -52,7 +56,7 @@ public class GuiSwingLogStatusBar extends JComponent {
         }
     }
 
-    public void setRenderer(TableCellRenderer renderer) {
+    public void setRenderer(GuiSwingLogManager.GuiSwingLogRenderer renderer) {
         this.renderer = renderer;
     }
 
@@ -60,7 +64,7 @@ public class GuiSwingLogStatusBar extends JComponent {
         return entry;
     }
 
-    public TableCellRenderer getRenderer() {
+    public GuiSwingLogManager.GuiSwingLogRenderer getRenderer() {
         return renderer;
     }
 
@@ -73,13 +77,60 @@ public class GuiSwingLogStatusBar extends JComponent {
         }
     }
 
-    @Override
-    protected void processMouseEvent(MouseEvent e) {
-        super.processMouseEvent(e);
-        if (renderer != null && entry != null) {
-            Component c = renderer.getTableCellRendererComponent(null, entry,  false, false, 0, 0);
-            c.setSize(getSize());
-            c.dispatchEvent(SwingUtilities.convertMouseEvent(this, e, c));
+
+    public static class EventDispatcher extends MouseAdapter {
+        protected GuiSwingLogStatusBar bar;
+
+        public EventDispatcher(GuiSwingLogStatusBar bar) {
+            this.bar = bar;
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            bar.dispatch(e);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            bar.dispatch(e);
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            bar.dispatch(e);
+        }
+    }
+
+    public void dispatch(MouseEvent e) {
+        if (renderer != null && entry != null && entry instanceof GuiSwingLogEntry) {
+            GuiSwingLogEntry se = (GuiSwingLogEntry) entry;
+            runEntry(se, r -> {
+                Point p = SwingUtilities.convertPoint(this, e.getPoint(), centerPane);
+                switch (e.getID()) {
+                    case MouseEvent.MOUSE_PRESSED:
+                        r.mousePressed(se, p);
+                        break;
+                    case MouseEvent.MOUSE_RELEASED:
+                        r.mouseReleased(se, p);
+                        break;
+                    case MouseEvent.MOUSE_DRAGGED:
+                        r.mouseDragged(se, p);
+                        break;
+                }
+            });
+        }
+    }
+
+    public void runEntry(GuiSwingLogEntry entry, Consumer<GuiSwingLogEntry.LogEntryRenderer> runner) {
+        GuiSwingLogEntry.LogEntryRenderer r = renderer.getEntryRenderer(entry);
+        if (r != null) {
+            Component cell = r.getTableCellRenderer()
+                    .getListCellRendererComponent(null, entry, -1, true, true);
+            cellRendererPane.add(cell);
+            cell.setBounds(centerPane.getBounds());
+            runner.accept(r);
+            cellRendererPane.removeAll();
+            repaint();
         }
         if (entry != null && entry.isActive()) {
             startActivePainter();

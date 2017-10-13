@@ -45,6 +45,12 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
         default Object focusNextFound(GuiSwingLogEntry entry, Object prevIndex, boolean forward) {
             return null;
         }
+
+        default String getSelectedText(GuiSwingLogEntry entry, boolean entireText) {
+            return "";
+        }
     }
 
+    default void clearSelection() {
+    }
 }

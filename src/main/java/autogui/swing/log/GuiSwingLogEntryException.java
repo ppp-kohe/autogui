@@ -11,6 +11,8 @@ import java.awt.event.ActionEvent;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class GuiSwingLogEntryException extends GuiLogEntryException implements GuiSwingLogEntry {
     protected Map<JTextComponent, int[]> selectionMap = new HashMap<>(2);
@@ -39,6 +41,11 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
     public boolean isExpanded() {
         return expanded;
+    }
+
+    @Override
+    public void clearSelection() {
+        selectionMap.clear();
     }
 
     public static class GuiSwingLogExceptionRenderer extends JComponent
@@ -468,6 +475,21 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
                     GuiSwingLogList.GuiSwingLogListModel model = (GuiSwingLogList.GuiSwingLogListModel) lastList.getModel();
                     model.fireRowChanged(lastValue);
                 }
+            }
+        }
+
+        @Override
+        public String getSelectedText(GuiSwingLogEntry entry, boolean entireText) {
+            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
+            if (lastValue != ex) {
+                setDocument(ex);
+            }
+            if (supports != null) {
+                return supports.getSelectedTexts(entireText ? null : ex.getSelections()).stream()
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining("\n"));
+            } else {
+                return message.getText();
             }
         }
     }

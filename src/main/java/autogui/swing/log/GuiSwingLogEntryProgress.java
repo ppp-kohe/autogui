@@ -15,6 +15,7 @@ import java.awt.font.TextLayout;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements GuiSwingLogEntry {
     protected Map<JTextComponent,int[]> selections = new HashMap<>(2);
@@ -26,6 +27,11 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
     public Map<JTextComponent, int[]> getSelections() {
         return selections;
+    }
+
+    @Override
+    public void clearSelection() {
+        selections.clear();
     }
 
     public static class GuiSwingLogProgressRenderer extends JComponent
@@ -263,7 +269,6 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             message2.setPreferredSize(null);
             message2.setBorder(BorderFactory.createEmptyBorder());
             progressContainer.add(message2, BorderLayout.CENTER);
-            invalidate();
         }
 
         public void setLayoutToProgress() {
@@ -274,12 +279,12 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             progressBar.setEnabled(true);
             message2Layout = false;
             message2.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-            invalidate();
         }
 
         public JComponent progressAccessory() {
             JPanel progressTailPane = new JPanel(new BorderLayout());//new JPanel(new FlowLayout());
             if (message2Size != null) {
+                //set prefSize for the parent pane instead of message2
                 progressTailPane.setPreferredSize(new Dimension(
                         message2Size.width + stopButton.getPreferredSize().width,
                         Math.max(message2Size.height, stopButton.getPreferredSize().height)));
@@ -359,6 +364,23 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 if (t != null && !stopPressed.isFinished()) {
                     t.interrupt();
                 }
+            }
+        }
+
+        @Override
+        public String getSelectedText(GuiSwingLogEntry entry, boolean entireText) {
+            GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
+            if (p != lastValue) {
+                lastValue = p;
+                updateByLastValue();
+            }
+            if (supports != null) {
+                return supports.getSelectedTexts(entireText ? null : p.getSelections()).stream()
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining("\n"));
+
+            } else {
+                return message2.getText() + "\t" + message.getText();
             }
         }
     }

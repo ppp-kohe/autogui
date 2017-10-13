@@ -4,18 +4,22 @@ import autogui.base.log.GuiLogEntry;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.util.List;
 import java.awt.*;
 import java.awt.event.*;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.ListIterator;
 import java.util.function.Consumer;
 
 public class GuiSwingLogList extends JList<GuiLogEntry> {
     protected Timer activePainter;
     protected GuiSwingLogEventDispatcher eventDispatcher;
+
+    protected LogListClearAction clearAction;
+    protected LogListCopyTextAction copyAction;
 
     public GuiSwingLogList(GuiSwingLogManager manager) {
         this(manager, true);
@@ -34,14 +38,26 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         setCellRenderer(new GuiSwingLogManager.GuiSwingLogRenderer(manager, GuiSwingLogEntry.ContainerType.List));
 
-        LogListClearAction clearAction = new LogListClearAction(this);
+        //clear action
+        clearAction = new LogListClearAction(this);
         Object name = clearAction.getValue(Action.NAME);
         getInputMap().put((KeyStroke) clearAction.getValue(Action.ACCELERATOR_KEY), name);
         getActionMap().put(name, clearAction);
 
+        copyAction = new LogListCopyTextAction(this);
+        getActionMap().put("copy", copyAction);
+
         if (addManagerAsView) {
             manager.addView(this::addLogEntry);
         }
+    }
+
+    public LogListCopyTextAction getCopyAction() {
+        return copyAction;
+    }
+
+    public LogListClearAction getClearAction() {
+        return clearAction;
     }
 
     public GuiSwingLogListModel getLogListModel() {
@@ -160,6 +176,10 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
     }
 
     /////////////////
+
+    public List<String> getSelectedText() {
+        return eventDispatcher.getSelectedText();
+    }
 
     public Rectangle getTargetEntryRectForScroll(int target) {
         Rectangle cellRect = getCellRect(target);
@@ -313,6 +333,22 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             this.table = table;
             this.rendererPane = new CellRendererPane();
             table.add(rendererPane);
+
+            table.addListSelectionListener(e -> {
+                selectionChange(e.getFirstIndex(), e.getLastIndex());
+            });
+        }
+
+        public void selectionChange(int from, int to) {
+            ListSelectionModel sel = table.getSelectionModel();
+            for (int i = from; i <= to; ++i) {
+                if (i >= 0 && !sel.isSelectedIndex(i)) {
+                    GuiLogEntry e = table.getValueAt(i);
+                    if (e instanceof GuiSwingLogEntry) {
+                        ((GuiSwingLogEntry) e).clearSelection();
+                    }
+                }
+            }
         }
 
         public GuiSwingLogEntry getEntry(Point p) {
@@ -579,6 +615,27 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                 }
             }
         }
+
+        public List<String> getSelectedText() {
+            ListSelectionModel sel = table.getSelectionModel();
+            java.util.List<String> lines = new ArrayList<>(table.getRowCount());
+            for (int i = sel.getMinSelectionIndex(), l = sel.getMaxSelectionIndex(); i >= 0 && i <= l; ++i) {
+                if (sel.isSelectedIndex(i)) {
+                    GuiLogEntry e = table.getValueAt(i);
+                    if (e instanceof GuiSwingLogEntry) {
+                        GuiSwingLogEntry se = (GuiSwingLogEntry) e;
+                        runEntry(i, se, r -> {
+                            String text = r.getSelectedText(se, false);
+                            if (text.isEmpty()) {
+                                text = r.getSelectedText(se, true);
+                            }
+                            lines.add(text);
+                        });
+                    }
+                }
+            }
+            return lines;
+        }
     }
 
     public static class FindState {
@@ -600,7 +657,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         JToolBar bar = new JToolBar();
         bar.setBorderPainted(false);
         bar.setFloatable(false);
-        bar.add(new LogListClearAction(this));
+        bar.add(getClearAction());
 
         JTextField field = new JTextField(20);
         field.addKeyListener(new LogTextFindAdapter(this, field));
@@ -643,6 +700,26 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         @Override
         public void keyReleased(KeyEvent e) {
             list.findText(findText.getText());
+        }
+    }
+
+    public static class LogListCopyTextAction extends AbstractAction {
+        protected GuiSwingLogList list;
+
+        public LogListCopyTextAction(GuiSwingLogList list) {
+            putValue(NAME, "Copy");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            this.list = list;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String text = String.join("\n", list.getSelectedText());
+
+            Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
+            StringSelection sel = new StringSelection(text);
+            board.setContents(sel, sel);
         }
     }
 }

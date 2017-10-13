@@ -46,6 +46,12 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         this.selectionTo = selectionTo;
     }
 
+    @Override
+    public void clearSelection() {
+        selectionFrom = 0;
+        selectionTo = 0;
+    }
+
     public static void drawSelection(Dimension size, Graphics g) {
         RoundRectangle2D.Float r = new RoundRectangle2D.Float(2, 2, size.width - 4, size.height - 4, 3, 3);
         Graphics2D g2 = (Graphics2D) g;
@@ -230,6 +236,28 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
                 str.setSelectionTo(range[1]);
             }
             return m;
+        }
+
+        @Override
+        public String getSelectedText(GuiSwingLogEntry entry, boolean entireText) {
+            GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
+            int from = str.getSelectionFrom();
+            int to = str.getSelectionTo();
+            String text = formatString(str);
+            if (entireText || from == to || !range(from, text) || !range(to, text)) {
+                return text;
+            } else {
+                if (from > to) {
+                    int tmp = to;
+                    to = from;
+                    from = tmp;
+                }
+                return text.substring(from, to);
+            }
+        }
+
+        private boolean range(int i, String s) {
+            return 0 <= i && i <= s.length();
         }
     }
 
