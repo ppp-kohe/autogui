@@ -37,6 +37,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         protected TextPaneCellSupport.TextPaneCellSupportList supports;
 
         protected boolean message2Layout = false;
+        protected Dimension message2Size;
         protected boolean leftToRight;
         protected GuiLogEntryProgress lastValue;
 
@@ -98,6 +99,8 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             StyleConstants.setForeground(timeStyle2, new Color(82, 116, 213));
 
             init(type.equals(ContainerType.StatusBar));
+
+            setLayoutToProgress();
         }
 
         public void init(boolean leftToRight) {
@@ -110,10 +113,9 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 add(Box.createHorizontalStrut(10));
                 add(messageContainer);
             } else {
-                setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-                add(messageContainer);
-                add(Box.createVerticalStrut(3));
-                add(progressContainer);
+                setLayout(new BorderLayout());
+                add(messageContainer, BorderLayout.NORTH);
+                add(progressContainer, BorderLayout.CENTER);
             }
             setLayoutToProgress();
             this.leftToRight = leftToRight;
@@ -154,9 +156,8 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 }
                 if (context != null) {
                     TextLayout l = new TextLayout("# NN% +NNh NNm NNs NNNms", font, context);
-                    message2.setMinimumSize(new Dimension((int) l.getAdvance(), message2.getPreferredSize().height));
-                    message2.setPreferredSize(message2.getMinimumSize());
-                    message2.setSize(message2.getMinimumSize());
+                    message2Size = new Dimension((int) l.getAdvance(), message2.getPreferredSize().height);
+                    message2.setSize(message2Size);
                     message2Layout = true;
                 }
             }
@@ -167,16 +168,19 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
 
         public void updateByLastValue() {
-            message.setText(formatMessageText(lastValue));
+            GuiLogEntryProgress nextValue = new GuiSwingLogEntryProgress();
+            nextValue.setState(lastValue);
+
+            message.setText(formatMessageText(nextValue));
             message.invalidate();
 
-            message2.setText(formatProgressText(lastValue));
+            message2.setText(formatProgressText(nextValue));
             message2.invalidate();
 
             if (lastValue != null) {
                 GuiSwingLogEntryString.setHeaderStyle(message, "] ", timeStyle);
 
-                if (lastValue.isFinished()) {
+                if (nextValue.isFinished()) {
                     if (!previousState.isFinished()) {
                         setLayoutToFinish();
                     }
@@ -187,10 +191,10 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                         setLayoutToProgress();
                     }
 
-                    progressBar.setIndeterminate(lastValue.isIndeterminate());
-                    progressBar.setValue(lastValue.getValue());
-                    progressBar.setMaximum(lastValue.getMaximum());
-                    progressBar.setMinimum(lastValue.getMinimum());
+                    progressBar.setIndeterminate(nextValue.isIndeterminate());
+                    progressBar.setValue(nextValue.getValue());
+                    progressBar.setMaximum(nextValue.getMaximum());
+                    progressBar.setMinimum(nextValue.getMinimum());
                 }
             } else {
                 if (previousState.isFinished()) {
@@ -204,11 +208,11 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 supports.setFindHighlights();
             }
 
-            setPreviousState(lastValue);
+            previousState = nextValue;
         }
 
         public String formatMessageText(GuiLogEntryProgress p) {
-            if (p != null){
+            if (p != null) {
                 return String.format("%s # %s",
                         manager.formatTime(p.getTime()),
                         p.getMessage());
@@ -219,18 +223,20 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
         public String formatProgressText(GuiLogEntryProgress p) {
             if (p != null) {
+                Instant time = p.getTime();
                 if (p.isFinished()) {
+                    Instant endTime = p.getEndTime();
                     return String.format("%s # finished: +%s",
-                            manager.formatTime(p.getEndTime()),
-                            manager.formatDuration(p.getTime(), p.getEndTime()));
+                            manager.formatTime(endTime),
+                            manager.formatDuration(time, endTime));
                 } else {
                     if (p.isIndeterminate()) {
                         return String.format("# +%s",
-                                manager.formatDuration(p.getTime(), Instant.now()));
+                                manager.formatDuration(time, Instant.now()));
                     } else {
                         return String.format("# %2d%% +%s",
                                 (int) (p.getValueP() * 100),
-                                manager.formatDuration(p.getTime(), Instant.now()));
+                                manager.formatDuration(time, Instant.now()));
                     }
                 }
             } else {
@@ -253,10 +259,11 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
         public void setLayoutToFinish() {
             progressContainer.removeAll();
-            progressContainer.add(message2, BorderLayout.CENTER);
             progressBar.setEnabled(false);
             message2.setPreferredSize(null);
             message2.setBorder(BorderFactory.createEmptyBorder());
+            progressContainer.add(message2, BorderLayout.CENTER);
+            invalidate();
         }
 
         public void setLayoutToProgress() {
@@ -267,39 +274,21 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             progressBar.setEnabled(true);
             message2Layout = false;
             message2.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+            invalidate();
         }
 
         public JComponent progressAccessory() {
-            JPanel progressTailPane = new JPanel(new FlowLayout());
-            progressTailPane.add(stopButton);
-            progressTailPane.add(message2);
+            JPanel progressTailPane = new JPanel(new BorderLayout());//new JPanel(new FlowLayout());
+            if (message2Size != null) {
+                progressTailPane.setPreferredSize(new Dimension(
+                        message2Size.width + stopButton.getPreferredSize().width,
+                        Math.max(message2Size.height, stopButton.getPreferredSize().height)));
+            }
+            progressTailPane.add(stopButton, BorderLayout.WEST);
+            progressTailPane.add(message2, BorderLayout.CENTER);
             progressTailPane.setOpaque(false);
             progressTailPane.setBorder(BorderFactory.createEmptyBorder());
             return progressTailPane;
-        }
-
-        public void setPreviousState(GuiLogEntryProgress p) {
-            if (p == null) {
-                previousState
-                        .setTime(null)
-                        .setMessage("")
-                        .setValue(0)
-                        .setIndeterminate(false)
-                        .setMaximum(0)
-                        .setMinimum(0)
-                        .setThread(null)
-                        .setEndTime(null);
-            } else {
-                previousState
-                        .setTime(p.getTime())
-                        .setMessage(p.getMessage())
-                        .setValue(p.getValue())
-                        .setIndeterminate(p.isIndeterminate())
-                        .setMaximum(p.getMaximum())
-                        .setMinimum(p.getMinimum())
-                        .setThread(p.getThread())
-                        .setEndTime(p.getEndTime());
-            }
         }
 
         @Override

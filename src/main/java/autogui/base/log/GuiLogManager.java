@@ -1,11 +1,34 @@
 package autogui.base.log;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.time.*;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.List;
 
 public class GuiLogManager {
+    protected static GuiLogManager manager;
+
+    public static GuiLogManager get() {
+        synchronized (GuiLogManager.class) {
+            if (manager == null) {
+                manager = new GuiLogManagerConsole();
+            }
+            return manager;
+        }
+    }
+
+    public static void setManager(GuiLogManager manager) {
+        synchronized (GuiLogManager.class) {
+            GuiLogManager.manager = manager;
+        }
+    }
+
     public GuiLogEntryString log(Object... args) {
         Formatter formatter = new Formatter();
         boolean needSpace = false;
@@ -34,6 +57,48 @@ public class GuiLogManager {
 
     public GuiLogEntryString logFormat(String format, Object... args) {
         return logString(String.format(format, args));
+    }
+
+    public void replaceConsole(boolean replaceError, boolean replaceOutput) {
+        if (replaceError) {
+            PrintStream exErr = System.err;
+            if (exErr instanceof LogPrintStream) {
+                System.setErr(new LogPrintStream(this, exErr));
+            } else {
+                //err -> logString -> original err
+                System.setErr(new LogPrintStream(this));
+            }
+        }
+        if (replaceOutput) {
+            PrintStream exOut = System.out;
+            //out -> {original out, logString -> original err }
+            System.setOut(new LogPrintStream(this, exOut));
+        }
+    }
+
+    public void replaceUncaughtHandler() {
+        Thread.UncaughtExceptionHandler h = Thread.getDefaultUncaughtExceptionHandler();
+        if (h != null && h instanceof LogUncaughtHandler) {
+            Thread.setDefaultUncaughtExceptionHandler(new LogUncaughtHandler(this, h));
+        } else {
+            Thread.setDefaultUncaughtExceptionHandler(new LogUncaughtHandler(this, null));
+        }
+    }
+
+    public PrintStream getSystemErr() {
+        PrintStream err = System.err;
+        if (err instanceof LogPrintStream) {
+            GuiLogManager manager = ((LogPrintStream) err).getManager();
+            PrintStream mErr = manager.getErr();
+            if (mErr != null) {
+                err = mErr;
+            }
+        }
+        return err;
+    }
+
+    public PrintStream getErr() {
+        return null;
     }
 
     public GuiLogEntryString logString(String str) {
@@ -150,5 +215,172 @@ public class GuiLogManager {
             parts.add(String.format("%,dns", nsPart));
         }
         return String.join(" ", parts);
+    }
+
+    public static class LogPrintStream extends PrintStream {
+        private GuiLogManager manager;
+
+        public LogPrintStream(GuiLogManager manager) {
+            this(manager, null);
+        }
+
+        public LogPrintStream(GuiLogManager manager, OutputStream out) {
+            super(new LogOutputStream(manager, out));
+            this.manager = manager;
+        }
+
+        public GuiLogManager getManager() {
+            return manager;
+        }
+
+        public OutputStream getOut() {
+            return out;
+        }
+
+        @Override
+        public void println(Object x) {
+            if (x instanceof Throwable) {
+                flush();
+                manager.logError((Throwable) x);
+            } else {
+                super.println(x);
+            }
+        }
+    }
+
+    public static class LogUncaughtHandler implements Thread.UncaughtExceptionHandler {
+        protected GuiLogManager manager;
+        protected Thread.UncaughtExceptionHandler handler;
+
+        public LogUncaughtHandler(GuiLogManager manager, Thread.UncaughtExceptionHandler handler) {
+            this.manager = manager;
+            this.handler = handler;
+        }
+
+        public void handle(Throwable e) {
+            uncaughtException(Thread.currentThread(), e);
+        }
+
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+            manager.logError(e);
+            if (handler != null) {
+                handler.uncaughtException(t, e);
+            }
+        }
+    }
+
+    public static class LogOutputStream extends OutputStream {
+        protected OutputStream out;
+        protected ByteBuffer buffer;
+        protected GuiLogManager manager;
+        protected Charset defaultCharset;
+
+        public LogOutputStream(GuiLogManager manager) {
+            this(manager, null);
+        }
+
+        public LogOutputStream(GuiLogManager manager, OutputStream out) {
+            this.manager = manager;
+            this.out = out;
+            buffer = ByteBuffer.allocateDirect(4096);
+            defaultCharset = Charset.defaultCharset(); //PrintStream always encode by default encoding
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            if (out != null) {
+                out.write(b);
+            }
+            synchronized (this) {
+                expand(1000);
+                buffer.put((byte) b);
+                if (b == '\n') {
+                    flushLog();
+                }
+            }
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            if (out != null) {
+                out.write(b);
+            }
+            synchronized (this) {
+                expand(b.length);
+                buffer.put(b);
+                for (byte e : b) {
+                    if (e == '\n') {
+                        flushLog();
+                        break;
+                    }
+                }
+            }
+        }
+
+        public void expand(int len) {
+            if (len >= buffer.remaining()) {
+                ByteBuffer newBuffer = ByteBuffer.allocateDirect(buffer.position() + (int) (len * 1.2));
+                ((Buffer) buffer).flip();
+                newBuffer.put(buffer);
+                buffer = newBuffer;
+            }
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            if (out != null) {
+                out.write(b, off, len);
+            }
+            synchronized (this) {
+                expand(len);
+                buffer.put(b, off, len);
+                for (int i = 0; i < len; ++i) {
+                    if (b[off + i] == '\n') {
+                        flushLog();
+                        break;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void flush() throws IOException {
+            synchronized (this) {
+                flushLog();
+            }
+            if (out != null) {
+                out.flush();
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            synchronized (this) {
+                flushLog();
+            }
+            if (out != null) {
+                out.close();
+            }
+        }
+
+        public void flushLog() {
+            ((Buffer) buffer).flip();
+            if (buffer.hasRemaining()) {
+                try {
+                    String data = defaultCharset.decode(buffer).toString();
+                    //cut the last line
+                    if (data.endsWith("\n")) {
+                        data = data.substring(0, data.length() - 1);
+                    }
+                    if (manager != null) {
+                        manager.logString(data);
+                    }
+                } catch (Exception ex) {
+                    manager.logString("data...");
+                }
+            }
+            ((Buffer) buffer).clear();
+        }
     }
 }

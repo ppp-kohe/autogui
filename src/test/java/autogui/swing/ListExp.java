@@ -4,11 +4,7 @@ import autogui.base.log.*;
 import autogui.swing.log.*;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
-import java.awt.font.TextLayout;
-import java.time.*;
-import java.util.Enumeration;
 
 public class ListExp extends GuiSwingTestCase {
     public static void main(String[] args) throws Exception {
@@ -31,9 +27,12 @@ public class ListExp extends GuiSwingTestCase {
     }
 
     public void test() {
+        //System.setProperty("sun.awt.exception.handler", MyHandler.class.getName());
+
         run(() -> {
             GuiSwingLogManager manager = new GuiSwingLogManager();
-            manager.setupConsole(true, true);
+            manager.setupConsole(true, true, true);
+            GuiLogManager.setManager(manager);
 
             GuiSwingLogManager.GuiSwingLogWindow w = manager.createWindow();
 
@@ -44,13 +43,21 @@ public class ListExp extends GuiSwingTestCase {
 
             JPanel pane = new JPanel();
             {
-
                 JTextField field = new JTextField(20);
                 field.addActionListener(e -> {
                     System.out.println(field.getText());
-                    field.setText("");
+                    throw new RuntimeException("hello");
                 });
                 pane.add(field);
+
+                JButton btn = new JButton("Task");
+                btn.addActionListener(e -> {
+                    try (GuiLogEntryProgress p = GuiLogManager.get().logProgress()) {
+                        p.addValueP(0.1);
+                        p.setMessage("hello");
+                    }
+                });
+                pane.add(btn);
             }
             pane = w.getPaneWithStatusBar(pane);
 //            for (Enumeration e = UIManager.getDefaults().keys(); e.hasMoreElements(); ) {

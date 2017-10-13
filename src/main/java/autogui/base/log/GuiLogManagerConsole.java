@@ -40,6 +40,11 @@ public class GuiLogManagerConsole extends GuiLogManager {
     }
 
     @Override
+    public PrintStream getErr() {
+        return out;
+    }
+
+    @Override
     public GuiLogEntryString logString(String str) {
         GuiLogEntryString s = super.logString(str);
         showString(s);
@@ -73,39 +78,42 @@ public class GuiLogManagerConsole extends GuiLogManager {
     }
 
     public void showProgress(GuiLogEntryProgress p) {
-        out.print(formatTime(p.getTime()) + " # \n\n");
-        lastEntry = p;
+        synchronized (p) {
+            out.print(formatTime(p.getTime()) + " # \n\n");
+            lastEntry = p;
+        }
     }
 
     @Override
     public void updateProgress(GuiLogEntryProgress p) {
-        Instant now = Instant.now();
-        if (p == lastEntry && controlSequence) {
-            out.print("\033[2F\033[K"); //back to top of the 2 previous row, and clear the row
-        }
-        //1st-line: [YYYY-MM-DD hh:mm:ss.msec] # message
-        out.format("%s # %s\n", formatTime(p.getTime()), formatMessageLine(p.getMessage()));
-        if (p == lastEntry && controlSequence) {
-            out.print("\033[K");
-        }
-        if (p.isFinished()) {
-            //2nd-line: [YYYY-MM-DD hh:mm:ss.msec] # finished: +duration
-            out.format("%s # finished: +%s\n",
-                    formatTime(p.getEndTime()),
-                    formatDuration(p.getTime(), p.getEndTime()));
-        } else {
-            if (p.isIndeterminate()) {
-                //2nd-line: # <emoji> +duration
-                Duration d = Duration.between(p.getTime(), now);
-                out.print("# " + formatDurationIndeterminate(d) + "  ");
-            } else {
-                //2nd-line: # NN% |====...   | +duration
-                out.print(formatBar(p.getValueP()));
+        synchronized (p) {
+            Instant now = Instant.now();
+            if (p == lastEntry && controlSequence) {
+                out.print("\033[2F\033[K"); //back to top of the 2 previous row, and clear the row
             }
-            out.format(" +%s\n", formatDuration(p.getTime(), now));
+            //1st-line: [YYYY-MM-DD hh:mm:ss.msec] # message
+            out.format("%s # %s\n", formatTime(p.getTime()), formatMessageLine(p.getMessage()));
+            if (p == lastEntry && controlSequence) {
+                out.print("\033[K");
+            }
+            if (p.isFinished()) {
+                //2nd-line: [YYYY-MM-DD hh:mm:ss.msec] # finished: +duration
+                out.format("%s # finished: +%s\n",
+                        formatTime(p.getEndTime()),
+                        formatDuration(p.getTime(), p.getEndTime()));
+            } else {
+                if (p.isIndeterminate()) {
+                    //2nd-line: # <emoji> +duration
+                    Duration d = Duration.between(p.getTime(), now);
+                    out.print("# " + formatDurationIndeterminate(d) + "  ");
+                } else {
+                    //2nd-line: # NN% |====...   | +duration
+                    out.print(formatBar(p.getValueP()));
+                }
+                out.format(" +%s\n", formatDuration(p.getTime(), now));
+            }
+            lastEntry = p;
         }
-
-        lastEntry = p;
     }
 
     public String formatDurationIndeterminate(Duration d) {
