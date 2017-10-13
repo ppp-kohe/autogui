@@ -237,9 +237,13 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             return true;
         }
 
+        //// formatting
+
         public void formatMessage(Instant time, Throwable ex) {
             String msg = ex.toString();
             StyledDocument doc = message.getStyledDocument();
+
+            //clear
             clearLinesForDocument(doc);
             try {
                 doc.remove(0, doc.getLength());
@@ -247,6 +251,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
                 throw new RuntimeException(dex);
             }
 
+            // [time] !!! message
             append(doc, manager.formatTime(time), messageTimeStyle);
             append(doc, " !!! " + (msg == null ? "" : msg), messageStyle);
             message.invalidate();
@@ -286,22 +291,6 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             lines.add(0);
         }
 
-        public void formatStackTraceEnclosing(Throwable ex, StyledDocument doc, Set<Throwable> history,
-                                              String head,
-                                              String lineHead,
-                                              List<StackTraceElement> stackTrace) {
-            StackTraceStyleSet set;
-            if (ex.getCause() == null ) {
-                set = lastSet;
-            } else {
-                set = middleSet;
-            }
-            append(doc, lineHead + head, null);
-            append(doc, ex.toString() + "\n", set.messageStyle);
-
-            formatStackTrace(ex, doc, history, lineHead, set, stackTrace);
-        }
-
         public void formatStackTrace(Throwable ex, StyledDocument doc, Set<Throwable> history,
                                      String lineHead,
                                      StackTraceStyleSet set,
@@ -337,8 +326,24 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             }
 
             if (ex.getCause() != null) {
-                formatStackTraceEnclosing(ex, doc, history, "Caused by: ", lineHead, nextStackTrace);
+                formatStackTraceEnclosing(ex.getCause(), doc, history, "Caused by: ", lineHead, nextStackTrace);
             }
+        }
+
+        public void formatStackTraceEnclosing(Throwable ex, StyledDocument doc, Set<Throwable> history,
+                                              String head,
+                                              String lineHead,
+                                              List<StackTraceElement> stackTrace) {
+            StackTraceStyleSet set;
+            if (ex.getCause() == null ) {
+                set = lastSet;
+            } else {
+                set = middleSet;
+            }
+            append(doc, lineHead + head, null);
+            append(doc, ex.toString() + "\n", set.messageStyle);
+
+            formatStackTrace(ex, doc, history, lineHead, set, stackTrace);
         }
 
         public void formatStackTraceElement(StackTraceElement e, String lineHead, StyledDocument doc, StackTraceStyleSet styleSet) {

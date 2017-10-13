@@ -108,8 +108,8 @@ public class ListExp extends GuiSwingTestCase {
                             p.setMessage("hello " + i +" : " + p.getValueP());
                             Thread.sleep(400);
                         }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
+                    }catch (Exception ex) {
+                        throw new RuntimeException(ex);
                     }
                 }
             }.start();
