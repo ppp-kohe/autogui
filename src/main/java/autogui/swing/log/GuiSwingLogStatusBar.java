@@ -18,13 +18,30 @@ public class GuiSwingLogStatusBar extends JComponent {
 
     protected CellRendererPane cellRendererPane;
 
+    protected JPanel centerPane;
+
     public GuiSwingLogStatusBar(GuiSwingLogManager manager) {
+        this(manager, true);
+    }
+
+    public GuiSwingLogStatusBar(GuiSwingLogManager manager, boolean addManagerAsView) {
         setPreferredSize(new Dimension(100, 28));
         setMinimumSize(new Dimension(100, 28));
         setLayout(new BorderLayout());
         renderer = new GuiSwingLogManager.GuiSwingLogRenderer(manager, GuiSwingLogEntry.ContainerType.StatusBar);
         cellRendererPane = new CellRendererPane();
-        add(cellRendererPane);
+        centerPane = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                paintCell(g, this);
+            }
+        };
+        centerPane.add(cellRendererPane);
+        add(centerPane, BorderLayout.CENTER);
+
+        if (addManagerAsView) {
+            manager.addView(this::addLogEntry);
+        }
     }
 
     public void setEntry(GuiLogEntry entry) {
@@ -48,13 +65,11 @@ public class GuiSwingLogStatusBar extends JComponent {
     }
 
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        //super.paintComponent(g);
+    public void paintCell(Graphics g, JComponent owner) {
         if (renderer != null && entry != null) {
             //clear, add, layout, paint
             Component c = renderer.getTableCellRendererComponent(null, entry,  false, false, 0, 0);
-            cellRendererPane.paintComponent(g, c, this, 0, 0, getWidth(), getHeight(), true);
+            cellRendererPane.paintComponent(g, c, owner, 0, 0, owner.getWidth(), owner.getHeight(), true);
         }
     }
 

@@ -22,7 +22,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
     protected int minimum = 0;
     protected int maximum = Integer.MAX_VALUE;
     protected int value;
-    protected boolean indeterminate = true;
+    protected boolean indeterminate = false;
     protected String message = "";
     protected Instant time;
     protected Instant endTime;
@@ -126,7 +126,11 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
 
     /**  it might cause {@link GuiLogEntryProgressInterruptedException} */
      public GuiLogEntryProgress addValue(int n) {
-        return setValue(value + n);
+         if ((n >= 0 && value >= maximum) || (n < 0 && value <= minimum)) {
+             return setValue(value);
+         } else {
+             return setValue(value + n);
+         }
     }
 
     /**  it might cause {@link GuiLogEntryProgressInterruptedException} */

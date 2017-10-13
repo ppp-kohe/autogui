@@ -201,7 +201,7 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
 
         @Override
         public Object executeSet(Object target, Object value) throws Exception {
-            content = (AbstractDocument.Content) content;
+            content = (AbstractDocument.Content) value;
             return null;
         }
 

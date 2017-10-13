@@ -7,9 +7,20 @@ import java.time.Duration;
 import java.time.Instant;
 
 public class GuiLogManagerConsole extends GuiLogManager {
-    protected PrintStream out = System.err;
+    protected PrintStream out;
     protected GuiLogEntry lastEntry;
     protected boolean controlSequence = true;
+
+    public static int barWidth = 50;
+
+    /** use current System.err */
+    public GuiLogManagerConsole() {
+        this(System.err);
+    }
+
+    public GuiLogManagerConsole(PrintStream out) {
+        this.out = out;
+    }
 
     public void setOut(PrintStream out) {
         this.out = out;
@@ -109,7 +120,7 @@ public class GuiLogManagerConsole extends GuiLogManager {
         int n = (int) (p * 100);
         StringBuilder buf = new StringBuilder();
         buf.append(String.format("# %2d", n)).append("% |");
-        int max = 50;
+        int max = barWidth;
         for (int i = 0, l = (int) (p * max); i < l; ++i) {
             buf.append('=');
             --max;

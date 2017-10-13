@@ -33,41 +33,25 @@ public class ListExp extends GuiSwingTestCase {
     public void test() {
         run(() -> {
             GuiSwingLogManager manager = new GuiSwingLogManager();
+            manager.setupConsole(true, true);
 
-            JPanel pane = new JPanel(new BorderLayout());
+            GuiSwingLogManager.GuiSwingLogWindow w = manager.createWindow();
+
+            JToolBar bar = w.getToolbar();
+            bar.add(new AddAction(w.getList(), manager));
+            bar.add(new AddProgressAction(w.getList(), manager));
+            bar.add(new AddErrorAction(w.getList(), manager));
+
+            JPanel pane = new JPanel();
             {
 
-                GuiSwingLogList list = new GuiSwingLogList(manager);
-                manager.addView(list::addLogEntry);
-                pane.add(new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.CENTER);
-
-                JToolBar bar = new JToolBar();
-                bar.setFloatable(false);
-                bar.add(new AddAction(list, manager));
-                bar.add(new AddProgressAction(list, manager));
-                bar.add(new AddErrorAction(list, manager));
-
-                JTextField findField = new JTextField(20);
-                bar.add(findField);
-                findField.addKeyListener(new KeyAdapter() {
-                    @Override
-                    public void keyReleased(KeyEvent e) {
-                        boolean back = e.isShiftDown();
-                        String str = findField.getText();
-                        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                            System.err.println("find " + str + " back=" + back);
-                            list.findText(str, !back);
-                        } else {
-                            list.findText(str);
-                        }
-                    }
+                JTextField field = new JTextField(20);
+                field.addActionListener(e -> {
+                    System.out.println(field.getText());
                 });
-                pane.add(bar, BorderLayout.NORTH);
-
-                GuiSwingLogStatusBar status = new GuiSwingLogStatusBar(manager);
-                manager.addView(status::addLogEntry);
-                pane.add(status, BorderLayout.SOUTH);
+                pane.add(field);
             }
+            pane = w.getPaneWithStatusBar(pane);
 //            for (Enumeration e = UIManager.getDefaults().keys(); e.hasMoreElements(); ) {
 //                Object k = e.nextElement();
 //                Object v = UIManager.getDefaults().get(k);
@@ -75,7 +59,7 @@ public class ListExp extends GuiSwingTestCase {
 //            }
 
             JFrame frame = testFrame(pane);
-            frame.setSize(400, 800);
+            frame.setSize(400, 300);
         });
     }
 

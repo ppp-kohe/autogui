@@ -3,13 +3,14 @@ package autogui.swing.log;
 import autogui.base.log.GuiLogEntry;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.function.Consumer;
 
 public class GuiSwingLogList extends JList<GuiLogEntry> {
@@ -17,8 +18,13 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
     protected GuiSwingLogEventDispatcher eventDispatcher;
 
     public GuiSwingLogList(GuiSwingLogManager manager) {
+        this(manager, true);
+    }
+
+    public GuiSwingLogList(GuiSwingLogManager manager, boolean addManagerAsView) {
         super(new GuiSwingLogListModel());
         setOpaque(true);
+        setFocusable(true);
 
         eventDispatcher = new GuiSwingLogEventDispatcher(this);
         addMouseListener(eventDispatcher);
@@ -27,10 +33,28 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         setCellRenderer(new GuiSwingLogManager.GuiSwingLogRenderer(manager, GuiSwingLogEntry.ContainerType.List));
+
+        LogListClearAction clearAction = new LogListClearAction(this);
+        Object name = clearAction.getValue(Action.NAME);
+        getInputMap().put((KeyStroke) clearAction.getValue(Action.ACCELERATOR_KEY), name);
+        getActionMap().put(name, clearAction);
+
+        if (addManagerAsView) {
+            manager.addView(this::addLogEntry);
+        }
     }
 
     public GuiSwingLogListModel getLogListModel() {
         return (GuiSwingLogListModel) getModel();
+    }
+
+    public int getEntryLimit() {
+        return getLogListModel().getEntryLimit();
+    }
+
+    /** &lt;1 means no limit */
+    public void setEntryLimit(int n) {
+        getLogListModel().setEntryLimit(n);
     }
 
     @Override
@@ -154,7 +178,20 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
     }
 
     public static class GuiSwingLogListModel extends AbstractListModel<GuiLogEntry> {
+        protected int entryLimit = -1;
         protected java.util.List<GuiLogEntry> entries = new ArrayList<>();
+
+        public int getEntryLimit() {
+            return entryLimit;
+        }
+
+        public void setEntryLimit(int entryLimit) {
+            this.entryLimit = entryLimit;
+        }
+
+        public java.util.List<GuiLogEntry> getEntries() {
+            return entries;
+        }
 
         @Override
         public int getSize() {
@@ -201,6 +238,20 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         }
 
         public int addLogEntry(GuiLogEntry entry, boolean lowPriority) {
+            if (entryLimit > 0 && entries.size() >= entryLimit) {
+                int removeIndex = -1;
+                for (int i = 0, s = entries.size(); i < s; ++i) {
+                    if (!entries.get(i).isActive()) {
+                        removeIndex = i;
+                        break;
+                    }
+                }
+                if (removeIndex < 0) {
+                    removeIndex = 0;
+                }
+                entries.remove(removeIndex);
+                fireIntervalRemoved(this, removeIndex, removeIndex);
+            }
             int index = 0;
             if (entry.isActive() && !lowPriority) {
                 index = entries.size();
@@ -219,6 +270,33 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         public void fireTableRowsInserted(int from, int to) {
             fireIntervalAdded(this, from, to);
+        }
+
+
+        public void removeInactiveEntries() {
+            boolean removingRange = false;
+            int removingStart = 0;
+            int i = 0;
+            for (Iterator<GuiLogEntry> iter = entries.iterator(); iter.hasNext(); ) {
+                GuiLogEntry e = iter.next();
+                if (!e.isActive()) {
+                    iter.remove();
+                    if (!removingRange) {
+                        removingStart = i;
+                        removingRange = true;
+                    }
+                } else {
+                    if (removingRange) {
+                        fireIntervalRemoved(this, removingStart, i);
+                    }
+                    removingRange = false;
+                    i -= (i - removingStart);
+                }
+                ++i;
+            }
+            if (removingRange) {
+                fireIntervalRemoved(this, removingStart, i - 1);
+            }
         }
     }
 
@@ -501,7 +579,6 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                 }
             }
         }
-
     }
 
     public static class FindState {
@@ -516,6 +593,56 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         @Override
         public String toString() {
             return "<" + text + "> : entry=" + entryIndex + " focus=" + entryFocusIndex;
+        }
+    }
+
+    public JToolBar createToolBar() {
+        JToolBar bar = new JToolBar();
+        bar.setBorderPainted(false);
+        bar.setFloatable(false);
+        bar.add(new LogListClearAction(this));
+
+        JTextField field = new JTextField(20);
+        field.addKeyListener(new LogTextFindAdapter(this, field));
+        bar.add(field);
+        return bar;
+    }
+
+    public static class LogListClearAction extends AbstractAction {
+        protected GuiSwingLogList list;
+
+        public LogListClearAction(GuiSwingLogList list) {
+            putValue(NAME, "Clear");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_K,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            this.list = list;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            list.getLogListModel().removeInactiveEntries();
+        }
+    }
+
+    public static class LogTextFindAdapter extends KeyAdapter {
+        protected GuiSwingLogList list;
+        protected JTextComponent findText;
+
+        public LogTextFindAdapter(GuiSwingLogList list, JTextComponent findText) {
+            this.list = list;
+            this.findText = findText;
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                list.findText(findText.getText(), !e.isShiftDown());
+            }
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+            list.findText(findText.getText());
         }
     }
 }

@@ -5,6 +5,14 @@ import autogui.base.log.*;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -24,6 +32,39 @@ public class GuiSwingLogManager extends GuiLogManager {
 
     public GuiLogManagerConsole getConsole() {
         return console;
+    }
+
+    public GuiLogManager setupConsole(boolean replaceError, boolean replaceOutput) {
+        setConsole(new GuiLogManagerConsole(getSystemErr()));
+        if (replaceError) {
+            PrintStream exErr = System.err;
+            if (exErr instanceof LogPrintStream) {
+                System.setErr(new LogPrintStream(this, exErr));
+            } else {
+                //err -> logString -> original err
+                System.setErr(new LogPrintStream(this));
+            }
+        }
+        if (replaceOutput) {
+            PrintStream exOut = System.err;
+            //out -> {original out, logString -> original err }
+            System.setOut(new LogPrintStream(this, exOut));
+        }
+        return this;
+    }
+
+    public PrintStream getSystemErr() {
+        PrintStream err = System.err;
+        if (err instanceof LogPrintStream) {
+            GuiLogManager manager = ((LogPrintStream) err).getManager();
+            if (manager instanceof GuiSwingLogManager) {
+                GuiLogManagerConsole console = ((GuiSwingLogManager) manager).getConsole();
+                if (console != null) {
+                    err = console.getOut();
+                }
+            }
+        }
+        return err;
     }
 
     @Override
@@ -128,6 +169,237 @@ public class GuiSwingLogManager extends GuiLogManager {
             }
             nullLabel.setText(Objects.toString(value));
             return nullLabel;
+        }
+    }
+
+    public static class LogPrintStream extends PrintStream {
+        private GuiLogManager manager;
+        public LogPrintStream(GuiLogManager manager) {
+            super(new LogOutputStream(manager));
+        }
+
+        public LogPrintStream(GuiLogManager manager, OutputStream out) {
+            super(new LogOutputStream(manager, out));
+            this.manager = manager;
+        }
+
+        public GuiLogManager getManager() {
+            return manager;
+        }
+
+        public OutputStream getOut() {
+            return out;
+        }
+    }
+
+    public static class LogOutputStream extends OutputStream {
+        protected OutputStream out;
+        protected ByteBuffer buffer;
+        protected GuiLogManager manager;
+        protected Charset defaultCharset;
+
+        public LogOutputStream(GuiLogManager manager) {
+            this(manager, null);
+        }
+
+        public LogOutputStream(GuiLogManager manager, OutputStream out) {
+            this.manager = manager;
+            this.out = out;
+            buffer = ByteBuffer.allocateDirect(4096);
+            defaultCharset = Charset.defaultCharset(); //PrintStream always encode by default encoding
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            if (out != null) {
+                out.write(b);
+            }
+            synchronized (this) {
+                expand(1000);
+                buffer.put((byte) b);
+                debug("write " + b + " : " + buffer);
+                if (b == '\n') {
+                    flushLog();
+                }
+            }
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            if (out != null) {
+                out.write(b);
+            }
+            synchronized (this) {
+                expand(b.length);
+                buffer.put(b);
+                debug("write [" + b.length + "] : " + buffer);
+                for (byte e : b) {
+                    if (e == '\n') {
+                        flushLog();
+                        break;
+                    }
+                }
+            }
+        }
+
+        public void expand(int len) {
+            if (len >= buffer.remaining()) {
+                ByteBuffer newBuffer = ByteBuffer.allocateDirect(buffer.position() + (int) (len * 1.2));
+                ((Buffer) buffer).flip();
+                newBuffer.put(buffer);
+                buffer = newBuffer;
+            }
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            if (out != null) {
+                out.write(b, off, len);
+            }
+            synchronized (this) {
+                expand(len);
+                buffer.put(b, off, len);
+                debug("write [" + off + "," + len + "] : " + buffer);
+                for (int i = 0; i < len; ++i) {
+                    if (b[off + i] == '\n') {
+                        flushLog();
+                        break;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void flush() throws IOException {
+            synchronized (this) {
+                debug("flush");
+                flushLog();
+            }
+            if (out != null) {
+                out.flush();
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            synchronized (this) {
+                flushLog();
+            }
+            if (out != null) {
+                out.close();
+            }
+        }
+
+        public void flushLog() {
+            ((Buffer) buffer).flip();
+            if (buffer.hasRemaining()) {
+                try {
+                    String ds = buffer.toString();
+                    String data = defaultCharset.decode(buffer).toString();
+                    debug("flush " + ds + " -> " + buffer.toString() + " <" + data + ">");
+                    //cut the last line
+                    if (data.endsWith("\n")) {
+                        data = data.substring(0, data.length() - 1);
+                    }
+                    if (manager != null) {
+                        debug(" flush log: <" + data + ">" + Thread.currentThread());
+                        manager.logString(data);
+                    }
+                } catch (Exception ex) {
+                    manager.logString("data...");
+                }
+            }
+            ((Buffer) buffer).clear();
+            debug("    flush cleared: " + buffer);
+        }
+
+        void debug(String str) {
+            area.append(str + "\n");
+        }
+        JTextArea area;
+        {
+            JFrame frame = new JFrame();
+            area = new JTextArea();
+            frame.setContentPane(new JScrollPane(area));
+            frame.setSize(1000, 800);
+            frame.setVisible(true);
+        }
+    }
+
+
+
+    public GuiSwingLogWindow createWindow() {
+        return new GuiSwingLogWindow(this);
+    }
+
+    public static class GuiSwingLogWindow extends JFrame {
+        protected GuiSwingLogList list;
+        protected JToolBar toolbar;
+        protected GuiSwingLogStatusBar statusBar;
+
+        public GuiSwingLogWindow(GuiSwingLogManager manager) {
+            setTitle("Log");
+            JPanel pane = new JPanel(new BorderLayout());
+
+            //list
+            list = new GuiSwingLogList(manager);
+            list.setEntryLimit(10000);
+            pane.add(new JScrollPane(list,
+                    JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED),
+                    BorderLayout.CENTER);
+
+            //tool bar
+            toolbar = list.createToolBar();
+            pane.add(toolbar, BorderLayout.NORTH);
+
+            //status bar
+            statusBar = new GuiSwingLogStatusBar(manager);
+            JButton showButton = new JButton(new LogWindowShowAction(this));
+            statusBar.add(showButton, BorderLayout.WEST);
+            setContentPane(pane);
+            pack();
+            setSize(400, 600);
+        }
+
+        public GuiSwingLogList getList() {
+            return list;
+        }
+
+        public GuiSwingLogStatusBar getStatusBar() {
+            return statusBar;
+        }
+
+        public JToolBar getToolbar() {
+            return toolbar;
+        }
+
+        public JPanel getPaneWithStatusBar(JPanel centerPane) {
+            JPanel pane = new JPanel(new BorderLayout());
+            pane.add(centerPane, BorderLayout.CENTER);
+            pane.add(statusBar, BorderLayout.SOUTH);
+            return pane;
+        }
+    }
+
+    public static class LogWindowShowAction extends AbstractAction {
+        protected JFrame frame;
+        protected boolean first = true;
+        public LogWindowShowAction(JFrame frame) {
+            putValue(NAME, "Show");
+            putValue(ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_L,
+                            KeyEvent.SHIFT_DOWN_MASK |
+                                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            this.frame = frame;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (first && e.getSource() instanceof JComponent) {
+                frame.setLocationRelativeTo((JComponent) e.getSource());
+            }
+            first = false;
+            frame.setVisible(true);
         }
     }
 }
