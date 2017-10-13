@@ -331,6 +331,12 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
 
         @Override
+        public boolean updateFindPattern(String findKeyword) {
+            return supports != null &&
+                    supports.updateFindPattern(findKeyword);
+        }
+
+        @Override
         public int findText(GuiSwingLogEntry entry, String findKeyword) {
             GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) entry;
             if (supports != null) {
@@ -350,9 +356,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 TextPaneCellSupport.TextPaneCellMatchList m = supports.nextFindMatchedList(prevIndex, forward, entry);
                 if (m != null) {
                     TextPaneCellSupport support = supports.getSupport(m.getSupportIndex());
-                    int[] range = support.getFindMatchedRange(m);
-                    p.getSelections().clear();
-                    p.getSelections().put(support.pane, range);
+                    support.updateSelectionMap(p.getSelections(), m);
                 }
                 return m;
             } else {

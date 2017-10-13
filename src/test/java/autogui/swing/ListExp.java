@@ -53,10 +53,12 @@ public class ListExp extends GuiSwingTestCase {
                     @Override
                     public void keyReleased(KeyEvent e) {
                         boolean back = e.isShiftDown();
+                        String str = findField.getText();
                         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                            String str = findField.getText();
                             System.err.println("find " + str + " back=" + back);
                             list.findText(str, !back);
+                        } else {
+                            list.findText(str);
                         }
                     }
                 });

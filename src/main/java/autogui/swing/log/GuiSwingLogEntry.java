@@ -27,6 +27,9 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
         default void mouseDragged(GuiSwingLogEntry entry, Point point) {}
         default void mouseReleased(GuiSwingLogEntry entry, Point point) {}
 
+        default boolean updateFindPattern(String findKeyword) {
+            return false;
+        }
 
         /** returns &gt;0 value if it has matched string */
         default int findText(GuiSwingLogEntry entry, String findKeyword) {

@@ -100,6 +100,10 @@ public class GuiSwingLogManager extends GuiLogManager {
             }
         }
 
+        public List<GuiSwingLogEntry.LogEntryRenderer> getRendererList() {
+            return new ArrayList<>(rendererMap.values());
+        }
+
         @Override
         public Component getListCellRendererComponent(JList<? extends GuiLogEntry> list, GuiLogEntry value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value != null && value instanceof GuiSwingLogEntry) {

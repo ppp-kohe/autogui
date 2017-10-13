@@ -29,7 +29,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         return new GuiSwingLogExceptionRenderer(manager, type);
     }
 
-    public Map<JTextComponent, int[]> getSelectionMap() {
+    public Map<JTextComponent, int[]> getSelections() {
         return selectionMap;
     }
 
@@ -185,10 +185,10 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         public void expansionChanged() {
             if (lastValue != null && lastValue instanceof GuiSwingLogEntryException) {
                 boolean expanded = ((GuiSwingLogEntryException) lastValue).isExpanded();
-                List<Integer> lines = getLinesForDocument(stackTrace.getStyledDocument());
-                if (!expanded && lines.size() >= 2) {
+                int i = getExpansionTextStartIndex();
+                if (!expanded && i >= 0) {
                     try {
-                        int sizeY = stackTrace.modelToView(lines.get(1)).y;
+                        int sizeY = stackTrace.modelToView(i).y;
                         stackViewport.setPreferredSize(new Dimension(stackTrace.getPreferredSize().width, sizeY));
                         stackViewport.setViewPosition(new Point(0, 0));
                     } catch (Exception dex) {
@@ -200,11 +200,25 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             }
         }
 
+        /** a valid result will be returned only after {@link #setDocument(GuiLogEntryException)}  */
+        public int getExpansionTextStartIndex() {
+            if (lastValue != null && lastValue instanceof GuiSwingLogEntryException) {
+                List<Integer> lines = getLinesForDocument(stackTrace.getStyledDocument());
+                if (lines.size() >= 2) {
+                    int n = lines.get(1);
+                    if (n <= stackTrace.getStyledDocument().getLength()) {
+                        return n;
+                    }
+                }
+            }
+            return -1;
+        }
+
         public void setSelectionHighlights(GuiLogEntryException ex) {
             if (ex != null && ex instanceof GuiSwingLogEntryException && supports != null) {
                 GuiSwingLogEntryException swingEx = (GuiSwingLogEntryException) ex;
                 if (selected) {
-                    supports.setSelectionHighlights(swingEx.getSelectionMap());
+                    supports.setSelectionHighlights(swingEx.getSelections());
                 } else {
                     supports.setSelectionHighlightsClear();
                 }
@@ -381,9 +395,9 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         @Override
         public void mousePressed(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            ex.getSelectionMap().clear();
+            ex.getSelections().clear();
 
-            TextPaneCellSupport.click(ex.getSelectionMap(), true, point, this);
+            TextPaneCellSupport.click(ex.getSelections(), true, point, this);
 
             Point expandPoint = SwingUtilities.convertPoint(this, point, expandButton);
             expandPressed = expandButton.contains(expandPoint) ? ex : null;
@@ -392,7 +406,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         @Override
         public void mouseDragged(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            TextPaneCellSupport.click(ex.getSelectionMap(), false, point, this);
+            TextPaneCellSupport.click(ex.getSelections(), false, point, this);
         }
 
         @Override
@@ -400,6 +414,12 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             if (expandPressed != null) {
                 expandButton.doClick();
             }
+        }
+
+        @Override
+        public boolean updateFindPattern(String findKeyword) {
+            return supports != null &&
+                    supports.updateFindPattern(findKeyword);
         }
 
         @Override
@@ -425,9 +445,14 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
                 TextPaneCellSupport.TextPaneCellMatchList m = supports.nextFindMatchedList(prevIndex, forward, entry);
                 if (m != null) {
                     TextPaneCellSupport support = supports.getSupport(m.getSupportIndex());
-                    int[] range = support.getFindMatchedRange(m);
-                    ex.getSelectionMap().clear();
-                    ex.getSelectionMap().put(support.pane, range);
+                    int[] range = support.updateSelectionMap(ex.getSelections(), m);
+                    int exIndex = getExpansionTextStartIndex();
+
+                    if (range != null && m.getSupportIndex() == 1 && //stackTrace
+                            (exIndex <= range[0] || exIndex <= range[1])
+                            && !ex.isExpanded()) { //lastValue == ex
+                        flipExpansion();
+                    }
                 }
                 return m;
             }

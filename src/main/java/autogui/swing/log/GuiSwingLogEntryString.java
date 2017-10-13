@@ -209,6 +209,11 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         }
 
         @Override
+        public boolean updateFindPattern(String findKeyword) {
+            return support.updateFindPattern(findKeyword);
+        }
+
+        @Override
         public int findText(GuiSwingLogEntry entry, String findKeyword) {
             GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
             String text = formatString(str);

@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * support class for displaying JTextPane as a list cell
+ */
 public class TextPaneCellSupport {
     protected JTextPane pane;
     protected Object selectionHighlight;
@@ -27,6 +30,21 @@ public class TextPaneCellSupport {
         findPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.orange);
     }
 
+    public JTextPane getPane() {
+        return pane;
+    }
+
+    /** key for selection highlight */
+    public Object getSelectionHighlight() {
+        return selectionHighlight;
+    }
+
+    /** existing finding-highlight keys, might be unused */
+    public List<Object> getFindHighlightKeys() {
+        return findHighlightKeys;
+    }
+
+    /** automatically called from the constructor */
     public void addSelectionHighlight() {
         try {
             Color c = UIManager.getColor("TextPane.selectionBackground");
@@ -41,6 +59,7 @@ public class TextPaneCellSupport {
         this.findPainter = findPainter;
     }
 
+    /** default highlight painter is automatically set in the constructor */
     public Highlighter.HighlightPainter getFindPainter() {
         return findPainter;
     }
@@ -53,6 +72,8 @@ public class TextPaneCellSupport {
         setHighlight(selectionHighlight, isSelected, from, to);
     }
 
+    /** change the position of the highlight. if isSelected == false, the positions become 0,0.
+     *     from and to can be both from&lt;to and to&lt;=from  */
     public void setHighlight(Object highlightKey, boolean isSelected, int from, int to) {
         if (highlightKey == null) {
             return;
@@ -74,6 +95,8 @@ public class TextPaneCellSupport {
         }
     }
 
+    /** set the highlight painter to locations matched by the findPattern.
+     *   it automatically reuses or adds findHighlightKeys */
     public void setFindHighlights(Pattern findPattern, Highlighter.HighlightPainter findPainter) {
         int hk = 0;
         if (findPattern != null) {
@@ -106,6 +129,22 @@ public class TextPaneCellSupport {
         }
     }
 
+    /** recursively checks text components within the component
+     *    whether those text components are clicked or not at clickPoint.
+     *    <p>
+     *    If clicked on a text component,
+     *     it adds or updates a value for the  text component.
+     *     the value of selection map becomes {startIndex, endIndex}.
+     *    <p>
+     *    If start == true,
+     *       this can be used for mousePressed events,
+     *       it sets the text index at clickPoint to value[0],
+     *     otherwise,
+     *       can be used for mouseDragged or mouseReleased events,
+     *       it sets the index to value[1].
+     *     <p>
+     *   The selectionMap can be used for {@link #setSelectionHighlight(Map)}
+     * */
     public static void click(Map<JTextComponent, int[]> selectionMap, boolean start, Point clickPoint, JComponent component) {
         if (component instanceof JTextComponent) {
             JTextComponent text = (JTextComponent) component;
@@ -128,6 +167,7 @@ public class TextPaneCellSupport {
         }
     }
 
+    /** update the selection highlight by the range obtained from selectionMap for the pane */
     public void setSelectionHighlight(Map<JTextComponent, int[]> selectionMap) {
         int[] sel = selectionMap.get(pane);
         if (sel == null) {
@@ -139,15 +179,30 @@ public class TextPaneCellSupport {
 
     ////////////
 
-    public List<Integer> findText(String findKeyword, String text) {
+    /** update renderer's finding-highlight-pattern.
+     *  this makes the renderer highlight texts of subsequent rendering items */
+    public boolean updateFindPattern(String findKeyword) {
         if (findKeyword == null || findKeyword.isEmpty()) {
             findText = null;
             findPattern = null;
             findMatchedPositions.clear();
-        } else if (findText == null || !findText.equals(findKeyword)) {
-            //update
+            return true;
+        } else if (findText == null || !findText.endsWith(findKeyword)) {
             findText = findKeyword;
             findPattern = Pattern.compile(Pattern.quote(findKeyword));
+            findMatchedPositions.clear();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /** update renderer's finding-highlight-pattern,
+     *  match the pattern with text,
+     *  and return matched positions */
+    public List<Integer> findText(String findKeyword, String text) {
+        updateFindPattern(findKeyword);
+        if (findPattern != null) {
             Matcher m = findPattern.matcher(text);
             findMatchedPositions.clear();
             while (m.find()) {
@@ -169,6 +224,12 @@ public class TextPaneCellSupport {
         return findPattern;
     }
 
+    /**
+     * update find-highlights with current findPattern and findPainter
+     * by calling {@link #setFindHighlights(Pattern, Highlighter.HighlightPainter)}.
+     * The method can be used within getListCellRenderer, in order to update highlights,
+     *   after the text of the pane is set.
+     * */
     public void setFindHighlights() {
         setFindHighlights(findPattern, findPainter);
     }
@@ -186,7 +247,7 @@ public class TextPaneCellSupport {
                 return new TextPaneCellMatch(findMatchedPositions.size() - 1, keys);
             }
         } else {
-            int i = ((TextPaneCellMatch) prevIndex).index + (forward ? 1 : -1);
+            int i = ((TextPaneCellMatch) prevIndex).indexOfFindMatchedPositions + (forward ? 1 : -1);
             if (0 <= i && i < findMatchedPositions.size()) {
                 return new TextPaneCellMatch(i, keys);
             } else {
@@ -195,39 +256,35 @@ public class TextPaneCellSupport {
         }
     }
 
+    /**
+     * clear the selectionMap and set matched range as the value for the pane */
+    public int[] updateSelectionMap(Map<JTextComponent, int[]> selectionMap, TextPaneCellMatch m) {
+        int[] r = getFindMatchedRange(m);
+        selectionMap.clear();
+        selectionMap.put(pane, r);
+        return r;
+    }
+
     public int[] getFindMatchedRange(TextPaneCellMatch m) {
-        if (m == null || !(0 <= m.index && m.index < findMatchedPositions.size())) {
+        if (m == null || !(0 <= m.indexOfFindMatchedPositions && m.indexOfFindMatchedPositions < findMatchedPositions.size())) {
             return new int[] {0, 0};
         } else {
-            int n = findMatchedPositions.get(m.index);
+            int n = findMatchedPositions.get(m.indexOfFindMatchedPositions);
             return new int[] {n, n + findText.length()};
         }
     }
 
     public static class TextPaneCellMatch {
         public Object[] keys;
-        public int index;
+        public int indexOfFindMatchedPositions;
 
-        public TextPaneCellMatch(int index, Object... keys) {
-            this.index = index;
+        public TextPaneCellMatch(int indexOfFindMatchedPositions, Object... keys) {
+            this.indexOfFindMatchedPositions = indexOfFindMatchedPositions;
             this.keys = keys;
         }
 
         public boolean sameKeys(Object... keys) {
             return Arrays.equals(this.keys, keys);
-        }
-
-        public boolean sameKeysHead(Object... fixedKeys) {
-            if (keys.length == fixedKeys.length + 1) {
-                for (int i = 0, l = fixedKeys.length; i < l; ++i) {
-                    if (!Objects.equals(fixedKeys[i], keys[i])) {
-                        return false;
-                    }
-                }
-                return true;
-            } else {
-                return false;
-            }
         }
 
         public Object key(int i) {
@@ -236,24 +293,24 @@ public class TextPaneCellSupport {
 
         @Override
         public String toString() {
-            return Arrays.toString(keys) + ":" + index;
+            return Arrays.toString(keys) + ":" + indexOfFindMatchedPositions;
         }
     }
 
     public static class TextPaneCellMatchList extends TextPaneCellMatch {
-        protected int supportKeyIndex;
+        protected int supportIndex;
 
-        public TextPaneCellMatchList(int index, int supportKeyIndex, Object... keys) {
+        public TextPaneCellMatchList(int index, int supportIndex, Object... keys) {
             super(index, keys);
-            this.supportKeyIndex = supportKeyIndex;
+            this.supportIndex = supportIndex;
         }
 
-        public TextPaneCellMatchList(TextPaneCellMatch m, int supportKeyIndex) {
-            this(m.index, supportKeyIndex, m.keys);
+        public TextPaneCellMatchList(TextPaneCellMatch m, int supportIndex) {
+            this(m.indexOfFindMatchedPositions, supportIndex, m.keys);
         }
 
         public int getSupportIndex() {
-            return (Integer) key(supportKeyIndex);
+            return supportIndex;
         }
     }
 
@@ -266,16 +323,20 @@ public class TextPaneCellSupport {
                     .forEach(supports::add);
         }
 
+        public List<TextPaneCellSupport> getSupports() {
+            return supports;
+        }
+
         public TextPaneCellMatchList nextFindMatchedList(Object prevIndex, boolean forward, Object... fixedKeys) {
             //keys: ...fixedKeys, index
-            if (prevIndex != null && prevIndex instanceof TextPaneCellMatch &&
-                    ((TextPaneCellMatch) prevIndex).sameKeysHead(fixedKeys)) {
-                TextPaneCellMatch pm = (TextPaneCellMatch) prevIndex;
-                int supportIndex = (Integer) pm.key(fixedKeys.length);
+            if (prevIndex != null && prevIndex instanceof TextPaneCellMatchList &&
+                    ((TextPaneCellMatch) prevIndex).sameKeys(fixedKeys)) {
+                TextPaneCellMatchList pm = (TextPaneCellMatchList) prevIndex;
+                int supportIndex = pm.getSupportIndex();
                 TextPaneCellMatch m = supports.get(supportIndex)
                         .nextFindMatched(pm, forward, pm.keys);
                 if (m != null) {
-                    return new TextPaneCellMatchList(m, fixedKeys.length);
+                    return new TextPaneCellMatchList(m, supportIndex);
                 } else {
                     supportIndex += (forward ? 1 : -1);
                     return nextFindMatchedListSupport(supportIndex, forward, fixedKeys);
@@ -288,20 +349,16 @@ public class TextPaneCellSupport {
         private TextPaneCellMatchList nextFindMatchedListSupport(int supportIndex, boolean forward, Object[] fixedKeys) {
             while (0 <= supportIndex && supportIndex < supports.size()) {
                 TextPaneCellMatch m = supports.get(supportIndex)
-                        .nextFindMatched(null, forward, fixedKeysAndSupportIndex(fixedKeys, supportIndex));
+                        .nextFindMatched(null, forward, fixedKeys);
                 if (m != null) {
-                    return new TextPaneCellMatchList(m, fixedKeys.length);
+                    return new TextPaneCellMatchList(m, supportIndex);
                 }
                 supportIndex += (forward ? 1 : -1);
             }
             return null;
         }
 
-        private static Object[] fixedKeysAndSupportIndex(Object[] fixedKeys, int supportIndex) {
-            Object[] nextKeys = Arrays.copyOf(fixedKeys, fixedKeys.length + 1);
-            nextKeys[fixedKeys.length] = supportIndex;
-            return nextKeys;
-        }
+
 
         public void setSelectionHighlights(Map<JTextComponent, int[]> selectionMap) {
             supports.forEach(s -> s.setSelectionHighlight(selectionMap));
@@ -309,6 +366,16 @@ public class TextPaneCellSupport {
 
         public void setSelectionHighlightsClear() {
             supports.forEach(TextPaneCellSupport::setSelectionHighlightClear);
+        }
+
+        public boolean updateFindPattern(String keyword) {
+            boolean r = false;
+            for (TextPaneCellSupport s : supports) {
+                if (s.updateFindPattern(keyword)) {
+                    r = true;
+                }
+            }
+            return r;
         }
 
         public List<List<Integer>> findTexts(String keyword, String... text) {
@@ -327,5 +394,6 @@ public class TextPaneCellSupport {
         public void setFindHighlights() {
             supports.forEach(TextPaneCellSupport::setFindHighlights);
         }
+
     }
 }

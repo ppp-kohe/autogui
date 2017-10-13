@@ -9,6 +9,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 public class GuiSwingLogList extends JList<GuiLogEntry> {
@@ -65,10 +66,10 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
     //////////
 
     public void addLogEntry(GuiLogEntry entry) {
-        SwingUtilities.invokeLater(() -> addLogEntry(entry, !entry.isActive()));
+        SwingUtilities.invokeLater(() -> addLogEntryInEvent(entry, !entry.isActive()));
     }
 
-    public void addLogEntry(GuiLogEntry entry, boolean lowPriority) {
+    public void addLogEntryInEvent(GuiLogEntry entry, boolean lowPriority) {
         GuiSwingLogListModel model = getLogListModel();
         if (model.contains(entry)) {
             return;
@@ -82,7 +83,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             removeRowSelectionInterval(index, index);
         }
 
-        if (first <= index && index <= last + 1) { //visible
+        if (!(first <= index && index <= last + 1) || index == getRowCount() - 1) { //invisible or last item
             int target = Math.max(model.getRowCount() - 1, last + 1);
             scrollRectToVisible(getTargetEntryRectForScroll(target));
         }
@@ -124,25 +125,32 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
     /////////////// find
 
+    /** only update matching filter of existing renderer */
+    public void findText(String str) {
+        eventDispatcher.findText(str);
+    }
+
+    /** find and move */
     public void findText(String str, boolean forward) {
-        eventDispatcher.findText(str, forward);
+        eventDispatcher.findTextAndScroll(str, forward);
     }
 
     /////////////////
 
     public Rectangle getTargetEntryRectForScroll(int target) {
-        Point location = indexToLocation(target);
+        Rectangle cellRect = getCellRect(target);
         Rectangle visibleRect = getVisibleRect();
-        Dimension size;
-        if (target + 1 < getRowCount()) {
-            Point nextLocation = indexToLocation(target + 1);
-            size = new Dimension(visibleRect.width, Math.max(nextLocation.y - location.y, 16));
-            location = new Point(visibleRect.x, location.y);
-        } else { //bottom
-            size = visibleRect.getSize();
-            location = new Point(visibleRect.x, size.height - 1);
+        if (cellRect == null) {
+            if (target == 0) {
+                return new Rectangle(visibleRect.x, 0, visibleRect.width, 1);
+            } else if (target == getRowCount() - 1) {
+                return new Rectangle(visibleRect.x, getHeight() - 1, visibleRect.width, 1);
+            } else {
+                return visibleRect;
+            }
+        } else {
+            return new Rectangle(visibleRect.x, (int) cellRect.getMaxY() - 1, visibleRect.width, 1);
         }
-        return new Rectangle(location, size);
     }
 
     public static class GuiSwingLogListModel extends AbstractListModel<GuiLogEntry> {
@@ -251,6 +259,15 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                 return ((GuiSwingLogManager.GuiSwingLogRenderer) r).getEntryRenderer(e);
             } else {
                 return null;
+            }
+        }
+
+        public java.util.List<GuiSwingLogEntry.LogEntryRenderer> getRendererList() {
+            ListCellRenderer<? super GuiLogEntry> r = table.getCellRenderer();
+            if (r instanceof GuiSwingLogManager.GuiSwingLogRenderer) {
+                return ((GuiSwingLogManager.GuiSwingLogRenderer) r).getRendererList();
+            } else {
+                return Collections.emptyList();
             }
         }
 
@@ -406,16 +423,21 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         @Override
         public void mouseMoved(MouseEvent e) { }
 
-        public void findText(String str, boolean forward) {
-            findState.text = str;
-            int i;
-            if (findState.entryIndex < 0 && forward) {
-                i = this.table.getFirstVisibleIndex();
-            } else if (findState.entryIndex < 0 /*&& !forward*/) {
-                i = this.table.getLastVisibleIndex();
-            } else {
-                i = findState.entryIndex;
+        public void findText(String str) {
+            boolean updated = false;
+            for (GuiSwingLogEntry.LogEntryRenderer r : getRendererList()) {
+                if (r.updateFindPattern(str)) {
+                    updated = true;
+                }
             }
+            if (updated) {
+                table.repaint();
+            }
+        }
+
+        public void findTextAndScroll(String str, boolean forward) {
+            findState.text = str;
+            int i = getCurrentFindIndex(forward);
 
             findTextRows(str, forward, i,
                     forward ? (table.getRowCount() - 1) : 0);
@@ -434,6 +456,16 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                 table.scrollRectToVisible(table.getCellRect(findState.entryIndex));
                 table.getSelectionModel().clearSelection();
                 table.getSelectionModel().addSelectionInterval(findState.entryIndex, findState.entryIndex);
+            }
+        }
+
+        public int getCurrentFindIndex(boolean forward) {
+            if (findState.entryIndex < 0 && forward) {
+                return this.table.getFirstVisibleIndex();
+            } else if (findState.entryIndex < 0 /*&& !forward*/) {
+                return this.table.getLastVisibleIndex();
+            } else {
+                return findState.entryIndex;
             }
         }
 
