@@ -48,6 +48,7 @@ public class ListExp extends GuiSwingTestCase {
                 JTextField field = new JTextField(20);
                 field.addActionListener(e -> {
                     System.out.println(field.getText());
+                    field.setText("");
                 });
                 pane.add(field);
             }

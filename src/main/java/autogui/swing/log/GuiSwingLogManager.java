@@ -46,7 +46,7 @@ public class GuiSwingLogManager extends GuiLogManager {
             }
         }
         if (replaceOutput) {
-            PrintStream exOut = System.err;
+            PrintStream exOut = System.out;
             //out -> {original out, logString -> original err }
             System.setOut(new LogPrintStream(this, exOut));
         }
@@ -217,7 +217,6 @@ public class GuiSwingLogManager extends GuiLogManager {
             synchronized (this) {
                 expand(1000);
                 buffer.put((byte) b);
-                debug("write " + b + " : " + buffer);
                 if (b == '\n') {
                     flushLog();
                 }
@@ -232,7 +231,6 @@ public class GuiSwingLogManager extends GuiLogManager {
             synchronized (this) {
                 expand(b.length);
                 buffer.put(b);
-                debug("write [" + b.length + "] : " + buffer);
                 for (byte e : b) {
                     if (e == '\n') {
                         flushLog();
@@ -259,7 +257,6 @@ public class GuiSwingLogManager extends GuiLogManager {
             synchronized (this) {
                 expand(len);
                 buffer.put(b, off, len);
-                debug("write [" + off + "," + len + "] : " + buffer);
                 for (int i = 0; i < len; ++i) {
                     if (b[off + i] == '\n') {
                         flushLog();
@@ -272,7 +269,6 @@ public class GuiSwingLogManager extends GuiLogManager {
         @Override
         public void flush() throws IOException {
             synchronized (this) {
-                debug("flush");
                 flushLog();
             }
             if (out != null) {
@@ -294,15 +290,12 @@ public class GuiSwingLogManager extends GuiLogManager {
             ((Buffer) buffer).flip();
             if (buffer.hasRemaining()) {
                 try {
-                    String ds = buffer.toString();
                     String data = defaultCharset.decode(buffer).toString();
-                    debug("flush " + ds + " -> " + buffer.toString() + " <" + data + ">");
                     //cut the last line
                     if (data.endsWith("\n")) {
                         data = data.substring(0, data.length() - 1);
                     }
                     if (manager != null) {
-                        debug(" flush log: <" + data + ">" + Thread.currentThread());
                         manager.logString(data);
                     }
                 } catch (Exception ex) {
@@ -310,23 +303,8 @@ public class GuiSwingLogManager extends GuiLogManager {
                 }
             }
             ((Buffer) buffer).clear();
-            debug("    flush cleared: " + buffer);
-        }
-
-        void debug(String str) {
-            area.append(str + "\n");
-        }
-        JTextArea area;
-        {
-            JFrame frame = new JFrame();
-            area = new JTextArea();
-            frame.setContentPane(new JScrollPane(area));
-            frame.setSize(1000, 800);
-            frame.setVisible(true);
         }
     }
-
-
 
     public GuiSwingLogWindow createWindow() {
         return new GuiSwingLogWindow(this);
