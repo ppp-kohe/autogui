@@ -60,7 +60,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         try {
             return field.toUpdateValue(context,
                     col.getCellValue(context.getParent(), context, rowObject, rowIndex, columnIndex));
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
             return null;
         }

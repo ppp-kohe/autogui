@@ -1,10 +1,13 @@
 package autogui.base.mapping;
 
+import autogui.base.log.GuiLogManager;
 import autogui.base.type.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +54,8 @@ public class GuiMappingContext {
 
     protected Object source;
     protected List<SourceUpdateListener> listeners = Collections.emptyList();
+
+    protected ScheduledExecutorService taskRunner;
 
     public GuiMappingContext(GuiTypeElement typeElement) {
         this.typeElement = typeElement;
@@ -293,7 +298,7 @@ public class GuiMappingContext {
     }
 
     public void errorWhileUpdateSource(Throwable error) {
-        //TODO
+        GuiLogManager.get().logError(error);
     }
 
     public boolean isParentPropertyPane() {
@@ -332,5 +337,30 @@ public class GuiMappingContext {
 
     public boolean isCollectionElement() {
         return getRepresentation() != null && getRepresentation() instanceof GuiReprCollectionElement;
+    }
+
+    //////////////////////
+
+    /** take taskRunner from parent context */
+    public ScheduledExecutorService getTaskRunner() {
+        if (taskRunner == null) {
+            GuiMappingContext context = getParent();
+            if (context != null) {
+                taskRunner = context.getTaskRunner();
+            } else {
+                taskRunner = Executors.newSingleThreadScheduledExecutor();
+            }
+        }
+        return taskRunner;
+    }
+
+    public <T> T execute(Callable<T> task) throws Throwable {
+        try {
+            return getTaskRunner()
+                    .submit(task)
+                    .get();
+        } catch (ExecutionException e) {
+            throw e.getCause();
+        }
     }
 }

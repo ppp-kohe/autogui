@@ -12,7 +12,7 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
     }
 
     @Override
-    public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Exception {
+    public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Throwable {
         return new GuiReprValueDocumentEditor.SwingInvoker(() -> super.getUpdatedValue(context, executeParent)).run();
     }
 

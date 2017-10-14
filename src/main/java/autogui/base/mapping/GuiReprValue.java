@@ -1,5 +1,6 @@
 package autogui.base.mapping;
 
+import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
 
 import java.util.LinkedHashMap;
@@ -46,7 +47,7 @@ public class GuiReprValue implements GuiRepresentation {
                 context.setSource(next);
                 return true;
             }
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
             return false;
         }
@@ -61,24 +62,30 @@ public class GuiReprValue implements GuiRepresentation {
      * @return the current value (nullable) or {@link GuiTypeValue#NO_UPDATE}
      * @throws Exception might be caused by executing method invocations.
      */
-    public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Exception {
+    public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Throwable {
         Object prev = context.getSource();
         if (context.isTypeElementProperty()) {
             Object src = getParentSource(context, executeParent);
-            return context.getTypeElementAsProperty().executeGet(src, prev);
+            GuiTypeMemberProperty prop = context.getTypeElementAsProperty();
+            return context.execute(() ->
+                    prop.executeGet(src, prev));
         } else {
             if (context.isParentPropertyPane()) {
                 //GuiReprPropertyPane matches to GuiTypeMemberProperty, and it has compareGet(p,n)
-                return context.getParent().getTypeElementAsProperty()
-                        .compareGet(prev, getParentSource(context, executeParent));
+                GuiTypeMemberProperty prop = context.getParent().getTypeElementAsProperty();
+                Object obj = getParentSource(context, executeParent);
+                return context.execute(() ->
+                        prop.compareGet(prev, obj));
             } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
-                return context.getTypeElementValue().updatedValue(prev);
+                GuiTypeValue val = context.getTypeElementValue();
+                return context.execute(() ->
+                        val.updatedValue(prev));
             }
         }
         return null;
     }
 
-    public Object getParentSource(GuiMappingContext context, boolean executeParent) throws Exception {
+    public Object getParentSource(GuiMappingContext context, boolean executeParent) throws Throwable {
         if (executeParent) {
             if (context.isParentPropertyPane()) {
                 return context.getParentPropertyPane()
@@ -101,9 +108,11 @@ public class GuiReprValue implements GuiRepresentation {
         if (context.isTypeElementProperty()) {
             Object src = context.getParentSource();
             try {
-                context.getTypeElementAsProperty().executeSet(src, newValue);
+                GuiTypeMemberProperty prop = context.getTypeElementAsProperty();
+                context.execute(() ->
+                        prop.executeSet(src, newValue));
                 context.updateSourceFromGui(newValue);
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
                 context.errorWhileUpdateSource(ex);
             }
         } else if (context.isParentPropertyPane()) {
@@ -112,8 +121,13 @@ public class GuiReprValue implements GuiRepresentation {
             //TODO nothing?
         } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
             Object prev = context.getSource();
-            Object next = context.getTypeElementValue().writeValue(prev, newValue);
-            context.updateSourceFromGui(next);
+            GuiTypeValue val = context.getTypeElementValue();
+            try {
+                Object next = context.execute(() -> val.writeValue(prev, newValue));
+                context.updateSourceFromGui(next);
+            } catch (Throwable ex) {
+                context.errorWhileUpdateSource(ex);
+            }
         }
     }
 

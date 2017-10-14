@@ -56,10 +56,15 @@ public class GuiReprPropertyPane extends GuiReprValue {
     public boolean checkAndUpdateSourceFromChild(GuiMappingContext child) {
         Object prev = child.getSource();
         Object next = child.getParentSource();
-        if (!Objects.equals(prev, next)) {
-            child.setSource(next);
-            return true;
-        } else {
+        try {
+            if (child.execute(() -> !Objects.equals(prev, next))) {
+                child.setSource(next);
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Throwable ex) {
+            child.errorWhileUpdateSource(ex);
             return false;
         }
     }

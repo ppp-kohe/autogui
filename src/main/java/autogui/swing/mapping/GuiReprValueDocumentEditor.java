@@ -25,28 +25,32 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     @Override
-    public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Exception {
+    public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Throwable {
         return new SwingInvoker(() -> super.getUpdatedValue(context, executeParent)).run();
+    }
+
+    public interface Task {
+        Object call() throws Throwable;
     }
 
     public static class SwingInvoker {
         public Object result;
-        public Exception exception;
+        public Throwable exception;
 
-        protected Callable<?> runnable;
+        protected Task runnable;
 
-        public SwingInvoker(Callable<?> runnable) {
+        public SwingInvoker(Task runnable) {
             this.runnable = runnable;
         }
 
-        public Object run() throws Exception {
+        public Object run() throws Throwable {
             if (SwingUtilities.isEventDispatchThread()) {
                 return runnable.call();
             } else {
                 SwingUtilities.invokeAndWait(() -> {
                     try {
                         result = runnable.call();
-                    } catch (Exception ex) {
+                    } catch (Throwable ex) {
                         exception = ex;
                     }
                 });
@@ -61,7 +65,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         public Object runNoError() {
             try {
                 return run();
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
                 throw new RuntimeException(ex);
             }
         }
