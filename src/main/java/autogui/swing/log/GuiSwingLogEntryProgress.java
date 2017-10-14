@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements GuiSwingLogEntry {
     protected Map<JTextComponent,int[]> selections = new HashMap<>(2);
+    protected boolean selected;
 
     @Override
     public LogEntryRenderer getRenderer(GuiSwingLogManager manager, ContainerType type) {
@@ -34,8 +35,19 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         selections.clear();
     }
 
+    @Override
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
+    @Override
+    public boolean isSelected() {
+        return selected;
+    }
+
     public static class GuiSwingLogProgressRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
+        protected ContainerType containerType;
         protected JProgressBar progressBar;
         protected JButton stopButton;
         protected JTextPane message;
@@ -63,6 +75,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
         public GuiSwingLogProgressRenderer(GuiSwingLogManager manager, ContainerType type) {
             this.manager = manager;
+            this.containerType = type;
             setBorder(BorderFactory.createEmptyBorder(7, 10, 3, 20));
             setLayout(new BorderLayout());
             setOpaque(false);
@@ -168,7 +181,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 }
             }
             super.paintComponent(g);
-            if (selected) {
+            if (selected && containerType.equals(ContainerType.List)) {
                 GuiSwingLogEntryString.drawSelection(getSize(), g);
             }
         }
@@ -251,6 +264,10 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
 
         public void setSelectionHighlight() {
+            if (lastValue != null && lastValue instanceof GuiSwingLogEntryProgress) {
+                selected = ((GuiSwingLogEntryProgress) lastValue).isSelected();
+            }
+
             if (lastValue != null && lastValue instanceof GuiSwingLogEntryProgress && selected) {
                 GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) lastValue;
                 if (supports != null) {
@@ -358,7 +375,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             }
         }
 
-        public void stop() {
+        public void interruptStopPressed() {
             if (stopPressed != null) {
                 Thread t = stopPressed.getThread();
                 if (t != null && !stopPressed.isFinished()) {
@@ -393,7 +410,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
         @Override
         public void actionPerformed(ActionEvent e) {
-            renderer.stop();
+            renderer.interruptStopPressed();
         }
     }
 }

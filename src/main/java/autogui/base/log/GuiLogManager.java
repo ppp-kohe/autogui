@@ -14,6 +14,7 @@ import java.util.List;
 public class GuiLogManager {
     protected static GuiLogManager manager;
 
+    /** return a shared instance */
     public static GuiLogManager get() {
         synchronized (GuiLogManager.class) {
             if (manager == null) {
@@ -29,10 +30,27 @@ public class GuiLogManager {
         }
     }
 
-    public GuiLogEntryString log(Object... args) {
+    /**  args are concatenated with a space and call {@link #logString(String)}.
+     *    if the previous arg is a String and it ends with an ASCII symbol char, it will not insert a space.
+     *    <pre>
+     *        log("hello", "world") =&gt; logString("hello world")
+     *        log("hello:", "world") =&gt; logString("hello:world")
+     *        log("x=", 1, "y=", 2, "ex", new Exception())
+     *           =&gt; logString("x=1 y=2 ex") and logError(new Exception())
+     *    </pre>
+     * when the last item of args is an exception, it will be passed to {@link #logError(Throwable)}.
+     *    if the args is only a single exception, it will returns its {@link GuiLogEntryException},
+     *      otherwise {@link GuiLogEntryString} */
+    public GuiLogEntry log(Object... args) {
         Formatter formatter = new Formatter();
         boolean needSpace = false;
+        int idx = 0;
+        Throwable lastException = null;
         for (Object arg : args) {
+            if (idx + 1 == args.length && arg instanceof Throwable) {
+                lastException = (Throwable) arg;
+                break;
+            }
             if (needSpace) {
                 formatter.format(" %s", arg);
             } else {
@@ -44,8 +62,18 @@ public class GuiLogManager {
             } else {
                 needSpace = true;
             }
+            ++idx;
         }
-        return logString(formatter.toString());
+        String str = formatter.toString();
+        if (str.isEmpty() && lastException != null) {
+            return logError(lastException);
+        } else if (lastException != null) {
+            GuiLogEntryString s = logString(str);
+            logError(lastException);
+            return s;
+        } else {
+            return logString(str);
+        }
     }
 
     public boolean isSymbol(char c) {
@@ -55,10 +83,17 @@ public class GuiLogManager {
                 (0x7b <= c && c <= 0x7f);
     }
 
+    /** use {@link String#format(String, Object...)} and call {@link #logString(String)} */
     public GuiLogEntryString logFormat(String format, Object... args) {
         return logString(String.format(format, args));
     }
 
+    /**
+     * replace {@link System#err} and {@link System#out} with a string redirecting to this manager.
+     *   System.err will be completely replaced with the manager,
+     *      because the manager usually outputs an entry to the original System.err.
+     *   System.out will be replaced with a manager stream with original System.out.
+     *   those replaced streams are instances of {@link LogPrintStream} */
     public void replaceConsole(boolean replaceError, boolean replaceOutput) {
         if (replaceError) {
             PrintStream exErr = System.err;
@@ -76,6 +111,11 @@ public class GuiLogManager {
         }
     }
 
+    /** replace the default uncaught handler with {@link LogUncaughtHandler}
+     * by calling {@link Thread#setDefaultUncaughtExceptionHandler(Thread.UncaughtExceptionHandler)}.
+     *
+     * this makes the uncaught exception will be sent to the manager.
+     * */
     public void replaceUncaughtHandler() {
         Thread.UncaughtExceptionHandler h = Thread.getDefaultUncaughtExceptionHandler();
         if (h != null && h instanceof LogUncaughtHandler) {
@@ -85,6 +125,7 @@ public class GuiLogManager {
         }
     }
 
+    /** obtains original System.err from wrapped System.err */
     public PrintStream getSystemErr() {
         PrintStream err = System.err;
         if (err instanceof LogPrintStream) {
@@ -101,20 +142,29 @@ public class GuiLogManager {
         return null;
     }
 
+    /** create a string entry and show it */
     public GuiLogEntryString logString(String str) {
         return new GuiLogEntryString(str);
     }
 
+    /** <pre>
+     *    [YYYY-mm-dd HH:MM:SS.LLL]
+     *  </pre>
+     *  */
     public String formatTime(Instant i) {
         LocalDateTime time = LocalDateTime.ofInstant(i, ZoneId.systemDefault());
         return String.format("[%tF %tT.%tL]", time, time, time);
     }
 
+    /** create an exception entry and show it */
     public GuiLogEntryException logError(Throwable ex) {
         return new GuiLogEntryException(ex);
     }
 
     /**
+     * create an active progress entry and show it.
+     * the returned progress is determinate (isIndeterminate() == false),
+     * and notifies progress changes to the manager by {@link #updateProgress(GuiLogEntryProgress)}
      * <pre>
      *     try (GuiLogEntryProgress p = manager.logProgress();) {
      *         for (...) {
@@ -132,6 +182,7 @@ public class GuiLogManager {
         return p;
     }
 
+    /** return an active progress entry with the maximum value, and show it. */
     public GuiLogEntryProgress logProgress(int max) {
         GuiLogEntryProgress p = logProgress();
         p.setMaximum(max);
@@ -141,6 +192,11 @@ public class GuiLogManager {
 
     public void updateProgress(GuiLogEntryProgress p) { }
 
+    /** update display of the entry */
+    public void show(GuiLogEntry entry) { }
+
+    /** a tab and a newline are converted to an space.
+     *  the length is limited to 70 chars */
     public String formatMessageLine(String msg) {
         if (msg != null && (msg.contains("\n") || msg.length() > 70)) {
             StringBuilder buf = new StringBuilder();
@@ -161,6 +217,9 @@ public class GuiLogManager {
         }
     }
 
+    /** <pre>
+     *    [[[[[[&lt;years&gt;y] &lt;months&gt;mo] &lt;days&gt;d] &lt;hours&gt;h] &lt;minutes&gt;m] &lt;seconds&gt;s] (&lt;millis&gt;ms|&lt;nanos&gt;ns)
+     * </pre>*/
     public String formatDuration(Instant from, Instant to) {
         List<String> parts = new ArrayList<>(8);
         Duration elapsed = Duration.between(from, to);

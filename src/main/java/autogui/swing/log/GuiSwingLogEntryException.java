@@ -11,12 +11,12 @@ import java.awt.event.ActionEvent;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class GuiSwingLogEntryException extends GuiLogEntryException implements GuiSwingLogEntry {
     protected Map<JTextComponent, int[]> selectionMap = new HashMap<>(2);
     protected boolean expanded;
+    protected boolean selected;
 
     public GuiSwingLogEntryException(Throwable exception) {
         super(exception);
@@ -48,8 +48,19 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         selectionMap.clear();
     }
 
+    @Override
+    public boolean isSelected() {
+        return selected;
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
     public static class GuiSwingLogExceptionRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
+        protected ContainerType containerType;
         protected JPanel messageLinePane;
         protected JTextPane message;
         protected JTextPane stackTrace;
@@ -77,6 +88,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         protected JList lastList;
 
         public GuiSwingLogExceptionRenderer(GuiSwingLogManager manager, ContainerType type) {
+            this.containerType = type;
             setBorder(BorderFactory.createEmptyBorder(7, 10, 3, 10));
             this.manager = manager;
             setLayout(new BorderLayout(0, 0));
@@ -224,6 +236,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         public void setSelectionHighlights(GuiLogEntryException ex) {
             if (ex != null && ex instanceof GuiSwingLogEntryException && supports != null) {
                 GuiSwingLogEntryException swingEx = (GuiSwingLogEntryException) ex;
+                selected = swingEx.isSelected();
                 if (selected) {
                     supports.setSelectionHighlights(swingEx.getSelections());
                 } else {
@@ -399,7 +412,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         protected void paintComponent(Graphics g) {
             setSelectionHighlights(lastValue);
             super.paintComponent(g);
-            if (selected) {
+            if (selected && containerType.equals(ContainerType.List)) {
                 GuiSwingLogEntryString.drawSelection(getSize(), g);
             }
         }

@@ -78,10 +78,7 @@ public class GuiLogManagerConsole extends GuiLogManager {
     }
 
     public void showProgress(GuiLogEntryProgress p) {
-        synchronized (p) {
-            out.print(formatTime(p.getTime()) + " # \n\n");
-            lastEntry = p;
-        }
+        updateProgress(p);
     }
 
     @Override
@@ -113,6 +110,17 @@ public class GuiLogManagerConsole extends GuiLogManager {
                 out.format(" +%s\n", formatDuration(p.getTime(), now));
             }
             lastEntry = p;
+        }
+    }
+
+    @Override
+    public void show(GuiLogEntry e) {
+        if (e instanceof GuiLogEntryString) {
+            showString((GuiLogEntryString) e);
+        } else if (e instanceof GuiLogEntryProgress) {
+            showProgress((GuiLogEntryProgress) e);
+        } else if (e instanceof GuiLogEntryException) {
+            showError((GuiLogEntryException) e);
         }
     }
 

@@ -53,4 +53,7 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
 
     default void clearSelection() {
     }
+
+    void setSelected(boolean selected);
+    boolean isSelected();
 }

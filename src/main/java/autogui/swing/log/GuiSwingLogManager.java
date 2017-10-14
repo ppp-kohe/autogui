@@ -87,6 +87,7 @@ public class GuiSwingLogManager extends GuiLogManager {
         show(p);
     }
 
+    @Override
     public synchronized void show(GuiLogEntry e) {
         views.forEach(v -> v.accept(e));
     }

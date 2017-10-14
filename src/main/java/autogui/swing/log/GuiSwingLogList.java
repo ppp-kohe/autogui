@@ -111,10 +111,15 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
     public void addLogEntryInEvent(GuiLogEntry entry, boolean lowPriority) {
         GuiSwingLogListModel model = getLogListModel();
-        if (model.contains(entry)) {
+        int index = model.indexOfElement(entry);
+        if (index >= 0) {
+            if (entry instanceof GuiSwingLogEntry) {
+                updateSelectionToSelectionModel((GuiSwingLogEntry) entry, index);
+            }
+            model.fireRowChangedAt(index);
             return;
         }
-        int index = model.addLogEntry(entry, lowPriority);
+        index = model.addLogEntry(entry, lowPriority);
         Rectangle rect = getVisibleRect();
         int first = rowAtPoint(rect.getLocation());
         int last = rowAtPoint(new Point(rect.x, rect.y + rect.height));
@@ -126,6 +131,18 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         if (!(first <= index && index <= last + 1) || index == getRowCount() - 1) { //invisible or last item
             int target = Math.max(model.getRowCount() - 1, last + 1);
             scrollRectToVisible(getTargetEntryRectForScroll(target));
+        }
+    }
+
+    public void updateSelectionToSelectionModel(GuiSwingLogEntry e, int index) {
+        ListSelectionModel selModel = getSelectionModel();
+        boolean sel = e.isSelected();
+        if (selModel.isSelectedIndex(index) != sel) {
+            if (sel) {
+                selModel.addSelectionInterval(index, index);
+            } else {
+                selModel.removeSelectionInterval(index, index);
+            }
         }
     }
 
@@ -226,6 +243,10 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             return entries;
         }
 
+        public int indexOfElement(GuiLogEntry e) {
+            return entries.indexOf(e);
+        }
+
         @Override
         public int getSize() {
             return getRowCount();
@@ -262,8 +283,12 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         public void fireRowChanged(GuiLogEntry entry) {
             int i = entries.indexOf(entry);
             if (i >= 0) {
-                fireContentsChanged(this, i, i);
+                fireRowChangedAt(i);
             }
+        }
+
+        public void fireRowChangedAt(int i) {
+            fireContentsChanged(this, i, i);
         }
 
         public boolean contains(GuiLogEntry entry) {
@@ -355,10 +380,15 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         public void selectionChange(int from, int to) {
             ListSelectionModel sel = table.getSelectionModel();
             for (int i = from; i <= to; ++i) {
-                if (i >= 0 && !sel.isSelectedIndex(i) && i < table.getRowCount()) {
+                if (i >= 0 && i < table.getRowCount()) {
+                    boolean selected = sel.isSelectedIndex(i);
                     GuiLogEntry e = table.getValueAt(i);
                     if (e instanceof GuiSwingLogEntry) {
-                        ((GuiSwingLogEntry) e).clearSelection();
+                        GuiSwingLogEntry se = (GuiSwingLogEntry) e;
+                        se.setSelected(selected);
+                        if (!selected) {
+                            se.clearSelection();
+                        }
                     }
                 }
             }
@@ -426,7 +456,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             GuiSwingLogEntry.LogEntryRenderer r = getEntryRenderer(entry);
             if (r != null) {
                 Component cell = r.getTableCellRenderer()
-                        .getListCellRendererComponent(table, entry, -1, false, true);
+                        .getListCellRendererComponent(table, entry, -1, entry.isSelected(), true);
                 rendererPane.add(cell);
                 cell.setBounds(table.getCellRect(row));
                 runner.accept(r);

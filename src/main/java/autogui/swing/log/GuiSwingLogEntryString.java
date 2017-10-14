@@ -16,6 +16,7 @@ import java.util.List;
 public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwingLogEntry {
     protected int selectionFrom;
     protected int selectionTo;
+    protected boolean selected;
 
     public GuiSwingLogEntryString(String data) {
         super(data);
@@ -27,7 +28,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
 
     @Override
     public LogEntryRenderer getRenderer(GuiSwingLogManager manager, ContainerType type) {
-        return new GuiSwingLogStringRenderer(manager);
+        return new GuiSwingLogStringRenderer(manager, type);
     }
 
     public int getSelectionFrom() {
@@ -50,6 +51,16 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
     public void clearSelection() {
         selectionFrom = 0;
         selectionTo = 0;
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
+    @Override
+    public boolean isSelected() {
+        return selected;
     }
 
     public static void drawSelection(Dimension size, Graphics g) {
@@ -94,6 +105,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
         protected GuiLogManager manager;
         protected boolean selected;
+        protected ContainerType containerType;
 
         protected TextPaneCellSupport support;
 
@@ -101,7 +113,8 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         protected Style timeStyle;
         protected Style followingLinesStyle;
 
-        public GuiSwingLogStringRenderer(GuiLogManager manager) {
+        public GuiSwingLogStringRenderer(GuiLogManager manager, ContainerType type) {
+            this.containerType = type;
             setBorder(BorderFactory.createEmptyBorder(7, 10, 3, 10));
             setFont(GuiSwingLogManager.getFont());
             this.manager = manager;
@@ -128,7 +141,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            if (selected) {
+            if (selected && containerType.equals(ContainerType.List)) {
                 drawSelection(getSize(), g);
             }
         }
@@ -155,6 +168,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
 
                 if (value instanceof GuiSwingLogEntryString) {
                     GuiSwingLogEntryString sStr = (GuiSwingLogEntryString) value;
+                    selected = sStr.isSelected();
                     if (row > -1) { //row==-1: for mouse events
                         support.setSelectionHighlight(selected, sStr.getSelectionFrom(), sStr.getSelectionTo());
                         support.setFindHighlights();
