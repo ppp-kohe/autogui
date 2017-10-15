@@ -64,6 +64,9 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         Number getOne();
         Number getZero();
         Comparable<?> convert(Object value);
+
+        String toString(Number n);
+        Number fromString(String s);
     }
 
     public static Infinity MAXIMUM = new Infinity(true);
@@ -271,6 +274,10 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             return numberClass;
         }
 
+        @Override
+        public String toString(Number n) {
+            return n.toString();
+        }
     }
 
     public static class NumberTypeInt extends NumberTypeDefault {
@@ -296,6 +303,11 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         public Comparable<?> convert(Object value) {
             return toInt(value);
         }
+
+        @Override
+        public Number fromString(String s) {
+            return Integer.valueOf(s);
+        }
     }
 
     public static class NumberTypeByte extends NumberTypeDefault {
@@ -320,6 +332,11 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
         public Comparable<?> convert(Object value) {
             return toByte(value);
+        }
+
+        @Override
+        public Number fromString(String s) {
+            return Byte.valueOf(s);
         }
     }
 
@@ -347,6 +364,11 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         public Comparable<?> convert(Object value) {
             return toShort(value);
         }
+
+        @Override
+        public Number fromString(String s) {
+            return Short.valueOf(s);
+        }
     }
 
 
@@ -372,6 +394,11 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
         public Comparable<?> convert(Object value) {
             return toLong(value);
+        }
+
+        @Override
+        public Number fromString(String s) {
+            return Long.valueOf(s);
         }
     }
 
@@ -399,6 +426,11 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         public Comparable<?> convert(Object value) {
             return toFloat(value);
         }
+
+        @Override
+        public Number fromString(String s) {
+            return Float.valueOf(s);
+        }
     }
 
 
@@ -424,6 +456,11 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
         public Comparable<?> convert(Object value) {
             return toDouble(value);
+        }
+
+        @Override
+        public Number fromString(String s) {
+            return Double.valueOf(s);
         }
     }
 
@@ -454,6 +491,11 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         public Comparable<?> convert(Object value) {
             return toBigInteger(value);
         }
+
+        @Override
+        public Number fromString(String s) {
+            return new BigInteger(s);
+        }
     }
 
     public static class NumberTypeBigDecimal extends NumberTypeDefault {
@@ -482,6 +524,11 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
         public Comparable<?> convert(Object value) {
             return toBigDecimal(value);
+        }
+
+        @Override
+        public Number fromString(String s) {
+            return new BigDecimal(s);
         }
     }
 

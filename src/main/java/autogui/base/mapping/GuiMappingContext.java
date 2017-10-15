@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -56,6 +55,7 @@ public class GuiMappingContext {
     protected List<SourceUpdateListener> listeners = Collections.emptyList();
 
     protected ScheduledExecutorService taskRunner;
+    protected GuiPreferences preferences;
 
     public GuiMappingContext(GuiTypeElement typeElement) {
         this.typeElement = typeElement;
@@ -344,9 +344,9 @@ public class GuiMappingContext {
     /** take taskRunner from parent context */
     public ScheduledExecutorService getTaskRunner() {
         if (taskRunner == null) {
-            GuiMappingContext context = getParent();
-            if (context != null) {
-                taskRunner = context.getTaskRunner();
+            GuiMappingContext parent = getParent();
+            if (parent != null) {
+                taskRunner = parent.getTaskRunner();
             } else {
                 taskRunner = Executors.newSingleThreadScheduledExecutor();
             }
@@ -362,5 +362,17 @@ public class GuiMappingContext {
         } catch (ExecutionException e) {
             throw e.getCause();
         }
+    }
+
+    public GuiPreferences getPreferences() {
+        if (preferences == null) {
+            GuiMappingContext parent = getParent();
+            if (parent != null) {
+                preferences = parent.getPreferences().getChild(this);
+            } else {
+                preferences = new GuiPreferences(this);
+            }
+        }
+        return preferences;
     }
 }

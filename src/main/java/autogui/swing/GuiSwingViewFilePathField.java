@@ -68,6 +68,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
             //popup menus
             List<JComponent> menus = new ArrayList<>();
             menus.add(GuiSwingContextInfo.get().getInfoLabel(context));
+            menus.add(new JMenuItem(new ContextRefreshAction(context)));
             menus.addAll(super.getPopupEditMenuItems());
             menus.addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
             return menus;

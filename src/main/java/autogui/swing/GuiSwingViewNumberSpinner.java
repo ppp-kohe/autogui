@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
@@ -216,6 +217,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             return popup.getMenuBuilder();
         }
 
+        public TypedSpinnerNumberModel getModelTyped() {
+            return (TypedSpinnerNumberModel) getModel();
+        }
+
         public static TypedSpinnerNumberModel createModel(GuiMappingContext context) {
             GuiReprValueNumberSpinner repr = (GuiReprValueNumberSpinner) context.getRepresentation();
             return new TypedSpinnerNumberModel(GuiReprValueNumberSpinner.getType(repr.getValueType(context)));
@@ -261,6 +266,38 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public GuiMappingContext getContext() {
             return context;
         }
+
+        @Override
+        public void savePreferences() {
+            GuiPreferences.GuiValueStore prefs = getContext().getPreferences().getValueStore();
+            TypedSpinnerNumberModel model = getModelTyped();
+            prefs.putString("maximum", model.getActualMaximum().toString());
+            prefs.putString("minimum", model.getActualMinimum().toString());
+            prefs.putString("stepSize", model.getStepSize().toString());
+
+            GuiSwingView.saveChildren(this);
+        }
+
+        @Override
+        public void loadPreferences() {
+            GuiPreferences.GuiValueStore prefs = getContext().getPreferences().getValueStore();
+            TypedSpinnerNumberModel model = getModelTyped();
+            GuiReprValueNumberSpinner.NumberType type = model.getNumberType();
+            String max = prefs.getString("maximum", "");
+            String min = prefs.getString("minimum", "");
+            String step = prefs.getString("stepSize", "");
+            if (!max.isEmpty()) {
+                model.setMaximum((Comparable<?>) type.fromString(max));
+            }
+            if (!min.isEmpty()) {
+                model.setMinimum((Comparable<?>) type.fromString(min));
+            }
+            if (!step.isEmpty()) {
+                model.setStepSize(type.fromString(step));
+            }
+
+            GuiSwingView.loadChildren(this);
+        }
     }
 
     public static class TextServiceDefaultMenuSpinner extends PopupExtensionText.TextServiceDefaultMenu {
@@ -271,6 +308,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             this.context = context;
             GuiSwingContextInfo info = GuiSwingContextInfo.get();
             editActions.add(0, info.getInfoLabel(context));
+            editActions.add(new JMenuItem(new ContextRefreshAction(context)));
             editActions.add(new JPopupMenu.Separator());
             editActions.add(new JMenuItem(new NumberSettingAction(info.getInfoLabel(context), model)));
         }

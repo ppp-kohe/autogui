@@ -85,6 +85,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
             List<JComponent> items = new ArrayList<>();
             items.add(label);
+            items.add(new JMenuItem(new ContextRefreshAction(context)));
             popup = new PopupExtensionCollection(this, PopupExtension.getDefaultKeyMatcher(), items);
 
             //cell selection
@@ -221,6 +222,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public GuiMappingContext getContext() {
             return context;
+        }
+
+        @Override
+        public void loadPreferences() {
+            //TODO
+        }
+
+        @Override
+        public void savePreferences() {
+            //TODO
         }
     }
 

@@ -86,8 +86,10 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
             //popup
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
+            ContextRefreshAction refreshAction = new ContextRefreshAction(context);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.accept(info);
+                menu.accept(refreshAction);
                 menu.accept(new JPopupMenu.Separator());
                 actions.forEach(menu::accept);
                 GuiSwingJsonTransfer.getActions(this, context)

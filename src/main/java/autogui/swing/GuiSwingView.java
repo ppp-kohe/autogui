@@ -5,6 +5,7 @@ import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.EventObject;
 import java.util.function.Consumer;
 
@@ -50,6 +51,37 @@ public interface GuiSwingView extends GuiSwingElement {
 
         default JComponent asComponent() {
             return (JComponent) this;
+        }
+
+        default void savePreferences() {
+            saveChildren(asComponent());
+        }
+
+        default void loadPreferences() {
+            loadChildren(asComponent());
+        }
+
+    }
+
+    static void saveChildren(JComponent comp) {
+        for (Component c : comp.getComponents()) {
+            if (c instanceof GuiSwingView.ValuePane) {
+                GuiSwingView.ValuePane valuePane = (GuiSwingView.ValuePane) c;
+                valuePane.savePreferences();
+            } else if (c instanceof JComponent) {
+                saveChildren((JComponent) c);
+            }
+        }
+    }
+
+    static void loadChildren(JComponent comp) {
+        for (Component c : comp.getComponents()) {
+            if (c instanceof GuiSwingView.ValuePane) {
+                GuiSwingView.ValuePane valuePane = (GuiSwingView.ValuePane) c;
+                valuePane.loadPreferences();
+            } else if (c instanceof JComponent) {
+                loadChildren((JComponent) c);
+            }
         }
     }
 
@@ -152,6 +184,34 @@ public interface GuiSwingView extends GuiSwingElement {
         @Override
         public GuiMappingContext getContext() {
             return pane == null ? null : pane.getContext();
+        }
+    }
+
+    class ContextRefreshAction extends AbstractAction {
+        protected GuiMappingContext context;
+
+        public ContextRefreshAction(GuiMappingContext context) {
+            putValue(NAME, "Refresh");
+            this.context = context;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            context.updateSourceSubTree();
+        }
+    }
+
+    class ContextRefreshRootAction extends AbstractAction {
+        protected GuiMappingContext context;
+
+        public ContextRefreshRootAction(GuiMappingContext context) {
+            putValue(NAME, "Refresh All");
+            this.context = context;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            context.updateSourceFromRoot();
         }
     }
 }

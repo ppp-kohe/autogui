@@ -81,6 +81,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         public List<? extends JComponent> getPopupEditMenuItems() {
             List<JComponent> menus = new ArrayList<>();
             menus.add(GuiSwingContextInfo.get().getInfoLabel(context));
+            menus.add(new JMenuItem(new ContextRefreshAction(context)));
             menus.addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
             menus.addAll(super.getPopupEditMenuItems());
             return menus;

@@ -61,8 +61,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
             //popup
             JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
+            ContextRefreshAction refreshAction = new ContextRefreshAction(context);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.accept(label);
+                menu.accept(refreshAction);
                 menu.accept(createSizeInfo(getImageSize()));
                 menu.accept(new ImageCopyAction(getImage()));
                 menu.accept(new ImagePasteAction(this));

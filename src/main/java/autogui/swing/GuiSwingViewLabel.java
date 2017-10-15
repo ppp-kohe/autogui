@@ -41,8 +41,10 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
             //popup
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
+            ContextRefreshAction refreshAction = new ContextRefreshAction(context);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.accept(info);
+                menu.accept(refreshAction);
             });
             setInheritsPopupMenu(true);
 

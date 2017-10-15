@@ -55,9 +55,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
         JComponent infoForSetting = GuiSwingContextInfo.get().getInfoLabel(context);
         List<Action> actions = PopupExtensionText.getEditActions(pane);
+        ContextRefreshAction refreshAction = new ContextRefreshAction(context);
         DocumentSettingAction settingAction = (pane instanceof JTextPane ? new DocumentSettingAction(infoForSetting, pane) : null);
         PopupExtensionText ext = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
             menu.accept(info);
+            menu.accept(refreshAction);
             actions.forEach(menu::accept);
 
             menu.accept(new JPopupMenu.Separator());
@@ -264,6 +266,17 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public GuiMappingContext getContext() {
             return context;
+        }
+
+        @Override
+        public void savePreferences() {
+            //TODO
+
+        }
+
+        @Override
+        public void loadPreferences() {
+            //TODO
         }
     }
 
