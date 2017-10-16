@@ -5,6 +5,7 @@ import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.*;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
@@ -18,9 +19,8 @@ import java.awt.event.ItemListener;
 import java.awt.geom.Rectangle2D;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 public class GuiSwingViewDocumentEditor implements GuiSwingView {
@@ -56,7 +56,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         JComponent infoForSetting = GuiSwingContextInfo.get().getInfoLabel(context);
         List<Action> actions = PopupExtensionText.getEditActions(pane);
         ContextRefreshAction refreshAction = new ContextRefreshAction(context);
-        DocumentSettingAction settingAction = (pane instanceof JTextPane ? new DocumentSettingAction(infoForSetting, pane) : null);
+        DocumentSettingAction settingAction = (pane instanceof PropertyDocumentTextPane ?
+                new DocumentSettingAction(infoForSetting, pane, ((PropertyDocumentTextPane) pane).getSettingPane()) : null);
         PopupExtensionText ext = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
             menu.accept(info);
             menu.accept(refreshAction);
@@ -219,9 +220,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected GuiMappingContext context;
         protected PopupExtension popup;
         protected boolean wrapLine = true;
+        protected DocumentSettingPane settingPane;
 
         public PropertyDocumentTextPane(GuiMappingContext context) {
             this.context = context;
+            settingPane = new DocumentSettingPane(this);
             popup = initText(this, context);
         }
 
@@ -266,6 +269,10 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public GuiMappingContext getContext() {
             return context;
+        }
+
+        public DocumentSettingPane getSettingPane() {
+            return settingPane;
         }
 
         @Override
@@ -342,9 +349,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static class DocumentSettingAction extends AbstractAction {
         protected DocumentSettingPane pane;
         protected JPanel contentPane;
-        public DocumentSettingAction(JComponent label, JEditorPane editorPane) {
+        public DocumentSettingAction(JComponent label, JEditorPane editorPane, DocumentSettingPane settingPane) {
             putValue(NAME, "Settings...");
-            pane = new DocumentSettingPane(editorPane);
+            this.pane = settingPane;
             contentPane = new JPanel(new BorderLayout());
             contentPane.add(label, BorderLayout.NORTH);
             contentPane.add(pane, BorderLayout.CENTER);
@@ -506,6 +513,26 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             } else {
                 return null;
             }
+        }
+
+        public void setJson(Object obj) {
+            //TODO
+        }
+
+        public Object getJson() {
+            Map<String, Object> json = new HashMap<>();
+            json.put("lineSpacing", ((Number) lineSpacing.getValue()).floatValue());
+            json.put("fontFamily", (String) fontFamily.getSelectedItem());
+            json.put("fontSize", ((Number) fontSize.getValue()).intValue());
+            json.put("bold", (Boolean) styleBold.getValue(Action.SELECTED_KEY));
+            json.put("italic", (Boolean) styleItalic.getValue(Action.SELECTED_KEY));
+            json.put("backgroundColor", toJson(backgroundColor.getColor()));
+            json.put("foregroundColor", toJson(foregroundColor.getColor()));
+            return json;
+        }
+
+        public Object toJson(Color c) {
+            return new ArrayList<>(Arrays.asList(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()));
         }
     }
 

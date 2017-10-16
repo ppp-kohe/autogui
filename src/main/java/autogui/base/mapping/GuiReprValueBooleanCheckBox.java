@@ -29,4 +29,13 @@ public class GuiReprValueBooleanCheckBox extends GuiReprValue {
             return null;
         }
     }
+
+    @Override
+    public Object fromJson(GuiMappingContext context, Object json) {
+        if (json instanceof Boolean) {
+            return json;
+        } else {
+            return null;
+        }
+    }
 }

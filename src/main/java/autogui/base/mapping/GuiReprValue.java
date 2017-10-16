@@ -154,6 +154,11 @@ public class GuiReprValue implements GuiRepresentation {
         return null;
     }
 
+    @Override
+    public Object fromJson(GuiMappingContext context, Object json) {
+        return null;
+    }
+
     public static class NamedValue {
         public String name;
         public Object value;

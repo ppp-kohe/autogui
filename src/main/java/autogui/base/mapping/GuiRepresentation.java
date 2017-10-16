@@ -38,6 +38,8 @@ public interface GuiRepresentation {
      */
     Object toJson(GuiMappingContext context, Object source);
 
+    Object fromJson(GuiMappingContext context, Object json);
+
     GuiReprNone NONE = new GuiReprNone();
 
     class GuiReprNone implements GuiRepresentation {
@@ -52,6 +54,11 @@ public interface GuiRepresentation {
 
         @Override
         public Object toJson(GuiMappingContext context, Object source) {
+            return null;
+        }
+
+        @Override
+        public Object fromJson(GuiMappingContext context, Object json) {
             return null;
         }
     }

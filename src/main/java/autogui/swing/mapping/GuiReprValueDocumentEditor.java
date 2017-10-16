@@ -131,6 +131,35 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
     }
 
+    @Override
+    public Object fromJson(GuiMappingContext context, Object json) {
+        Class<?> cls = getValueType(context);
+        if (json instanceof String) {
+            String jsonStr = (String) json;
+            //TODO checking type equality
+            if (Document.class.isAssignableFrom(cls)) {
+                DefaultStyledDocument doc = new DefaultStyledDocument();
+                try {
+                    doc.insertString(0, jsonStr, null);
+                } catch (Exception ex) {
+                    return null;
+                }
+                return doc;
+            } else if (AbstractDocument.Content.class.isAssignableFrom(cls)) {
+                GapContent content = new GapContent();
+                try {
+                    content.insertString(0, jsonStr);
+                } catch (Exception ex) {
+                    return null;
+                }
+                return content;
+            } else if (StringBuilder.class.isAssignableFrom(cls)) {
+                return new StringBuilder(jsonStr);
+            }
+        }
+        return null;
+    }
+
     public static class ContentWrappingDocument extends DefaultStyledDocument {
         protected Content value;
 

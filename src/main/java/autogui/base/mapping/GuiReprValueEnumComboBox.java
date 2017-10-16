@@ -1,5 +1,7 @@
 package autogui.base.mapping;
 
+import java.util.Arrays;
+
 public class GuiReprValueEnumComboBox extends GuiReprValue {
 
     @Override
@@ -22,6 +24,19 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
         if (source != null) {
             return ((Enum<?>) source).name();
         } else {
+            return null;
+        }
+    }
+
+    @Override
+    public Object fromJson(GuiMappingContext context, Object json) {
+        if (json instanceof String) {
+            String jsonStr = (String) json;
+            Class<?> enumType = getValueType(context);
+            return Arrays.stream(enumType.getEnumConstants())
+                    .filter(e -> ((Enum<?>) e).name().equals(jsonStr))
+                    .findFirst().orElse(null);
+        } else{
             return null;
         }
     }

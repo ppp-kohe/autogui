@@ -121,7 +121,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             try {
                 String max = formatter.valueToString(model.getMaximum());
                 String min = formatter.valueToString(model.getMinimum());
-                field.setColumns(Math.max(max.length(), max.length()));
+                field.setColumns(Math.max(min.length(), max.length()));
             } catch (ParseException ex) {
                 System.err.println("ex: " + ex);
                 //nothing

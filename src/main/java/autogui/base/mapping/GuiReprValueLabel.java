@@ -17,4 +17,9 @@ public class GuiReprValueLabel extends GuiReprValue {
     public Object toJson(GuiMappingContext context, Object source) {
         return null;
     }
+
+    @Override
+    public Object fromJson(GuiMappingContext context, Object json) {
+        return null;
+    }
 }

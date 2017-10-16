@@ -49,7 +49,8 @@ public class GuiReprObjectPane extends GuiReprValue {
                 GuiRepresentation subRepr = subContext.getRepresentation();
                 try {
                     Object prevValue = subContext.getSource();
-                    Object nextValue = subContext.getTypeElementAsProperty().executeGet(source, prevValue);
+                    Object nextValue = subContext.execute(() ->
+                            subContext.getTypeElementAsProperty().executeGet(source, prevValue));
                     if (nextValue != null && nextValue.equals(GuiTypeValue.NO_UPDATE)) {
                         nextValue = prevValue;
                     }
@@ -57,11 +58,48 @@ public class GuiReprObjectPane extends GuiReprValue {
                     if (subObj != null) {
                         map.put(subContext.getName(), subObj);
                     }
-                } catch (Exception ex) {
+                } catch (Throwable ex) {
                     //nothing
                 }
             }
         }
         return map;
+    }
+
+    @Override
+    public Object fromJson(GuiMappingContext context, Object json) {
+        return fromJsonToObject(context, json);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Object fromJsonToObject(GuiMappingContext context, Object json) {
+        if (json instanceof Map<?,?>) {
+            Class<?> valType = ((GuiReprValue) context.getRepresentation()).getValueType(context);
+            Map<String,?> jsonMap = (Map<String,?>) json;
+            try {
+                //TODO constructor?
+                Object value = valType.getConstructor().newInstance();
+                for (GuiMappingContext subContext : context.getChildren()) {
+                    if (subContext.isTypeElementProperty()) {
+                        GuiRepresentation subRepr = subContext.getRepresentation();
+                        try {
+                            Object jsonEntry = jsonMap.get(subContext.getName());
+                            if (jsonEntry != null) {
+                                Object subObj = subRepr.fromJson(subContext, jsonEntry);
+                                if (subObj != null) {
+                                    subContext.execute(() -> subContext.getTypeElementAsProperty()
+                                            .executeSet(value, subObj));
+                                }
+                            }
+                        } catch (Throwable ex) {
+                            //nothing
+                        }
+                    }
+                }
+            } catch (Throwable ex) {
+                //nothing
+            }
+        }
+        return null;
     }
 }

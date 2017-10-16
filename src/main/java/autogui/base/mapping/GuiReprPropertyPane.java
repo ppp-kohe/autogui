@@ -86,4 +86,9 @@ public class GuiReprPropertyPane extends GuiReprValue {
     public Object toJson(GuiMappingContext context, Object source) {
         return GuiReprObjectPane.toJsonFromObject(context, source);
     }
+
+    @Override
+    public Object fromJson(GuiMappingContext context, Object json) {
+        return GuiReprObjectPane.fromJsonToObject(context, json);
+    }
 }

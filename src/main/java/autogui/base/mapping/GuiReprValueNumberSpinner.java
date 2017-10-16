@@ -46,6 +46,22 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
+    @Override
+    public Object fromJson(GuiMappingContext context, Object json) {
+        NumberType numType = getType(getValueType(context));
+        if (numType instanceof NumberTypeBigDecimal || numType instanceof NumberTypeBigInteger) {
+            if (json instanceof String) {
+                String jsonStr = (String) json;
+                return numType.fromString(jsonStr);
+            }
+        } else {
+            if (json instanceof Number) {
+                return (Number) json;
+            }
+        }
+        return null;
+    }
+
     public interface NumberType {
         Class<? extends Number> getNumberClass();
         /** the maximum value, it might be an Infinity */

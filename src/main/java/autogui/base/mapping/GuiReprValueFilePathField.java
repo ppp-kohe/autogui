@@ -2,6 +2,7 @@ package autogui.base.mapping;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class GuiReprValueFilePathField extends GuiReprValue {
     @Override
@@ -30,5 +31,18 @@ public class GuiReprValueFilePathField extends GuiReprValue {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public Object fromJson(GuiMappingContext context, Object json) {
+        if (json instanceof String) {
+            Path p = Paths.get((String) json);
+            if (File.class.isAssignableFrom(getValueType(context))) {
+                return p.toFile();
+            } else {
+                return p;
+            }
+        }
+        return null;
     }
 }

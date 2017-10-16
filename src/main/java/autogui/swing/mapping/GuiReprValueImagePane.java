@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.awt.image.RenderedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Base64;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -108,6 +109,21 @@ public class GuiReprValueImagePane extends GuiReprValue {
             try {
                 ImageIO.write(img, "png", bytes);
                 return Base64.getEncoder().encodeToString(bytes.toByteArray());
+            } catch (Exception ex) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Object fromJson(GuiMappingContext context, Object json) {
+        if (json instanceof String) {
+            String jsonStr = (String) json;
+            byte[] bs = Base64.getDecoder().decode(jsonStr);
+            ByteArrayInputStream bin = new ByteArrayInputStream(bs);
+            try {
+                return ImageIO.read(bin);
             } catch (Exception ex) {
                 return null;
             }
