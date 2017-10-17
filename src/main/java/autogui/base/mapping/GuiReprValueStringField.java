@@ -30,11 +30,16 @@ public class GuiReprValueStringField extends GuiReprValue {
     }
 
     @Override
-    public Object fromJson(GuiMappingContext context, Object json) {
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
         if (json instanceof String) {
             return json;
         } else {
             return null;
         }
+    }
+
+    @Override
+    public boolean isJsonSetter() {
+        return false;
     }
 }

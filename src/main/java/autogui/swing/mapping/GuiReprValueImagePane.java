@@ -117,7 +117,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
     }
 
     @Override
-    public Object fromJson(GuiMappingContext context, Object json) {
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
         if (json instanceof String) {
             String jsonStr = (String) json;
             byte[] bs = Base64.getDecoder().decode(jsonStr);
@@ -129,6 +129,11 @@ public class GuiReprValueImagePane extends GuiReprValue {
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean isJsonSetter() {
+        return false;
     }
 
     public RenderedImage getRenderedImage(GuiMappingContext context, Object source) {

@@ -29,7 +29,7 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
     }
 
     @Override
-    public Object fromJson(GuiMappingContext context, Object json) {
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
         if (json instanceof String) {
             String jsonStr = (String) json;
             Class<?> enumType = getValueType(context);
@@ -39,5 +39,10 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
         } else{
             return null;
         }
+    }
+
+    @Override
+    public boolean isJsonSetter() {
+        return false;
     }
 }

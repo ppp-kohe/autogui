@@ -47,7 +47,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
     }
 
     @Override
-    public Object fromJson(GuiMappingContext context, Object json) {
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
         NumberType numType = getType(getValueType(context));
         if (numType instanceof NumberTypeBigDecimal || numType instanceof NumberTypeBigInteger) {
             if (json instanceof String) {
@@ -60,6 +60,11 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean isJsonSetter() {
+        return false;
     }
 
     public interface NumberType {

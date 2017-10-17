@@ -1,5 +1,6 @@
 package autogui.base.mapping;
 
+import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
 
 import java.util.HashMap;
@@ -67,29 +68,35 @@ public class GuiReprObjectPane extends GuiReprValue {
     }
 
     @Override
-    public Object fromJson(GuiMappingContext context, Object json) {
-        return fromJsonToObject(context, json);
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
+        return fromJsonToObject(context, target, json);
     }
 
     @SuppressWarnings("unchecked")
-    public static Object fromJsonToObject(GuiMappingContext context, Object json) {
+    public static Object fromJsonToObject(GuiMappingContext context, Object target, Object json) {
         if (json instanceof Map<?,?>) {
-            Class<?> valType = ((GuiReprValue) context.getRepresentation()).getValueType(context);
             Map<String,?> jsonMap = (Map<String,?>) json;
             try {
-                //TODO constructor?
-                Object value = valType.getConstructor().newInstance();
+                if (target == null) {
+                    Class<?> valType = ((GuiReprValue) context.getRepresentation()).getValueType(context);
+                    target = valType.getConstructor().newInstance();
+                }
                 for (GuiMappingContext subContext : context.getChildren()) {
                     if (subContext.isTypeElementProperty()) {
                         GuiRepresentation subRepr = subContext.getRepresentation();
                         try {
                             Object jsonEntry = jsonMap.get(subContext.getName());
                             if (jsonEntry != null) {
-                                Object subObj = subRepr.fromJson(subContext, jsonEntry);
-                                if (subObj != null) {
-                                    subContext.execute(() -> subContext.getTypeElementAsProperty()
-                                            .executeSet(value, subObj));
-                                }
+                                Object t = target;
+                                subContext.execute(() -> {
+                                    GuiTypeMemberProperty prop = subContext.getTypeElementAsProperty();
+                                    Object subPrev = prop.executeGet(t, null);
+                                    Object subObj = subRepr.fromJson(subContext, subPrev, jsonEntry);
+                                    if (subObj != null && subPrev != subObj) {
+                                        prop.executeSet(t, subObj);
+                                    }
+                                    return null;
+                                });
                             }
                         } catch (Throwable ex) {
                             //nothing
@@ -100,6 +107,11 @@ public class GuiReprObjectPane extends GuiReprValue {
                 //nothing
             }
         }
-        return null;
+        return target;
+    }
+
+    @Override
+    public boolean isJsonSetter() {
+        return true;
     }
 }

@@ -5,6 +5,7 @@ import autogui.base.type.GuiTypeValue;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class GuiReprValue implements GuiRepresentation {
     @Override
@@ -105,6 +106,8 @@ public class GuiReprValue implements GuiRepresentation {
 
 
     public void updateFromGui(GuiMappingContext context, Object newValue) {
+        context.getPreferences().addHistoryValue(newValue);
+
         if (context.isTypeElementProperty()) {
             Object src = context.getParentSource();
             try {
@@ -155,8 +158,12 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     @Override
-    public Object fromJson(GuiMappingContext context, Object json) {
-        return null;
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
+        return target;
+    }
+
+    public static <T> T castOrMake(Class<T> cls, Object o, Supplier<T> v) {
+        return o != null && cls.isInstance(o) ? cls.cast(o) : v.get();
     }
 
     public static class NamedValue {

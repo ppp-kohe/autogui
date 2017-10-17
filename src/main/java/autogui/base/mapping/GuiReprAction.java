@@ -45,7 +45,7 @@ public class GuiReprAction implements GuiRepresentation {
     }
 
     @Override
-    public Object fromJson(GuiMappingContext context, Object json) {
-        return null;
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
+        return target;
     }
 }

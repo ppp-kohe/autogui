@@ -1,9 +1,11 @@
 package autogui.base.mapping;
 
 import autogui.base.JsonReader;
+import autogui.base.JsonWriter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.prefs.Preferences;
 
 public class GuiPreferences {
@@ -54,11 +56,11 @@ public class GuiPreferences {
         if (historyValues == null) {
             loadHistoryValues();
         }
-        HistoryValueEntry e = findHistoryValue(value);
-        if (e != null) {
+        HistoryValueEntry e = getHistoryValue(value);
+        if (e == null) {
+            return; //value is null or cannot convert to json
+        } else if (e.getKeyIndex() != -1) {
             historyValues.remove(e);
-        } else {
-            e = new HistoryValueEntry(this, value);
         }
         historyValues.add(0, e);
         while (historyValues.size() > historyValueLimit) {
@@ -110,11 +112,16 @@ public class GuiPreferences {
         return historyValues;
     }
 
-    public HistoryValueEntry findHistoryValue(Object value) {
+    public HistoryValueEntry getHistoryValue(Object value) {
+        HistoryValueEntry e = new HistoryValueEntry(this, value);
+        Object v = e.getValue(); //it might be converted to JSON
+        if (v == null) {
+            return null;
+        }
         return historyValues.stream()
-                .filter(entry -> entry.match(value))
+                .filter(entry -> entry.match(v))
                 .findFirst()
-                .orElse(null);
+                .orElse(e);
     }
 
     public void loadHistoryValues() {
@@ -211,11 +218,16 @@ public class GuiPreferences {
 
         public HistoryValueEntry(GuiPreferences preferences, Object value) {
             this.preferences = preferences;
-            this.value = value;
+            if (isJsonValue() && value != null) {
+                this.value = preferences.getContext().getRepresentation()
+                        .toJsonWithNamed(preferences.getContext(), value);
+            } else {
+                this.value = value;
+            }
         }
 
         public boolean match(Object v) {
-            return value.equals(v);
+            return Objects.equals(value, v);
         }
 
         public Object getValue() {
@@ -241,21 +253,48 @@ public class GuiPreferences {
 
         public void setKeyIndex(int keyIndex) {
             if (this.keyIndex == -1 && keyIndex != -1) {
-                //load
                 this.keyIndex = keyIndex;
-                GuiValueStore store = getValueStore();
-                int index = store.getInt("index", -1);
-                if (index != -1) {
-                    this.index = index;
-                    String v = store.getString("value", "null");
-                    Object jsonValue = JsonReader.create(v).parseValue();
-                    if (jsonValue != null) {
-                        this.value = preferences.getContext().getRepresentation()
-                                .fromJson(preferences.getContext(), jsonValue);
-                    }
+                if (value != null) {
+                    store();
+                } else {
+                    load();
                 }
             }
             this.keyIndex = keyIndex;
+        }
+
+        public void load() {
+            GuiValueStore store = getValueStore();
+            int index = store.getInt("index", -1);
+            if (index != -1) {
+                this.index = index;
+                String v = store.getString("value", "null");
+                Object jsonValue = JsonReader.create(v).parseValue();
+                if (jsonValue != null) {
+                    if (isJsonValue()) {
+                        this.value = jsonValue;
+                    } else {
+                        this.value = preferences.getContext().getRepresentation()
+                                .fromJson(preferences.getContext(), null, jsonValue);
+                    }
+                }
+            }
+        }
+
+        public boolean isJsonValue() {
+            return preferences.getContext().getRepresentation().isJsonSetter();
+        }
+
+        public void store() {
+            GuiValueStore store = getValueStore();
+            Object json = isJsonValue() ? this.value :
+                    preferences.getContext().getRepresentation()
+                            .toJsonWithNamed(preferences.getContext(), this.value);
+            String jsonSource = JsonWriter.create().write(json).toSource();
+            store.putString("value", jsonSource);
+            if (index != -1) {
+                store.putInt("index", index);
+            }
         }
 
         public GuiValueStore getValueStore() {

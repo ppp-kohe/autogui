@@ -34,7 +34,7 @@ public class GuiReprValueFilePathField extends GuiReprValue {
     }
 
     @Override
-    public Object fromJson(GuiMappingContext context, Object json) {
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
         if (json instanceof String) {
             Path p = Paths.get((String) json);
             if (File.class.isAssignableFrom(getValueType(context))) {
@@ -44,5 +44,10 @@ public class GuiReprValueFilePathField extends GuiReprValue {
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean isJsonSetter() {
+        return false;
     }
 }

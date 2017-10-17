@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 /** the representation depends on some Swing classes(java.desktop module)  */
@@ -132,13 +133,14 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     @Override
-    public Object fromJson(GuiMappingContext context, Object json) {
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
         Class<?> cls = getValueType(context);
         if (json instanceof String) {
             String jsonStr = (String) json;
-            //TODO checking type equality
+
+
             if (Document.class.isAssignableFrom(cls)) {
-                DefaultStyledDocument doc = new DefaultStyledDocument();
+                Document doc = castOrMake(Document.class, target, DefaultStyledDocument::new);
                 try {
                     doc.insertString(0, jsonStr, null);
                 } catch (Exception ex) {
@@ -146,7 +148,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
                 }
                 return doc;
             } else if (AbstractDocument.Content.class.isAssignableFrom(cls)) {
-                GapContent content = new GapContent();
+                AbstractDocument.Content content = castOrMake(AbstractDocument.Content.class, target, GapContent::new);
                 try {
                     content.insertString(0, jsonStr);
                 } catch (Exception ex) {
@@ -154,10 +156,17 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
                 }
                 return content;
             } else if (StringBuilder.class.isAssignableFrom(cls)) {
-                return new StringBuilder(jsonStr);
+                StringBuilder buf = castOrMake(StringBuilder.class, target, StringBuilder::new);
+                buf.replace(0, buf.length(), jsonStr);
+                return buf;
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean isJsonSetter() {
+        return true;
     }
 
     public static class ContentWrappingDocument extends DefaultStyledDocument {

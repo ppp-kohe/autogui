@@ -126,19 +126,30 @@ public class GuiReprCollectionElement implements GuiRepresentation {
         return array;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object fromJson(GuiMappingContext context, Object json) {
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
         if (json instanceof List<?>) {
             List<?> listJson = (List<?>) json;
-            List<Object> list = new ArrayList<>(listJson.size());
-            for (Object elementJson : listJson) {
-                Object e = getRepresentation().fromJson(context, elementJson);
+
+            List<Object> listTarget = GuiReprValue.castOrMake(List.class, target, () -> null);
+            List<Object> listResult = new ArrayList<>(listJson.size());
+
+            for (int i = 0, l = listJson.size(); i < l; ++i) {
+                Object elementJson = listJson.get(i);
+                Object elementTarget = (listTarget != null && i < listTarget.size()) ? listTarget.get(i) : null;
+                Object e = getRepresentation().fromJson(context, elementTarget, elementJson);
                 if (e != null) {
-                    list.add(e);
+                    listResult.add(e);
                 }
             }
-            return list;
+            return listResult;
         }
         return null;
+    }
+
+    @Override
+    public boolean isJsonSetter() {
+        return false;
     }
 }

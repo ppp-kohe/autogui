@@ -38,7 +38,13 @@ public interface GuiRepresentation {
      */
     Object toJson(GuiMappingContext context, Object source);
 
-    Object fromJson(GuiMappingContext context, Object json);
+    Object fromJson(GuiMappingContext context, Object target, Object json);
+
+    /** true means {@link #fromJson(GuiMappingContext, Object, Object)} takes a target object and set json properties to
+     *   the target. otherwise, the method will return a new value, thus the target can be null */
+    default boolean isJsonSetter() {
+        return true;
+    }
 
     GuiReprNone NONE = new GuiReprNone();
 
@@ -58,8 +64,8 @@ public interface GuiRepresentation {
         }
 
         @Override
-        public Object fromJson(GuiMappingContext context, Object json) {
-            return null;
+        public Object fromJson(GuiMappingContext context, Object target, Object json) {
+            return target;
         }
     }
 

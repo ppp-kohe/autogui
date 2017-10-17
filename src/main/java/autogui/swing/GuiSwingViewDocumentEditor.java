@@ -1,6 +1,9 @@
 package autogui.swing;
 
+import autogui.base.JsonReader;
+import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.*;
 
@@ -277,13 +280,17 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void savePreferences() {
-            //TODO
-
+            Map<String, Object> jsonObj = settingPane.getJson();
+            GuiPreferences.GuiValueStore store = context.getPreferences().getValueStore();
+            store.putString("style", JsonWriter.create().write(jsonObj).toSource());
         }
 
         @Override
         public void loadPreferences() {
-            //TODO
+            GuiPreferences.GuiValueStore store = context.getPreferences().getValueStore();
+            Object jsonObj = JsonReader.create(store.getString("style", "null")).parseValue();
+            settingPane.setJson(jsonObj);
+
         }
     }
 
@@ -343,6 +350,12 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 pane.revalidate();
             }
         }
+
+        public void change(boolean f) {
+            putValue(SELECTED_KEY, f);
+            JScrollPane pane = scroll(field.getParent());
+            setWrapLine(pane, f);
+        }
     }
 
 
@@ -374,6 +387,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         protected Action styleItalic;
         protected Action styleBold;
+        protected TextWrapTextAction wrapText;
         protected boolean updateDisabled;
 
         protected SettingsWindow.ColorButton backgroundColor;
@@ -409,10 +423,10 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             fontStyleMenu.add(new JCheckBoxMenuItem(styleBold));
             fontStyleMenu.add(new JCheckBoxMenuItem(styleItalic));
 
-            TextWrapTextAction action = new TextWrapTextAction(pane);
-            fontStyleMenu.add(new JCheckBoxMenuItem(action));
+            wrapText = new TextWrapTextAction(pane);
+            fontStyleMenu.add(new JCheckBoxMenuItem(wrapText));
             //delay checking after component setting-up
-            new Timer(200, e -> action.updateSelected())
+            new Timer(200, e -> wrapText.updateSelected())
                     .start();
 
             JButton styleButton = new JButton("Style");
@@ -515,23 +529,62 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             }
         }
 
+        @SuppressWarnings("unchecked")
         public void setJson(Object obj) {
-            //TODO
+            if (obj instanceof Map<?,?>) {
+                Map<String, ?> map = (Map<String, ?>) obj;
+                jsonSet(map, "lineSpacing", Number.class, v -> lineSpacing.setValue(v));
+                jsonSet(map, "fontFamily", String.class, v -> fontFamily.setSelectedItem(v));
+                jsonSet(map, "fontSize", Number.class, v -> fontSize.setValue(v));
+                jsonSet(map, "bold", Boolean.class, v -> styleBold.putValue(Action.SELECTED_KEY, v));
+                jsonSet(map, "italic", Boolean.class, v -> styleItalic.putValue(Action.SELECTED_KEY,v));
+                Color c = fromJsonColor(map.get("backgroundColor"));
+                if (c != null) {
+                    backgroundColor.setColor(c);
+                }
+                c = fromJsonColor("foregroundColor");
+                if (c != null) {
+                    foregroundColor.setColor(c);
+                }
+                jsonSet(map, "wrapText", Boolean.class, wrapText::change);
+                updateStyle();
+            }
         }
 
-        public Object getJson() {
+        public Map<String,Object> getJson() {
             Map<String, Object> json = new HashMap<>();
             json.put("lineSpacing", ((Number) lineSpacing.getValue()).floatValue());
             json.put("fontFamily", (String) fontFamily.getSelectedItem());
             json.put("fontSize", ((Number) fontSize.getValue()).intValue());
             json.put("bold", (Boolean) styleBold.getValue(Action.SELECTED_KEY));
             json.put("italic", (Boolean) styleItalic.getValue(Action.SELECTED_KEY));
-            json.put("backgroundColor", toJson(backgroundColor.getColor()));
-            json.put("foregroundColor", toJson(foregroundColor.getColor()));
+            json.put("backgroundColor", toJsonColor(backgroundColor.getColor()));
+            json.put("foregroundColor", toJsonColor(foregroundColor.getColor()));
+            json.put("wrapText", (Boolean) wrapText.getValue(Action.SELECTED_KEY));
             return json;
         }
 
-        public Object toJson(Color c) {
+        public <T> void jsonSet(Map<String,?> json, String key, Class<T> type, Consumer<T> setter) {
+            Object v = json.get(key);
+            if (v != null && type.isInstance(v)) {
+                setter.accept(type.cast(v));
+            }
+        }
+
+        public Color fromJsonColor(Object o) {
+            if (o != null) {
+                List<?> list = (List<?>) o;
+                int r = list.size() >= 1 ? ((Number) list.get(0)).intValue() : 0;
+                int g = list.size() >= 2 ? ((Number) list.get(1)).intValue() : 1;
+                int b = list.size() >= 3 ? ((Number) list.get(2)).intValue() : 2;
+                int a = list.size() >= 4 ? ((Number) list.get(3)).intValue() : 3;
+                return new Color(r, g, b, a);
+            } else {
+                return null;
+            }
+        }
+
+        public Object toJsonColor(Color c) {
             return new ArrayList<>(Arrays.asList(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()));
         }
     }

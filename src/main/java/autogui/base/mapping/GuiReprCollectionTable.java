@@ -51,13 +51,18 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
     }
 
     @Override
-    public Object fromJson(GuiMappingContext context, Object json) {
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
         for (GuiMappingContext elementContext : context.getChildren()) {
-            Object obj = elementContext.getRepresentation().fromJson(elementContext, json);
+            Object obj = elementContext.getRepresentation().fromJson(elementContext, target, json);
             if (obj != null) {
                 return obj;
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean isJsonSetter() {
+        return false;
     }
 }
