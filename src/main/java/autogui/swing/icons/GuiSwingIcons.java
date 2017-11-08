@@ -59,36 +59,38 @@ public class GuiSwingIcons {
     }
 
     public Icon getDefaultIcon(String name) {
-        URL url = getClass().getResource("autogui-icon@2x.png");
-        if (url != null) {
-            try {
-                defaultIcon = new ResourceIcon(ImageIO.read(url), 32, 32);
-            } catch (Exception ex) {
-                //
-            }
-        }
         if (defaultIcon == null) {
-            int w = 64;
-            int h = 64;
-            BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
-            Graphics2D g = image.createGraphics();
-            {
-                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                g.setColor(new Color(0, 0, 0, 0));
-                g.fillRect(0, 0, w, h);
-
-                g.setColor(new Color(245, 245, 245));
-                RoundRectangle2D.Float rr = new RoundRectangle2D.Float(5, h / 2 - 10, w - 10, 20, 5, 5);
-                g.fill(rr);
-
-                g.setStroke(new BasicStroke(0.7f));
-                g.setColor(new Color(160, 160, 160));
-                g.draw(rr);
+            URL url = getClass().getResource("autogui-icon@2x.png");
+            if (url != null) {
+                try {
+                    defaultIcon = new ResourceIcon(ImageIO.read(url), 32, 32);
+                } catch (Exception ex) {
+                    //
+                }
             }
-            g.dispose();
-            defaultIcon = new ResourceIcon(image, 32, 32);
+            if (defaultIcon == null) {
+                int w = 64;
+                int h = 64;
+                BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
+                Graphics2D g = image.createGraphics();
+                {
+                    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                    g.setColor(new Color(0, 0, 0, 0));
+                    g.fillRect(0, 0, w, h);
+
+                    g.setColor(new Color(245, 245, 245));
+                    RoundRectangle2D.Float rr = new RoundRectangle2D.Float(5, h / 2 - 10, w - 10, 20, 5, 5);
+                    g.fill(rr);
+
+                    g.setStroke(new BasicStroke(0.7f));
+                    g.setColor(new Color(160, 160, 160));
+                    g.draw(rr);
+                }
+                g.dispose();
+                defaultIcon = new ResourceIcon(image, 32, 32);
+            }
         }
         return defaultIcon;
     }
@@ -155,7 +157,7 @@ public class GuiSwingIcons {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g;
-            g2.drawImage(image, op, 0, 0);
+            g2.drawImage(image, op, x, y);
         }
 
         @Override
