@@ -76,6 +76,7 @@ public class IconExp {
 
         btn.setDisabledSelectedIcon(GuiSwingIcons.getInstance().getDefaultIcon(name));
         btn.setDisabledIcon(GuiSwingIcons.getInstance().getDefaultIcon(name));
+        btn.setPressedIcon(GuiSwingIcons.getInstance().getPressedIcon(name));
 
         System.err.printf("GuiSwingIcon: icon=%s, dis=%s, press=%s, roll=%s, sel=%s, disSel=%s, rollSel=%s\n",
                 btn.getIcon(), btn.getDisabledIcon(), btn.getPressedIcon(), btn.getRolloverIcon(), btn.getSelectedIcon(),

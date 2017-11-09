@@ -3,9 +3,7 @@ package autogui.swing.icons;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
-import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.ArrayList;
@@ -15,8 +13,9 @@ import java.util.Map;
 
 public class GuiSwingIcons {
     protected static GuiSwingIcons instance = new GuiSwingIcons();
-
     protected Map<String, Icon> iconMap = new HashMap<>();
+    //to avoid concurrent modification to iconMap, define another map
+    protected Map<String, Icon> pressedIconMap = new HashMap<>();
     protected List<String> iconWords = new ArrayList<>();
     protected Map<String, String> synonyms = new HashMap<>();
 
@@ -120,44 +119,52 @@ public class GuiSwingIcons {
         return iconMap;
     }
 
+    public Map<String, Icon> getPressedIconMap() {
+        return pressedIconMap;
+    }
+
     public Map<String, String> getSynonyms() {
         return synonyms;
     }
 
+    /**
+     * returns a gray version of the icon obtained by getIcon(name).
+     * this can be set for the pressed icon of an button:
+     * <pre>
+     *     button.setPressedIcon(icons.getPressedIcon(name));
+     * </pre>
+     * Default impl. of some UI automatically generates the pressed icon for an ImageIcon,
+     *    but does not for another icon type.
+     * */
+    public Icon getPressedIcon(String name) {
+        return pressedIconMap.computeIfAbsent(name , this::loadPressedIcon);
+    }
+
+    public Icon loadPressedIcon(String name) {
+        Icon icon = getIcon(name);
+        if (icon instanceof ResourceIcon) {
+            return ((ResourceIcon) icon).getPressedIcon();
+        } else if (icon instanceof ImageIcon){
+            return new ImageIcon(GrayFilter.createDisabledImage(((ImageIcon) icon).getImage()));
+        }
+        return icon;
+    }
+
     public static class ResourceIcon implements Icon {
-        protected BufferedImage image;
+        protected Image image;
         protected int width;
         protected int height;
-        protected AffineTransformOp op;
 
-        public ResourceIcon(BufferedImage image, int width, int height) {
+        public ResourceIcon(Image image, int width, int height) {
             this.image = image;
             this.width = width;
             this.height = height;
-            op = new AffineTransformOp(getTransform(), getRenderingHings());
-        }
-
-        protected AffineTransform getTransform() {
-            float imageWidth = image.getWidth();
-            float imageHeight = image.getHeight();
-            return new AffineTransform(
-                    width / imageWidth, 0, 0,
-                    height / imageHeight, 0, 0);
-        }
-
-
-        protected RenderingHints getRenderingHings() {
-            RenderingHints hints = new RenderingHints(new HashMap<>());
-            hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            hints.put(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-            hints.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            return hints;
         }
 
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g;
-            g2.drawImage(image, op, x, y);
+            g2.drawImage(image, x, y, width, height, c);
         }
 
         @Override
@@ -169,10 +176,19 @@ public class GuiSwingIcons {
         public int getIconHeight() {
             return height;
         }
+
+        public Image getImage() {
+            return image;
+        }
+
+        public ResourceIcon getPressedIcon() {
+            return new ResourceIcon(GrayFilter.createDisabledImage(image), width, height);
+        }
     }
 
-    /////////////////////////////
 
+
+    /////////////////////////////
 
     public Icon getAcceptIcon() { return getIcon("accept"); }
     public Icon getAddIcon() { return getIcon("add"); }
@@ -264,7 +280,6 @@ public class GuiSwingIcons {
     public Icon getUndoIcon() { return getIcon("undo"); }
     public Icon getUnlockIcon() { return getIcon("unlock"); }
     public Icon getUnregisterIcon() { return getIcon("unregister"); }
-    public Icon getUnsetIcon() { return getIcon("unset"); }
     public Icon getUnwrapIcon() { return getIcon("unwrap"); }
     public Icon getUpdateIcon() { return getIcon("update"); }
     public Icon getUseIcon() { return getIcon("use"); }
@@ -283,32 +298,32 @@ public class GuiSwingIcons {
                 ,"register","release","remove","rename","replace","request","resize","resolve","retain","reverse"
                 ,"rotate","save","schedule","scroll","select","set","shift","show","skip","slice"
                 ,"sort","split","start","stop","sync","trim","try","undo","unlock","unregister"
-                ,"unset","unwrap","update","use","wait","wrap","write");
-        addSynonym("add", "insert", "install", "append", "join");
+                ,"unwrap","update","use","wait","wrap","write");
+        addSynonym("add", "insert", "append", "install", "join");
         addSynonym("apply", "compute");
         addSynonym("bind", "rebind");
         addSynonym("calculate", "evaluate", "eval");
         addSynonym("change", "modify");
-        addSynonym("check", "validate", "verify", "revalidate", "test");
-        addSynonym("clear", "reset", "init", "format", "empty", "initialize", "refresh", "flush", "free");
+        addSynonym("check", "validate", "revalidate", "test", "verify");
+        addSynonym("clear", "reset", "empty", "flush", "format", "free", "init", "initialize", "refresh");
         addSynonym("compose", "group");
         addSynonym("convert", "to", "transform", "translate");
         addSynonym("copy", "clone", "duplicate");
-        addSynonym("create", "new", "make", "allocate", "generate");
-        addSynonym("deactivate", "deregister", "disable");
-        addSynonym("find", "query", "filter", "search", "match", "matches", "lookup");
+        addSynonym("create", "new", "allocate", "generate", "make");
+        addSynonym("deactivate", "unset", "deregister", "disable");
+        addSynonym("find", "query", "filter", "lookup", "match", "matches", "search");
         addSynonym("get", "take", "acquire");
         addSynonym("load", "open");
-        addSynonym("minus", "subtract", "decrement");
+        addSynonym("minus", "decrement", "subtract");
         addSynonym("paint", "repaint");
         addSynonym("plus", "sum", "accumulate", "increment");
         addSynonym("provide", "offer");
-        addSynonym("put", "send", "post", "submit", "dispatch", "push", "redirect", "store", "transfer");
-        addSynonym("remove", "uninstall", "dispose", "pop", "deinstall");
+        addSynonym("put", "send", "dispatch", "post", "push", "redirect", "store", "submit", "transfer");
+        addSynonym("remove", "uninstall", "deinstall", "dispose", "pop");
         addSynonym("reverse", "rewind", "rollback");
         addSynonym("set", "enable", "activate");
-        addSynonym("start", "fire", "process", "invoke", "run", "execute", "exec", "starts", "begin");
-        addSynonym("stop", "pause", "destroy", "invalidate", "cancel", "shutdown", "abort", "ends", "finish", "end");
+        addSynonym("start", "fire", "begin", "exec", "execute", "invoke", "process", "run", "starts");
+        addSynonym("stop", "pause", "abort", "cancel", "destroy", "end", "ends", "finish", "invalidate", "shutdown");
         addSynonym("trim", "truncate");
         addSynonym("unregister", "unbind");
     }
