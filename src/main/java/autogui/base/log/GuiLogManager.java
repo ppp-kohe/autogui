@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.List;
 
+/** the base class for log managers */
 public class GuiLogManager {
     protected static GuiLogManager manager;
 

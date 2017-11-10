@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
+ * a log-entry for progress:
  * <pre>
  *     [time] minimum|=========value - - - - |maximum : valueP %, message
  *     or
@@ -35,6 +36,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         thread = Thread.currentThread();
     }
 
+    /** copy fields of p. p can be null */
     public void setState(GuiLogEntryProgress p) {
         if (p == null) {
             minimum = 0;
@@ -83,6 +85,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         }
     }
 
+    /** notifies to listeners. this is automatically called from setter methods*/
     public void fireChange() {
         if (listeners != null) {
             listeners.forEach(l -> l.accept(this));

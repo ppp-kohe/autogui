@@ -2,6 +2,7 @@ package autogui.base.log;
 
 import java.time.Instant;
 
+/** a log-entry for a string */
 public class GuiLogEntryString implements GuiLogEntry {
     protected Instant time;
     protected String data;

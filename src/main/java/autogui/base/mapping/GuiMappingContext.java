@@ -256,15 +256,19 @@ public class GuiMappingContext {
         return listeners;
     }
 
+    /** set the source to newValue, call {@link #updateSourceFromGui(Object)} starting with this*/
     public void updateSourceFromGui(Object newValue) {
         this.source = newValue;
         updateSourceFromRoot(this);
     }
 
+    /** {@link #updateSourceFromGui(Object)} with the null cause */
     public void updateSourceFromRoot() {
         updateSourceFromRoot(null);
     }
 
+    /** obtains the root context, recursively collect updated sub-contexts from the root,
+     *    and call listeners with each updated context.  */
     public void updateSourceFromRoot(GuiMappingContext cause) {
         GuiMappingContext ctx = getRoot();
         List<GuiMappingContext> updated = new ArrayList<>();
@@ -274,6 +278,7 @@ public class GuiMappingContext {
                 .forEach(l -> l.update(this, c.getSource())));
     }
 
+    /** recursively collect updated sub-contexts from this and call listeners*/
     public void updateSourceSubTree() {
         List<GuiMappingContext> updated = new ArrayList<>();
         collectUpdatedSource(null, updated);
@@ -296,6 +301,7 @@ public class GuiMappingContext {
         }
     }
 
+    /** space separated words from the camel-case context name */
     public String getDisplayName() {
         if (displayName == null) {
             displayName = nameJoinForDisplay(nameSplit(getName(), true));
@@ -303,6 +309,7 @@ public class GuiMappingContext {
         return displayName;
     }
 
+    /** the top word of the split name, which is an action verb in most cases */
     public String getIconName() {
         if (iconName == null) {
             iconName = nameSplit(getName(), true)
