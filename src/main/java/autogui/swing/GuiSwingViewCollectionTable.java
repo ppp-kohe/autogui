@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.table.GuiSwingTableColumnSet;
 import autogui.swing.table.GuiSwingTableColumnSetDefault;
 import autogui.swing.table.ObjectTableColumn;
@@ -141,7 +142,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initAction(JToolBar actionToolBar, Action action) {
-            actionToolBar.add(new GuiSwingViewObjectPane.ActionButton(action));
+            actionToolBar.add(new GuiSwingIcons.ActionButton(action));
             action.setEnabled(false);
 
             String name = (String) action.getValue(Action.NAME);

@@ -24,6 +24,10 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             if (icon != null) {
                 putValue(LARGE_ICON_KEY, icon);
             }
+            Icon pressIcon = getActionPressedIcon();
+            if (pressIcon != null) {
+                putValue(GuiSwingIcons.PRESSED_ICON_KEY, pressIcon);
+            }
         }
         @Override
         public void actionPerformed(ActionEvent e) {

@@ -35,7 +35,7 @@ public class GuiReprValue implements GuiRepresentation {
 
     /**
      * * the class supposes the parent is a {@link GuiReprPropertyPane}: [propName: [objectPane]].
-     *  then, the parent of source and this source is a same value;
+     *  then, the parent of source and this source are a same value;
      *       and the parent is already checkAndUpdateSource and a new value is supplied
      */
     @Override
@@ -55,7 +55,7 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
-     * obtains current value of the context
+     * obtains the current value of the context
      * @param context  target context
      * @param executeParent  indicates whether recursively invoke the method for the parent if the parent is a property pane.
      *                        If it is checking process, then the order is from root to bottom,

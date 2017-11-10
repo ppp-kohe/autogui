@@ -193,7 +193,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     }
 
     /**
-     * The default implementation is just call to {@link #executeGet(Object, Object)}
+     * The default implementation just calls {@link #executeGet(Object, Object)}
      * @param index  index of the target in the list
      * @param target  an element object
      * @param prevValue it might be null

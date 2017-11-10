@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.ResizableFlowLayout;
 
@@ -180,7 +181,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             if (actionToolBar == null) {
                 initActionToolBar();
             }
-            actionToolBar.add(new ActionButton(action));
+            actionToolBar.add(new GuiSwingIcons.ActionButton(action));
             actions.add(action);
         }
 
@@ -211,19 +212,6 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         @Override
         public GuiMappingContext getContext() {
             return context;
-        }
-    }
-
-    public static class ActionButton extends JButton {
-        public ActionButton(Action a) {
-            super(a);
-            setBorderPainted(false);
-            if (a instanceof GuiSwingActionDefault.ExecutionAction) {
-                Icon icon = ((GuiSwingActionDefault.ExecutionAction) a).getActionPressedIcon();
-                if (icon != null) {
-                    setPressedIcon(icon);
-                }
-            }
         }
     }
 

@@ -45,7 +45,7 @@ public class IconExp {
 
             List<JButton> btns = new ArrayList<>();
 
-            JButton btn1 = button("src/main/resources/autogui/swing/icons/autogui-icon@2x.png", "Run 64");
+            JButton btn1 = button("src/main/resources/autogui/swing/icons/action@2x.png", "Run 64");
             btns.add(btn1);
 
             GuiSwingIcons.getInstance().getIconWords().forEach(n -> btns.add(buttonRes(n)));

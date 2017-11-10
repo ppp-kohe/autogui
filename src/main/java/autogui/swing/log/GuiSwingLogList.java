@@ -1,17 +1,17 @@
 package autogui.swing.log;
 
 import autogui.base.log.GuiLogEntry;
+import autogui.swing.icons.GuiSwingIcons;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.text.JTextComponent;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.util.List;
-import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class GuiSwingLogList extends JList<GuiLogEntry> {
@@ -29,6 +29,11 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         super(new GuiSwingLogListModel());
         setOpaque(true);
         setFocusable(true);
+
+        //clear default UI listeners: BasicListUI.Handler changes the selection interval,
+        //  and it will unexpectedly clear the starting row of a drag range
+        Arrays.stream(getMouseListeners()).forEach(this::removeMouseListener);
+        Arrays.stream(getMouseMotionListeners()).forEach(this::removeMouseMotionListener);
 
         eventDispatcher = new GuiSwingLogEventDispatcher(this);
         addMouseListener(eventDispatcher);
@@ -385,8 +390,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                     GuiLogEntry e = table.getValueAt(i);
                     if (e instanceof GuiSwingLogEntry) {
                         GuiSwingLogEntry se = (GuiSwingLogEntry) e;
+                        boolean alreadySelected = se.isSelected();
                         se.setSelected(selected);
-                        if (!selected) {
+                        if (alreadySelected && !selected) {
                             se.clearSelection();
                         }
                     }
@@ -445,7 +451,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             Rectangle cellRect = table.getCellRect(row);
             GuiSwingLogEntry entry = getEntry(pressPoint);
             if (entry != null) {
-                table.getSelectionModel().addSelectionInterval(row, row);
+                ListSelectionModel sel = table.getSelectionModel();
+                //sel.addSelectionInterval(row, row);
+                sel.setSelectionInterval(row, row);
                 runEntry(row, entry, r -> {
                     r.mousePressed(entry, convert(cellRect, pressPoint));
                 });
@@ -708,7 +716,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         JToolBar bar = new JToolBar();
         bar.setBorderPainted(false);
         bar.setFloatable(false);
-        bar.add(getClearAction());
+        bar.add(new GuiSwingIcons.ActionButton(getClearAction()));
 
         JTextField field = new JTextField(20);
         field.addKeyListener(new LogTextFindAdapter(this, field));
@@ -723,6 +731,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             putValue(NAME, "Clear");
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_K,
                     Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("clear"));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("clear"));
             this.list = list;
         }
 

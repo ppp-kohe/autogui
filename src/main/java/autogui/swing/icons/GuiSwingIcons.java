@@ -30,7 +30,11 @@ public class GuiSwingIcons {
     }
 
     public Icon getIcon(String name) {
-        return iconMap.computeIfAbsent(name, this::loadIconOrDefault);
+        return iconMap.computeIfAbsent("action-" + name, k -> loadIconOrDefault(name));
+    }
+
+    public Icon getIcon(String prefix, String name, int width, int height) {
+        return iconMap.computeIfAbsent(prefix + name, k -> loadIcon(prefix, name, "@2x.png", width, height));
     }
 
     public Icon loadIconOrDefault(String name) {
@@ -42,15 +46,18 @@ public class GuiSwingIcons {
     }
 
     public Icon loadIcon(String name) {
-        try {
-            String iconName = synonyms.getOrDefault(name, name);
+        return loadIcon("action-",
+                synonyms.getOrDefault(name, name), "@2x.png", 32, 32);
+    }
 
-            URL url = getClass().getResource("autogui-icon-" + iconName + "@2x.png");
+    public Icon loadIcon(String prefix, String name, String suffix, int width, int height) {
+        try {
+            URL url = getClass().getResource(prefix + name + suffix);
             if (url == null) {
                 return null;
             } else {
                 return new ResourceIcon(
-                        ImageIO.read(url), 32, 32);
+                        ImageIO.read(url), width, height);
             }
         } catch (Exception ex) {
             return null;
@@ -59,7 +66,7 @@ public class GuiSwingIcons {
 
     public Icon getDefaultIcon(String name) {
         if (defaultIcon == null) {
-            URL url = getClass().getResource("autogui-icon@2x.png");
+            URL url = getClass().getResource("action@2x.png");
             if (url != null) {
                 try {
                     defaultIcon = new ResourceIcon(ImageIO.read(url), 32, 32);
@@ -137,17 +144,24 @@ public class GuiSwingIcons {
      *    but does not for another icon type.
      * */
     public Icon getPressedIcon(String name) {
-        return pressedIconMap.computeIfAbsent(name , this::loadPressedIcon);
+        return pressedIconMap.computeIfAbsent("action-" + name , k -> loadPressedIcon(name));
     }
 
     public Icon loadPressedIcon(String name) {
-        Icon icon = getIcon(name);
+        return loadPressedIcon(getIcon(name));
+    }
+
+    public Icon loadPressedIcon(Icon icon) {
         if (icon instanceof ResourceIcon) {
             return ((ResourceIcon) icon).getPressedIcon();
         } else if (icon instanceof ImageIcon){
             return new ImageIcon(GrayFilter.createDisabledImage(((ImageIcon) icon).getImage()));
         }
         return icon;
+    }
+
+    public Icon getPressedIcon(String prefix, String name, int width, int height) {
+        return pressedIconMap.computeIfAbsent(prefix + name, k -> loadPressedIcon(loadIcon(prefix, name, "@2x.png", width, height)));
     }
 
     public static class ResourceIcon implements Icon {
@@ -186,6 +200,18 @@ public class GuiSwingIcons {
         }
     }
 
+    public static String PRESSED_ICON_KEY = "autoguiPressedIcon";
+
+    public static class ActionButton extends JButton {
+        public ActionButton(Action a) {
+            super(a);
+            setBorderPainted(false);
+            Object o = a.getValue(PRESSED_ICON_KEY);
+            if (o != null) {
+                setPressedIcon((Icon) o);
+            }
+        }
+    }
 
 
     /////////////////////////////

@@ -2,6 +2,7 @@ package autogui.swing.log;
 
 import autogui.base.log.GuiLogEntry;
 import autogui.base.log.GuiLogEntryProgress;
+import autogui.swing.icons.GuiSwingIcons;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -13,8 +14,9 @@ import java.awt.event.ActionEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements GuiSwingLogEntry {
@@ -83,9 +85,10 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             Font font = GuiSwingLogManager.getFont();
 
             progressBar = new JProgressBar(0, 1000_000);
-            stopButton = new JButton(new ProgressStopAction(this));
+            stopButton = new GuiSwingIcons.ActionButton(new ProgressStopAction(this));
             stopButton.setBorderPainted(false);
-            stopButton.setPreferredSize(new Dimension(64, 15));
+            stopButton.setHideActionText(true);
+            stopButton.setPreferredSize(new Dimension(24, 24));
 
             message = new JTextPane();
             message.setBorder(BorderFactory.createEmptyBorder());
@@ -406,6 +409,9 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         protected GuiSwingLogProgressRenderer renderer;
         public ProgressStopAction(GuiSwingLogProgressRenderer renderer) {
             putValue(NAME, "Stop");
+            GuiSwingIcons icons = GuiSwingIcons.getInstance();
+            putValue(LARGE_ICON_KEY, icons.getIcon("log-", "stop", 16, 16));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, icons.getPressedIcon("log-", "stop", 16, 16));
             this.renderer = renderer;
         }
         @Override

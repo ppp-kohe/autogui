@@ -8,6 +8,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.prefs.Preferences;
 
+/** the Preferences holder associated to a GuiMappingContext.
+ *    The class holds its parent, but does not hold children.
+ *     Each child is held by GuiMappingContext.
+ *
+ *   It also has a list of history values.
+ * */
 public class GuiPreferences {
     protected GuiMappingContext context;
     protected GuiPreferences parent;
@@ -24,6 +30,7 @@ public class GuiPreferences {
         this.context = context;
     }
 
+    /** returns a new instance for context */
     public GuiPreferences getChild(GuiMappingContext context) {
         return new GuiPreferences(this, context);
     }
@@ -157,6 +164,7 @@ public class GuiPreferences {
         public void flush() { }
     }
 
+    /* note: in macOS, ~/Library/Preferences/com.apple.java.util.prefs.plist ? */
     public static class GuiValueStoreDefault extends GuiValueStore {
         protected Preferences store;
 
@@ -298,7 +306,7 @@ public class GuiPreferences {
         }
 
         public GuiValueStore getValueStore() {
-            if (valueStore != null) {
+            if (valueStore == null) {
                 valueStore = preferences.getValueStore()
                         .getChild("$")
                         .getChild("" + keyIndex);

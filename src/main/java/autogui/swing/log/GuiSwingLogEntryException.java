@@ -2,6 +2,7 @@ package autogui.swing.log;
 
 import autogui.base.log.GuiLogEntry;
 import autogui.base.log.GuiLogEntryException;
+import autogui.swing.icons.GuiSwingIcons;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -67,6 +68,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         protected JViewport stackViewport;
         protected TextPaneCellSupport.TextPaneCellSupportList supports;
 
+        protected ExceptionExpandAction expandAction;
         protected JButton expandButton;
 
         protected GuiSwingLogManager manager;
@@ -102,8 +104,10 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             stackViewport = new JViewport();
             stackViewport.setView(stackTrace);
 
-            expandButton = new JButton(new ExceptionExpandAction(this));
-            expandButton.setPreferredSize(new Dimension(64, 15));
+            expandAction = new ExceptionExpandAction(this);
+            expandButton = new GuiSwingIcons.ActionButton(expandAction);
+            expandButton.setHideActionText(true);
+            expandButton.setPreferredSize(new Dimension(32, 28));
 
             messageLinePane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
             messageLinePane.getInsets().set(0, 0, 0, 0);
@@ -204,6 +208,10 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         public void expansionChanged() {
             if (lastValue != null && lastValue instanceof GuiSwingLogEntryException) {
                 boolean expanded = ((GuiSwingLogEntryException) lastValue).isExpanded();
+
+                expandButton.setIcon(expandAction.getIcon(expanded));
+                expandButton.setPressedIcon(expandAction.getPressedIcon(expanded));
+
                 int i = getExpansionTextStartIndex();
                 if (!expanded && i >= 0) {
                     try {
@@ -558,6 +566,16 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         public ExceptionExpandAction(GuiSwingLogExceptionRenderer renderer) {
             super("Expand");
             this.renderer = renderer;
+            putValue(LARGE_ICON_KEY, getIcon(true));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, getPressedIcon(true));
+        }
+
+        public Icon getIcon(boolean expand) {
+            return GuiSwingIcons.getInstance().getIcon("log-", expand ? "expand" : "collapse", 16, 14);
+        }
+
+        public Icon getPressedIcon(boolean expand) {
+            return GuiSwingIcons.getInstance().getPressedIcon("log-", expand ? "expand" : "collapse", 16, 14);
         }
 
         @Override

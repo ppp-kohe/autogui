@@ -67,7 +67,7 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
         run(propertyPane::doClick);
         Assert.assertFalse(prop.booleanValue().value);
 
-        Assert.assertEquals("hello", propertyPane.getText());
+        Assert.assertEquals("Hello", propertyPane.getText());
 
     }
 

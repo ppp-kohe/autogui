@@ -32,15 +32,17 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
 
                 JButton btn = new JButton("Task");
                 btn.addActionListener(e -> {
-                    try (GuiLogEntryProgress p = GuiLogManager.get().logProgress()) {
-                        for (int i = 0; i < 10; ++i) {
-                            p.addValueP(0.1);
-                            p.setMessage("hello");
-                            Thread.sleep(100);
+                    new Thread(() -> {
+                        try (GuiLogEntryProgress p = GuiLogManager.get().logProgress()) {
+                            for (int i = 0; i < 10; ++i) {
+                                p.addValueP(0.1);
+                                p.setMessage("hello");
+                                Thread.sleep(500);
+                            }
+                        } catch (Exception ex) {
+                            //
                         }
-                    } catch (Exception ex) {
-                        //
-                    }
+                    }).start();
                 });
                 pane.add(btn);
             }
@@ -63,7 +65,7 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
             for (int i = 0; i < 10; ++i) {
                 p.addValueP(0.1);
                 p.setMessage("progress " + i);
-                Thread.sleep(100);
+                Thread.sleep(500);
             }
         } catch (Exception ex) {
             //

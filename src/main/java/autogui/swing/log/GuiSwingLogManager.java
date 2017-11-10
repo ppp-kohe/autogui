@@ -1,6 +1,7 @@
 package autogui.swing.log;
 
 import autogui.base.log.*;
+import autogui.swing.icons.GuiSwingIcons;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -180,8 +181,11 @@ public class GuiSwingLogManager extends GuiLogManager {
 
             //status bar
             statusBar = new GuiSwingLogStatusBar(manager);
-            JButton showButton = new JButton(new LogWindowShowAction(this));
+            JButton showButton = new GuiSwingIcons.ActionButton(new LogWindowShowAction(this));
+            showButton.setHideActionText(true);
+            showButton.setBorderPainted(false);
             statusBar.add(showButton, BorderLayout.WEST);
+            System.err.println(showButton.getPressedIcon());
             setContentPane(pane);
             pack();
             setSize(400, 600);
@@ -216,6 +220,9 @@ public class GuiSwingLogManager extends GuiLogManager {
                     KeyStroke.getKeyStroke(KeyEvent.VK_L,
                             KeyEvent.SHIFT_DOWN_MASK |
                                     Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            GuiSwingIcons icons = GuiSwingIcons.getInstance();
+            putValue(LARGE_ICON_KEY, icons.getIcon("log-", "show", 32, 25));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, icons.getPressedIcon("log-", "show", 32, 25));
             this.frame = frame;
         }
 
