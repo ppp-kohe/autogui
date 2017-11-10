@@ -218,6 +218,12 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         public ActionButton(Action a) {
             super(a);
             setBorderPainted(false);
+            if (a instanceof GuiSwingActionDefault.ExecutionAction) {
+                Icon icon = ((GuiSwingActionDefault.ExecutionAction) a).getActionPressedIcon();
+                if (icon != null) {
+                    setPressedIcon(icon);
+                }
+            }
         }
     }
 

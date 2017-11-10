@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprAction;
+import autogui.swing.icons.GuiSwingIcons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -19,7 +20,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             this.context = context;
             putValue(Action.NAME, context.getDisplayName());
 
-            Icon icon = getActionIcon(context.getName());
+            Icon icon = getActionIcon();
             if (icon != null) {
                 putValue(LARGE_ICON_KEY, icon);
             }
@@ -35,9 +36,16 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             }
         }
 
-        public Icon getActionIcon(String name) {
-            //TODO
-            return null;
+        public String getIconName() {
+            return context.getIconName();
+        }
+
+        public Icon getActionIcon() {
+            return GuiSwingIcons.getInstance().getIcon(getIconName());
+        }
+
+        public Icon getActionPressedIcon() {
+            return GuiSwingIcons.getInstance().getPressedIcon(getIconName());
         }
     }
 }

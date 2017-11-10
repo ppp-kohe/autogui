@@ -57,6 +57,9 @@ public class GuiMappingContext {
     protected ScheduledExecutorService taskRunner;
     protected GuiPreferences preferences;
 
+    protected String displayName;
+    protected String iconName;
+
     public GuiMappingContext(GuiTypeElement typeElement) {
         this.typeElement = typeElement;
     }
@@ -294,8 +297,72 @@ public class GuiMappingContext {
     }
 
     public String getDisplayName() {
-        return getName(); //TODO
+        if (displayName == null) {
+            displayName = nameJoinForDisplay(nameSplit(getName(), true));
+        }
+        return displayName;
     }
+
+    public String getIconName() {
+        if (iconName == null) {
+            iconName = nameSplit(getName(), true)
+                    .get(0).toLowerCase();
+        }
+        return iconName;
+    }
+
+    public String nameJoinForDisplay(List<String> words) {
+        return words.stream()
+            .map(s -> s.isEmpty() ? s :
+                    (Character.toUpperCase(s.charAt(0)) + s.substring(1)))
+            .collect(Collectors.joining(" "));
+    }
+
+    /**
+     * split a name to a list of words by camel case.
+     * <pre>
+     *  "helloWorld" =&gt; ["hello", "World"]
+     *  "HelloWorld" =&gt; ["Hello", "World"]
+     *  "helloWORLD" =&gt; ["hello", "WORLD"]
+     *  "HELLOWorld" =&gt; ["HELLO", "World"]
+     *  "" =&gt; [""]
+     * </pre>
+     */
+    public List<String> nameSplit(String name, boolean forDisplay) {
+        List<String> words = new ArrayList<String>();
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0, len = name.length(); i < len; ++i) {
+            char c = name.charAt(i);
+            if (buf.length() > 0 &&
+                    (isNameSeparator(c) ||
+                     isNameCharUpper(c, i, len, name, forDisplay))) {
+                words.add(buf.toString());
+                buf = new StringBuilder();
+            }
+            if (!isNameSeparator(c)) {
+                buf.append(c);
+            }
+        }
+        if (buf.length() > 0 || words.isEmpty()) {
+            words.add(buf.toString());
+        }
+        return words;
+    }
+
+    public boolean isNameCharUpper(char c, int i, int len, String name, boolean forDisplay) {
+        if (forDisplay) {
+            return (Character.isUpperCase(c) &&
+                    (i > 0 && Character.isLowerCase(name.charAt(i - 1)) ||  // a[A]
+                   (i + 1 < len && Character.isLowerCase(name.charAt(i + 1))))); //[.]a
+        } else {
+            return Character.isUpperCase(c);
+        }
+    }
+
+    public boolean isNameSeparator(char c) {
+        return Character.isWhitespace(c) || c == '$' || c =='_' || !Character.isJavaIdentifierPart(c);
+    }
+
 
     public void errorWhileUpdateSource(Throwable error) {
         GuiLogManager.get().logError(error);
