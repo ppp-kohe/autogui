@@ -169,8 +169,10 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
         @Override
         protected void paintComponent(Graphics g) {
+
             updateByLastValue();
-            if (!message2Layout) {
+            if (!message2Layout &&
+                    message2Size == null) { //frequent process of the following code cause flicker
                 FontRenderContext context = ((Graphics2D) g).getFontRenderContext();
                 Font font = getFont();
                 if (font == null) {
@@ -194,10 +196,8 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             nextValue.setState(lastValue);
 
             message.setText(formatMessageText(nextValue));
-            message.invalidate();
 
             message2.setText(formatProgressText(nextValue));
-            message2.invalidate();
 
             if (lastValue != null) {
                 GuiSwingLogEntryString.setHeaderStyle(message, "] ", timeStyle);

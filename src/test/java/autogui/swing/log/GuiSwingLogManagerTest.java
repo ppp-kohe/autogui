@@ -45,6 +45,22 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
                     }).start();
                 });
                 pane.add(btn);
+
+                btn = new JButton("TaskLong");
+                btn.addActionListener(e -> {
+                    new Thread(() -> {
+                        try (GuiLogEntryProgress p = GuiLogManager.get().logProgress()) {
+                            for (int i = 0; i < 100; ++i) {
+                                p.addValueP(0.01);
+                                p.setMessage("hello long");
+                                Thread.sleep(500);
+                            }
+                        } catch (Exception ex) {
+                            //
+                        }
+                    }).start();
+                });
+                pane.add(btn);
             }
             pane = w.getPaneWithStatusBar(pane);
 

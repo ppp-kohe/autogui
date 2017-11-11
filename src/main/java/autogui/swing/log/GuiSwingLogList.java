@@ -2,6 +2,8 @@ package autogui.swing.log;
 
 import autogui.base.log.GuiLogEntry;
 import autogui.swing.icons.GuiSwingIcons;
+import autogui.swing.util.ResizableFlowLayout;
+import autogui.swing.util.SearchTextField;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -442,6 +444,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                 table.showPopup(e.getPoint());
                 return;
             }
+
+            table.requestFocusInWindow();
             table.setValueIsAdjusting(true);
             pressPoint = e.getPoint();
 
@@ -718,9 +722,45 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         bar.setFloatable(false);
         bar.add(new GuiSwingIcons.ActionButton(getClearAction()));
 
+
+        JComponent findPane = new JComponent() {
+            SearchTextField.SearchBackgroundPainterBordered p = new SearchTextField.SearchBackgroundPainterBordered(this);
+            {
+                setLayout(new BorderLayout());
+                setBackground(Color.white);
+            }
+
+            @Override
+            public Component add(Component comp) {
+                p.setChild((JComponent) comp);
+                return super.add(comp);
+            }
+
+            @Override
+            public void add(Component comp, Object constraints) {
+                p.setChild((JComponent) comp);
+                super.add(comp, constraints);
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                p.paintComponent(g);
+            }
+        };
+
+        JButton icon = new JButton();
+        icon.setIcon(GuiSwingIcons.getInstance().getPressedIcon("log-", "find", 16, 16));
+        icon.setBorderPainted(false);
+        findPane.add(icon, BorderLayout.WEST);
+
         JTextField field = new JTextField(20);
+        field.setOpaque(true);
         field.addKeyListener(new LogTextFindAdapter(this, field));
-        bar.add(field);
+        findPane.add(field);
+
+        bar.add(ResizableFlowLayout.create(true)
+                .withBorder(5, 5)
+                .add(findPane, true).getContainer());
         return bar;
     }
 

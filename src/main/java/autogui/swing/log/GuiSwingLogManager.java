@@ -185,7 +185,6 @@ public class GuiSwingLogManager extends GuiLogManager {
             showButton.setHideActionText(true);
             showButton.setBorderPainted(false);
             statusBar.add(showButton, BorderLayout.WEST);
-            System.err.println(showButton.getPressedIcon());
             setContentPane(pane);
             pack();
             setSize(400, 600);
