@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,15 +37,17 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
             //context update
             context.addSourceUpdateListener(this);
-            //inital update
+            //initial update
             update(context, context.getSource());
 
             //popup
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
             ContextRefreshAction refreshAction = new ContextRefreshAction(context);
+            PopupExtensionText.TextOpenBrowserAction browserAction = new PopupExtensionText.TextOpenBrowserAction(this);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.accept(info);
                 menu.accept(refreshAction);
+                menu.accept(browserAction);
             });
             setInheritsPopupMenu(true);
 
@@ -110,5 +113,6 @@ public class GuiSwingViewLabel implements GuiSwingView {
             return new StringSelection(pane.getValueAsString());
         }
     }
+
 }
 

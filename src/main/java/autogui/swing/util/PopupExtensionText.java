@@ -1,5 +1,8 @@
 package autogui.swing.util;
 
+import autogui.base.log.GuiLogManager;
+import autogui.swing.log.GuiSwingLogManager;
+
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -11,6 +14,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -115,7 +119,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                 new TextPasteAllAction(textComponent),
                 new TextSelectAllAction(textComponent),
                 new TextLoadAction(textComponent),
-                new TextSaveAction(textComponent));
+                new TextSaveAction(textComponent),
+                new TextOpenBrowserAction(textComponent));
     }
 
     //////////////
@@ -201,6 +206,33 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     ///////////// text actions for a specific target
 
+    public static class TextOpenBrowserAction extends AbstractAction {
+        protected JComponent component;
+        public TextOpenBrowserAction(JComponent component) {
+            this.component = component;
+            putValue(NAME, "Open URL in Browser");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String text = null;
+            if (component instanceof JLabel) {
+                text = ((JLabel) component).getText();
+            } else if (component instanceof JTextComponent) {
+                text = ((JTextComponent) component).getText();
+            }
+            if (text != null) {
+                try {
+                    if (!text.contains("://")) {
+                        text = "http://" + text;
+                    }
+                    Desktop.getDesktop().browse(URI.create(text));
+                } catch (Exception ex) {
+                    GuiLogManager.get().logFormat("Open URL Error:%s", ex);
+                }
+            }
+        }
+    }
 
     public static class TextCutAction extends AbstractAction {
         private static final long serialVersionUID = 1L;

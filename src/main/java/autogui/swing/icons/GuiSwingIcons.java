@@ -3,6 +3,7 @@ package autogui.swing.icons;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.net.URL;
@@ -166,10 +167,10 @@ public class GuiSwingIcons {
 
     public static class ResourceIcon implements Icon {
         protected Image image;
-        protected int width;
-        protected int height;
+        protected float width;
+        protected float height;
 
-        public ResourceIcon(Image image, int width, int height) {
+        public ResourceIcon(Image image, float width, float height) {
             this.image = image;
             this.width = width;
             this.height = height;
@@ -178,17 +179,17 @@ public class GuiSwingIcons {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g;
-            g2.drawImage(image, x, y, width, height, c);
+            g2.drawImage(image, x, y, (int) width, (int) height, c);
         }
 
         @Override
         public int getIconWidth() {
-            return width;
+            return (int) width;
         }
 
         @Override
         public int getIconHeight() {
-            return height;
+            return (int) height;
         }
 
         public Image getImage() {

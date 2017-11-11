@@ -11,10 +11,15 @@ import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
@@ -87,7 +92,12 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             List<JComponent> items = new ArrayList<>();
             items.add(label);
             items.add(new JMenuItem(new ContextRefreshAction(context)));
+
+            MouseListener[] listeners = getMouseListeners();
+            Arrays.stream(listeners).forEach(this::removeMouseListener);
             popup = new PopupExtensionCollection(this, PopupExtension.getDefaultKeyMatcher(), items);
+            Arrays.stream(listeners).forEach(this::addMouseListener);
+            //improve precedence of the popup listener
 
             //cell selection
             setCellSelectionEnabled(true);
@@ -234,12 +244,59 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void savePreferences() {
             //TODO
         }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            Graphics2D g2 = (Graphics2D) g;
+            paintSelectedRows(g2);
+        }
+
+        protected void paintSelectedRows(Graphics2D g2) {
+            Rectangle rect = g2.getClipBounds();
+            double top = rect.getY();
+            double bottom = rect.getMaxY();
+            double x = rect.getX();
+
+            int start = rowAtPoint(new Point((int) x, (int) top));
+            int end = rowAtPoint(new Point((int) x, (int) bottom));
+            if (end < 0) {
+                end = getRowCount() - 1;
+            }
+
+            g2.setColor(getSelectionBackground());
+            g2.setStroke(new BasicStroke(1));
+
+            ListSelectionModel sel = getSelectionModel();
+            int cols = getColumnCount();
+            for (int i = start; i <= end; ++i) {
+                if (sel.isSelectedIndex(i)) {
+                    Rectangle row = null;
+                    for (int c = 0; c < cols; ++c) {
+                        Rectangle r = getCellRect(i, c, false);
+                        if (row == null) {
+                            row= r;
+                        } else {
+                            row.add(r);
+                        }
+                    }
+                    if (row != null) {
+                        g2.draw(new RoundRectangle2D.Float(row.x + 1, row.y + 1, row.width - 2, row.height - 2, 5, 5));
+                    }
+                }
+            }
+        }
     }
 
-    public static class PopupExtensionCollection extends PopupExtension {
+
+    public static class PopupExtensionCollection extends PopupExtension implements PopupMenuListener {
         protected CollectionTable table;
         protected int targetColumnIndex = -1;
         protected int lastClickColumnIndex = 0;
+
+        protected boolean showing;
+        protected Timer showingTimer;
 
         public PopupExtensionCollection(CollectionTable pane, Predicate<KeyEvent> keyMatcher, List<JComponent> items) {
             super(pane, keyMatcher, null);
@@ -252,6 +309,27 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                         .forEach(comps::add);
                 return comps;
             }));
+
+            menu.get().addPopupMenuListener(this);
+            showingTimer = new Timer(100, e -> {
+                showing = false;
+            });
+            showingTimer.setRepeats(false);
+        }
+
+        @Override
+        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            showing = true;
+        }
+
+        @Override
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            showingTimer.start(); //force to cause the hiding process after mousePressed
+        }
+
+        @Override
+        public void popupMenuCanceled(PopupMenuEvent e) {
+            showingTimer.start();
         }
 
         public CollectionTable getTable() {
@@ -260,6 +338,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void mousePressed(MouseEvent e) {
+            if (!e.isPopupTrigger() && showing) { //closing the popup menu, and then nothing
+                e.consume();
+                return;
+            }
             int viewColumn = table.columnAtPoint(e.getPoint());
             lastClickColumnIndex = table.convertColumnIndexToView(viewColumn);
             if (e.isPopupTrigger()) {

@@ -220,8 +220,8 @@ public class GuiSwingLogManager extends GuiLogManager {
                             KeyEvent.SHIFT_DOWN_MASK |
                                     Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             GuiSwingIcons icons = GuiSwingIcons.getInstance();
-            putValue(LARGE_ICON_KEY, icons.getIcon("log-", "show", 32, 25));
-            putValue(GuiSwingIcons.PRESSED_ICON_KEY, icons.getPressedIcon("log-", "show", 32, 25));
+            putValue(LARGE_ICON_KEY, icons.getIcon("log-", "show", 25, 25));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, icons.getPressedIcon("log-", "show", 25, 25));
             this.frame = frame;
         }
 

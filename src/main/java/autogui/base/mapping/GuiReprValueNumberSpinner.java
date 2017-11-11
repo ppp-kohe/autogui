@@ -260,6 +260,9 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
         @Override
         public int compareTo(Object o) {
+            if (o.equals(this)) {
+                return 0;
+            }
             return upper ? 1 : 0;
         }
 

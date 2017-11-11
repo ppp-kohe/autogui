@@ -20,6 +20,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.*;
 import java.util.EventObject;
 import java.util.List;
@@ -311,8 +313,26 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             editActions.add(new JMenuItem(new ContextRefreshAction(context)));
             editActions.add(new JPopupMenu.Separator());
             editActions.add(new JMenuItem(new NumberSettingAction(info.getInfoLabel(context), model)));
+            editActions.add(new JMenuItem(new NumberMaximumAction(false, model)));
+            editActions.add(new JMenuItem(new NumberMaximumAction(true, model)));
         }
 
+    }
+
+    public static class NumberMaximumAction extends AbstractAction {
+        protected TypedSpinnerNumberModel model;
+        protected boolean max;
+
+        public NumberMaximumAction(boolean max, TypedSpinnerNumberModel model) {
+            this.model = model;
+            this.max = max;
+            putValue(NAME, max ? "Set to Maximum" : "Set to Minimum");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            model.setValue(max ? model.getNumberMaximum() : model.getNumberMinimum());
+        }
     }
 
     public static class TypedSpinnerNumberModel extends SpinnerNumberModel {
@@ -384,21 +404,40 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             }
         }
 
-        @Override
-        public Comparable<?> getMaximum() {
-            return toNumber(super.getMaximum(), true);
-        }
+//        @Override
+//        public Comparable<?> getMaximum() {
+//            return toNumber(super.getMaximum(), true);
+//        }
+//
+//        @Override
+//        public Comparable<?> getMinimum() {
+//            return toNumber(super.getMinimum(), false);
+//        }
 
-        @Override
-        public Comparable<?> getMinimum() {
-            return toNumber(super.getMinimum(), false);
-        }
+        static BigInteger nayuta = BigInteger.valueOf(10).pow(60);
 
-        protected Comparable<?> toNumber(Comparable<?> o, boolean max) {
+        protected Number toNumber(Comparable<?> o, boolean max) {
             if (o instanceof Number) {
-                return o;
+                return (Number) numberType.convert(o);
             } else {
-                return max ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+                Object m = max ? numberType.getMaximum() : numberType.getMinimum();
+                if (m instanceof Number) {
+                    return (Number) m;
+                } else {
+                    if (m.equals(GuiReprValueNumberSpinner.MAXIMUM)) {
+                        if (numberType instanceof GuiReprValueNumberSpinner.NumberTypeBigInteger) {
+                            return nayuta;
+                        } else {
+                            return new BigDecimal(nayuta);
+                        }
+                    } else {
+                        if (numberType instanceof GuiReprValueNumberSpinner.NumberTypeBigInteger) {
+                            return nayuta.multiply(BigInteger.valueOf(-1));
+                        } else {
+                            return new BigDecimal(nayuta).multiply(BigDecimal.valueOf(-1));
+                        }
+                    }
+                }
             }
         }
 
@@ -408,6 +447,14 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public Comparable<?> getActualMinimum() {
             return super.getMinimum();
+        }
+
+        public Number getNumberMaximum() {
+            return toNumber(super.getMaximum(), true);
+        }
+
+        public Number getNumberMinimum() {
+            return toNumber(super.getMinimum(), false);
         }
     }
 
