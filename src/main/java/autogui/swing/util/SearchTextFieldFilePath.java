@@ -1,6 +1,7 @@
 package autogui.swing.util;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.DnDConstants;
@@ -16,9 +17,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -480,6 +479,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     public static class SearchTextFieldModelFilePath implements SearchTextFieldModel {
         protected PopupCategorized.CategorizedPopupItem selection;
+        protected FileSystemView iconSource;
 
         @Override
         public boolean isFixedCategorySize() {
@@ -510,11 +510,11 @@ public class SearchTextFieldFilePath extends SearchTextField {
                     if (publisher.isSearchCancelled()) {
                         return items;
                     }
-                    items.addAll(getParentItems(path));
+                    items.addAll(getChildItems(path));
                     if (publisher.isSearchCancelled()) {
                         return items;
                     }
-                    items.addAll(getChildItems(path));
+                    items.addAll(getParentItems(path));
                     if (publisher.isSearchCancelled()) {
                         return items;
                     }
@@ -636,7 +636,16 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
 
         public FileItem getFileItem(Path path, String category, boolean nameOnly) {
-            return new FileItem(path, null, category, nameOnly);
+            if (iconSource == null) {
+                iconSource = FileSystemView.getFileSystemView();
+            }
+            return new FileItem(path, p -> {
+                if (path == null) {
+                    return null;
+                } else {
+                    return iconSource.getSystemIcon(p.toFile());
+                }
+            }, category, nameOnly);
         }
 
         @Override
@@ -694,7 +703,6 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     public static class FileInfoItem implements PopupCategorized.CategorizedPopupItemLabel {
         protected Path path;
-
         public FileInfoItem(Path path) {
             this.path = path;
         }
@@ -741,7 +749,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         public String toFileTime(FileTime time) {
             LocalDateTime l = LocalDateTime.ofInstant(time.toInstant(), ZoneId.systemDefault());
-            return l.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
+            return l.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+                    .withLocale(Locale.getDefault()));
         }
 
         public String getNameSize() throws Exception {
@@ -802,8 +811,11 @@ public class SearchTextFieldFilePath extends SearchTextField {
         upperAppended = append(buf, upperAppended, tera, " T");
         upperAppended = append(buf, upperAppended, giga, " G");
         upperAppended = append(buf, upperAppended, mega, " M");
-        append(buf, upperAppended, kilo, " K");
+        upperAppended = append(buf, upperAppended, kilo, " K");
         if (bytes > 0) {
+            if (upperAppended) {
+                buf.append(" ");
+            }
             buf.append(bytes).append(" ");
         }
         buf.append("B");

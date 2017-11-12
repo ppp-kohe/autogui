@@ -43,15 +43,15 @@ public class GuiSwingTestCase {
             if (Character.isUpperCase(c)) {
                 robot.keyPress(KeyEvent.VK_SHIFT);
             }
-            robot.delay(10);
+            robot.delay(30);
             robot.keyPress(Character.toUpperCase(c));
-            robot.delay(10);
+            robot.delay(30);
             robot.keyRelease(Character.toUpperCase(c));
-            robot.delay(10);
+            robot.delay(30);
             if (Character.isUpperCase(c)) {
                 getRobot().keyRelease(KeyEvent.VK_SHIFT);
             }
-            robot.delay(10);
+            robot.delay(100);
         }
     }
 

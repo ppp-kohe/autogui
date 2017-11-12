@@ -11,9 +11,11 @@ import javax.swing.*;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 
 public class GuiSwingViewFilePathFieldTest extends GuiSwingTestCase {
     public static void main(String[] args) throws Exception {
+        System.err.println(Locale.getDefault());
         new GuiSwingViewFilePathFieldTest().test();
     }
 

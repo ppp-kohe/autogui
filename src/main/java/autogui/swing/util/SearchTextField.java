@@ -1,5 +1,7 @@
 package autogui.swing.util;
 
+import autogui.swing.icons.GuiSwingIcons;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -52,6 +54,8 @@ public class SearchTextField extends JComponent {
          *       }
          *       return results;
          *   </pre>
+         *   Note: the method is also called by selection of a searched menu item.
+         *    Then the select is already set as the same value of the text.
          * */
         List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher);
 
@@ -61,6 +65,7 @@ public class SearchTextField extends JComponent {
 
         /** After {@link #getCandidates(String, boolean, SearchTextFieldPublisher)},
          *    an exact matching item might be found, and then the method returns the item.
+         *    Otherwise returns null.
          *    The method is executed under the event dispatching thread. */
         PopupCategorized.CategorizedPopupItem getSelection();
 
@@ -356,12 +361,19 @@ public class SearchTextField extends JComponent {
 
     /** the user selects the item from the menu.
      * update selection in the model and also GUI display.
-     * This is the task using a supplied item supplied by the model.
-     *  So, it does not cause a further update that leads to a background task */
+     * It will stop the current running task if exists, and starts a new task.
+     * <strike>This is the task using an item supplied by the model.
+     *  So, it does not cause a further update that leads to a background task </strike>
+     *  */
     public void selectSearchedItemFromGui(PopupCategorized.CategorizedPopupItem item) {
         model.select(item);
         setIconFromSearchedItem(item);
         setTextFromSearchedItem(item);
+        if (SwingUtilities.isEventDispatchThread()) {
+            updateFieldInEvent(true);
+        } else {
+            SwingUtilities.invokeLater(() -> updateFieldInEvent(true));
+        }
     }
 
     /** called when the search is done, and update only the icon */
@@ -386,6 +398,8 @@ public class SearchTextField extends JComponent {
         if (w != ew || h != eh) {
             if (icon instanceof ImageIcon) {
                 icon = new ImageIcon(((ImageIcon) icon).getImage().getScaledInstance(ew, eh, Image.SCALE_SMOOTH));
+            } else if (icon instanceof GuiSwingIcons.ResourceIcon) {
+                icon = new GuiSwingIcons.ResourceIcon(((GuiSwingIcons.ResourceIcon) icon).getImage(), ew, eh);
             } else {
                 BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
                 icon.paintIcon(this.icon, img.getGraphics(), 0, 0);
