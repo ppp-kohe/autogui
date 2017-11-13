@@ -36,7 +36,7 @@ public class GuiSwingJsonTransfer {
         public JsonCopyAction(GuiSwingView.ValuePane component, GuiMappingContext context) {
             this.component = component;
             this.context = context;
-            putValue(NAME, "Copy AS JSON");
+            putValue(NAME, "Copy As JSON");
         }
 
         @Override

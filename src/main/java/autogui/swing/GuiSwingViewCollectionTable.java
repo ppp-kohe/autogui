@@ -255,6 +255,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         protected void paintSelectedRows(Graphics2D g2) {
             Rectangle rect = g2.getClipBounds();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             double top = rect.getY();
             double bottom = rect.getMaxY();
             double x = rect.getX();
