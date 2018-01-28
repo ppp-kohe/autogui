@@ -26,6 +26,7 @@ import java.text.*;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 
 public class GuiSwingViewNumberSpinner implements GuiSwingView {
@@ -317,6 +318,13 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             editActions.add(new JMenuItem(new NumberMaximumAction(true, model)));
         }
 
+        @Override
+        public List<Action> getActionsInInitEditActions(JTextComponent textComponent) {
+            return super.getActionsInInitEditActions(textComponent)
+                    .stream()
+                    .filter(e -> !(e instanceof PopupExtensionText.TextOpenBrowserAction))
+                    .collect(Collectors.toList());
+        }
     }
 
     public static class NumberMaximumAction extends AbstractAction {

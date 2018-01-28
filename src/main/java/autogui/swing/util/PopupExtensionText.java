@@ -88,9 +88,13 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
         /** called from constructor */
         public void initEditActions(JTextComponent textComponent) {
-            editActions = PopupExtensionText.getEditActions(textComponent).stream()
+            editActions = getActionsInInitEditActions(textComponent).stream()
                     .map(JMenuItem::new)
                     .collect(Collectors.toList());
+        }
+
+        public List<Action> getActionsInInitEditActions(JTextComponent textComponent) {
+            return PopupExtensionText.getEditActions(textComponent);
         }
 
         public List<JComponent> getEditActions() {
@@ -219,13 +223,31 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             if (component instanceof JLabel) {
                 text = ((JLabel) component).getText();
             } else if (component instanceof JTextComponent) {
-                text = ((JTextComponent) component).getText();
+                JTextComponent comp = (JTextComponent) component;
+                int start = comp.getSelectionStart();
+                int end = comp.getSelectionEnd();
+                if (start != end) {
+                    if (start > end) {
+                        int tmp = start;
+                        start = end;
+                        end = tmp;
+                    }
+                    try {
+                        text = comp.getText(Math.max(0, start),
+                                Math.min(comp.getDocument().getLength(), end - start));
+                    } catch (Exception ex) {
+                        //
+                    }
+                } else {
+                    text = comp.getText();
+                }
             }
             if (text != null) {
                 try {
                     if (!text.contains("://")) {
                         text = "http://" + text;
                     }
+                    text = text.trim();
                     Desktop.getDesktop().browse(URI.create(text));
                 } catch (Exception ex) {
                     GuiLogManager.get().logFormat("Open URL Error:%s", ex);
