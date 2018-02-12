@@ -2,8 +2,8 @@ package autogui.swing;
 
 import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
-import autogui.swing.table.TableTarget;
-import autogui.swing.table.TableTargetAction;
+import autogui.swing.table.TableTargetColumn;
+import autogui.swing.table.TableTargetColumnAction;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +29,7 @@ public class GuiSwingJsonTransfer {
         return Collections.singletonList(new JsonCopyAction(component, context));
     }
 
-    public static class JsonCopyAction extends AbstractAction implements TableTargetAction {
+    public static class JsonCopyAction extends AbstractAction implements TableTargetColumnAction {
         protected GuiSwingView.ValuePane component;
         protected GuiMappingContext context;
 
@@ -42,7 +42,7 @@ public class GuiSwingJsonTransfer {
         @Override
         public void actionPerformed(ActionEvent e) {
             Object value = component.getSwingViewValue();
-            Object map = context.getRepresentation().toJsonWithNamed(context, value);
+            Object map = toCopiedJson(value);
             copy(map);
         }
 
@@ -56,12 +56,16 @@ public class GuiSwingJsonTransfer {
             }
         }
 
+        public Object toCopiedJson(Object value) {
+            return context.getRepresentation().toJsonWithNamed(context, value);
+        }
+
         @Override
-        public void actionPerformedOnTable(ActionEvent e, TableTarget target) {
+        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
             Map<Integer,Object> map = target.getSelectedCellValues();
             //suppose the map preserves order of values, and skip null element
             copy(map.values().stream()
-                    .map(v -> context.getRepresentation().toJsonWithNamed(context, v))
+                    .map(this::toCopiedJson)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList()));
         }

@@ -2,8 +2,8 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.mapping.GuiReprValueImagePane;
-import autogui.swing.table.TableTarget;
-import autogui.swing.table.TableTargetAction;
+import autogui.swing.table.TableTargetColumn;
+import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
 
@@ -181,7 +181,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
-    public static class ImageCopyAction extends AbstractAction implements TableTargetAction {
+    public static class ImageCopyAction extends AbstractAction implements TableTargetColumnAction {
         protected Image image;
 
         public ImageCopyAction(Image image) {
@@ -208,7 +208,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
-        public void actionPerformedOnTable(ActionEvent e, TableTarget target) {
+        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
             Object o = target.getSelectedCellValue();
             if (o instanceof Image) {
                 copy((Image) o);
@@ -216,7 +216,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
-    public static class ImagePasteAction extends AbstractAction implements TableTargetAction {
+    public static class ImagePasteAction extends AbstractAction implements TableTargetColumnAction {
         protected PropertyImagePane pane;
 
         public ImagePasteAction(PropertyImagePane pane) {
@@ -245,7 +245,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
-        public void actionPerformedOnTable(ActionEvent e, TableTarget target) {
+        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
             paste(img -> target.setSelectedCellValues(r -> img));
         }
     }

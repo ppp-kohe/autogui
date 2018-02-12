@@ -19,7 +19,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.EventObject;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -51,6 +53,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         if (renderer instanceof ObjectTableCellRenderer) {
             ((ObjectTableCellRenderer) renderer).setOwnerColumn(this);
         }
+    }
+
+    public GuiMappingContext getContext() {
+        return context;
     }
 
     @Override
@@ -219,7 +225,30 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
                 JTable table = (JTable) pane;
 
                 paneOriginalBuilder.build(sender, new CollectionRowsActionBuilder(table, column, menu));
+
+                addColumnSelection(table, menu);
             }
+        }
+
+        protected void addColumnSelection(JTable table, Consumer<Object> menu) {
+            menu.accept(new ColumnSelectionAction(table, column.getTableColumn().getModelIndex()));
+        }
+    }
+
+    public static class ColumnSelectionAction extends AbstractAction {
+        protected JTable table;
+        protected int column;
+
+        public ColumnSelectionAction(JTable table, int column) {
+            putValue(NAME, "Select Column All Cells");
+            this.table = table;
+            this.column = column;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            table.getColumnModel().getSelectionModel().setSelectionInterval(column, column);
+            table.getSelectionModel().setSelectionInterval(0, table.getRowCount());
         }
     }
 
@@ -227,13 +256,13 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         protected JTable table;
         protected ObjectTableColumn column;
         protected Consumer<Object> menu;
-        protected TableTarget target;
+        protected TableTargetColumn target;
 
         public CollectionRowsActionBuilder(JTable table, ObjectTableColumn column, Consumer<Object> menu) {
             this.table = table;
             this.column = column;
             this.menu = menu;
-            target = new TableTarget(table, column.getTableColumn().getModelIndex());
+            target = new TableTargetColumn(table, column.getTableColumn().getModelIndex());
         }
 
         @Override
@@ -249,8 +278,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
 
         public void addAction(Action a) {
-            if (a instanceof TableTargetAction) {
-                menu.accept(new TableTargetExecutionAction((TableTargetAction) a, target));
+            if (a instanceof TableTargetColumnAction) {
+                menu.accept(new TableTargetExecutionAction((TableTargetColumnAction) a, target));
 
             } else if (a instanceof PopupExtensionText.TextCopyAllAction) {
                 menu.accept(new TableTargetInvocationAction(a, target,
@@ -282,10 +311,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     }
 
     public static class TableTargetExecutionAction extends AbstractAction {
-        protected TableTargetAction action;
-        protected TableTarget target;
+        protected TableTargetColumnAction action;
+        protected TableTargetColumn target;
 
-        public TableTargetExecutionAction(TableTargetAction action, TableTarget target) {
+        public TableTargetExecutionAction(TableTargetColumnAction action, TableTargetColumn target) {
             this.action = action;
             this.target = target;
         }
@@ -300,26 +329,26 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             return action.getValue(key);
         }
 
-        public TableTarget getTarget() {
+        public TableTargetColumn getTarget() {
             return target;
         }
 
-        public TableTargetAction getAction() {
+        public TableTargetColumnAction getAction() {
             return action;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            action.actionPerformedOnTable(e, target);
+            action.actionPerformedOnTableColumn(e, target);
         }
     }
 
     public static class TableTargetInvocationAction extends AbstractAction {
         protected Action action;
-        protected TableTarget target;
-        protected BiConsumer<ActionEvent, TableTarget> invoker;
+        protected TableTargetColumn target;
+        protected BiConsumer<ActionEvent, TableTargetColumn> invoker;
 
-        public TableTargetInvocationAction(Action action, TableTarget target, BiConsumer<ActionEvent, TableTarget> invoker) {
+        public TableTargetInvocationAction(Action action, TableTargetColumn target, BiConsumer<ActionEvent, TableTargetColumn> invoker) {
             this.action = action;
             this.target = target;
             this.invoker = invoker;
@@ -335,7 +364,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             return action.getValue(key);
         }
 
-        public TableTarget getTarget() {
+        public TableTargetColumn getTarget() {
             return target;
         }
 
@@ -385,6 +414,22 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
                 }
             }
         }
+    }
+
+    ///////////////
+
+
+    @Override
+    public List<TableMenuComposite> getCompositesForRows() {
+        return Collections.singletonList(new ToStringCopyCell.TableMenuCompositeToStringValue(context,
+                getTableColumn().getModelIndex()));
+    }
+
+
+    @Override
+    public List<TableMenuComposite> getCompositesForCells() {
+        return Collections.singletonList(new ToStringCopyCell.TableMenuCompositeToStringValue(context,
+                getTableColumn().getModelIndex()));
     }
 
 }

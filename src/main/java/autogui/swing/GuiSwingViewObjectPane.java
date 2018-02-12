@@ -91,10 +91,11 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.accept(info);
                 menu.accept(refreshAction);
-                menu.accept(new JPopupMenu.Separator());
-                actions.forEach(menu::accept);
                 GuiSwingJsonTransfer.getActions(this, context)
                         .forEach(menu::accept);
+                menu.accept(new ToStringCopyAction(this, context));
+                menu.accept(new JPopupMenu.Separator());
+                actions.forEach(menu::accept);
             });
             setInheritsPopupMenu(true);
         }

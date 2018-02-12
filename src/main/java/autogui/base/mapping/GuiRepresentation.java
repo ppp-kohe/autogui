@@ -46,6 +46,12 @@ public interface GuiRepresentation {
         return true;
     }
 
+    /** method for constructing "toString" copy operations:
+     *   the returned string will be separated by tabs and new-lines */
+    default String toHumanReadableString(GuiMappingContext context, Object source) {
+        return "" + source;
+    }
+
     GuiReprNone NONE = new GuiReprNone();
 
     class GuiReprNone implements GuiRepresentation {

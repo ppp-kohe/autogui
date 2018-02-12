@@ -14,6 +14,8 @@ import java.util.Map;
 public class JsonReader {
     protected String source;
     protected int index;
+    protected int lineNumber;
+    protected int columnNumber;
     protected int sourceLength;
 
     public static Object read(File file) {
@@ -44,10 +46,15 @@ public class JsonReader {
         this.source = source;
         this.sourceLength = (source == null ? 0 : source.length());
         index = 0;
+        lineNumber = 0;
+        columnNumber = 0;
     }
 
     public Object parseValue() {
         eatSpaces();
+        if (!hasNext()) {
+            throw error("[empty]");
+        }
         char c = next();
         switch (c) {
             case '\"':
@@ -69,22 +76,51 @@ public class JsonReader {
             case '9':
                 return parseNumber();
             case 't':
-                eat("true");
-                return Boolean.TRUE;
+                if (eat("true")) {
+                    return Boolean.TRUE;
+                } else {
+                    throw error(c);
+                }
             case 'f':
-                eat("false");
-                return Boolean.FALSE;
+                if (eat("false")) {
+                    return Boolean.FALSE;
+                } else {
+                    throw error(c);
+                }
             case 'n':
-                eat("null");
-                return null;
+                if (eat("null")) {
+                    return null;
+                } else {
+                    throw error(c);
+                }
             default:
-                throw new RuntimeException();
+                throw error(c);
         }
+    }
+    public RuntimeException error(char c) {
+        return error("\'" + c + "\'");
+    }
+
+    public RuntimeException error(String c) {
+        return new RuntimeException("JSON parsing error " + c +
+                " at " + getCurrentLineInfo());
+    }
+
+    public String getCurrentLineInfo() {
+        int start = Math.max(0, index - columnNumber);
+        int len = (source == null ? 0 : Math.max(0, source.indexOf('\n', index))) - start;
+        String targetLine = "";
+        if (len > 80) {
+            targetLine = " : \'" + (source == null ? "" : source.substring(start, start + 80)) + "...\'";
+        } else if (len > 0) {
+            targetLine = " : \'" + (source == null ? "" : source.substring(start, start + len)) + "\'";
+        }
+        return "line " + lineNumber + " column " + columnNumber + targetLine;
     }
 
     public String parseString() {
         eatSpaces();
-        eat('"');
+        eat('"'); //non-strict parsing
         StringBuilder buf = new StringBuilder();
         while (!eat('"')) {
             if (eat('\\')) {
@@ -106,11 +142,11 @@ public class JsonReader {
                         buf.append("\t");
                         break;
                     case 'u':
-                        int i = Integer.parseInt(new StringBuilder()
-                                .append(eatNext())
-                                .append(eatNext())
-                                .append(eatNext())
-                                .append(eatNext()).toString(), 16);
+                        int i = Integer.parseInt("" +
+                                eatNext() +
+                                eatNext() +
+                                eatNext() +
+                                eatNext(), 16);
                         buf.append((char) i);
                         break;
                     default:
@@ -126,7 +162,7 @@ public class JsonReader {
     public Map<String, Object> parseObject() {
         eatSpaces();
         if (eat('{')) {
-            HashMap<String, Object> obj = new HashMap<String, Object>();
+            HashMap<String, Object> obj = new HashMap<>();
             eatSpaces();
             while (!eat('}')) {
                 String str = parseString();
@@ -147,12 +183,12 @@ public class JsonReader {
     public List<Object> parseArray() {
         eatSpaces();
         if (eat('[')) {
-            List<Object> ary = new ArrayList<Object>();
+            List<Object> ary = new ArrayList<>();
             eatSpaces();
             while (!eat(']')) {
                 ary.add(parseValue());
                 eatSpaces();
-                eat(',');
+                eat(','); //non-strict parsing
                 eatSpaces();
             }
             return ary;
@@ -227,8 +263,8 @@ public class JsonReader {
     public void eatSpaces() {
         while (hasNext()) {
             char c = next();
-            if (c == ' ' || c == '\n' || c == '\t') {
-                proceedNext();
+            if (c == ' ' || c == '\n' || c == '\t' || c == '\r') {
+                proceedNext(c);
             } else {
                 break;
             }
@@ -238,7 +274,7 @@ public class JsonReader {
     public boolean eat(char c) {
         if (hasNext()) {
             if (next() == c) {
-                proceedNext();
+                proceedNext(c);
                 return true;
             } else {
                 return false;
@@ -248,6 +284,10 @@ public class JsonReader {
         }
     }
 
+    /**
+     * @param str must not contain a newline
+     * @return true if successfully eaten the str
+     */
     public boolean eat(String str) {
         if (hasNext() && source.startsWith(str, index)) {
             index += str.length();
@@ -260,7 +300,7 @@ public class JsonReader {
     public char eatNext() {
         if (hasNext()) {
             char c = next();
-            proceedNext();
+            proceedNext(c);
             return c;
         } else {
             return (char) 0;
@@ -280,7 +320,13 @@ public class JsonReader {
         }
     }
 
-    public void proceedNext() {
+    public void proceedNext(char theNextChar) {
         ++index;
+        if (theNextChar == '\n') {
+            ++lineNumber;
+            columnNumber = 0;
+        } else {
+            ++columnNumber;
+        }
     }
 }

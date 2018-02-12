@@ -3,6 +3,8 @@ package autogui.swing.util;
 import autogui.swing.icons.GuiSwingIcons;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
+import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
@@ -22,6 +24,28 @@ import java.util.stream.Collectors;
  *       [ popupMenu:
  *             model.getCandidates(textField.text,...) ]
  * </pre>
+ *
+ * The popup menus are composition of
+ *    {@link #getPopupEditMenuItems()} -&gt; {@link #getPopupEditActions()}
+ *       -&gt; {@link PopupExtensionText#getEditActions(JTextComponent)},
+ *      and
+ *       {@link #getSearchedItems()} whose items are set by
+ *         {@link #setCurrentSearchedItems(List, boolean)} or
+ *          {@link #setCurrentSearchedItems(List, PopupCategorized.CategorizedPopupItem)},
+ *           called from {@link SearchTask}'s background task via {@link SearchTextFieldModel}.
+ *
+ *  <p>
+ *     If a background task calls setCurrentSearchedItems and {@link #getSearchedItems()} is changed,
+ *       then {@link SearchedItemsListener} is called.
+ *      In {@link #initPopup()}, it registers a listener returned by
+ *         {@link #getPopupUpdateListener(PopupExtensionText, PopupCategorized)},
+ *         which dynamically calls {@link PopupExtension#setupMenu()}.
+ *
+ *  <p>
+ *     If the user edits texts, then it needs to dynamically update the popup.
+ *      To do this, {@link #initField()} sets up
+ *        {@link autogui.swing.util.ScheduledTaskRunner.EditingRunner} with {@link #updateField(List)}
+ *         and registers it to the field as document listener, action listener and focus listener .
  */
 public class SearchTextField extends JComponent {
     protected SearchTextFieldModel model;
@@ -39,6 +63,8 @@ public class SearchTextField extends JComponent {
     protected static ImageIcon emptyIcon;
 
     protected SearchBackgroundPainter backgroundPainter;
+
+    protected KeyUndoManager undoManager;
 
     public interface SearchTextFieldModel {
         /** the method is executed under the background thread of {@link SwingWorker}.
@@ -59,7 +85,7 @@ public class SearchTextField extends JComponent {
          * */
         List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher);
 
-        /** The method is executed under the event dispatching thread.
+        /** <strike>The method is executed under the event dispatching thread.</strike>
          *   The user selects the item from a menu and then this method will be called. */
         void select(PopupCategorized.CategorizedPopupItem item);
 
@@ -162,6 +188,9 @@ public class SearchTextField extends JComponent {
         field.setOpaque(false);
         setOpaque(false);
 
+        undoManager = new KeyUndoManager();
+        undoManager.putListenersAndActionsTo(field);
+
         field.getDocument().addDocumentListener(editingRunner);
         field.addActionListener(editingRunner);
         field.addFocusListener(editingRunner);
@@ -175,6 +204,8 @@ public class SearchTextField extends JComponent {
                         this::getSearchedItems),
                 this::selectSearchedItemFromGui);
 
+        PopupExtensionText.putInputEditActions(field);
+        PopupExtensionText.putUnregisteredEditActions(field);
         popup = new PopupExtensionText(field, PopupExtensionText.getDefaultKeyMatcher(), categorized);
         popupButton = new JButton(popup.getAction());
         addSearchItemsListener(getPopupUpdateListener(popup, categorized));
@@ -442,6 +473,8 @@ public class SearchTextField extends JComponent {
             return text;
         }
 
+        //at first, the background thread call the method.
+        //while in the method, this is passed as SearchTextFieldPublisher
         @Override
         protected List<PopupCategorized.CategorizedPopupItem> doInBackground() throws Exception {
             try{
@@ -451,6 +484,7 @@ public class SearchTextField extends JComponent {
             }
         }
 
+        //pushSearch cause the method in the event dispatching thread
         @Override
         protected void process(List<List<PopupCategorized.CategorizedPopupItem>> chunks) {
             int last = chunks.size() - 1;

@@ -3,8 +3,11 @@ package autogui.base.mapping;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class GuiReprObjectPane extends GuiReprValue {
     protected GuiRepresentation subRepresentation;
@@ -45,26 +48,28 @@ public class GuiReprObjectPane extends GuiReprValue {
 
     public static Object toJsonFromObject(GuiMappingContext context, Object source) {
         Map<String, Object> map = new HashMap<>(context.getChildren().size());
+        BiConsumer<GuiMappingContext, Object> processor = (s, nextValue) -> {
+            Object subObj = s.getRepresentation().toJsonWithNamed(s, nextValue);
+            if (subObj != null) {
+                map.put(s.getName(), subObj);
+            }
+        };
+        boolean collection = false;
         for (GuiMappingContext subContext : context.getChildren()) {
             if (subContext.isTypeElementProperty()) {
-                GuiRepresentation subRepr = subContext.getRepresentation();
-                try {
-                    Object prevValue = subContext.getSource();
-                    Object nextValue = subContext.execute(() ->
-                            subContext.getTypeElementAsProperty().executeGet(source, prevValue));
-                    if (nextValue != null && nextValue.equals(GuiTypeValue.NO_UPDATE)) {
-                        nextValue = prevValue;
-                    }
-                    Object subObj = subRepr.toJsonWithNamed(subContext, nextValue);
-                    if (subObj != null) {
-                        map.put(subContext.getName(), subObj);
-                    }
-                } catch (Throwable ex) {
-                    //nothing
-                }
+                runSubPropertyValue(subContext, source, processor);
+            } else if (subContext.isTypeElementCollection()) {
+                runSubCollectionValue(subContext, source, processor);
+                collection = true;
             }
         }
-        return map;
+        if (map.size() == 1 && collection) { //collection: not object{property}, but property{collection},
+             // then the name of the context will be the type name of the collection element.
+            //    Note s is subContext of context of the property.
+            return map.values().iterator().next();
+        } else {
+            return map;
+        }
     }
 
     @Override
@@ -113,5 +118,51 @@ public class GuiReprObjectPane extends GuiReprValue {
     @Override
     public boolean isJsonSetter() {
         return true;
+    }
+
+    @Override
+    public String toHumanReadableString(GuiMappingContext context, Object source) {
+        return toHumanReadableStringFromObject(context, source);
+    }
+
+    public static String toHumanReadableStringFromObject(GuiMappingContext context, Object source) {
+        List<String> strs = new ArrayList<>(context.getChildren().size());
+        BiConsumer<GuiMappingContext, Object> processor = (s, n) -> {
+            if (n instanceof NamedValue) {
+                n = ((NamedValue) n).value;
+            }
+            strs.add(s.getRepresentation().toHumanReadableString(s, n));
+        };
+        for (GuiMappingContext subContext : context.getChildren()) {
+            if (subContext.isTypeElementProperty()) {
+                runSubPropertyValue(subContext, source, processor);
+            } else if (subContext.isTypeElementCollection()) {
+                runSubCollectionValue(subContext, source, processor);
+            }
+        }
+        return String.join("\t", strs);
+    }
+
+    public static void runSubPropertyValue(GuiMappingContext subContext, Object source, BiConsumer<GuiMappingContext, Object> subAndNext) {
+        try {
+            Object prevValue = subContext.getSource();
+            Object nextValue = subContext.execute(() ->
+                    subContext.getTypeElementAsProperty().executeGet(source, prevValue));
+            if (nextValue != null && nextValue.equals(GuiTypeValue.NO_UPDATE)) {
+                nextValue = prevValue;
+            }
+            subAndNext.accept(subContext, nextValue);
+        } catch (Throwable ex) {
+            //nothing
+        }
+    }
+
+    public static void runSubCollectionValue(GuiMappingContext subContext, Object source, BiConsumer<GuiMappingContext, Object> subAndNext) {
+        //Object prevValue = subContext.getSource();
+        for (GuiMappingContext listElementContext : subContext.getChildren()) {
+            if (listElementContext.isCollectionElement()) {
+                subAndNext.accept(listElementContext, source);
+            }
+        }
     }
 }

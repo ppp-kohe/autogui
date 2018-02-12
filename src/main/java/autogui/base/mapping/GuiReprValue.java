@@ -83,7 +83,7 @@ public class GuiReprValue implements GuiRepresentation {
                         val.updatedValue(prev));
             }
         }
-        return null;
+        return prev;
     }
 
     public Object getParentSource(GuiMappingContext context, boolean executeParent) throws Throwable {

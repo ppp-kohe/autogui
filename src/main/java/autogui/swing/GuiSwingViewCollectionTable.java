@@ -14,6 +14,7 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -25,6 +26,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class GuiSwingViewCollectionTable implements GuiSwingView {
     protected GuiSwingMapperSet columnMapperSet;
@@ -92,6 +95,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             List<JComponent> items = new ArrayList<>();
             items.add(label);
             items.add(new JMenuItem(new ContextRefreshAction(context)));
+            items.add(new JMenuItem(new SelectAllAction(this)));
 
             MouseListener[] listeners = getMouseListeners();
             Arrays.stream(listeners).forEach(this::removeMouseListener);
@@ -291,6 +295,26 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
 
+
+    public static class SelectAllAction extends AbstractAction {
+        protected JTable table;
+
+        public SelectAllAction(JTable table) {
+            putValue(NAME, "Select All");
+            this.table = table;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            table.selectAll();
+        }
+    }
+
+    /**
+     * menu creation for selected rows and columns.
+     * <p>
+     *     For columns, it uses {@link CollectionColumnMenuSupplier}.
+     * */
     public static class PopupExtensionCollection extends PopupExtension implements PopupMenuListener {
         protected CollectionTable table;
         protected int targetColumnIndex = -1;
@@ -302,14 +326,24 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public PopupExtensionCollection(CollectionTable pane, Predicate<KeyEvent> keyMatcher, List<JComponent> items) {
             super(pane, keyMatcher, null);
             this.table = pane;
-            setMenuBuilder(new CollectionColumnMenuSupplier(table, () -> {
-                List<JComponent> comps = new ArrayList<>();
+
+            Supplier<List<JComponent>> otherActions =  () -> {
+                List<Action> tableActions = table.getActions();
+                List<JComponent> comps = new ArrayList<>(items.size() + tableActions.size());
                 comps.addAll(items);
-                table.getActions().stream()
+                tableActions.stream()
                         .map(JMenuItem::new)
                         .forEach(comps::add);
                 return comps;
-            }));
+            };
+            PopupMenuBuilder columnBuilder = new CollectionColumnMenuSupplier();
+            PopupMenuBuilder cellBuilder = new CollectionCellMenuSupplier();
+
+            setMenuBuilder((s, m) -> {
+                otherActions.get().forEach(m::accept);
+                columnBuilder.build(s, m);
+                cellBuilder.build(s, m);
+            });
 
             menu.get().addPopupMenuListener(this);
             showingTimer = new Timer(100, e -> {
@@ -383,23 +417,25 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 return null;
             }
         }
+
+        public List<ObjectTableColumn> getTargetColumns() {
+            ObjectTableModel model = table.getObjectTableModel();
+            return IntStream.of(table.getSelectedColumns())
+                    .map(table::convertColumnIndexToModel)
+                    .mapToObj(model.getColumns()::get)
+                    .collect(Collectors.toList());
+        }
     }
 
+    /**
+     * it reacts to only {@link PopupExtensionCollection}
+     *    in order to obtains selected column by {@link PopupExtensionCollection#getTargetColumn()}.
+     *    The target column is the column under the mouse pointer, or one of selected column when a key stroke happened.
+     *    A returned {@link ObjectTableColumn} can obtain a menu source by {@link ObjectTableColumn#getMenuBuilderSource()}.
+     * */
     public static class CollectionColumnMenuSupplier implements PopupExtension.PopupMenuBuilder {
-        protected CollectionTable table;
-        protected Supplier<? extends Collection<JComponent>> items;
-
-        public CollectionColumnMenuSupplier(CollectionTable table, Supplier<? extends Collection<JComponent>> items) {
-            this.table = table;
-            this.items = items;
-        }
-
         @Override
         public void build(PopupExtension sender, Consumer<Object> menu) {
-            if (items != null) {
-                items.get().forEach(menu::accept);
-            }
-
             if (sender instanceof PopupExtensionCollection) {
                 ObjectTableColumn column = ((PopupExtensionCollection) sender).getTargetColumn();
                 ObjectTableColumn.PopupMenuBuilderSource src = (column == null ? null : column.getMenuBuilderSource());
@@ -432,6 +468,24 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 added = true;
             }
             appender.accept(o);
+        }
+    }
+
+    public static class CollectionCellMenuSupplier implements PopupExtension.PopupMenuBuilder {
+        @Override
+        public void build(PopupExtension sender, Consumer<Object> menu) {
+            if (sender instanceof PopupExtensionCollection) {
+                PopupExtensionCollection collSender = (PopupExtensionCollection) sender;
+                CollectionTable table = collSender.getTable();
+
+                List<ObjectTableColumn> allCols = table.getObjectTableModel().getColumns();
+                table.getObjectTableModel().getBuilderForRowsOrCells(table, allCols, true)
+                        .build(sender, new MenuTitleAppender("Rows", menu));
+
+                List<ObjectTableColumn> targetCols = collSender.getTargetColumns();
+                table.getObjectTableModel().getBuilderForRowsOrCells(table, targetCols, false)
+                        .build(sender, new MenuTitleAppender("Cells", menu));
+            }
         }
     }
 }

@@ -1,17 +1,21 @@
 package autogui.swing.table;
 
+import autogui.swing.util.PopupExtension;
+
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class ObjectTableModel extends AbstractTableModel {
     protected Supplier<List<?>> sourceSupplier;
@@ -376,5 +380,85 @@ public class ObjectTableModel extends AbstractTableModel {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return getColumns().get(columnIndex)
                 .getTableColumn().getCellEditor() != null;
+    }
+
+    ///////////
+
+    public PopupExtension.PopupMenuBuilder getBuilderForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
+        return (sender,menu) -> getBuildersForRowsOrCells(table, cols, row)
+                .forEach(b -> b.build(sender, new CollectionRowsAndCellsActionBuilder(table, menu)));
+    }
+
+
+    public Stream<PopupExtension.PopupMenuBuilder> getBuildersForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
+        Map<ObjectTableColumn.TableMenuCompositeShared, List<ObjectTableColumn.TableMenuComposite>> rows
+                = new LinkedHashMap<>();
+        cols.forEach(c ->
+                (row ? c.getCompositesForRows() :
+                        c.getCompositesForCells()).forEach(cmp ->
+                        rows.computeIfAbsent(cmp.getShared(), key -> new ArrayList<>())
+                                .add(cmp)));
+
+        return rows.entrySet().stream()
+                .map(e -> e.getKey().composite(table, e.getValue(), row));
+
+    }
+
+
+    public static class CollectionRowsAndCellsActionBuilder implements Consumer<Object> {
+        protected Consumer<Object> menu;
+        protected TableTargetCell target;
+
+        public CollectionRowsAndCellsActionBuilder(JTable table, Consumer<Object> menu) {
+            this.menu = menu;
+            target = new TableTargetCell(table);
+        }
+
+        @Override
+        public void accept(Object o) {
+            if (o instanceof Action) {
+                addAction(o);
+            } else if (o instanceof JMenuItem) {
+                addAction(o);
+            } else {
+                menu.accept(o);
+            }
+        }
+
+        public void addAction(Object a) {
+            if (a instanceof TableTargetCellAction) {
+                menu.accept(new TableTargetCellExecutionAction((TableTargetCellAction) a, target));
+            }
+            //otherwise: disabled
+        }
+    }
+
+    public static class TableTargetCellExecutionAction extends AbstractAction {
+        protected TableTargetCellAction action;
+        protected TableTargetCell target;
+
+        public TableTargetCellExecutionAction(TableTargetCellAction action, TableTargetCell target) {
+            this.action = action;
+            this.target = target;
+        }
+
+
+        @Override
+        public Object getValue(String key) {
+            return action.getValue(key);
+        }
+
+        public TableTargetCellAction getAction() {
+            return action;
+        }
+
+        public TableTargetCell getTarget() {
+            return target;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            action.actionPerformedOnTableCell(e, target);
+        }
     }
 }

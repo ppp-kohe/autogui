@@ -9,12 +9,12 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class TableTarget {
+public class TableTargetColumn {
     protected JTable table;
     /** model index */
     protected int column;
 
-    public TableTarget(JTable table, int column) {
+    public TableTargetColumn(JTable table, int column) {
         this.table = table;
         this.column = column;
     }

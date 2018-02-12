@@ -96,4 +96,9 @@ public class GuiReprPropertyPane extends GuiReprValue {
     public boolean isJsonSetter() {
         return true;
     }
+
+    @Override
+    public String toHumanReadableString(GuiMappingContext context, Object source) {
+        return GuiReprObjectPane.toHumanReadableStringFromObject(context, source);
+    }
 }

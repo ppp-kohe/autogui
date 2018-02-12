@@ -43,11 +43,14 @@ public class GuiSwingViewLabel implements GuiSwingView {
             //popup
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
             ContextRefreshAction refreshAction = new ContextRefreshAction(context);
+
             PopupExtensionText.TextOpenBrowserAction browserAction = new PopupExtensionText.TextOpenBrowserAction(this);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.accept(info);
                 menu.accept(refreshAction);
                 menu.accept(browserAction);
+                menu.accept(new LabelJsonCopyAction(this, context));
+                menu.accept(new ToStringCopyAction(this, context));
             });
             setInheritsPopupMenu(true);
 
@@ -81,13 +84,29 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
 
         public String getValueAsString() {
-            GuiReprValue label = (GuiReprValue) context.getRepresentation();;
+            GuiReprValue label = (GuiReprValue) context.getRepresentation();
             return "" + label.toUpdateValue(context, getSwingViewValue());
         }
 
         @Override
         public GuiMappingContext getContext() {
             return context;
+        }
+    }
+
+    /** special handling for any type of value as string */
+    public static class LabelJsonCopyAction extends GuiSwingJsonTransfer.JsonCopyAction {
+        public LabelJsonCopyAction(ValuePane component, GuiMappingContext context) {
+            super(component, context);
+        }
+
+        @Override
+        public Object toCopiedJson(Object value) {
+            if (value instanceof GuiReprValue.NamedValue) {
+                return ((GuiReprValue.NamedValue) value).toJson(toCopiedJson(((GuiReprValue.NamedValue) value).value));
+            } else {
+                return "" + value;
+            }
         }
     }
 

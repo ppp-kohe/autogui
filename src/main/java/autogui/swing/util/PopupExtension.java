@@ -14,6 +14,16 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+/**
+ * it support showing the popup menu supplied by {@link #menu} via the following event listeners:
+ * <ul>
+ *     <li>{@link MouseListener} </li>
+ *     <li>{@link KeyListener}  with {@link #keyMatcher}, can be {@link #getDefaultKeyMatcher()}</li>
+ *     <li>{@link ActionListener} caused by {@link #getAction()} </li>
+ * </ul>
+ * {@link #menuBuilder} determines menu items in the popup menu via {@link PopupMenuBuilder#buildWithClear(PopupExtension, JPopupMenu)}.
+ *
+ */
 public class PopupExtension implements MouseListener, KeyListener, ActionListener {
     /** the supplier is frequently called and expected to return same menu object */
     protected Supplier<JPopupMenu> menu;
@@ -24,8 +34,19 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     protected Action action;
 
     public interface PopupMenuBuilder {
+        /**
+         * the Consumer accepts
+         *  <ul>
+         *    <li>{@link Action}
+         *        including {@link JMenu} and  {@link JPopupMenu}</li>
+         *    <li>{@link JMenuItem}</li>
+         *    <li>{@link JComponent}</li>
+         *  </ul>
+         * */
         void build(PopupExtension sender, Consumer<Object> menu);
 
+        /** the default behavior reconstruct entire items by {@link #build(PopupExtension, Consumer)}.
+         *    The Consumer can append an item to the menu. */
         default void buildWithClear(PopupExtension sender, JPopupMenu menu) {
             menu.removeAll();
             build(sender, new MenuBuilder.MenuAppender(menu));
@@ -33,11 +54,13 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         }
     }
 
+    /** call {@link #PopupExtension(JComponent, Predicate, PopupMenuBuilder, Supplier)} */
     public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder, JPopupMenu menu) {
         this(pane, keyMatcher, menuBuilder,
                 menu == null ? new DefaultPopupGetter(pane) : () -> menu);
     }
 
+    /** add this to pane as {@link KeyListener} and {@link MouseListener} */
     public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder, Supplier<JPopupMenu> menu) {
         this.pane = pane;
         this.keyMatcher = keyMatcher;
@@ -48,6 +71,10 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         }
     }
 
+    /**
+     * call {@link #PopupExtension(JComponent, Predicate, PopupMenuBuilder, Supplier)}.
+     * the menu is supplied by the pane's {@link JComponent#getComponentPopupMenu()} or creating a new one if it returns null.
+     *   it also call {@link MenuKeySelector#addToMenu(JPopupMenu)} for incremental item search while showing the popup menu */
     public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder) {
         this(pane, keyMatcher, menuBuilder, new DefaultPopupGetter(pane));
         new MenuKeySelector().addToMenu(menu.get());

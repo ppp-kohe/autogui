@@ -36,7 +36,8 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
 
         @Override
         public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
-            return (sender, menu) -> {};
+            return (sender, menu) -> {
+            };
         }
 
         @Override

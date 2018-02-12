@@ -11,9 +11,9 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.function.Supplier;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.stream.IntStream;
 
 /** the representation depends on some Swing classes(java.desktop module)  */
@@ -130,6 +130,12 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public String toHumanReadableString(GuiMappingContext context, Object source) {
+        Object j = toJson(context, source);
+        return j == null ? "" : j.toString();
     }
 
     @Override

@@ -1,13 +1,18 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.swing.table.TableTargetColumn;
+import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.util.EventObject;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public interface GuiSwingView extends GuiSwingElement {
     JComponent createView(GuiMappingContext context);
@@ -212,6 +217,40 @@ public interface GuiSwingView extends GuiSwingElement {
         @Override
         public void actionPerformed(ActionEvent e) {
             context.updateSourceFromRoot();
+        }
+    }
+
+    class ToStringCopyAction extends AbstractAction implements TableTargetColumnAction {
+        protected ValuePane pane;
+        protected GuiMappingContext context;
+
+        public ToStringCopyAction(ValuePane pane, GuiMappingContext context) {
+            putValue(NAME, "Copy As String");
+            this.pane = pane;
+            this.context = context;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            copy(toString(pane.getSwingViewValue()));
+        }
+
+        public String toString(Object v) {
+            return context.getRepresentation().toHumanReadableString(context, v);
+        }
+
+
+        public void copy(String data) {
+            Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
+            StringSelection sel = new StringSelection(data);
+            board.setContents(sel, sel);
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
+            copy(target.getSelectedCellValues().values().stream()
+                    .map(this::toString)
+                    .collect(Collectors.joining("\n")));
         }
     }
 }

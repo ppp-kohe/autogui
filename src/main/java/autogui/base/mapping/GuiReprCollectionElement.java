@@ -152,4 +152,14 @@ public class GuiReprCollectionElement implements GuiRepresentation {
     public boolean isJsonSetter() {
         return false;
     }
+
+    @Override
+    public String toHumanReadableString(GuiMappingContext context, Object source) {
+        List<?> list = (List<?>) source;
+        List<String> array = new ArrayList<>(list.size());
+        for (Object element : list) {
+            array.add(getRepresentation().toHumanReadableString(context, element));
+        }
+        return String.join("\n", array);
+    }
 }

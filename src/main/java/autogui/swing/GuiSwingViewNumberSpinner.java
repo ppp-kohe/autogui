@@ -3,10 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.PopupExtensionText;
-import autogui.swing.util.ScheduledTaskRunner;
-import autogui.swing.util.SettingsWindow;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -129,6 +126,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 System.err.println("ex: " + ex);
                 //nothing
             }
+
+
         }
 
         public SpinnerNumberModel getModel() {
@@ -179,6 +178,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected GuiMappingContext context;
         protected ScheduledTaskRunner.EditingRunner editingRunner;
         protected PopupExtensionText popup;
+        protected KeyUndoManager undoManager = new KeyUndoManager();
 
         public PropertyNumberSpinner(GuiMappingContext context) {
             super(createModel(context));
@@ -203,6 +203,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             menu.getEditActions().addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
 
             //popup
+            PopupExtensionText.putInputEditActions(field);
+            PopupExtensionText.putUnregisteredEditActions(field);
             popup = new PopupExtensionText(field, PopupExtension.getDefaultKeyMatcher(), menu);
             setInheritsPopupMenu(true);
 
@@ -213,6 +215,9 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, e -> {
                 getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
             });
+
+            //undo
+            undoManager.putListenersAndActionsTo(field);
         }
 
         @Override

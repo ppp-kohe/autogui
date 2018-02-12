@@ -1,7 +1,6 @@
 package autogui.swing.util;
 
 import autogui.base.log.GuiLogManager;
-import autogui.swing.log.GuiSwingLogManager;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -25,6 +24,23 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/** default popup menu support for text components.
+ *   The default impl. can be set by {@link #installDefault(JTextComponent)}
+ *     which supplies {@link PopupExtension#getDefaultKeyMatcher()} and {@link #getServiceDefaultMenu(JTextComponent)}.
+ *    The method calls {@link #putInputEditActions(JTextComponent)} which instruments additional key-actions regarding deleting.
+ *
+ *    <p>
+ *       the default items flow:
+ *       <ol>
+ *        <li>{@link TextServiceDefaultMenu#initEditActions(JTextComponent)} -&gt;
+ *        <li>  {@link TextServiceDefaultMenu#getActionsInInitEditActions(JTextComponent)} -&gt;
+ *         <li>  {@link #getEditActions(JTextComponent)}
+ *       </ol>
+ *
+ *    <p>
+ *      Note {@link #putUnregisteredEditActions(JTextComponent)} is not called automatically.
+ *
+ *  */
 public class PopupExtensionText extends PopupExtension implements FocusListener {
     protected int selectionStart;
     protected int selectionEnd;
@@ -54,6 +70,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     ////////////////
 
+    /** call {@link #show(Component, int, int)} with the bottom right position of the current text selection start */
     @Override
     public void showByKey(KeyEvent e, Component comp) {
         JTextComponent textComponent = getTextComponent();

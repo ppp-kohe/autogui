@@ -11,7 +11,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Comparator;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -158,6 +159,29 @@ public class ObjectTableColumn {
         PopupExtension.PopupMenuBuilder getMenuBuilder();
     }
 
+    ////////////////
+
+    public List<TableMenuComposite> getCompositesForRows() {
+        return Collections.emptyList();
+    }
+
+    public List<TableMenuComposite> getCompositesForCells() {
+        return Collections.emptyList();
+    }
+
+    /** menu items which the column can process */
+    public interface TableMenuComposite {
+        /** returns the "key" object for the composite shared by the same menu composites */
+        TableMenuCompositeShared getShared();
+    }
+
+    public interface TableMenuCompositeShared  {
+        /***
+         * actually composite the selected columns if row is false, or all columns if row is true.
+         */
+        PopupExtension.PopupMenuBuilder composite(JTable table, List<TableMenuComposite> columns, boolean row);
+    }
+
 
     ////////////////
 
@@ -171,6 +195,18 @@ public class ObjectTableColumn {
         @Override
         public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
             return rowIndex;
+        }
+
+        @Override
+        public List<TableMenuComposite> getCompositesForRows() {
+            return Collections.singletonList(new ToStringCopyCell.TableMenuCompositeToStringValue(
+                    getTableColumn().getModelIndex()));
+        }
+
+        @Override
+        public List<TableMenuComposite> getCompositesForCells() {
+            return Collections.singletonList(new ToStringCopyCell.TableMenuCompositeToStringValue(
+                    getTableColumn().getModelIndex()));
         }
     }
 
@@ -202,7 +238,7 @@ public class ObjectTableColumn {
     }
 
     public static class NumberCopyAction extends PopupExtensionText.TextCopyAllAction
-            implements TableTargetAction {
+            implements TableTargetColumnAction {
 
         public NumberCopyAction() {
             super(null);
@@ -210,7 +246,7 @@ public class ObjectTableColumn {
         }
 
         @Override
-        public void actionPerformedOnTable(ActionEvent e, TableTarget target) {
+        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
             actionPerformedOnTable(e, target.getSelectedCellValues().values());
         }
 
@@ -276,7 +312,6 @@ public class ObjectTableColumn {
             return null;
         }
     }
-
 
 
 

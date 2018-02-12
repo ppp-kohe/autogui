@@ -61,6 +61,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                 menu.accept(refreshAction);
                 GuiSwingJsonTransfer.getActions(this, context)
                         .forEach(menu::accept);
+                menu.accept(new ToStringCopyAction(this, context));
             });
             setInheritsPopupMenu(true);
 
