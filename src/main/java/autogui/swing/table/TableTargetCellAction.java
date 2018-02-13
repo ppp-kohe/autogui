@@ -26,7 +26,7 @@ import java.util.List;
  *   For each {@link autogui.swing.table.ObjectTableColumn.TableMenuCompositeShared}
  *      with columns returned the same shared key,
  *      it calls {@link autogui.swing.table.ObjectTableColumn.TableMenuCompositeShared#composite(JTable, List, boolean)}
- *        and obtains {@link autogui.swing.util.PopupExtension.PopupMenuBuilder}
+ *        and obtains {@link autogui.swing.table.ObjectTableModel.PopupMenuBuilderForRowsOrCells}
  *        for building an action summarizing those columns as {@link TableTargetCellAction}.
  *  <p>
  *   The {@link ObjectTableModel#getBuilderForRowsOrCells(JTable, List, boolean)}
@@ -34,6 +34,11 @@ import java.util.List;
  *      with {@link autogui.swing.table.ObjectTableModel.CollectionRowsAndCellsActionBuilder} as the menu appender.
  *    It converts {@link TableTargetCellAction} to
  *     {@link autogui.swing.table.ObjectTableModel.TableTargetCellExecutionAction} and add it to the menu.
+ *  <p>
+ *   Also, the returned builder will receive custom sender which becomes
+ *      a subtype of {@link autogui.swing.util.PopupExtension}  for table processing,
+ *     and the action can take custom table info including GuiMappingContext:
+ *      for instance, GuiSwingCollectionTable provides PopupExtensionCollection.
  */
 public interface TableTargetCellAction extends Action {
     void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target);

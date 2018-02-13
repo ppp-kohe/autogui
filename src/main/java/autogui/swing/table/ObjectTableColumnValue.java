@@ -4,6 +4,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionElement;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingActionDefault;
+import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
@@ -19,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
@@ -421,15 +423,19 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
     @Override
     public List<TableMenuComposite> getCompositesForRows() {
-        return Collections.singletonList(new ToStringCopyCell.TableMenuCompositeToStringValue(context,
-                getTableColumn().getModelIndex()));
+        int index = getTableColumn().getModelIndex();
+        return Arrays.asList(
+                new ToStringCopyCell.TableMenuCompositeToStringValue(context, index),
+                new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(context, index));
     }
 
 
     @Override
     public List<TableMenuComposite> getCompositesForCells() {
-        return Collections.singletonList(new ToStringCopyCell.TableMenuCompositeToStringValue(context,
-                getTableColumn().getModelIndex()));
+        int index = getTableColumn().getModelIndex();
+        return Arrays.asList(
+                new ToStringCopyCell.TableMenuCompositeToStringValue(context, index),
+                new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(context, index));
     }
 
 }

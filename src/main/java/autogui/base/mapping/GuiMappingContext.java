@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  *        The type-element tree can be obtained by GuiTypeBuilder.
  *  <p>
  *      Second, {@link GuiReprSet} receives the unmapped context object, and constructs sub-trees.
- *       The sub-trees are created by {@link #createChildCandidates()} and
+ *       The sub-trees are created by using {@link #createChildCandidates()} and
  *         matched with {@link GuiReprSet#match(GuiMappingContext)}.
  *          The only matched sub-context becomes an actual child of a context by {@link #addToParent()}.
  *          Also, if matched, the context becomes to have a {@link GuiRepresentation}.
@@ -256,7 +256,7 @@ public class GuiMappingContext {
         return listeners;
     }
 
-    /** set the source to newValue, call {@link #updateSourceFromGui(Object)} starting with this*/
+    /** set the source to newValue, call {@link #updateSourceFromRoot(GuiMappingContext)} starting with this*/
     public void updateSourceFromGui(Object newValue) {
         this.source = newValue;
         updateSourceFromRoot(this);
@@ -327,6 +327,7 @@ public class GuiMappingContext {
 
     /**
      * split a name to a list of words by camel case.
+     * If <code>forDisplay=true</code>,
      * <pre>
      *  "helloWorld" =&gt; ["hello", "World"]
      *  "HelloWorld" =&gt; ["Hello", "World"]

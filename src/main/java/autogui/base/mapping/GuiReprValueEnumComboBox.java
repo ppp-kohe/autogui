@@ -10,7 +10,8 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
     }
 
     public String getDisplayName(GuiMappingContext context, Enum<?> enumValue) {
-        return enumValue.name(); //TODO display name
+        String n = enumValue.name();
+        return context.nameJoinForDisplay(context.nameSplit(n, true));
     }
 
     /**

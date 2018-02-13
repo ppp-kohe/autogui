@@ -236,7 +236,7 @@ public class ObjectTableModel extends AbstractTableModel {
         if (cellObject != null && cellObject instanceof Future<?>) {
             rowData[columnIndex] = NULL_CELL;
             futureWaiter.accept(() -> takeValueFromSourceFuture(rowData, rowIndex, columnIndex, (Future<?>) cellObject));
-            return NULL_CELL;
+            return rowData[columnIndex];
         } else if (cellObject == null) {
             rowData[columnIndex] = NULL_CELL;
             return NULL_CELL;
@@ -252,9 +252,8 @@ public class ObjectTableModel extends AbstractTableModel {
             if (cellObject == null) {
                 cellObject = NULL_CELL;
             }
-            final Object o = cellObject;
+            rowData[columnIndex] = cellObject;
             SwingUtilities.invokeLater(() -> {
-                rowData[columnIndex] = o;
                 fireTableCellUpdated(rowIndex, columnIndex);
             });
         } catch (Exception ex) {
@@ -389,8 +388,11 @@ public class ObjectTableModel extends AbstractTableModel {
                 .forEach(b -> b.build(sender, new CollectionRowsAndCellsActionBuilder(table, menu)));
     }
 
+    public interface PopupMenuBuilderForRowsOrCells {
+        void build(PopupExtension sender, Consumer<TableTargetCellAction> menu);
+    }
 
-    public Stream<PopupExtension.PopupMenuBuilder> getBuildersForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
+    public Stream<PopupMenuBuilderForRowsOrCells> getBuildersForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
         Map<ObjectTableColumn.TableMenuCompositeShared, List<ObjectTableColumn.TableMenuComposite>> rows
                 = new LinkedHashMap<>();
         cols.forEach(c ->
@@ -405,7 +407,7 @@ public class ObjectTableModel extends AbstractTableModel {
     }
 
 
-    public static class CollectionRowsAndCellsActionBuilder implements Consumer<Object> {
+    public static class CollectionRowsAndCellsActionBuilder implements Consumer<TableTargetCellAction> {
         protected Consumer<Object> menu;
         protected TableTargetCell target;
 
@@ -415,20 +417,8 @@ public class ObjectTableModel extends AbstractTableModel {
         }
 
         @Override
-        public void accept(Object o) {
-            if (o instanceof Action) {
-                addAction(o);
-            } else if (o instanceof JMenuItem) {
-                addAction(o);
-            } else {
-                menu.accept(o);
-            }
-        }
-
-        public void addAction(Object a) {
-            if (a instanceof TableTargetCellAction) {
-                menu.accept(new TableTargetCellExecutionAction((TableTargetCellAction) a, target));
-            }
+        public void accept(TableTargetCellAction a) {
+            menu.accept(new TableTargetCellExecutionAction(a, target));
             //otherwise: disabled
         }
     }

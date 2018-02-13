@@ -184,6 +184,10 @@ public class GuiReprValue implements GuiRepresentation {
             map.put(name, value);
             return map;
         }
+
+        public void putTo(Map<String, Object> m) {
+            m.put(name, value);
+        }
     }
 
 }

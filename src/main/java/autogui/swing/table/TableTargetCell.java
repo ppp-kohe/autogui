@@ -53,6 +53,18 @@ public class TableTargetCell {
                 .collect(Collectors.toList());
     }
 
+    /** the model of the table must be {@link ObjectTableModel} */
+    public List<Object> getSelectedRowValues() {
+        ObjectTableModel m = (ObjectTableModel) table.getModel();
+        return IntStream.of(table.getSelectedRows())
+                .mapToObj(m.getSource()::get)
+                .collect(Collectors.toList());
+    }
+
+    public JTable getTable() {
+        return table;
+    }
+
     public static class CellValue {
         public int row;
         public int column;

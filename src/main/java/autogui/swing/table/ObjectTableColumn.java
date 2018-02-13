@@ -1,5 +1,6 @@
 package autogui.swing.table;
 
+import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
@@ -178,8 +179,12 @@ public class ObjectTableColumn {
     public interface TableMenuCompositeShared  {
         /***
          * actually composite the selected columns if row is false, or all columns if row is true.
+         *  The built actions within the returned builder are {@link TableTargetCellAction},
+         *    and their actionPerformed(ActionEvent) will never be called.
+         *    So you can just throw an exception in the method.
          */
-        PopupExtension.PopupMenuBuilder composite(JTable table, List<TableMenuComposite> columns, boolean row);
+        ObjectTableModel.PopupMenuBuilderForRowsOrCells composite(JTable table,
+                                                                  List<TableMenuComposite> columns, boolean row);
     }
 
 
@@ -199,14 +204,18 @@ public class ObjectTableColumn {
 
         @Override
         public List<TableMenuComposite> getCompositesForRows() {
-            return Collections.singletonList(new ToStringCopyCell.TableMenuCompositeToStringValue(
-                    getTableColumn().getModelIndex()));
+            int index = getTableColumn().getModelIndex();
+            return Arrays.asList(
+                    new ToStringCopyCell.TableMenuCompositeToStringValue(index),
+                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index));
         }
 
         @Override
         public List<TableMenuComposite> getCompositesForCells() {
-            return Collections.singletonList(new ToStringCopyCell.TableMenuCompositeToStringValue(
-                    getTableColumn().getModelIndex()));
+            int index = getTableColumn().getModelIndex();
+            return Arrays.asList(
+                    new ToStringCopyCell.TableMenuCompositeToStringValue(index),
+                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index));
         }
     }
 

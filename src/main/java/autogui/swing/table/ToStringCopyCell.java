@@ -1,7 +1,6 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +47,7 @@ public class ToStringCopyCell {
 
     public static class TableMenuCompositeSharedToStringValue implements ObjectTableColumn.TableMenuCompositeShared {
         @Override
-        public PopupExtension.PopupMenuBuilder composite(JTable table, List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
+        public ObjectTableModel.PopupMenuBuilderForRowsOrCells composite(JTable table, List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
             return (sender, menu) -> {
                 menu.accept(new ToStringCopyForCellsAction(columns.stream()
                         .map(TableMenuCompositeToStringValue.class::cast)
@@ -59,12 +58,12 @@ public class ToStringCopyCell {
 
     public static class ToStringCopyForCellsAction extends AbstractAction implements TableTargetCellAction {
         protected List<TableMenuCompositeToStringValue> activatedColumns;
-        protected boolean onlyAppliyingSelectedColumns;
+        protected boolean onlyApplyingSelectedColumns;
 
         public ToStringCopyForCellsAction(List<TableMenuCompositeToStringValue> activatedColumns, boolean onlyApplyingSelectedColumns) {
             putValue(NAME, onlyApplyingSelectedColumns ? "Copy Selected Cells As String" : "Copy Selected Row Cells As String");
             this.activatedColumns = activatedColumns;
-            this.onlyAppliyingSelectedColumns = onlyApplyingSelectedColumns;
+            this.onlyApplyingSelectedColumns = onlyApplyingSelectedColumns;
         }
 
         @Override
@@ -78,7 +77,7 @@ public class ToStringCopyCell {
             int prevLine = -1;
             List<String> cols = new ArrayList<>();
             List<String> lines = new ArrayList<>();
-            List<TableTargetCell.CellValue> cells = (onlyAppliyingSelectedColumns ? target.getSelectedCells()
+            List<TableTargetCell.CellValue> cells = (onlyApplyingSelectedColumns ? target.getSelectedCells()
                                                                                   : target.getSelectedRowCells());
             for (TableTargetCell.CellValue cell : cells) {
                 TableMenuCompositeToStringValue col = getMenuCompositeForCell(cell);
