@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /**
+ * an action taking a list: processing the selected items in a table
  * <pre>
  *  public R m(List&lt;E&gt; selectedItems) { ... }
  *  </pre>
@@ -37,6 +38,7 @@ public class GuiTypeMemberActionList extends GuiTypeMemberAction {
         return method;
     }
 
+    /** execute the action method with items */
     public Object execute(Object target, List<?> selectedItems) throws Exception {
         Method method = getMethod();
         if (method != null) {

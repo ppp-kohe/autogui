@@ -10,7 +10,7 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
 
     /** for each key object (and also a container type),
      *  a renderer will be created by {@link #getRenderer(GuiSwingLogManager, ContainerType)}.
-     *  by default, the key is {@link #getClass()} */
+     *  by default, the key is {@link Object#getClass()} */
     default Object getRendererKey() {
         return getClass();
     }

@@ -43,6 +43,10 @@ import java.util.stream.Collectors;
  *            <li>
  *                After that, {@link SourceUpdateListener#update(GuiMappingContext, Object)} of each updated context will be called.
  *        </ol>
+ *
+ *    <p>
+ *        getType...(), isType...() check and obtain {@link #typeElement} as a specified type.
+ *        isParent...() check the type of the parent.
  */
 public class GuiMappingContext {
     protected GuiTypeElement typeElement;
@@ -146,6 +150,7 @@ public class GuiMappingContext {
         return ctx;
     }
 
+    /** the name of {@link #typeElement} */
     public String getName() {
         return typeElement.getName();
     }
@@ -215,15 +220,18 @@ public class GuiMappingContext {
 
     ///////////////////////
 
-
+    /** only set the source value */
     public void setSource(Object source) {
         this.source = source;
     }
 
+    /** actual value of the context */
     public Object getSource() {
         return source;
     }
 
+    /** called from {@link #updateSourceFromRoot(GuiMappingContext)} and {@link #updateSourceSubTree()}.
+     *  used for updating GUI components, setSwingViewValue(v) */
     public interface SourceUpdateListener {
         void update(GuiMappingContext cause, Object newValue);
     }
@@ -267,7 +275,7 @@ public class GuiMappingContext {
         updateSourceFromRoot(null);
     }
 
-    /** obtains the root context, recursively collect updated sub-contexts from the root,
+    /** obtain the root context, recursively collect updated sub-contexts from the root,
      *    and call listeners with each updated context.  */
     public void updateSourceFromRoot(GuiMappingContext cause) {
         GuiMappingContext ctx = getRoot();
@@ -287,6 +295,14 @@ public class GuiMappingContext {
                 .forEach(l -> l.update(this, c.getSource())));
     }
 
+    /** recursively call {@link GuiRepresentation#checkAndUpdateSource(GuiMappingContext)}:
+     *   the checkAndUpdateSource invokes the getter of the target source object in order to update the value.
+     *   <p>
+     *   the recursion can be controlled by {@link GuiRepresentation#continueCheckAndUpdateSourceForChildren(GuiMappingContext, boolean)}:
+     *     this is used for avoiding recursion of list elements.
+     *   <p>
+     *    the method alone does not cause GUI updates because of no listener calls
+     *   */
     public void collectUpdatedSource(GuiMappingContext cause, List<GuiMappingContext> updated) {
         boolean thisUpdated = false;
         if (this != cause) {
@@ -301,7 +317,8 @@ public class GuiMappingContext {
         }
     }
 
-    /** space separated words from the camel-case context name */
+    /** space separated words from the camel-case context name:
+     *  e.g. "myPropName" -&gt; "My Prop Name" */
     public String getDisplayName() {
         if (displayName == null) {
             displayName = nameJoinForDisplay(nameSplit(getName(), true));
@@ -309,7 +326,8 @@ public class GuiMappingContext {
         return displayName;
     }
 
-    /** the top word of the split name, which is an action verb in most cases */
+    /** the top word of the split name, which is an action verb in most cases:
+     *    e.g. "getProp" -&gt; "get" */
     public String getIconName() {
         if (iconName == null) {
             iconName = nameSplit(getName(), true)
@@ -335,6 +353,7 @@ public class GuiMappingContext {
      *  "HELLOWorld" =&gt; ["HELLO", "World"]
      *  "" =&gt; [""]
      * </pre>
+     * If <code>forDisplay=false</code>, "MYName" =&gt; ["M", "Y", "Name"]
      */
     public List<String> nameSplit(String name, boolean forDisplay) {
         List<String> words = new ArrayList<String>();
@@ -372,6 +391,7 @@ public class GuiMappingContext {
     }
 
 
+    /** notify to {@link GuiLogManager} */
     public void errorWhileUpdateSource(Throwable error) {
         GuiLogManager.get().logError(error);
     }
@@ -416,7 +436,8 @@ public class GuiMappingContext {
 
     //////////////////////
 
-    /** take taskRunner from parent context */
+    /** take taskRunner from parent context,
+     *   or single thread executor in the root.  */
     public ScheduledExecutorService getTaskRunner() {
         if (taskRunner == null) {
             GuiMappingContext parent = getParent();
@@ -429,6 +450,7 @@ public class GuiMappingContext {
         return taskRunner;
     }
 
+    /** submit the task to the task runner and wait the completion of the task */
     public <T> T execute(Callable<T> task) throws Throwable {
         try {
             return getTaskRunner()
@@ -439,6 +461,7 @@ public class GuiMappingContext {
         }
     }
 
+    /** obtains from the parent */
     public GuiPreferences getPreferences() {
         if (preferences == null) {
             GuiMappingContext parent = getParent();

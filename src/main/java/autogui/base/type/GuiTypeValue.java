@@ -25,6 +25,8 @@ public class GuiTypeValue implements GuiTypeElement {
         return name;
     }
 
+    /** the default implementation returns the class
+     * obtained from {@link Class#forName(String)} with the {@link #name} */
     public Class<?> getType() {
         if (type == null) {
             try {
@@ -41,9 +43,13 @@ public class GuiTypeValue implements GuiTypeElement {
         return "type(" + name + ")";
     }
 
-    /** returns a value other than {@link #NO_UPDATE} if the value is updated from the prevValue;
-     *   the returned value is a next(current) state of the prevValue.
+    /**
+     * check whether the given value is updated or not.
+     * <p>
+     * return a value other than {@link #NO_UPDATE} if the value is updated from the prevValue;
+     *   the returned value is a next (current) state of the prevValue.
      *   Even if the returned value is equivalent to the prevValue, it is non-NO_UPDATE and then it indicates an update.
+     * <p>
      * the default implementation returns NO_UPDATE.
      *  The main purpose of the method is provide extensibility for GUI source.
      * */
@@ -55,11 +61,12 @@ public class GuiTypeValue implements GuiTypeElement {
         return updatedValue(prevValue);
     }
 
+    /** whether the value is writable or not. default is true */
     public boolean isWritable(Object value) {
         return true;
     }
 
-    /** returns a new value */
+    /** return the newValue */
     public Object writeValue(Object prevValue, Object newValue) {
         return newValue;
     }

@@ -9,6 +9,7 @@ import java.util.List;
 public interface GuiTypeElement {
     String getName();
 
+    /** sub-elements of the type tree */
     default List<GuiTypeElement> getChildren() {
         return Collections.emptyList();
     }

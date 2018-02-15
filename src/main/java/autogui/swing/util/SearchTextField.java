@@ -70,7 +70,7 @@ public class SearchTextField extends JComponent {
         /** the method is executed under the background thread of {@link SwingWorker}.
          *   The publisher is passed for checking cancellation and publishing intermediate result.
          *   <pre>
-         *       List&lt;CategorizedPopupItem&gt results = new ArrayList&lt;&gt();
+         *       List&lt;CategorizedPopupItem&gt; results = new ArrayList&lt;&gt;();
          *       for (CategorizedPopupItem item : ...) {
          *           if (publisher.isSearchCancelled()) {
          *               break;

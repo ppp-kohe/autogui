@@ -6,6 +6,11 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * {@link #get(Type)} can obtain a {@link GuiTypeElement} from {@link Type}.
+ *   it's targets are members attached [at]{@link GuiIncluded}.
+ *
+ * */
 public class GuiTypeBuilder {
     protected Map<Type, GuiTypeElement> typeElements = new HashMap<>();
 
@@ -26,10 +31,14 @@ public class GuiTypeBuilder {
         this.valueTypes = valueTypes;
     }
 
+    /** the default value types are boxed primitive types: {@link Integer} etc. */
     public List<Class<?>> getValueTypes() {
         return valueTypes;
     }
 
+    /**
+     * reuse a constructed type element, or {@link #create(Type)}.
+     *   the reusing can avoid infinity recursion */
     public GuiTypeElement get(Type type) {
         GuiTypeElement e = typeElements.get(type);
         if (e == null) {
@@ -39,7 +48,14 @@ public class GuiTypeBuilder {
     }
 
     /**
-     *
+     * <ul>
+     *     <li>for {@link Class}: {@link #createFromClass(Class)}</li>
+     *     <li>for {@link ParameterizedType}: obtain the raw class and
+     *             check it is a {@link Collection} with a type arg &lt;T&gt;.
+     *             then, {@link #createCollectionFromType(ParameterizedType)},
+     *             otherwise {@link #createFromClass(Class)} for the raw type</li>
+     *     <li>otherwise null</li>
+     * </ul>
      * @param type for creation
      * @return nullable
      */
@@ -60,6 +76,8 @@ public class GuiTypeBuilder {
         }
     }
 
+    /** if {@link #isValueType(Class)} or {@link #isExcludedType(Class)} then {@link #createValueFromClass(Class)}
+     *  else {@link #createObjectFromClass(Class)}*/
     public GuiTypeElement createFromClass(Class<?> cls) {
         if (isValueType(cls) || isExcludedType(cls)) {
             return createValueFromClass(cls);
@@ -68,12 +86,14 @@ public class GuiTypeBuilder {
         }
     }
 
+    /** return a new {@link GuiTypeValue} with registering it */
     public GuiTypeValue createValueFromClass(Class<?> cls) {
         GuiTypeValue valueType = new GuiTypeValue(cls);
         put(cls, valueType);
         return valueType;
     }
 
+    /** return a new {@link GuiTypeCollection} with the raw type and the element type */
     public GuiTypeCollection createCollectionFromType(ParameterizedType type) {
         Class<?> rawType = getClass(type);
         GuiTypeCollection collectionType = new GuiTypeCollection(rawType);
@@ -82,6 +102,13 @@ public class GuiTypeBuilder {
         return collectionType;
     }
 
+    /**
+     * create a {@link GuiTypeObject}, register it,
+     *   and construct field and method members.
+     *   those members are grouped by their names
+     *   and passed to {@link #createMember(GuiTypeObject, MemberDefinitions)}.
+     *
+     *   the rules for finding members are {@link #isMemberField(Field)} and {@link #isMemberMethod(Method)}. */
     public GuiTypeObject createObjectFromClass(Class<?> cls) {
         GuiTypeObject objType = new GuiTypeObject(cls);
         put(cls, objType);
@@ -107,6 +134,7 @@ public class GuiTypeBuilder {
         return objType;
     }
 
+    /** temporarily created member group in {@link #createObjectFromClass(Class)} */
     public static class MemberDefinitions {
         public String name;
         public List<Method> methods = new ArrayList<>();
@@ -136,6 +164,7 @@ public class GuiTypeBuilder {
         typeElements.put(type, e);
     }
 
+    /** primitive or {@link #valueTypes} */
     public boolean isValueType(Class<?> cls) {
         return cls.isPrimitive() || valueTypes.contains(cls);
     }
@@ -144,6 +173,8 @@ public class GuiTypeBuilder {
         return !cls.isAnnotationPresent(GuiIncluded.class);
     }
 
+    /** if the definitions has a field, a getter or a setter, create a property.
+     *   otherwise create an action. */
     public void createMember(GuiTypeObject objType, MemberDefinitions definitions) {
         Field fld = definitions.getLastField();
         Method getter = definitions.getLast(this::isGetterMethod);
@@ -200,10 +231,12 @@ public class GuiTypeBuilder {
         objType.getActions().add(action);
     }
 
+    /** attached {@link GuiIncluded} and non-static */
     public boolean isMemberField(Field f) {
         return f.isAnnotationPresent(GuiIncluded.class) && !Modifier.isStatic(f.getModifiers());
     }
 
+    /** the field name itself or attached {@link GuiIncluded#name()} */
     public String getMemberNameFromField(Field f) {
         GuiIncluded included = f.getAnnotation(GuiIncluded.class);
         if (included == null || included.name().isEmpty()) {
@@ -213,10 +246,12 @@ public class GuiTypeBuilder {
         }
     }
 
+    /** attached {@link GuiIncluded} and non-static */
     public boolean isMemberMethod(Method m) {
         return m.isAnnotationPresent(GuiIncluded.class) && !Modifier.isStatic(m.getModifiers());
     }
 
+    /** {@link #getMemberNameFromMethodName(String)} or attached {@link GuiIncluded#name()}*/
     public String getMemberNameFromMethod(Method m) {
         GuiIncluded included = m.getAnnotation(GuiIncluded.class);
         if (included.name().isEmpty()) {
@@ -226,6 +261,7 @@ public class GuiTypeBuilder {
         }
     }
 
+    /** get..., is...., set..., or name itself */
     public String getMemberNameFromMethodName(String name) {
         String pName = getNameSuffix("get", name);
         if (pName == null) {
@@ -253,6 +289,7 @@ public class GuiTypeBuilder {
         }
     }
 
+    /** boolean is...() or V get...() */
     public boolean isGetterMethod(Method m) {
         return ((m.getName().startsWith("is") && m.getReturnType().equals(boolean.class)) ||
                     m.getName().startsWith("get")) &&
@@ -260,14 +297,17 @@ public class GuiTypeBuilder {
                 !m.getReturnType().equals(void.class);
     }
 
+    /** set...(V v) */
     public boolean isSetterMethod(Method m) {
         return m.getName().startsWith("set") && m.getParameterCount() == 1;
     }
 
+    /** m() */
     public boolean isActionMethod(Method m) {
         return m.getParameterCount() == 0;
     }
 
+    /** m(L&lt;E&gt;) and L is a super type of {@link List} except for Object. */
     public boolean isActionListMethod(Method m) {
         if (m.getParameterCount() == 1) {
             Type t = m.getGenericParameterTypes()[0];
@@ -283,6 +323,13 @@ public class GuiTypeBuilder {
         }
     }
 
+    /** {@link Class},
+     * raw type of {@link ParameterizedType},
+     *  LUB of {@link WildcardType},
+     *  LUB of {@link TypeVariable},
+     *  Object[] for {@link GenericArrayType},
+     *  or Object
+     * */
     public Class<?> getClass(Type type) {
         if (type instanceof Class<?>) {
             return (Class<?>) type;

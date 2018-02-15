@@ -51,7 +51,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
         default GuiSwingViewPropertyPane.NamedPropertyPane wrapNamed() {
             return new GuiSwingViewPropertyPane.NamedPropertyPane(getContext().getDisplayName(), getContext().getName(),
-                    asComponent());
+                    asComponent(), getSwingMenuBuilder());
         }
 
         default JComponent asComponent() {

@@ -136,6 +136,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
     /**
      * <table>
+     *     <caption>domains and range</caption>
      * <tr><th>l,r</th>	<th>byte</th>	<th>short</th>	<th>int</th>	<th>long</th>	<th>float</th>	<th>double</th>	<th>bigInteger</th>	<th>bigDecimal</th></tr>
      * <tr><th>byte</th>	<td>byte</td>	<td>short</td>	<td>int</td>	<td>long</td>	<td>float</td>	<td>double</td>	<td>bigInteger</td>	<td>bigDecimal</td></tr>
      * <tr><th>short</th>	<td>short</td>	<td>short</td>	<td>int</td>	<td>long</td>	<td>float</td>	<td>double</td>	<td>bigInteger</td>	<td>bigDecimal</td></tr>
