@@ -136,6 +136,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
     /**
      * <table>
+     *     <caption>domains and range</caption>
      * <tr><th>l,r</th>	<th>byte</th>	<th>short</th>	<th>int</th>	<th>long</th>	<th>float</th>	<th>double</th>	<th>bigInteger</th>	<th>bigDecimal</th></tr>
      * <tr><th>byte</th>	<td>byte</td>	<td>short</td>	<td>int</td>	<td>long</td>	<td>float</td>	<td>double</td>	<td>bigInteger</td>	<td>bigDecimal</td></tr>
      * <tr><th>short</th>	<td>short</td>	<td>short</td>	<td>int</td>	<td>long</td>	<td>float</td>	<td>double</td>	<td>bigInteger</td>	<td>bigDecimal</td></tr>
@@ -145,7 +146,6 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
      * <tr><th>double</th>	<td>double</td>	<td>double</td>	<td>double</td>	<td>double</td>	<td>double</td>	<td>double</td>	<td>bigDecimal</td>	<td>bigDecimal</td></tr>
      * <tr><th>bigInteger</th>	<td>bigInteger</td>	<td>bigInteger</td>	<td>bigInteger</td>	<td>bigInteger</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigInteger</td>	<td>bigDecimal</td></tr>
      * <tr><th>bigDecimal</th>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td></tr>
-     * <caption>the number conversion table</caption>
      * </table>
      * @param l a number type
      * @param r a number type

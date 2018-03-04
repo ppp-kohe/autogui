@@ -27,10 +27,12 @@ public class GuiTypeObject extends GuiTypeValue {
         this.actions = new ArrayList<>();
     }
 
+    /** @return property members */
     public List<GuiTypeMemberProperty> getProperties() {
         return properties;
     }
 
+    /** @return action members */
     public List<GuiTypeMemberAction> getActions() {
         return actions;
     }
@@ -53,6 +55,7 @@ public class GuiTypeObject extends GuiTypeValue {
         this.actions = actions;
     }
 
+    /** @return properties and actions */
     @Override
     public List<GuiTypeElement> getChildren() {
         return Stream.concat(getProperties().stream(), getActions().stream())

@@ -106,6 +106,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
     }
 
     public static class NamedPropertyPane extends NamedPane implements ValuePane {
+        protected PopupExtension popup;
 
         public NamedPropertyPane() { }
 
@@ -117,6 +118,12 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         public NamedPropertyPane(String displayName, String name, JComponent contentPane) {
             super(displayName, contentPane);
             setName(name);
+        }
+
+        public NamedPropertyPane(String displayName, String name, JComponent contentPane,
+                                 PopupExtension.PopupMenuBuilder menuBuilder) {
+            this(displayName, name, contentPane);
+            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), menuBuilder);
         }
 
         @Override

@@ -33,7 +33,11 @@ public class GuiTypeMemberAction extends GuiTypeMember {
         return methodName;
     }
 
-
+    /**
+     * @param target the target of the action
+     * @return execute the action method
+     * @throws Exception the exception from the method
+     * */
     public Object execute(Object target) throws Exception {
         Method method = getMethod();
         if (method != null) {

@@ -125,10 +125,12 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         this.type = type;
     }
 
+    /** @return property type */
     public GuiTypeElement getType() {
         return type;
     }
 
+    /** @return singleton with the property type */
     @Override
     public List<GuiTypeElement> getChildren() {
         if (type == null) {
@@ -139,7 +141,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     }
 
     /**
-     *
+     * execute the property method or obtain value of the property field
      * @param target the property holder
      * @param prevValue a previous value of the property, which can be compared to the new value and if it equals,
      *                   the returned value will be {@link GuiTypeValue#NO_UPDATE}.
@@ -180,6 +182,13 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         }
     }
 
+    /**
+     * execute the setter method or set the value of the property field
+     * @param target the field or setter target
+     * @param value the value to be set
+     * @return setter returned value or null
+     * @throws Exception thrown in the setter
+     */
     public Object executeSet(Object target, Object value) throws Exception {
         Method setter = getSetter();
         if (setter != null) {
@@ -194,6 +203,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         throw new UnsupportedOperationException("no setter: " + name);
     }
 
+    /** @return true if it has a setter of a field */
     public boolean isWritable() {
         return getSetter() != null || getField() != null;
     }
@@ -210,6 +220,14 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
        return executeGet(target, prevValue);
     }
 
+    /**
+     *  the default implementation just calls {@link #executeSet(Object, Object)}
+     * @param index the index in the list
+     * @param target an element object
+     * @param value the value to be set
+     * @return the returned value of the setter or null
+     * @throws Exception thrown in the setter
+     */
     public Object executeSetList(int index, Object target, Object value) throws Exception {
         return executeSet(target, value);
     }

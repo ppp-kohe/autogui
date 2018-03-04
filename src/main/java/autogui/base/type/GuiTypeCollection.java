@@ -35,6 +35,7 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
     }
 
 
+    /** @return the element type of the collection: usually obtained from ParameterizedType */
     public GuiTypeElement getElementType() {
         return elementType;
     }

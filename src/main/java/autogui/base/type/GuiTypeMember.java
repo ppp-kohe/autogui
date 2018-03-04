@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
+/** the super type for actions and properties */
 public abstract class GuiTypeMember implements GuiTypeElement {
     protected String name;
     /** nullable */
@@ -25,7 +26,10 @@ public abstract class GuiTypeMember implements GuiTypeElement {
         return name;
     }
 
-
+    /**
+     * @param name the name compared by {@link Method#getName()}
+     * @param p a filter of methods
+     * @return a method whose name is equivalent to the name with matching the p */
     public Method findOwnerMethod(String name, Predicate<Method> p) {
         if (getOwner() != null) {
             Class<?> type = getOwner().getType();
