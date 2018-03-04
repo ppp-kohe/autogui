@@ -29,6 +29,13 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
         }
     }
 
+    /**
+     *
+     * @param context the context of the repr.
+     * @param target unused
+     * @param json a {@link String} as a name of a member of an enum.
+     * @return an {@link Enum} member of the name
+     */
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         if (json instanceof String) {

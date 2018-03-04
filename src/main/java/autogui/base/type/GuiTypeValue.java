@@ -41,12 +41,15 @@ public class GuiTypeValue implements GuiTypeElement {
         return "type(" + name + ")";
     }
 
-    /** returns a value other than {@link #NO_UPDATE} if the value is updated from the prevValue;
+    /**
+     *
+     * @param prevValue  the previous value
+     * @return returns a value other than {@link #NO_UPDATE} if the value is updated from the prevValue;
      *   the returned value is a next(current) state of the prevValue.
      *   Even if the returned value is equivalent to the prevValue, it is non-NO_UPDATE and then it indicates an update.
      * the default implementation returns NO_UPDATE.
      *  The main purpose of the method is provide extensibility for GUI source.
-     * */
+     */
     public Object updatedValue(Object prevValue) {
         return null;
     }
@@ -59,7 +62,11 @@ public class GuiTypeValue implements GuiTypeElement {
         return true;
     }
 
-    /** returns a new value */
+    /**
+     * @param prevValue ignored
+     * @param newValue used as the returned value
+     * @return newValue
+     */
     public Object writeValue(Object prevValue, Object newValue) {
         return newValue;
     }
@@ -89,7 +96,11 @@ public class GuiTypeValue implements GuiTypeElement {
         return name != null ? name.hashCode() : 0;
     }
 
-    /** check equality 2 objects: default implementation is calling (shallow) equals */
+    /** check equality 2 objects: default implementation is calling (shallow) equals
+     * @param prevValue the compared value 1
+     * @param nextValue the compared value 2
+     * @return use Objects.equals
+     */
     public boolean equals(Object prevValue, Object nextValue) {
         return Objects.equals(prevValue, nextValue);
     }

@@ -159,7 +159,13 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         throw new UnsupportedOperationException("no getter: " + name);
     }
 
-    /** use equals of type */
+    /**
+     * use {@link Objects#equals(Object, Object)} or
+     *  if {@link GuiTypeValue}, use {@link GuiTypeValue#equals(Object, Object)}
+     * @param prevValue the compared value 1
+     * @param newValue the compared value 2
+     * @return <code>newValue</code> if equivalent, or {@link GuiTypeValue#NO_UPDATE}.
+     */
     public Object compareGet(Object prevValue, Object newValue) {
         boolean eq;
         if (type != null && type instanceof GuiTypeValue) {

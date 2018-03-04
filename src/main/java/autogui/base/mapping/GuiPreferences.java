@@ -30,7 +30,10 @@ public class GuiPreferences {
         this.context = context;
     }
 
-    /** returns a new instance for context */
+    /**
+     * @param context the parent
+     * @return a new instance for context
+     */
     public GuiPreferences getChild(GuiMappingContext context) {
         return new GuiPreferences(this, context);
     }

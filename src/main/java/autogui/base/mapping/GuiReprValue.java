@@ -5,8 +5,13 @@ import autogui.base.type.GuiTypeValue;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+/**
+ * a value component associated with {@link GuiTypeValue}.
+ *  matching {@link Class} with the subclass implementing {@link #matchValueType(Class)}.
+ */
 public class GuiReprValue implements GuiRepresentation {
     @Override
     public boolean match(GuiMappingContext context) {
@@ -19,6 +24,12 @@ public class GuiReprValue implements GuiRepresentation {
         }
     }
 
+    /**
+     * obtains the value type from the context.
+     *   the implementation checks the context is a property, or an element value
+     * @param context the context
+     * @return a property type class, a element value class, or null
+     */
     public Class<?> getValueType(GuiMappingContext context) {
         if (context.isTypeElementProperty()) {
             return context.getTypeElementPropertyTypeAsClass();
@@ -36,7 +47,10 @@ public class GuiReprValue implements GuiRepresentation {
     /**
      * * the class supposes the parent is a {@link GuiReprPropertyPane}: [propName: [objectPane]].
      *  then, the parent of source and this source are a same value;
-     *       and the parent is already checkAndUpdateSource and a new value is supplied
+     *       and the parent is already checkAndUpdateSource and a new value is supplied.
+     *   the method uses {@link #getUpdatedValue(GuiMappingContext, boolean)} with <code>executeParent=false</code>.
+     *  @param context the source context
+     *  @return the source context is updated or not
      */
     @Override
     public boolean checkAndUpdateSource(GuiMappingContext context) {
@@ -55,8 +69,23 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
-     * obtains the current value of the context
-     * @param context  target context
+     * obtain the current value of the context.
+     *  This is called from {@link #checkAndUpdateSource(GuiMappingContext)},
+     *   and invoke the getter method for obtaining the value.
+     *   <ul>
+     *       <li>use <code>source</code> of the context as the previous value</li>
+     *       <li>for executing {@link autogui.base.type.GuiTypeElement},
+     *               use {@link GuiMappingContext#execute(Callable)}</li>
+     *       <li>if this is a property, call {@link #getParentSource(GuiMappingContext, boolean)}
+     *             for obtaining <code>target</code>, and call {@link GuiTypeMemberProperty#executeGet(Object, Object)}. </li>
+     *       <li>if the parent is a property (suppose {@link GuiTypeMemberProperty} -&gt; {@link GuiTypeValue}),
+     *             obtain a value from the parent property, and {@link GuiTypeMemberProperty#compareGet(Object, Object)}.</li>
+     *       <li>if this is a value
+     *             {@link GuiMappingContext#isTypeElementValue()},
+     *             {@link GuiMappingContext#isTypeElementObject()}, or
+     *             {@link GuiMappingContext#isTypeElementCollection()}, {@link GuiTypeValue#updatedValue(Object)}</li>
+     *   </ul>
+     * @param context  target context,
      * @param executeParent  indicates whether recursively invoke the method for the parent if the parent is a property pane.
      *                        If it is checking process, then the order is from root to bottom,
      *                         and it might be parent is already set.
@@ -86,6 +115,21 @@ public class GuiReprValue implements GuiRepresentation {
         return prev;
     }
 
+    /**
+     * <ul>
+     *     <li>if <code>executeParent=true</code> and the parent is a property,
+     *            {@link GuiReprPropertyPane#getUpdatedValue(GuiMappingContext, boolean)} for the parent</li>
+     *     <li>if <code>executeParent=true</code>  and the parent is a collection element,
+     *            it is an error</li>
+     *     <li>if <code>executeParent=true</code> and the parent is a value,
+     *            {@link GuiReprValue#getUpdatedValue(GuiMappingContext, boolean)}</li>
+     *     <li>otherwise, the source value of the parent</li>
+     * </ul>
+     * @param context the context of the repr.
+     * @param executeParent if true, it allows an action in order to obtain the value
+     * @return the source value of the parent
+     * @throws Throwable the action might cause an error
+     */
     public Object getParentSource(GuiMappingContext context, boolean executeParent) throws Throwable {
         if (executeParent) {
             if (context.isParentPropertyPane()) {
@@ -104,7 +148,25 @@ public class GuiReprValue implements GuiRepresentation {
         }
     }
 
-
+    /**
+     * call the setter by editing on GUI, and {@link GuiMappingContext#updateSourceFromGui(Object)}.
+     * <ul>
+     *   <li>it first adds <code>newValue</code> to the history. </li>
+     *   <li>using {@link GuiMappingContext#execute(Callable)}</li>
+     *   <li>if this is a property, {@link GuiMappingContext#getParentSource()} and
+     *        {@link GuiMappingContext#updateSourceFromGui(Object)} with the <code>newValue</code></li>
+     *   <li>if the parent is a property, {@link GuiReprPropertyPane#getUpdatedValue(GuiMappingContext, boolean)}
+     *          with <code>newValue</code></li>
+     *   <li>if the parent is a collection element, nothing happen</li>
+     *   <li>if this is a value, use {@link GuiMappingContext#getSource()} as the previous value,
+     *        {@link GuiTypeValue#writeValue(Object, Object)} with the prev and <code>newValue</code>,
+     *        and {@link GuiMappingContext#updateSourceFromGui(Object)}</li>
+     * </ul>
+     *
+     *
+     * @param context the context of this repr.
+     * @param newValue the updated proeprty value
+     */
     public void updateFromGui(GuiMappingContext context, Object newValue) {
         context.getPreferences().addHistoryValue(newValue);
 
@@ -134,6 +196,11 @@ public class GuiReprValue implements GuiRepresentation {
         }
     }
 
+    /**
+     *
+     * @param context the context of the repr.
+     * @return the result of {@link GuiTypeMemberProperty#isWritable()} and so on.
+     */
     public boolean isEditable(GuiMappingContext context) {
         if (context.isTypeElementProperty()) {
             return context.getTypeElementAsProperty().isWritable();
@@ -146,8 +213,15 @@ public class GuiReprValue implements GuiRepresentation {
         }
     }
 
-    /** subclass can change to returned type and convert the value to the type.
-     * a typical use case is just down-casting and converting null to an empty object. */
+    /**
+     * called from a GUI element in order to update the it's value.
+     * subclass can change to returned type and convert the value to the type.
+     * a typical use case is just down-casting and converting null to an empty object.
+     *
+     * @param context the context of the repr.
+     * @param value the current value
+     * @return the updated value
+     */
     public Object toUpdateValue(GuiMappingContext context, Object value) {
         return value;
     }
@@ -162,10 +236,23 @@ public class GuiReprValue implements GuiRepresentation {
         return target;
     }
 
+    /**
+     * cast <code>o</code> if <code>o</code> is a non-null and specified type <code>cls</code>,
+     *     otherwise call <code>v</code>.
+     *  used in {@link #toJson(GuiMappingContext, Object)}.
+     * @param cls the required class <code>T</code>
+     * @param o the current value, nullable
+     * @param v the falling-back supplier
+     * @param <T> the required type
+     * @return <code>o</code> or the result of <code>v</code>
+     */
     public static <T> T castOrMake(Class<T> cls, Object o, Supplier<T> v) {
         return o != null && cls.isInstance(o) ? cls.cast(o) : v.get();
     }
 
+    /**
+     * pair object for a value and a String name, can be converted to a JSON object member.
+     */
     public static class NamedValue {
         public String name;
         public Object value;

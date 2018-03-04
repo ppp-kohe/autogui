@@ -4,7 +4,7 @@ import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -36,7 +36,7 @@ public class GuiReprObjectPane extends GuiReprValue {
     }
 
     /**
-     *
+     * use {@link #toJsonFromObject(GuiMappingContext, Object)}
      * @param context a context holds the representation
      * @param source  the converted object
      * @return Map: { propertyName: propertyJson }
@@ -46,8 +46,17 @@ public class GuiReprObjectPane extends GuiReprValue {
         return toJsonFromObject(context, source);
     }
 
+    /**
+     * @param context the context of the caller's repr.
+     * @param source the converted object
+     * @return a map object ({@link LinkedHashMap}), with entries based on the child contexts.
+     *   a member is constructed with {@link GuiRepresentation#toJsonWithNamed(GuiMappingContext, Object)}.
+     *   Special case: if the map has only 1 collection entry,
+     *     then it will return the entry value (list) instead of the map.
+     *     This is because the entry name will be the type name and useless.
+     */
     public static Object toJsonFromObject(GuiMappingContext context, Object source) {
-        Map<String, Object> map = new HashMap<>(context.getChildren().size());
+        Map<String, Object> map = new LinkedHashMap<>(context.getChildren().size());
         BiConsumer<GuiMappingContext, Object> processor = (s, nextValue) -> {
             Object subObj = s.getRepresentation().toJsonWithNamed(s, nextValue);
             if (subObj != null) {

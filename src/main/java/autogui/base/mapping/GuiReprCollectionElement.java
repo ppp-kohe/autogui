@@ -5,7 +5,11 @@ import autogui.base.type.GuiTypeValue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
+/**
+ * elements in a collection table {@link GuiReprCollectionTable}
+ */
 public class GuiReprCollectionElement implements GuiRepresentation {
     protected GuiRepresentation representation;
 
@@ -45,17 +49,45 @@ public class GuiReprCollectionElement implements GuiRepresentation {
          return new GuiReprCollectionElement(wrapped);
     }
 
+    /**
+     * nothing happen
+     * @param context the context of the repr.
+     * @return always false
+     */
     @Override
     public boolean checkAndUpdateSource(GuiMappingContext context) {
         return false;
     }
 
+    /**
+     *
+     * @param context the context of the repr.
+     * @param parentUpdate ignored
+     * @return always false
+     */
     @Override
     public boolean continueCheckAndUpdateSourceForChildren(GuiMappingContext context, boolean parentUpdate) {
         return false;
     }
 
-    /** the table cell version of {@link GuiReprValue#getUpdatedValue(GuiMappingContext, boolean)} */
+    /** the table cell version of {@link GuiReprValue#getUpdatedValue(GuiMappingContext, boolean)}.
+     * <ul>
+     *     <li>use {@link GuiMappingContext#execute(Callable)}  of <code>subContext</code>.</li>
+     *     <li>if the <code>subContext</code> is a property,
+     *          call {@link GuiTypeMemberProperty#executeGetList(int, Object, Object)}</li>
+     *     <li>basically a GUI table reuses an old value,
+     *        it updates when the value is null as cleared, and it obtains the new value.
+     *           Thus, the method does not consider a previous value, which will be null.
+     *           This is because mainly performance reason.</li>
+     * </ul>
+     * @param context the context of the repr.
+     * @param subContext the main context as a value of the collection
+     * @param src  the target collection
+     * @param rowIndex the element index of the collection
+     * @param columnIndex the table column index, ignored in the impl.
+     * @return the updated value of the cell
+     * @throws Throwable an error caused by the execution
+     */
     public Object getCellValue(GuiMappingContext context, GuiMappingContext subContext,
                                Object src, int rowIndex, int columnIndex) throws Throwable {
         if (subContext.isTypeElementProperty()) {
@@ -79,7 +111,14 @@ public class GuiReprCollectionElement implements GuiRepresentation {
         return null;
     }
 
-    /** the table cell version of {@link GuiReprValue#updateFromGui(GuiMappingContext, Object)} */
+    /** the table cell version of {@link GuiReprValue#updateFromGui(GuiMappingContext, Object)}
+     * @param context the context of the repr.
+     * @param subContext the main context as a value of the collection
+     * @param src  the target collection
+     * @param rowIndex the element index of the collection
+     * @param columnIndex the table column index, ignored in the impl.
+     * @param newValue the edited new value of the cell
+     */
     public void updateCellFromGui(GuiMappingContext context, GuiMappingContext subContext,
                                   Object src, int rowIndex, int columnIndex, Object newValue) {
         if (subContext.isTypeElementProperty()) {
@@ -107,7 +146,7 @@ public class GuiReprCollectionElement implements GuiRepresentation {
      *
      * @param context a context holds the representation
      * @param source  the converted object
-     * @return List: { elementJson, ... }.  Note: null elements are skipped
+     * @return List ({@link ArrayList}): [ elementJson, ... ].  Note: null elements are skipped.
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {

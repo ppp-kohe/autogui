@@ -33,6 +33,13 @@ public class GuiReprValueFilePathField extends GuiReprValue {
         }
     }
 
+    /**
+     * obtain a file-path object from the string json
+     * @param context  the context of the repr.
+     * @param target  unused
+     * @param json suppose a {@link String}
+     * @return {@link Path} or {@link File} (determined by the context type), or null
+     */
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         if (json instanceof String) {

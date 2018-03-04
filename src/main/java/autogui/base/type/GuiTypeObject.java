@@ -36,6 +36,7 @@ public class GuiTypeObject extends GuiTypeValue {
     }
 
     /**
+     * @param name the name compared with {@link GuiTypeMember#getName()}
      * @return nullable
      * */
     public GuiTypeMember getMemberByName(String name) {

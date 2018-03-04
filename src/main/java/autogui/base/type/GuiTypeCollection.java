@@ -44,6 +44,10 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
         return "collection(" + elementType + ")";
     }
 
+    /**
+     *
+     * @return a single list with {@link #elementType}
+     */
     @Override
     public List<GuiTypeElement> getChildren() {
         if (elementType != null) {
@@ -71,7 +75,12 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
         return result;
     }
 
-    /** it also checks identity of 2 collections */
+    /**
+     * it also checks identity of 2 collections
+     * @param prevValue the compared value 1
+     * @param nextValue the compared value 2
+     * @return true if two objects are equivalent
+     */
     @Override
     public boolean equals(Object prevValue, Object nextValue) {
         if (prevValue == nextValue) {

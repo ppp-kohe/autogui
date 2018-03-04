@@ -178,8 +178,10 @@ public class GuiMappingContext {
         return typeElement instanceof GuiTypeObject;
     }
 
-    /** it includes {@link GuiTypeObject} and {@link GuiTypeCollection}
-     *    which are subtypes of {@link GuiTypeValue} */
+    /**
+     * @return includes {@link GuiTypeObject} and {@link GuiTypeCollection}
+     *    which are subtypes of {@link GuiTypeValue}
+     */
     public boolean isTypeElementValue() {
         return typeElement instanceof GuiTypeValue;
     }
@@ -256,7 +258,9 @@ public class GuiMappingContext {
         return listeners;
     }
 
-    /** set the source to newValue, call {@link #updateSourceFromRoot(GuiMappingContext)} starting with this*/
+    /** set the source to newValue, call {@link #updateSourceFromRoot(GuiMappingContext)} starting with this
+     * @param newValue the new source value to be set
+     */
     public void updateSourceFromGui(Object newValue) {
         this.source = newValue;
         updateSourceFromRoot(this);
@@ -268,7 +272,10 @@ public class GuiMappingContext {
     }
 
     /** obtains the root context, recursively collect updated sub-contexts from the root,
-     *    and call listeners with each updated context.  */
+     *    and call listeners with each updated context.
+     * @param cause the cause of the updating process,
+     *               and the process avoids to update the context.
+     */
     public void updateSourceFromRoot(GuiMappingContext cause) {
         GuiMappingContext ctx = getRoot();
         List<GuiMappingContext> updated = new ArrayList<>();
@@ -301,7 +308,9 @@ public class GuiMappingContext {
         }
     }
 
-    /** space separated words from the camel-case context name */
+    /**
+     * @return  space separated words from the camel-case context name
+     */
     public String getDisplayName() {
         if (displayName == null) {
             displayName = nameJoinForDisplay(nameSplit(getName(), true));
@@ -309,7 +318,8 @@ public class GuiMappingContext {
         return displayName;
     }
 
-    /** the top word of the split name, which is an action verb in most cases */
+    /** @return the top word of the split name, which is an action verb in most cases
+     * */
     public String getIconName() {
         if (iconName == null) {
             iconName = nameSplit(getName(), true)
@@ -327,7 +337,8 @@ public class GuiMappingContext {
 
     /**
      * split a name to a list of words by camel case.
-     * If <code>forDisplay=true</code>,
+     * @param name the split name
+     * @param forDisplay if true,
      * <pre>
      *  "helloWorld" =&gt; ["hello", "World"]
      *  "HelloWorld" =&gt; ["Hello", "World"]
@@ -335,6 +346,7 @@ public class GuiMappingContext {
      *  "HELLOWorld" =&gt; ["HELLO", "World"]
      *  "" =&gt; [""]
      * </pre>
+     * @return the split list, never null
      */
     public List<String> nameSplit(String name, boolean forDisplay) {
         List<String> words = new ArrayList<String>();
@@ -416,7 +428,7 @@ public class GuiMappingContext {
 
     //////////////////////
 
-    /** take taskRunner from parent context */
+    /** @return taskRunner taken from parent context  */
     public ScheduledExecutorService getTaskRunner() {
         if (taskRunner == null) {
             GuiMappingContext parent = getParent();

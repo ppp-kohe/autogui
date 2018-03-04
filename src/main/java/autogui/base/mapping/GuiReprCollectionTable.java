@@ -16,7 +16,7 @@ import java.util.List;
  *         The factory will match the element type with the {@link GuiTypeCollection} as it's parent
  *           (the element is regular element type but the collection element repr. has higher precedence in the factory).
  *
- *        So, sub-context is a single element with the {@link GuiReprCollectionElement}.
+ *        So, a sub-context is a single element with the {@link GuiReprCollectionElement}.
  *
  *   <p>  The sub-contexts of the sub-collection element are regular sub-contexts of the wrapped element representation.
  *        For example, if the wrapped collection element is an {@link GuiReprObjectPane}'s context,
@@ -25,6 +25,33 @@ import java.util.List;
  *         As summarize, {@link GuiReprCollectionTable} -&gt;
  *            {@link GuiReprCollectionElement}(wrapping a {@link GuiRepresentation}) -&gt;
  *              member representations.
+ *      <pre>
+ *          [  { "e1": v1_1 , "e2":v1_2},
+ *             { "e1": v2_1 , "e2":v2_2},
+ *             { "e1": v3_1 , "e2":v3_2} ]
+ *         =&gt;
+ *         table:
+ *           |    e1     |     e2      |
+ *           ------------|--------------
+ *           |    v1_1   |    v1_2     |
+ *           |    v2_1   |    v2_2     |
+ *           |    v3_1   |    v3_2     |
+ *
+ *      </pre>
+ *
+ *      <pre>
+ *          [  [  v1_1 , v1_2],
+ *             [  v2_1 , v2_2],
+ *             [  v3_1 , v3_2] ]
+ *         =&gt;
+ *         table:
+ *           |    0      |    1        |
+ *           ------------|--------------
+ *           |    v1_1   |    v1_2     |
+ *           |    v2_1   |    v2_2     |
+ *           |    v3_1   |    v3_2     |
+ *
+ *      </pre>
  *
  * <h3>accessing collection values</h3>
  * <p>
@@ -40,7 +67,67 @@ import java.util.List;
  *     It takes the context of the collection element,
  *        an it's sub-context of the property of the row object,
  *           the source row object and row and column indices.
+ * <h3>examples</h3>
+ *   <pre>
+ *       class O { List&lt;E&gt; list; }
+ *       class E { String prop; }
+ *   </pre>
  *
+ *   Notation:
+ *   <ul>
+ *   <li>(T,r,s) { cs }:
+ *       {@link GuiMappingContext} where
+ *       t is a type {@link autogui.base.type.GuiTypeElement},
+ *       r is a {@link GuiRepresentation},
+ *       s is a swing component,
+ *         and cs is a list of sub-contexts.
+ *    </li>
+ *    <li>Obj(T) : {@link autogui.base.type.GuiTypeObject}</li>
+ *    <li>Prop(n,t) :{@link autogui.base.type.GuiTypeMemberProperty} </li>
+ *    <li>Coll(T&lt;E&gt;) :{@link autogui.base.type.GuiTypeCollection} </li>
+ *  </ul>
+ *   <pre>
+ *       (Obj(O), {@link GuiReprObjectPane}, GuiSwingViewObjectPane) {
+ *           (Prop(list,Coll(List&lt;E&gt;)), {@link GuiReprPropertyPane}(subRepr={@link GuiReprCollectionTable}), GuiSwingViewPropertyPane) {
+ *               (Coll(List&lt;E&gt;), {@link GuiReprCollectionTable}(subRepr={@link GuiReprCollectionElement}), GuiSwingViewCollectionTable) {
+ *                    (Obj(E)), {@link GuiReprCollectionElement}({@link GuiReprObjectPane}), GuiSwingTableColumnSetDefault) {
+ *                         (Prop(prop,String), {@link GuiReprValueStringField}, GuiSwingTableColumnString) {}
+ *                    }
+ *               }
+ *           }
+ *       }
+ *   </pre>
+ *   <ul>
+ *       <li> <code>createView</code>:
+ *               <ul>
+ *                   <li><code>GuiSwingCollectionTable</code> creates a <code>CollectionTable</code> (a subclass of <code>JTable</code>):
+ *                      the model is customized as it's row source is a list obtained from the context.
+ *                      The table is a {@link autogui.base.mapping.GuiMappingContext.SourceUpdateListener} and
+ *                         registered to the context.</li>
+ *                   <li><code>GuiSwingCollectionTable</code>
+ *                         constructs columns by <code>GuiSwingTableColumnSet#createColumns(...)</code></li>
+ *                   <li><code>GuiSwingTableColumnSet</code> calls <code>createColumn(subContext)</code> to sub-contexts GuiSwingTableColumn
+ *                      and adds the returned TableColumn to the model.</li>
+ *
+ *               </ul>
+ *       </li>
+ *       <li><code>update</code>
+ *              <ul>
+ *                  <li><code>ObjectTableModel</code> first obtains row list via
+ *                        <code>CollectionTable#getSource()</code> :
+ *                         it returns <code>source</code> previously set by <code>setSwingViewValue(Object)</code>,
+ *                            with calling {@link #toUpdateValue(GuiMappingContext, Object)}.
+ *                          </li>
+ *                  <li><code>ObjectTableModel#getValueAt(int,int)</code> builds a table array and
+ *                        sets the value obtained by
+ *                              <code>ObjectTableColumnValue#getCellValue(...)</code> with a row object,
+ *                              which causes {@link GuiReprCollectionElement#getCellValue(GuiMappingContext, GuiMappingContext, Object, int, int)}
+ *                                 with the column repr. {@link GuiReprValue}
+ *                                  and parent repr. {@link GuiReprCollectionElement},
+ *                            to the specified cell value.</li>
+ *              </ul>
+ *       </li>
+ *   </ul>
  * */
 public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresentation {
     protected GuiRepresentation subRepresentation;

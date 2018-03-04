@@ -69,9 +69,9 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
     public interface NumberType {
         Class<? extends Number> getNumberClass();
-        /** the maximum value, it might be an Infinity */
+        /** @return the maximum value, it might be an Infinity */
         Comparable<?> getMaximum();
-        /** the minimum value, it might be an Infinity */
+        /** @return the minimum value, it might be an Infinity */
         Comparable<?> getMinimum();
 
         /**
@@ -145,6 +145,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
      * <tr><th>double</th>	<td>double</td>	<td>double</td>	<td>double</td>	<td>double</td>	<td>double</td>	<td>double</td>	<td>bigDecimal</td>	<td>bigDecimal</td></tr>
      * <tr><th>bigInteger</th>	<td>bigInteger</td>	<td>bigInteger</td>	<td>bigInteger</td>	<td>bigInteger</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigInteger</td>	<td>bigDecimal</td></tr>
      * <tr><th>bigDecimal</th>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td>	<td>bigDecimal</td></tr>
+     * <caption>the number conversion table</caption>
      * </table>
      * @param l a number type
      * @param r a number type
