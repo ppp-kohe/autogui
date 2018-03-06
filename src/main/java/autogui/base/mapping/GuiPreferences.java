@@ -176,7 +176,7 @@ public class GuiPreferences {
                 .min(Comparator.comparing(HistoryValueEntry::getIndex))
                 .orElse(optionalDefault);
         if (e != null) {
-            e.setValue(e);
+            e.setValue(v);
             e.setIndex(-1);
         }
         return e;
