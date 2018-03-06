@@ -15,7 +15,7 @@ import java.util.List;
 public class GuiLogManager {
     protected static GuiLogManager manager;
 
-    /** return a shared instance */
+    /** @return a shared instance */
     public static GuiLogManager get() {
         synchronized (GuiLogManager.class) {
             if (manager == null) {
@@ -31,7 +31,9 @@ public class GuiLogManager {
         }
     }
 
-    /**  args are concatenated with a space and call {@link #logString(String)}.
+    /**
+     * create and report a log entry.
+     * args are concatenated with a space and pass to {@link #logString(String)}.
      *    if the previous arg is a String and it ends with an ASCII symbol char, it will not insert a space.
      *    <pre>
      *        log("hello", "world") =&gt; logString("hello world")
@@ -41,7 +43,10 @@ public class GuiLogManager {
      *    </pre>
      * when the last item of args is an exception, it will be passed to {@link #logError(Throwable)}.
      *    if the args is only a single exception, it will returns its {@link GuiLogEntryException},
-     *      otherwise {@link GuiLogEntryString} */
+     *      otherwise {@link GuiLogEntryString}
+     * @param args concatenated values for creating a log entry.
+     * @return the created log entry
+     *      */
     public GuiLogEntry log(Object... args) {
         Formatter formatter = new Formatter();
         boolean needSpace = false;
@@ -84,7 +89,12 @@ public class GuiLogManager {
                 (0x7b <= c && c <= 0x7f);
     }
 
-    /** use {@link String#format(String, Object...)} and call {@link #logString(String)} */
+    /** create and report a log entry.
+     *  use {@link String#format(String, Object...)} and pass to {@link #logString(String)}
+     *  @param format the format string
+     *  @param args   the arguments for the format
+     *  @return the created log entry
+     * */
     public GuiLogEntryString logFormat(String format, Object... args) {
         return logString(String.format(format, args));
     }
@@ -94,7 +104,10 @@ public class GuiLogManager {
      *   System.err will be completely replaced with the manager,
      *      because the manager usually outputs an entry to the original System.err.
      *   System.out will be replaced with a manager stream with original System.out.
-     *   those replaced streams are instances of {@link LogPrintStream} */
+     *   those replaced streams are instances of {@link LogPrintStream}
+     *   @param replaceError if true, it will replace {@link System#err}
+     *   @param replaceOutput  if true, it will replace {@link System#out}
+     *   */
     public void replaceConsole(boolean replaceError, boolean replaceOutput) {
         if (replaceError) {
             PrintStream exErr = System.err;
@@ -126,7 +139,8 @@ public class GuiLogManager {
         }
     }
 
-    /** obtains original System.err from wrapped System.err */
+    /** @return  obtains the original {@link System#err} from wrapped System.err
+     * */
     public PrintStream getSystemErr() {
         PrintStream err = System.err;
         if (err instanceof LogPrintStream) {
@@ -143,21 +157,26 @@ public class GuiLogManager {
         return null;
     }
 
-    /** create a string entry and show it */
+    /** create a string entry and show it.
+     * @param str the string for the entry
+     * @return the created log entry */
     public GuiLogEntryString logString(String str) {
         return new GuiLogEntryString(str);
     }
 
-    /** <pre>
-     *    [YYYY-mm-dd HH:MM:SS.LLL]
-     *  </pre>
+    /**
+     * @param i the formatted date-time
+     * @return <code>[YYYY-mm-dd HH:MM:SS.LLL]</code> with local date-time
      *  */
     public String formatTime(Instant i) {
         LocalDateTime time = LocalDateTime.ofInstant(i, ZoneId.systemDefault());
         return String.format("[%tF %tT.%tL]", time, time, time);
     }
 
-    /** create an exception entry and show it */
+    /** create an exception entry and show it
+     * @param ex the exception
+     * @return the created entry
+     * */
     public GuiLogEntryException logError(Throwable ex) {
         return new GuiLogEntryException(ex);
     }
@@ -176,6 +195,7 @@ public class GuiLogManager {
      *         }
      *     } catch (Exception ex) { ... }
      * </pre>
+     * @return the created progress entry
      */
     public GuiLogEntryProgress logProgress() {
         GuiLogEntryProgress p = new GuiLogEntryProgress();
@@ -183,7 +203,9 @@ public class GuiLogManager {
         return p;
     }
 
-    /** return an active progress entry with the maximum value, and show it. */
+    /**
+     * @param max a maximum value
+     * @return an active progress entry with the maximum value, and show it. */
     public GuiLogEntryProgress logProgress(int max) {
         GuiLogEntryProgress p = logProgress();
         p.setMaximum(max);
@@ -193,11 +215,16 @@ public class GuiLogManager {
 
     public void updateProgress(GuiLogEntryProgress p) { }
 
-    /** update display of the entry */
+    /** update display of the entry.
+     * @param entry the displayed entry
+     * */
     public void show(GuiLogEntry entry) { }
 
-    /** a tab and a newline are converted to an space.
-     *  the length is limited to 70 chars */
+    /**
+     *  @param msg the message to be formatted
+     *  @return the formatted line:  a tab and a newline are converted to an space.
+     *  the length is limited to 70 chars
+     *  */
     public String formatMessageLine(String msg) {
         if (msg != null && (msg.contains("\n") || msg.length() > 70)) {
             StringBuilder buf = new StringBuilder();
@@ -218,9 +245,14 @@ public class GuiLogManager {
         }
     }
 
-    /** <pre>
+    /**
+     * @param from the start time
+     * @param to  the end time
+     * @return <code>
      *    [[[[[[&lt;years&gt;y] &lt;months&gt;mo] &lt;days&gt;d] &lt;hours&gt;h] &lt;minutes&gt;m] &lt;seconds&gt;s] (&lt;millis&gt;ms|&lt;nanos&gt;ns)
-     * </pre>*/
+     * </code>
+     *   : years, months, and days are calculated by local date
+     * */
     public String formatDuration(Instant from, Instant to) {
         List<String> parts = new ArrayList<>(8);
         Duration elapsed = Duration.between(from, to);
@@ -344,7 +376,7 @@ public class GuiLogManager {
             this.manager = manager;
             this.out = out;
             buffer = ByteBuffer.allocateDirect(4096);
-            defaultCharset = Charset.defaultCharset(); //PrintStream always encode by default encoding
+            defaultCharset = Charset.defaultCharset(); //PrintStream always encodes by default encoding
         }
 
         @Override

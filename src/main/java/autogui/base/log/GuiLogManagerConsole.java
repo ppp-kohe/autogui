@@ -13,7 +13,7 @@ public class GuiLogManagerConsole extends GuiLogManager {
 
     public static int barWidth = 50;
 
-    /** use current System.err */
+    /** use current {@link System#err} */
     public GuiLogManagerConsole() {
         this(System.err);
     }
@@ -30,7 +30,7 @@ public class GuiLogManagerConsole extends GuiLogManager {
         return out;
     }
 
-    /** if true, control code with CSI will be printed (default) */
+    /** @param controlSequence if true, control code with CSI will be printed (default) */
     public void setControlSequence(boolean controlSequence) {
         this.controlSequence = controlSequence;
     }

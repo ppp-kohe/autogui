@@ -36,7 +36,9 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         thread = Thread.currentThread();
     }
 
-    /** copy fields of p. p can be null */
+    /** copy fields of p. p can be null
+     * @param p copied state
+     * */
     public void setState(GuiLogEntryProgress p) {
         if (p == null) {
             minimum = 0;
@@ -61,7 +63,10 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         }
     }
 
-    /** the listener will receive the progress when its valueP is updated */
+    /**
+     * @param listener the listener will receive the progress when its valueP is updated
+     * @return this
+     */
     public GuiLogEntryProgress addListener(Consumer<GuiLogEntryProgress> listener) {
         if (listeners == null) {
             listeners = new ArrayList<>(3);
@@ -92,7 +97,12 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         }
     }
 
-    /** it might cause {@link GuiLogEntryProgressInterruptedException} */
+    /** it might cause {@link GuiLogEntryProgressInterruptedException}.
+     * it also causes a notification to listeners when the minimum value is actually changed.
+     * @param minimum the minimum value of the progress to be set: if the value is smaller than the maximum,
+     *                 then the intermediate flag becomes false
+     * @return this
+     * */
     public synchronized GuiLogEntryProgress setMinimum(int minimum) {
         boolean change = this.minimum == minimum;
         this.minimum = minimum;
@@ -107,7 +117,12 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
     }
 
 
-    /** it might cause {@link GuiLogEntryProgressInterruptedException} */
+    /** it might cause {@link GuiLogEntryProgressInterruptedException}.
+     * it also causes a notification to listeners when the maximum value is actually changed.
+     * @param maximum the maximum value of the progress to be set: if the value is larger than the minimum
+     *                 then the intermediate flag becomes false
+     * @return this
+     *  */
     public synchronized GuiLogEntryProgress setMaximum(int maximum) {
         boolean change = this.maximum == maximum;
         this.maximum = maximum;
@@ -125,13 +140,18 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
      *  it might cause {@link GuiLogEntryProgressInterruptedException}
      * @param p  0 to 1.0
      * @return this
-     *
+     * @see #setValue(int)
      */
     public synchronized GuiLogEntryProgress setValueP(double p) {
         return setValue((int) ((maximum - minimum) * p));
     }
 
-    /**  it might cause {@link GuiLogEntryProgressInterruptedException} */
+    /**  it might cause {@link GuiLogEntryProgressInterruptedException}
+     * if the value is actually changed, it causes a notification to listeners
+     * @param n the progress value
+     * @return this
+     *
+     * */
      public synchronized GuiLogEntryProgress setValue(int n) {
         if (value != n) {
             value = n;
@@ -145,12 +165,17 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
      *  it might cause {@link GuiLogEntryProgressInterruptedException}
      * @param p 0 to 1.0
      * @return this
+     * @see #addValue(int)
      */
     public synchronized GuiLogEntryProgress addValueP(double p) {
         return addValue((int) ((maximum - minimum) * p));
     }
 
-    /**  it might cause {@link GuiLogEntryProgressInterruptedException} */
+    /**  it might cause {@link GuiLogEntryProgressInterruptedException}
+     * @param n added value to the progress
+     * @return this
+     * @see #setValue(int)
+     * */
      public synchronized GuiLogEntryProgress addValue(int n) {
          if ((n >= 0 && value >= maximum) || (n < 0 && value <= minimum)) {
              return setValue(value);
@@ -159,7 +184,11 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
          }
     }
 
-    /**  it might cause {@link GuiLogEntryProgressInterruptedException} */
+    /**  it might cause {@link GuiLogEntryProgressInterruptedException}.
+     * if the flag is actually changed, it causes a notification to listeners
+     * @param indeterminate the intermediate flag to be set
+     * @return this
+     * */
      public synchronized GuiLogEntryProgress setIndeterminate(boolean indeterminate) {
         if (indeterminate != this.indeterminate) {
             this.indeterminate = indeterminate;
@@ -169,7 +198,11 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         return this;
     }
 
-    /**  it might cause {@link GuiLogEntryProgressInterruptedException} */
+    /**  it might cause {@link GuiLogEntryProgressInterruptedException}.
+     * the method will never cause a notification
+     * @param message the new message
+     * @return this
+     * */
      public synchronized GuiLogEntryProgress setMessage(String message) {
         this.message = message;
         checkInterruption();
@@ -214,7 +247,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         return message;
     }
 
-    /** true if endTime is set */
+    /** @return true if endTime is set */
     public boolean isFinished() {
         return endTime != null;
     }
@@ -243,7 +276,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         return this;
     }
 
-    /** by default, the current thread of constructor sender */
+    /** @return by default, the current thread of constructor sender */
     public Thread getThread() {
         return thread;
     }
