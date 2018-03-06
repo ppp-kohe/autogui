@@ -3,15 +3,14 @@ package autogui.base.mapping;
 import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.prefs.Preferences;
 
-/** the Preferences holder associated to a GuiMappingContext.
+/** the Preferences holder associated to a {@link GuiMappingContext}.
  *    The class holds its parent, but does not hold children.
- *     Each child is held by GuiMappingContext.
+ *     Each child is held by {@link GuiMappingContext}.
  *
+ *   The class has a {@link GuiValueStore}.
  *   It also has a list of history values.
  * */
 public class GuiPreferences {
@@ -62,20 +61,54 @@ public class GuiPreferences {
         return valueStore;
     }
 
+    /**
+     * add a value to the history.
+     * <ol>
+     *  <li>it first loads the existing history if not yet loaded, by {@link #loadHistoryValues()}.</li>
+     *  <li>
+     *   it finds an existing entry or a create new entry by {@link #getHistoryValue(Object)}.
+     *  </li>
+     *  <li>
+     *    if the entry is a new one (keyIndex==-1), call {@link #replaceMin(Object, HistoryValueEntry)}
+     *      and obtain the oldest entry with replacing the value.
+     *  </li>
+     *  <li>
+     *   The entry moves to the end of the history as the latest value,
+     *    by setting the max index + 1 as it's index, which is a temporarly index.
+     *    The entire history is sorted by the indexes.
+     *  </li>
+     *  <li>
+     *   remove overflowed entries with calling {@link HistoryValueEntry#remove()}.
+     *    (regularly, this step never happens.)
+     *  </li>
+     *  <li>set index and keyIndex (if keyIndex==-1) for all entries, and flush the store.</li>
+     * </ol>
+     * @param value the new entry value
+     */
     public void addHistoryValue(Object value) {
         if (historyValues == null) {
             loadHistoryValues();
         }
         HistoryValueEntry e = getHistoryValue(value);
         if (e == null) {
-            return; //value is null or cannot convert to json
-        } else if (e.getKeyIndex() != -1) {
-            historyValues.remove(e);
+            return; //value is null or cannot be converted to json
         }
-        historyValues.add(0, e);
+
+        if (e.getKeyIndex() == -1) {
+            e = replaceMin(e.getValue(), e);
+        }
+
+        int maxIndex = historyValues.stream()
+                .mapToInt(HistoryValueEntry::getIndex)
+                .max()
+                .orElse(-1);
+        e.setIndex(maxIndex + 1); //temporarly index
+
+        historyValues.sort(Comparator.comparing(HistoryValueEntry::getIndex));
+
         while (historyValues.size() > historyValueLimit) {
             historyValues
-                    .remove(historyValues.size() - 1)
+                    .remove(0)
                     .remove();
         }
 
@@ -122,6 +155,10 @@ public class GuiPreferences {
         return historyValues;
     }
 
+    /**
+     * @param value the entry value
+     * @return a new entry (keyIndex == -1) or an existing entry
+     * */
     public HistoryValueEntry getHistoryValue(Object value) {
         HistoryValueEntry e = new HistoryValueEntry(this, value);
         Object v = e.getValue(); //it might be converted to JSON
@@ -134,14 +171,30 @@ public class GuiPreferences {
                 .orElse(e);
     }
 
+    public HistoryValueEntry replaceMin(Object v, HistoryValueEntry optionalDefault) {
+        HistoryValueEntry e = historyValues.stream()
+                .min(Comparator.comparing(HistoryValueEntry::getIndex))
+                .orElse(optionalDefault);
+        if (e != null) {
+            e.setValue(e);
+            e.setIndex(-1);
+        }
+        return e;
+    }
+
+    /**
+     * load or create historyValues: it's size becomes historyValueLimit and sorted by index.
+     * The new entries have -1 indexes.
+     */
     public void loadHistoryValues() {
         historyValues = new ArrayList<>();
         for (int i = 0; i < historyValueLimit; ++i) {
             HistoryValueEntry e = new HistoryValueEntry(this, null);
             e.setKeyIndex(i);
-
             historyValues.add(e);
         }
+
+        historyValues.sort(Comparator.comparing(HistoryValueEntry::getIndex));
     }
 
     public abstract static class GuiValueStore {
@@ -167,8 +220,9 @@ public class GuiPreferences {
         public void flush() { }
     }
 
-    /* note: in macOS, ~/Library/Preferences/com.apple.java.util.prefs.plist ? */
+    /** the concrete implementation of the store by {@link Preferences} */
     public static class GuiValueStoreDefault extends GuiValueStore {
+        /* note: in macOS, ~/Library/Preferences/com.apple.java.util.prefs.plist ? */
         protected Preferences store;
 
         public GuiValueStoreDefault(GuiPreferences preferences, Preferences store) {
@@ -220,6 +274,16 @@ public class GuiPreferences {
         }
     }
 
+    /**
+     * <pre>
+     *     preferences/
+     *        "$"/
+     *           keyIndex/    : valueStore
+     *                "index" : int
+     *                "value" : String
+     *           ...
+     * </pre>
+     */
     public static class HistoryValueEntry {
         protected GuiPreferences preferences;
         protected Object value;
@@ -245,6 +309,10 @@ public class GuiPreferences {
             return value;
         }
 
+        public void setValue(Object value) {
+            this.value = value;
+        }
+
         public int getKeyIndex() {
             return keyIndex;
         }
@@ -262,6 +330,11 @@ public class GuiPreferences {
             this.keyIndex = -1;
         }
 
+        /**
+         * if the keyIndex is not -1,
+         *   it causes {@link #store()} (if value has been set) or {@link #load()} (not set).
+         * @param keyIndex the key index
+         */
         public void setKeyIndex(int keyIndex) {
             if (this.keyIndex == -1 && keyIndex != -1) {
                 this.keyIndex = keyIndex;
@@ -274,6 +347,11 @@ public class GuiPreferences {
             this.keyIndex = keyIndex;
         }
 
+        /** load the "$history/index" value,
+         *   and if the value is not -1, then also load "$history/value" and
+         *   decode it as JSON and {@link GuiRepresentation#fromJson(GuiMappingContext, Object, Object)}.
+         *  {@link #getValue()} will be null if it failed.
+         *    */
         public void load() {
             GuiValueStore store = getValueStore();
             int index = store.getInt("index", -1);
@@ -311,7 +389,7 @@ public class GuiPreferences {
         public GuiValueStore getValueStore() {
             if (valueStore == null) {
                 valueStore = preferences.getValueStore()
-                        .getChild("$")
+                        .getChild("$history")
                         .getChild("" + keyIndex);
             }
             return valueStore;
