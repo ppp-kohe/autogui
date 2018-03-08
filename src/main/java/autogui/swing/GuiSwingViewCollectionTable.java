@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.table.GuiSwingTableColumnSet;
@@ -245,7 +246,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         @Override
-        public void savePreferences() {
+        public void savePreferences(GuiPreferences prefs) {
             //TODO
         }
 

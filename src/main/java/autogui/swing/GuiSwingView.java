@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
 import autogui.swing.table.TableTargetColumn;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.PopupExtension;
@@ -58,8 +59,12 @@ public interface GuiSwingView extends GuiSwingElement {
             return (JComponent) this;
         }
 
-        default void savePreferences() {
-            saveChildren(asComponent());
+        /**
+         * @param prefs target prefs or ancestor of the target;
+         *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
+         */
+        default void savePreferences(GuiPreferences prefs) {
+            saveChildren(prefs, asComponent());
         }
 
         default void loadPreferences() {
@@ -68,13 +73,13 @@ public interface GuiSwingView extends GuiSwingElement {
 
     }
 
-    static void saveChildren(JComponent comp) {
+    static void saveChildren(GuiPreferences prefs, JComponent comp) {
         for (Component c : comp.getComponents()) {
             if (c instanceof GuiSwingView.ValuePane) {
                 GuiSwingView.ValuePane valuePane = (GuiSwingView.ValuePane) c;
-                valuePane.savePreferences();
+                valuePane.savePreferences(prefs);
             } else if (c instanceof JComponent) {
-                saveChildren((JComponent) c);
+                saveChildren(prefs, (JComponent) c);
             }
         }
     }

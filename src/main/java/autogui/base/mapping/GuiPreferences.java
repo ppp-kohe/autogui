@@ -16,6 +16,7 @@ import java.util.prefs.Preferences;
 public class GuiPreferences {
     protected GuiMappingContext context;
     protected GuiPreferences parent;
+    protected Map<GuiMappingContext, GuiPreferences> children;
     protected GuiValueStore valueStore;
     protected List<HistoryValueEntry> historyValues;
     protected int historyValueLimit = 10;
@@ -29,12 +30,21 @@ public class GuiPreferences {
         this.context = context;
     }
 
+    public GuiPreferences(GuiValueStore valueStore, GuiMappingContext context) {
+        this.valueStore = valueStore;
+        this.context = context;
+    }
+
     /**
      * @param context the parent
-     * @return a new instance for context
+     * @return a child preference for context
      */
     public GuiPreferences getChild(GuiMappingContext context) {
-        return new GuiPreferences(this, context);
+        if (children == null) {
+            children = new HashMap<>();
+        }
+        return children.computeIfAbsent(context,
+                c -> new GuiPreferences(this, c));
     }
 
     public String getName() {
@@ -43,6 +53,29 @@ public class GuiPreferences {
 
     public GuiMappingContext getContext() {
         return context;
+    }
+
+    public GuiPreferences getParent() {
+        return parent;
+    }
+
+    /**
+     * @param descendantContext a descendant context of the context returned by {@link #getContext()},
+     *                           can be {@link #getContext()} itself
+     * @return a descendant preference associated with the descendantContext
+     */
+    public GuiPreferences getDescendant(GuiMappingContext descendantContext) {
+        List<GuiMappingContext> path = new ArrayList<>();
+        GuiMappingContext interContext = descendantContext;
+        while (interContext != null && !interContext.equals(context)) {
+            path.add(0, interContext);
+            interContext = interContext.getParent();
+        }
+        GuiPreferences p = this;
+        for (GuiMappingContext context : path) {
+            p = p.getChild(context);
+        }
+        return p;
     }
 
     public GuiValueStore getValueStore() {
