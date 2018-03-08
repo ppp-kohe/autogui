@@ -1,5 +1,7 @@
 package autogui.swing;
 
+import autogui.base.JsonReader;
+import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
@@ -12,17 +14,17 @@ import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
+import javax.swing.Timer;
+import javax.swing.event.*;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.RoundRectangle2D;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -79,6 +81,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected PopupExtensionCollection popup;
         protected List<Action> actions = new ArrayList<>();
 
+        protected TablePreferencesUpdater preferencesUpdater;
+
         public CollectionTable(GuiMappingContext context) {
             this.context = context;
 
@@ -111,6 +115,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             //initial update
             update(context, context.getSource());
 
+            preferencesUpdater = new TablePreferencesUpdater(this);
+
             //TODO drag drop
         }
 
@@ -118,6 +124,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             this.actions.addAll(actions);
             ObjectTableModel model = getObjectTableModel();
             model.initTableWithoutScrollPane(this);
+
+            getColumnModel().addColumnModelListener(preferencesUpdater);
+            getRowSorter().addRowSorterListener(preferencesUpdater);
+
             if (actions.isEmpty()) {
                 return initTableScrollPane();
             } else {
@@ -241,13 +251,18 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         @Override
-        public void loadPreferences() {
-            //TODO
+        public void loadPreferences(GuiPreferences prefs) {
+            GuiPreferences targetPrefs = prefs.getDescendant(getContext());
+            preferencesUpdater.applyJson(
+                JsonReader.create(targetPrefs.getValueStore().getString("table", "{}"))
+                    .parseObject());
         }
 
         @Override
         public void savePreferences(GuiPreferences prefs) {
-            //TODO
+            GuiPreferences targetPrefs = prefs.getDescendant(getContext());
+            targetPrefs.getValueStore().putString("table",
+                    JsonWriter.create().write(preferencesUpdater.getPrefs().toJson()).toSource());
         }
 
         @Override
@@ -295,7 +310,179 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
     }
 
+    public static class TablePreferencesUpdater implements TableColumnModelListener, RowSorterListener {
+        protected JTable table;
+        protected TablePreferences prefs;
 
+        public TablePreferencesUpdater(JTable table) {
+            this.table = table;
+            prefs = new TablePreferences();
+        }
+
+        public void setPrefs(TablePreferences prefs) {
+            this.prefs = prefs;
+        }
+
+        public void applyJson(Map<String,Object> json) {
+            prefs.setJson(json);
+            prefs.applyTo(table);
+        }
+
+        public TablePreferences getPrefs() {
+            return prefs;
+        }
+
+        @Override
+        public void columnMoved(TableColumnModelEvent e) {
+            prefs.setColumnOrderFrom(table);
+        }
+
+        @Override
+        public void columnMarginChanged(ChangeEvent e) {
+            prefs.setColumnWidthFrom(table);
+        }
+
+        @Override
+        public void columnSelectionChanged(ListSelectionEvent e) {}
+
+        @Override
+        public void columnRemoved(TableColumnModelEvent e) {}
+
+        @Override
+        public void columnAdded(TableColumnModelEvent e) {}
+
+        @Override
+        public void sorterChanged(RowSorterEvent e) {
+            prefs.setRowSortFrom(table);
+        }
+    }
+
+    public static class TablePreferences {
+        protected List<Integer> columnOrder = new ArrayList<>();
+        protected List<Integer> columnWidth = new ArrayList<>();
+        protected List<TableRowSortPreferences> rowSort = new ArrayList<>();
+
+        public void applyTo(JTable table) {
+            TableColumnModel columnModel = table.getColumnModel();
+            applyColumnWidthTo(table, columnModel);
+            applyColumnOrderTo(table, columnModel);
+        }
+        public void applyColumnWidthTo(JTable table, TableColumnModel columnModel) {
+            for (int i = 0, len = Math.min(table.getColumnCount(), columnWidth.size()); i < len; ++i) { //i is model index
+                columnModel.getColumn(table.convertColumnIndexToView(i)).setPreferredWidth(columnWidth.get(i));
+            }
+        }
+        public void applyColumnOrderTo(JTable table, TableColumnModel columnModel) {
+            for (int i = 0, len = Math.min(table.getColumnCount(), columnOrder.size()); i < len; ++i) {
+                int from = columnOrder.get(i);
+                if (from >= 0 && from < table.getColumnCount()) {
+                    columnModel.moveColumn(table.convertColumnIndexToView(from), i);
+                }
+            }
+        }
+        public void applyRowSortTo(JTable table) {
+            List<RowSorter.SortKey> keys = new ArrayList<>(rowSort.size());
+            for (int i = 0, len = Math.min(table.getColumnCount(), rowSort.size()); i < len; ++i) {
+                TableRowSortPreferences row = rowSort.get(i);
+                SortOrder order = SortOrder.valueOf(row.getOrder());
+                keys.add(new RowSorter.SortKey(row.getColumn(), order));
+            }
+            table.getRowSorter().setSortKeys(keys);
+        }
+
+        public void setColumnOrderFrom(JTable table) {
+            TableColumnModel columnModel = table.getColumnModel();
+            columnOrder.clear();
+            for (int i = 0, len = columnModel.getColumnCount(); i < len; ++i) {
+                columnOrder.add(table.convertColumnIndexToModel(i));
+            }
+        }
+        public void setColumnWidthFrom(JTable table) {
+            TableColumnModel columnModel = table.getColumnModel();
+            columnWidth.clear();
+            for (int i = 0, len = columnModel.getColumnCount(); i < len; ++i) {
+                columnWidth.add(columnModel.getColumn(table.convertColumnIndexToView(i)).getWidth());
+            }
+        }
+        public void setRowSortFrom(JTable table) {
+            rowSort.clear();
+            for (RowSorter.SortKey key : table.getRowSorter().getSortKeys()) {
+                TableRowSortPreferences row = new TableRowSortPreferences(key.getColumn(), key.getSortOrder().name());
+                rowSort.add(row);
+            }
+        }
+
+        public Map<String,Object> toJson() {
+            Map<String,Object> map = new LinkedHashMap<>();
+            map.put("columnOrder", columnOrder);
+            map.put("columnWidth", columnWidth);
+            map.put("rowSort", rowSort.stream()
+                                .map(TableRowSortPreferences::toJson)
+                                .collect(Collectors.toList()));
+            return map;
+        }
+
+        @SuppressWarnings("unchecked")
+        public void setJson(Map<String,Object> map) {
+            Object order = map.get("columnOrder");
+            if (order != null) {
+                columnOrder.clear();
+                ((List<?>) order)
+                        .forEach(i -> columnOrder.add((Integer) i));
+            }
+
+            Object width = map.get("columnWidth");
+            if (width != null) {
+                columnWidth.clear();
+                ((List<?>) width)
+                        .forEach(i -> columnWidth.add((Integer) i));
+            }
+
+            Object rowSortObj = map.get("rowSort");
+            if (rowSortObj != null) {
+                rowSort.clear();
+                ((List<?>) rowSortObj).stream()
+                        .map(e -> new TableRowSortPreferences((Map<String, Object>) e))
+                        .forEach(rowSort::add);
+            }
+        }
+    }
+
+    public static class TableRowSortPreferences {
+        protected int column;
+        protected String order;
+
+        public TableRowSortPreferences(int column, String order) {
+            this.column = column;
+            this.order = order;
+        }
+
+        public TableRowSortPreferences(Map<String, Object> map) {
+            column = (Integer) map.getOrDefault("column", 0);
+            order = (String) map.getOrDefault("order", "");
+        }
+
+        public void setColumn(int column) {
+            this.column = column;
+        }
+        public int getColumn() {
+            return column;
+        }
+        public void setOrder(String order) {
+            this.order = order;
+        }
+        public String getOrder() {
+            return order;
+        }
+
+        public Map<String,Object> toJson() {
+            Map<String,Object> map = new LinkedHashMap<>();
+            map.put("column", column);
+            map.put("order", order);
+            return map;
+        }
+
+    }
 
     public static class SelectAllAction extends AbstractAction {
         protected JTable table;

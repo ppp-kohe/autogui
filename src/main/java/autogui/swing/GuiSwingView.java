@@ -67,8 +67,12 @@ public interface GuiSwingView extends GuiSwingElement {
             saveChildren(prefs, asComponent());
         }
 
-        default void loadPreferences() {
-            loadChildren(asComponent());
+        /**
+         * @param prefs target prefs or ancestor of the target;
+         *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
+         */
+        default void loadPreferences(GuiPreferences prefs) {
+            loadChildren(prefs, asComponent());
         }
 
     }
@@ -84,13 +88,13 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
-    static void loadChildren(JComponent comp) {
+    static void loadChildren(GuiPreferences prefs, JComponent comp) {
         for (Component c : comp.getComponents()) {
             if (c instanceof GuiSwingView.ValuePane) {
                 GuiSwingView.ValuePane valuePane = (GuiSwingView.ValuePane) c;
-                valuePane.loadPreferences();
+                valuePane.loadPreferences(prefs);
             } else if (c instanceof JComponent) {
-                loadChildren((JComponent) c);
+                loadChildren(prefs, (JComponent) c);
             }
         }
     }

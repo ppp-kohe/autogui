@@ -288,13 +288,14 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        public void loadPreferences() {
-            GuiPreferences.GuiValueStore prefs = getContext().getPreferences().getValueStore();
+        public void loadPreferences(GuiPreferences prefs) {
+            GuiPreferences targetPrefs = prefs.getDescendant(getContext());
+            GuiPreferences.GuiValueStore store = targetPrefs.getValueStore();
             TypedSpinnerNumberModel model = getModelTyped();
             GuiReprValueNumberSpinner.NumberType type = model.getNumberType();
-            String max = prefs.getString("maximum", "");
-            String min = prefs.getString("minimum", "");
-            String step = prefs.getString("stepSize", "");
+            String max = store.getString("maximum", "");
+            String min = store.getString("minimum", "");
+            String step = store.getString("stepSize", "");
             if (!max.isEmpty()) {
                 model.setMaximum((Comparable<?>) type.fromString(max));
             }
@@ -305,7 +306,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 model.setStepSize(type.fromString(step));
             }
 
-            GuiSwingView.loadChildren(this);
+            GuiSwingView.loadChildren(prefs, this);
         }
     }
 

@@ -287,8 +287,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public void loadPreferences() {
-            GuiPreferences.GuiValueStore store = context.getPreferences().getValueStore();
+        public void loadPreferences(GuiPreferences prefs) {
+            GuiPreferences targetPrefs = prefs.getDescendant(context);
+            GuiPreferences.GuiValueStore store = targetPrefs.getValueStore();
             Object jsonObj = JsonReader.create(store.getString("style", "null")).parseValue();
             settingPane.setJson(jsonObj);
 

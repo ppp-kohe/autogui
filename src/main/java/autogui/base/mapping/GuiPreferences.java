@@ -3,6 +3,8 @@ package autogui.base.mapping;
 import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.prefs.Preferences;
 
@@ -135,7 +137,7 @@ public class GuiPreferences {
                 .mapToInt(HistoryValueEntry::getIndex)
                 .max()
                 .orElse(-1);
-        e.setIndex(maxIndex + 1); //temporarly index
+        e.setIndex(maxIndex + 1); //temporarily index
 
         historyValues.sort(Comparator.comparing(HistoryValueEntry::getIndex));
 
@@ -147,7 +149,7 @@ public class GuiPreferences {
 
         for (int i = 0, l = historyValues.size(); i < l; ++i) {
             e = historyValues.get(i);
-            if (e.getKeyIndex() == -1) {
+            if (e.getKeyIndex() == -1) { //a new entry will have key=-1 and then the value will be stored
                 e.setKeyIndex(getHistoryValueUnusedKeyIndex());
             }
             e.setIndex(i);
@@ -211,6 +213,7 @@ public class GuiPreferences {
         if (e != null) {
             e.setValue(v);
             e.setIndex(-1);
+            e.setTime(optionalDefault.getTime());
         }
         return e;
     }
@@ -310,10 +313,11 @@ public class GuiPreferences {
     /**
      * <pre>
      *     preferences/
-     *        "$"/
+     *        "$history"/
      *           keyIndex/    : valueStore
      *                "index" : int
      *                "value" : String
+     *                "time"  : String //Instant
      *           ...
      * </pre>
      */
@@ -323,9 +327,11 @@ public class GuiPreferences {
         protected int keyIndex = -1;
         protected int index = -1;
         protected GuiValueStore valueStore;
+        protected Instant time;
 
         public HistoryValueEntry(GuiPreferences preferences, Object value) {
             this.preferences = preferences;
+            this.time = Instant.now();
             if (isJsonValue() && value != null) {
                 this.value = preferences.getContext().getRepresentation()
                         .toJsonWithNamed(preferences.getContext(), value);
@@ -354,11 +360,20 @@ public class GuiPreferences {
             return index;
         }
 
+        public Instant getTime() {
+            return time;
+        }
+
+        public void setTime(Instant time) {
+            this.time = time;
+        }
+
         public void remove() {
             if (this.keyIndex != -1) {
                 GuiValueStore store = getValueStore();
                 store.putInt("index", -1);
                 store.putString("value", "null");
+                store.putString("time", "null");
             }
             this.keyIndex = -1;
         }
@@ -400,9 +415,21 @@ public class GuiPreferences {
                                 .fromJson(preferences.getContext(), null, jsonValue);
                     }
                 }
+
+                String timeVal = store.getString("time", "null");
+                Object timeJson = JsonReader.create(timeVal).parseValue();
+                if (timeJson != null) {
+                    try {
+                        this.time = Instant.parse((String) timeJson);
+                    } catch (Exception ex) {
+                        //
+                    }
+                }
             }
         }
 
+        /** @return if false, the value holds a raw-object which might be a non-JSON object,
+         *        and then the associated representation can create a new value from a JSON source without any raw-object. */
         public boolean isJsonValue() {
             return preferences.getContext().getRepresentation().isJsonSetter();
         }
@@ -417,6 +444,7 @@ public class GuiPreferences {
             if (index != -1) {
                 store.putInt("index", index);
             }
+            store.putString("time", time.toString());
         }
 
         public GuiValueStore getValueStore() {
