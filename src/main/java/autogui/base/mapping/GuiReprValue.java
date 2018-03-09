@@ -165,7 +165,7 @@ public class GuiReprValue implements GuiRepresentation {
      *
      *
      * @param context the context of this repr.
-     * @param newValue the updated proeprty value
+     * @param newValue the updated property value
      */
     public void updateFromGui(GuiMappingContext context, Object newValue) {
         context.getPreferences().addHistoryValue(newValue);

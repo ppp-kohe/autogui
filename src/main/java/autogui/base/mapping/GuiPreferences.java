@@ -4,8 +4,8 @@ import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
 
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.prefs.Preferences;
 
 /** the Preferences holder associated to a {@link GuiMappingContext}.
@@ -80,20 +80,34 @@ public class GuiPreferences {
         return p;
     }
 
+    /**
+     * @return Preferences based value-store.
+     *    if it has parent, node for context's name of the parent,
+     *    otherwise, node for context's object-type (user-node "/pack/ObjType") or
+     *               node for (pack of this type)+"/"+(context's name).
+     */
     public GuiValueStore getValueStore() {
         if (valueStore == null) {
             if (parent != null) {
                 valueStore = parent.getValueStore().getChild(this);
             } else {
-                GuiRepresentation repr = context.getRepresentation();
-                if (repr instanceof GuiReprValue) {
-                    Class<?> type = ((GuiReprValue) repr).getValueType(context);
-                    valueStore = new GuiValueStoreDefault(this,
-                            Preferences.userNodeForPackage(type));
-                }
+                valueStore = getValueStoreFromRepresentation();
             }
         }
         return valueStore;
+    }
+
+    public GuiValueStore getValueStoreFromRepresentation() {
+        GuiRepresentation repr = context.getRepresentation();
+        Preferences node;
+        if (repr instanceof GuiReprObjectPane) {
+            Class<?> type = ((GuiReprObjectPane) repr).getValueType(context);
+            node = Preferences.userNodeForPackage(type).node(type.getSimpleName());
+        } else {
+            node = Preferences.userNodeForPackage(GuiPreferences.class)
+                    .node(context.getName().replace('.', '_'));
+        }
+        return new GuiValueStoreDefault(this, node);
     }
 
     /**
@@ -138,6 +152,9 @@ public class GuiPreferences {
                 .max()
                 .orElse(-1);
         e.setIndex(maxIndex + 1); //temporarily index
+        if (!historyValues.contains(e)) {
+            historyValues.add(e);
+        }
 
         historyValues.sort(Comparator.comparing(HistoryValueEntry::getIndex));
 
@@ -150,7 +167,7 @@ public class GuiPreferences {
         for (int i = 0, l = historyValues.size(); i < l; ++i) {
             e = historyValues.get(i);
             if (e.getKeyIndex() == -1) { //a new entry will have key=-1 and then the value will be stored
-                e.setKeyIndex(getHistoryValueUnusedKeyIndex());
+                e.setKeyIndexWithLoadOrStore(getHistoryValueUnusedKeyIndex());
             }
             e.setIndex(i);
         }
@@ -207,9 +224,11 @@ public class GuiPreferences {
     }
 
     public HistoryValueEntry replaceMin(Object v, HistoryValueEntry optionalDefault) {
-        HistoryValueEntry e = historyValues.stream()
-                .min(Comparator.comparing(HistoryValueEntry::getIndex))
-                .orElse(optionalDefault);
+        HistoryValueEntry e = historyValues.size() > historyValueLimit ?
+                historyValues.stream()
+                    .min(Comparator.comparing(HistoryValueEntry::getIndex))
+                    .orElse(optionalDefault) :
+                optionalDefault;
         if (e != null) {
             e.setValue(v);
             e.setIndex(-1);
@@ -219,18 +238,28 @@ public class GuiPreferences {
     }
 
     /**
-     * load or create historyValues: it's size becomes historyValueLimit and sorted by index.
+     * load or create historyValues: it's size becomes up to historyValueLimit and sorted by index.
      * The new entries have -1 indexes.
      */
     public void loadHistoryValues() {
         historyValues = new ArrayList<>();
         for (int i = 0; i < historyValueLimit; ++i) {
             HistoryValueEntry e = new HistoryValueEntry(this, null);
-            e.setKeyIndex(i);
-            historyValues.add(e);
+            e.setKeyIndexWithLoadOrStore(i);
+            if (e.getIndex() != -1) {
+                historyValues.add(e);
+            }
         }
 
         historyValues.sort(Comparator.comparing(HistoryValueEntry::getIndex));
+    }
+
+    public void clearHistories() {
+        if (historyValues == null) {
+            loadHistoryValues();
+        }
+        historyValues.forEach(HistoryValueEntry::remove);
+        historyValues = null;
     }
 
     public abstract static class GuiValueStore {
@@ -261,49 +290,74 @@ public class GuiPreferences {
         /* note: in macOS, ~/Library/Preferences/com.apple.java.util.prefs.plist ? */
         protected Preferences store;
 
+        protected Preferences parentStore;
+        protected String storeName;
+
         public GuiValueStoreDefault(GuiPreferences preferences, Preferences store) {
             super(preferences);
             this.store = store;
+        }
+
+        public GuiValueStoreDefault(GuiPreferences preferences, Preferences parentStore, String storeName) {
+            super(preferences);
+            this.parentStore = parentStore;
+            this.storeName = storeName;
+            try {
+                if (parentStore.nodeExists(storeName)) {
+                    store = parentStore.node(storeName);
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
 
         public Preferences getStore() {
             return store;
         }
 
+        public Preferences getOrCreateStore() {
+            if (store == null) {
+                store = parentStore.node(storeName);
+            }
+            return store;
+        }
+
         @Override
         public void putString(String key, String val) {
-            store.put(key, val);
+            getOrCreateStore().put(key, val);
         }
 
         @Override
         public String getString(String key, String def) {
-            return store.get(key, def);
+            return store == null ? def : store.get(key, def);
         }
 
         @Override
         public void putInt(String key, int val) {
-            store.putInt(key, val);
+            getOrCreateStore().putInt(key, val);
         }
 
         @Override
         public int getInt(String key, int def) {
-            return store.getInt(key, def);
+            return store == null ? def : store.getInt(key, def);
         }
 
         @Override
         public GuiValueStore getChild(GuiPreferences preferences) {
-            return new GuiValueStoreDefault(preferences, store.node(preferences.getName()));
+            return new GuiValueStoreDefault(preferences, getOrCreateStore(), preferences.getName());
         }
 
         @Override
         public GuiValueStore getChild(String name) {
-            return new GuiValueStoreDefault(preferences, store.node(name));
+            return new GuiValueStoreDefault(preferences, getOrCreateStore(), name);
         }
 
         @Override
         public void flush() {
             try {
-                store.flush();
+                if (store != null) {
+                    store.flush();
+                }
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
@@ -383,7 +437,7 @@ public class GuiPreferences {
          *   it causes {@link #store()} (if value has been set) or {@link #load()} (not set).
          * @param keyIndex the key index
          */
-        public void setKeyIndex(int keyIndex) {
+        public void setKeyIndexWithLoadOrStore(int keyIndex) {
             if (this.keyIndex == -1 && keyIndex != -1) {
                 this.keyIndex = keyIndex;
                 if (value != null) {
@@ -426,6 +480,7 @@ public class GuiPreferences {
                     }
                 }
             }
+            System.err.println("load key=" + keyIndex + ", idx=" + index + ", val=" + value);
         }
 
         /** @return if false, the value holds a raw-object which might be a non-JSON object,
@@ -445,6 +500,7 @@ public class GuiPreferences {
                 store.putInt("index", index);
             }
             store.putString("time", time.toString());
+            System.err.println("store key=" + keyIndex + ", idx=" + index + ", val=" + value);
         }
 
         public GuiValueStore getValueStore() {
@@ -457,7 +513,7 @@ public class GuiPreferences {
         }
 
         public void setIndex(int index) {
-            if (this.index != index) {
+            if (this.index != index && keyIndex != -1) {
                 //update index
                 GuiValueStore store = getValueStore();
                 store.putInt("index", index);

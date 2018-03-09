@@ -183,7 +183,7 @@ public class SearchTextField extends JComponent {
     }
 
     public void initField() {
-        editingRunner = new ScheduledTaskRunner.EditingRunner(500, this::updateField);
+        editingRunner = new ScheduledTaskRunner.EditingRunner(getEditingRunnerDelay(), this::updateField);
         field = new JTextField();
         field.setOpaque(false);
         setOpaque(false);
@@ -194,6 +194,11 @@ public class SearchTextField extends JComponent {
         field.getDocument().addDocumentListener(editingRunner);
         field.addActionListener(editingRunner);
         field.addFocusListener(editingRunner);
+        field.addInputMethodListener(editingRunner);
+    }
+
+    protected int getEditingRunnerDelay() {
+        return 500;
     }
 
 

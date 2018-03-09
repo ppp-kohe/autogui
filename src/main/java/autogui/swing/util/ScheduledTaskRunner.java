@@ -68,9 +68,10 @@ public class ScheduledTaskRunner<EventType> {
     public synchronized void schedule(EventType event, long delayMSec) {
         if (enabled) {
             accumulatedEvents.add(event);
-            if (scheduledTask == null) {
-                scheduledTask = executor.schedule(this::run, delayMSec, TimeUnit.MILLISECONDS);
+            if (scheduledTask != null) {
+                scheduledTask.cancel(false);
             }
+            scheduledTask = executor.schedule(this::run, delayMSec, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -105,7 +106,7 @@ public class ScheduledTaskRunner<EventType> {
     }
 
     public static class EditingRunner extends ScheduledTaskRunner<Object>
-            implements DocumentListener, KeyListener, ActionListener, FocusListener, ChangeListener {
+            implements DocumentListener, KeyListener, ActionListener, FocusListener, ChangeListener, InputMethodListener {
         public EditingRunner(long delay, Consumer<List<Object>> consumer) {
             super(delay, consumer);
         }
@@ -160,6 +161,16 @@ public class ScheduledTaskRunner<EventType> {
         @Override
         public void stateChanged(ChangeEvent e) {
             schedule(e);
+        }
+
+        @Override
+        public void inputMethodTextChanged(InputMethodEvent event) {
+            schedule(event);
+        }
+
+        @Override
+        public void caretPositionChanged(InputMethodEvent event) {
+            schedule(event);
         }
     }
 }
