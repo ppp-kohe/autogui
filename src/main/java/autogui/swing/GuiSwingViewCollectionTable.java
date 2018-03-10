@@ -74,7 +74,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class CollectionTable extends JTable
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane,
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<List<?>>,
                         GuiSwingTableColumnSet.TableSelectionSource {
         protected GuiMappingContext context;
         protected List<?> source;
@@ -195,19 +195,25 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+            SwingUtilities.invokeLater(() -> setSwingViewValue((List<?>) newValue));
         }
 
         @Override
-        public Object getSwingViewValue() {
+        public List<?> getSwingViewValue() {
             return getSource();
         }
 
         @Override
-        public void setSwingViewValue(Object value) {
+        public void setSwingViewValue(List<?> value) {
             GuiReprCollectionTable repr = (GuiReprCollectionTable) context.getRepresentation();
             source = repr.toUpdateValue(context, value);
             getObjectTableModel().setSourceFromSupplier();
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(List<?> value) {
+            setSwingViewValue(value);
+            context.updateSourceFromGui(value);
         }
 
         /////////////////

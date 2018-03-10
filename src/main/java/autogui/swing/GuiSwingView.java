@@ -7,11 +7,16 @@ import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EventObject;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -23,12 +28,15 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
 
-    interface ValuePane {
-        Object getSwingViewValue();
-        /** updates GUI display,
+    interface ValuePane<ValueType> {
+        ValueType getSwingViewValue();
+        /** update GUI display,
          *   and it does NOT update the target model value.
          * processed under the event thread */
-        void setSwingViewValue(Object value);
+        void setSwingViewValue(ValueType value);
+
+        /** update the GUI display and the model. processed under the event thread */
+        void setSwingViewValueWithUpdate(ValueType value);
 
         default void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) { }
 
@@ -99,16 +107,18 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
-    class ValueScrollPane extends JScrollPane implements ValuePane {
-        protected ValuePane pane;
+    class ValueScrollPane<ValueType> extends JScrollPane implements ValuePane<ValueType> {
+        protected ValuePane<ValueType> pane;
 
+        @SuppressWarnings("unchecked")
         public ValueScrollPane(Component view, int vsbPolicy, int hsbPolicy) {
             super(view, vsbPolicy, hsbPolicy);
             if (view instanceof ValuePane) {
-                this.pane = (ValuePane) view;
+                this.pane = (ValuePane<ValueType>) view;
             }
         }
 
+        @SuppressWarnings("unchecked")
         public ValueScrollPane(Component view) {
             super(view);
             if (view instanceof ValuePane) {
@@ -117,14 +127,21 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         @Override
-        public Object getSwingViewValue() {
+        public ValueType getSwingViewValue() {
             return pane == null ? null : pane.getSwingViewValue();
         }
 
         @Override
-        public void setSwingViewValue(Object value) {
+        public void setSwingViewValue(ValueType value) {
             if (pane != null) {
                 pane.setSwingViewValue(value);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(ValueType value) {
+            if (pane != null) {
+                pane.setSwingViewValueWithUpdate(value);
             }
         }
 
@@ -147,14 +164,15 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
 
-    class ValueWrappingPane extends JPanel implements ValuePane {
-        protected ValuePane pane;
+    class ValueWrappingPane<ValueType> extends JPanel implements ValuePane<ValueType> {
+        protected ValuePane<ValueType> pane;
 
         public ValueWrappingPane(Component view) {
             super(new BorderLayout());
             add(view, BorderLayout.CENTER);
         }
 
+        @SuppressWarnings("unchecked")
         private void setPane(Component view) {
             if (view instanceof ValuePane) {
                 this.pane = (ValuePane) view;
@@ -172,14 +190,21 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         @Override
-        public Object getSwingViewValue() {
+        public ValueType getSwingViewValue() {
             return pane == null ? null : pane.getSwingViewValue();
         }
 
         @Override
-        public void setSwingViewValue(Object value) {
+        public void setSwingViewValue(ValueType value) {
             if (pane != null) {
                 pane.setSwingViewValue(value);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(ValueType value) {
+            if (pane != null) {
+                pane.setSwingViewValueWithUpdate(value);
             }
         }
 
@@ -260,6 +285,107 @@ public interface GuiSwingView extends GuiSwingElement {
             copy(target.getSelectedCellValues().values().stream()
                     .map(this::toString)
                     .collect(Collectors.joining("\n")));
+        }
+    }
+
+    ///////////////////////////
+
+    class HistoryMenu<ValueType, PaneType extends ValuePane<ValueType>> extends JMenu {
+        protected PaneType component;
+        protected GuiMappingContext context;
+
+        public HistoryMenu(PaneType component, GuiMappingContext context) {
+            super("History");
+            this.component = component;
+            this.context = context;
+            buildMenu();
+        }
+
+        protected void buildMenu() {
+            addMenuListener(new MenuListener() {
+                @Override
+                public void menuSelected(MenuEvent e) {
+                    loadItems();
+                }
+                @Override
+                public void menuDeselected(MenuEvent e) { }
+                @Override
+                public void menuCanceled(MenuEvent e) { }
+            });
+        }
+
+
+        public void clearHistory() {
+            context.getPreferences().clearHistories();
+        }
+
+        public void loadItems() {
+            removeAll();
+            boolean added = false;
+            List<GuiPreferences.HistoryValueEntry> prefEs = context.getPreferences().getHistoryValues();
+            List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefEs);
+            Collections.reverse(es);
+            for (GuiPreferences.HistoryValueEntry e : es) {
+                if (e.getIndex() != -1 && e.getValue() != null) {
+                    add(createAction(e));
+                    added = true;
+                }
+            }
+            if (!added) {
+                JMenuItem nothing = new JMenuItem("Nothing");
+                nothing.setEnabled(false);
+                add(nothing);
+            }
+            HistoryClearAction clearAction = new HistoryClearAction(this);
+            if (!added) {
+                clearAction.setEnabled(false);
+            }
+            addSeparator();
+            add(clearAction);
+        }
+
+        @SuppressWarnings("unchecked")
+        public Action createAction(GuiPreferences.HistoryValueEntry e) {
+            ValueType v = (ValueType) e.getValue();
+            return new HistorySetAction<>(getActionName(e), v, component);
+        }
+
+        public String getActionName(GuiPreferences.HistoryValueEntry e) {
+            String name = context.getRepresentation().toHumanReadableString(context, e.getValue());
+            if (name.length() > 30) {
+                name = name.substring(0, 30) + "...";
+            }
+            return name;
+        }
+    }
+
+    class HistorySetAction<ValueType> extends AbstractAction {
+        protected ValueType value;
+        protected ValuePane<ValueType> component;
+
+        public HistorySetAction(String name, ValueType value, ValuePane<ValueType> component) {
+            super(name);
+            this.value = value;
+            this.component = component;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            component.setSwingViewValueWithUpdate(value);
+        }
+    }
+
+    class HistoryClearAction extends AbstractAction {
+        protected HistoryMenu menu;
+
+        public HistoryClearAction(HistoryMenu menu) {
+            putValue(NAME, "Clear");
+            this.menu = menu;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            menu.clearHistory();
         }
     }
 }

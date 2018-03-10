@@ -25,7 +25,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
     }
 
     public static class PropertyFilePathPane extends SearchTextFieldFilePath
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> { //ValuePane<File|Path>
         protected GuiMappingContext context;
 
         public PropertyFilePathPane(GuiMappingContext context) {
@@ -71,10 +71,11 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
             menus.add(new JMenuItem(new ContextRefreshAction(context)));
             menus.addAll(super.getPopupEditMenuItems());
             menus.addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
+            menus.add(new HistoryMenu<>(this, context));
             return menus;
         }
 
-        /** update property: the user selects the item fromthe menu, and then update the target property */
+        /** update property: the user selects the item from the menu, and then update the target property */
         @Override
         public void selectSearchedItemFromGui(PopupCategorized.CategorizedPopupItem item) {
             super.selectSearchedItemFromGui(item);
@@ -112,6 +113,13 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
                     .toUpdateValue(context, value);
             FileItem item = getFileItem(path);
             selectSearchedItemWithoutUpdateContext(item);
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value) {
+            Path path = ((GuiReprValueFilePathField) context.getRepresentation())
+                    .toUpdateValue(context, value);
+            setFile(path);
         }
 
         @Override

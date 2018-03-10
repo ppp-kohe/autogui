@@ -1,26 +1,18 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValueStringField;
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.SearchTextField;
 
 import javax.swing.*;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
-import java.awt.event.ActionEvent;
-import java.awt.event.InputMethodEvent;
-import java.awt.event.InputMethodListener;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
@@ -42,7 +34,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
     }
 
     public static class PropertyTextPane extends SearchTextField
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<String> {
         protected GuiMappingContext context;
 
         public PropertyTextPane(GuiMappingContext context) {
@@ -98,7 +90,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
             menus.add(new JMenuItem(new ContextRefreshAction(context)));
             menus.addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
             menus.addAll(super.getPopupEditMenuItems());
-            menus.add(new HistoryMenuBuilder(getField(), getContext()).getMenu());
+            menus.add(new HistoryMenu<>(this, getContext()));
             return menus;
         }
 
@@ -113,18 +105,23 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+            SwingUtilities.invokeLater(() -> setSwingViewValue((String) newValue));
         }
 
         @Override
-        public Object getSwingViewValue() {
+        public String getSwingViewValue() {
             return getField().getText();
         }
 
         @Override
-        public void setSwingViewValue(Object value) {
+        public void setSwingViewValue(String value) {
             GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
             setTextWithoutUpdateField(str.toUpdateValue(context, value));
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(String value) {
+            getField().setText(value);
         }
 
         @Override
@@ -135,99 +132,6 @@ public class GuiSwingViewStringField implements GuiSwingView {
         @Override
         public GuiMappingContext getContext() {
             return context;
-        }
-    }
-
-    public static class HistoryMenuBuilder {
-        protected JTextField field;
-        protected GuiMappingContext context;
-        protected JMenu menu;
-        public HistoryMenuBuilder(JTextField field, GuiMappingContext context) {
-            this.field = field;
-            this.context = context;
-        }
-
-        public JMenu getMenu() {
-            if (menu == null) {
-                menu = buildMenu();
-            }
-            return menu;
-        }
-
-        public JMenu buildMenu() {
-            JMenu menu = new JMenu("History");
-
-            menu.addMenuListener(new MenuListener() {
-                @Override
-                public void menuSelected(MenuEvent e) {
-                    loadItems();
-                }
-                @Override
-                public void menuDeselected(MenuEvent e) { }
-                @Override
-                public void menuCanceled(MenuEvent e) { }
-            });
-            return menu;
-        }
-
-
-        public void clearHistory() {
-            context.getPreferences().clearHistories();
-        }
-
-        public void loadItems() {
-            menu.removeAll();
-            boolean added = false;
-            List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(context.getPreferences().getHistoryValues());
-            Collections.reverse(es);
-            for (GuiPreferences.HistoryValueEntry e : es) {
-                if (e.getIndex() != -1 && e.getValue() != null) {
-                    String strValue = e.getValue().toString();
-                    String name = strValue;
-                    if (name.length() > 100) {
-                        name = name.substring(0, 100) + "...";
-                    }
-                    menu.add(new JMenuItem(new HistorySetAction(name, strValue, field)));
-                    added = true;
-                }
-            }
-            if (!added) {
-                JMenuItem nothing = new JMenuItem("Nothing");
-                nothing.setEnabled(false);
-                menu.add(nothing);
-            }
-
-            menu.add(new HistoryClearAction(this));
-        }
-    }
-
-    public static class HistorySetAction extends AbstractAction {
-        protected String value;
-        protected JTextField field;
-
-        public HistorySetAction(String name, String value, JTextField field) {
-            super(name);
-            this.value = value;
-            this.field = field;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            field.setText(value);
-        }
-    }
-
-    public static class HistoryClearAction extends AbstractAction {
-        protected HistoryMenuBuilder menu;
-
-        public HistoryClearAction(HistoryMenuBuilder menu) {
-            putValue(NAME, "Clear");
-            this.menu = menu;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            menu.clearHistory();
         }
     }
 
@@ -265,7 +169,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         public boolean importString(String str) {
             if (str != null) {
-                pane.setSwingViewValue(str);
+                pane.setSwingViewValueWithUpdate(str);
                 return true;
             } else {
                 return false;

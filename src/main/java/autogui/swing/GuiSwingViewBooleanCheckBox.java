@@ -28,7 +28,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     }
 
     public static class PropertyCheckBox extends JCheckBox
-            implements ActionListener, GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
+            implements ActionListener, GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Boolean> {
         protected GuiMappingContext context;
         protected PopupExtension popup;
 
@@ -61,6 +61,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
                 GuiSwingJsonTransfer.getActions(this, context)
                         .forEach(menu::accept);
                 menu.accept(new ToStringCopyAction(this, context));
+                menu.accept(new HistoryMenu<>(this, getContext()));
             });
             setInheritsPopupMenu(true);
 
@@ -86,19 +87,26 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+            SwingUtilities.invokeLater(() -> setSwingViewValue((Boolean) newValue));
         }
 
         @Override
-        public Object getSwingViewValue() {
+        public Boolean getSwingViewValue() {
             return isSelected();
         }
 
         @Override
-        public void setSwingViewValue(Object value) {
+        public void setSwingViewValue(Boolean value) {
             GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
             //setSelected seems not to cause ActionEvent
             setSelected(repr.toUpdateValue(context, value));
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Boolean value) {
+            GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
+            repr.updateFromGui(context, value);
+            setSwingViewValue(value);
         }
 
         @Override
@@ -125,19 +133,15 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
                     support.isDataFlavorSupported(DataFlavor.stringFlavor);
         }
 
-        static Pattern numPattern = Pattern.compile("\\d+");
 
         @Override
         public boolean importData(TransferSupport support) {
             if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 try {
                     String data = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-                    data = data.toLowerCase();
-                    if (data.equals("true") || numPattern.matcher(data).matches()) {
-                        pane.setSwingViewValue(true);
-                        return true;
-                    } else if (data.equals("false") || data.equals("0")) {
-                        pane.setSwingViewValue(false);
+                    Boolean value = ((GuiReprValueBooleanCheckBox) pane.getContext().getRepresentation()).getBooleanValue(data);
+                    if (value != null) {
+                        pane.setSwingViewValue(value);
                         return true;
                     }
                     return false;

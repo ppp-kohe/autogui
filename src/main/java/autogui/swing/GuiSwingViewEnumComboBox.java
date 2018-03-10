@@ -15,10 +15,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.EventObject;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class GuiSwingViewEnumComboBox implements GuiSwingView {
     @Override
@@ -32,7 +30,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     }
 
     public static class PropertyEnumComboBox extends JComboBox<Object>
-            implements GuiMappingContext.SourceUpdateListener, ItemListener, GuiSwingView.ValuePane {
+            implements GuiMappingContext.SourceUpdateListener, ItemListener, GuiSwingView.ValuePane<Object> { //Enum
         protected GuiMappingContext context;
         protected boolean listenerEnabled = true;
         protected PopupExtension popup;
@@ -62,6 +60,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                 GuiSwingJsonTransfer.getActions(this, context)
                         .forEach(menu::accept);
                 menu.accept(new ToStringCopyAction(this, context));
+                menu.accept(new HistoryMenu<>(this, context));
             });
             setInheritsPopupMenu(true);
 
@@ -115,6 +114,11 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         }
 
         @Override
+        public void setSwingViewValueWithUpdate(Object value) {
+            setSelectedItem(value);
+        }
+
+        @Override
         public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
             addItemListener(eventHandler::accept);
         }
@@ -126,8 +130,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     }
 
     public static Object[] getEnumConstants(GuiMappingContext context) {
-        Class<?> e = ((GuiReprValueEnumComboBox) context.getRepresentation()).getValueType(context);
-        return e.getEnumConstants();
+        return ((GuiReprValueEnumComboBox) context.getRepresentation()).getEnumConstants(context);
     }
 
     public static class PropertyEnumListRenderer extends DefaultListCellRenderer {
@@ -161,37 +164,17 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                     support.isDataFlavorSupported(DataFlavor.stringFlavor);
         }
 
-        protected Pattern numPattern = Pattern.compile("\\d+");
-
         @Override
         public boolean importData(TransferSupport support) {
             if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 try {
                     String str = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-                    if (numPattern.matcher(str).matches()) {
-                        int ord = Integer.parseInt(str);
-                        pane.setSelectedIndex(ord);
+                    Object enumValue = ((GuiReprValueEnumComboBox) pane.getContext().getRepresentation()).getEnumValue(
+                            pane.getContext(), str);
+                    if (enumValue != null) {
+                        pane.setSwingViewValueWithUpdate(enumValue);
                         return true;
                     } else {
-                        List<String> names = Arrays.stream(pane.getSelectedObjects())
-                                .map(Enum.class::cast)
-                                .map(Enum::name)
-                                .collect(Collectors.toList());
-                        int idx = names.indexOf(str);
-                        if (idx >= 0) {
-                            pane.setSelectedIndex(idx);
-                            return true;
-                        } else {
-                            String lstr = str.toLowerCase();
-                            int lidx = names.stream()
-                                    .map(String::toLowerCase)
-                                    .collect(Collectors.toList())
-                                    .indexOf(lstr);
-                            if (lidx >= 0) {
-                                pane.setSelectedIndex(lidx);
-                                return true;
-                            }
-                        }
                         return false;
                     }
                 } catch (Exception ex) {

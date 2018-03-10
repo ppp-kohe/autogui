@@ -24,7 +24,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
     }
 
     public static class PropertyLabel extends JLabel
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
         protected GuiMappingContext context;
         protected Object value;
         protected PopupExtension popup;
@@ -81,6 +81,12 @@ public class GuiSwingViewLabel implements GuiSwingView {
             GuiReprValue label = (GuiReprValue) context.getRepresentation();
             this.value = value;
             setText("" + label.toUpdateValue(context, value));
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value) {
+            //TODO unsupported?
+
         }
 
         public String getValueAsString() {

@@ -84,6 +84,7 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
         @Override
         public Object executeSet(Object target, Object value) throws Exception {
             number = (Number) value;
+            System.err.println("set " + value);
             return null;
         }
 
@@ -109,6 +110,7 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
         @Override
         public Object executeSet(Object target, Object value) throws Exception {
             number = (BigDecimal) value;
+            System.err.println("set " + value);
             return null;
         }
     }

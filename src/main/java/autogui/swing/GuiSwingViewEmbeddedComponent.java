@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.swing.mapping.GuiReprEmbeddedComponent;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
@@ -23,7 +24,7 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
     }
 
     public static class PropertyEmbeddedPane extends JComponent
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<JComponent> {
         protected GuiMappingContext context;
         protected PopupExtension popup;
 
@@ -47,30 +48,34 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+            SwingUtilities.invokeLater(() -> setSwingViewValue((JComponent) newValue));
         }
 
         @Override
-        public Object getSwingViewValue() {
+        public JComponent getSwingViewValue() {
             if (getComponentCount() == 0) {
                 return null;
             } else {
-                return getComponent(0);
+                return (JComponent) getComponent(0);
             }
         }
 
         @Override
-        public void setSwingViewValue(Object value) {
+        public void setSwingViewValue(JComponent value) {
             if (value == null) {
                 if (getComponentCount() > 0) {
                     remove(0);
                 }
             } else {
-                JComponent comp = (JComponent) value;
-                add(comp, 0);
-                setPreferredSize(comp.getPreferredSize());
+                add(value, 0);
+                setPreferredSize(value.getPreferredSize());
             }
             revalidate();
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(JComponent value) {
+            //unsupported
         }
     }
 }

@@ -153,7 +153,7 @@ public class ObjectTableColumn {
     }
 
     public interface PopupMenuBuilderSource {
-        default GuiSwingView.ValuePane getMenuTargetPane() {
+        default GuiSwingView.ValuePane<Object> getMenuTargetPane() {
             return null;
         }
 

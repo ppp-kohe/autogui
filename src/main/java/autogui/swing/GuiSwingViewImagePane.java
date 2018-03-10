@@ -38,7 +38,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class PropertyImagePane extends JComponent
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Image> {
         protected GuiMappingContext context;
         protected Image image;
         protected Dimension imageSize = new Dimension(1, 1);
@@ -70,6 +70,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 menu.accept(new ImagePasteAction(this));
                 GuiSwingJsonTransfer.getActions(this, context)
                         .forEach(menu::accept);
+                menu.accept(new HistoryMenu<>(this, context));
             });
             setInheritsPopupMenu(true);
 
@@ -104,7 +105,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+            SwingUtilities.invokeLater(() -> setSwingViewValue((Image) newValue));
         }
 
         public void setMaxImageScale(float maxImageScale) {
@@ -170,14 +171,19 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
-        public Object getSwingViewValue() {
+        public Image getSwingViewValue() {
             return getImage();
         }
 
         @Override
-        public void setSwingViewValue(Object value) {
+        public void setSwingViewValue(Image value) {
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
             setImageWithoutContextUpdate(img.updateValue(context, value));
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Image value) {
+            setImage(value);
         }
     }
 

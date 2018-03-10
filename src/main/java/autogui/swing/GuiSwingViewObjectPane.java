@@ -7,6 +7,7 @@ import autogui.swing.util.ResizableFlowLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,7 +69,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
      *   ... ]
      *  </pre>
      */
-    public static class ObjectPane extends JPanel implements GuiMappingContext.SourceUpdateListener, ValuePane {
+    public static class ObjectPane extends JPanel implements GuiMappingContext.SourceUpdateListener, ValuePane<Object> {
         protected GuiMappingContext context;
         protected JToolBar actionToolBar;
         protected JComponent contentPane;
@@ -198,8 +199,16 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             return context.getSource();
         }
 
+        /** special case: update the source */
         @Override
         public void setSwingViewValue(Object value) {
+            context.setSource(value);
+            revalidate();
+            repaint();
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value) {
             context.setSource(value);
             revalidate();
             repaint();

@@ -164,7 +164,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     }
 
     public static class PropertyDocumentEditorPane extends JEditorPane
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> { //ValuePane<StringBuilder|Content|Document>
         protected GuiMappingContext context;
         protected PopupExtension popup;
         protected boolean wrapLine = true;
@@ -195,6 +195,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
+        public void setSwingViewValueWithUpdate(Object value) {
+            //TODO setting string contents of value?
+        }
+
+        @Override
         public boolean getScrollableTracksViewportWidth() {
             return wrapLine;
         }
@@ -219,7 +224,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     }
 
     public static class PropertyDocumentTextPane extends JTextPane
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> { //ValuePane<StringBuilder|Content|Document>
         protected GuiMappingContext context;
         protected PopupExtension popup;
         protected boolean wrapLine = true;
@@ -249,6 +254,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public void setSwingViewValue(Object value) {
             updateText(this, context, value);
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value) {
+            //TODO setting string contents of value?
         }
 
         @Override

@@ -45,7 +45,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         return false;
     }
 
-    public static class PropertyPane extends NamedPropertyPane implements ValuePane {
+    public static class PropertyPane extends NamedPropertyPane {
         protected GuiMappingContext context;
         protected PopupExtension popup;
 
@@ -105,7 +105,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
     }
 
-    public static class NamedPropertyPane extends NamedPane implements ValuePane {
+    public static class NamedPropertyPane extends NamedPane implements ValuePane<GuiReprValue.NamedValue> {
         protected PopupExtension popup;
 
         public NamedPropertyPane() { }
@@ -126,10 +126,19 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), menuBuilder);
         }
 
+        public boolean hasContentValuePane() {
+            return contentPane != null && contentPane instanceof ValuePane;
+        }
+
+        @SuppressWarnings("unchecked")
+        public ValuePane<Object> getContentPaneAsValuePane() {
+            return (ValuePane<Object>) contentPane;
+        }
+
         @Override
-        public Object getSwingViewValue() {
-            if (contentPane != null && contentPane instanceof ValuePane) {
-                Object value = ((ValuePane) contentPane).getSwingViewValue();
+        public GuiReprValue.NamedValue getSwingViewValue() {
+            if (hasContentValuePane()) {
+                Object value = getContentPaneAsValuePane().getSwingViewValue();
                 if (value != null) {
                     return new GuiReprValue.NamedValue(getName(), value);
                 }
@@ -138,18 +147,23 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
 
         @Override
-        public void setSwingViewValue(Object value) {
-            if (contentPane != null && contentPane instanceof ValuePane) {
-                if (value != null && value instanceof GuiReprValue.NamedValue) {
-                    ((ValuePane) contentPane).setSwingViewValue(((GuiReprValue.NamedValue) value).value);
-                }
+        public void setSwingViewValue(GuiReprValue.NamedValue value) {
+            if (hasContentValuePane() && value != null) {
+                getContentPaneAsValuePane().setSwingViewValue((value).value);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(GuiReprValue.NamedValue value) {
+            if (hasContentValuePane() && value != null) {
+                getContentPaneAsValuePane().setSwingViewValueWithUpdate(value.value);
             }
         }
 
         @Override
         public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
-            if (contentPane != null && contentPane instanceof ValuePane) {
-                return ((ValuePane) contentPane).getSwingMenuBuilder();
+            if (hasContentValuePane()) {
+                return getContentPaneAsValuePane().getSwingMenuBuilder();
             } else {
                 return null;
             }
@@ -157,15 +171,15 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
 
         @Override
         public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
-            if (contentPane != null && contentPane instanceof ValuePane) {
-                ((ValuePane) contentPane).addSwingEditFinishHandler(eventHandler);
+            if (hasContentValuePane()) {
+                getContentPaneAsValuePane().addSwingEditFinishHandler(eventHandler);
             }
         }
 
         @Override
         public GuiMappingContext getContext() {
-            if (contentPane != null && contentPane instanceof ValuePane) {
-                return ((ValuePane) contentPane).getContext();
+            if (hasContentValuePane()) {
+                return getContentPaneAsValuePane().getContext();
             } else {
                 return null;
             }

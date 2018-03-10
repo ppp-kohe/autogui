@@ -1,5 +1,7 @@
 package autogui.base.mapping;
 
+import java.util.regex.Pattern;
+
 public class GuiReprValueBooleanCheckBox extends GuiReprValue {
 
     @Override
@@ -42,5 +44,18 @@ public class GuiReprValueBooleanCheckBox extends GuiReprValue {
     @Override
     public boolean isJsonSetter() {
         return false;
+    }
+
+    static Pattern numPattern = Pattern.compile("\\d+");
+
+    public Boolean getBooleanValue(String data) {
+        data = data.toLowerCase();
+        if (data.equals("true") || numPattern.matcher(data).matches()) {
+            return true;
+        } else if (data.equals("false") || data.equals("0")) {
+            return false;
+        } else {
+            return null;
+        }
     }
 }

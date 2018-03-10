@@ -105,18 +105,20 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setTableColor(table, component, isSelected);
-            if (component instanceof GuiSwingView.ValuePane) {
-                ((GuiSwingView.ValuePane) component).setSwingViewValue(value);
+            GuiSwingView.ValuePane<Object> valuePane = getMenuTargetPane();
+            if (valuePane != null) {
+                valuePane.setSwingViewValue(value);
             }
 
             component.setBorder(BorderFactory.createMatteBorder(0, 10, 0, 5, component.getBackground()));
             return component;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
-        public GuiSwingView.ValuePane getMenuTargetPane() {
+        public GuiSwingView.ValuePane<Object> getMenuTargetPane() {
             if (component instanceof GuiSwingView.ValuePane) {
-                return (GuiSwingView.ValuePane) component;
+                return (GuiSwingView.ValuePane<Object>) component;
             } else {
                 return null;
             }
@@ -164,16 +166,17 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         @Override
         public Object getCellEditorValue() {
             if (component instanceof GuiSwingView.ValuePane) {
-                return ((GuiSwingView.ValuePane) component).getSwingViewValue();
+                return ((GuiSwingView.ValuePane<?>) component).getSwingViewValue();
             } else {
                 return null;
             }
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             if (component instanceof GuiSwingView.ValuePane) {
-                ((GuiSwingView.ValuePane) component).setSwingViewValue(value);
+                ((GuiSwingView.ValuePane<Object>) component).setSwingViewValue(value);
             }
             component.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createEmptyBorder(0, 5, 0, 3),
@@ -398,7 +401,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         @Override
         public void actionPerformed(ActionEvent e) {
             ObjectTableColumn.PopupMenuBuilderSource source = (column == null ? null : column.getMenuBuilderSource());
-            GuiSwingView.ValuePane valuePane = (source == null ? null : source.getMenuTargetPane());
+            GuiSwingView.ValuePane<Object> valuePane = (source == null ? null : source.getMenuTargetPane());
 
             for (int row : table.getSelectedRows()) {
                 Object prev = null;

@@ -10,6 +10,24 @@ public class GuiReprValueFilePathField extends GuiReprValue {
         return File.class.isAssignableFrom(cls) || Path.class.isAssignableFrom(cls);
     }
 
+    public Object toValueFromPath(GuiMappingContext context, Path path) {
+        Class<?> type = getValueType(context);
+        if (File.class.isAssignableFrom(type)) {
+            return path.toFile();
+        } else {
+            //Path
+            return path;
+        }
+    }
+
+    @Override
+    public void updateFromGui(GuiMappingContext context, Object newValue) {
+        if (newValue instanceof Path) {
+            newValue = toValueFromPath(context, (Path) newValue);
+        }
+        super.updateFromGui(context, newValue);
+    }
+
     public Path toUpdateValue(GuiMappingContext context, Object value) {
         if (value instanceof File) {
             return ((File) value).toPath();

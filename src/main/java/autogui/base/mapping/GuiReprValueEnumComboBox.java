@@ -1,6 +1,9 @@
 package autogui.base.mapping;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class GuiReprValueEnumComboBox extends GuiReprValue {
 
@@ -52,5 +55,39 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
     @Override
     public boolean isJsonSetter() {
         return false;
+    }
+
+
+    public Object[] getEnumConstants(GuiMappingContext context) {
+        return getValueType(context).getEnumConstants();
+    }
+
+    protected Pattern numPattern = Pattern.compile("\\d+");
+
+    public Object getEnumValue(GuiMappingContext context, String nameOrIndex) {
+        Object[] es = getEnumConstants(context);
+        if (numPattern.matcher(nameOrIndex).matches()) {
+            int ord = Integer.parseInt(nameOrIndex);
+            return es[ord];
+        } else {
+            List<String> names = Arrays.stream(es)
+                    .map(Enum.class::cast)
+                    .map(Enum::name)
+                    .collect(Collectors.toList());
+            int idx = names.indexOf(nameOrIndex);
+            if (idx >= 0) {
+                return es[idx];
+            } else {
+                String lower = nameOrIndex.toLowerCase();
+                idx = names.stream()
+                        .map(String::toLowerCase)
+                        .collect(Collectors.toList())
+                        .indexOf(lower);
+                if (idx >= 0) {
+                    return es[idx];
+                }
+            }
+            return null;
+        }
     }
 }

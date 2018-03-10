@@ -245,9 +245,13 @@ public class GuiPreferences {
         historyValues = new ArrayList<>();
         for (int i = 0; i < historyValueLimit; ++i) {
             HistoryValueEntry e = new HistoryValueEntry(this, null);
-            e.setKeyIndexWithLoadOrStore(i);
-            if (e.getIndex() != -1) {
-                historyValues.add(e);
+            try {
+                e.setKeyIndexWithLoadOrStore(i);
+                if (e.getIndex() != -1) {
+                    historyValues.add(e);
+                }
+            } catch (Exception ex) {
+                //failed to load the entry
             }
         }
 

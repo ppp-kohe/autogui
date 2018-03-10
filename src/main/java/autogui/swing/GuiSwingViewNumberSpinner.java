@@ -174,7 +174,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
 
     public static class PropertyNumberSpinner extends InfinityNumberSpinner
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
         protected GuiMappingContext context;
         protected ScheduledTaskRunner.EditingRunner editingRunner;
         protected PopupExtensionText popup;
@@ -201,6 +201,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             TextServiceDefaultMenuSpinner menu = new TextServiceDefaultMenuSpinner(context,
                     (TypedSpinnerNumberModel) getModel(), field);
             menu.getEditActions().addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
+            menu.getEditActions().add(new HistoryMenu<>(this, context));
 
             //popup
             PopupExtensionText.putInputEditActions(field);
@@ -259,6 +260,11 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             } finally {
                 editingRunner.setEnabled(true);
             }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value) {
+            setValue(value);
         }
 
         @Override
