@@ -26,6 +26,27 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 
+/**
+ * <h3>representation</h3>
+ * {@link GuiReprValueNumberSpinner}
+ *
+ * <h3>{@link PropertyNumberSpinner#getSwingViewValue()}</h3>
+ *  spinner-model's value: {@link Number}, but the value type is Object because
+ *     it includes {@link autogui.base.mapping.GuiReprValueNumberSpinner.Infinity}.
+ *  <p>
+ *     updating is caused by
+ *       {@link PropertyNumberSpinner#setValue(Object)} -&gt; change-listener -&gt; taskRunner -&gt;
+ *        {@link PropertyNumberSpinner#updateNumber(List)}
+ *
+ *
+ * <h3>history-value</h3>
+ *  supported.
+ *
+ * <h3>string-transfer</h3>
+ *  {@link NumberTransferHandler}.
+ *   formatted by formatter of {@link PropertyNumberSpinner#getEditorField()}
+ *      which is actually a {@link InfinityNumberFormatter} with {@link InfinityDecimalFormat}.
+ */
 public class GuiSwingViewNumberSpinner implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
@@ -171,7 +192,6 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             return format.parse(source, parsePosition);
         }
     }
-
 
     public static class PropertyNumberSpinner extends InfinityNumberSpinner
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
@@ -499,7 +519,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 try {
                     String data = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
                     Object val = pane.getEditorField().getFormatter().stringToValue(data);
-                    pane.setSwingViewValue(val);
+                    pane.setSwingViewValueWithUpdate(val);
                     return true;
                 } catch (Exception ex) {
                     return false;

@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprObjectPane;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.ResizableFlowLayout;
@@ -11,6 +12,24 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * <h3>representation</h3>
+ * {@link autogui.base.mapping.GuiReprObjectPane}
+ *
+ * <h3>{@link ObjectPane#getSwingViewValue()}</h3>
+ * latest set raw-object.
+ *
+ *  Currently, {@link ObjectPane#setSwingViewValue(Object)} also set context's value.
+ *    TODO omit to update?
+ *
+ * <h3>history-value</h3>
+ *  supported.
+ *
+ * <h3>string-transfer</h3>
+ * no-transfer-handler.
+ *  suported by {@link autogui.swing.GuiSwingView.ToStringCopyAction} and
+ *     {@link autogui.base.mapping.GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}.
+ */
 public class GuiSwingViewObjectPane implements GuiSwingView {
     protected GuiSwingMapperSet mapperSet;
 
@@ -209,7 +228,8 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            context.setSource(value);
+            ((GuiReprObjectPane) getContext().getRepresentation())
+                    .updateFromGui(getContext(), value);
             revalidate();
             repaint();
         }

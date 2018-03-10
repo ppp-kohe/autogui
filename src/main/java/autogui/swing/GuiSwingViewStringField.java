@@ -17,6 +17,24 @@ import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * <h3>representation</h3>
+ * {@link GuiReprValueStringField}
+ *
+ * <h3>{@link PropertyTextPane#getSwingViewValue()}</h3>
+ *  the field text: {@link String}.
+ * <p>
+ *   updating is caused by field's setText(String) -&gt;
+ *      document listener -&gt;
+ *      taskRunner -&gt; {@link PropertyTextPane#updateFieldInEvent(boolean)}.
+ *
+ * <h3>history-value</h3>
+ * supported.
+ *
+ * <h3>string-transfer</h3>
+ * {@link StringTransferHandler},
+ *   reading and writing String.
+ */
 public class GuiSwingViewStringField implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {

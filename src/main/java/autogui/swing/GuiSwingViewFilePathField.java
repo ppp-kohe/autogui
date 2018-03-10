@@ -13,6 +13,28 @@ import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
 
+
+/**
+ * <h3>representation</h3>
+ * {@link GuiReprValueFilePathField}
+ *
+ * <h3>{@link PropertyFilePathPane#getSwingViewValue()}</h3>
+ * selected path: {@link Path} or {@link java.io.File}
+ *
+ * <p>
+ *     updating is caused by {@link PropertyFilePathPane#setFile(Path)} -&gt; editingRunner -&gt;
+ *       {@link autogui.swing.util.SearchTextField#updateFieldInEvent(boolean)} -&gt;
+ *       {@link PropertyFilePathPane#setCurrentSearchedItems(List, PopupCategorized.CategorizedPopupItem)} -&gt;
+ *         {@link PropertyFilePathPane#selectSearchedItemFromModel(PopupCategorized.CategorizedPopupItem)}
+ *
+ *
+ * <h3>history-value</h3>
+ * supported.
+ *
+ * <h3>string-transfer</h3>
+ * {@link autogui.swing.util.SearchTextFieldFilePath.FileTransferHandler}.
+ * reading and writing a file path string.
+ */
 public class GuiSwingViewFilePathField implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {

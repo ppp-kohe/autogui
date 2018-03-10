@@ -4,6 +4,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.swing.table.TableTargetColumn;
 import autogui.swing.table.TableTargetColumnAction;
+import autogui.swing.table.TableTargetMenu;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
@@ -29,27 +30,33 @@ public interface GuiSwingView extends GuiSwingElement {
 
 
     interface ValuePane<ValueType> {
+        /** @return basically, the source value of the context, held by the component without touching the context.  */
         ValueType getSwingViewValue();
+
         /** update GUI display,
          *   and it does NOT update the target model value.
-         * processed under the event thread */
+         * processed under the event thread
+         * @param value the new value
+         * */
         void setSwingViewValue(ValueType value);
 
-        /** update the GUI display and the model. processed under the event thread */
+        /** update the GUI display and the model. processed under the event thread
+         * @param value the new value
+         * */
         void setSwingViewValueWithUpdate(ValueType value);
 
         default void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) { }
 
         PopupExtension.PopupMenuBuilder getSwingMenuBuilder();
 
-        default ValueScrollPane wrapScrollPane(boolean verticalAlways, boolean horizontalAlways) {
-            return new ValueScrollPane(asComponent(),
+        default ValueScrollPane<ValueType> wrapScrollPane(boolean verticalAlways, boolean horizontalAlways) {
+            return new ValueScrollPane<>(asComponent(),
                     verticalAlways ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     horizontalAlways ? ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         }
 
-        default ValueWrappingPane wrapPane() {
-            return new ValueWrappingPane(asComponent());
+        default ValueWrappingPane<ValueType> wrapPane() {
+            return new ValueWrappingPane<>(asComponent());
         }
 
         GuiMappingContext getContext();
@@ -122,7 +129,7 @@ public interface GuiSwingView extends GuiSwingElement {
         public ValueScrollPane(Component view) {
             super(view);
             if (view instanceof ValuePane) {
-                this.pane = (ValuePane) view;
+                this.pane = (ValuePane<ValueType>) view;
             }
         }
 
@@ -175,7 +182,7 @@ public interface GuiSwingView extends GuiSwingElement {
         @SuppressWarnings("unchecked")
         private void setPane(Component view) {
             if (view instanceof ValuePane) {
-                this.pane = (ValuePane) view;
+                this.pane = (ValuePane<ValueType>) view;
             }
         }
 
@@ -290,7 +297,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
     ///////////////////////////
 
-    class HistoryMenu<ValueType, PaneType extends ValuePane<ValueType>> extends JMenu {
+    class HistoryMenu<ValueType, PaneType extends ValuePane<ValueType>> extends JMenu implements TableTargetMenu {
         protected PaneType component;
         protected GuiMappingContext context;
 
@@ -314,6 +321,10 @@ public interface GuiSwingView extends GuiSwingElement {
             });
         }
 
+        @Override
+        public JMenu convert(TableTargetColumn target) {
+            return new HistoryMenuForTableColumn<>(component, context, target);
+        }
 
         public void clearHistory() {
             context.getPreferences().clearHistories();
@@ -359,6 +370,20 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
+    class HistoryMenuForTableColumn<ValueType, PaneType extends ValuePane<ValueType>> extends HistoryMenu<ValueType, PaneType> {
+        protected TableTargetColumn target;
+        public HistoryMenuForTableColumn(PaneType component, GuiMappingContext context, TableTargetColumn target) {
+            super(component, context);
+            this.target = target;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public Action createAction(GuiPreferences.HistoryValueEntry e) {
+            return new HistorySetForColumnAction<>(getActionName(e), (ValueType) e.getValue(), target);
+        }
+    }
+
     class HistorySetAction<ValueType> extends AbstractAction {
         protected ValueType value;
         protected ValuePane<ValueType> component;
@@ -372,6 +397,22 @@ public interface GuiSwingView extends GuiSwingElement {
         @Override
         public void actionPerformed(ActionEvent e) {
             component.setSwingViewValueWithUpdate(value);
+        }
+    }
+
+    class HistorySetForColumnAction<ValueType> extends AbstractAction {
+        protected ValueType value;
+        protected TableTargetColumn target;
+
+        public HistorySetForColumnAction(String name, ValueType value, TableTargetColumn target) {
+            super(name);
+            this.value = value;
+            this.target = target;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            target.setSelectedCellValues(i -> value);
         }
     }
 

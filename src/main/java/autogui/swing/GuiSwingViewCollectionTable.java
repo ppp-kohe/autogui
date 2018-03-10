@@ -32,6 +32,25 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * <h3>representation</h3>
+ * {@link GuiReprCollectionTable}
+ *
+ * <h3>{@link CollectionTable#getSwingViewValue()}</h3>
+ * latest set {@link List}.
+ *
+ * <h3>history-value</h3>
+ *  Currently unsupported.
+ *
+ * <h3>string-transfer</h3>
+ * entire copying is supported by owned {@link autogui.swing.GuiSwingViewPropertyPane.PropertyPane}.
+ *  the entire copying is handled by {@link autogui.base.mapping.GuiReprPropertyPane#toHumanReadableString(GuiMappingContext, Object)} -&gt;
+ *  {@link autogui.base.mapping.GuiReprObjectPane#toHumanReadableStringFromObject(GuiMappingContext, Object)}  -&gt;
+ *    {@link autogui.base.mapping.GuiReprCollectionElement#toHumanReadableString(GuiMappingContext, Object)}.
+ *  <p>
+ *      selected rows or cells can be achieved by {@link autogui.swing.table.ToStringCopyCell}
+ *      based on {@link autogui.swing.table.TableTargetCellAction}.
+ */
 public class GuiSwingViewCollectionTable implements GuiSwingView {
     protected GuiSwingMapperSet columnMapperSet;
 
@@ -213,7 +232,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(List<?> value) {
             setSwingViewValue(value);
-            context.updateSourceFromGui(value);
+            ((GuiReprCollectionTable) getContext().getRepresentation())
+                    .updateFromGui(getContext(), value);
         }
 
         /////////////////

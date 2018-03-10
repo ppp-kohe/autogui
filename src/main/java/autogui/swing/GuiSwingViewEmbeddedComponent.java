@@ -7,6 +7,19 @@ import autogui.swing.util.PopupExtension;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * <h3>representation</h3>
+ * {@link autogui.swing.mapping.GuiReprEmbeddedComponent}
+ *
+ * <h3>{@link PropertyEmbeddedPane#getSwingViewValue()}</h3>
+ * {@link JComponent}
+ *
+ * <h3>history-value</h3>
+ * unsupported
+ *
+ * <h3>string-transfer</h3>
+ * unsupported.
+ */
 public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
@@ -75,7 +88,9 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(JComponent value) {
-            //unsupported
+            setSwingViewValue(value);
+            ((GuiReprEmbeddedComponent) getContext().getRepresentation())
+                    .updateFromGui(getContext(), value);
         }
     }
 }

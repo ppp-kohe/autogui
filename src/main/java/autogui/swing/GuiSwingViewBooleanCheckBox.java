@@ -15,6 +15,22 @@ import java.util.EventObject;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+/**
+ * <h3>representation</h3>
+ * {@link GuiReprValueBooleanCheckBox}
+ *
+ * <h3>{@link PropertyCheckBox#getSwingViewValue()}</h3>
+ * check-box selection: {@link Boolean}
+ *
+ * <h3>history-value</h3>
+ * supported.
+ *
+ * <h3>string-transfer</h3>
+ * {@link BooleanTransferHandler}.
+ *  "true" or non "0" for true,
+ *  and "false" or "0" for false.
+ *   @see GuiReprValueBooleanCheckBox#getBooleanValue(String)
+ */
 public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {

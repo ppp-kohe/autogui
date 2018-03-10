@@ -20,6 +20,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * <h3>representation</h3>
+ * {@link GuiReprValueImagePane}
+ *
+ * <h3>{@link PropertyImagePane#getSwingViewValue()}</h3>
+ * latest set image: {@link Image}
+ *
+ * <p>
+ *   updating is caused by {@link PropertyImagePane#setImage(Image)}
+ *
+ * <h3>history-value</h3>
+ * supported.
+ *
+ * <h3>string-transfer</h3>
+ * unsupported.
+ */
 public class GuiSwingViewImagePane implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {

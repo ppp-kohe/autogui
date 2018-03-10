@@ -21,7 +21,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -274,6 +273,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         public void accept(Object o) {
             if (o instanceof Action) {
                 addAction((Action) o);
+            } else if (o instanceof TableTargetMenu) {
+                menu.accept(((TableTargetMenu) o).convert(target));
             } else if (o instanceof JMenuItem) {
                 Action action = ((JMenuItem) o).getAction();
                 addAction(action);

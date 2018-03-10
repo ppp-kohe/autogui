@@ -26,6 +26,20 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * <h3>representation</h3>
+ * {@link GuiReprValueDocumentEditor}
+ *
+ * <h3>{@link PropertyDocumentEditorPane#getSwingViewValue()} or
+ *      {@link PropertyDocumentTextPane#getSwingViewValue()}</h3>
+ * {@link Document},  {@link AbstractDocument.Content}, or {@link StringBuilder}
+ *
+ * <h3>histroy-value</h3>
+ * TODO unsupported yet
+ *
+ * <h3>string-transfer</h3>
+ * TODO unsupported yet
+ */
 public class GuiSwingViewDocumentEditor implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {

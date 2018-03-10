@@ -64,6 +64,12 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
 
     protected Pattern numPattern = Pattern.compile("\\d+");
 
+    /**
+     *
+     * @param context the context which is used for obtaining the type of the enum.
+     * @param nameOrIndex {@link Enum#name()} or {@link Enum#ordinal()}
+     * @return a Enum member or null if not found
+     */
     public Object getEnumValue(GuiMappingContext context, String nameOrIndex) {
         Object[] es = getEnumConstants(context);
         if (numPattern.matcher(nameOrIndex).matches()) {

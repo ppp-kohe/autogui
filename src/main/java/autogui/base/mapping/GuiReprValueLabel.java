@@ -23,5 +23,8 @@ public class GuiReprValueLabel extends GuiReprValue {
         return target;
     }
 
-
+    @Override
+    public boolean isHistoryValueSupported() {
+        return false;
+    }
 }

@@ -33,4 +33,9 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         return target;
     }
+
+    @Override
+    public boolean isHistoryValueSupported() {
+        return false;
+    }
 }

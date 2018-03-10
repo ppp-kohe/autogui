@@ -12,6 +12,22 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 
+/**
+ * <h3>representation</h3>
+ * {@link GuiReprValue},
+ *   a fallback view.
+ *
+ * <h3>{@link PropertyLabel#getSwingViewValue()}</h3>
+ * latest set value: (read-only) Object.
+ *   {@link PropertyLabel#setSwingViewValueWithUpdate(Object)} just causes GUI update without updating the context's value.
+ *
+ *  <h3>history-value</h3>
+ *  unsupported.
+ *
+ *  <h3>string-transfer</h3>
+ *  {@link LabelTransferHandler}.
+ *   exporting-only {@link autogui.base.mapping.GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}
+ */
 public class GuiSwingViewLabel implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
@@ -85,13 +101,12 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            //TODO unsupported?
-
+            setSwingViewValue(value);
         }
 
         public String getValueAsString() {
             GuiReprValue label = (GuiReprValue) context.getRepresentation();
-            return "" + label.toUpdateValue(context, getSwingViewValue());
+            return "" + label.toHumanReadableString(context, getSwingViewValue());
         }
 
         @Override

@@ -18,6 +18,26 @@ import java.util.EventObject;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+/**
+ * <h3>representation</h3>
+ * {@link GuiReprValueEnumComboBox}
+ *
+ * <h3>{@link PropertyEnumComboBox#getSwingViewValue()}</h3>
+ * the selected {@link Enum} member.
+ *
+ * <p>
+ *     updating is caused by {@link PropertyEnumComboBox#setSelectedItem(Object)} -&gt;
+ *      item-listener: {@link PropertyEnumComboBox#itemStateChanged(ItemEvent)}
+ *
+ *
+ * <h3>history-value</h3>
+ * supported.
+ *
+ * <h3>string-transfer</h3>
+ * {@link EnumTransferHandler}.
+ *  reading {@link Enum#name()} or {@link Enum#ordinal()}, and writing {@link Enum#name()}.
+ *  @see GuiReprValueEnumComboBox#getEnumValue(GuiMappingContext, String)
+ */
 public class GuiSwingViewEnumComboBox implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
@@ -59,7 +79,6 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                 menu.accept(refreshAction);
                 GuiSwingJsonTransfer.getActions(this, context)
                         .forEach(menu::accept);
-                menu.accept(new ToStringCopyAction(this, context));
                 menu.accept(new HistoryMenu<>(this, context));
             });
             setInheritsPopupMenu(true);

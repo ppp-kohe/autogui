@@ -7,8 +7,10 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.function.Consumer;
 
-/** indicating an action can be converted for selected table columns (with entire rows) processing,
+/** indicating an action can be converted for selected table columns (with entire rows or selected cells) processing,
  *   handled by {@link autogui.swing.table.ObjectTableColumnValue.CollectionRowsActionBuilder}.
+ *   The key-point is that the action can be statically constructed for (selected or entire) rows of the column and
+ *      focused on the single target column.
  *
  *  <p>
  *  a collection table whose model is {@link ObjectTableModel} builds menu items including actions of the type.

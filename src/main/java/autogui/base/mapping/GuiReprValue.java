@@ -168,7 +168,9 @@ public class GuiReprValue implements GuiRepresentation {
      * @param newValue the updated property value
      */
     public void updateFromGui(GuiMappingContext context, Object newValue) {
-        context.getPreferences().addHistoryValue(newValue);
+        if (isHistoryValueSupported()) {
+            context.getPreferences().addHistoryValue(newValue);
+        }
 
         if (context.isTypeElementProperty()) {
             Object src = context.getParentSource();
@@ -194,6 +196,14 @@ public class GuiReprValue implements GuiRepresentation {
                 context.errorWhileUpdateSource(ex);
             }
         }
+    }
+
+    /***
+     * @return if true, {@link #updateFromGui(GuiMappingContext, Object)} automatically add the value to the preferences.
+     *    the default impl. returns true.
+     */
+    public boolean isHistoryValueSupported() {
+        return true;
     }
 
     /**

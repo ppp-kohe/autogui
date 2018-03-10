@@ -10,6 +10,24 @@ import java.awt.*;
 import java.util.EventObject;
 import java.util.function.Consumer;
 
+/**
+ * <h3>representation</h3>
+ * {@link autogui.base.mapping.GuiReprPropertyPane}
+ *
+ * <h3>{@link PropertyPane#getSwingViewValue()}</h3>
+ *  {@link autogui.base.mapping.GuiReprValue.NamedValue}.
+ *     obtaining and setting ({@link PropertyPane#setSwingViewValue(GuiReprValue.NamedValue)} and
+ *        {@link PropertyPane#setSwingViewValueWithUpdate(GuiReprValue.NamedValue)}) delete to the contentPane.
+ *     Note the setting of the property will be treated the value's contentPane.
+ *        {@link GuiReprValue#updateFromGui(GuiMappingContext, Object)} by the value's contentPane
+ *         supports the case of the parent is a property.
+ *
+ *  <h3>history-value</h3>
+ *  unsupported. (supported by the contentPane)
+ *
+ *  <h3>string-transfer</h3>
+ *  only copying is supported by {@link autogui.swing.GuiSwingView.ToStringCopyAction}
+ */
 public class GuiSwingViewPropertyPane implements GuiSwingView {
     protected GuiSwingMapperSet mapperSet;
 
