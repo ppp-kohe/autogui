@@ -309,6 +309,7 @@ public class GuiLogManager {
         return String.join(" ", parts);
     }
 
+    /** a console-wrapper stream, with supporting printing exceptions */
     public static class LogPrintStream extends PrintStream {
         private GuiLogManager manager;
 
@@ -340,6 +341,7 @@ public class GuiLogManager {
         }
     }
 
+    /** a default handler for integrating the log-manager */
     public static class LogUncaughtHandler implements Thread.UncaughtExceptionHandler {
         protected GuiLogManager manager;
         protected Thread.UncaughtExceptionHandler handler;
@@ -362,6 +364,7 @@ public class GuiLogManager {
         }
     }
 
+    /** a stream wrapper with writing to a log-manager, used by {@link LogPrintStream} */
     public static class LogOutputStream extends OutputStream {
         protected OutputStream out;
         protected ByteBuffer buffer;

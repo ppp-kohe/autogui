@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+/** a shared window manager for the setting panel */
 public class SettingsWindow {
     protected static SettingsWindow instance;
 
@@ -51,6 +52,7 @@ public class SettingsWindow {
 
     ///////// header text:
 
+    /** a group of labels */
     public static class LabelGroup {
         protected List<JComponent> names = new ArrayList<>();
         protected int align;
@@ -124,6 +126,7 @@ public class SettingsWindow {
          return colorWindow;
     }
 
+    /** a window holder for the color chooser */
     public static class ColorWindow {
         protected JFrame window;
 
@@ -171,6 +174,7 @@ public class SettingsWindow {
         }
     }
 
+    /** a color well can be changed by a shared color-panel */
     public static class ColorButton extends JButton implements ActionListener {
         protected Color color;
         protected Consumer<Color> callback;

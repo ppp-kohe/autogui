@@ -145,7 +145,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     }
 
     public static class LambdaDocumentTextPane extends GuiSwingViewDocumentEditor.PropertyDocumentTextPane {
-        /** the getter returns {@link StringBuilder},
+        /** @param getter the getter returns {@link StringBuilder},
          *  {@link javax.swing.text.AbstractDocument.Content}, or {@link StyledDocument} */
         public LambdaDocumentTextPane(Supplier<?> getter) {
             super(create(Document.class, getter, null, new GuiReprValueDocumentEditor()));

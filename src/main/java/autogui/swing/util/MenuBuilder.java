@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
+ * a utility for menu construction.
  * <pre>
  *     [menu:
  *        JLabel("title"),

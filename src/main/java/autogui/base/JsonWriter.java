@@ -7,6 +7,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * a simple JSON writer.
+ * <pre>
+ *     String jsonSource = JsonWriter.create().write(obj).toSource();
+ * </pre>
+ */
 public class JsonWriter {
     protected Appendable source;
     protected int level;

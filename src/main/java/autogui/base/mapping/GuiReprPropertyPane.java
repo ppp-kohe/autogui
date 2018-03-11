@@ -2,7 +2,7 @@ package autogui.base.mapping;
 
 import java.util.Objects;
 
-/** [propertyName: [  propertyValueField  ] ]
+/** a property member definition: [propertyName: [  propertyValueField  ] ]
  * */
 public class GuiReprPropertyPane extends GuiReprValue {
     protected GuiRepresentation subRepresentations;

@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/** an {@link Icon} factory*/
 public class GuiSwingIcons {
     protected static GuiSwingIcons instance = new GuiSwingIcons();
     protected Map<String, Icon> iconMap = new HashMap<>();
@@ -143,7 +144,9 @@ public class GuiSwingIcons {
      * </pre>
      * Default impl. of some UI automatically generates the pressed icon for an ImageIcon,
      *    but does not for another icon type.
-     * */
+     * @param name the action icon name
+     * @return the pressed icon for the name
+     */
     public Icon getPressedIcon(String name) {
         return pressedIconMap.computeIfAbsent("action-" + name , k -> loadPressedIcon(name));
     }

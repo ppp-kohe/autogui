@@ -2,6 +2,9 @@ package autogui.base.mapping;
 
 import java.util.Objects;
 
+/**
+ * a read-only text label for any type of object property
+ */
 public class GuiReprValueLabel extends GuiReprValue {
     public String toUpdateValue(GuiMappingContext context, Object newValue) {
         return Objects.toString(newValue);

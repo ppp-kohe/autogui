@@ -1,5 +1,8 @@
 package autogui.base.mapping;
 
+/**
+ * a text-field component for a {@link String} property
+ */
 public class GuiReprValueStringField extends GuiReprValue {
     @Override
     public boolean matchValueType(Class<?> cls) {

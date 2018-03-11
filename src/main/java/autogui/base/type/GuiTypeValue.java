@@ -83,6 +83,7 @@ public class GuiTypeValue implements GuiTypeElement {
 
     public static NoUpdate NO_UPDATE = NoUpdate.NoUpdate;
 
+    /** a constant for describing a property is not updated */
     public enum NoUpdate {
         NoUpdate;
     }

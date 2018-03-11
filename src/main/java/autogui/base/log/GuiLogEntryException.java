@@ -3,7 +3,7 @@ package autogui.base.log;
 import java.time.Instant;
 
 /**
- * the class is not an throwable exception class.
+ * the class is not an throwable exception class, instead
  *  this is a log-entry class for an exception object.
  * */
 public class GuiLogEntryException implements GuiLogEntry {

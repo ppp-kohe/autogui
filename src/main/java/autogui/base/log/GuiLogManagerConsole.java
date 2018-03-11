@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 
+/** the console based log-manager */
 public class GuiLogManagerConsole extends GuiLogManager {
     protected PrintStream out;
     protected GuiLogEntry lastEntry;

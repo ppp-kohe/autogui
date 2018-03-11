@@ -113,7 +113,9 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
             path.updateFromGui(context, getFile());
         }
 
-        /** no property update */
+        /** no property update
+         * @param item the selected item
+         * */
         public void selectSearchedItemWithoutUpdateContext(PopupCategorized.CategorizedPopupItem item) {
             super.selectSearchedItemFromGui(item);
             //no update callback

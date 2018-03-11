@@ -34,7 +34,6 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             setEnabled(false);
             try {
                 ((GuiReprAction) context.getRepresentation()).executeAction(context);
-                //TODO run in another thread?
             } finally {
                 setEnabled(true);
             }

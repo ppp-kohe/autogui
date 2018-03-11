@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 /**
- * {@link #get(Type)} can obtain a {@link GuiTypeElement} from {@link Type}.
+ * the factory for {@link GuiTypeElement}. {@link #get(Type)} can obtain a {@link GuiTypeElement} from {@link Type}.
  *   it's targets are members attached [at]{@link GuiIncluded}.
  *
  * */
@@ -148,7 +148,7 @@ public class GuiTypeBuilder {
         return objType;
     }
 
-    /** temporarily created member group in {@link #createObjectFromClass(Class)} */
+    /** a temporarily created member group in {@link #createObjectFromClass(Class)} */
     public static class MemberDefinitions {
         public String name;
         public List<Method> methods = new ArrayList<>();

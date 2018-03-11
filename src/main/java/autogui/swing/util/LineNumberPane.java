@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 /**
+ * a line-numbers display.
  * <pre>
  *     new LineNumberPane(textPane).install();
  * </pre>

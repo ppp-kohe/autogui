@@ -13,6 +13,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+/** a delayed task executor accumulating subsequent firing events while the specified delay */
 public class ScheduledTaskRunner<EventType> {
     /** msec */
     protected long delay;
@@ -105,6 +106,7 @@ public class ScheduledTaskRunner<EventType> {
         return executor;
     }
 
+    /** the sub-class of the executor with implementing various listeners */
     public static class EditingRunner extends ScheduledTaskRunner<Object>
             implements DocumentListener, KeyListener, ActionListener, FocusListener, ChangeListener, InputMethodListener {
         public EditingRunner(long delay, Consumer<List<Object>> consumer) {

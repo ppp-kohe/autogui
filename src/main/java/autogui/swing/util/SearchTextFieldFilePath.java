@@ -25,6 +25,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/** a text-field with background searching file-items */
 public class SearchTextFieldFilePath extends SearchTextField {
 
     public SearchTextFieldFilePath() {
@@ -65,6 +66,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** the method is a simulated GUI task originally caused by the user.
      *   thus, it will cause a new background search task
+     *   @param file  the selected file
      * */
     public void setFile(Path file) {
         FileItem item = getFileItem(file);
@@ -124,6 +126,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
+    /** a transfer-hander for copying and pasting a file-list */
     public static class FileTransferHandler extends TransferHandler {
         protected SearchTextFieldFilePath component;
 
@@ -194,7 +197,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
-
+    /** the action for completing a searched file-item */
     public static abstract class FileListEditAction extends AbstractAction {
         protected SearchTextFieldFilePath component;
 
@@ -215,7 +218,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         public abstract void run(Consumer<List<Path>> files);
     }
 
-
+    /** the action for text paste */
     public static class FilePasteAction extends FileListEditAction {
 
         public FilePasteAction(SearchTextFieldFilePath component) {
@@ -258,6 +261,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
+    /** an abstract definition of a file-list */
     public static abstract class FileListAction extends AbstractAction {
         protected SearchTextFieldFilePath component;
 
@@ -281,6 +285,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         public abstract void run(List<Path> files);
     }
 
+    /** copying the selected file */
     public static class FileCopyAllAction extends FileListAction {
 
         public FileCopyAllAction(SearchTextFieldFilePath component) {
@@ -297,6 +302,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
+    /** transferable object for a file list */
     public static class FileSelection implements Transferable, ClipboardOwner {
         protected List<Path> files;
 
@@ -339,7 +345,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         public void lostOwnership(Clipboard clipboard, Transferable contents) { }
     }
 
-
+    /** the action for opening files */
     public static class DesktopOpenAction extends FileListAction {
 
         public DesktopOpenAction(SearchTextFieldFilePath component) {
@@ -370,6 +376,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
+    /** the action for showing files in Finder or Explorer */
     public static class DesktopRevealAction extends FileListAction {
         protected Consumer<Path> command;
 
@@ -431,6 +438,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
+    /** an action for selecting a file item from an open dialog */
     public static class OpenDialogAction extends FileListEditAction {
         protected JFileChooser fileChooser;
 
@@ -477,6 +485,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
+    /** the model definition for the completing file items */
     public static class SearchTextFieldModelFilePath implements SearchTextFieldModel {
         protected PopupCategorized.CategorizedPopupItem selection;
         protected FileSystemView iconSource;
@@ -659,7 +668,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
-
+    /** a completed file item */
     public static class FileItem implements PopupCategorized.CategorizedPopupItem {
         protected Path path;
         protected Function<Path,Icon> iconGetter;
@@ -701,6 +710,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
+    /** a file info item */
     public static class FileInfoItem implements PopupCategorized.CategorizedPopupItemLabel {
         protected Path path;
         public FileInfoItem(Path path) {

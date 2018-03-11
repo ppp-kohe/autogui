@@ -11,14 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ *  the class provides Undo and Redo actions for text panes.
+ * <p>
  * usage:
  * <pre>
  *     KeyUndoManager km = new KeyUndoManager();
  *     km.putListenersAndActionsTo(editorPane);
  * </pre>
- *
- * <p>
- *  the class provides Undo and Redo actions for text panes.
  */
 public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusListener {
     protected UndoManager undoManager;

@@ -3,6 +3,9 @@ package autogui.base.mapping;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+/**
+ * a spinner text-field component for a {@link Number} or primitive number property
+ */
 public class GuiReprValueNumberSpinner extends GuiReprValue {
     @Override
     public boolean matchValueType(Class<?> cls) {
@@ -67,6 +70,9 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         return false;
     }
 
+    /**
+     * a type information of number.
+     */
     public interface NumberType {
         Class<? extends Number> getNumberClass();
         /** @return the maximum value, it might be an Infinity */
@@ -251,7 +257,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
-
+    /** a comparable infinity representation, which is not a Number type, but comparable to any other types */
     public static class Infinity implements Comparable<Object> {
         protected boolean upper;
 
@@ -273,6 +279,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
+    /** default impl. of the number type */
     public abstract static class NumberTypeDefault implements NumberType {
         protected Class<? extends Number> numberClass;
         protected Comparable<?> max;
@@ -305,6 +312,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
+    /** the number type for int */
     public static class NumberTypeInt extends NumberTypeDefault {
         public NumberTypeInt() {
             super(Integer.class, Integer.MAX_VALUE, Integer.MIN_VALUE);
@@ -335,6 +343,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
+    /** the number type for byte */
     public static class NumberTypeByte extends NumberTypeDefault {
         public NumberTypeByte() {
             super(Byte.class, Byte.MAX_VALUE, Byte.MIN_VALUE);
@@ -366,6 +375,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
     }
 
 
+    /** the number type for short */
     public static class NumberTypeShort extends NumberTypeDefault {
         public NumberTypeShort() {
             super(Short.class, Short.MAX_VALUE, Short.MIN_VALUE);
@@ -396,7 +406,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
-
+    /** the number type for long */
     public static class NumberTypeLong extends NumberTypeDefault {
         public NumberTypeLong() {
             super(Long.class, Long.MAX_VALUE, Long.MIN_VALUE);
@@ -427,7 +437,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
-
+    /** the number type for float */
     public static class NumberTypeFloat extends NumberTypeDefault {
         public NumberTypeFloat() {
             super(Float.class, Float.MAX_VALUE, -Float.MAX_VALUE);
@@ -458,7 +468,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
-
+    /** the number type for double */
     public static class NumberTypeDouble extends NumberTypeDefault {
         public NumberTypeDouble() {
             super(Double.class, Double.MAX_VALUE, -Double.MAX_VALUE);
@@ -489,6 +499,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
+    /** the number type for {@link BigInteger} */
     public static class NumberTypeBigInteger extends NumberTypeDefault {
         public NumberTypeBigInteger() {
             super(BigInteger.class, MAXIMUM, MINIMUM);
@@ -523,6 +534,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
+    /** the number type for {@link BigDecimal} */
     public static class NumberTypeBigDecimal extends NumberTypeDefault {
         public NumberTypeBigDecimal() {
             super(BigDecimal.class, MAXIMUM, MINIMUM);

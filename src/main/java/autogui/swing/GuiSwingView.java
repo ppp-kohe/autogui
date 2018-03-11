@@ -14,6 +14,9 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventObject;
@@ -338,7 +341,7 @@ public interface GuiSwingView extends GuiSwingElement {
             Collections.reverse(es);
             for (GuiPreferences.HistoryValueEntry e : es) {
                 if (e.getIndex() != -1 && e.getValue() != null) {
-                    add(createAction(e));
+                    addAction(e);
                     added = true;
                 }
             }
@@ -353,6 +356,14 @@ public interface GuiSwingView extends GuiSwingElement {
             }
             addSeparator();
             add(clearAction);
+        }
+
+        static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        public void addAction(GuiPreferences.HistoryValueEntry e) {
+            JMenuItem item = new JMenuItem(createAction(e));
+            item.setText(item.getText() + " : " + formatter.format(LocalDateTime.ofInstant(e.getTime(), ZoneId.systemDefault())));
+            add(item);
         }
 
         @SuppressWarnings("unchecked")

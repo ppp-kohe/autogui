@@ -266,6 +266,7 @@ public class GuiPreferences {
         historyValues = null;
     }
 
+    /** the abstract definition of key-value store */
     public abstract static class GuiValueStore {
         protected GuiPreferences preferences;
 
@@ -369,6 +370,7 @@ public class GuiPreferences {
     }
 
     /**
+     * an entry of the value history, consisting of a value, an index and a time-stamp, associated with a key-index.
      * <pre>
      *     preferences/
      *        "$history"/

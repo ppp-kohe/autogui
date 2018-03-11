@@ -84,6 +84,8 @@ public class ResizableFlowLayout implements LayoutManager {
 
     /**
      * Here, the word "height" means opposite orientation of lining orientation.
+     * @param fitHeight the flag
+     * @return this
      */
     public ResizableFlowLayout setFitHeight(boolean fitHeight) {
         this.fitHeight = fitHeight;
@@ -277,6 +279,9 @@ public class ResizableFlowLayout implements LayoutManager {
         }
         /**
          * Assume ContainerType is {@link JComponent}.
+         * @param x the border size w
+         * @param y the border size y
+         * @return this
          */
         public LayoutAppender<ContainerType> withBorder(int x, int y) {
             JComponent p = (JComponent) parent;

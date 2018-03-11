@@ -2,6 +2,9 @@ package autogui.swing.util;
 
 import javax.swing.*;
 
+/**
+ * a wrapper pane with a label
+ */
 public class NamedPane extends JComponent {
     protected String displayName;
     protected JLabel label;

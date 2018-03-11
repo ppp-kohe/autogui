@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 
+/** an object representation composing member sub-representations */
 public class GuiReprObjectPane extends GuiReprValue {
     protected GuiRepresentation subRepresentation;
 
@@ -81,11 +83,27 @@ public class GuiReprObjectPane extends GuiReprValue {
         }
     }
 
+    /**
+     * use {@link #fromJsonToObject(GuiMappingContext, Object, Object)}
+     * @param context a context holds the representation
+     * @param target the target object or null
+     * @param json the source JSON
+     * @return the target or newly created object
+     */
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         return fromJsonToObject(context, target, json);
     }
 
+    /**
+     * constructing an object or setting up the target object from the JSON.
+     *  to set properties, it relies on {@link GuiMappingContext#execute(Callable)}.
+     * @param context the context of the caller's repr
+     * @param target the target object, may be null and then it creates a new object
+     *                by 0-args constructor of the value type of the representation (supposing {@link GuiReprValue})
+     * @param json the JSON object
+     * @return the target or newly created object
+     */
     @SuppressWarnings("unchecked")
     public static Object fromJsonToObject(GuiMappingContext context, Object target, Object json) {
         if (json instanceof Map<?,?>) {
@@ -129,11 +147,28 @@ public class GuiReprObjectPane extends GuiReprValue {
         return true;
     }
 
+    /**
+     * use {@link #toHumanReadableStringFromObject(GuiMappingContext, Object)}
+     * @param context the context of the repr.
+     * @param source converted to string
+     * @return the representation of the source
+     */
     @Override
     public String toHumanReadableString(GuiMappingContext context, Object source) {
         return toHumanReadableStringFromObject(context, source);
     }
 
+    /**
+     * constructing a human readable string representation of the object.
+     *   the contents consist of members of the object (listed by the context).
+     *    each of them is processed by {@link #runSubPropertyValue(GuiMappingContext, Object, BiConsumer)}
+     *     if it is a property. For obtaining the value of the property, it relies on {@link GuiMappingContext#execute(Callable)}.
+     *    if it is a collection element, then it will be processed
+     *    by {@link #runSubCollectionValue(GuiMappingContext, Object, BiConsumer)}.
+     * @param context the context associated with the caller's repr
+     * @param source the source object
+     * @return the representation of the source
+     */
     public static String toHumanReadableStringFromObject(GuiMappingContext context, Object source) {
         List<String> strs = new ArrayList<>(context.getChildren().size());
         BiConsumer<GuiMappingContext, Object> processor = (s, n) -> {

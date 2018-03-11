@@ -70,7 +70,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     ////////////////
 
-    /** call {@link #show(Component, int, int)} with the bottom right position of the current text selection start */
+    /** call {@link #show(Component, int, int)} with the bottom right position of the current text selection start
+     * @param e the key-event
+     * @param comp the target component
+     */
     @Override
     public void showByKey(KeyEvent e, Component comp) {
         JTextComponent textComponent = getTextComponent();
@@ -91,7 +94,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     ////////////////////
 
 
-    /** a {@link PopupExtension.PopupMenuBuilder} which has typical actions for the text component*/
+    /** a {@link PopupExtension.PopupMenuBuilder} which has typical actions for the text component
+     * @param component the target component
+     * @return a new menu
+     */
     public static TextServiceDefaultMenu getServiceDefaultMenu(JTextComponent component) {
         return new TextServiceDefaultMenu(component);
     }
@@ -103,7 +109,9 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             initEditActions(textComponent);
         }
 
-        /** called from constructor */
+        /** called from constructor
+         * @param textComponent the target component
+         * */
         public void initEditActions(JTextComponent textComponent) {
             editActions = getActionsInInitEditActions(textComponent).stream()
                     .map(JMenuItem::new)
@@ -130,7 +138,11 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     }
 
     /** JDK has standard implementations for cut, copy and paste as DefaultEditorKit.
-     *   However, those actions take the target from event source, and do not have user friendly name */
+     *   However, those actions take the target from event source, and do not have user friendly name
+     * @param textComponent the target component
+     * @return list of actions for the component: cut, copy, copy-all, paste, paste-all, select-all, load, save,
+     *    and open-browser
+     */
     public static List<Action> getEditActions(JTextComponent textComponent) {
         return Arrays.asList(
                 new TextCutAction(textComponent),
@@ -146,7 +158,12 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     //////////////
 
-    /** component is optional */
+    /**
+     *
+     * @param component optional component
+     * @return list of actions of additional edit-actions:
+     *    delete-next-word, delete-previous-word, delete-to-line-end, and paste-history
+     */
     public static List<Action> getInputEditActions(JTextComponent component) {
         return Arrays.asList(
                 new TextDeleteNextWordAction(component),
@@ -174,6 +191,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /**
      * usually, it will register "Copy Value" and "Paste Value"
+     * @param component the host of action- and input-map
      */
     public static void putUnregisteredEditActions(JTextComponent component) {
         List<Action> actions = getEditActions(component);
@@ -227,6 +245,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     ///////////// text actions for a specific target
 
+    /** the action for opening selection as an URL in a browser */
     public static class TextOpenBrowserAction extends AbstractAction {
         protected JComponent component;
         public TextOpenBrowserAction(JComponent component) {
@@ -273,6 +292,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** a cut action */
     public static class TextCutAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
@@ -296,6 +316,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** a copy action */
     public static class TextCopyAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
@@ -318,6 +339,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** a paste action*/
     public static class TextPasteAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
@@ -340,6 +362,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** a copy-all action: copying all text in a text-component */
     public static class TextCopyAllAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
@@ -369,6 +392,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** a paste-all action: replacing entire text with the clipboard contents */
     public static class TextPasteAllAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
@@ -403,6 +427,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** a select-all action */
     public static class TextSelectAllAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
@@ -423,6 +448,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     //////// text action with history buffer
 
+    /** an abstract action for interacting with the history-buffer (kill-buffer) */
     public abstract static class TextAbstractHistoryAction extends AbstractAction {
         protected JTextComponent field;
 
@@ -473,6 +499,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** an delete-to-line-end action */
     public static class TextDeleteToLineEndAction extends TextAbstractHistoryAction {
 
         public TextDeleteToLineEndAction(JTextComponent field) {
@@ -498,6 +525,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** an delete-next-word action */
     public static class TextDeleteNextWordAction extends TextAbstractHistoryAction {
         public TextDeleteNextWordAction(JTextComponent field) {
             super("delete-next-word", field);
@@ -525,6 +553,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** an delete-previous-word action */
     public static class TextDeletePreviousWordAction extends TextAbstractHistoryAction {
         public TextDeletePreviousWordAction(JTextComponent field) {
             super("delete-previous-word", field);
@@ -552,6 +581,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** an paste the history-buffer action (yank) */
     public static class TextPasteHistoryAction extends TextAbstractHistoryAction {
         public TextPasteHistoryAction(JTextComponent field) {
             super("yank", field);
@@ -573,6 +603,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     public static TextInputHistory defaultHistory = new TextInputHistory();
 
+    /** a history buffer (kill buffer) */
     public static class TextInputHistory implements CaretListener {
         protected List<TextInputEdit> buffer = new ArrayList<>();
         protected Object nextSource;
@@ -612,6 +643,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** an edit in the history buffer */
     public static class TextInputEdit {
         public Object source;
         public int position;
@@ -626,6 +658,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     ////////////
 
+    /** a file loading action */
     public static class TextLoadAction extends AbstractAction {
         protected JTextComponent field;
         protected static JFileChooser fileChooser;
@@ -682,6 +715,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
+    /** a file saving action */
     public static class TextSaveAction extends TextLoadAction {
         public TextSaveAction(JTextComponent component) {
             super(component);

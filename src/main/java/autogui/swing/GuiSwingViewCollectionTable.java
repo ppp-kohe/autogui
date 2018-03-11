@@ -618,7 +618,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             }
         }
 
-        /** model index*/
+        /** @return model index*/
         public int getTargetColumnIndex() {
             return targetColumnIndex;
         }

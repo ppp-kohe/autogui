@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
+ * a text-field implementation with supporting background searching.
  * <pre>
  *     [ icon: JButton | textField | popupButton ]
  *       [ popupMenu:
@@ -66,6 +67,7 @@ public class SearchTextField extends JComponent {
 
     protected KeyUndoManager undoManager;
 
+    /** the interface for the searching model */
     public interface SearchTextFieldModel {
         /** the method is executed under the background thread of {@link SwingWorker}.
          *   The publisher is passed for checking cancellation and publishing intermediate result.
@@ -82,17 +84,26 @@ public class SearchTextField extends JComponent {
          *   </pre>
          *   Note: the method is also called by selection of a searched menu item.
          *    Then the select is already set as the same value of the text.
-         * */
+         *
+         * @param text the input text
+         * @param editable whether the field is editable or not
+         * @param publisher the publisher for submitting the searched item
+         * @return the total results of searched items
+         */
         List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher);
 
         /** <strike>The method is executed under the event dispatching thread.</strike>
-         *   The user selects the item from a menu and then this method will be called. */
+         *   The user selects the item from a menu and then this method will be called.
+         * @param item the selected item
+         */
         void select(PopupCategorized.CategorizedPopupItem item);
 
         /** After {@link #getCandidates(String, boolean, SearchTextFieldPublisher)},
          *    an exact matching item might be found, and then the method returns the item.
          *    Otherwise returns null.
-         *    The method is executed under the event dispatching thread. */
+         *    The method is executed under the event dispatching thread.
+         * @return the exact matched item or null
+         */
         PopupCategorized.CategorizedPopupItem getSelection();
 
         default boolean isFixedCategorySize() {
@@ -104,11 +115,13 @@ public class SearchTextField extends JComponent {
         }
     }
 
+    /** the intermediate items submission target */
     public interface SearchTextFieldPublisher {
         boolean isSearchCancelled();
         void publishSearch(List<PopupCategorized.CategorizedPopupItem> intermediateResult);
     }
 
+    /** empty impl. of the publisher*/
     public static class SearchTextFieldPublisherEmpty implements SearchTextFieldPublisher {
         @Override
         public boolean isSearchCancelled() {
@@ -120,10 +133,12 @@ public class SearchTextField extends JComponent {
         }
     }
 
+    /** a listener interface for receiving the searched items */
     public interface SearchedItemsListener {
         void updateCurrentSearchedItems(List<PopupCategorized.CategorizedPopupItem> items, boolean done);
     }
 
+    /** the empty model for searching nothing */
     public static class SearchTextFieldModelEmpty implements SearchTextFieldModel {
         @Override
         public List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher) {
@@ -329,7 +344,9 @@ public class SearchTextField extends JComponent {
 
     ////////////////////
 
-    /** After editing text or action performed, this method will be executed under the scheduler thread */
+    /** After editing text or action performed, this method will be executed under the scheduler thread
+     * @param events the accumulated events
+     */
     public void updateField(List<Object> events) {
         try {
             boolean modified = isUpdateFieldModifiedEvents(events);
@@ -349,7 +366,9 @@ public class SearchTextField extends JComponent {
     }
 
     /** executed under event thread:
-     *  start a new search task in background */
+     *  start a new search task in background
+     * @param modified  true if the field is actually edited
+     */
     public void updateFieldInEvent(boolean modified) {
         if (modified || currentSearchedItems == null) {
             String text = field.getText();
@@ -372,13 +391,19 @@ public class SearchTextField extends JComponent {
         return new SearchTask(this, text);
     }
 
-    /** set the searched items from the background task: it might be an intermediate result */
+    /** set the searched items from the background task: it might be an intermediate result
+     * @param currentSearchedItems the intermediate searched items
+     * @param done true if the search is done
+     */
     public void setCurrentSearchedItems(List<PopupCategorized.CategorizedPopupItem> currentSearchedItems, boolean done) {
         this.currentSearchedItems = currentSearchedItems;
         searchedItemsListeners.forEach(l -> l.updateCurrentSearchedItems(currentSearchedItems, done));
     }
 
-    /** called once when the search is done */
+    /** called once when the search is done
+     * @param currentSearchedItems the final result of the search
+     * @param selection the selected item by the model
+     */
     public void setCurrentSearchedItems(List<PopupCategorized.CategorizedPopupItem> currentSearchedItems,
                                         PopupCategorized.CategorizedPopupItem selection) {
         this.currentSearchedItems = currentSearchedItems;
@@ -400,7 +425,9 @@ public class SearchTextField extends JComponent {
      * It will stop the current running task if exists, and starts a new task.
      * <strike>This is the task using an item supplied by the model.
      *  So, it does not cause a further update that leads to a background task </strike>
-     *  */
+     *
+     * @param item the selected item
+     */
     public void selectSearchedItemFromGui(PopupCategorized.CategorizedPopupItem item) {
         model.select(item);
         setIconFromSearchedItem(item);
@@ -412,7 +439,9 @@ public class SearchTextField extends JComponent {
         }
     }
 
-    /** called when the search is done, and update only the icon */
+    /** called when the search is done, and update only the icon
+     * @param item  the selected item by the model
+     * */
     public void selectSearchedItemFromModel(PopupCategorized.CategorizedPopupItem item) {
         setIconFromSearchedItem(item);
     }
@@ -463,7 +492,7 @@ public class SearchTextField extends JComponent {
         });
     }
 
-
+    /** the background searching task */
     public static class SearchTask extends SwingWorker<List<PopupCategorized.CategorizedPopupItem>, List<PopupCategorized.CategorizedPopupItem>>
         implements SearchTextFieldPublisher {
         protected SearchTextField field;
@@ -520,12 +549,14 @@ public class SearchTextField extends JComponent {
         }
     }
 
+    /** an interface for painting background */
     public static class SearchBackgroundPainter {
         public void setChild(JComponent child) { }
         public void init() { }
         public void paintComponent(Graphics g) { }
     }
 
+    /** the painter impl. */
     public static class SearchBackgroundPainterBordered extends SearchBackgroundPainter {
         protected JComponent component;
         protected Color[] gradientColors;

@@ -11,6 +11,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/** a simple JSON reader.
+ *  <pre>
+ *      Object value = JsonReader.create(jsonSource).parseValue();
+ *  </pre>
+ * */
 public class JsonReader {
     protected String source;
     protected int index;

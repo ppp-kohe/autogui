@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
 import autogui.swing.mapping.GuiReprValueImagePane;
 import autogui.swing.table.TableTargetColumn;
 import autogui.swing.table.TableTargetColumnAction;
@@ -86,7 +87,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 menu.accept(new ImagePasteAction(this));
                 GuiSwingJsonTransfer.getActions(this, context)
                         .forEach(menu::accept);
-                menu.accept(new HistoryMenu<>(this, context));
+                menu.accept(new HistoryMenuImage(this, context));
             });
             setInheritsPopupMenu(true);
 
@@ -200,6 +201,21 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(Image value) {
             setImage(value);
+        }
+    }
+
+    public static class HistoryMenuImage extends HistoryMenu<Image, PropertyImagePane> {
+        public HistoryMenuImage(PropertyImagePane component, GuiMappingContext context) {
+            super(component, context);
+        }
+
+        @Override
+        public Action createAction(GuiPreferences.HistoryValueEntry e) {
+            Action a = super.createAction(e);
+            Image img = (Image) e.getValue();
+            Image icon = img.getScaledInstance(16, 16, Image.SCALE_DEFAULT);
+            a.putValue(Action.SMALL_ICON, new ImageIcon(icon));
+            return a;
         }
     }
 

@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/** a composition of representations.
+ * if {@link #match(GuiMappingContext)} matches a member representation, it immediately stops the matching and returns true.
+ *  the matched member representation will be set to the context */
 public class GuiReprSet implements GuiRepresentation {
     protected List<GuiRepresentation> representations = new ArrayList<>();
 

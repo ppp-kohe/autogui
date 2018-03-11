@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 /**
  *
+ * a menu builder for categorizing items.
  * <pre>
  *     [ labelItem1 //{@link CategorizedPopupItemLabel},
  *       labelItem2,
@@ -29,6 +30,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
     protected Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier;
     protected Consumer<CategorizedPopupItem> itemConsumer;
 
+    /** the categorized menu item */
     public interface CategorizedPopupItem {
         String getName();
         Icon getIcon();
@@ -45,7 +47,8 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         }
     }
 
-    /** name and icon are ignored, the default category is same as itemLabel */
+    /** a categorized menu item with a menu-item component.
+     *  name and icon are ignored, the default category is same as itemLabel */
     public interface CategorizedPopupItemMenu extends CategorizedPopupItem {
         JComponent getMenuItem(PopupCategorized sender);
 
@@ -160,6 +163,9 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         }
     }
 
+    /**
+     * an action for selecting a {@link CategorizedPopupItem}
+     */
     public static class SearchPopupAction extends AbstractAction {
         protected PopupCategorized popup;
         protected CategorizedPopupItem item;
@@ -179,6 +185,9 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         }
     }
 
+    /**
+     * another menu builder with limiting items
+     */
     public static class PopupCategorizedFixed extends PopupCategorized {
         public PopupCategorizedFixed(Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier) {
             super(itemSupplier);

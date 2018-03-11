@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
+ * a popup menu manager.
  * it support showing the popup menu supplied by {@link #menu} via the following event listeners:
  * <ul>
  *     <li>{@link MouseListener} </li>
@@ -33,6 +34,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     protected Action action;
 
+    /** the interface for constructing menus */
     public interface PopupMenuBuilder {
         /**
          * the Consumer accepts
@@ -42,11 +44,16 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
          *    <li>{@link JMenuItem}</li>
          *    <li>{@link JComponent}</li>
          *  </ul>
-         * */
+         * @param sender the sender extension
+         * @param menu the target for appending menus
+         */
         void build(PopupExtension sender, Consumer<Object> menu);
 
         /** the default behavior reconstruct entire items by {@link #build(PopupExtension, Consumer)}.
-         *    The Consumer can append an item to the menu. */
+         *    The Consumer can append an item to the menu.
+         * @param sender the sender extension
+         * @param menu the target for appending menus
+         */
         default void buildWithClear(PopupExtension sender, JPopupMenu menu) {
             menu.removeAll();
             build(sender, new MenuBuilder.MenuAppender(menu));
@@ -54,13 +61,23 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         }
     }
 
-    /** call {@link #PopupExtension(JComponent, Predicate, PopupMenuBuilder, Supplier)} */
+    /** call {@link #PopupExtension(JComponent, Predicate, PopupMenuBuilder, Supplier)}
+     * @param pane the host pane of the popup-menu, can be null
+     * @param keyMatcher matching with a key-event for displaying the menu
+     * @param menuBuilder a builder for constructing menu-items
+     * @param menu the displayed popup-menu, can be null
+     */
     public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder, JPopupMenu menu) {
         this(pane, keyMatcher, menuBuilder,
                 menu == null ? new DefaultPopupGetter(pane) : () -> menu);
     }
 
-    /** add this to pane as {@link KeyListener} and {@link MouseListener} */
+    /** add this to pane as {@link KeyListener} and {@link MouseListener}
+     * @param pane the host pane of the popup-menu, can be null
+     * @param keyMatcher matching with a key-event for displaying the menu
+     * @param menuBuilder a builder for constructing menu-items
+     * @param menu the supplier of the displayed popup-menu
+     */
     public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder, Supplier<JPopupMenu> menu) {
         this.pane = pane;
         this.keyMatcher = keyMatcher;
@@ -74,7 +91,11 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     /**
      * call {@link #PopupExtension(JComponent, Predicate, PopupMenuBuilder, Supplier)}.
      * the menu is supplied by the pane's {@link JComponent#getComponentPopupMenu()} or creating a new one if it returns null.
-     *   it also call {@link MenuKeySelector#addToMenu(JPopupMenu)} for incremental item search while showing the popup menu */
+     *   it also call {@link MenuKeySelector#addToMenu(JPopupMenu)} for incremental item search while showing the popup menu
+     * @param pane the host pane of the popup-menu, can be null
+     * @param keyMatcher  matching with a key-event for displaying the menu
+     * @param menuBuilder a builder for constructing menu-items
+     */
     public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder) {
         this(pane, keyMatcher, menuBuilder, new DefaultPopupGetter(pane));
         new MenuKeySelector().addToMenu(menu.get());
@@ -136,6 +157,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     //////////////////
 
+    /** a default popup-menu factory, obtaining a component or a creating a new popup */
     public static class DefaultPopupGetter implements Supplier<JPopupMenu> {
         protected JComponent component;
         protected JPopupMenu menu;
@@ -266,6 +288,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     /////////////////
 
     /**
+     * a menu-selector by incremental key-typing
      * <pre>
      *     new MenuKeySelector().addToMenu(popupMenu);
      * </pre>
@@ -469,6 +492,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     }
 
 
+    /** a window-listener and popup-menu listener for fixing the behavior of showing/hiding a popup menu */
     public class PopupMenuHidingFix extends WindowAdapter implements PopupMenuListener {
         protected JPopupMenu menu;
 

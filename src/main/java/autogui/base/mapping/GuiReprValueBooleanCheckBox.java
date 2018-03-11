@@ -2,6 +2,7 @@ package autogui.base.mapping;
 
 import java.util.regex.Pattern;
 
+/** the abstract checkbox component for a {@link Boolean} or primitive boolean property */
 public class GuiReprValueBooleanCheckBox extends GuiReprValue {
 
     @Override
