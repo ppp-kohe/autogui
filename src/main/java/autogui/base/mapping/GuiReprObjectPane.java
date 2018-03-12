@@ -171,12 +171,7 @@ public class GuiReprObjectPane extends GuiReprValue {
      */
     public static String toHumanReadableStringFromObject(GuiMappingContext context, Object source) {
         List<String> strs = new ArrayList<>(context.getChildren().size());
-        BiConsumer<GuiMappingContext, Object> processor = (s, n) -> {
-            if (n instanceof NamedValue) {
-                n = ((NamedValue) n).value;
-            }
-            strs.add(s.getRepresentation().toHumanReadableString(s, n));
-        };
+        BiConsumer<GuiMappingContext, Object> processor = getAddingHumanReadableStringToList(strs);
         for (GuiMappingContext subContext : context.getChildren()) {
             if (subContext.isTypeElementProperty()) {
                 runSubPropertyValue(subContext, source, processor);
@@ -185,6 +180,15 @@ public class GuiReprObjectPane extends GuiReprValue {
             }
         }
         return String.join("\t", strs);
+    }
+
+    public static BiConsumer<GuiMappingContext, Object> getAddingHumanReadableStringToList(List<String> list) {
+        return (s, n) -> {
+            if (n instanceof NamedValue) {
+                n = ((NamedValue) n).value;
+            }
+            list.add(s.getRepresentation().toHumanReadableString(s, n));
+        };
     }
 
     public static void runSubPropertyValue(GuiMappingContext subContext, Object source, BiConsumer<GuiMappingContext, Object> subAndNext) {

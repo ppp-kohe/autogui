@@ -6,11 +6,15 @@ import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * <h3>representation</h3>
@@ -49,7 +53,9 @@ public class GuiSwingViewLabel implements GuiSwingView {
             this.context = context;
             putClientProperty("html.disable", Boolean.TRUE);
             setMinimumSize(new Dimension(100, 20));
-            setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+
+            setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10),
+                    new FocusBorder(this)));
 
             //context update
             context.addSourceUpdateListener(this);
@@ -71,10 +77,9 @@ public class GuiSwingViewLabel implements GuiSwingView {
             setInheritsPopupMenu(true);
 
             //drag
-            setTransferHandler(new LabelTransferHandler(this));
-            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, e -> {
-                getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
-            });
+            GuiSwingView.setupTransferHandler(this, new LabelTransferHandler(this));
+            setFocusable(true);
+
         }
 
         @Override
@@ -112,6 +117,74 @@ public class GuiSwingViewLabel implements GuiSwingView {
         @Override
         public GuiMappingContext getContext() {
             return context;
+        }
+    }
+
+    public static class FocusBorder implements Border {
+        protected Color focusColor;
+        protected BasicStroke[] strokes;
+
+        public FocusBorder(JComponent target) {
+            target.addFocusListener(new FocusListener() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    target.repaint();
+                }
+
+                @Override
+                public void focusLost(FocusEvent e) {
+                    target.repaint();
+                }
+            });
+        }
+
+        public void initFocusColor() {
+            focusColor = UIManager.getColor("Focus.color");
+            if (focusColor == null) {
+                focusColor = new Color(150, 150, 150);
+            }
+        }
+
+        public void initStrokes() {
+            strokes = new BasicStroke[3];
+            for (int i = 0; i < strokes.length; ++i) {
+                strokes[i] = new BasicStroke(strokes.length / 2.0f);
+            }
+        }
+
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            if (focusColor == null) {
+                initFocusColor();
+            }
+            if (strokes == null){
+                initStrokes();
+            }
+
+            if (c.hasFocus()) {
+                paintStrokes(g, x, y, width, height);
+            }
+        }
+
+        public void paintStrokes(Graphics g, int x, int y, int width, int height) {
+            RoundRectangle2D rr = new RoundRectangle2D.Float(x, y, width - 1, height - 1, 3, 3);
+            Graphics2D g2 = (Graphics2D) g;
+            Color color2 = new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 150);
+            g2.setColor(color2);
+            for (BasicStroke s : strokes) {
+                g2.setStroke(s);
+                g2.draw(rr);
+            }
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c) {
+            return new Insets(1, 1, 1, 1);
+        }
+
+        @Override
+        public boolean isBorderOpaque() {
+            return false;
         }
     }
 

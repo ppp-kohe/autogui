@@ -2,13 +2,15 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprObjectPane;
+import autogui.base.mapping.GuiReprPropertyPane;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.ResizableFlowLayout;
 
 import javax.swing.*;
 import java.awt.*;
-import java.time.OffsetDateTime;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +29,7 @@ import java.util.List;
  *
  * <h3>string-transfer</h3>
  * no-transfer-handler.
- *  suported by {@link autogui.swing.GuiSwingView.ToStringCopyAction} and
+ *  supported by {@link autogui.swing.GuiSwingView.ToStringCopyAction} and
  *     {@link autogui.base.mapping.GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}.
  */
 public class GuiSwingViewObjectPane implements GuiSwingView {
@@ -118,6 +120,10 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
                 actions.forEach(menu::accept);
             });
             setInheritsPopupMenu(true);
+
+            setBorder(new GuiSwingViewLabel.FocusBorder(this));
+            setFocusable(true);
+            GuiSwingView.setupTransferHandler(this, new ToStringTransferHandler(this));
         }
 
         public void initContentPane() {
@@ -242,6 +248,33 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         @Override
         public GuiMappingContext getContext() {
             return context;
+        }
+    }
+
+    public static class ToStringTransferHandler extends TransferHandler {
+        protected ValuePane<?> pane;
+
+        public ToStringTransferHandler(ValuePane<?> pane) {
+            super();
+            this.pane = pane;
+        }
+
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            return false;
+        }
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return COPY;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            String data = pane.getContext().getRepresentation()
+                            .toHumanReadableString(pane.getContext(), pane.getSwingViewValue());
+            return new StringSelection(data);
         }
     }
 

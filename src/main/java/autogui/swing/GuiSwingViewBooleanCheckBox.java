@@ -82,12 +82,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
             setInheritsPopupMenu(true);
 
             //drag drop
-            BooleanTransferHandler h = new BooleanTransferHandler(this);
-            setTransferHandler(h);
-            //TODO drag does not work properly
-            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, e -> {
-                getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
-            });
+            GuiSwingView.setupTransferHandler(this, new BooleanTransferHandler(this));
         }
 
         @Override

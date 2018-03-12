@@ -231,11 +231,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
             //drag drop
             NumberTransferHandler h = new NumberTransferHandler(this);
-            setTransferHandler(h);
-            field.setTransferHandler(h);
-            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, e -> {
-                getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
-            });
+            GuiSwingView.setupTransferHandler(this, h);
+            GuiSwingView.setupTransferHandler(field, h);
 
             //undo
             undoManager.putListenersAndActionsTo(field);

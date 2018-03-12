@@ -33,8 +33,6 @@ public class GuiSwingViewLabelTest extends GuiSwingTestCase {
 
         GuiSwingViewLabel.PropertyLabel lbl = runQuery(c, query(GuiSwingViewLabel.PropertyLabel.class, 0));
         Assert.assertEquals("value-1", runGet(lbl::getText));
-
-
     }
 
     public static class TestObj extends GuiTypeMemberProperty {

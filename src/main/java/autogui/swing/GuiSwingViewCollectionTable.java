@@ -6,10 +6,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.icons.GuiSwingIcons;
-import autogui.swing.table.GuiSwingTableColumnSet;
-import autogui.swing.table.GuiSwingTableColumnSetDefault;
-import autogui.swing.table.ObjectTableColumn;
-import autogui.swing.table.ObjectTableModel;
+import autogui.swing.table.*;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
 
@@ -19,11 +16,14 @@ import javax.swing.event.*;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.RoundRectangle2D;
+import java.security.KeyStore;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -137,6 +137,18 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             preferencesUpdater = new TablePreferencesUpdater(this);
 
             //TODO drag drop
+            setTransferHandler(new ToStringCollectionTransferHandler(this));
+            GuiSwingView.setupCopyAndPasteActions(this);
+            setFocusable(true);
+
+            //esc. to clear selection
+            UnSelectAction unSelectAction = new UnSelectAction(this);
+            getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), unSelectAction.getValue(Action.NAME));
+            getActionMap().put(unSelectAction.getValue(Action.NAME), unSelectAction);
+        }
+
+        public PopupExtensionCollection getPopup() {
+            return popup;
         }
 
         public JComponent initAfterAddingColumns(List<Action> actions) {
@@ -700,6 +712,59 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 table.getObjectTableModel().getBuilderForRowsOrCells(table, targetCols, false)
                         .build(sender, new MenuTitleAppender("Cells", menu));
             }
+        }
+    }
+
+    public static class ToStringCollectionTransferHandler extends TransferHandler {
+        protected CollectionTable pane;
+
+        public ToStringCollectionTransferHandler(CollectionTable pane) {
+            this.pane = pane;
+        }
+
+        @Override
+        public boolean canImport(TransferSupport support) {
+            return false;
+        }
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return COPY;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+
+            if (pane.isSelectionEmpty()) {
+                String data = pane.getContext().getRepresentation()
+                        .toHumanReadableString(pane.getContext(), pane.getSwingViewValue());
+                return new StringSelection(data);
+            } else {
+                //manual composition of to-string action for columns of selected cells.
+                List<ToStringCopyCell.TableMenuCompositeToStringValue> composites = pane.getPopup().getTargetColumns().stream()
+                            .flatMap(col -> col.getCompositesForCells().stream()
+                                    .filter(ToStringCopyCell.TableMenuCompositeToStringValue.class::isInstance)
+                                    .map(ToStringCopyCell.TableMenuCompositeToStringValue.class::cast))
+                            .collect(Collectors.toList());
+                String data = new ToStringCopyCell.ToStringCopyForCellsAction(composites, true)
+                    .getString(new TableTargetCell(pane));
+                return new StringSelection(data);
+
+            }
+        }
+    }
+
+    public static class UnSelectAction extends AbstractAction {
+        protected JTable table;
+
+        public UnSelectAction(JTable table) {
+            super("clear-selection");
+            this.table = table;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            table.clearSelection();
         }
     }
 }

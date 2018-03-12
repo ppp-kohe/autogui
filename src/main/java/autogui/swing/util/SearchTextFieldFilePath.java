@@ -43,12 +43,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
     public void initTransferHandler() {
-        FileTransferHandler handler = new FileTransferHandler(this);
-        setTransferHandler(handler);
-        getField().setTransferHandler(handler);
-        DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(getField(), DnDConstants.ACTION_COPY, e -> {
-            getTransferHandler().exportAsDrag(getField(), e.getTriggerEvent(), TransferHandler.COPY);
-        });
+        setTransferHandlerWithSettingExportingDragSource(
+                new FileTransferHandler(this));
     }
 
     @Override

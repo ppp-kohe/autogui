@@ -1,5 +1,7 @@
 package autogui.swing.icons;
 
+import autogui.swing.GuiSwingViewLabel;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -209,7 +211,9 @@ public class GuiSwingIcons {
     public static class ActionButton extends JButton {
         public ActionButton(Action a) {
             super(a);
-            setBorderPainted(false);
+            setFocusable(true);
+            //setBorderPainted(false);
+            setBorder(new GuiSwingViewLabel.FocusBorder(this));
             Object o = a.getValue(PRESSED_ICON_KEY);
             if (o != null) {
                 setPressedIcon((Icon) o);

@@ -2,6 +2,7 @@ package autogui.base.mapping;
 
 import autogui.base.type.GuiTypeCollection;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -190,5 +191,13 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
     @Override
     public boolean isJsonSetter() {
         return false;
+    }
+
+    @Override
+    public String toHumanReadableString(GuiMappingContext context, Object source) {
+        List<String> list = new ArrayList<>(1);
+        GuiReprObjectPane.runSubCollectionValue(context, source,
+                GuiReprObjectPane.getAddingHumanReadableStringToList(list));
+        return String.join("\t", list);
     }
 }

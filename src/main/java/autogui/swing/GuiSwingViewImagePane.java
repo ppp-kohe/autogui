@@ -92,10 +92,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             setInheritsPopupMenu(true);
 
             //drag drop
-            setTransferHandler(new ImageTransferHandler(this));
-            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, e -> {
-                getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
-            });
+            GuiSwingView.setupTransferHandler(this, new ImageTransferHandler(this));
+
+            setFocusable(true);
         }
 
         @Override

@@ -1,5 +1,7 @@
 package autogui.base.mapping;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /** a property member definition: [propertyName: [  propertyValueField  ] ]
@@ -99,6 +101,9 @@ public class GuiReprPropertyPane extends GuiReprValue {
 
     @Override
     public String toHumanReadableString(GuiMappingContext context, Object source) {
-        return GuiReprObjectPane.toHumanReadableStringFromObject(context, source);
+        List<String> list = new ArrayList<>(1);
+        GuiReprObjectPane.runSubPropertyValue(context, source,
+                GuiReprObjectPane.getAddingHumanReadableStringToList(list));
+        return String.join("\t", list);
     }
 }

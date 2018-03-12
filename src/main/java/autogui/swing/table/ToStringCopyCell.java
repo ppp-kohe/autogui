@@ -73,12 +73,16 @@ public class ToStringCopyCell {
 
         @Override
         public void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target) {
+            copy(getString(target));
+        }
+
+        public String getString(TableTargetCell target) {
             //follow the visual ordering
             int prevLine = -1;
             List<String> cols = new ArrayList<>();
             List<String> lines = new ArrayList<>();
             List<TableTargetCell.CellValue> cells = (onlyApplyingSelectedColumns ? target.getSelectedCells()
-                                                                                  : target.getSelectedRowCells());
+                    : target.getSelectedRowCells());
             for (TableTargetCell.CellValue cell : cells) {
                 TableMenuCompositeToStringValue col = getMenuCompositeForCell(cell);
                 if (col != null) {
@@ -97,7 +101,7 @@ public class ToStringCopyCell {
                 lines.add(String.join("\t", cols));
             }
 
-            copy(String.join("\n", lines));
+            return String.join("\n", lines);
         }
 
         public TableMenuCompositeToStringValue getMenuCompositeForCell(TableTargetCell.CellValue cell) {

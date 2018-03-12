@@ -74,12 +74,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
             //drag drop
             StringTransferHandler h = new StringTransferHandler(this);
-            setTransferHandler(h);
-            getField().setTransferHandler(h);
-            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(getField(), DnDConstants.ACTION_COPY, e -> {
-                getTransferHandler().exportAsDrag(getField(), e.getTriggerEvent(), TransferHandler.COPY);
-            });
-
+            setTransferHandlerWithSettingExportingDragSource(h);
         }
 
         @Override
@@ -201,7 +196,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         @Override
         protected Transferable createTransferable(JComponent c) {
-            String text = (String) pane.getSwingViewValue();
+            String text = pane.getSwingViewValue();
             return new StringSelection(text);
         }
     }

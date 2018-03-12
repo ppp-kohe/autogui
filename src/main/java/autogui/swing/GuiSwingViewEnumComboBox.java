@@ -90,12 +90,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                     .forEach(c -> c.addMouseListener(popup));
 
             //drag drop
-            EnumTransferHandler h = new EnumTransferHandler(this);
-            setTransferHandler(h);
-            //TODO does not work properly: need drop target?
-            DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, e -> {
-                getTransferHandler().exportAsDrag(this, e.getTriggerEvent(), TransferHandler.COPY);
-            });
+            GuiSwingView.setupTransferHandler(this, new EnumTransferHandler(this));
         }
 
         @Override

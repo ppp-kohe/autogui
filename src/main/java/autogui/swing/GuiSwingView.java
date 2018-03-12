@@ -10,10 +10,14 @@ import autogui.swing.util.PopupExtension;
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -439,5 +443,36 @@ public interface GuiSwingView extends GuiSwingElement {
         public void actionPerformed(ActionEvent e) {
             menu.clearHistory();
         }
+    }
+
+    /**
+     * set up the transfer handler for a component.
+     * also set up drag-gesture for the COPY operation.
+     * if the component is not a {@link JTextComponent},
+     *  then it sets up copy and paste actions to the action-map,
+     *  and input key-strokes (Cmd+C and Cmd+V) to the input-map (which will be activated when the component is focusable).
+     * @param component the target component
+     * @param handler the transfer-handler to be set
+     */
+    static void setupTransferHandler(JComponent component, TransferHandler handler) {
+        component.setTransferHandler(handler);
+        DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(component, DnDConstants.ACTION_COPY, e -> {
+            component.getTransferHandler().exportAsDrag(component, e.getTriggerEvent(), TransferHandler.COPY);
+        });
+        if (!(component instanceof JTextComponent)) {
+            setupCopyAndPasteActions(component);
+        }
+    }
+
+    static void setupCopyAndPasteActions(JComponent component) {
+        Action copy = TransferHandler.getCopyAction();
+        component.getActionMap().put(copy.getValue(Action.NAME), copy);
+        Action paste = TransferHandler.getPasteAction();
+        component.getActionMap().put(paste.getValue(Action.NAME), paste);
+
+        component.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), copy.getValue(Action.NAME));
+        component.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), paste.getValue(Action.NAME));
     }
 }
