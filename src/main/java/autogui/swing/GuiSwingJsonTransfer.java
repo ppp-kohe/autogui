@@ -2,8 +2,12 @@ package autogui.swing;
 
 import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiReprValue;
-import autogui.swing.table.*;
+import autogui.swing.table.ObjectTableColumn;
+import autogui.swing.table.ObjectTableModel;
+import autogui.swing.table.TableTargetCellAction;
+import autogui.swing.table.TableTargetColumnAction;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,10 +66,9 @@ public class GuiSwingJsonTransfer {
         }
 
         @Override
-        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
-            Map<Integer,Object> map = target.getSelectedCellValues();
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
             //suppose the map preserves order of values, and skip null element
-            copy(map.values().stream()
+            copy(target.getSelectedCellValues().stream()
                     .map(this::toCopiedJson)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList()));
@@ -198,13 +201,9 @@ public class GuiSwingJsonTransfer {
         }
 
         @Override
-        public void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target) {
-            if (target.getTable() instanceof GuiSwingViewCollectionTable.CollectionTable) {
-                GuiMappingContext context = ((GuiSwingViewCollectionTable.CollectionTable) target.getTable()).getContext();
-
-                copy(context.getRepresentation()
-                        .toJson(context,target.getSelectedRowValues()));
-            }
+        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+            copy(context.getRepresentation()
+                    .toJson(context, target.getSelectedRowValues()));
         }
 
     }
@@ -223,12 +222,12 @@ public class GuiSwingJsonTransfer {
         }
 
         @Override
-        public void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target) {
+        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
             int prevLine = -1;
             List<Object> lines = new ArrayList<>();
             Map<String,Object> cols = new LinkedHashMap<>(activatedColumns.size());
 
-            for (TableTargetCell.CellValue cell : target.getSelectedCells()) {
+            for (GuiReprCollectionTable.CellValue cell : target.getSelectedCells()) {
                 TableMenuCompositeJsonCopy col = getMenuCompositeForCell(cell);
                 if (col != null) {
                     if (prevLine != cell.getRow() && prevLine != -1) {
@@ -252,7 +251,7 @@ public class GuiSwingJsonTransfer {
             copy(lines);
         }
 
-        public TableMenuCompositeJsonCopy getMenuCompositeForCell(TableTargetCell.CellValue cell) {
+        public TableMenuCompositeJsonCopy getMenuCompositeForCell(GuiReprCollectionTable.CellValue cell) {
             return activatedColumns.stream()
                     .filter(cmp -> cmp.getIndex() == cell.getColumn())
                     .findFirst()

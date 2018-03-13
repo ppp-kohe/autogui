@@ -2,7 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
-import autogui.swing.table.TableTargetColumn;
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.table.TableTargetMenu;
 import autogui.swing.util.PopupExtension;
@@ -295,8 +295,8 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         @Override
-        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
-            copy(target.getSelectedCellValues().values().stream()
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            copy(target.getSelectedCellValues().stream()
                     .map(this::toString)
                     .collect(Collectors.joining("\n")));
         }
@@ -329,7 +329,7 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         @Override
-        public JMenu convert(TableTargetColumn target) {
+        public JMenu convert(GuiReprCollectionTable.TableTargetColumn target) {
             return new HistoryMenuForTableColumn<>(component, context, target);
         }
 
@@ -386,8 +386,8 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     class HistoryMenuForTableColumn<ValueType, PaneType extends ValuePane<ValueType>> extends HistoryMenu<ValueType, PaneType> {
-        protected TableTargetColumn target;
-        public HistoryMenuForTableColumn(PaneType component, GuiMappingContext context, TableTargetColumn target) {
+        protected GuiReprCollectionTable.TableTargetColumn target;
+        public HistoryMenuForTableColumn(PaneType component, GuiMappingContext context, GuiReprCollectionTable.TableTargetColumn target) {
             super(component, context);
             this.target = target;
         }
@@ -417,9 +417,9 @@ public interface GuiSwingView extends GuiSwingElement {
 
     class HistorySetForColumnAction<ValueType> extends AbstractAction {
         protected ValueType value;
-        protected TableTargetColumn target;
+        protected GuiReprCollectionTable.TableTargetColumn target;
 
-        public HistorySetForColumnAction(String name, ValueType value, TableTargetColumn target) {
+        public HistorySetForColumnAction(String name, ValueType value, GuiReprCollectionTable.TableTargetColumn target) {
             super(name);
             this.value = value;
             this.target = target;
@@ -427,7 +427,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            target.setSelectedCellValues(i -> value);
+            target.setCellValues(target.getSelectedCellIndexesStream(), i -> value);
         }
     }
 

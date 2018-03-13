@@ -1,6 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprCollectionTable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,18 +73,19 @@ public class ToStringCopyCell {
         }
 
         @Override
-        public void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target) {
+        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
             copy(getString(target));
         }
 
-        public String getString(TableTargetCell target) {
+        public String getString(GuiReprCollectionTable.TableTargetCell target) {
             //follow the visual ordering
             int prevLine = -1;
             List<String> cols = new ArrayList<>();
             List<String> lines = new ArrayList<>();
-            List<TableTargetCell.CellValue> cells = (onlyApplyingSelectedColumns ? target.getSelectedCells()
-                    : target.getSelectedRowCells());
-            for (TableTargetCell.CellValue cell : cells) {
+            List<GuiReprCollectionTable.CellValue> cells = (onlyApplyingSelectedColumns
+                    ? target.getSelectedCells()
+                    : target.getSelectedRowAllCells());
+            for (GuiReprCollectionTable.CellValue cell : cells) {
                 TableMenuCompositeToStringValue col = getMenuCompositeForCell(cell);
                 if (col != null) {
                     if (prevLine != cell.getRow() && prevLine != -1) {
@@ -104,7 +106,7 @@ public class ToStringCopyCell {
             return String.join("\n", lines);
         }
 
-        public TableMenuCompositeToStringValue getMenuCompositeForCell(TableTargetCell.CellValue cell) {
+        public TableMenuCompositeToStringValue getMenuCompositeForCell(GuiReprCollectionTable.CellValue cell) {
             return activatedColumns.stream()
                     .filter(cmp -> cmp.getIndex() == cell.getColumn())
                     .findFirst()

@@ -1,5 +1,6 @@
 package autogui.swing.table;
 
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupExtension;
 
@@ -29,5 +30,5 @@ import java.util.function.Consumer;
  *            in the {@link autogui.swing.table.ObjectTableColumnValue.ObjectTableColumnActionBuilder#build(PopupExtension, Consumer)}.
  *   */
 public interface TableTargetColumnAction extends Action {
-    void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target);
+    void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target);
 }

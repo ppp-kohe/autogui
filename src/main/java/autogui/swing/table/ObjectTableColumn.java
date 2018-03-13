@@ -1,5 +1,6 @@
 package autogui.swing.table;
 
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupExtension;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ObjectTableColumn {
     protected TableColumn tableColumn;
@@ -255,8 +257,10 @@ public class ObjectTableColumn {
         }
 
         @Override
-        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
-            actionPerformedOnTable(e, target.getSelectedCellValues().values());
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            actionPerformedOnTable(e, target.getSelectedCells().stream()
+                .map(GuiReprCollectionTable.CellValue::getValue)
+                .collect(Collectors.toList()));
         }
 
         @Override

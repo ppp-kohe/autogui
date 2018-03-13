@@ -2,6 +2,7 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionElement;
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingActionDefault;
 import autogui.swing.GuiSwingJsonTransfer;
@@ -260,13 +261,13 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         protected JTable table;
         protected ObjectTableColumn column;
         protected Consumer<Object> menu;
-        protected TableTargetColumn target;
+        protected GuiReprCollectionTable.TableTargetColumn target;
 
         public CollectionRowsActionBuilder(JTable table, ObjectTableColumn column, Consumer<Object> menu) {
             this.table = table;
             this.column = column;
             this.menu = menu;
-            target = new TableTargetColumn(table, column.getTableColumn().getModelIndex());
+            target = new TableTargetColumnForJTable(table, column.getTableColumn().getModelIndex());
         }
 
         @Override
@@ -290,7 +291,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             } else if (a instanceof PopupExtensionText.TextCopyAllAction) {
                 menu.accept(new TableTargetInvocationAction(a, target,
                         (e, t) -> ((PopupExtensionText.TextCopyAllAction) a).actionPerformedOnTable(e,
-                                t.getSelectedCellValues().values())));
+                                t.getSelectedCellValues())));
 
             } else if (a instanceof PopupExtensionText.TextPasteAllAction) {
                 menu.accept(new TableTargetInvocationAction(a, target,
@@ -305,7 +306,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             } else if (a instanceof SearchTextFieldFilePath.FileListAction) {
                 menu.accept(new TableTargetInvocationAction(a, target,
                         (e, t) -> ((SearchTextFieldFilePath.FileListAction) a)
-                                .run(t.getSelectedCellValues().values().stream()
+                                .run(t.getSelectedCellValues().stream()
                                         .map(Path.class::cast)
                                         .collect(Collectors.toList()))));
 
@@ -318,9 +319,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
     public static class TableTargetExecutionAction extends AbstractAction {
         protected TableTargetColumnAction action;
-        protected TableTargetColumn target;
+        protected GuiReprCollectionTable.TableTargetColumn target;
 
-        public TableTargetExecutionAction(TableTargetColumnAction action, TableTargetColumn target) {
+        public TableTargetExecutionAction(TableTargetColumnAction action, GuiReprCollectionTable.TableTargetColumn target) {
             this.action = action;
             this.target = target;
         }
@@ -335,7 +336,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             return action.getValue(key);
         }
 
-        public TableTargetColumn getTarget() {
+        public GuiReprCollectionTable.TableTargetColumn getTarget() {
             return target;
         }
 
@@ -351,10 +352,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
     public static class TableTargetInvocationAction extends AbstractAction {
         protected Action action;
-        protected TableTargetColumn target;
-        protected BiConsumer<ActionEvent, TableTargetColumn> invoker;
+        protected GuiReprCollectionTable.TableTargetColumn target;
+        protected BiConsumer<ActionEvent, GuiReprCollectionTable.TableTargetColumn> invoker;
 
-        public TableTargetInvocationAction(Action action, TableTargetColumn target, BiConsumer<ActionEvent, TableTargetColumn> invoker) {
+        public TableTargetInvocationAction(Action action, GuiReprCollectionTable.TableTargetColumn target, BiConsumer<ActionEvent, GuiReprCollectionTable.TableTargetColumn> invoker) {
             this.action = action;
             this.target = target;
             this.invoker = invoker;
@@ -370,7 +371,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             return action.getValue(key);
         }
 
-        public TableTargetColumn getTarget() {
+        public GuiReprCollectionTable.TableTargetColumn getTarget() {
             return target;
         }
 

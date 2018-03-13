@@ -1,19 +1,48 @@
 package autogui.swing.table;
 
+import autogui.base.mapping.GuiReprCollectionTable;
+
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class TableTargetCell {
+public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTargetCell {
     protected JTable table;
 
-    public TableTargetCell(JTable table) {
+    public TableTargetCellForJTable(JTable table) {
         this.table = table;
     }
 
+    @Override
+    public boolean isSelectionEmpty() {
+        return table.getSelectionModel().isSelectionEmpty();
+    }
+
+    @Override
+    public IntStream getSelectedRows() {
+        return IntStream.of(table.getSelectedRows())
+                .map(table::convertRowIndexToModel);
+    }
+
+    @Override
+    public void setCellValues(List<GuiReprCollectionTable.CellValue> values) {
+        TableModel model = table.getModel();
+        values.forEach(e ->
+                model.setValueAt(e.value, e.row, e.column));
+    }
+
+    @Override
+    public void setCellValues(Stream<int[]> pos, Function<int[], Object> posToValue) {
+        TableModel model = table.getModel();
+        pos.forEach(p ->
+                model.setValueAt(posToValue.apply(p), p[0], p[1]));
+    }
+
+    @Override
     public Stream<int[]> getSelectedCellIndexesStream() {
         int[] rows = table.getSelectedRows();
         int[] cols = table.getSelectedColumns();
@@ -26,7 +55,8 @@ public class TableTargetCell {
                     }));
     }
 
-    public Stream<int[]> getSelectedRowCellIndexesStream() {
+    @Override
+    public Stream<int[]> getSelectedRowAllCellIndexesStream() {
         int[] rows = table.getSelectedRows();
         return IntStream.of(rows)
                 .boxed()
@@ -37,55 +67,35 @@ public class TableTargetCell {
                     }));
     }
 
-    public List<CellValue> getSelectedCells() {
+    @Override
+    public List<GuiReprCollectionTable.CellValue> getSelectedCells() {
         return getCellsByCellIndexes(getSelectedCellIndexesStream());
     }
 
-    public List<CellValue> getSelectedRowCells() {
-        return getCellsByCellIndexes(getSelectedRowCellIndexesStream());
+    @Override
+    public List<GuiReprCollectionTable.CellValue> getSelectedRowAllCells() {
+        return getCellsByCellIndexes(getSelectedRowAllCellIndexesStream());
     }
 
-    public List<CellValue> getCellsByCellIndexes(Stream<int[]> idx) {
+    public List<GuiReprCollectionTable.CellValue> getCellsByCellIndexes(Stream<int[]> idx) {
         TableModel model = table.getModel();
         return idx
-                .map(pos -> new CellValue(pos[0], pos[1],
+                .map(pos -> new GuiReprCollectionTable.CellValue(pos[0], pos[1],
                         model.getValueAt(pos[0], pos[1])))
                 .collect(Collectors.toList());
     }
 
     /** the model of the table must be {@link ObjectTableModel} */
+    @Override
     public List<Object> getSelectedRowValues() {
         ObjectTableModel m = (ObjectTableModel) table.getModel();
-        return IntStream.of(table.getSelectedRows())
+        return getSelectedRows()
+                .sorted()
                 .mapToObj(m.getSource()::get)
                 .collect(Collectors.toList());
     }
 
     public JTable getTable() {
         return table;
-    }
-
-    public static class CellValue {
-        public int row;
-        public int column;
-        public Object value;
-
-        public CellValue(int row, int column, Object value) {
-            this.row = row;
-            this.column = column;
-            this.value = value;
-        }
-
-        public int getRow() {
-            return row;
-        }
-
-        public int getColumn() {
-            return column;
-        }
-
-        public Object getValue() {
-            return value;
-        }
     }
 }

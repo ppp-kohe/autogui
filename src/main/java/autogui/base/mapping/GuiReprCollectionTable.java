@@ -5,6 +5,10 @@ import autogui.base.type.GuiTypeCollection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * representation for {@link autogui.base.type.GuiTypeCollection}.
@@ -199,5 +203,81 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
         GuiReprObjectPane.runSubCollectionValue(context, source,
                 GuiReprObjectPane.getAddingHumanReadableStringToList(list));
         return String.join("\t", list);
+    }
+
+    public interface TableTarget {
+        boolean isSelectionEmpty();
+        IntStream getSelectedRows();
+        List<Object> getSelectedRowValues();
+        List<CellValue> getSelectedCells();
+        Stream<int[]> getSelectedCellIndexesStream();
+
+        default List<Object> getSelectedCellValues() {
+            return getSelectedCells().stream()
+                    .map(CellValue::getValue)
+                    .collect(Collectors.toList());
+        }
+
+        void setCellValues(List<CellValue> values);
+        void setCellValues(Stream<int[]> pos, Function<int[], Object> posToValue);
+    }
+
+    public interface TableTargetCell extends TableTarget {
+        Stream<int[]> getSelectedRowAllCellIndexesStream();
+        List<CellValue> getSelectedRowAllCells();
+    }
+
+    /** an interface for operating a specific column with selected rows */
+    public interface TableTargetColumn extends TableTarget {
+        /**
+         * @return the value of the primary cell
+         */
+        Object getSelectedCellValue();
+
+        default void setSelectedCellValuesLoop(List<?> rowValues) {
+            setCellValues(getSelectedCellIndexesStream(),
+                    new TableTargetColumnFillLoop(rowValues));
+        }
+    }
+
+    public static class TableTargetColumnFillLoop implements Function<int[],Object> {
+        protected int nextIndex;
+        protected List<?> values;
+
+        public TableTargetColumnFillLoop(List<?> values) {
+            this.values = values;
+        }
+
+        @Override
+        public Object apply(int[] ints) {
+            Object v = values.get(nextIndex % values.size());
+            ++nextIndex;
+            return v;
+        }
+    }
+
+    /** a selected cell value */
+    public static class CellValue {
+        public int row;
+        public int column;
+        public Object value;
+
+        public CellValue(int row, int column, Object value) {
+            this.row = row;
+            this.column = column;
+            this.value = value;
+        }
+
+        public int getRow() {
+            return row;
+        }
+
+        public int getColumn() {
+            return column;
+        }
+
+        public Object getValue() {
+            return value;
+        }
     }
 }

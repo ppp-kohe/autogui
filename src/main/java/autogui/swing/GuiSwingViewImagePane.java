@@ -2,8 +2,8 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.mapping.GuiReprValueImagePane;
-import autogui.swing.table.TableTargetColumn;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
@@ -12,8 +12,6 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
@@ -245,7 +243,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
-        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
             Object o = target.getSelectedCellValue();
             if (o instanceof Image) {
                 copy((Image) o);
@@ -282,8 +280,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
-        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
-            paste(img -> target.setSelectedCellValues(r -> img));
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            paste(img -> target.setCellValues(target.getSelectedCellIndexesStream(), r -> img));
         }
     }
 

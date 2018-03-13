@@ -1,5 +1,7 @@
 package autogui.swing.table;
 
+import autogui.base.mapping.GuiReprCollectionTable;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
@@ -41,5 +43,5 @@ import java.util.List;
  *      for instance, GuiSwingCollectionTable provides PopupExtensionCollection.
  */
 public interface TableTargetCellAction extends Action {
-    void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target);
+    void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target);
 }

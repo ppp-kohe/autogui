@@ -1,5 +1,6 @@
 package autogui.swing.table;
 
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
@@ -409,11 +410,11 @@ public class ObjectTableModel extends AbstractTableModel {
 
     public static class CollectionRowsAndCellsActionBuilder implements Consumer<TableTargetCellAction> {
         protected Consumer<Object> menu;
-        protected TableTargetCell target;
+        protected GuiReprCollectionTable.TableTargetCell target;
 
         public CollectionRowsAndCellsActionBuilder(JTable table, Consumer<Object> menu) {
             this.menu = menu;
-            target = new TableTargetCell(table);
+            target = new TableTargetCellForJTable(table);
         }
 
         @Override
@@ -425,9 +426,9 @@ public class ObjectTableModel extends AbstractTableModel {
 
     public static class TableTargetCellExecutionAction extends AbstractAction {
         protected TableTargetCellAction action;
-        protected TableTargetCell target;
+        protected GuiReprCollectionTable.TableTargetCell target;
 
-        public TableTargetCellExecutionAction(TableTargetCellAction action, TableTargetCell target) {
+        public TableTargetCellExecutionAction(TableTargetCellAction action, GuiReprCollectionTable.TableTargetCell target) {
             this.action = action;
             this.target = target;
         }
@@ -442,7 +443,7 @@ public class ObjectTableModel extends AbstractTableModel {
             return action;
         }
 
-        public TableTargetCell getTarget() {
+        public GuiReprCollectionTable.TableTargetCell getTarget() {
             return target;
         }
 

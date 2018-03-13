@@ -13,7 +13,6 @@ import autogui.swing.util.PopupExtension;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.*;
-import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -23,7 +22,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.RoundRectangle2D;
-import java.security.KeyStore;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -747,7 +745,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                                     .map(ToStringCopyCell.TableMenuCompositeToStringValue.class::cast))
                             .collect(Collectors.toList());
                 String data = new ToStringCopyCell.ToStringCopyForCellsAction(composites, true)
-                    .getString(new TableTargetCell(pane));
+                    .getString(new TableTargetCellForJTable(pane));
                 return new StringSelection(data);
 
             }
