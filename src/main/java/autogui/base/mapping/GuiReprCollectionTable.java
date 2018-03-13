@@ -229,6 +229,10 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
 
         void setCellValues(List<CellValue> values);
 
+        /**
+         * @param pos the specified cell: {row, column}
+         * @param posToValue pos: {row, column} to a cell value, if it returns null, then it skips the updating
+         */
         void setCellValues(Stream<int[]> pos, Function<int[], Object> posToValue);
     }
 

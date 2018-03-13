@@ -455,7 +455,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         int index = getTableColumn().getModelIndex();
         return Arrays.asList(
                 new ToStringCopyCell.TableMenuCompositeToStringValue(context, index),
-                new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(context, index));
+                new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(context, index),
+                new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(context, index));
     }
 
 
@@ -464,7 +465,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         int index = getTableColumn().getModelIndex();
         return Arrays.asList(
                 new ToStringCopyCell.TableMenuCompositeToStringValue(context, index),
-                new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(context, index));
+                new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(context, index),
+                new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(context, index));
     }
 
 }

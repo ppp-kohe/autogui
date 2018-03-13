@@ -38,8 +38,12 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
     @Override
     public void setCellValues(Stream<int[]> pos, Function<int[], Object> posToValue) {
         TableModel model = table.getModel();
-        pos.forEach(p ->
-                model.setValueAt(posToValue.apply(p), p[0], p[1]));
+        pos.forEach(p -> {
+                Object v = posToValue.apply(p);
+                if (v != null) {
+                    model.setValueAt(v, p[0], p[1]);
+                }
+        });
     }
 
     @Override

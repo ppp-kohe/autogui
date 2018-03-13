@@ -15,10 +15,10 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class GuiSwingJsonTransfer {
@@ -116,6 +116,8 @@ public class GuiSwingJsonTransfer {
         @Override
         public void lostOwnership(Clipboard clipboard, Transferable contents) { }
     }
+
+    ////////////////////////////
 
     public static class TableMenuCompositeJsonCopy implements ObjectTableColumn.TableMenuComposite {
         protected GuiMappingContext context;
@@ -266,6 +268,10 @@ public class GuiSwingJsonTransfer {
         protected GuiMappingContext context;
         protected int index;
 
+        public TableMenuCompositeJsonPaste(int index) {
+            this.index = index;
+        }
+
         public TableMenuCompositeJsonPaste(GuiMappingContext context, int index) {
             this.context = context;
             this.index = index;
@@ -285,7 +291,23 @@ public class GuiSwingJsonTransfer {
         }
 
         public Object fromJson(Object columnValue) {
-            return null; //TODO
+            if (isIndexColumn()) {
+                if (columnValue instanceof Integer) {
+                    return columnValue;
+                } else {
+                    return Integer.valueOf((String) columnValue);
+                }
+            } else {
+                return context.getRepresentation().fromJson(context, null, columnValue);
+            }
+        }
+
+        public boolean matchJsonKey(String key) {
+            if (isIndexColumn()) {
+                return key.equals("#");
+            } else {
+                return context.getName().equals(key);
+            }
         }
     }
 
@@ -309,10 +331,20 @@ public class GuiSwingJsonTransfer {
         }
     }
 
+    /**
+     * a cell value indicating that it's row index is specified like { "#":123, ... }
+     */
+    public static class CellValueRowSpecified extends GuiReprCollectionTable.CellValue {
+        public CellValueRowSpecified(int row, int column, Object value) {
+            super(row, column, value);
+        }
+    }
+
     public static class JsonPasteCellAction extends AbstractAction implements TableTargetCellAction {
         protected List<TableMenuCompositeJsonPaste> activeComposite;
 
         public JsonPasteCellAction(List<TableMenuCompositeJsonPaste> activeComposite) {
+            putValue(NAME, "Paste JSON To Selected Cells");
             this.activeComposite = activeComposite;
         }
 
@@ -325,22 +357,47 @@ public class GuiSwingJsonTransfer {
         public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
             Object json = readJson();
 
+            /* separate entries to 2 types: free-rows and specified-rows
+             *
+             *   [{ "#":0, "value":"a" },  { "#":1, "value":"b" }, { "#":3, "value":"c"} ] : specifiedRows
+             *   [{ "value":"d" }, { "value":"e"}, {"value":"f"} ] : freeRows
+             *
+             * selected cells:
+             *    row0 <- specifiedRows[0]
+             *    //omit row1
+             *    row2 <- freeRows[0]
+             *    row3 <- specifiedRows[2]
+             *    row4 <- freeRows[1]
+             *    row5 <- freeRows[2]
+             *    row6 <- freeRows[0]
+             *    ...
+             */
             if (json != null) {
+                JsonFillLoop fillLoop = new JsonFillLoop();
                 if (json instanceof List<?>) { //[ ... ]
                     int rowIndex = 0;
                     for (Object o : (List<?>) json) {
                         List<GuiReprCollectionTable.CellValue> updatedRow = getCellsForRow(rowIndex, o);
-
-                        ++rowIndex;
+                        if (fillLoop.addRow(updatedRow)) {
+                            ++rowIndex;
+                        }
                     }
                 } else {
-                    //TODO fill all cells?
+                    List<GuiReprCollectionTable.CellValue> updatedRow = getCellsForRow(0, json); //single row
+                    fillLoop.addRow(updatedRow);
                 }
+                target.setCellValues(target.getSelectedCellIndexesStream(), fillLoop);
             }
+        }
+
+        private boolean isRowSpecified(List<GuiReprCollectionTable.CellValue> updatedRow) {
+            return updatedRow.stream()
+                    .anyMatch(CellValueRowSpecified.class::isInstance); //all cells in the returned list has a same row
         }
 
         public List<GuiReprCollectionTable.CellValue> getCellsForRow(int rowIndex, Object rowJson) {
             int targetRow = rowIndex;
+            boolean rowSpecified = false;
             List<GuiReprCollectionTable.CellValue> updatedRow = new ArrayList<>();
 
             if (rowJson instanceof List<?>) { // [ [...], [...], ...]
@@ -350,6 +407,7 @@ public class GuiSwingJsonTransfer {
                     if (column.isIndexColumn()) {
                         //specify the row index
                         targetRow = (Integer) column.fromJson(row.get(i));
+                        rowSpecified = true;
                     } else {
                         updatedRow.add(new GuiReprCollectionTable.CellValue(targetRow, column.getIndex(),
                                 column.fromJson(row.get(i))));
@@ -358,15 +416,25 @@ public class GuiSwingJsonTransfer {
             } else if (rowJson instanceof Map<?,?>) { //[ {...}, {...}, ...]
                 for (Map.Entry<?,?> entry : ((Map<?,?>) rowJson).entrySet()) {
                     TableMenuCompositeJsonPaste column = find(entry.getKey());
-                    if (column.isIndexColumn()) {
-                        targetRow = (Integer) column.fromJson(entry.getValue());
-                    } else {
-                        updatedRow.add(new GuiReprCollectionTable.CellValue(targetRow, column.getIndex(),
-                                column.fromJson(entry.getValue())));
+                    if (column != null) {
+                        if (column.isIndexColumn()) {
+                            targetRow = (Integer) column.fromJson(entry.getValue());
+                            rowSpecified = true;
+                        } else {
+                            updatedRow.add(new GuiReprCollectionTable.CellValue(targetRow, column.getIndex(),
+                                    column.fromJson(entry.getValue())));
+                        }
                     }
                 }
             } else { // [ a, b, ... ]
-                //TODO
+                TableMenuCompositeJsonPaste uniqueColumn = activeComposite.stream()
+                        .filter(e -> !e.isIndexColumn())
+                        .findFirst()
+                        .orElse(null);
+                if (uniqueColumn != null) {
+                    updatedRow.add(new GuiReprCollectionTable.CellValue(targetRow, uniqueColumn.getIndex(),
+                            uniqueColumn.fromJson(rowJson)));
+                }
             }
 
             if (targetRow != rowIndex) {
@@ -374,7 +442,13 @@ public class GuiSwingJsonTransfer {
                     c.row = targetRow;
                 }
             }
-            return updatedRow;
+            if (rowSpecified) {
+                return updatedRow.stream()
+                        .map(e -> new CellValueRowSpecified(e.row, e.column, e.value))
+                        .collect(Collectors.toList());
+            } else {
+                return updatedRow;
+            }
         }
 
         public TableMenuCompositeJsonPaste find(Object key) {
@@ -397,10 +471,10 @@ public class GuiSwingJsonTransfer {
         public String readJsonSource() {
             Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
             try {
-                if (board.isDataFlavorAvailable(jsonFlavor)) {
-                    return (String) board.getData(jsonFlavor);
-                } else if (board.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
-                    try (InputStream in = (InputStream) board.getData(DataFlavor.stringFlavor)) {
+                if (board.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+                    return (String) board.getData(DataFlavor.stringFlavor);
+                } else if (board.isDataFlavorAvailable(jsonFlavor)) {
+                    try (InputStream in = (InputStream) board.getData(jsonFlavor)) {
                         BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
                         List<String> lines = new ArrayList<>();
                         String line;
@@ -415,7 +489,42 @@ public class GuiSwingJsonTransfer {
                 throw new RuntimeException(ex);
             }
         }
+    }
 
+    public static class JsonFillLoop implements Function<int[], Object> {
+        protected Map<Integer,List<GuiReprCollectionTable.CellValue>> specifiedRows = new HashMap<>();
+        protected List<List<GuiReprCollectionTable.CellValue>> freeRows = new ArrayList<>();
+
+        protected Map<Integer,Integer> rowToFreeIndex = new HashMap<>();
+
+        public boolean addRow(List<GuiReprCollectionTable.CellValue> updatedRow) {
+            if (isRowSpecified(updatedRow)) {
+                specifiedRows.put(updatedRow.get(0).row, updatedRow);
+                return false;
+            } else {
+                freeRows.add(updatedRow);
+                return true;
+            }
+        }
+
+        private boolean isRowSpecified(List<GuiReprCollectionTable.CellValue> updatedRow) {
+            return updatedRow.stream()
+                    .anyMatch(CellValueRowSpecified.class::isInstance); //all cells in the returned list has a same row
+        }
+
+        @Override
+        public Object apply(int[] pos) {
+            List<GuiReprCollectionTable.CellValue> row = specifiedRows.get(pos[0]);
+            if (row == null) {
+                row = freeRows.get(rowToFreeIndex.computeIfAbsent(pos[0],
+                        key -> rowToFreeIndex.size() % freeRows.size()));
+            }
+            return row.stream()
+                    .filter(c -> c.column == pos[1])
+                    .findFirst()
+                    .map(c -> c.value)
+                    .orElse(null);
+        }
     }
 
 }
