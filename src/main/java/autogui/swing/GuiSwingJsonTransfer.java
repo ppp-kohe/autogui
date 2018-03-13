@@ -1,5 +1,6 @@
 package autogui.swing;
 
+import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
@@ -13,8 +14,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -258,4 +259,163 @@ public class GuiSwingJsonTransfer {
                     .orElse(null);
         }
     }
+
+    ////////////////////////////
+
+    public static class TableMenuCompositeJsonPaste implements ObjectTableColumn.TableMenuComposite {
+        protected GuiMappingContext context;
+        protected int index;
+
+        public TableMenuCompositeJsonPaste(GuiMappingContext context, int index) {
+            this.context = context;
+            this.index = index;
+        }
+
+        public boolean isIndexColumn() {
+            return context == null;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        @Override
+        public ObjectTableColumn.TableMenuCompositeShared getShared() {
+            return jsonPasteShared;
+        }
+
+        public Object fromJson(Object columnValue) {
+            return null; //TODO
+        }
+    }
+
+    public static TableMenuCompositeSharedJsonPaste jsonPasteShared = new TableMenuCompositeSharedJsonPaste();
+
+    public static class TableMenuCompositeSharedJsonPaste implements ObjectTableColumn.TableMenuCompositeShared {
+        @Override
+        public ObjectTableModel.PopupMenuBuilderForRowsOrCells composite(JTable table,
+                                                                         List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
+
+            return (sender, menu) -> {
+                menu.accept(new JsonPasteCellAction(toJsonPaste(columns)));
+            };
+        }
+
+        private List<TableMenuCompositeJsonPaste> toJsonPaste(List<ObjectTableColumn.TableMenuComposite> columns) {
+            return columns.stream()
+                    .filter(TableMenuCompositeJsonPaste.class::isInstance)
+                    .map(TableMenuCompositeJsonPaste.class::cast)
+                    .collect(Collectors.toList());
+        }
+    }
+
+    public static class JsonPasteCellAction extends AbstractAction implements TableTargetCellAction {
+        protected List<TableMenuCompositeJsonPaste> activeComposite;
+
+        public JsonPasteCellAction(List<TableMenuCompositeJsonPaste> activeComposite) {
+            this.activeComposite = activeComposite;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+            Object json = readJson();
+
+            if (json != null) {
+                if (json instanceof List<?>) { //[ ... ]
+                    int rowIndex = 0;
+                    for (Object o : (List<?>) json) {
+                        List<GuiReprCollectionTable.CellValue> updatedRow = getCellsForRow(rowIndex, o);
+
+                        ++rowIndex;
+                    }
+                } else {
+                    //TODO fill all cells?
+                }
+            }
+        }
+
+        public List<GuiReprCollectionTable.CellValue> getCellsForRow(int rowIndex, Object rowJson) {
+            int targetRow = rowIndex;
+            List<GuiReprCollectionTable.CellValue> updatedRow = new ArrayList<>();
+
+            if (rowJson instanceof List<?>) { // [ [...], [...], ...]
+                List<?> row = (List<?>) rowJson;
+                for (int i = 0, l = row.size(); i < l; ++i) {
+                    TableMenuCompositeJsonPaste column = activeComposite.get(i % activeComposite.size());
+                    if (column.isIndexColumn()) {
+                        //specify the row index
+                        targetRow = (Integer) column.fromJson(row.get(i));
+                    } else {
+                        updatedRow.add(new GuiReprCollectionTable.CellValue(targetRow, column.getIndex(),
+                                column.fromJson(row.get(i))));
+                    }
+                }
+            } else if (rowJson instanceof Map<?,?>) { //[ {...}, {...}, ...]
+                for (Map.Entry<?,?> entry : ((Map<?,?>) rowJson).entrySet()) {
+                    TableMenuCompositeJsonPaste column = find(entry.getKey());
+                    if (column.isIndexColumn()) {
+                        targetRow = (Integer) column.fromJson(entry.getValue());
+                    } else {
+                        updatedRow.add(new GuiReprCollectionTable.CellValue(targetRow, column.getIndex(),
+                                column.fromJson(entry.getValue())));
+                    }
+                }
+            } else { // [ a, b, ... ]
+                //TODO
+            }
+
+            if (targetRow != rowIndex) {
+                for (GuiReprCollectionTable.CellValue c : updatedRow) {
+                    c.row = targetRow;
+                }
+            }
+            return updatedRow;
+        }
+
+        public TableMenuCompositeJsonPaste find(Object key) {
+            String str = key.toString();
+            return activeComposite.stream()
+                    .filter(c -> c.matchJsonKey(str))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        public Object readJson() {
+            String json = readJsonSource();
+            if (json != null) {
+                return JsonReader.create(json).parseValue();
+            } else {
+                return null;
+            }
+        }
+
+        public String readJsonSource() {
+            Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
+            try {
+                if (board.isDataFlavorAvailable(jsonFlavor)) {
+                    return (String) board.getData(jsonFlavor);
+                } else if (board.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+                    try (InputStream in = (InputStream) board.getData(DataFlavor.stringFlavor)) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+                        List<String> lines = new ArrayList<>();
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            lines.add(line);
+                        }
+                        return String.join("\n", lines);
+                    }
+                }
+                return null;
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+    }
+
 }

@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 public class ObjectTableColumnValue extends ObjectTableColumn {
     protected GuiMappingContext context;
+    protected int contextIndex = -1;
 
     /**
      * the representation of the context must be a sub-type of {@link GuiReprValue}.
@@ -47,6 +48,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
     public ObjectTableColumnValue(GuiMappingContext context, TableCellRenderer renderer, TableCellEditor editor) {
         this.context = context;
+        this.contextIndex = ((GuiReprCollectionElement) context.getParent().getRepresentation())
+                .getFixedColumnIndex(context.getParent(), context);
+
         GuiReprValue value = (GuiReprValue) context.getRepresentation();
         setTableColumn(new TableColumn(0, 64, renderer,
                 value.isEditable(context) ? editor : null));
@@ -61,23 +65,43 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         return context;
     }
 
+    public int getContextIndex() {
+        return contextIndex;
+    }
+
+    /**
+     *
+     * @param rowObject the row object at rowIndex
+     * @param rowIndex   the row index in the list
+     * @param columnIndex the column index of the view table-model of the column
+     * @return the column value
+     */
     @Override
     public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
         GuiReprValue field = (GuiReprValue) context.getRepresentation();
         GuiReprCollectionElement col = (GuiReprCollectionElement) context.getParent().getRepresentation();
         try {
             return field.toUpdateValue(context,
-                    col.getCellValue(context.getParent(), context, rowObject, rowIndex, columnIndex));
+                    col.getCellValue(context.getParent(), context, rowObject, rowIndex, this.contextIndex));
+               //the columnIndex is an index on the view model, so it passes contextIndex as the context's column index
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
             return null;
         }
     }
 
+    /**
+     *
+     * @param rowObject the row object at rowIndex
+     * @param rowIndex  the row index in the list
+     * @param columnIndex the column index of the view table-model of the column
+     * @param newColumnValue the new value to be set
+     * @return null
+     */
     @Override
     public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
         GuiReprCollectionElement col = (GuiReprCollectionElement) context.getParent().getRepresentation();
-        col.updateCellFromGui(context.getParent(), context, rowObject, rowIndex, columnIndex, newColumnValue);
+        col.updateCellFromGui(context.getParent(), context, rowObject, rowIndex, this.contextIndex, newColumnValue);
         return null;
     }
 

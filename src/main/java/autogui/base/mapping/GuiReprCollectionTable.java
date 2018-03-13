@@ -207,9 +207,18 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
 
     public interface TableTarget {
         boolean isSelectionEmpty();
+
         IntStream getSelectedRows();
+
         List<Object> getSelectedRowValues();
+
         List<CellValue> getSelectedCells();
+
+        /**
+         * @return a stream of {row, column}. those indexes are from the view model,
+         *    which might be different from the context's ones.
+         *    The view-model has additional columns other than the context, e.g. the row-index column.
+         */
         Stream<int[]> getSelectedCellIndexesStream();
 
         default List<Object> getSelectedCellValues() {
@@ -219,11 +228,13 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
         }
 
         void setCellValues(List<CellValue> values);
+
         void setCellValues(Stream<int[]> pos, Function<int[], Object> posToValue);
     }
 
     public interface TableTargetCell extends TableTarget {
         Stream<int[]> getSelectedRowAllCellIndexesStream();
+
         List<CellValue> getSelectedRowAllCells();
     }
 

@@ -201,4 +201,22 @@ public class GuiReprCollectionElement implements GuiRepresentation {
         }
         return String.join("\n", array);
     }
+
+    /**
+     * @param context the context of the repr.
+     * @return the size of columns which is equivalent to the size of the children,
+     *    or -1 which means that the number of columns might be dynamic.
+     */
+    public int getFixedColumnSize(GuiMappingContext context) {
+        if (!(representation instanceof GuiReprCollectionElement) &&
+                !(representation instanceof GuiReprCollectionTable)) {
+            return context.getChildren().size();
+        } else {
+            return -1;
+        }
+    }
+
+    public int getFixedColumnIndex(GuiMappingContext context, GuiMappingContext columnContext) {
+        return context.getChildren().indexOf(columnContext);
+    }
 }
