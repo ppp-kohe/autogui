@@ -12,13 +12,16 @@ import java.util.function.Consumer;
 
 /**
  * <h3>representation</h3>
- * {@link autogui.base.mapping.GuiReprPropertyPane}
+ * {@link autogui.base.mapping.GuiReprPropertyPane},
+ *  or another repr. called {@link ValuePane#wrapProperty()}
+ *  The latter case is that a context has a property type, but the representation matched to the value type of the property.
+ *    (see {@link GuiReprValue#getValueType(GuiMappingContext)}).
  *
  * <h3>{@link PropertyPane#getSwingViewValue()}</h3>
  *  {@link autogui.base.mapping.GuiReprValue.NamedValue}.
  *     obtaining and setting ({@link PropertyPane#setSwingViewValue(GuiReprValue.NamedValue)} and
  *        {@link PropertyPane#setSwingViewValueWithUpdate(GuiReprValue.NamedValue)}) delete to the contentPane.
- *     Note the setting of the property will be treated the value's contentPane.
+ *     Note the setting of the property will be treated by the value's contentPane.
  *        {@link GuiReprValue#updateFromGui(GuiMappingContext, Object)} by the value's contentPane
  *         supports the case of the parent is a property.
  *

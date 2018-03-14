@@ -13,7 +13,7 @@ import java.awt.event.KeyEvent;
 
 public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
     public static void main(String[] args) throws Exception {
-        new GuiSwingViewDocumentEditorTest().testBuilder();
+        new GuiSwingViewDocumentEditorTest().test();
     }
 
     @Test

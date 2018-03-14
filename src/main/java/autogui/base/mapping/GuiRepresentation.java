@@ -1,5 +1,7 @@
 package autogui.base.mapping;
 
+import java.util.Map;
+
 /** abstract GUI component:
  *    most methods of the interface always take  a {@link GuiMappingContext},
  *      this is because the instance of the interface might be an singleton instance.
@@ -42,6 +44,32 @@ public interface GuiRepresentation {
         } else {
             return toJson(context, source);
         }
+    }
+
+    /**
+     *
+     * @param context the context of the repr. In most cases, the type of the context will be a property.
+     * @param target the target object. if it is {@link autogui.base.mapping.GuiReprValue.NamedValue},
+     *               then it obtains the value. nullable
+     * @param json a {@link java.util.Map} with containing an entry for the name of the context
+     * @return the returned value {@link #fromJson(GuiMappingContext, Object, Object)}.
+     *   if the target is a NamedValue, the returned value will also be a NamedValue.
+     */
+    default Object fromJsonWithNamed(GuiMappingContext context, Object target, Object json) {
+        if (json instanceof Map<?,?>) {
+            Object entry = ((Map<?,?>) json).get(context.getName());
+            boolean namedValue = false;
+            if (target != null && target instanceof GuiReprValue.NamedValue) {
+                target = ((GuiReprValue.NamedValue) target).value;
+                namedValue = true;
+            }
+            Object ret = fromJson(context, target, entry);
+            if (namedValue) {
+                ret = new GuiReprValue.NamedValue(context.getName(), ret);
+            }
+            return ret;
+        }
+        return null;
     }
 
     /**

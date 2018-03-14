@@ -4,6 +4,7 @@ import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiReprPropertyPane;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.table.ObjectTableColumn;
 import autogui.swing.table.ObjectTableModel;
@@ -23,15 +24,17 @@ import java.util.stream.Collectors;
 
 public class GuiSwingJsonTransfer {
 
-    public static List<JMenuItem> getActionMenuItems(GuiSwingView.ValuePane component, GuiMappingContext context) {
+    public static List<JMenuItem> getActionMenuItems(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
         return getActions(component, context).stream()
                 .map(JMenuItem::new)
                 .collect(Collectors.toList());
 
     }
 
-    public static List<Action> getActions(GuiSwingView.ValuePane component, GuiMappingContext context) {
-        return Collections.singletonList(new JsonCopyAction(component, context));
+    public static List<Action> getActions(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
+        return Arrays.asList(
+                new JsonCopyAction(component, context),
+                new JsonPasteAction(component, context));
     }
 
     public static void copy(Object map) {
@@ -44,11 +47,42 @@ public class GuiSwingJsonTransfer {
         }
     }
 
+    public static Object readJson() {
+        String json = readJsonSource();
+        if (json != null) {
+            return JsonReader.create(json).parseValue();
+        } else {
+            return null;
+        }
+    }
+
+    public static String readJsonSource() {
+        Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
+        try {
+            if (board.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+                return (String) board.getData(DataFlavor.stringFlavor);
+            } else if (board.isDataFlavorAvailable(jsonFlavor)) {
+                try (InputStream in = (InputStream) board.getData(jsonFlavor)) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+                    List<String> lines = new ArrayList<>();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        lines.add(line);
+                    }
+                    return String.join("\n", lines);
+                }
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     public static class JsonCopyAction extends AbstractAction implements TableTargetColumnAction {
-        protected GuiSwingView.ValuePane component;
+        protected GuiSwingView.ValuePane<?> component;
         protected GuiMappingContext context;
 
-        public JsonCopyAction(GuiSwingView.ValuePane component, GuiMappingContext context) {
+        public JsonCopyAction(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
             this.component = component;
             this.context = context;
             putValue(NAME, "Copy As JSON");
@@ -73,6 +107,30 @@ public class GuiSwingJsonTransfer {
                     .map(this::toCopiedJson)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList()));
+        }
+    }
+
+    public static class JsonPasteAction extends AbstractAction {
+        protected GuiSwingView.ValuePane<?> component;
+        protected GuiMappingContext context;
+
+        public JsonPasteAction(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
+            this.component = component;
+            this.context = context;
+            putValue(NAME, "Paste JSON");
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Object json = readJson();
+            Object v;
+            if (context.isTypeElementProperty()) {
+                v = context.getRepresentation().fromJsonWithNamed(context, component.getSwingViewValue(), json);
+            } else {
+                v = context.getRepresentation().fromJson(context, component.getSwingViewValue(), json);
+            }
+            ((GuiSwingView.ValuePane<Object>) component).setSwingViewValueWithUpdate(v);
         }
     }
 
@@ -319,7 +377,7 @@ public class GuiSwingJsonTransfer {
                                                                          List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
 
             return (sender, menu) -> {
-                menu.accept(new JsonPasteCellAction(toJsonPaste(columns)));
+                menu.accept(new JsonPasteCellAction(toJsonPaste(columns), row));
             };
         }
 
@@ -343,8 +401,10 @@ public class GuiSwingJsonTransfer {
     public static class JsonPasteCellAction extends AbstractAction implements TableTargetCellAction {
         protected List<TableMenuCompositeJsonPaste> activeComposite;
 
-        public JsonPasteCellAction(List<TableMenuCompositeJsonPaste> activeComposite) {
-            putValue(NAME, "Paste JSON To Selected Cells");
+        public JsonPasteCellAction(List<TableMenuCompositeJsonPaste> activeComposite, boolean allCells) {
+            putValue(NAME, allCells
+                    ? "Paste JSON To Selected Rows"
+                    : "Paste JSON To Selected Cells");
             this.activeComposite = activeComposite;
         }
 
@@ -457,37 +517,6 @@ public class GuiSwingJsonTransfer {
                     .filter(c -> c.matchJsonKey(str))
                     .findFirst()
                     .orElse(null);
-        }
-
-        public Object readJson() {
-            String json = readJsonSource();
-            if (json != null) {
-                return JsonReader.create(json).parseValue();
-            } else {
-                return null;
-            }
-        }
-
-        public String readJsonSource() {
-            Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
-            try {
-                if (board.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
-                    return (String) board.getData(DataFlavor.stringFlavor);
-                } else if (board.isDataFlavorAvailable(jsonFlavor)) {
-                    try (InputStream in = (InputStream) board.getData(jsonFlavor)) {
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-                        List<String> lines = new ArrayList<>();
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            lines.add(line);
-                        }
-                        return String.join("\n", lines);
-                    }
-                }
-                return null;
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
         }
     }
 

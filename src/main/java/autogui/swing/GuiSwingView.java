@@ -102,7 +102,7 @@ public interface GuiSwingView extends GuiSwingElement {
     static void saveChildren(GuiPreferences prefs, JComponent comp) {
         for (Component c : comp.getComponents()) {
             if (c instanceof GuiSwingView.ValuePane) {
-                GuiSwingView.ValuePane valuePane = (GuiSwingView.ValuePane) c;
+                GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) c;
                 valuePane.savePreferences(prefs);
             } else if (c instanceof JComponent) {
                 saveChildren(prefs, (JComponent) c);
@@ -113,7 +113,7 @@ public interface GuiSwingView extends GuiSwingElement {
     static void loadChildren(GuiPreferences prefs, JComponent comp) {
         for (Component c : comp.getComponents()) {
             if (c instanceof GuiSwingView.ValuePane) {
-                GuiSwingView.ValuePane valuePane = (GuiSwingView.ValuePane) c;
+                GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) c;
                 valuePane.loadPreferences(prefs);
             } else if (c instanceof JComponent) {
                 loadChildren(prefs, (JComponent) c);
@@ -269,10 +269,10 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     class ToStringCopyAction extends AbstractAction implements TableTargetColumnAction {
-        protected ValuePane pane;
+        protected ValuePane<?> pane;
         protected GuiMappingContext context;
 
-        public ToStringCopyAction(ValuePane pane, GuiMappingContext context) {
+        public ToStringCopyAction(ValuePane<?> pane, GuiMappingContext context) {
             putValue(NAME, "Copy As String");
             this.pane = pane;
             this.context = context;

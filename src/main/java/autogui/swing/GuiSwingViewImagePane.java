@@ -39,7 +39,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
         PropertyImagePane imagePane = new PropertyImagePane(context);
-        ValuePane pane = new GuiSwingView.ValueScrollPane(imagePane);
+        ValuePane<Image> pane = new GuiSwingView.ValueScrollPane<>(imagePane);
         if (context.isTypeElementProperty()) {
             return pane.wrapProperty();
         } else {

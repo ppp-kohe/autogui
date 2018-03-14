@@ -49,6 +49,8 @@ public class GuiReprValue implements GuiRepresentation {
      *  then, the parent of source and this source are a same value;
      *       and the parent is already checkAndUpdateSource and a new value is supplied.
      *   the method uses {@link #getUpdatedValue(GuiMappingContext, boolean)} with <code>executeParent=false</code>.
+     *   <p>
+     *   As additional side-effect, the updated value will be added to the value-history if supported
      *  @param context the source context
      *  @return the source context is updated or not
      */
@@ -59,6 +61,13 @@ public class GuiReprValue implements GuiRepresentation {
             if (next != null && next.equals(GuiTypeValue.NO_UPDATE)) {
                 return false;
             } else {
+                try {
+                    if (isHistoryValueSupported()) {
+                        context.getPreferences().addHistoryValue(next);
+                    }
+                } catch (Throwable ex) {
+                    context.errorWhileUpdateSource(ex);
+                }
                 context.setSource(next);
                 return true;
             }
@@ -168,8 +177,12 @@ public class GuiReprValue implements GuiRepresentation {
      * @param newValue the updated property value
      */
     public void updateFromGui(GuiMappingContext context, Object newValue) {
-        if (isHistoryValueSupported()) {
-            context.getPreferences().addHistoryValue(newValue);
+        try {
+            if (isHistoryValueSupported()) {
+                context.getPreferences().addHistoryValue(newValue);
+            }
+        } catch (Throwable ex) {
+            context.errorWhileUpdateSource(ex);
         }
 
         if (context.isTypeElementProperty()) {

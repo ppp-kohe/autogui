@@ -6,6 +6,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +22,8 @@ public class LineNumberPane extends JComponent implements DocumentListener {
     protected JTextComponent field;
 
     protected List<Integer> linePosition = new ArrayList<>();
+
+    protected static boolean debug = true;
 
     public static JScrollPane scroll(Container c) {
         if (c == null) {
@@ -71,17 +74,25 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         try {
             int off = e.getOffset();
             int len = e.getLength();
-            String text = e.getDocument().getText(off, len);
+            String insertedText = e.getDocument().getText(off, len);
 
-            List<Integer> insertedLines = linePositions(text, false, off);
+            List<Integer> insertedLines = linePositions(insertedText, false, off);
 
             if (!insertedLines.isEmpty()) {
-                int idx = findPosition(insertedLines.get(0));
+                int idx = findPosition(off);
 
                 for (int i = idx, l = linePosition.size(); i < l; ++i) {
                     linePosition.set(i, linePosition.get(i) + len);
                 }
+                if (debug) {
+                    debug("TXT[" + idx + "]", e.getDocument().getText(0, e.getDocument().getLength()), 0, linePosition);
+                }
+
                 linePosition.addAll(idx, insertedLines);
+
+                if (debug) {
+                    debug("TXT", e.getDocument().getText(0, e.getDocument().getLength()), 0, linePosition);
+                }
             }
             updatePreferredSize();
         } catch (Exception ex) {
@@ -89,23 +100,54 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         }
     }
 
+    /**
+     * @param text sub-string of the document
+     * @param startLineHead if true, the result will include the starting point of the text (=off)
+     * @param off an offset in the document (not the text)
+     * @return list of line-head positions.
+     */
     public List<Integer> linePositions(String text, boolean startLineHead, int off) {
         List<Integer> insertedLines = new ArrayList<>();
-        boolean lineHead = startLineHead;
-        for (int i = 0, l = text.length(); i < l; ++i) {
-            if (lineHead) {
-                insertedLines.add(i + off);
-                lineHead = false;
-            }
+
+        if (startLineHead) {
+            insertedLines.add(off);
+        }
+        for (int i = 0, len = text.length(); i < len; ++i) {
             char c = text.charAt(i);
             if (c == '\n') {
-                lineHead = true;
+                insertedLines.add(i + off + 1);
             }
         }
-        if (lineHead) {
-            insertedLines.add(text.length() + off);
+        if (debug) {
+            debug("INS", text, off, insertedLines);
         }
+
         return insertedLines;
+    }
+
+    private void debug(String head, String text, int off, List<Integer> lineHeads) {
+        StringBuilder buf = new StringBuilder();
+        buf.append(head + ":<");
+        int i = off;
+        for (char c : text.toCharArray()) {
+            if (lineHeads.contains(i)) {
+                buf.append("[");
+            }
+            if (c == '\n') {
+                buf.append("\\n");
+            } else {
+                buf.append(c);
+            }
+            if (lineHeads.contains(i)) {
+                buf.append("]");
+            }
+            ++i;
+        }
+        if (lineHeads.contains(i)) {
+            buf.append("[_]");
+        }
+        buf.append(">");
+        System.err.println(buf);
     }
 
     public int findPosition(int n) {

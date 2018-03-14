@@ -1,8 +1,6 @@
 package autogui.base.mapping;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /** a property member definition: [propertyName: [  propertyValueField  ] ]
  * */
@@ -79,6 +77,16 @@ public class GuiReprPropertyPane extends GuiReprValue {
         return isEditable(context.getParent());
     }
 
+    @Override
+    public Object toJsonWithNamed(GuiMappingContext context, Object source) {
+        return toJson(context, source);
+    }
+
+    @Override
+    public Object fromJsonWithNamed(GuiMappingContext context, Object target, Object json) {
+        return fromJson(context, target, json);
+    }
+
     /**
      * @param context a context holds the representation
      * @param source  the converted object
@@ -86,13 +94,50 @@ public class GuiReprPropertyPane extends GuiReprValue {
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
-        return GuiReprObjectPane.toJsonFromObject(context, source);
+        if (source instanceof GuiReprValue.NamedValue) {
+            GuiReprValue.NamedValue named = (GuiReprValue.NamedValue) source;
+            return toJsonProperty(context, named.value);
+        } else {
+            return toJsonProperty(context, source);
+        }
+    }
+
+    public Object toJsonProperty(GuiMappingContext context, Object source) {
+        Map<String, Object> map = new HashMap<>();
+        for (GuiMappingContext subContext : context.getChildren()) {
+            map.put(context.getName(),
+                    subContext.getRepresentation().toJson(subContext, source));
+        }
+        return map;
     }
 
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
-        return GuiReprObjectPane.fromJsonToObject(context, target, json);
+        boolean namedValue = false;
+        if (target != null && target instanceof GuiReprValue.NamedValue) {
+            target = ((GuiReprValue.NamedValue) target).value;
+            namedValue = true;
+        }
+        Object ret = fromJsonProperty(context, target, json);
+        if (namedValue) {
+            ret = new GuiReprValue.NamedValue(context.getName(), ret);
+        }
+        return ret;
     }
+
+    public Object fromJsonProperty(GuiMappingContext context, Object target, Object json) {
+        if (json instanceof Map<?,?>) {
+            Object entry = ((Map<?,?>) json).get(context.getName());
+            Object ret = null;
+            for (GuiMappingContext subContext : context.getChildren()) {
+                ret = subContext.getRepresentation().fromJson(subContext, target, entry);
+            }
+            return ret;
+        } else {
+            return null;
+        }
+    }
+
 
     @Override
     public boolean isJsonSetter() {

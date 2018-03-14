@@ -178,8 +178,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
          */
         public ObjectTableCellEditor(JComponent component) {
             this.component = component;
-            if (component instanceof GuiSwingView.ValuePane) {
-                ((GuiSwingView.ValuePane) component).addSwingEditFinishHandler(e -> stopCellEditing());
+            if (component instanceof GuiSwingView.ValuePane<?>) {
+                ((GuiSwingView.ValuePane<?>) component).addSwingEditFinishHandler(e -> stopCellEditing());
             }
         }
 
@@ -189,7 +189,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         @Override
         public Object getCellEditorValue() {
-            if (component instanceof GuiSwingView.ValuePane) {
+            if (component instanceof GuiSwingView.ValuePane<?>) {
                 return ((GuiSwingView.ValuePane<?>) component).getSwingViewValue();
             } else {
                 return null;

@@ -331,16 +331,16 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             return this;
         }
 
-        public GuiSwingView.ValueWrappingPane wrapPane() {
+        public GuiSwingView.ValueWrappingPane<List<?>> wrapPane() {
             return wrapPane(true, true);
         }
 
-        public GuiSwingView.ValueWrappingPane wrapPane(boolean verticalAlways, boolean horizontalAlways) {
-            GuiSwingView.ValueScrollPane s = new GuiSwingView.ValueScrollPane(this,
+        public GuiSwingView.ValueWrappingPane<List<?>> wrapPane(boolean verticalAlways, boolean horizontalAlways) {
+            GuiSwingView.ValueScrollPane<List<?>> s = new GuiSwingView.ValueScrollPane<>(this,
                     verticalAlways ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     horizontalAlways ? ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             initTableScrollPane(s);
-            GuiSwingView.ValueWrappingPane pane = s.wrapPane();
+            GuiSwingView.ValueWrappingPane<List<?>> pane = s.wrapPane();
             pane.add(initActionToolBar(getActions()), BorderLayout.PAGE_START);
             return pane;
         }

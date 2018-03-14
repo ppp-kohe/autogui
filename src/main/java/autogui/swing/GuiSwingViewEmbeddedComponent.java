@@ -23,7 +23,7 @@ import java.awt.*;
 public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
-        ValuePane comp = new PropertyEmbeddedPane(context);
+        ValuePane<JComponent> comp = new PropertyEmbeddedPane(context);
         if (context.isTypeElementProperty()) {
             return comp.wrapProperty();
         } else {

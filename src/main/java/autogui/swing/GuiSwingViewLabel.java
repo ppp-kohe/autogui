@@ -190,7 +190,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
     /** special handling for any type of value as string */
     public static class LabelJsonCopyAction extends GuiSwingJsonTransfer.JsonCopyAction {
-        public LabelJsonCopyAction(ValuePane component, GuiMappingContext context) {
+        public LabelJsonCopyAction(ValuePane<?> component, GuiMappingContext context) {
             super(component, context);
         }
 

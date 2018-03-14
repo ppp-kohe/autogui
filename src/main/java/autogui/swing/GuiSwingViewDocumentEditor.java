@@ -34,7 +34,7 @@ import java.util.function.Consumer;
  *      {@link PropertyDocumentTextPane#getSwingViewValue()}</h3>
  * {@link Document},  {@link AbstractDocument.Content}, or {@link StringBuilder}
  *
- * <h3>histroy-value</h3>
+ * <h3>history-value</h3>
  * TODO unsupported yet
  *
  * <h3>string-transfer</h3>
@@ -44,9 +44,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
         GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
-        ValuePane text = doc.isStyledDocument(context) ?
+        ValuePane<Object> text = doc.isStyledDocument(context) ?
                 new PropertyDocumentTextPane(context) : new PropertyDocumentEditorPane(context);
-        ValuePane pane = text.wrapScrollPane(true, false);
+        ValuePane<Object> pane = text.wrapScrollPane(true, false);
         if (context.isTypeElementProperty()) {
             return pane.wrapProperty();
         } else {
