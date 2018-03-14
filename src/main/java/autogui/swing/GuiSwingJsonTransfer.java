@@ -544,6 +544,7 @@ public class GuiSwingJsonTransfer {
         @Override
         public Object apply(int[] pos) {
             List<GuiReprCollectionTable.CellValue> row = specifiedRows.get(pos[0]);
+
             if (row == null) {
                 row = freeRows.get(rowToFreeIndex.computeIfAbsent(pos[0],
                         key -> rowToFreeIndex.size() % freeRows.size()));

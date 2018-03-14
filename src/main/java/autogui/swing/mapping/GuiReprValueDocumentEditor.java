@@ -144,30 +144,37 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         if (json instanceof String) {
             String jsonStr = (String) json;
 
-
-            if (Document.class.isAssignableFrom(cls)) {
+            if (fromJsonCheckType(Document.class, cls, target)) {
                 Document doc = castOrMake(Document.class, target, DefaultStyledDocument::new);
                 try {
+                    doc.remove(0, doc.getLength());
                     doc.insertString(0, jsonStr, null);
                 } catch (Exception ex) {
                     return null;
                 }
                 return doc;
-            } else if (AbstractDocument.Content.class.isAssignableFrom(cls)) {
+            } else if (fromJsonCheckType(AbstractDocument.Content.class, cls, target)) {
                 AbstractDocument.Content content = castOrMake(AbstractDocument.Content.class, target, GapContent::new);
                 try {
+                    content.remove(0, content.length());
                     content.insertString(0, jsonStr);
                 } catch (Exception ex) {
                     return null;
                 }
                 return content;
-            } else if (StringBuilder.class.isAssignableFrom(cls)) {
+            } else if (fromJsonCheckType(StringBuilder.class, cls, target)) {
                 StringBuilder buf = castOrMake(StringBuilder.class, target, StringBuilder::new);
                 buf.replace(0, buf.length(), jsonStr);
                 return buf;
             }
         }
         return null;
+    }
+
+    private boolean fromJsonCheckType(Class<?> type, Class<?> valueType, Object target) {
+        return target == null
+                ? type.isAssignableFrom(valueType)
+                : type.isInstance(target);
     }
 
     @Override

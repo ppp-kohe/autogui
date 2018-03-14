@@ -152,7 +152,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
     }
 
-    public static void updateText(JEditorPane pane, GuiMappingContext context, Object newValue) {
+    public static void setSwingViewValue(JEditorPane pane, GuiMappingContext context, Object newValue, boolean contextUpdate) {
         GuiReprValueDocumentEditor docEditor = (GuiReprValueDocumentEditor) context.getRepresentation();
         Document doc = docEditor.toUpdateValue(context, newValue);
         if (pane.getDocument() != doc && doc != null) {
@@ -160,15 +160,29 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
             //line numbering
             new LineNumberPane(pane).install();
+            pane.repaint();
+        }
+        if (contextUpdate) {
+            //newValue will be a Document
+            if (newValue instanceof Document) {
+                newValue = docEditor.toSourceValue(context, (Document) newValue);
+            }
+            docEditor.updateFromGui(context, newValue);
         }
     }
 
-    public static Object sourceValue(JEditorPane pane, GuiMappingContext context) {
+    /**
+     *
+     * @param pane the pane of the document
+     * @param context the context of the view.
+     * @return always return a {@link Document}
+     */
+    public static Object getSwingViewValue(JEditorPane pane, GuiMappingContext context) {
         GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
-        return doc.toSourceValue(context, pane.getDocument());
+        return pane.getDocument();
     }
 
-    public static Dimension preferredSize(JTextComponent field, boolean wrapLine) {
+    public static Dimension getPreferredSize(JTextComponent field, boolean wrapLine) {
         Dimension dim = field.getUI().getPreferredSize(field);
         Component parent = SwingUtilities.getUnwrappedParent(field);
         if (!wrapLine && parent != null) {
@@ -200,17 +214,17 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public Object getSwingViewValue() {
-            return sourceValue(this, context);
+            return GuiSwingViewDocumentEditor.getSwingViewValue(this, context);
         }
 
         @Override
         public void setSwingViewValue(Object value) {
-            updateText(this, context, value);
+            GuiSwingViewDocumentEditor.setSwingViewValue(this, context, value, false);
         }
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            //TODO setting string contents of value?
+            GuiSwingViewDocumentEditor.setSwingViewValue(this, context, value, true);
         }
 
         @Override
@@ -225,7 +239,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public Dimension getPreferredSize() {
             try {
-                return GuiSwingViewDocumentEditor.preferredSize(this, wrapLine);
+                return GuiSwingViewDocumentEditor.getPreferredSize(this, wrapLine);
             } catch (Exception ex) {
                 return getSize();
             }
@@ -262,17 +276,17 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public Object getSwingViewValue() {
-            return sourceValue(this, context);
+            return GuiSwingViewDocumentEditor.getSwingViewValue(this, context);
         }
 
         @Override
         public void setSwingViewValue(Object value) {
-            updateText(this, context, value);
+            GuiSwingViewDocumentEditor.setSwingViewValue(this, context, value, false);
         }
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            //TODO setting string contents of value?
+            GuiSwingViewDocumentEditor.setSwingViewValue(this, context, value, true);
         }
 
         @Override
@@ -287,7 +301,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public Dimension getPreferredSize() {
             try {
-                return GuiSwingViewDocumentEditor.preferredSize(this, wrapLine);
+                return GuiSwingViewDocumentEditor.getPreferredSize(this, wrapLine);
             } catch (Exception ex) {
                 return getSize();
             }

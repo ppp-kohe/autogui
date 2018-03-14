@@ -13,7 +13,7 @@ import java.awt.event.KeyEvent;
 
 public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
     public static void main(String[] args) throws Exception {
-        new GuiSwingViewDocumentEditorTest().test();
+        new GuiSwingViewDocumentEditorTest().testContent();
     }
 
     @Test
@@ -197,6 +197,7 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
 
         public TestContentProp() {
             super("hello");
+            setType(new GuiTypeValue(AbstractDocument.Content.class));
         }
 
         @Override
@@ -216,6 +217,7 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
 
         public TestBuilderProp() {
             super("hello");
+            setType(new GuiTypeValue(StringBuilder.class));
         }
 
         @Override
