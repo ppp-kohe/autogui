@@ -1,5 +1,7 @@
 package autogui.base.type;
 
+import autogui.GuiIncluded;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -231,4 +233,5 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     public Object executeSetList(int index, Object target, Object value) throws Exception {
         return executeSet(target, value);
     }
+
 }

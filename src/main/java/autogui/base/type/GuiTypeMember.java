@@ -9,6 +9,7 @@ public abstract class GuiTypeMember implements GuiTypeElement {
     protected String name;
     /** nullable */
     protected GuiTypeObject owner;
+    protected MemberOrdinal ordinal;
 
     public GuiTypeMember(String name) {
         this.name = name;
@@ -44,4 +45,44 @@ public abstract class GuiTypeMember implements GuiTypeElement {
         return null;
     }
 
+
+    public void setOrdinal(MemberOrdinal ordinal) {
+        this.ordinal = ordinal;
+    }
+
+    public MemberOrdinal getOrdinal() {
+        if (ordinal == null) {
+            ordinal = new MemberOrdinal(-1, getName());
+        }
+        return ordinal;
+    }
+
+    public static class MemberOrdinal implements Comparable<MemberOrdinal> {
+        protected int index;
+        protected String name;
+
+        public MemberOrdinal(int index, String name) {
+            this.index = index;
+            this.name = name;
+        }
+
+        @Override
+        public int compareTo(MemberOrdinal o) {
+            int i = Integer.compare(index, o.index);
+            return i != 0 ? i : name.compareTo(o.name);
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String toString() {
+            return index + ":" + name;
+        }
+    }
 }

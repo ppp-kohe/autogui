@@ -127,7 +127,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
 
         @Override
-        public void build(PopupExtension sender, Consumer<Object> menu) {
+        public void build(PopupExtensionSender sender, Consumer<Object> menu) {
             MenuBuilder builder = getMenuBuilder();
             builder.addMenuItems(menu, editActions, null);
         }

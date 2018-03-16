@@ -2,6 +2,7 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionSender;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -390,7 +391,7 @@ public class ObjectTableModel extends AbstractTableModel {
     }
 
     public interface PopupMenuBuilderForRowsOrCells {
-        void build(PopupExtension sender, Consumer<TableTargetCellAction> menu);
+        void build(PopupExtensionSender sender, Consumer<TableTargetCellAction> menu);
     }
 
     public Stream<PopupMenuBuilderForRowsOrCells> getBuildersForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {

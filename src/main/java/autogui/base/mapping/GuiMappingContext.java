@@ -73,6 +73,11 @@ public class GuiMappingContext {
         this.parent = parent;
     }
 
+    public GuiMappingContext(GuiTypeElement typeElement, Object source) {
+        this.typeElement = typeElement;
+        this.source = source;
+    }
+
     public GuiMappingContext(GuiTypeElement typeElement, GuiRepresentation representation, Object source) {
         this.typeElement = typeElement;
         this.representation = representation;

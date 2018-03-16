@@ -12,7 +12,7 @@ public class GuiTypeValue implements GuiTypeElement {
     protected Class<?> type;
 
     public GuiTypeValue(Class<?> type) {
-        this(type.getName());
+        this(type.getSimpleName());
         this.type = type;
     }
 
@@ -54,7 +54,7 @@ public class GuiTypeValue implements GuiTypeElement {
      *  The main purpose of the method is provide extensibility for GUI source.
      */
     public Object updatedValue(Object prevValue) {
-        return null;
+        return NO_UPDATE;
     }
 
     public Object updatedValueList(int index, Object prevValue) {

@@ -22,10 +22,10 @@ import java.util.regex.Pattern;
  *     <li>{@link KeyListener}  with {@link #keyMatcher}, can be {@link #getDefaultKeyMatcher()}</li>
  *     <li>{@link ActionListener} caused by {@link #getAction()} </li>
  * </ul>
- * {@link #menuBuilder} determines menu items in the popup menu via {@link PopupMenuBuilder#buildWithClear(PopupExtension, JPopupMenu)}.
+ * {@link #menuBuilder} determines menu items in the popup menu via {@link PopupMenuBuilder#buildWithClear(PopupExtensionSender, JPopupMenu)}.
  *
  */
-public class PopupExtension implements MouseListener, KeyListener, ActionListener {
+public class PopupExtension implements MouseListener, KeyListener, ActionListener, PopupExtensionSender {
     /** the supplier is frequently called and expected to return same menu object */
     protected Supplier<JPopupMenu> menu;
     protected JComponent pane;
@@ -47,14 +47,14 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
          * @param sender the sender extension
          * @param menu the target for appending menus
          */
-        void build(PopupExtension sender, Consumer<Object> menu);
+        void build(PopupExtensionSender sender, Consumer<Object> menu);
 
-        /** the default behavior reconstruct entire items by {@link #build(PopupExtension, Consumer)}.
+        /** the default behavior reconstruct entire items by {@link #build(PopupExtensionSender, Consumer)}.
          *    The Consumer can append an item to the menu.
          * @param sender the sender extension
          * @param menu the target for appending menus
          */
-        default void buildWithClear(PopupExtension sender, JPopupMenu menu) {
+        default void buildWithClear(PopupExtensionSender sender, JPopupMenu menu) {
             menu.removeAll();
             build(sender, new MenuBuilder.MenuAppender(menu));
             menu.revalidate();

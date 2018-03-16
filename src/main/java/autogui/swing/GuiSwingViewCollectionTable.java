@@ -9,6 +9,7 @@ import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.table.*;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionSender;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -659,7 +660,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
      * */
     public static class CollectionColumnMenuSupplier implements PopupExtension.PopupMenuBuilder {
         @Override
-        public void build(PopupExtension sender, Consumer<Object> menu) {
+        public void build(PopupExtensionSender sender, Consumer<Object> menu) {
             if (sender instanceof PopupExtensionCollection) {
                 ObjectTableColumn column = ((PopupExtensionCollection) sender).getTargetColumn();
                 ObjectTableColumn.PopupMenuBuilderSource src = (column == null ? null : column.getMenuBuilderSource());
@@ -697,7 +698,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
     public static class CollectionCellMenuSupplier implements PopupExtension.PopupMenuBuilder {
         @Override
-        public void build(PopupExtension sender, Consumer<Object> menu) {
+        public void build(PopupExtensionSender sender, Consumer<Object> menu) {
             if (sender instanceof PopupExtensionCollection) {
                 PopupExtensionCollection collSender = (PopupExtensionCollection) sender;
                 CollectionTable table = collSender.getTable();

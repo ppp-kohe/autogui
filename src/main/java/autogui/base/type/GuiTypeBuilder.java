@@ -142,6 +142,9 @@ public class GuiTypeBuilder {
         definitionsMap.values()
                 .forEach(d -> createMember(objType, d));
 
+        objType.getProperties().sort(Comparator.comparing(GuiTypeMember::getOrdinal));
+        objType.getActions().sort(Comparator.comparing(GuiTypeMember::getOrdinal));
+
         ((ArrayList<?>) objType.getProperties()).trimToSize();
         ((ArrayList<?>) objType.getActions()).trimToSize();
 
@@ -221,22 +224,43 @@ public class GuiTypeBuilder {
         property.setOwner(objType);
 
         Type type = null;
+        int index = Integer.MAX_VALUE;
         if (fld != null) {
             property.setField(fld);
             type = fld.getGenericType();
+            index = Math.min(index, getMemberOrdinalIndex(fld));
         }
         if (setter != null) {
             property.setSetter(setter);
             type = setter.getGenericParameterTypes()[0];
+            index = Math.min(index, getMemberOrdinalIndex(setter));
         }
         if (getter != null) {
             property.setGetter(getter);
             type = getter.getGenericReturnType();
+            index = Math.min(index, getMemberOrdinalIndex(getter));
         }
 
         property.setType(get(type));
+        property.setOrdinal(new GuiTypeMemberProperty.MemberOrdinal(index, name));
 
         objType.getProperties().add(property);
+    }
+
+    public int getMemberOrdinalIndex(Method m) {
+        if (m.isAnnotationPresent(GuiIncluded.class)) {
+            return m.getAnnotation(GuiIncluded.class).index();
+        } else {
+            return Integer.MAX_VALUE;
+        }
+    }
+
+    public int getMemberOrdinalIndex(Field f) {
+        if (f.isAnnotationPresent(GuiIncluded.class)) {
+            return f.getAnnotation(GuiIncluded.class).index();
+        } else {
+            return Integer.MAX_VALUE;
+        }
     }
 
     public void createMemberAction(GuiTypeObject objType, String name, Method method, boolean isList) {
@@ -249,6 +273,8 @@ public class GuiTypeBuilder {
         }
         action.setOwner(objType);
         objType.getActions().add(action);
+        int index = getMemberOrdinalIndex(method);
+        action.setOrdinal(new GuiTypeMember.MemberOrdinal(index, name));
     }
 
     /**

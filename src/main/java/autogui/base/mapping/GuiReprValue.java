@@ -99,7 +99,7 @@ public class GuiReprValue implements GuiRepresentation {
      *                        If it is checking process, then the order is from root to bottom,
      *                         and it might be parent is already set.
      * @return the current value (nullable) or {@link GuiTypeValue#NO_UPDATE}
-     * @throws Exception might be caused by executing method invocations.
+     * @throws Throwable might be caused by executing method invocations.
      */
     public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Throwable {
         Object prev = context.getSource();
@@ -125,13 +125,30 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
+     * caLl {@link #getUpdatedValue(GuiMappingContext, boolean)} and never return NO_UPDATE
+     * @param context the context
+     * @param executeParent indicates whether recursively invoke the method for the parent
+     * @return original source (nullable), never NO_UPDATE
+     * @throws Throwable might be caused by executing method invocation
+     */
+    public Object getUpdatedValueWithoutNoUpdate(GuiMappingContext context, boolean executeParent) throws Throwable {
+        Object prev = context.getSource();
+        Object ret = getUpdatedValue(context, executeParent);
+        if (ret != null && ret.equals(GuiTypeValue.NO_UPDATE)) {
+            ret = prev;
+        }
+        return ret;
+
+    }
+
+    /**
      * <ul>
      *     <li>if <code>executeParent=true</code> and the parent is a property,
-     *            {@link GuiReprPropertyPane#getUpdatedValue(GuiMappingContext, boolean)} for the parent</li>
+     *            {@link GuiReprPropertyPane#getUpdatedValueWithoutNoUpdate(GuiMappingContext, boolean)}  for the parent</li>
      *     <li>if <code>executeParent=true</code>  and the parent is a collection element,
      *            it is an error</li>
      *     <li>if <code>executeParent=true</code> and the parent is a value,
-     *            {@link GuiReprValue#getUpdatedValue(GuiMappingContext, boolean)}</li>
+     *            {@link GuiReprValue#getUpdatedValueWithoutNoUpdate(GuiMappingContext, boolean)} </li>
      *     <li>otherwise, the source value of the parent</li>
      * </ul>
      * @param context the context of the repr.
@@ -143,12 +160,12 @@ public class GuiReprValue implements GuiRepresentation {
         if (executeParent) {
             if (context.isParentPropertyPane()) {
                 return context.getParentPropertyPane()
-                        .getUpdatedValue(context.getParent(), true);
+                        .getUpdatedValueWithoutNoUpdate(context.getParent(), true);
             } else if (context.isParentCollectionElement()) {
                 throw new UnsupportedOperationException("parent is a collection: it requires an index: " + context); //TODO
             } else if (context.isParentValuePane()) {
                 return context.getParentValuePane()
-                        .getUpdatedValue(context.getParent(), true);
+                        .getUpdatedValueWithoutNoUpdate(context.getParent(), true);
             } else {
                 return context.getParentSource();
             }
@@ -164,7 +181,7 @@ public class GuiReprValue implements GuiRepresentation {
      *   <li>using {@link GuiMappingContext#execute(Callable)}</li>
      *   <li>if this is a property, {@link GuiMappingContext#getParentSource()} and
      *        {@link GuiMappingContext#updateSourceFromGui(Object)} with the <code>newValue</code></li>
-     *   <li>if the parent is a property, {@link GuiReprPropertyPane#getUpdatedValue(GuiMappingContext, boolean)}
+     *   <li>if the parent is a property, {@link GuiReprPropertyPane#updateFromGuiChild(GuiMappingContext, Object)}
      *          with <code>newValue</code></li>
      *   <li>if the parent is a collection element, nothing happen</li>
      *   <li>if this is a value, use {@link GuiMappingContext#getSource()} as the previous value,

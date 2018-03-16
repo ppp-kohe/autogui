@@ -1,5 +1,7 @@
 package autogui.base.mapping;
 
+import autogui.base.type.GuiTypeValue;
+
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -27,7 +29,7 @@ public class GuiReprAction implements GuiRepresentation {
      * */
     public void executeAction(GuiMappingContext context) {
         try {
-            Object target = context.getParentValuePane().getUpdatedValue(context.getParent(), true);
+            Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), true);
             context.execute(() -> context.getTypeElementAsAction().execute(target));
             context.updateSourceFromRoot();
         } catch (Throwable ex) {

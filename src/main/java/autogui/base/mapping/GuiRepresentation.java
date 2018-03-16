@@ -4,7 +4,7 @@ import java.util.Map;
 
 /** abstract GUI component:
  *    most methods of the interface always take  a {@link GuiMappingContext},
- *      this is because the instance of the interface might be an singleton instance.
+ *      this is because an instance of the interface might be an singleton instance.
  *
  * */
 public interface GuiRepresentation {
@@ -135,6 +135,10 @@ public interface GuiRepresentation {
         }
     }
 
+    /**
+     * @return the set of default representations.
+     *  it does not includes swing-based representations.
+     */
     static GuiReprSet getDefaultSet() {
         GuiReprSet set = new GuiReprSet();
 

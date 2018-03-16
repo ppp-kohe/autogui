@@ -8,6 +8,7 @@ import autogui.swing.GuiSwingActionDefault;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionSender;
 import autogui.swing.util.PopupExtensionText;
 import autogui.swing.util.SearchTextFieldFilePath;
 
@@ -247,7 +248,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
 
         @Override
-        public void build(PopupExtension sender, Consumer<Object> menu) {
+        public void build(PopupExtensionSender sender, Consumer<Object> menu) {
             JComponent pane = sender.getPane();
             if (pane instanceof JTable &&
                     ((JTable) pane).getModel() instanceof ObjectTableModel) {
