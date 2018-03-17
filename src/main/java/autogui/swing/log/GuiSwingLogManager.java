@@ -202,7 +202,7 @@ public class GuiSwingLogManager extends GuiLogManager {
             return toolbar;
         }
 
-        public JPanel getPaneWithStatusBar(JPanel centerPane) {
+        public JPanel getPaneWithStatusBar(JComponent centerPane) {
             JPanel pane = new JPanel(new BorderLayout());
             pane.add(centerPane, BorderLayout.CENTER);
             pane.add(statusBar, BorderLayout.SOUTH);

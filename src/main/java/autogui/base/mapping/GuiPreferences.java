@@ -4,8 +4,9 @@ import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.prefs.Preferences;
 
 /** the Preferences holder associated to a {@link GuiMappingContext}.
@@ -47,6 +48,13 @@ public class GuiPreferences {
         }
         return children.computeIfAbsent(context,
                 c -> new GuiPreferences(this, c));
+    }
+
+    protected void setChild(GuiMappingContext context, GuiPreferences child) {
+        if (children == null) {
+            children = new HashMap<>();
+        }
+        children.put(context, child);
     }
 
     public String getName() {
@@ -91,13 +99,17 @@ public class GuiPreferences {
             if (parent != null) {
                 valueStore = parent.getValueStore().getChild(this);
             } else {
-                valueStore = getValueStoreFromRepresentation();
+                valueStore = getValueStoreRootFromRepresentation();
             }
         }
         return valueStore;
     }
 
-    public GuiValueStore getValueStoreFromRepresentation() {
+    public GuiValueStore getValueStoreRootFromRepresentation() {
+        return new GuiValueStoreDefault(this, getPreferencesNodeAsRoot(), "$default");
+    }
+
+    public Preferences getPreferencesNodeAsRoot() {
         GuiRepresentation repr = context.getRepresentation();
         Preferences node;
         if (repr instanceof GuiReprObjectPane) {
@@ -107,7 +119,76 @@ public class GuiPreferences {
             node = Preferences.userNodeForPackage(GuiPreferences.class)
                     .node(context.getName().replace('.', '_'));
         }
-        return new GuiValueStoreDefault(this, node);
+        return node;
+    }
+
+    /**
+     * <pre>
+     *     "autogui/base/mapping/"
+     *        pack_Type/
+     *            "$default/"
+     *               ...
+     *            "$saved/"
+     *               "0/"
+     *                  "$name" = "prefs yyyy/mm/dd hh:mm"
+     *                  ...
+     *               "1/"
+     *               ...
+     * </pre>
+     * @return saved preferences
+     */
+    public List<GuiPreferences> getSavedStoreListAsRoot() {
+        Preferences prefs = getPreferencesNodeAsRoot();
+        try {
+            List<GuiPreferences> savedList = new ArrayList<>();
+            if (prefs.nodeExists("$saved")) {
+                Preferences savedNode = prefs.node("$saved");
+                List<String> stores = Arrays.asList(savedNode.childrenNames());
+
+                for (String key : stores) {
+                    GuiPreferences savedPrefs = new GuiPreferences(context);
+                    savedPrefs.valueStore = new GuiValueStoreDefault(savedPrefs, savedNode, key);
+                    savedList.add(savedPrefs);
+                }
+            }
+            return savedList;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
+
+    public GuiPreferences addNewSavedStoreAsRoot() {
+        Preferences prefs = getPreferencesNodeAsRoot();
+        Preferences savedNode = prefs.node("$saved");
+        try {
+            List<String> stores = Arrays.asList(savedNode.childrenNames());
+            int n = stores.size();
+            String key = "$" + Integer.toString(n);
+            while (stores.contains(key)) {
+                n++;
+                key = "$" + Integer.toString(n);
+            }
+            GuiPreferences newPrefs = new GuiPreferences(context);
+            newPrefs.valueStore = new GuiValueStoreDefault(newPrefs, savedNode, key);
+
+            String name = context.getName();
+
+            newPrefs.valueStore.putString("$name",
+                    String.format("%s %d - %s", name, (n + 1), LocalDateTime.now().format(formatter)));
+
+            return newPrefs;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public void removeAsSavedStore() {
+        GuiValueStore store = getValueStore();
+        if (store instanceof GuiValueStoreDefault) {
+            ((GuiValueStoreDefault) store).removeThisNode();
+        }
     }
 
     /**
@@ -266,7 +347,17 @@ public class GuiPreferences {
         historyValues = null;
     }
 
-    /** the abstract definition of key-value store */
+    /** the abstract definition of key-value store.
+     *
+     *  <ul>
+     *      <li>a key may be associated with a child node or an entry, and it shares the name space.</li>
+     *      <li>an entry can be obtained as a String or a Integer</li>
+     *      <li>an Integer entry can be obtained as a String entry</li>
+     *      <li>a node is associated with a {@link GuiPreferences}, which might be the preferences of the store
+     *            or a sub-preferences.</li>
+     *  </ul>
+     *
+     * */
     public abstract static class GuiValueStore {
         protected GuiPreferences preferences;
 
@@ -285,7 +376,13 @@ public class GuiPreferences {
         public abstract int getInt(String key, int def);
 
         public abstract GuiValueStore getChild(GuiPreferences preferences);
-        public abstract GuiValueStore getChild(String name);
+        public abstract GuiValueStore getChild(String key);
+
+        public abstract boolean hasEntryKey(String key);
+        public abstract boolean hasNodeKey(String key);
+        public abstract List<String> getKeys();
+
+        public abstract void remove(String key);
 
         public void flush() { }
     }
@@ -355,6 +452,56 @@ public class GuiPreferences {
         @Override
         public GuiValueStore getChild(String name) {
             return new GuiValueStoreDefault(preferences, getOrCreateStore(), name);
+        }
+
+        @Override
+        public boolean hasEntryKey(String key) {
+            try {
+                return Arrays.asList(getOrCreateStore().keys()).contains(key);
+            } catch (Exception ex) {
+                return false;
+            }
+        }
+
+        @Override
+        public boolean hasNodeKey(String key) {
+            try {
+                return getOrCreateStore().nodeExists(key);
+            } catch (Exception ex) {
+                return false;
+            }
+        }
+
+        @Override
+        public List<String> getKeys() {
+            try {
+                List<String> keys = new ArrayList<>(Arrays.asList(getOrCreateStore().keys()));
+                keys.addAll(Arrays.asList(getOrCreateStore().childrenNames()));
+                return keys;
+            } catch (Exception ex) {
+                return Collections.emptyList();
+            }
+        }
+
+        @Override
+        public void remove(String key) {
+            if (hasEntryKey(key)) {
+                getOrCreateStore().remove(key);
+            } else if (hasNodeKey(key)) {
+                try {
+                    getOrCreateStore().node(key).removeNode();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+
+        public void removeThisNode() {
+            try {
+                getOrCreateStore().removeNode();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
 
         @Override
@@ -486,7 +633,6 @@ public class GuiPreferences {
                     }
                 }
             }
-            System.err.println("load key=" + keyIndex + ", idx=" + index + ", val=" + value);
         }
 
         /** @return if false, the value holds a raw-object which might be a non-JSON object,
@@ -506,7 +652,6 @@ public class GuiPreferences {
                 store.putInt("index", index);
             }
             store.putString("time", time.toString());
-            System.err.println("store key=" + keyIndex + ", idx=" + index + ", val=" + value);
         }
 
         public GuiValueStore getValueStore() {
@@ -525,6 +670,175 @@ public class GuiPreferences {
                 store.putInt("index", index);
             }
             this.index = index;
+        }
+    }
+
+    //////////////////
+
+    public Map<String,Object> toJson() {
+        return ((GuiValueStoreOnMemory) copyOnMemoryAsRoot()
+                .getValueStore())
+                .toJson();
+    }
+
+    public GuiPreferences copyOnMemoryAsRoot() {
+        return copyOnMemory(null);
+    }
+
+    /**
+     * @param parent the parent which is already an on-memory instance or null
+     * @return the copied preferences whose value-store is a {@link GuiValueStoreOnMemory}
+     */
+    public GuiPreferences copyOnMemory(GuiPreferences parent) {
+        GuiPreferences src = this;
+        GuiPreferences prefs = new GuiPreferences(parent, src.context);
+        prefs.valueStore = copyOnMemoryStore(prefs, src.getValueStore());
+        for (GuiMappingContext subContext : src.getContext().getChildren()) {
+            GuiPreferences subPrefs = subContext.getPreferences().copyOnMemory(prefs);
+            prefs.setChild(subContext, subPrefs);
+        }
+        return prefs;
+    }
+
+    public static GuiValueStore copyOnMemoryStore(GuiPreferences prefs, GuiValueStore store) {
+        GuiValueStoreOnMemory copyStore = new GuiValueStoreOnMemory(prefs);
+        if (prefs.getParent() != null) {
+            GuiValueStore parentStore = prefs.getValueStore();
+            if (parentStore instanceof GuiValueStoreOnMemory) {
+                ((GuiValueStoreOnMemory) parentStore).putChild(prefs.getName(), copyStore);
+            }
+        }
+        for (String key : store.getKeys()) {
+            if (store.hasEntryKey(key)) {
+                copyStore.putString(key, store.getString(key, ""));
+            } else if (store.hasNodeKey(key)) {
+                GuiValueStore child = store.getChild(key);
+                if (child.getPreferences().equals(prefs)) { //this prefs node
+                    GuiValueStore childCopy = copyOnMemoryStore(child.getPreferences(), child);
+                    copyStore.putChild(key, childCopy);
+                }
+            }
+        }
+        return copyStore;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void fromJson(Map<String,Object> json) {
+        GuiPreferences src = this;
+
+        Map<String,Object> remainingNodes = new LinkedHashMap<>(json);
+
+        for (GuiMappingContext subContext : src.getContext().getChildren()) {
+            GuiPreferences subPrefs = src.getChild(subContext);
+            String key = subPrefs.getName();
+            Object v = json.get(key);
+            if (v instanceof Map<?,?>) {
+                subPrefs.fromJson((Map<String,Object>) v);
+                remainingNodes.remove(key);
+            }
+        }
+        //non-sub-prefs nodes
+        src.fromJsonChildNodes(src.getValueStore(), remainingNodes);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void fromJsonChildNodes(GuiValueStore store, Map<String,Object> json) {
+        for (Map.Entry<String,Object> e : json.entrySet()) {
+            String key = e.getKey();
+            Object val = e.getValue();
+            if (val instanceof String) {
+                store.putString(key, (String) val);
+            } else if (val instanceof Map<?,?>) {
+                fromJsonChildNodes(store.getChild(key), (Map<String, Object>) val);
+            }
+        }
+    }
+
+    public static class GuiValueStoreOnMemory extends GuiValueStore {
+        protected Map<String,Object> values;
+
+        public GuiValueStoreOnMemory(GuiPreferences preferences) {
+            super(preferences);
+            values = new LinkedHashMap<>();
+        }
+
+        @Override
+        public void putString(String key, String val) {
+            values.put(key, val);
+        }
+
+        @Override
+        public String getString(String key, String def) {
+            try {
+                return (String) values.getOrDefault(key, def);
+            } catch (Exception ex) {
+                return def;
+            }
+        }
+
+        @Override
+        public void putInt(String key, int val) {
+            values.put(key, Integer.toString(val));
+        }
+
+        @Override
+        public int getInt(String key, int def) {
+            try {
+                return Integer.valueOf((String) values.getOrDefault(key, Integer.toString(def)));
+            } catch (Exception ex) {
+                return def;
+            }
+        }
+
+        @Override
+        public GuiValueStore getChild(GuiPreferences preferences) {
+            return (GuiValueStore) values.computeIfAbsent(preferences.getName(),
+                    k -> new GuiValueStoreOnMemory(preferences));
+        }
+
+        @Override
+        public GuiValueStore getChild(String name) {
+            return (GuiValueStore) values.computeIfAbsent(name,
+                    k -> new GuiValueStoreOnMemory(preferences));
+        }
+
+        @Override
+        public List<String> getKeys() {
+            return new ArrayList<>(values.keySet());
+        }
+
+        @Override
+        public boolean hasEntryKey(String key) {
+            Object v = values.get(key);
+            return v != null && !(v instanceof GuiValueStore);
+        }
+
+        @Override
+        public boolean hasNodeKey(String key) {
+            Object v = values.get(key);
+            return v != null && v instanceof GuiValueStore;
+        }
+
+        public void putChild(String name, GuiValueStore value) {
+            values.put(name, value);
+        }
+
+        public Map<String,Object> toJson() {
+            LinkedHashMap<String,Object> map = new LinkedHashMap<>();
+            for (Map.Entry<String,Object> e : values.entrySet()) {
+                Object v = e.getValue();
+                if (v instanceof GuiValueStoreOnMemory) {
+                    map.put(e.getKey(), ((GuiValueStoreOnMemory) v).toJson());
+                } else {
+                    map.put(e.getKey(), v);
+                }
+            }
+            return map;
+        }
+
+        @Override
+        public void remove(String key) {
+            values.remove(key);
         }
     }
 }
