@@ -726,7 +726,7 @@ public class SearchTextField extends JComponent {
                 RoundRectangle2D rp = new RoundRectangle2D.Float(x + i, y + i, width - (2 * i), height - (2 * i), arcW, arcH);
                 g2.fill(rp);
             }
-            g2.setColor(new Color(200, 200, 200));
+            g2.setColor(new Color(180, 180, 180));
             g2.setStroke(new BasicStroke(0.7f));
             g2.draw(rr);
         }

@@ -166,6 +166,7 @@ public class GuiSwingLogManager extends GuiLogManager {
 
         public GuiSwingLogWindow(GuiSwingLogManager manager) {
             setTitle("Log");
+            setType(Type.UTILITY);
             JPanel pane = new JPanel(new BorderLayout());
 
             //list

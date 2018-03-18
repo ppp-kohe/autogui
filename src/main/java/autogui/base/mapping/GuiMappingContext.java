@@ -377,7 +377,7 @@ public class GuiMappingContext {
      * @return the split list, never null
      * If <code>forDisplay=false</code>, "MYName" =&gt; ["M", "Y", "Name"]
      */
-    public List<String> nameSplit(String name, boolean forDisplay) {
+    public static List<String> nameSplit(String name, boolean forDisplay) {
         List<String> words = new ArrayList<String>();
         StringBuilder buf = new StringBuilder();
         for (int i = 0, len = name.length(); i < len; ++i) {
@@ -398,7 +398,7 @@ public class GuiMappingContext {
         return words;
     }
 
-    public boolean isNameCharUpper(char c, int i, int len, String name, boolean forDisplay) {
+    public static boolean isNameCharUpper(char c, int i, int len, String name, boolean forDisplay) {
         if (forDisplay) {
             return (Character.isUpperCase(c) &&
                     (i > 0 && Character.isLowerCase(name.charAt(i - 1)) ||  // a[A]
@@ -408,7 +408,7 @@ public class GuiMappingContext {
         }
     }
 
-    public boolean isNameSeparator(char c) {
+    public static boolean isNameSeparator(char c) {
         return Character.isWhitespace(c) || c == '$' || c =='_' || !Character.isJavaIdentifierPart(c);
     }
 

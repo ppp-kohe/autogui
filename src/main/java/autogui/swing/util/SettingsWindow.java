@@ -44,7 +44,8 @@ public class SettingsWindow {
         show();
     }
 
-    public void show(JComponent sender, JComponent contentPane) {
+    public void show(String title, JComponent sender, JComponent contentPane) {
+        window.setTitle(title);
         window.setContentPane(contentPane);
         window.pack();
         show(sender);

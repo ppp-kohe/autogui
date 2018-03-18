@@ -5,8 +5,12 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.type.GuiTypeBuilder;
 import autogui.swing.log.GuiSwingLogManager;
 import autogui.swing.log.GuiSwingLogStatusBar;
+import autogui.swing.util.ApplicationIconGenerator;
+import autogui.swing.util.MenuBuilder;
 
 import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.function.Supplier;
@@ -18,6 +22,7 @@ public class GuiSwingWindow extends JFrame {
     protected GuiSwingLogManager logManager;
 
     protected JComponent viewComponent;
+    protected JMenu objectMenu;
 
     public static GuiSwingWindow createForObject(Object o) {
         return new GuiSwingWindow(new GuiMappingContext(
@@ -48,26 +53,56 @@ public class GuiSwingWindow extends JFrame {
         setContentPane(viewComponent);
         initMenu();
         initLog();
-
+        initIcon();
         pack();
+
         context.updateSourceFromRoot();
     }
 
     protected void initMenu() {
         JMenuBar bar = new JMenuBar();
 
-        JMenu menu = new JMenu("Object");
-        menu.add(new ShowPreferencesAction(this::getPreferences, viewComponent));
-        bar.add(menu);
+        objectMenu = new JMenu("Object");
+        objectMenu.addMenuListener(new MenuListener() {
+            @Override
+            public void menuSelected(MenuEvent e) {
+                setupObjectMenu();
+            }
+
+            @Override
+            public void menuDeselected(MenuEvent e) { }
+
+            @Override
+            public void menuCanceled(MenuEvent e) { }
+        });
+
+        bar.add(objectMenu);
 
         setJMenuBar(bar);
     }
+
+    public void setupObjectMenu() {
+        objectMenu.removeAll();
+        objectMenu.add(new ShowPreferencesAction(GuiSwingWindow.this::getPreferences, viewComponent));
+        objectMenu.addSeparator();
+        if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
+            ((GuiSwingView.ValuePane) viewComponent).getSwingMenuBuilder()
+                    .build(() -> viewComponent,
+                            new MenuBuilder.MenuAppender(objectMenu));
+        }
+    }
+
 
     protected void initLog() {
         logManager = new GuiSwingLogManager();
         logManager.setupConsole(true, true, true);
         GuiLogManager.setManager(logManager);
         setContentPane(logManager.createWindow().getPaneWithStatusBar(viewComponent));
+    }
+
+    protected void initIcon() {
+        new ApplicationIconGenerator(256, 256, context.getName())
+                .setAppIcon(this);
     }
 
     public GuiSwingPreferences getPreferences() {

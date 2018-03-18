@@ -56,7 +56,7 @@ public class GuiSwingPreferences {
     }
 
     public void show(JComponent sender) {
-        SettingsWindow.get().show(sender, mainPane);
+        SettingsWindow.get().show("Preferences", sender, mainPane);
     }
 
     public GuiMappingContext getRootContext() {

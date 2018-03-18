@@ -558,7 +558,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            SettingsWindow.get().show(pane, contentPane);
+            SettingsWindow.get().show("Number Settings", pane, contentPane);
         }
     }
 
