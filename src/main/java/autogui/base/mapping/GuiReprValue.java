@@ -237,6 +237,13 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
+     * @return if true, actually the value is stored to the preferences store
+     */
+    public boolean isHistoryValueStored() {
+        return true;
+    }
+
+    /**
      *
      * @param context the context of the repr.
      * @return the result of {@link GuiTypeMemberProperty#isWritable()} and so on.

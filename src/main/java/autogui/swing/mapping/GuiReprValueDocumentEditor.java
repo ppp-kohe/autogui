@@ -30,6 +30,11 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         return new SwingInvoker(() -> super.getUpdatedValue(context, executeParent)).run();
     }
 
+    @Override
+    public boolean isHistoryValueStored() {
+        return false;
+    }
+
     public interface Task {
         Object call() throws Throwable;
     }

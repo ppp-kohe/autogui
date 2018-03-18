@@ -293,7 +293,7 @@ public class GuiPreferences {
      * @return a new entry (keyIndex == -1) or an existing entry
      * */
     public HistoryValueEntry getHistoryValue(Object value) {
-        HistoryValueEntry e = new HistoryValueEntry(this, value);
+        HistoryValueEntry e = createHistoryValueEntry(value);
         Object v = e.getValue(); //it might be converted to JSON
         if (v == null) {
             return null;
@@ -325,7 +325,7 @@ public class GuiPreferences {
     public void loadHistoryValues() {
         historyValues = new ArrayList<>();
         for (int i = 0; i < historyValueLimit; ++i) {
-            HistoryValueEntry e = new HistoryValueEntry(this, null);
+            HistoryValueEntry e = createHistoryValueEntry(null);
             try {
                 e.setKeyIndexWithLoadOrStore(i);
                 if (e.getIndex() != -1) {
@@ -337,6 +337,15 @@ public class GuiPreferences {
         }
 
         historyValues.sort(Comparator.comparing(HistoryValueEntry::getIndex));
+    }
+
+    public HistoryValueEntry createHistoryValueEntry(Object value) {
+        if (context.getRepresentation() instanceof GuiReprValue &&
+                ((GuiReprValue) context.getRepresentation()).isHistoryValueStored()) {
+            return new HistoryValueEntry(this, value);
+        } else {
+            return new HistoryValueEntryOnMemory(this, value);
+        }
     }
 
     public void clearHistories() {
@@ -670,6 +679,34 @@ public class GuiPreferences {
                 store.putInt("index", index);
             }
             this.index = index;
+        }
+    }
+
+    public static class HistoryValueEntryOnMemory extends HistoryValueEntry {
+        public HistoryValueEntryOnMemory(GuiPreferences preferences, Object value) {
+            super(preferences, value);
+        }
+
+        @Override
+        public void load() { }
+
+        @Override
+        public void store() { }
+
+        @Override
+        public void remove() {
+            this.keyIndex = -1;
+            this.value = null;
+        }
+
+        @Override
+        public void setIndex(int index) {
+            this.index = index;
+        }
+
+        @Override
+        public GuiValueStore getValueStore() {
+            return null;
         }
     }
 

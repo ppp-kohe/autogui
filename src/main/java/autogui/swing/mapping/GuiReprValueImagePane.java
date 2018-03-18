@@ -40,6 +40,11 @@ public class GuiReprValueImagePane extends GuiReprValue {
         }
     }
 
+    @Override
+    public boolean isHistoryValueStored() {
+        return false;
+    }
+
     public static class ImageSizeGetter implements ImageObserver {
         protected AtomicInteger width = new AtomicInteger();
         protected AtomicInteger height = new AtomicInteger();

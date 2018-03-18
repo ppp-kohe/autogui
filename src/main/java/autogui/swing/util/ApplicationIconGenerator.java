@@ -110,7 +110,7 @@ public class ApplicationIconGenerator {
             g.fill(outerRectPath);
         }
 
-        Rectangle2D.Float interRect = buildRectSmaller(outerRect, outerRect.width * 0.02f, outerRect.height * 0.02f);
+        Rectangle2D.Float interRect = buildRectSmaller(outerRect, outerRect.width * 0.015f, outerRect.height * 0.015f);
         {
             Path2D interRectPath = buildRoundRect(true, true, true, true, interRect, 0.15f);
 
@@ -118,7 +118,7 @@ public class ApplicationIconGenerator {
             g.fill(interRectPath);
         }
 
-        Rectangle2D.Float fillRect = buildRectSmaller(interRect, interRect.width * 0.02f, outerRect.height * 0.02f);
+        Rectangle2D.Float fillRect = buildRectSmaller(interRect, interRect.width * 0.03f, outerRect.height * 0.03f);
         float fillRectHeightP = 0.3f;
         Rectangle2D.Float fillRect2 = new Rectangle2D.Float(fillRect.x, fillRect.y + fillRect.height * fillRectHeightP,
                 fillRect.width, fillRect.height * (1 - fillRectHeightP));
@@ -158,7 +158,7 @@ public class ApplicationIconGenerator {
                     g.setFont(font);
                 }
 
-                float fontSizeP = Math.min(nameRect.width / pattern.getWidth(), nameRect.height / pattern.getHeight());
+                float fontSizeP = Math.min(nameRect.width / pattern.getWidth(), nameRect.height / pattern.getHeight()) * 0.9f;
                 g.setFont(words.metrics.getFont().deriveFont(fontSizeP * words.metrics.getFont().getSize2D()));
                 NameWordBounds wordsFit = new NameWordBounds(g, words.names);
 

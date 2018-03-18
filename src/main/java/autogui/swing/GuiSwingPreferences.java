@@ -43,7 +43,8 @@ public class GuiSwingPreferences {
             toolBar.setOpaque(false);
             toolBar.add(actionButton(new SavePrefsAction()));
             toolBar.add(actionButton(new LoadPrefsAction()));
-            toolBar.add(actionButton(new ApplyPrefsAction(this::getRootContext, this::getSelectedSavedPreferences, () -> {})));
+            toolBar.add(actionButton(new ApplyPrefsAction(this::getRootContext, this::getSelectedSavedPreferences,
+                    () -> getRootContext().updateSourceFromRoot())));
             toolBar.add(actionButton(new NewPrefsAction(this::getRootContext, this::reloadList)));
             toolBar.add(actionButton(new DeletePrefsAction(this::getSelectedSavedPreferencesList, this::reloadList)));
 
@@ -205,6 +206,7 @@ public class GuiSwingPreferences {
             GuiPreferences preferences = prefs.get();
             if (preferences != null) {
                 context.get().getPreferences().fromJson(preferences.toJson());
+                  //TODO apply the last history value to context value, if isHistoryValueSupported() && isHistoryValueStored()
                 updater.run();
             }
         }

@@ -37,6 +37,11 @@ public class GuiReprObjectPane extends GuiReprValue {
         }
     }
 
+    @Override
+    public boolean isHistoryValueStored() {
+        return false;
+    }
+
     /**
      * use {@link #toJsonFromObject(GuiMappingContext, Object)}
      * @param context a context holds the representation
