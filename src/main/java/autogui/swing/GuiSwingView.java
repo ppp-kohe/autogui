@@ -89,6 +89,8 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         /**
+         * a sub-class which wraps another value-pane should overrides the method
+         *   in order to omit needless value setting
          * @param prefs target prefs or ancestor of the target;
          *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
          */
@@ -188,6 +190,11 @@ public interface GuiSwingView extends GuiSwingElement {
         public GuiMappingContext getContext() {
             return pane == null ? null : pane.getContext();
         }
+
+        @Override
+        public void loadPreferences(GuiPreferences prefs) {
+            GuiSwingView.loadChildren(prefs.getDescendant(getContext()), this);
+        }
     }
 
 
@@ -250,6 +257,11 @@ public interface GuiSwingView extends GuiSwingElement {
         @Override
         public GuiMappingContext getContext() {
             return pane == null ? null : pane.getContext();
+        }
+
+        @Override
+        public void loadPreferences(GuiPreferences prefs) {
+            GuiSwingView.loadChildren(prefs.getDescendant(getContext()), this);
         }
     }
 

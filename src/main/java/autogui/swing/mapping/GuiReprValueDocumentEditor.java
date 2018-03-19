@@ -187,10 +187,34 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         return true;
     }
 
+    public static TabSet tabSet;
+
+    public static TabSet getTabSet() {
+        if (tabSet == null) {
+            tabSet = new TabSet(IntStream.range(0, 100)
+                    .mapToObj(i -> new TabStop(i * 32))
+                    .toArray(TabStop[]::new));
+        }
+        return tabSet;
+    }
+
+    public static void setUpStyle(Style style) {
+        StyleConstants.setTabSet(style, getTabSet());
+        StyleConstants.setFontSize(style, 14);
+        String os = System.getProperty("os.name", "?").toLowerCase();
+        if (os.contains("mac")) {
+            StyleConstants.setFontFamily(style, "Menlo");
+        }
+    }
+
+    public static void setUpStyle(StyledDocument doc) {
+        Style style = doc.getStyle(StyleContext.DEFAULT_STYLE);
+        setUpStyle(style);
+        doc.setParagraphAttributes(0, doc.getLength(), style, true);
+    }
+
     public static class ContentWrappingDocument extends DefaultStyledDocument {
         protected Content value;
-
-        public static TabSet tabSet;
 
         public ContentWrappingDocument(Content c) {
             super(c, new StyleContext());
@@ -199,20 +223,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
 
         public void initDefaultStyle() {
-            if (tabSet == null) {
-                tabSet = new TabSet(IntStream.range(0, 100)
-                        .mapToObj(i -> new TabStop(i * 32))
-                        .toArray(TabStop[]::new));
-            }
-            Style style = getStyle(StyleContext.DEFAULT_STYLE);
-
-            StyleConstants.setTabSet(style, tabSet);
-            StyleConstants.setFontSize(style, 14);
-            String os = System.getProperty("os.name", "?").toLowerCase();
-            if (os.contains("mac")) {
-                StyleConstants.setFontFamily(style, "Menlo");
-            }
-            setParagraphAttributes(0, getLength(), style, true);
+            setUpStyle(this);
         }
 
         public Content getContentValue() {

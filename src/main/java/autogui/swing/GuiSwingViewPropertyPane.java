@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupExtension;
@@ -204,6 +205,11 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             } else {
                 return null;
             }
+        }
+
+        @Override
+        public void loadPreferences(GuiPreferences prefs) {
+            GuiSwingView.loadChildren(prefs.getDescendant(getContext()), this);
         }
     }
 }

@@ -1,22 +1,39 @@
 package autogui.swing;
 
+import autogui.base.JsonReader;
+import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.swing.icons.GuiSwingIcons;
+import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.text.Document;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class GuiSwingPreferences {
     protected JPanel mainPane;
     protected GuiMappingContext rootContext;
     protected JComponent rootComponent;
-    protected JList<GuiPreferences> list;
+    protected JTable list;
     protected PreferencesListModel listModel;
+
+    protected JEditorPane contentTextPane;
 
     public GuiSwingPreferences(GuiMappingContext rootContext, JComponent rootComponent) {
         this.rootContext = rootContext;
@@ -28,13 +45,25 @@ public class GuiSwingPreferences {
         mainPane = new JPanel(new BorderLayout());
         {
             listModel = new PreferencesListModel(this::getRootContext);
-            list = new JList<>(listModel);
-            list.setCellRenderer(new PreferencesRenderer());
+            list = new JTable(listModel);
+            list.setDefaultRenderer(Object.class, new PreferencesRenderer());
+            TableColumn column = list.getColumnModel().getColumn(0);
+            {
+                column.setHeaderValue("Saved Prefs");
+                column.setCellEditor(new PreferencesNameEditor());
+            }
+            addSelectionListener(this::showSelectedPrefs);
 
             JScrollPane listScroll = new JScrollPane(list);
             listScroll.setPreferredSize(new Dimension(300, 300));
 
-            JPanel viewPane = new JPanel();
+            JPanel viewPane = new JPanel(new BorderLayout());
+            {
+                contentTextPane = new JTextPane();
+                contentTextPane.setEditable(false);
+                GuiReprValueDocumentEditor.setUpStyle((StyledDocument) contentTextPane.getDocument());
+                viewPane.add(new JScrollPane(contentTextPane));
+            }
 
             JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listScroll, viewPane);
             mainPane.add(splitPane, BorderLayout.CENTER);
@@ -71,15 +100,31 @@ public class GuiSwingPreferences {
     }
 
     public List<GuiPreferences> getSelectedSavedPreferencesList() {
-        return list.getSelectedValuesList();
+        return IntStream.of(list.getSelectedRows())
+                .map(list::convertRowIndexToModel)
+                .mapToObj(listModel.getList()::get)
+                .collect(Collectors.toList());
     }
 
     public GuiPreferences getSelectedSavedPreferences() {
-        return list.getSelectedValue();
+        int i = list.convertRowIndexToView(list.getSelectedRow());
+        if (i >= 0) {
+            return listModel.getList().get(i);
+        } else {
+            return null;
+        }
     }
 
-    public JList<GuiPreferences> getList() {
+    public JTable getList() {
         return list;
+    }
+
+    public void addSelectionListener(Runnable r) {
+        list.getSelectionModel().addListSelectionListener(e -> r.run());
+    }
+
+    public boolean isSelectionEmpty() {
+        return list.getSelectionModel().isSelectionEmpty();
     }
 
     public JPanel getMainPane() {
@@ -100,7 +145,28 @@ public class GuiSwingPreferences {
         }
     }
 
-    public static class PreferencesListModel extends AbstractListModel<GuiPreferences> {
+    public void showSelectedPrefs() {
+        List<Object> list = new ArrayList<>();
+        for (GuiPreferences prefs : getSelectedSavedPreferencesList()) {
+            list.add(prefs.toJson());
+        }
+
+        JsonWriter w = JsonWriter.create().withNewLines(true);
+        if (list.size() == 1) {
+            w.write(list.get(0));
+        } else {
+            w.write(list);
+        }
+        Document doc = contentTextPane.getDocument();
+        try {
+            doc.remove(0, doc.getLength());
+            doc.insertString(0, w.toSource(), null);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public static class PreferencesListModel extends AbstractTableModel {
         protected Supplier<GuiMappingContext> context;
         protected List<GuiPreferences> list;
         public PreferencesListModel(Supplier<GuiMappingContext> context) {
@@ -109,13 +175,28 @@ public class GuiSwingPreferences {
         }
 
         @Override
-        public int getSize() {
+        public int getRowCount() {
             return list.size();
         }
 
         @Override
-        public GuiPreferences getElementAt(int index) {
-            return list.get(index);
+        public int getColumnCount() {
+            return 1;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            return list.get(rowIndex);
+        }
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return columnIndex == 0;
         }
 
         public void reload() {
@@ -124,6 +205,8 @@ public class GuiSwingPreferences {
                 oldSize = list.size();
             }
             list = context.get().getPreferences().getSavedStoreListAsRoot();
+            fireTableDataChanged();
+            /*
             int diff = oldSize - list.size();
             fireContentsChanged(this, 0, Math.min(oldSize - 1, list.size() - 1));
             if (diff > 0) { //removed
@@ -131,7 +214,7 @@ public class GuiSwingPreferences {
             }
             if (diff < 0) { //added
                 fireIntervalAdded(this, oldSize, list.size() - 1);
-            }
+            }*/
         }
 
         public List<GuiPreferences> getList() {
@@ -139,22 +222,48 @@ public class GuiSwingPreferences {
         }
     }
 
-    public static class PreferencesRenderer extends DefaultListCellRenderer {
+    public static class PreferencesRenderer extends DefaultTableCellRenderer {
         @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             if (value instanceof GuiPreferences) {
                 GuiPreferences prefs = (GuiPreferences) value;
-                value = prefs.getValueStore().getString("$name", "Preferences " + index);
+                value = prefs.getValueStore().getString("$name", "Preferences " + row);
             }
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             return this;
+        }
+    }
+
+    public static class PreferencesNameEditor extends DefaultCellEditor {
+        protected GuiPreferences currentPrefs;
+        public PreferencesNameEditor() {
+            super(new JTextField());
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            currentPrefs = null;
+            if (value instanceof GuiPreferences) {
+                currentPrefs = (GuiPreferences) value;
+                value = ((GuiPreferences) value).getValueStore().getString("$name", "");
+            }
+            return super.getTableCellEditorComponent(table, value, isSelected, row, column);
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            Object name = super.getCellEditorValue();
+            if (currentPrefs != null) {
+                currentPrefs.getValueStore().putString("$name", name.toString());
+            }
+            return currentPrefs;
         }
     }
 
     public static class NewPrefsAction extends AbstractAction {
         protected GuiSwingPreferences owner;
         public NewPrefsAction(GuiSwingPreferences owner) {
-            putValue(NAME, "New");
+            putValue(NAME, "Save");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("add"));
             this.owner = owner;
         }
@@ -164,7 +273,11 @@ public class GuiSwingPreferences {
             GuiPreferences rootPrefs = owner.getRootContext().getPreferences();
             GuiPreferences newStore = rootPrefs.addNewSavedStoreAsRoot();
             owner.savePreferences(newStore);
-            newStore.fromJson(rootPrefs.toJson());
+            Map<String,Object> map = rootPrefs.toJson();
+            if (map.containsKey("$name")) {
+                map.remove("$name");
+            }
+            newStore.fromJson(map);
             owner.reloadList();
         }
     }
@@ -175,9 +288,8 @@ public class GuiSwingPreferences {
             putValue(NAME, "Delete");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("delete"));
             this.owner = owner;
-            owner.getList().addListSelectionListener(e -> {
-                setEnabled(!owner.getList().isSelectionEmpty());
-            });
+            owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
+
         }
 
         @Override
@@ -189,36 +301,68 @@ public class GuiSwingPreferences {
         }
     }
 
+    protected JFileChooser chooser;
+
+    public JFileChooser getChooser() {
+        if (chooser == null) {
+            chooser = new JFileChooser();
+        }
+        return chooser;
+    }
+
     public static class SavePrefsAction extends AbstractAction {
         protected GuiSwingPreferences owner;
         public SavePrefsAction(GuiSwingPreferences owner) {
-            putValue(NAME, "Save...");
+            putValue(NAME, "Write To File...");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("save"));
             this.owner = owner;
-            owner.getList().addListSelectionListener(e -> {
-                setEnabled(!owner.getList().isSelectionEmpty());
-            });
+            owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO
+            JFileChooser chooser = owner.getChooser();
+            GuiPreferences pref = owner.getSelectedSavedPreferences();
+            String name = toSafeName(pref.getValueStore().getString("$name", "pref")) + ".json";
+            chooser.setSelectedFile(new File(name));
+            int ret = chooser.showSaveDialog(owner.getMainPane());
+            if (ret == JFileChooser.APPROVE_OPTION) {
+                File file = chooser.getSelectedFile();
+                try (Writer w = Files.newBufferedWriter(file.toPath())) {
+                    new JsonWriter(w).withNewLines(true)
+                            .write(pref.toJson());
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+                System.err.println("saved: " + file);
+            }
+        }
+
+        public String toSafeName(String name) {
+            return name.replaceAll("[\\-:/]", "_");
         }
     }
 
     public static class LoadPrefsAction extends AbstractAction {
         protected GuiSwingPreferences owner;
         public LoadPrefsAction(GuiSwingPreferences owner) {
-            putValue(NAME, "Load...");
+            putValue(NAME, "Load From File...");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("load"));
-            owner.getList().addListSelectionListener(e -> {
-                setEnabled(!owner.getList().isSelectionEmpty());
-            });
+            this.owner = owner;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO
+            JFileChooser chooser = owner.getChooser();
+            int ret = chooser.showOpenDialog(owner.getMainPane());
+            if (ret == JFileChooser.APPROVE_OPTION) {
+                File file = chooser.getSelectedFile();
+                Object json = JsonReader.read(file);
+                owner.getRootContext().getPreferences().addNewSavedStoreAsRoot()
+                        .fromJson((Map<String,Object>) json);
+                owner.reloadList();
+            }
         }
     }
 
@@ -228,9 +372,7 @@ public class GuiSwingPreferences {
             putValue(NAME, "Apply");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("apply"));
             this.owner = owner;
-            owner.getList().addListSelectionListener(e -> {
-                setEnabled(!owner.getList().isSelectionEmpty());
-            });
+            owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
         }
 
         @Override
@@ -247,7 +389,7 @@ public class GuiSwingPreferences {
         protected GuiSwingPreferences owner;
 
         public ResetPrefsAction(GuiSwingPreferences owner) {
-            putValue(NAME, "Clear All");
+            putValue(NAME, "Reset");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("reset"));
             this.owner = owner;
         }
@@ -258,6 +400,7 @@ public class GuiSwingPreferences {
                     "Reset Entire Preferences ?");
             if (r == JOptionPane.OK_OPTION) {
                 owner.getRootContext().getPreferences().clearAll();
+                owner.applyPreferences();
             }
         }
     }

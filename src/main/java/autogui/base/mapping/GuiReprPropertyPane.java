@@ -151,4 +151,17 @@ public class GuiReprPropertyPane extends GuiReprValue {
                 GuiReprObjectPane.getAddingHumanReadableStringToList(list));
         return String.join("\t", list);
     }
+
+    @Override
+    public boolean isHistoryValueStored() {
+        return false;
+    }
+
+    /**
+     * @return false: a property does not support history values, but the content repr. might support it.
+     */
+    @Override
+    public boolean isHistoryValueSupported() {
+        return false;
+    }
 }
