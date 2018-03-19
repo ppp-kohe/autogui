@@ -45,6 +45,9 @@ public class GuiSwingPreferences {
         mainPane = new JPanel(new BorderLayout());
         {
             listModel = new PreferencesListModel(this::getRootContext);
+            listModel.addTableModelListener(e -> {
+                this.showSelectedPrefs();
+            });
             list = new JTable(listModel);
             list.setDefaultRenderer(Object.class, new PreferencesRenderer());
             TableColumn column = list.getColumnModel().getColumn(0);
@@ -191,7 +194,7 @@ public class GuiSwingPreferences {
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-
+            fireTableCellUpdated(rowIndex, columnIndex);
         }
 
         @Override
@@ -255,6 +258,7 @@ public class GuiSwingPreferences {
             Object name = super.getCellEditorValue();
             if (currentPrefs != null) {
                 currentPrefs.getValueStore().putString("$name", name.toString());
+
             }
             return currentPrefs;
         }
@@ -379,6 +383,7 @@ public class GuiSwingPreferences {
         public void actionPerformed(ActionEvent e) {
             GuiPreferences preferences = owner.getSelectedSavedPreferences();
             if (preferences != null) {
+                owner.getRootContext().getPreferences().clearAll();
                 owner.getRootContext().getPreferences().fromJson(preferences.toJson());
                 owner.applyPreferences();
             }
