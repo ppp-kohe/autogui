@@ -48,7 +48,7 @@ public class GuiSwingWindow extends JFrame {
     protected void init() {
         viewComponent = view.createView(context);
 
-        preferences = new GuiSwingPreferences(context);
+        preferences = new GuiSwingPreferences(context, viewComponent);
 
         setContentPane(viewComponent);
         initMenu();

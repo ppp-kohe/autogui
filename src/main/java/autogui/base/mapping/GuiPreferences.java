@@ -8,13 +8,34 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 /** the Preferences holder associated to a {@link GuiMappingContext}.
- *    The class holds its parent, but does not hold children.
- *     Each child is held by {@link GuiMappingContext}.
+ *     Each child is also held by {@link GuiMappingContext}.
  *
  *   The class has a {@link GuiValueStore}.
  *   It also has a list of history values.
+ *
+ *   <pre>
+ *        pack/Type/  //root-context, in a case of {@link GuiReprObjectPane}(pack.Type)
+ *                    //otherwise, "autogui/base/mapping/pack_Type"
+ *            "$default"/
+ *               propName = value... //regular preferences entries
+ *               ...
+ *               "$history"/
+ *                  "0"/    //key-index
+ *                     "index" = ...
+ *                     "value" = ...
+ *                     "time"  = ... //{@link Instant#toString()}
+ *                  ...
+ *               propertyName/   //the name of a sub-context
+ *                  ...
+ *            "$saved"/
+ *               "$0"/
+ *                 "name" = ...
+ *                 ... //same structure as "$default"
+ *               ...
+ *   </pre>
  * */
 public class GuiPreferences {
     protected GuiMappingContext context;
@@ -124,15 +145,13 @@ public class GuiPreferences {
 
     /**
      * <pre>
-     *     "autogui/base/mapping/"
-     *        pack_Type/
      *            "$default/"
      *               ...
      *            "$saved/"
-     *               "0/"
+     *               "$0/"
      *                  "$name" = "prefs yyyy/mm/dd hh:mm"
      *                  ...
-     *               "1/"
+     *               "$1/"
      *               ...
      * </pre>
      * @return saved preferences
@@ -181,13 +200,6 @@ public class GuiPreferences {
             return newPrefs;
         } catch (Exception ex) {
             throw new RuntimeException(ex);
-        }
-    }
-
-    public void removeAsSavedStore() {
-        GuiValueStore store = getValueStore();
-        if (store instanceof GuiValueStoreDefault) {
-            ((GuiValueStoreDefault) store).removeThisNode();
         }
     }
 
@@ -340,12 +352,27 @@ public class GuiPreferences {
     }
 
     public HistoryValueEntry createHistoryValueEntry(Object value) {
-        if (context.getRepresentation() instanceof GuiReprValue &&
-                ((GuiReprValue) context.getRepresentation()).isHistoryValueStored()) {
+        if (context.isHistoryValueStored()) {
             return new HistoryValueEntry(this, value);
         } else {
             return new HistoryValueEntryOnMemory(this, value);
         }
+    }
+
+    /** after calling the method, the preferences will be invalidated */
+    public void clearAll() {
+        if (context.getPreferences().equals(this)) { //current context: recursively clear the histories
+            clearHistoriesTree();
+        }
+        getValueStore().removeThisNode();
+    }
+
+    public void clearHistoriesTree() {
+        clearHistories();
+        for (GuiMappingContext subContext : context.getChildren()) {
+            subContext.getPreferences().clearHistoriesTree();
+        }
+        context.clearPreferences();
     }
 
     public void clearHistories() {
@@ -393,6 +420,10 @@ public class GuiPreferences {
 
         public abstract void remove(String key);
 
+        /**
+         * erase the node, but it might not remove the node from the parent
+         */
+        public abstract void removeThisNode();
         public void flush() { }
     }
 
@@ -505,6 +536,7 @@ public class GuiPreferences {
             }
         }
 
+        @Override
         public void removeThisNode() {
             try {
                 getOrCreateStore().removeNode();
@@ -682,6 +714,9 @@ public class GuiPreferences {
         }
     }
 
+    /**
+     * an on-memory impl. of value history entry, created when the repr. is {@link GuiReprValue#isHistoryValueStored()}.
+     */
     public static class HistoryValueEntryOnMemory extends HistoryValueEntry {
         public HistoryValueEntryOnMemory(GuiPreferences preferences, Object value) {
             super(preferences, value);
@@ -729,31 +764,33 @@ public class GuiPreferences {
     public GuiPreferences copyOnMemory(GuiPreferences parent) {
         GuiPreferences src = this;
         GuiPreferences prefs = new GuiPreferences(parent, src.context);
-        prefs.valueStore = copyOnMemoryStore(prefs, src.getValueStore());
+        prefs.valueStore = copyOnMemoryStore(src, prefs, src.getValueStore(), true);
         for (GuiMappingContext subContext : src.getContext().getChildren()) {
-            GuiPreferences subPrefs = subContext.getPreferences().copyOnMemory(prefs);
+            GuiPreferences subPrefs = src.getChild(subContext).copyOnMemory(prefs);
             prefs.setChild(subContext, subPrefs);
         }
         return prefs;
     }
 
-    public static GuiValueStore copyOnMemoryStore(GuiPreferences prefs, GuiValueStore store) {
+    public static GuiValueStore copyOnMemoryStore(GuiPreferences src, GuiPreferences prefs, GuiValueStore store, boolean putToParent) {
         GuiValueStoreOnMemory copyStore = new GuiValueStoreOnMemory(prefs);
-        if (prefs.getParent() != null) {
-            GuiValueStore parentStore = prefs.getValueStore();
+        if (putToParent && prefs.getParent() != null) {
+            GuiValueStore parentStore = prefs.getParent().getValueStore();
             if (parentStore instanceof GuiValueStoreOnMemory) {
                 ((GuiValueStoreOnMemory) parentStore).putChild(prefs.getName(), copyStore);
             }
         }
+        Set<String> subNodeNames = src.getContext().getChildren().stream()
+                .map(GuiMappingContext::getName)
+                .collect(Collectors.toSet());
         for (String key : store.getKeys()) {
             if (store.hasEntryKey(key)) {
                 copyStore.putString(key, store.getString(key, ""));
-            } else if (store.hasNodeKey(key)) {
+            } else if (store.hasNodeKey(key) &&
+                    !subNodeNames.contains(key)) { //only copies nodes for "this"
                 GuiValueStore child = store.getChild(key);
-                if (child.getPreferences().equals(prefs)) { //this prefs node
-                    GuiValueStore childCopy = copyOnMemoryStore(child.getPreferences(), child);
-                    copyStore.putChild(key, childCopy);
-                }
+                GuiValueStore childCopy = copyOnMemoryStore(src, prefs, child, false);
+                copyStore.putChild(key, childCopy);
             }
         }
         return copyStore;
@@ -791,6 +828,9 @@ public class GuiPreferences {
         }
     }
 
+    /**
+     * an on-memory impl. of value-store
+     */
     public static class GuiValueStoreOnMemory extends GuiValueStore {
         protected Map<String,Object> values;
 
@@ -876,6 +916,11 @@ public class GuiPreferences {
         @Override
         public void remove(String key) {
             values.remove(key);
+        }
+
+        @Override
+        public void removeThisNode() {
+            values.clear();
         }
     }
 }

@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.table.TableTargetMenu;
 import autogui.swing.util.PopupExtension;
@@ -21,9 +22,7 @@ import java.awt.event.KeyEvent;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -93,8 +92,22 @@ public interface GuiSwingView extends GuiSwingElement {
          * @param prefs target prefs or ancestor of the target;
          *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
          */
+        @SuppressWarnings("unchecked")
         default void loadPreferences(GuiPreferences prefs) {
-            loadChildren(prefs, asComponent());
+            GuiPreferences targetPrefs = prefs.getDescendant(getContext());
+            if (getContext().isHistoryValueSupported()) {
+                setLastHistoryValue(targetPrefs, (ValuePane<Object>) this);
+            }
+            loadChildren(targetPrefs, asComponent());
+        }
+    }
+
+    static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane) {
+        List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefs.getHistoryValues());
+        es.sort(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime));
+        if (!es.isEmpty()) {
+            Object value = es.get(es.size() - 1).getValue();
+            pane.setSwingViewValueWithUpdate(value);
         }
 
     }

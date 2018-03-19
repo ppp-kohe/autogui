@@ -329,6 +329,9 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 model.setStepSize(type.fromString(step));
             }
 
+            if (context.isHistoryValueSupported()) {
+                GuiSwingView.setLastHistoryValue(prefs, this);
+            }
             GuiSwingView.loadChildren(prefs, this);
         }
     }

@@ -8,6 +8,7 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.nio.file.Paths;
@@ -61,6 +62,29 @@ public class IconExp {
             JPanel pane = new JPanel();//new JPanel(new BorderLayout());
             btns.forEach(pane::add);
             frame.setContentPane(pane);
+
+            BufferedImage img = new BufferedImage(16,16, BufferedImage.TYPE_4BYTE_ABGR);
+            Graphics2D g = img.createGraphics();
+            {
+                g.setColor(new Color(255, 255, 255, 0));
+                g.fillRect(0, 0, img.getWidth(), img.getHeight());
+
+                Ellipse2D e = new Ellipse2D.Float(img.getWidth() / 10, img.getHeight() / 10,
+                        (float) (img.getWidth() * 0.7), (float) (img.getHeight() * 0.7));
+                g.setColor(Color.blue);
+                g.fill(e);
+            }
+            g.dispose();
+            frame.setIconImage(img);
+
+            try {
+                Class<?> task = Class.forName("java.awt.Taskbar");
+                Object taskBarObj = task.getMethod("getTaskbar").invoke(null);
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
         }
         frame.setSize(500, 500);
         frame.setVisible(true);

@@ -458,6 +458,16 @@ public class GuiMappingContext {
         return getRepresentation() != null && getRepresentation() instanceof GuiReprCollectionElement;
     }
 
+    public boolean isHistoryValueSupported() {
+        return getRepresentation() != null && getRepresentation() instanceof GuiReprValue
+                && ((GuiReprValue) getRepresentation()).isHistoryValueSupported();
+    }
+
+    public boolean isHistoryValueStored() {
+        return getRepresentation() != null && getRepresentation() instanceof GuiReprValue
+                && ((GuiReprValue) getRepresentation()).isHistoryValueStored();
+    }
+
     //////////////////////
 
     /** @return taskRunner taken from parent context or single thread executor in the root.
@@ -490,7 +500,9 @@ public class GuiMappingContext {
         }
     }
 
-    /** @return obtains from the parent */
+    /** @return obtains from the parent.
+     *     a preference object occasionally cleared from the parent context.
+     *     so it does not recommend to hold the returned instance. */
     public GuiPreferences getPreferences() {
         if (preferences == null) {
             GuiMappingContext parent = getParent();
@@ -501,5 +513,9 @@ public class GuiMappingContext {
             }
         }
         return preferences;
+    }
+
+    public void clearPreferences() {
+        this.preferences = null;
     }
 }

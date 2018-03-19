@@ -38,6 +38,11 @@ public class GuiReprObjectPane extends GuiReprValue {
     }
 
     @Override
+    public boolean isHistoryValueSupported() {
+        return false;
+    }
+
+    @Override
     public boolean isHistoryValueStored() {
         return false;
     }

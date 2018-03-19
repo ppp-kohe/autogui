@@ -240,7 +240,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @return if true, actually the value is stored to the preferences store
      */
     public boolean isHistoryValueStored() {
-        return true;
+        return isHistoryValueSupported();
     }
 
     /**

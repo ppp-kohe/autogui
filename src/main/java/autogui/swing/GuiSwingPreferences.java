@@ -14,11 +14,13 @@ import java.util.function.Supplier;
 public class GuiSwingPreferences {
     protected JPanel mainPane;
     protected GuiMappingContext rootContext;
+    protected JComponent rootComponent;
     protected JList<GuiPreferences> list;
     protected PreferencesListModel listModel;
 
-    public GuiSwingPreferences(GuiMappingContext rootContext) {
+    public GuiSwingPreferences(GuiMappingContext rootContext, JComponent rootComponent) {
         this.rootContext = rootContext;
+        this.rootComponent = rootComponent;
         init();
     }
 
@@ -41,12 +43,12 @@ public class GuiSwingPreferences {
             JToolBar toolBar = new JToolBar();
             toolBar.setFloatable(false);
             toolBar.setOpaque(false);
-            toolBar.add(actionButton(new SavePrefsAction()));
-            toolBar.add(actionButton(new LoadPrefsAction()));
-            toolBar.add(actionButton(new ApplyPrefsAction(this::getRootContext, this::getSelectedSavedPreferences,
-                    () -> getRootContext().updateSourceFromRoot())));
-            toolBar.add(actionButton(new NewPrefsAction(this::getRootContext, this::reloadList)));
-            toolBar.add(actionButton(new DeletePrefsAction(this::getSelectedSavedPreferencesList, this::reloadList)));
+            toolBar.add(actionButton(new NewPrefsAction(this)));
+            toolBar.add(actionButton(new DeletePrefsAction(this)));
+            toolBar.add(actionButton(new ApplyPrefsAction(this)));
+            toolBar.add(actionButton(new SavePrefsAction(this)));
+            toolBar.add(actionButton(new LoadPrefsAction(this)));
+            toolBar.add(actionButton(new ResetPrefsAction(this)));
 
             mainPane.add(toolBar, BorderLayout.PAGE_START);
         }
@@ -74,6 +76,28 @@ public class GuiSwingPreferences {
 
     public GuiPreferences getSelectedSavedPreferences() {
         return list.getSelectedValue();
+    }
+
+    public JList<GuiPreferences> getList() {
+        return list;
+    }
+
+    public JPanel getMainPane() {
+        return mainPane;
+    }
+
+    public void applyPreferences() {
+        if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
+            ((GuiSwingView.ValuePane) rootComponent).loadPreferences(
+                rootContext.getPreferences());
+        }
+    }
+
+    public void savePreferences(GuiPreferences prefs) {
+        if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
+            ((GuiSwingView.ValuePane) rootComponent).savePreferences(
+                    prefs);
+        }
     }
 
     public static class PreferencesListModel extends AbstractListModel<GuiPreferences> {
@@ -128,86 +152,112 @@ public class GuiSwingPreferences {
     }
 
     public static class NewPrefsAction extends AbstractAction {
-        protected Supplier<GuiMappingContext> context;
-        protected Runnable updater;
-        public NewPrefsAction(Supplier<GuiMappingContext> context, Runnable updater) {
+        protected GuiSwingPreferences owner;
+        public NewPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "New");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("add"));
-            this.context = context;
-            this.updater = updater;
+            this.owner = owner;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            GuiPreferences rootPrefs = context.get().getPreferences();
+            GuiPreferences rootPrefs = owner.getRootContext().getPreferences();
             GuiPreferences newStore = rootPrefs.addNewSavedStoreAsRoot();
+            owner.savePreferences(newStore);
             newStore.fromJson(rootPrefs.toJson());
-            updater.run();
+            owner.reloadList();
         }
     }
 
     public static class DeletePrefsAction extends AbstractAction {
-        protected Supplier<List<GuiPreferences>> prefs;
-        protected Runnable updater;
-        public DeletePrefsAction(Supplier<List<GuiPreferences>> prefs, Runnable updater) {
+        protected GuiSwingPreferences owner;
+        public DeletePrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Delete");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("delete"));
-            this.prefs = prefs;
-            this.updater = updater;
+            this.owner = owner;
+            owner.getList().addListSelectionListener(e -> {
+                setEnabled(!owner.getList().isSelectionEmpty());
+            });
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            for (GuiPreferences p : prefs.get()) {
-                p.removeAsSavedStore();
+            for (GuiPreferences p : owner.getSelectedSavedPreferencesList()) {
+                p.clearAll();
             }
-            updater.run();
+            owner.reloadList();
         }
     }
 
     public static class SavePrefsAction extends AbstractAction {
-        public SavePrefsAction() {
+        protected GuiSwingPreferences owner;
+        public SavePrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Save...");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("save"));
+            this.owner = owner;
+            owner.getList().addListSelectionListener(e -> {
+                setEnabled(!owner.getList().isSelectionEmpty());
+            });
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-
+            //TODO
         }
     }
 
     public static class LoadPrefsAction extends AbstractAction {
-        public LoadPrefsAction() {
+        protected GuiSwingPreferences owner;
+        public LoadPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Load...");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("load"));
+            owner.getList().addListSelectionListener(e -> {
+                setEnabled(!owner.getList().isSelectionEmpty());
+            });
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-
+            //TODO
         }
     }
 
     public static class ApplyPrefsAction extends AbstractAction {
-        protected Supplier<GuiMappingContext> context;
-        protected Supplier<GuiPreferences> prefs;
-        protected Runnable updater;
-        public ApplyPrefsAction(Supplier<GuiMappingContext> context, Supplier<GuiPreferences> prefs, Runnable updater) {
+        protected GuiSwingPreferences owner;
+        public ApplyPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Apply");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("apply"));
-            this.context = context;
-            this.prefs = prefs;
-            this.updater = updater;
+            this.owner = owner;
+            owner.getList().addListSelectionListener(e -> {
+                setEnabled(!owner.getList().isSelectionEmpty());
+            });
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            GuiPreferences preferences = prefs.get();
+            GuiPreferences preferences = owner.getSelectedSavedPreferences();
             if (preferences != null) {
-                context.get().getPreferences().fromJson(preferences.toJson());
-                  //TODO apply the last history value to context value, if isHistoryValueSupported() && isHistoryValueStored()
-                updater.run();
+                owner.getRootContext().getPreferences().fromJson(preferences.toJson());
+                owner.applyPreferences();
+            }
+        }
+    }
+
+    public static class ResetPrefsAction extends AbstractAction {
+        protected GuiSwingPreferences owner;
+
+        public ResetPrefsAction(GuiSwingPreferences owner) {
+            putValue(NAME, "Clear All");
+            putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("reset"));
+            this.owner = owner;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int r = JOptionPane.showConfirmDialog(owner.getMainPane(),
+                    "Reset Entire Preferences ?");
+            if (r == JOptionPane.OK_OPTION) {
+                owner.getRootContext().getPreferences().clearAll();
             }
         }
     }
