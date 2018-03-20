@@ -17,7 +17,10 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * a column factory for {@link java.io.File} or {@link Path}
+ * a column factory for {@link java.io.File} or {@link Path}.
+ * <p>
+ *     both editor and renderer are realized by a sub-class of
+ *     {@link autogui.swing.GuiSwingViewFilePathField.PropertyFilePathPane}.
  */
 public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     @Override

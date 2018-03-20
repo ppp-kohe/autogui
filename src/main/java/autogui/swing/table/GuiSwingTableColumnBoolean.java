@@ -10,7 +10,10 @@ import java.util.Comparator;
 import java.util.EventObject;
 
 /**
- * a column factory for {@link Boolean}
+ * a column factory for {@link Boolean}.
+ *
+ * <p>
+ * Both editor and renderer are realized by {@link autogui.swing.GuiSwingViewBooleanCheckBox.PropertyCheckBox}.
  */
 public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
     @Override

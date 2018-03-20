@@ -30,13 +30,20 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/**
+ * a table-column with {@link GuiMappingContext}.
+ *
+ */
 public class ObjectTableColumnValue extends ObjectTableColumn {
     protected GuiMappingContext context;
     protected int contextIndex = -1;
 
     /**
      * the representation of the context must be a sub-type of {@link GuiReprValue}.
-     * view must be a {@link autogui.swing.GuiSwingView.ValuePane} */
+     * view must be a {@link autogui.swing.GuiSwingView.ValuePane}
+     * @param context the associated context
+     * @param view the component for both editor and renderer
+     */
     public ObjectTableColumnValue(GuiMappingContext context, JComponent view) {
         this(context, view, view);
     }
@@ -106,11 +113,16 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         return null;
     }
 
+    /**
+     * a cell renderer with {@link autogui.swing.GuiSwingView.ValuePane}
+     */
     public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource {
         protected JComponent component;
         protected ObjectTableColumn ownerColumn;
 
-        /** component must be {@link GuiSwingView.ValuePane }*/
+        /**
+         * @param component the renderer component, must be a {@link GuiSwingView.ValuePane}
+         */
         public ObjectTableCellRenderer(JComponent component) {
             this.component = component;
         }
@@ -170,12 +182,15 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
     }
 
+    /**
+     * a cell-editor with {@link autogui.swing.GuiSwingView.ValuePane}
+     */
     public static class ObjectTableCellEditor extends AbstractCellEditor implements TableCellEditor {
         protected JComponent component;
         protected int clickCount = 2;
 
         /**
-         * component must be {@link autogui.swing.GuiSwingView.ValuePane}
+         * @param component the editor component, must be a {@link autogui.swing.GuiSwingView.ValuePane}
          */
         public ObjectTableCellEditor(JComponent component) {
             this.component = component;
@@ -237,7 +252,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         return UIManager.getBorder("Table.focusCellHighlightBorder");
     }
 
-
+    /**
+     * a popup-menu builder returned by {@link ObjectTableCellRenderer}
+     *  for wrapping an original menu-builder (not intended for a table)
+     *    with {@link autogui.swing.table.ObjectTableModel.CollectionRowsAndCellsActionBuilder}.
+      */
     public static class ObjectTableColumnActionBuilder implements PopupExtension.PopupMenuBuilder {
         protected ObjectTableColumn column;
         protected PopupExtension.PopupMenuBuilder paneOriginalBuilder;
@@ -265,6 +284,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
     }
 
+    /**
+     * an action for selecting cells of a target column and all rows
+     */
     public static class ColumnSelectionAction extends AbstractAction {
         protected JTable table;
         protected int column;
@@ -282,6 +304,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
     }
 
+    /**
+     * a menu appending wrapper for converting an action to another action which supports a selected rows.
+     * <ul>
+     *  <li>{@link TableTargetMenu#convert(GuiReprCollectionTable.TableTargetColumn)}</li>
+     *  <li>the class currently explicitly handles actions in {@link PopupExtensionText} and in {@link SearchTextFieldFilePath}.</li>
+     *  <li>a {@link TableTargetCellAction} is converted to a {@link TableTargetExecutionAction}.</li>
+     * </ul>
+     */
     public static class CollectionRowsActionBuilder implements Consumer<Object> {
         protected JTable table;
         protected ObjectTableColumn column;
@@ -342,6 +372,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
     }
 
+    /**
+     * a wrapper class for {@link TableTargetCellAction}
+     */
     public static class TableTargetExecutionAction extends AbstractAction {
         protected TableTargetColumnAction action;
         protected GuiReprCollectionTable.TableTargetColumn target;
@@ -375,12 +408,16 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
     }
 
+    /**
+     * an action for selected rows of a column with a lambda
+     */
     public static class TableTargetInvocationAction extends AbstractAction {
         protected Action action;
         protected GuiReprCollectionTable.TableTargetColumn target;
         protected BiConsumer<ActionEvent, GuiReprCollectionTable.TableTargetColumn> invoker;
 
-        public TableTargetInvocationAction(Action action, GuiReprCollectionTable.TableTargetColumn target, BiConsumer<ActionEvent, GuiReprCollectionTable.TableTargetColumn> invoker) {
+        public TableTargetInvocationAction(Action action, GuiReprCollectionTable.TableTargetColumn target,
+                                           BiConsumer<ActionEvent, GuiReprCollectionTable.TableTargetColumn> invoker) {
             this.action = action;
             this.target = target;
             this.invoker = invoker;
@@ -406,7 +443,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
     }
 
-
+    /**
+     * an action for wrapping another action.
+     *   this action iterates over the selected rows and changing the target column value with the each row value.
+     */
     public static class TableRowsRepeatAction extends AbstractAction {
         protected JTable table;
         protected ObjectTableColumn column;

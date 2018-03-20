@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+/**
+ * an implementation of {@link autogui.base.mapping.GuiReprCollectionTable.TableTargetCell} for {@link JTable}.
+ */
 public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTargetCell {
     protected JTable table;
 

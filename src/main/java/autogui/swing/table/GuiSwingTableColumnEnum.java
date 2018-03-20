@@ -9,6 +9,10 @@ import java.util.Comparator;
 
 /**
  * a column factory for {@link Enum}.
+ *
+ * <p>
+ *    The renderer is realized by {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
+ *    The editor is realized by {@link autogui.swing.GuiSwingViewEnumComboBox.PropertyEnumComboBox}.
  */
 public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     @Override

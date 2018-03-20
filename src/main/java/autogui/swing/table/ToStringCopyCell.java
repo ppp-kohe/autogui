@@ -12,7 +12,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * classes for copying string description of selected cells and rows
+ */
 public class ToStringCopyCell {
+    /**
+     * a composite for to-string relying on
+     * {@link autogui.base.mapping.GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}
+     */
     public static class TableMenuCompositeToStringValue implements ObjectTableColumn.TableMenuComposite {
         protected GuiMappingContext context;
         protected int index;
@@ -46,6 +53,9 @@ public class ToStringCopyCell {
 
     public static TableMenuCompositeSharedToStringValue shared = new TableMenuCompositeSharedToStringValue();
 
+    /**
+     * the key of {@link TableMenuCompositeToStringValue}
+     */
     public static class TableMenuCompositeSharedToStringValue implements ObjectTableColumn.TableMenuCompositeShared {
         @Override
         public ObjectTableModel.PopupMenuBuilderForRowsOrCells composite(JTable table, List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
@@ -57,6 +67,9 @@ public class ToStringCopyCell {
         }
     }
 
+    /**
+     * the action defined by composition of selected columns; it joins cell strings by new-lines (for row) and tabs (for columns).
+     */
     public static class ToStringCopyForCellsAction extends AbstractAction implements TableTargetCellAction {
         protected List<TableMenuCompositeToStringValue> activatedColumns;
         protected boolean onlyApplyingSelectedColumns;

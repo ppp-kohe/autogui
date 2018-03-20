@@ -8,6 +8,13 @@ import autogui.swing.GuiSwingViewNumberSpinner;
 import javax.swing.*;
 import java.util.Comparator;
 
+/**
+ * a column factory for a {@link Number}.
+ *
+ * <p>
+ *     the renderer is realized by {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
+ *     the editor is realized by {@link autogui.swing.GuiSwingViewNumberSpinner.PropertyNumberSpinner}.
+ */
 public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context) {

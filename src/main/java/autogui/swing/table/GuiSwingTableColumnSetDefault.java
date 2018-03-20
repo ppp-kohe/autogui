@@ -13,6 +13,10 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * the default implementation of table-column-set associated with {@link autogui.base.mapping.GuiReprCollectionElement}.
+ *
+ */
 public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     protected GuiSwingMapperSet columnMappingSet;
 
@@ -43,7 +47,17 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         return actions;
     }
 
-
+    /**
+     * an action for executing an {@link GuiReprActionList} with selected targets.
+     *  instances of the class is created by a collection-table instead of the column-set,
+     *   because of a list-action is created as a sibling node of the target collection;
+     * <pre>
+     *     class T {
+     *         public List&lt;E&gt; collectionProp;
+     *         public void action(List&lt;E&gt; selected) { ... } //a sibling member of the collection
+     *     }
+     * </pre>
+     */
     public static class TableSelectionListAction extends GuiSwingActionDefault.ExecutionAction {
         protected TableSelectionSource source;
 
@@ -65,6 +79,18 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         }
     }
 
+    /**
+     * an action for execution an {@link GuiReprAction} with selected targets.
+     * <pre>
+     *     class T {
+     *         public List&lt;E&gt; collectionProp;
+     *     }
+     *     class E {
+     *         ...
+     *         public void action() { ... }
+     *     }
+     * </pre>
+     * */
     public static class TableSelectionAction extends TableSelectionListAction {
         public TableSelectionAction(GuiMappingContext context, TableSelectionSource source) {
             super(context, source);

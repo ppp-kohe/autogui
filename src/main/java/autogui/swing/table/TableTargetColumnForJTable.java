@@ -6,6 +6,9 @@ import javax.swing.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+/**
+ * a impl. of {@link autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn} with a {@link JTable}.
+ */
 public class TableTargetColumnForJTable extends TableTargetCellForJTable
         implements GuiReprCollectionTable.TableTargetColumn {
     /** model index */

@@ -6,7 +6,11 @@ import autogui.swing.GuiSwingViewImagePane;
 import java.awt.*;
 
 /**
- * a column factory for {@link Image}
+ * a column factory for {@link Image}.
+ *
+ * <p>
+ *     both editor and renderer are realized by a sub-class of
+ *     {@link autogui.swing.GuiSwingViewImagePane.PropertyImagePane}.
  */
 public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
     @Override

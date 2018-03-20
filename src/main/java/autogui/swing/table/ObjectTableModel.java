@@ -19,6 +19,9 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+/**
+ * a table-model based on a list of row objects
+ */
 public class ObjectTableModel extends AbstractTableModel {
     protected Supplier<List<?>> sourceSupplier;
     protected List<ObjectTableColumn> columns;
@@ -216,7 +219,17 @@ public class ObjectTableModel extends AbstractTableModel {
         }
     }
 
-    /** executed under event thread */
+    /**
+     *  executed under the event thread.
+     *  <p>
+     *  the cell value is obtained via the specified {@link ObjectTableColumn}
+     *   with the specified row of {@link #getSource()}.
+     *  the cell value is cached and obtained by {@link #takeValueFromSource(Object[], int, int)} at the first time.
+     *
+     * @param rowIndex the target row
+     * @param columnIndex the target column
+     * @return the cell value, nullable (waiting for obtaining the value)
+     */
     public Object getValueAtWithError(int rowIndex, int columnIndex) {
         Object[] rowData = data[rowIndex];
         Object cellData = rowData[columnIndex];
@@ -230,6 +243,16 @@ public class ObjectTableModel extends AbstractTableModel {
         }
     }
 
+    /**
+     *  the column's {@link ObjectTableColumn#getCellValue(Object, int, int)} might return
+     *   a {@link Future} object and
+     *   then it waits completion of the task in {@link #takeValueFromSourceFuture(Object[], int, int, Future)}.
+     *   The method is run in {@link #getFutureWaiter()} (default is just call the method)
+     * @param rowData the row array which the returned cell value will be stored
+     * @param rowIndex the row index
+     * @param columnIndex the column index
+     * @return the cell value, nullable
+     */
     public Object takeValueFromSource(Object[] rowData, int rowIndex, int columnIndex) {
         Object rowObject = source.get(rowIndex);
         Object cellObject = columns.get(columnIndex)
@@ -248,6 +271,15 @@ public class ObjectTableModel extends AbstractTableModel {
         }
     }
 
+    /**
+     * wait the completion of a task up to 1 sec. ,
+     *   store the result to the array, and notify the update (as a later event process).
+     *   If it overs the time, it just throws a runtime-exception.
+     * @param rowData the stored array
+     * @param rowIndex  the row index
+     * @param columnIndex the column index
+     * @param future the task
+     */
     public void takeValueFromSourceFuture(Object[] rowData, int rowIndex, int columnIndex, Future<?> future) {
         try {
             Object cellObject = future.get(1, TimeUnit.SECONDS);
@@ -276,7 +308,11 @@ public class ObjectTableModel extends AbstractTableModel {
         }
     }
 
-    /** executed under event thread */
+    /** executed under event thread.
+     * @param aValue the column value to be set
+     * @param rowIndex the target row
+     * @param columnIndex the target column
+     */
     public void setValueAtWithError(Object aValue, int rowIndex, int columnIndex) {
         Object[] rowData = data[rowIndex];
         rowData[columnIndex] = (aValue == null ? NULL_CELL : aValue);
@@ -317,7 +353,9 @@ public class ObjectTableModel extends AbstractTableModel {
         }
     }
 
-    /** executed under event thread */
+    /** executed under event thread
+     * @param rowIndex the target row index
+     */
     public void refreshRow(int rowIndex) {
         clearRowData(rowIndex);
         fireTableRowsUpdated(rowIndex, rowIndex);
@@ -329,7 +367,9 @@ public class ObjectTableModel extends AbstractTableModel {
         Arrays.fill(rowData, null);
     }
 
-    /** executed under event thread */
+    /** executed under event thread
+     * @param rowIndexes the target rows
+     */
     public void refreshRows(int... rowIndexes) {
         int min = -1;
         int max = -1;
@@ -347,14 +387,18 @@ public class ObjectTableModel extends AbstractTableModel {
         }
     }
 
-    /** executed under event thread */
+    /** executed under event thread
+     * @param columnIndexes the target columns
+     */
     public void refreshColumns(Collection<Integer> columnIndexes) {
         refreshColumns(columnIndexes.stream()
                 .mapToInt(Integer::intValue)
                 .toArray());
     }
 
-    /** executed under event thread */
+    /** executed under event thread
+     * @param columnIndexes the target columns
+     */
     public void refreshColumns(int... columnIndexes) {
         for (Object[] rowData : data) {
             for (int columnIndex : columnIndexes) {
@@ -390,6 +434,9 @@ public class ObjectTableModel extends AbstractTableModel {
                 .forEach(b -> b.build(sender, new CollectionRowsAndCellsActionBuilder(table, menu)));
     }
 
+    /**
+     * a menu builder for {@link TableTargetCellAction}s
+     */
     public interface PopupMenuBuilderForRowsOrCells {
         void build(PopupExtensionSender sender, Consumer<TableTargetCellAction> menu);
     }
@@ -409,6 +456,9 @@ public class ObjectTableModel extends AbstractTableModel {
     }
 
 
+    /**
+     * a builder accepting a {@link TableTargetCellAction} and wrapping it to a {@link TableTargetCellExecutionAction}.
+     */
     public static class CollectionRowsAndCellsActionBuilder implements Consumer<TableTargetCellAction> {
         protected Consumer<Object> menu;
         protected GuiReprCollectionTable.TableTargetCell target;
@@ -425,6 +475,9 @@ public class ObjectTableModel extends AbstractTableModel {
         }
     }
 
+    /**
+     * an action for wrapping {@link TableTargetCellAction}
+     */
     public static class TableTargetCellExecutionAction extends AbstractAction {
         protected TableTargetCellAction action;
         protected GuiReprCollectionTable.TableTargetCell target;

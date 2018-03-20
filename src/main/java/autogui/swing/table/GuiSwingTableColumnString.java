@@ -1,24 +1,27 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.GuiSwingViewStringField;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 
+/**
+ * a column factory for {@link String}.
+ * <p>
+ *     both editor and renderer are realized by a sub-class of {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
+ */
 public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context) {
-        GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context);
-        label.setOpaque(true);
         return new ObjectTableColumnValue(context,
                 new ColumnEditTextPane(context, false),
                 new ColumnEditTextPane(context, true))
                     .withComparator(Comparator.comparing(String.class::cast));
     }
 
+    /** a component for editor and renderer */
     public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyTextPane {
         protected boolean editor;
         public ColumnEditTextPane(GuiMappingContext context, boolean editor) {

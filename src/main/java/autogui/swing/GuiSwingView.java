@@ -3,7 +3,6 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.base.mapping.GuiReprValue;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.table.TableTargetMenu;
 import autogui.swing.util.PopupExtension;

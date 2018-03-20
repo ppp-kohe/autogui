@@ -20,6 +20,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * a table-column with additional info.
+ *
+ */
 public class ObjectTableColumn {
     protected TableColumn tableColumn;
     protected int rowHeight;
@@ -155,6 +159,9 @@ public class ObjectTableColumn {
         }
     }
 
+    /**
+     * a menu-builder holder
+     */
     public interface PopupMenuBuilderSource {
         default GuiSwingView.ValuePane<Object> getMenuTargetPane() {
             return null;
@@ -175,16 +182,23 @@ public class ObjectTableColumn {
 
     /** menu items which the column can process */
     public interface TableMenuComposite {
-        /** returns the "key" object for the composite shared by the same menu composites */
+        /** @return the "key" object for the composite shared by the same menu composites */
         TableMenuCompositeShared getShared();
     }
 
+    /**
+     * a shared key for a menu composite
+     */
     public interface TableMenuCompositeShared  {
-        /***
+        /**
          * actually composite the selected columns if row is false, or all columns if row is true.
          *  The built actions within the returned builder are {@link TableTargetCellAction},
          *    and their actionPerformed(ActionEvent) will never be called.
          *    So you can just throw an exception in the method.
+         * @param table the target table
+         * @param columns the selected target columns
+         * @param row true if the target are all columns of a row, or false if the target are only selected columns
+         * @return a menu builder for composite items
          */
         ObjectTableModel.PopupMenuBuilderForRowsOrCells composite(JTable table,
                                                                   List<TableMenuComposite> columns, boolean row);
@@ -193,6 +207,9 @@ public class ObjectTableColumn {
 
     ////////////////
 
+    /**
+     * a top-column displaying an row-index number
+     */
     public static class ObjectTableColumnRowIndex extends ObjectTableColumn {
         public ObjectTableColumnRowIndex() {
             tableColumn = new TableColumn(0, 64, new NumberRenderer(this), null);
@@ -224,6 +241,9 @@ public class ObjectTableColumn {
         }
     }
 
+    /**
+     * a renderer for index numbers
+     */
     public static class NumberRenderer extends DefaultTableCellRenderer
             implements PopupMenuBuilderSource {
         protected ObjectTableColumn column;
@@ -251,6 +271,9 @@ public class ObjectTableColumn {
         }
     }
 
+    /**
+     * an action for copying an index number to the clip-board
+     */
     public static class NumberCopyAction extends PopupExtensionText.TextCopyAllAction
             implements TableTargetColumnAction {
 
@@ -291,6 +314,12 @@ public class ObjectTableColumn {
         return l;
     }
 
+    /**
+     * a column class for specifying operations with lambdas.
+     * The class does not care about rendering and editing.
+     * @param <ObjType> the target row-object type
+     * @param <PropType> the column type
+     */
     public static class ObjectTableColumnLabel<ObjType, PropType> extends ObjectTableColumn {
         protected Function<ObjType,PropType> getter;
         protected BiConsumer<ObjType,PropType> setter;
