@@ -14,7 +14,8 @@ import java.util.Base64;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** the representation depends on some AWT classes (java.desktop module) */
+/** a GUI representation for a property holding an {@link Image}.
+ * the representation depends on some AWT classes (java.desktop module) */
 public class GuiReprValueImagePane extends GuiReprValue {
     @Override
     public boolean matchValueType(Class<?> cls) {
@@ -45,6 +46,9 @@ public class GuiReprValueImagePane extends GuiReprValue {
         return false;
     }
 
+    /**
+     * an {@link ImageObserver} for obtaining the size of an image
+     */
     public static class ImageSizeGetter implements ImageObserver {
         protected AtomicInteger width = new AtomicInteger();
         protected AtomicInteger height = new AtomicInteger();

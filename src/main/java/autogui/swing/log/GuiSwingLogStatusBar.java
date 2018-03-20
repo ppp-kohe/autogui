@@ -9,6 +9,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
 
+/**
+ * a status-bar for displaying a last log-entry
+ */
 public class GuiSwingLogStatusBar extends JComponent {
     protected GuiLogEntry entry;
     protected Component entryComponent;
@@ -77,7 +80,7 @@ public class GuiSwingLogStatusBar extends JComponent {
         }
     }
 
-
+    /** a dispatcher delegating to {@link GuiSwingLogStatusBar#dispatch(MouseEvent)} */
     public static class EventDispatcher extends MouseAdapter {
         protected GuiSwingLogStatusBar bar;
 

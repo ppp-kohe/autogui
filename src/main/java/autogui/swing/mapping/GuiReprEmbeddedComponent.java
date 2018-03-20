@@ -5,6 +5,9 @@ import autogui.base.mapping.GuiReprValue;
 
 import javax.swing.*;
 
+/**
+ * a GUI component for a property holding a {@link JComponent}
+ */
 public class GuiReprEmbeddedComponent extends GuiReprValue {
     @Override
     public boolean matchValueType(Class<?> cls) {

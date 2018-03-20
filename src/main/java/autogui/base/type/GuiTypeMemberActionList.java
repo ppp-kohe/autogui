@@ -5,9 +5,9 @@ import java.util.List;
 
 /**
  * an action taking a list: processing the selected items in a table
- * <pre>
+ * <code>
  *  public R m(List&lt;E&gt; selectedItems) { ... }
- *  </pre>
+ *  </code>.
  *  the type of the argument is List, and its super types except for Object (Collection and Iterable).
  *
  *  no children.

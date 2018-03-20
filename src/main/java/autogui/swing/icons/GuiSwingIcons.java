@@ -170,6 +170,7 @@ public class GuiSwingIcons {
         return pressedIconMap.computeIfAbsent(prefix + name, k -> loadPressedIcon(loadIcon(prefix, name, "@2x.png", width, height)));
     }
 
+    /** an {@link Icon} with an {@link Image} and size*/
     public static class ResourceIcon implements Icon {
         protected Image image;
         protected float width;
@@ -208,6 +209,7 @@ public class GuiSwingIcons {
 
     public static String PRESSED_ICON_KEY = "autoguiPressedIcon";
 
+    /** an action button with the customized border */
     public static class ActionButton extends JButton {
         public ActionButton(Action a) {
             super(a);

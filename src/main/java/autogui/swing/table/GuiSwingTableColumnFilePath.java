@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * a column factory for {@link java.io.File} or {@link Path}
+ */
 public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context) {
@@ -25,6 +28,9 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
                 .withComparator(Comparator.comparing(Path.class::cast));
     }
 
+    /**
+     * an editor for a file-path
+     */
     public static class ColumnEditFilePath extends GuiSwingViewFilePathField.PropertyFilePathPane {
         protected boolean editor;
         public ColumnEditFilePath(GuiMappingContext context, boolean editor) {
@@ -77,6 +83,9 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         }
     }
 
+    /**
+     * a dummy editor for just rending a file-path
+     */
     public static class SearchTextFieldModelFilePathEmpty extends SearchTextFieldFilePath.SearchTextFieldModelFilePath {
         @Override
         public boolean isBackgroundTask() {

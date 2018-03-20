@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * a log-entry of a progress bar
+ */
 public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements GuiSwingLogEntry {
     protected Map<JTextComponent,int[]> selections = new HashMap<>(2);
     protected boolean selected;
@@ -47,6 +50,9 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         return selected;
     }
 
+    /**
+     * a renderer for a process bar entry
+     */
     public static class GuiSwingLogProgressRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
         protected ContainerType containerType;
@@ -405,6 +411,9 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
     }
 
+    /**
+     * an action for terminating a progress bar entry
+     */
     public static class ProgressStopAction extends AbstractAction {
         protected GuiSwingLogProgressRenderer renderer;
         public ProgressStopAction(GuiSwingLogProgressRenderer renderer) {

@@ -4,9 +4,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * <pre>
+ * a type information about <code>
  *     Collection&lt;E&gt;
- * </pre>
+ * </code>.
  *  the type is Collection, and its sub-types
  */
 public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {

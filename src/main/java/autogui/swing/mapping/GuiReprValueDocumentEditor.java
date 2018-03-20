@@ -16,7 +16,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.IntStream;
 
-/** the representation depends on some Swing classes(java.desktop module)  */
+/** a GUI representation for a property holding
+ * a {@link Document}, {@link javax.swing.text.AbstractDocument.Content}, or a {@link StringBuilder}.
+ *  the representation depends on some Swing classes(java.desktop module)  */
 public class GuiReprValueDocumentEditor extends GuiReprValue {
     @Override
     public boolean matchValueType(Class<?> cls) {
@@ -35,10 +37,16 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         return false;
     }
 
+    /**
+     * a function interface for processed in {@link SwingInvoker}
+     */
     public interface Task {
         Object call() throws Throwable;
     }
 
+    /**
+     * a task runner in the Swing Event dispatching thread.
+     */
     public static class SwingInvoker {
         public Object result;
         public Throwable exception;
@@ -213,6 +221,9 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         doc.setParagraphAttributes(0, doc.getLength(), style, true);
     }
 
+    /**
+     * a styled-document impl. for {@link javax.swing.text.AbstractDocument.Content}
+     */
     public static class ContentWrappingDocument extends DefaultStyledDocument {
         protected Content value;
 
@@ -231,7 +242,10 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
 
         /** compare values by equals(Object) for detecting change of a property:
-         *   default impl. of equals of Content only compares their references */
+         *   default impl. of equals of Content only compares their references
+         * @param o compared value
+         * @return true if o is this
+         */
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -249,6 +263,9 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     //TODO this is a worst way for implementing a text editor.
+    /**
+     *  a content for {@link StringBuilder}
+     */
     public static class StringBuilderContent implements AbstractDocument.Content, Serializable {
         protected final StringBuilder buffer;
         transient protected char[] array;
@@ -365,7 +382,10 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
 
         /**
-         * compare only StringBuilder references for detecting change of the property */
+         * compare only StringBuilder references for detecting change of the property
+         * @param o compared value
+         * @return true if o is this
+         */
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -382,10 +402,17 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
     }
 
+    /**
+     * an functional interface used in {@link StringBuilderContent}
+     * @param <T> the returned type
+     */
     public interface EditSupplier<T> {
         T get() throws BadLocationException;
     }
 
+    /**
+     * a position implementation with an offset
+     */
     public static class ContentPosition implements Position {
         public int offset;
 
@@ -404,6 +431,9 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
     }
 
+    /**
+     * an undoable insertion operation for {@link StringBuilderContent}
+     */
     public static class ContentInsertEdit extends AbstractUndoableEdit {
         protected StringBuilderContent content;
         protected int offset;
@@ -439,6 +469,9 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
     }
 
+    /**
+     * an undoable removing operation for {@link StringBuilderContent}
+     */
     public static class ContentRemoveEdit extends AbstractUndoableEdit {
         protected StringBuilderContent content;
         protected int offset;

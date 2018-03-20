@@ -13,11 +13,16 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * a log-manager supporting Swing GUI
+ */
 public class GuiSwingLogManager extends GuiLogManager {
     protected List<Consumer<GuiLogEntry>> views = new ArrayList<>();
     protected GuiLogManagerConsole console;
 
-    /** view might accept same entries */
+    /**
+     * @param view might accept same entries
+     */
     public void addView(Consumer<GuiLogEntry> view) {
         views.add(view);
     }
@@ -102,6 +107,9 @@ public class GuiSwingLogManager extends GuiLogManager {
         }
     }
 
+    /**
+     * a log-entry renderer for a list and a status-bar
+     */
     public static class GuiSwingLogRenderer implements TableCellRenderer, ListCellRenderer<GuiLogEntry> {
         protected GuiSwingLogManager manager;
         protected JLabel nullLabel;
@@ -159,6 +167,9 @@ public class GuiSwingLogManager extends GuiLogManager {
         return new GuiSwingLogWindow(this);
     }
 
+    /**
+     * a window for displaying log-list
+     */
     public static class GuiSwingLogWindow extends JFrame {
         protected GuiSwingLogList list;
         protected JToolBar toolbar;
@@ -211,6 +222,9 @@ public class GuiSwingLogManager extends GuiLogManager {
         }
     }
 
+    /**
+     * an action for showing the log-list, displayed on a status-bar
+     */
     public static class LogWindowShowAction extends AbstractAction {
         protected JFrame frame;
         protected boolean first = true;

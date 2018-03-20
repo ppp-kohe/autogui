@@ -7,6 +7,9 @@ import autogui.swing.GuiSwingViewLabel;
 import javax.swing.*;
 import java.util.Comparator;
 
+/**
+ * a column factory for {@link Enum}.
+ */
 public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context) {

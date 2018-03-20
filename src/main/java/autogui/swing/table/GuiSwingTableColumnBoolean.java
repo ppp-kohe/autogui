@@ -9,6 +9,9 @@ import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.EventObject;
 
+/**
+ * a column factory for {@link Boolean}
+ */
 public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context) {
@@ -31,6 +34,9 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
         return column;
     }
 
+    /**
+     * an editor for a boolean value
+     */
     public static class CheckBoxEditor extends ObjectTableColumnValue.ObjectTableCellEditor {
         public CheckBoxEditor(JComponent component) {
             super(component);

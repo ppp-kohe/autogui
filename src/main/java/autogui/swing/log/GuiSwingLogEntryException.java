@@ -14,6 +14,9 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * a log-entry for an exception with supporting GUI rendering
+ */
 public class GuiSwingLogEntryException extends GuiLogEntryException implements GuiSwingLogEntry {
     protected Map<JTextComponent, int[]> selectionMap = new HashMap<>(2);
     protected boolean expanded;
@@ -59,6 +62,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         this.selected = selected;
     }
 
+    /** a renderer for a log-entry */
     public static class GuiSwingLogExceptionRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
         protected ContainerType containerType;
@@ -227,7 +231,9 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             }
         }
 
-        /** a valid result will be returned only after {@link #setDocument(GuiLogEntryException)}  */
+        /** a valid result will be returned only after {@link #setDocument(GuiLogEntryException)}
+         * @return an index
+         */
         public int getExpansionTextStartIndex() {
             if (lastValue != null && lastValue instanceof GuiSwingLogEntryException) {
                 List<Integer> lines = getLinesForDocument(stackTrace.getStyledDocument());
@@ -520,7 +526,9 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         }
     }
 
-
+    /**
+     * a set of {@link Style}s for describing stack-trace info.
+     */
     public static class StackTraceStyleSet {
         public Style timeStyle;
         public Style messageStyle;
@@ -561,6 +569,9 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         }
     }
 
+    /**
+     * an action for expanding stack-trace of an exception entry
+     */
     public static class ExceptionExpandAction extends AbstractAction {
         protected GuiSwingLogExceptionRenderer renderer;
         public ExceptionExpandAction(GuiSwingLogExceptionRenderer renderer) {

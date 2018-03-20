@@ -16,6 +16,9 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * a list component for displaying log entries
+ */
 public class GuiSwingLogList extends JList<GuiLogEntry> {
     protected Timer activePainter;
     protected GuiSwingLogEventDispatcher eventDispatcher;
@@ -75,7 +78,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         return getLogListModel().getEntryLimit();
     }
 
-    /** &lt;1 means no limit */
+    /**
+     * @param n the limit. &lt;1 means no limit
+     */
     public void setEntryLimit(int n) {
         getLogListModel().setEntryLimit(n);
     }
@@ -189,12 +194,17 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
     /////////////// find
 
-    /** only update matching filter of existing renderer */
+    /** only update matching filter of existing renderer
+     * @param str the searched text
+     */
     public void findText(String str) {
         eventDispatcher.findText(str);
     }
 
-    /** find and move */
+    /** find and move
+     * @param str the searched text
+     * @param forward forward=true, or backward=false
+     */
     public void findText(String str, boolean forward) {
         eventDispatcher.findTextAndScroll(str, forward);
     }
@@ -234,6 +244,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         menu.show(this, p.x, p.y);
     }
 
+    /** the list model for the log-list component */
     public static class GuiSwingLogListModel extends AbstractListModel<GuiLogEntry> {
         protected int entryLimit = -1;
         protected java.util.List<GuiLogEntry> entries = new ArrayList<>();
@@ -365,7 +376,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         }
     }
 
-
+    /**
+     * the event handler for log-entries in the list
+     * */
     public static class GuiSwingLogEventDispatcher implements MouseListener, MouseMotionListener {
         protected GuiSwingLogList table;
         protected CellRendererPane rendererPane;
@@ -701,6 +714,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         }
     }
 
+    /**
+     * a mutable state type for searching
+     */
     public static class FindState {
         public String text;
         public int entryIndex = -1;
@@ -764,6 +780,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         return bar;
     }
 
+    /**
+     * the action for clearing the log-list
+     */
     public static class LogListClearAction extends AbstractAction {
         protected GuiSwingLogList list;
 
@@ -782,6 +801,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         }
     }
 
+    /**
+     * the key-handler for starting searching
+     */
     public static class LogTextFindAdapter extends KeyAdapter {
         protected GuiSwingLogList list;
         protected JTextComponent findText;
@@ -804,6 +826,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         }
     }
 
+    /**
+     * the action for copying texts of log-entries
+     */
     public static class LogListCopyTextAction extends AbstractAction {
         protected GuiSwingLogList list;
 

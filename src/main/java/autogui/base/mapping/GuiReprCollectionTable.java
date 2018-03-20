@@ -205,6 +205,8 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
         return String.join("\t", list);
     }
 
+    /** interface for actions which handle selected-rows;
+     *    an actual implementation relies on a concrete GUI component */
     public interface TableTarget {
         boolean isSelectionEmpty();
 
@@ -236,6 +238,11 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
         void setCellValues(Stream<int[]> pos, Function<int[], Object> posToValue);
     }
 
+    /**
+     * a sub-type of table-target, also supporting selecting partial columns;
+     *   in the type, {@link #getSelectedCells()} returns the values of the partial columns.
+     *   it also supports obtaining all-cells in a row.
+     */
     public interface TableTargetCell extends TableTarget {
         Stream<int[]> getSelectedRowAllCellIndexesStream();
 
@@ -255,6 +262,7 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
         }
     }
 
+    /** a function for setting cell-values with different sized values */
     public static class TableTargetColumnFillLoop implements Function<int[],Object> {
         protected int nextIndex;
         protected List<?> values;

@@ -3,9 +3,10 @@ package autogui.base.type;
 import java.lang.reflect.Method;
 
 /**
- * <pre>
+ * a type information for
+ * <code>
  *     public R m() { ... }
- * </pre>
+ * </code>.
  * no children
  */
 public class GuiTypeMemberAction extends GuiTypeMember {

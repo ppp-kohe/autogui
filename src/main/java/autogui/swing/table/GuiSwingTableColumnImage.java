@@ -5,6 +5,9 @@ import autogui.swing.GuiSwingViewImagePane;
 
 import java.awt.*;
 
+/**
+ * a column factory for {@link Image}
+ */
 public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context) {

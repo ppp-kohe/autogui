@@ -3,6 +3,7 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionSender;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -27,7 +28,7 @@ import java.util.function.Consumer;
  *          The original builder creates menu items for a non-table view.
  *          Those items are converted to {@link TableTargetColumnAction}s
  *           by {@link autogui.swing.table.ObjectTableColumnValue.CollectionRowsActionBuilder}
- *            in the {@link autogui.swing.table.ObjectTableColumnValue.ObjectTableColumnActionBuilder#build(PopupExtension, Consumer)}.
+ *            in the {@link autogui.swing.table.ObjectTableColumnValue.ObjectTableColumnActionBuilder#build(PopupExtensionSender, Consumer)} .
  *   */
 public interface TableTargetColumnAction extends Action {
     void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target);

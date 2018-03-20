@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
+ * a type information about a property.
  * <pre>
  *     public R setP(E e) { ... }
  *     public E getP() { ... }

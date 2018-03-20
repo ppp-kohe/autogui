@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/** the combobox component for an {@link Enum} property */
+/** a combobox component for an {@link Enum} property */
 public class GuiReprValueEnumComboBox extends GuiReprValue {
 
     @Override

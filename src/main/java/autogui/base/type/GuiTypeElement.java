@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * describe information of a type, a property, or an action.
+ * the super-type for describing information of a type, a property, or an action.
  */
 public interface GuiTypeElement {
     String getName();

@@ -137,14 +137,15 @@ public class ObjectTableColumn {
         return this;
     }
 
-    /** returns {@link TableColumn#getCellRenderer()} if the renderer is an {@link PopupMenuBuilderSource} itself.
-     *  <p>
+    /**
      *  Note: the actions added by the builder will only work with single (last) value of the renderer,
      *    set by {@link autogui.swing.GuiSwingView.ValuePane#setSwingViewValue(Object)}.
      *    So when the action is invoked,
      *       it will need to iterate over the selected rows, set the target value and invoke the action for each row.
      *       After the each action invoked, it might need to check the value.
-     *  */
+     *
+     * @return {@link TableColumn#getCellRenderer()} if the renderer is an {@link PopupMenuBuilderSource} itself.
+     */
     public PopupMenuBuilderSource getMenuBuilderSource() {
         TableCellRenderer r = getTableColumn().getCellRenderer();
         if (r instanceof PopupMenuBuilderSource) {

@@ -304,6 +304,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
                 (thread != null ? " @" + getThread().getName() : "") + getMessage();
     }
 
+    /** an exception thrown by checking-interruption */
     public static class GuiLogEntryProgressInterruptedException extends RuntimeException {
 
     }

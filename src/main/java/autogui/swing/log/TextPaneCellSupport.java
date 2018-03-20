@@ -11,7 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * support class for displaying JTextPane as a list cell
+ * a support class for displaying JTextPane as a list cell
  */
 public class TextPaneCellSupport {
     protected JTextPane pane;
@@ -34,12 +34,14 @@ public class TextPaneCellSupport {
         return pane;
     }
 
-    /** key for selection highlight */
+    /**
+     * @return key for selection highlight
+     */
     public Object getSelectionHighlight() {
         return selectionHighlight;
     }
 
-    /** existing finding-highlight keys, might be unused */
+    /** @return existing finding-highlight keys, might be unused */
     public List<Object> getFindHighlightKeys() {
         return findHighlightKeys;
     }
@@ -59,7 +61,7 @@ public class TextPaneCellSupport {
         this.findPainter = findPainter;
     }
 
-    /** default highlight painter is automatically set in the constructor */
+    /** @return default highlight painter, automatically set in the constructor */
     public Highlighter.HighlightPainter getFindPainter() {
         return findPainter;
     }
@@ -72,8 +74,13 @@ public class TextPaneCellSupport {
         setHighlight(selectionHighlight, isSelected, from, to);
     }
 
-    /** change the position of the highlight. if isSelected == false, the positions become 0,0.
-     *     from and to can be both from&lt;to and to&lt;=from  */
+    /** change the position of the highlight.
+     *     from and to can be both from&lt;to and to&lt;=from
+     * @param highlightKey a key object
+     * @param isSelected if false, the positions become 0,0.
+     * @param from the range starting index
+     * @param to the range ending index
+     */
     public void setHighlight(Object highlightKey, boolean isSelected, int from, int to) {
         if (highlightKey == null) {
             return;
@@ -114,7 +121,10 @@ public class TextPaneCellSupport {
     }
 
     /** set the highlight painter to locations matched by the findPattern.
-     *   it automatically reuses or adds findHighlightKeys */
+     *   it automatically reuses or adds findHighlightKeys
+     * @param findPattern the pattern for finding ranges in the pane's text
+     * @param findPainter the set painter
+     */
     public void setFindHighlights(Pattern findPattern, Highlighter.HighlightPainter findPainter) {
         int hk = 0;
         if (findPattern != null) {
@@ -153,16 +163,17 @@ public class TextPaneCellSupport {
      *    If clicked on a text component,
      *     it adds or updates a value for the  text component.
      *     the value of selection map becomes {startIndex, endIndex}.
-     *    <p>
+     * @param selectionMap  can be used for {@link #setSelectionHighlight(Map)}
+     * @param start
      *    If start == true,
      *       this can be used for mousePressed events,
      *       it sets the text index at clickPoint to value[0],
      *     otherwise,
      *       can be used for mouseDragged or mouseReleased events,
      *       it sets the index to value[1].
-     *     <p>
-     *   The selectionMap can be used for {@link #setSelectionHighlight(Map)}
-     * */
+     * @param clickPoint the clicked point
+     * @param component the component containing text components
+     */
     public static void click(Map<JTextComponent, int[]> selectionMap, boolean start, Point clickPoint, JComponent component) {
         if (component instanceof JTextComponent) {
             JTextComponent text = (JTextComponent) component;
@@ -185,7 +196,9 @@ public class TextPaneCellSupport {
         }
     }
 
-    /** update the selection highlight by the range obtained from selectionMap for the pane */
+    /** update the selection highlight by the range obtained from selectionMap for the pane
+     * @param selectionMap called get(pane), containing a range for the pane
+     */
     public void setSelectionHighlight(Map<JTextComponent, int[]> selectionMap) {
         int[] sel = selectionMap.get(pane);
         if (sel == null) {
@@ -198,7 +211,10 @@ public class TextPaneCellSupport {
     ////////////
 
     /** update renderer's finding-highlight-pattern.
-     *  this makes the renderer highlight texts of subsequent rendering items */
+     *  this makes the renderer highlight texts of subsequent rendering items
+     * @param findKeyword the found text. if null, it clears the finding patterns
+     * @return true if updated
+     */
     public boolean updateFindPattern(String findKeyword) {
         if (findKeyword == null || findKeyword.isEmpty()) {
             findText = null;
@@ -216,8 +232,11 @@ public class TextPaneCellSupport {
     }
 
     /** update renderer's finding-highlight-pattern,
-     *  match the pattern with text,
-     *  and return matched positions */
+     *  match the pattern with text
+     * @param findKeyword the found text
+     * @param text the searching target
+     * @return matched positions
+     */
     public List<Integer> findText(String findKeyword, String text) {
         updateFindPattern(findKeyword);
         if (findPattern != null) {
@@ -247,7 +266,7 @@ public class TextPaneCellSupport {
      * by calling {@link #setFindHighlights(Pattern, Highlighter.HighlightPainter)}.
      * The method can be used within getListCellRenderer, in order to update highlights,
      *   after the text of the pane is set.
-     * */
+     */
     public void setFindHighlights() {
         setFindHighlights(findPattern, findPainter);
     }
@@ -275,7 +294,11 @@ public class TextPaneCellSupport {
     }
 
     /**
-     * clear the selectionMap and set matched range as the value for the pane */
+     * clear the selectionMap and set matched range as the value for the pane
+     * @param selectionMap the modified map
+     * @param m the matched info.
+     * @return the matched range
+     */
     public int[] updateSelectionMap(Map<JTextComponent, int[]> selectionMap, TextPaneCellMatch m) {
         int[] r = getFindMatchedRange(m);
         selectionMap.clear();
@@ -292,6 +315,9 @@ public class TextPaneCellSupport {
         }
     }
 
+    /**
+     * matching info.
+     */
     public static class TextPaneCellMatch {
         public Object[] keys;
         public int indexOfFindMatchedPositions;
@@ -315,6 +341,9 @@ public class TextPaneCellSupport {
         }
     }
 
+    /**
+     * matching info. within a list
+     */
     public static class TextPaneCellMatchList extends TextPaneCellMatch {
         protected int supportIndex;
 
@@ -332,6 +361,9 @@ public class TextPaneCellSupport {
         }
     }
 
+    /**
+     * a list of {@link TextPaneCellSupport}
+     */
     public static class TextPaneCellSupportList {
         protected List<TextPaneCellSupport> supports = new ArrayList<>();
 
@@ -414,7 +446,11 @@ public class TextPaneCellSupport {
         }
 
 
-        /** if selectionMap == null, then it takes entire text of each pane */
+        /**
+         * @param selectionMap a map containing target ranges,
+         *                      if selectionMap == null, then it takes entire text of each pane
+         * @return extracted text lines
+         */
         public List<String> getSelectedTexts(Map<JTextComponent, int[]> selectionMap) {
             List<String> lines = new ArrayList<>(supports.size());
             for (TextPaneCellSupport support : supports) {

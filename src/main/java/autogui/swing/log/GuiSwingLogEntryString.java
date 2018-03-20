@@ -13,6 +13,9 @@ import java.time.Instant;
 import java.util.*;
 import java.util.List;
 
+/**
+ * a log-entry of a string message with supporting GUI rendering
+ */
 public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwingLogEntry {
     protected int selectionFrom;
     protected int selectionTo;
@@ -81,7 +84,12 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         return timeStyle;
     }
 
-    /** returns the X position of headerEnd or &lt;0 value */
+    /**
+     * @param pane the target text pane
+     * @param headerEnd a sub-string within the pane
+     * @param style set to the target position
+     * @return the X position of headerEnd or &lt;0 value
+     */
     public static float setHeaderStyle(JTextPane pane, String headerEnd, Style style) {
         pane.setSize(pane.getPreferredSize()); //this makes modelToView(i) return non-null rect
 
@@ -101,6 +109,9 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         return -1;
     }
 
+    /**
+     * a string log-entry renderer
+     */
     public static class GuiSwingLogStringRenderer extends JTextPane
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
         protected GuiLogManager manager;

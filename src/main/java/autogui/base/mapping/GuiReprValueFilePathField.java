@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * the text-field component for a {@link File} or {@link Path} property.
+ * a text-field component for a {@link File} or {@link Path} property.
  */
 public class GuiReprValueFilePathField extends GuiReprValue {
     @Override
