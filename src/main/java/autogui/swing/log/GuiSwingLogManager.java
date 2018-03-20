@@ -183,9 +183,10 @@ public class GuiSwingLogManager extends GuiLogManager {
             //list
             list = new GuiSwingLogList(manager);
             list.setEntryLimit(10000);
-            pane.add(new JScrollPane(list,
-                    JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED),
-                    BorderLayout.CENTER);
+            JScrollPane scrollPane = new JScrollPane(list,
+                    JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+            pane.add(scrollPane, BorderLayout.CENTER);
 
             //tool bar
             toolbar = list.createToolBar();

@@ -2,10 +2,7 @@ package autogui.swing.util;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +13,7 @@ public class SettingsWindow {
     protected static SettingsWindow instance;
 
     public JFrame window;
+    protected SettingSupport settingSupport;
 
     public static SettingsWindow get() {
         if (instance == null) {
@@ -27,6 +25,27 @@ public class SettingsWindow {
     public SettingsWindow() {
         window = new JFrame();
         window.setType(Window.Type.UTILITY);
+        window.addComponentListener(new ComponentListener() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                if (settingSupport != null) {
+                    settingSupport.resized(window);
+                }
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+                if (settingSupport != null) {
+                    settingSupport.moved(window);
+                }
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) { }
+
+            @Override
+            public void componentHidden(ComponentEvent e) { }
+        });
     }
 
     public JFrame getWindow() {
@@ -41,14 +60,28 @@ public class SettingsWindow {
         if (sender != null) {
             window.setLocationRelativeTo(sender);
         }
+        if (settingSupport != null) {
+            settingSupport.setup(window);
+        }
         show();
     }
 
     public void show(String title, JComponent sender, JComponent contentPane) {
+        show(title, sender, contentPane, null);
+    }
+
+    public void show(String title, JComponent sender, JComponent contentPane, SettingSupport settingSupport) {
         window.setTitle(title);
         window.setContentPane(contentPane);
         window.pack();
+        this.settingSupport = settingSupport;
         show(sender);
+    }
+
+    public interface SettingSupport {
+        void resized(JFrame window);
+        void moved(JFrame window);
+        void setup(JFrame window);
     }
 
     ///////// header text:

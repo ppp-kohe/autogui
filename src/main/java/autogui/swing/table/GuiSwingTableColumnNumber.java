@@ -30,6 +30,8 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
                 .withComparator(new NumberComparator());
     }
 
+    /**
+     * a comparator for comparing numbers */
     public static class NumberComparator implements Comparator<Object> {
         @Override
         public int compare(Object o1, Object o2) {

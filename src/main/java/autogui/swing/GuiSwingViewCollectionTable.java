@@ -93,7 +93,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
     public static class CollectionTable extends JTable
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<List<?>>,
-                        GuiSwingTableColumnSet.TableSelectionSource {
+                        GuiSwingTableColumnSet.TableSelectionSource, GuiSwingPreferences.PreferencesUpdateSupport {
         protected GuiMappingContext context;
         protected List<?> source;
         protected PopupExtensionCollection popup;
@@ -133,7 +133,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             //initial update
             update(context, context.getSource());
 
-            preferencesUpdater = new TablePreferencesUpdater(this);
+            preferencesUpdater = new TablePreferencesUpdater(this, context);
 
             //TODO drag drop
             setTransferHandler(new ToStringCollectionTransferHandler(this));
@@ -179,6 +179,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     .mapToInt(e -> e.getTableColumn().getWidth())
                     .sum();
             scrollPane.setPreferredSize(new Dimension(width, Math.max(scrollPane.getPreferredSize().height, 100)));
+            scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+            scrollPane.getHorizontalScrollBar().setUnitIncrement(10);
         }
 
         public JToolBar initActionToolBar(List<Action> actions) {
@@ -247,6 +249,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     .updateFromGui(getContext(), value);
         }
 
+        @Override
+        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+            this.preferencesUpdater.setUpdater(updater);
+        }
+
         /////////////////
 
         @Override
@@ -289,17 +296,17 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void loadPreferences(GuiPreferences prefs) {
+            GuiSwingView.loadPreferencesDefault(this, prefs);
             GuiPreferences targetPrefs = prefs.getDescendant(getContext());
-            preferencesUpdater.applyJson(
-                JsonReader.create(targetPrefs.getValueStore().getString("table", "{}"))
-                    .parseObject());
+            preferencesUpdater.apply(targetPrefs);
         }
 
         @Override
         public void savePreferences(GuiPreferences prefs) {
+            GuiSwingView.savePreferencesDefault(this, prefs);
             GuiPreferences targetPrefs = prefs.getDescendant(getContext());
-            targetPrefs.getValueStore().putString("table",
-                    JsonWriter.create().write(preferencesUpdater.getPrefs().toJson()).toSource());
+            PreferencesForTable p = preferencesUpdater.getPrefs();
+            p.saveTo(targetPrefs);
         }
 
         @Override
@@ -349,15 +356,27 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
     public static class TablePreferencesUpdater implements TableColumnModelListener, RowSorterListener {
         protected JTable table;
-        protected TablePreferences prefs;
+        protected GuiMappingContext context;
+        protected PreferencesForTable prefs;
+        protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater;
 
-        public TablePreferencesUpdater(JTable table) {
+        public TablePreferencesUpdater(JTable table, GuiMappingContext context) {
             this.table = table;
-            prefs = new TablePreferences();
+            this.context = context;
+            prefs = new PreferencesForTable();
         }
 
-        public void setPrefs(TablePreferences prefs) {
+        public void setPrefs(PreferencesForTable prefs) {
             this.prefs = prefs;
+        }
+
+        public void setUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+            this.updater = updater;
+        }
+
+        public void apply(GuiPreferences p) {
+            prefs.loadFrom(p);
+            prefs.applyTo(table);
         }
 
         public void applyJson(Map<String,Object> json) {
@@ -365,18 +384,24 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             prefs.applyTo(table);
         }
 
-        public TablePreferences getPrefs() {
+        public PreferencesForTable getPrefs() {
             return prefs;
         }
 
         @Override
         public void columnMoved(TableColumnModelEvent e) {
             prefs.setColumnOrderFrom(table);
+            sendToUpdater();
+        }
+
+        public void sendToUpdater() {
+            updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, prefs));
         }
 
         @Override
         public void columnMarginChanged(ChangeEvent e) {
             prefs.setColumnWidthFrom(table);
+            sendToUpdater();
         }
 
         @Override
@@ -391,24 +416,27 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void sorterChanged(RowSorterEvent e) {
             prefs.setRowSortFrom(table);
+            sendToUpdater();
         }
     }
 
-    public static class TablePreferences {
+    public static class PreferencesForTable implements GuiSwingPreferences.Preferences {
         protected List<Integer> columnOrder = new ArrayList<>();
         protected List<Integer> columnWidth = new ArrayList<>();
-        protected List<TableRowSortPreferences> rowSort = new ArrayList<>();
+        protected List<PreferencesForTableRowSort> rowSort = new ArrayList<>();
 
         public void applyTo(JTable table) {
             TableColumnModel columnModel = table.getColumnModel();
             applyColumnWidthTo(table, columnModel);
             applyColumnOrderTo(table, columnModel);
         }
+
         public void applyColumnWidthTo(JTable table, TableColumnModel columnModel) {
             for (int i = 0, len = Math.min(table.getColumnCount(), columnWidth.size()); i < len; ++i) { //i is model index
                 columnModel.getColumn(table.convertColumnIndexToView(i)).setPreferredWidth(columnWidth.get(i));
             }
         }
+
         public void applyColumnOrderTo(JTable table, TableColumnModel columnModel) {
             for (int i = 0, len = Math.min(table.getColumnCount(), columnOrder.size()); i < len; ++i) {
                 int from = columnOrder.get(i);
@@ -417,10 +445,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 }
             }
         }
+
         public void applyRowSortTo(JTable table) {
             List<RowSorter.SortKey> keys = new ArrayList<>(rowSort.size());
             for (int i = 0, len = Math.min(table.getColumnCount(), rowSort.size()); i < len; ++i) {
-                TableRowSortPreferences row = rowSort.get(i);
+                PreferencesForTableRowSort row = rowSort.get(i);
                 SortOrder order = SortOrder.valueOf(row.getOrder());
                 keys.add(new RowSorter.SortKey(row.getColumn(), order));
             }
@@ -434,6 +463,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 columnOrder.add(table.convertColumnIndexToModel(i));
             }
         }
+
         public void setColumnWidthFrom(JTable table) {
             TableColumnModel columnModel = table.getColumnModel();
             columnWidth.clear();
@@ -441,60 +471,71 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 columnWidth.add(columnModel.getColumn(table.convertColumnIndexToView(i)).getWidth());
             }
         }
+
         public void setRowSortFrom(JTable table) {
             rowSort.clear();
             for (RowSorter.SortKey key : table.getRowSorter().getSortKeys()) {
-                TableRowSortPreferences row = new TableRowSortPreferences(key.getColumn(), key.getSortOrder().name());
+                PreferencesForTableRowSort row = new PreferencesForTableRowSort(key.getColumn(), key.getSortOrder().name());
                 rowSort.add(row);
             }
         }
 
+        @Override
+        public String getKey() {
+            return "$table";
+        }
+
+        @Override
         public Map<String,Object> toJson() {
             Map<String,Object> map = new LinkedHashMap<>();
             map.put("columnOrder", columnOrder);
             map.put("columnWidth", columnWidth);
             map.put("rowSort", rowSort.stream()
-                                .map(TableRowSortPreferences::toJson)
+                                .map(PreferencesForTableRowSort::toJson)
                                 .collect(Collectors.toList()));
             return map;
         }
 
+        @Override
         @SuppressWarnings("unchecked")
-        public void setJson(Map<String,Object> map) {
-            Object order = map.get("columnOrder");
-            if (order != null) {
-                columnOrder.clear();
-                ((List<?>) order)
-                        .forEach(i -> columnOrder.add((Integer) i));
-            }
+        public void setJson(Object json) {
+            if (json instanceof Map<?,?>) {
+                Map<String,?> map = (Map<String,?>) json;
+                Object order = map.get("columnOrder");
+                if (order != null) {
+                    columnOrder.clear();
+                    ((List<?>) order)
+                            .forEach(i -> columnOrder.add((Integer) i));
+                }
 
-            Object width = map.get("columnWidth");
-            if (width != null) {
-                columnWidth.clear();
-                ((List<?>) width)
-                        .forEach(i -> columnWidth.add((Integer) i));
-            }
+                Object width = map.get("columnWidth");
+                if (width != null) {
+                    columnWidth.clear();
+                    ((List<?>) width)
+                            .forEach(i -> columnWidth.add((Integer) i));
+                }
 
-            Object rowSortObj = map.get("rowSort");
-            if (rowSortObj != null) {
-                rowSort.clear();
-                ((List<?>) rowSortObj).stream()
-                        .map(e -> new TableRowSortPreferences((Map<String, Object>) e))
-                        .forEach(rowSort::add);
+                Object rowSortObj = map.get("rowSort");
+                if (rowSortObj != null) {
+                    rowSort.clear();
+                    ((List<?>) rowSortObj).stream()
+                            .map(e -> new PreferencesForTableRowSort((Map<String, Object>) e))
+                            .forEach(rowSort::add);
+                }
             }
         }
     }
 
-    public static class TableRowSortPreferences {
+    public static class PreferencesForTableRowSort {
         protected int column;
         protected String order;
 
-        public TableRowSortPreferences(int column, String order) {
+        public PreferencesForTableRowSort(int column, String order) {
             this.column = column;
             this.order = order;
         }
 
-        public TableRowSortPreferences(Map<String, Object> map) {
+        public PreferencesForTableRowSort(Map<String, Object> map) {
             column = (Integer) map.getOrDefault("column", 0);
             order = (String) map.getOrDefault("order", "");
         }
@@ -502,12 +543,15 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setColumn(int column) {
             this.column = column;
         }
+
         public int getColumn() {
             return column;
         }
+
         public void setOrder(String order) {
             this.order = order;
         }
+
         public String getOrder() {
             return order;
         }

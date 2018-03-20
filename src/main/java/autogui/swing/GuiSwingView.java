@@ -1,5 +1,6 @@
 package autogui.swing;
 
+import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
@@ -84,7 +85,7 @@ public interface GuiSwingView extends GuiSwingElement {
          *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
          */
         default void savePreferences(GuiPreferences prefs) {
-            saveChildren(prefs, asComponent());
+            savePreferencesDefault(asComponent(), prefs);
         }
 
         /**
@@ -93,13 +94,8 @@ public interface GuiSwingView extends GuiSwingElement {
          * @param prefs target prefs or ancestor of the target;
          *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
          */
-        @SuppressWarnings("unchecked")
         default void loadPreferences(GuiPreferences prefs) {
-            GuiPreferences targetPrefs = prefs.getDescendant(getContext());
-            if (getContext().isHistoryValueSupported()) {
-                setLastHistoryValue(targetPrefs, (ValuePane<Object>) this);
-            }
-            loadChildren(targetPrefs, asComponent());
+            loadPreferencesDefault(asComponent(), prefs);
         }
     }
 
@@ -117,18 +113,48 @@ public interface GuiSwingView extends GuiSwingElement {
         for (Component c : comp.getComponents()) {
             if (c instanceof GuiSwingView.ValuePane) {
                 GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) c;
-                valuePane.savePreferences(prefs);
+                try {
+                    valuePane.savePreferences(prefs);
+                } catch (Exception ex) {
+                    GuiLogManager.get().logError(ex);
+                }
             } else if (c instanceof JComponent) {
                 saveChildren(prefs, (JComponent) c);
             }
         }
     }
 
+    @SuppressWarnings("unchecked")
+    static void savePreferencesDefault(JComponent pane, GuiPreferences prefs) {
+        if (pane instanceof ValuePane<?>) {
+            prefs = prefs.getDescendant(((ValuePane<?>) pane).getContext());
+        }
+        saveChildren(prefs, pane);
+    }
+
+    @SuppressWarnings("unchecked")
+    static void loadPreferencesDefault(JComponent pane, GuiPreferences prefs) {
+        if (pane instanceof ValuePane<?>) {
+            GuiMappingContext context = ((ValuePane) pane).getContext();
+            GuiPreferences targetPrefs = prefs.getDescendant(context);
+            if (context.isHistoryValueSupported()) {
+                setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane);
+            }
+            prefs = targetPrefs;
+        }
+        loadChildren(prefs, pane);
+
+    }
+
     static void loadChildren(GuiPreferences prefs, JComponent comp) {
         for (Component c : comp.getComponents()) {
             if (c instanceof GuiSwingView.ValuePane) {
                 GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) c;
-                valuePane.loadPreferences(prefs);
+                try {
+                    valuePane.loadPreferences(prefs);
+                } catch (Exception ex) {
+                    GuiLogManager.get().logError(ex);
+                }
             } else if (c instanceof JComponent) {
                 loadChildren(prefs, (JComponent) c);
             }

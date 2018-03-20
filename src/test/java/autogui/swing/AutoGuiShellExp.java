@@ -2,11 +2,15 @@ package autogui.swing;
 
 import autogui.AutoGuiShell;
 import autogui.GuiIncluded;
+import autogui.swing.icons.GuiSwingIcons;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AutoGuiShellExp {
     public static void main(String[] args) {
@@ -48,5 +52,35 @@ public class AutoGuiShellExp {
         public void thankYou() {
             System.err.println("thankx");
         }
+
+        protected List<TestRow> rows = new ArrayList<>();
+        {
+            for (String w : GuiSwingIcons.getInstance().getIconWords()) {
+                Icon i = GuiSwingIcons.getInstance().getIcon(w);
+                if (i instanceof GuiSwingIcons.ResourceIcon) {
+                    GuiSwingIcons.ResourceIcon ri =(GuiSwingIcons.ResourceIcon) i;
+                    Image img = ri.getImage();
+                    TestRow r = new TestRow();
+                    r.x = ri.getIconWidth();
+                    r.y = ri.getIconHeight();
+                    r.name = w;
+                    r.icon = img;
+                    rows.add(r);
+                }
+            }
+        }
+
+        @GuiIncluded(index = 5)
+        public List<TestRow> getList() {
+            return rows;
+        }
+    }
+
+    @GuiIncluded
+    public static class TestRow {
+        @GuiIncluded(index = 0) public int x;
+        @GuiIncluded(index = 1) public int y;
+        @GuiIncluded(index = 2) public String name;
+        @GuiIncluded(index = 3) public Image icon;
     }
 }

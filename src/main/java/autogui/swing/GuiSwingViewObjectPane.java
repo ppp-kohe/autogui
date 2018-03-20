@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprObjectPane;
 import autogui.base.mapping.GuiReprPropertyPane;
 import autogui.swing.icons.GuiSwingIcons;
@@ -11,8 +12,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * <h3>representation</h3>
@@ -90,7 +98,8 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
      *   ... ]
      *  </pre>
      */
-    public static class ObjectPane extends JPanel implements GuiMappingContext.SourceUpdateListener, ValuePane<Object> {
+    public static class ObjectPane extends JPanel implements GuiMappingContext.SourceUpdateListener, ValuePane<Object>,
+        GuiSwingPreferences.PreferencesUpdateSupport {
         protected GuiMappingContext context;
         protected JToolBar actionToolBar;
         protected JComponent contentPane;
@@ -98,11 +107,16 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         protected PopupExtension popup;
         protected List<Action> actions = new ArrayList<>();
 
+        protected List<JSplitPane> splitPanes = new ArrayList<>();
+        protected SplitPreferencesUpdater preferencesUpdater;
+
         public ObjectPane(GuiMappingContext context) {
             this.context = context;
             setLayout(new BorderLayout());
             initContentPane();
             add(contentPane, BorderLayout.CENTER);
+
+            preferencesUpdater = new SplitPreferencesUpdater(context, this::getSplitPanes);
 
             //context update
             context.addSourceUpdateListener(this);
@@ -171,7 +185,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             } else {
                 Component prev = resizableSubComponents.getComponent(0);
                 resizableSubComponents.removeAll();
-                JComponent split = createResizableSplit(false, prev, component);
+                JComponent split = createResizableSplit(true, prev, component);
                 resizableSubComponents.add(split);
             }
         }
@@ -192,7 +206,16 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             pane.setOpaque(false);
             pane.setBorder(BorderFactory.createEmptyBorder());
             pane.setDividerLocation(prevWidth / (prevWidth + nextWidth));
+
+            this.splitPanes.add(pane);
+
+            pane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, preferencesUpdater);
+            pane.addPropertyChangeListener(JSplitPane.ORIENTATION_PROPERTY, preferencesUpdater);
             return pane;
+        }
+
+        public List<JSplitPane> getSplitPanes() {
+            return splitPanes;
         }
 
         private double getSize(boolean horizontal, Component comp) {
@@ -249,6 +272,23 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         public GuiMappingContext getContext() {
             return context;
         }
+
+        @Override
+        public void loadPreferences(GuiPreferences prefs) {
+            GuiSwingView.loadPreferencesDefault(this, prefs);
+            preferencesUpdater.apply(prefs.getDescendant(getContext()));
+        }
+
+        @Override
+        public void savePreferences(GuiPreferences prefs) {
+            GuiSwingView.savePreferencesDefault(this, prefs);
+            preferencesUpdater.getPrefs().saveTo(prefs.getDescendant(getContext()));
+        }
+
+        @Override
+        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+            preferencesUpdater.setUpdater(updater);
+        }
     }
 
     public static class ToStringTransferHandler extends TransferHandler {
@@ -278,4 +318,108 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         }
     }
 
+    public static class SplitPreferencesUpdater implements PropertyChangeListener {
+        protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater;
+        protected GuiMappingContext context;
+        protected Supplier<List<JSplitPane>> panes;
+        protected PreferencesForSplit prefs;
+
+        public SplitPreferencesUpdater(GuiMappingContext context, Supplier<List<JSplitPane>> panes) {
+            this.context = context;
+            this.panes = panes;
+            prefs = new PreferencesForSplit();
+        }
+
+        public void setUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+            this.updater = updater;
+        }
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            prefs.set(panes.get());
+            updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, prefs));
+        }
+
+        public void apply(GuiPreferences p) {
+            prefs.loadFrom(p);
+            prefs.applyTo(panes.get());
+        }
+
+        public PreferencesForSplit getPrefs() {
+            return prefs;
+        }
+    }
+
+    public static class PreferencesForSplit implements GuiSwingPreferences.Preferences {
+        protected List<PreferencesForSplitEntry> splits = new ArrayList<>();
+
+        @Override
+        public String getKey() {
+            return "$split";
+        }
+
+        @Override
+        public Object toJson() {
+            return splits.stream()
+                    .map(PreferencesForSplitEntry::toJson)
+                    .collect(Collectors.toList());
+        }
+
+        public void applyTo(List<JSplitPane> panes) {
+            for (int i = 0, l = panes.size(); i < l; ++i) {
+                JSplitPane pane = panes.get(i);
+                if (i < splits.size()) {
+                    splits.get(i).applyTo(pane);
+                }
+            }
+        }
+
+        public void set(List<JSplitPane> panes) {
+            for (int i = 0, l = panes.size(); i < l; ++i) {
+                JSplitPane pane = panes.get(i);
+                while (i >= splits.size()) {
+                    splits.add(new PreferencesForSplitEntry());
+                }
+                splits.get(i).set(pane);
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void setJson(Object json) {
+            if (json != null && json instanceof List<?>) {
+                splits.clear();
+                for (Object item : (List<?>) json) {
+                    PreferencesForSplitEntry e = new PreferencesForSplitEntry();
+                    if (item instanceof Map<?,?>) {
+                        Map<String,Object> map = (Map<String,Object>) item;
+                        e.dividerLocation = (Integer) map.getOrDefault("dividerLocation", 0);
+                        e.horizontal = (Boolean) map.getOrDefault("horizontal", true);
+                    }
+                    splits.add(e);
+                }
+            }
+        }
+    }
+
+    public static class PreferencesForSplitEntry {
+        public int dividerLocation;
+        public boolean horizontal;
+
+        public Object toJson() {
+            Map<String,Object> map = new LinkedHashMap<>();
+            map.put("dividerLocation", dividerLocation);
+            map.put("horizontal", horizontal);
+            return map;
+        }
+
+        public void applyTo(JSplitPane pane) {
+            pane.setDividerLocation(dividerLocation);
+        }
+
+        public void set(JSplitPane pane) {
+            dividerLocation = pane.getDividerLocation();
+            horizontal = (pane.getOrientation() == JSplitPane.HORIZONTAL_SPLIT);
+        }
+    }
 }

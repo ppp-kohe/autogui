@@ -57,6 +57,7 @@ public interface GuiSwingElement {
             .addReprClass(GuiReprValueImagePane.class, new GuiSwingViewImagePane())
             .addReprClass(GuiReprValueNumberSpinner.class, new GuiSwingViewNumberSpinner())
             .addReprClass(GuiReprValueStringField.class, new GuiSwingViewStringField())
+            .addReprClass(GuiReprCollectionTable.class, new GuiSwingViewCollectionTable(set))
             .addReprClass(GuiReprPropertyPane.class, new GuiSwingViewPropertyPane(set))
             .addReprClass(GuiReprObjectPane.class, new GuiSwingViewObjectPane(set))
             .addReprClass(GuiReprAction.class, new GuiSwingActionDefault())

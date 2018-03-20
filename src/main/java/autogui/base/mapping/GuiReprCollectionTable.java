@@ -205,6 +205,16 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
         return String.join("\t", list);
     }
 
+    @Override
+    public boolean isHistoryValueSupported() {
+        return false;
+    }
+
+    @Override
+    public boolean isHistoryValueStored() {
+        return false;
+    }
+
     /** interface for actions which handle selected-rows;
      *    an actual implementation relies on a concrete GUI component */
     public interface TableTarget {

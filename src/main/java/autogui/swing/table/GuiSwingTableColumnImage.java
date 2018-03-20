@@ -20,6 +20,9 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         return new ObjectTableColumnValue(context, img, edit).withRowHeight(64);
     }
 
+    /**
+     * a component for column editor
+     */
     public static class ColumnEditImagePane extends GuiSwingViewImagePane.PropertyImagePane {
         public ColumnEditImagePane(GuiMappingContext context) {
             super(context);
