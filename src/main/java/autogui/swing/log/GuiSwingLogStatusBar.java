@@ -13,6 +13,7 @@ import java.util.function.Consumer;
  * a status-bar for displaying a last log-entry
  */
 public class GuiSwingLogStatusBar extends JComponent {
+    protected GuiSwingLogManager manager;
     protected GuiLogEntry entry;
     protected Component entryComponent;
 
@@ -22,6 +23,7 @@ public class GuiSwingLogStatusBar extends JComponent {
     protected CellRendererPane cellRendererPane;
 
     protected JPanel centerPane;
+    protected Object managerKey;
 
     public GuiSwingLogStatusBar(GuiSwingLogManager manager) {
         this(manager, true);
@@ -42,13 +44,18 @@ public class GuiSwingLogStatusBar extends JComponent {
         centerPane.add(cellRendererPane);
         add(centerPane, BorderLayout.CENTER);
 
+        this.manager = manager;
         if (addManagerAsView) {
-            manager.addView(this::addLogEntry);
+            managerKey = manager.addView(this::addLogEntry);
         }
 
         EventDispatcher e = new EventDispatcher(this);
         addMouseListener(e);
         addMouseMotionListener(e);
+    }
+
+    public void removeFromManager() {
+        manager.removeView(managerKey);
     }
 
     public void setEntry(GuiLogEntry entry) {

@@ -22,7 +22,6 @@ public class GuiSwingWindow extends JFrame {
     protected GuiMappingContext context;
     protected GuiSwingView view;
     protected GuiSwingPreferences preferences;
-    protected GuiSwingLogManager logManager;
     protected GuiSwingLogManager.GuiSwingLogWindow logWindow;
 
     protected JComponent viewComponent;
@@ -119,14 +118,26 @@ public class GuiSwingWindow extends JFrame {
 
 
     protected void initLog() {
-        logManager = new GuiSwingLogManager();
-        logManager.setupConsole(true, true, true);
-        GuiLogManager.setManager(logManager);
-        logWindow = logManager.createWindow();
+        logWindow = initSwingLogManager().createWindow();
         logPreferencesUpdater = new GuiSwingPreferences.WindowPreferencesUpdater(logWindow, context, "$logWindow");
         logPreferencesUpdater.setUpdater(preferences.getUpdateRunner());
         logWindow.addComponentListener(logPreferencesUpdater);
         setContentPane(logWindow.getPaneWithStatusBar(viewComponent));
+    }
+
+    protected GuiSwingLogManager initSwingLogManager() {
+        GuiSwingLogManager logManager;
+        synchronized (GuiLogManager.class) {
+            GuiLogManager m = GuiLogManager.get();
+            if (m instanceof GuiSwingLogManager) {
+                logManager = (GuiSwingLogManager) m;
+            } else {
+                logManager = new GuiSwingLogManager();
+                logManager.setupConsole(true, true, true);
+                GuiLogManager.setManager(logManager);
+            }
+        }
+        return logManager;
     }
 
     protected void initIcon() {
@@ -263,7 +274,17 @@ public class GuiSwingWindow extends JFrame {
 
         public void updateMenuItemsForFrames() {
             for (Frame f : Frame.getFrames()) {
-                menu.add(new JCheckBoxMenuItem(new WindowMenuToFromAction(f)));
+                if (isListed(f)) {
+                    menu.add(new JCheckBoxMenuItem(new WindowMenuToFromAction(f)));
+                }
+            }
+        }
+
+        public boolean isListed(Frame f) {
+            if (f instanceof SettingsWindow.SettingsFrame) {
+                return ((SettingsWindow.SettingsFrame) f).isShown();
+            } else {
+                return true;
             }
         }
     }

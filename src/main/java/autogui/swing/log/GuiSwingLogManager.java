@@ -22,9 +22,18 @@ public class GuiSwingLogManager extends GuiLogManager {
 
     /**
      * @param view might accept same entries
+     * @return key object for removing, currently view itself
      */
-    public void addView(Consumer<GuiLogEntry> view) {
+    public Object addView(Consumer<GuiLogEntry> view) {
         views.add(view);
+        return view;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void removeView(Object v) {
+        if (v != null && v instanceof Consumer<?>) {
+            views.remove((Consumer<GuiLogEntry>) v);
+        }
     }
 
     public void setConsole(GuiLogManagerConsole console) {
@@ -201,6 +210,13 @@ public class GuiSwingLogManager extends GuiLogManager {
             setContentPane(pane);
             pack();
             setSize(400, 600);
+        }
+
+        @Override
+        public void dispose() {
+            list.removeFromManager();
+            statusBar.removeFromManager();
+            super.dispose();
         }
 
         public GuiSwingLogList getList() {

@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 public class SettingsWindow {
     protected static SettingsWindow instance;
 
-    public JFrame window;
+    public SettingsFrame window;
     protected SettingSupport settingSupport;
 
     public static SettingsWindow get() {
@@ -23,7 +23,7 @@ public class SettingsWindow {
     }
 
     public SettingsWindow() {
-        window = new JFrame();
+        window = new SettingsFrame();
         window.setType(Window.Type.UTILITY);
         window.addComponentListener(new ComponentListener() {
             @Override
@@ -48,11 +48,24 @@ public class SettingsWindow {
         });
     }
 
+    public class SettingsFrame extends JFrame {
+        protected boolean shown;
+
+        public void setShown(boolean shown) {
+            this.shown = shown;
+        }
+
+        public boolean isShown() {
+            return shown;
+        }
+    }
+
     public JFrame getWindow() {
         return window;
     }
 
     public void show() {
+        window.setShown(true);
         window.setVisible(true);
     }
 

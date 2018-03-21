@@ -20,11 +20,14 @@ import java.util.function.Consumer;
  * a list component for displaying log entries
  */
 public class GuiSwingLogList extends JList<GuiLogEntry> {
+    protected GuiSwingLogManager manager;
     protected Timer activePainter;
     protected GuiSwingLogEventDispatcher eventDispatcher;
 
     protected LogListClearAction clearAction;
     protected LogListCopyTextAction copyAction;
+
+    protected Object managerKey;
 
     public GuiSwingLogList(GuiSwingLogManager manager) {
         this(manager, true);
@@ -57,9 +60,14 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         copyAction = new LogListCopyTextAction(this);
         getActionMap().put("copy", copyAction);
 
+        this.manager = manager;
         if (addManagerAsView) {
-            manager.addView(this::addLogEntry);
+            managerKey = manager.addView(this::addLogEntry);
         }
+    }
+
+    public void removeFromManager() {
+        manager.removeView(managerKey);
     }
 
     public LogListCopyTextAction getCopyAction() {
