@@ -13,6 +13,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -57,30 +60,92 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         protected GuiMappingContext context;
         protected Image image;
         protected Dimension imageSize = new Dimension(1, 1);
-        protected float maxImageScale = 1f;
         protected boolean editable;
+
+        protected ImageScale imageScale;
+        protected ImageScaleFit imageScaleDefault;
+        protected ImageScaleFit imageScaleFit;
+        protected ImageScaleMouseWheel imageScaleMouseWheel;
+
+        protected boolean imageScaleAutoSwitchByMouseWheel = true;
 
         protected PopupExtension popup;
 
         public PropertyImagePane(GuiMappingContext context) {
             this.context = context;
+            init();
+        }
 
-            //editable
+        protected void init() {
+            initScale();
+            initEditable();
+            initPopup();
+            initDragAndDrop();
+            initFocus();
+            initContext();
+        }
+
+        protected void initScale() {
+            imageScaleDefault = new ImageScaleFit(1f);
+            setImageScale(imageScaleDefault);
+
+            imageScaleFit = new ImageScaleFit(100f);
+
+            imageScaleMouseWheel = new ImageScaleMouseWheel(this);
+            addMouseWheelListener(e -> {
+                boolean activate = imageScaleMouseWheelShouldBeActivated(e);
+                if (activate) {
+                    setImageScale(imageScaleMouseWheel);
+                    imageScaleMouseWheel.mouseWheelMoved(e);
+                }
+            });
+        }
+
+        protected boolean imageScaleMouseWheelShouldBeActivated(MouseWheelEvent e) {
+            return isImageScaleAutoSwitchByMouseWheel();// && (this.imageScale == imageScaleDefault);
+        }
+
+        public void setImageScaleAutoSwitchByMouseWheel(boolean imageScaleAutoSwitchByMouseWheel) {
+            this.imageScaleAutoSwitchByMouseWheel = imageScaleAutoSwitchByMouseWheel;
+            if (imageScale != null && imageScale instanceof MouseWheelListener) {
+                if (imageScaleAutoSwitchByMouseWheel) {
+                    addMouseWheelListener((MouseWheelListener) imageScale);
+                } else {
+                    removeMouseWheelListener((MouseWheelListener) imageScale);
+                }
+            }
+        }
+
+        public boolean isImageScaleAutoSwitchByMouseWheel() {
+            return imageScaleAutoSwitchByMouseWheel;
+        }
+
+        protected void initEditable() {
             setEditable(((GuiReprValueImagePane) context.getRepresentation())
                     .isEditable(context));
+        }
 
-            //context update
-            context.addSourceUpdateListener(this);
-            //initial update
-            update(context, context.getSource());
-
-            //popup
+        protected void initPopup() {
             JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
             ContextRefreshAction refreshAction = new ContextRefreshAction(context);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
                 menu.accept(label);
                 menu.accept(refreshAction);
                 menu.accept(createSizeInfo(getImageSize()));
+                menu.accept(createScaleInfo(getImageSize()));
+                menu.accept(new JCheckBoxMenuItem(new ImageScaleSwitchFitAction(this)));
+                menu.accept(new ImageScaleOriginalSizeAction(this));
+                menu.accept(new JCheckBoxMenuItem(new ImageScaleAutoSwitchByMouseWheel(this)));
+
+                JMenu scaleMenu = new JMenu("Scale");
+                scaleMenu.add(new ImageScaleSizeAction(this, 0.5f));
+                scaleMenu.add(new ImageScaleSizeAction(this, 1.5f));
+                scaleMenu.add(new ImageScaleSizeAction(this, 2f));
+                scaleMenu.add(new ImageScaleSizeAction(this, 4f));
+                scaleMenu.add(new ImageScaleSizeAction(this, 8f));
+                menu.accept(scaleMenu);
+
+
                 menu.accept(new ImageCopyAction(getImage()));
                 menu.accept(new ImagePasteAction(this));
                 GuiSwingJsonTransfer.getActions(this, context)
@@ -88,10 +153,20 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 menu.accept(new HistoryMenuImage(this, context));
             });
             setInheritsPopupMenu(true);
+        }
 
-            //drag drop
+        protected void initDragAndDrop() {
             GuiSwingView.setupTransferHandler(this, new ImageTransferHandler(this));
+        }
 
+        protected void initContext() {
+            //context update
+            context.addSourceUpdateListener(this);
+            //initial update
+            update(context, context.getSource());
+        }
+
+        protected void initFocus() {
             setFocusable(true);
         }
 
@@ -102,6 +177,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public JComponent createSizeInfo(Dimension size) {
             return MenuBuilder.get().createLabel(String.format("Size: %,d x %,d", size.width, size.height));
+        }
+
+        public JComponent createScaleInfo(Dimension size) {
+            return MenuBuilder.get().createLabel(String.format("Scale: %s",
+                    imageScale == null ? "null" : imageScale.getInfo(size, getViewSize())));
         }
 
         @Override
@@ -120,14 +200,6 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
             SwingUtilities.invokeLater(() -> setSwingViewValue((Image) newValue));
-        }
-
-        public void setMaxImageScale(float maxImageScale) {
-            this.maxImageScale = maxImageScale;
-        }
-
-        public float getMaxImageScale() {
-            return maxImageScale;
         }
 
         public Image getImage() {
@@ -162,8 +234,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             g.setColor(getBackground());
             g.fillRect(0, 0, getWidth(), getHeight());
             if (image != null) {
-                Dimension paneSize = getSize();
-                Dimension size = getScaledImageSize(imageSize, paneSize);
+                Dimension paneSize = getViewSize();
+
+                Dimension size = (imageScale == null ? imageSize : imageScale.getScaledImageSize(imageSize, paneSize));
+
                 int left = (paneSize.width - size.width) / 2;
                 int top = (paneSize.height - size.height) / 2;
 
@@ -177,11 +251,59 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             }
         }
 
-        public Dimension getScaledImageSize(Dimension srcSize, Dimension dstSize) {
-            float pw = (dstSize.width / (float) srcSize.width);
-            float ph = (dstSize.height / (float) srcSize.height);
-            float p = Math.min(pw < ph ? pw : ph, maxImageScale);
-            return new Dimension((int) (srcSize.width * p), (int) (srcSize.height * p));
+        public ImageScale getImageScale() {
+            return imageScale;
+        }
+
+        public ImageScaleFit getImageScaleDefault() {
+            return imageScaleDefault;
+        }
+
+        public ImageScaleMouseWheel getImageScaleMouseWheel() {
+            return imageScaleMouseWheel;
+        }
+
+        public ImageScaleFit getImageScaleFit() {
+            return imageScaleFit;
+        }
+
+        public void setImageScale(ImageScale imageScale) {
+            if (imageScale != this.imageScale) {
+                ImageScale oldScale = this.imageScale;
+                if (this.imageScale != null && this.imageScale instanceof MouseWheelListener) {
+                    removeMouseWheelListener((MouseWheelListener) this.imageScale);
+                }
+                this.imageScale = imageScale;
+
+                //inherits fitting scale to mouse-wheel zoom
+                if (oldScale instanceof ImageScaleFit && imageScale instanceof ImageScaleMouseWheel) {
+                    float p = ((ImageScaleFit) oldScale).getScale(getImageSize(), getViewSize());
+                    ((ImageScaleMouseWheel) imageScale).setCurrentZoom(p);
+                }
+
+                if (imageScale != null && imageScale instanceof MouseWheelListener &&
+                        isImageScaleAutoSwitchByMouseWheel()) {
+                    addMouseWheelListener((MouseWheelListener) imageScale);
+                }
+                updateScale();
+            }
+        }
+
+        public void updateScale() {
+            Dimension paneSize = getViewSize();
+            Dimension size = (imageScale == null ? imageSize : imageScale.getScaledImageSize(imageSize, paneSize));
+
+            setPreferredSize(size);
+            revalidate();
+            repaint();
+        }
+
+        public Dimension getViewSize() {
+            if (getParent() != null && getParent() instanceof JViewport) {
+                return getParent().getSize();
+            } else {
+                return getSize();
+            }
         }
 
         @Override
@@ -200,6 +322,162 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             setImage(value);
         }
     }
+
+    public interface ImageScale {
+        Dimension getScaledImageSize(Dimension srcSize, Dimension dstSize);
+        String getInfo(Dimension srcSize, Dimension dstSize);
+    }
+
+    public static class ImageScaleFit implements ImageScale {
+        protected float maxImageScale;
+
+        public ImageScaleFit(float maxImageScale) {
+            this.maxImageScale = maxImageScale;
+        }
+
+        @Override
+        public Dimension getScaledImageSize(Dimension srcSize, Dimension dstSize) {
+            float p = getScale(srcSize, dstSize);
+            return new Dimension((int) (srcSize.width * p), (int) (srcSize.height * p));
+        }
+
+        public float getScale(Dimension srcSize, Dimension dstSize) {
+            float pw = (dstSize.width / (float) srcSize.width);
+            float ph = (dstSize.height / (float) srcSize.height);
+            return Math.min(pw < ph ? pw : ph, maxImageScale);
+        }
+
+        @Override
+        public String getInfo(Dimension srcSize, Dimension dstSize) {
+            Dimension size = getScaledImageSize(srcSize, dstSize);
+            return String.format("Fit: %d%%, %,d x %,d", (int) (getScale(srcSize, dstSize) * 100f), size.width, size.height);
+        }
+    }
+
+    public static class ImageScaleMouseWheel implements MouseWheelListener, ImageScale {
+        protected PropertyImagePane pane;
+        protected float currentZoom = 1.0f;
+
+        public ImageScaleMouseWheel(PropertyImagePane pane) {
+            this.pane = pane;
+        }
+
+        public float getCurrentZoom() {
+            return currentZoom;
+        }
+
+        public void setCurrentZoom(float currentZoom) {
+            this.currentZoom = currentZoom;
+            pane.updateScale();
+        }
+
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent event) {
+            if (event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
+                float amount = (event.getUnitsToScroll() / 100.0f) * 4.0f;
+                setCurrentZoom(Math.min(Math.max(0.1f, amount + currentZoom), 20f));
+            }
+        }
+
+        @Override
+        public Dimension getScaledImageSize(Dimension srcSize, Dimension dstSize) {
+            return new Dimension((int)  (srcSize.width * currentZoom), (int) (srcSize.height * currentZoom));
+        }
+
+        @Override
+        public String getInfo(Dimension srcSize, Dimension dstSize) {
+            Dimension size = getScaledImageSize(srcSize, dstSize);
+            return String.format("Zoom: %d%%, %,d x %,d", (int) (getCurrentZoom() * 100f), size.width, size.height);
+        }
+    }
+
+    public static class ImageScaleSwitchFitAction extends AbstractAction {
+        protected PropertyImagePane pane;
+
+        public ImageScaleSwitchFitAction(PropertyImagePane pane) {
+            this.pane = pane;
+            putValue(NAME, "Fit to View Size");
+            updateSelected();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (isSelected()) {
+                pane.setImageScale(pane.getImageScaleDefault());
+            } else {
+                pane.setImageScale(pane.getImageScaleFit());
+            }
+            updateSelected();
+        }
+
+        public boolean isSelected() {
+            return pane.getImageScale() == pane.getImageScaleFit();
+        }
+
+        public void updateSelected() {
+            putValue(SELECTED_KEY, isSelected());
+        }
+    }
+
+    public static class ImageScaleOriginalSizeAction extends AbstractAction {
+        protected PropertyImagePane pane;
+
+        public ImageScaleOriginalSizeAction(PropertyImagePane pane) {
+            this.pane = pane;
+            putValue(NAME, "Zoom to Original Size");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            pane.setImageScale(pane.getImageScaleMouseWheel());
+            pane.getImageScaleMouseWheel().setCurrentZoom(1.0f);
+            pane.updateScale();
+        }
+    }
+
+    public static class ImageScaleSizeAction extends AbstractAction {
+        protected PropertyImagePane pane;
+        protected float n;
+
+        public ImageScaleSizeAction(PropertyImagePane pane, float n) {
+            this.pane = pane;
+            putValue(NAME, String.format("%d%%", (int) (n * 100)));
+            this.n = n;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            pane.setImageScale(pane.getImageScaleMouseWheel());
+            pane.getImageScaleMouseWheel().setCurrentZoom(n);
+            pane.updateScale();
+        }
+    }
+
+    public static class ImageScaleAutoSwitchByMouseWheel extends AbstractAction {
+        protected PropertyImagePane pane;
+
+        public ImageScaleAutoSwitchByMouseWheel(PropertyImagePane pane) {
+            putValue(NAME, "Zoom by Mouse Wheel");
+            this.pane = pane;
+            updateSelected();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            pane.setImageScaleAutoSwitchByMouseWheel(!isSelected());
+            updateSelected();
+        }
+
+        public boolean isSelected() {
+            return pane.isImageScaleAutoSwitchByMouseWheel();
+        }
+
+        public void updateSelected() {
+            putValue(SELECTED_KEY, isSelected());
+        }
+    }
+
+    ///////////////////////
 
     public static class HistoryMenuImage extends HistoryMenu<Image, PropertyImagePane> {
         public HistoryMenuImage(PropertyImagePane component, GuiMappingContext context) {
@@ -324,7 +602,6 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public void lostOwnership(Clipboard clipboard, Transferable contents) {
             image = null;
         }
-
     }
 
 
@@ -400,7 +677,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         @Override
         protected Transferable createTransferable(JComponent c) {
             Image img = imagePane.getImage();
-            Dimension size = imagePane.getScaledImageSize(imagePane.getImageSize(), new Dimension(100, 100));
+            Dimension size = imagePane.getImageScaleDefault().getScaledImageSize(imagePane.getImageSize(), new Dimension(100, 100));
             setDragImage(img.getScaledInstance(size.width , size.height, Image.SCALE_DEFAULT));
             return new ImageSelection(img);
         }
