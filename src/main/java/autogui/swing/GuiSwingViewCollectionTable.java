@@ -167,7 +167,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             }
         }
 
-
         public ValueScrollPane initTableScrollPane() {
             ValueScrollPane scrollPane = new GuiSwingView.ValueScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             initTableScrollPane(scrollPane);
@@ -360,6 +359,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected PreferencesForTable prefs;
         protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater;
 
+        protected boolean savingDisabled = false;
+
         public TablePreferencesUpdater(JTable table, GuiMappingContext context) {
             this.table = table;
             this.context = context;
@@ -375,13 +376,17 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void apply(GuiPreferences p) {
+            savingDisabled = true;
             prefs.loadFrom(p);
             prefs.applyTo(table);
+            savingDisabled = false;
         }
 
         public void applyJson(Map<String,Object> json) {
+            savingDisabled = true;
             prefs.setJson(json);
             prefs.applyTo(table);
+            savingDisabled = false;
         }
 
         public PreferencesForTable getPrefs() {
@@ -400,8 +405,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void columnMarginChanged(ChangeEvent e) {
-            prefs.setColumnWidthFrom(table);
-            sendToUpdater();
+            if (!savingDisabled) {
+                prefs.setColumnWidthFrom(table);
+                sendToUpdater();
+            }
         }
 
         @Override
@@ -415,8 +422,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void sorterChanged(RowSorterEvent e) {
-            prefs.setRowSortFrom(table);
-            sendToUpdater();
+            if (!savingDisabled) {
+                prefs.setRowSortFrom(table);
+                sendToUpdater();
+            }
         }
     }
 

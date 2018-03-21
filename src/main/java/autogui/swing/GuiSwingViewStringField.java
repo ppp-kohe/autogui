@@ -146,6 +146,11 @@ public class GuiSwingViewStringField implements GuiSwingView {
         public GuiMappingContext getContext() {
             return context;
         }
+
+        @Override
+        public void shutDown() {
+            getEditingRunner().getExecutor().shutdown();
+        }
     }
 
     /** handle entire text */

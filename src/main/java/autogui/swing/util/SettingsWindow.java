@@ -84,6 +84,8 @@ public class SettingsWindow {
         void setup(JFrame window);
     }
 
+
+
     ///////// header text:
 
     /** a group of labels */

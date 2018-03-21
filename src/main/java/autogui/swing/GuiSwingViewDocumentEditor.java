@@ -74,7 +74,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         List<Action> actions = PopupExtensionText.getEditActions(pane);
         ContextRefreshAction refreshAction = new ContextRefreshAction(context);
         DocumentSettingAction settingAction = (pane instanceof PropertyDocumentTextPane ?
-                new DocumentSettingAction(infoForSetting, pane, ((PropertyDocumentTextPane) pane).getSettingPane()) : null);
+                new DocumentSettingAction(infoForSetting, (SettingsWindowClient) pane,
+                        ((PropertyDocumentTextPane) pane).getSettingPane()) : null);
         PopupExtensionText ext = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
             menu.accept(info);
             menu.accept(refreshAction);
@@ -192,10 +193,12 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     }
 
     public static class PropertyDocumentEditorPane extends JEditorPane
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> { //ValuePane<StringBuilder|Content|Document>
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
+                SettingsWindowClient  { //ValuePane<StringBuilder|Content|Document>
         protected GuiMappingContext context;
         protected PopupExtension popup;
         protected boolean wrapLine = true;
+        protected SettingsWindow settingsWindow;
 
         public PropertyDocumentEditorPane(GuiMappingContext context) {
             this.context = context;
@@ -249,14 +252,26 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public GuiMappingContext getContext() {
             return context;
         }
+
+        @Override
+        public void setSettingsWindow(SettingsWindow settingWindow) {
+            this.settingsWindow = settingWindow;
+        }
+
+        @Override
+        public SettingsWindow getSettingsWindow() {
+            return settingsWindow == null ? SettingsWindow.get() : settingsWindow;
+        }
     }
 
     public static class PropertyDocumentTextPane extends JTextPane
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> { //ValuePane<StringBuilder|Content|Document>
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
+            SettingsWindowClient  { //ValuePane<StringBuilder|Content|Document>
         protected GuiMappingContext context;
         protected PopupExtension popup;
         protected boolean wrapLine = true;
         protected DocumentSettingPane settingPane;
+        protected SettingsWindow settingsWindow;
 
         public PropertyDocumentTextPane(GuiMappingContext context) {
             this.context = context;
@@ -318,6 +333,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void savePreferences(GuiPreferences prefs) {
+            GuiSwingView.savePreferencesDefault(this, prefs);
             GuiPreferences targetPrefs = prefs.getDescendant(context);
             Map<String, Object> jsonObj = settingPane.getJson();
             GuiPreferences.GuiValueStore store = targetPrefs.getValueStore();
@@ -326,11 +342,26 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void loadPreferences(GuiPreferences prefs) {
+            GuiSwingView.loadPreferencesDefault(this, prefs);
             GuiPreferences targetPrefs = prefs.getDescendant(context);
             GuiPreferences.GuiValueStore store = targetPrefs.getValueStore();
             Object jsonObj = JsonReader.create(store.getString("style", "null")).parseValue();
             settingPane.setJson(jsonObj);
+        }
 
+        @Override
+        public void setSettingsWindow(SettingsWindow settingWindow) {
+            this.settingsWindow = settingWindow;
+        }
+
+        @Override
+        public SettingsWindow getSettingsWindow() {
+            return settingsWindow == null ? SettingsWindow.get() : settingsWindow;
+        }
+
+        @Override
+        public void shutDown() {
+            settingPane.shutDown();
         }
     }
 
@@ -402,9 +433,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static class DocumentSettingAction extends AbstractAction {
         protected DocumentSettingPane pane;
         protected JPanel contentPane;
-        public DocumentSettingAction(JComponent label, JEditorPane editorPane, DocumentSettingPane settingPane) {
+        protected SettingsWindowClient editorPane;
+        public DocumentSettingAction(JComponent label, SettingsWindowClient editorPane, DocumentSettingPane settingPane) {
             putValue(NAME, "Settings...");
             this.pane = settingPane;
+            this.editorPane = editorPane;
             contentPane = new JPanel(new BorderLayout());
             contentPane.add(label, BorderLayout.NORTH);
             contentPane.add(pane, BorderLayout.CENTER);
@@ -412,7 +445,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            SettingsWindow.get().show("Document Settings", pane, contentPane);
+            editorPane.getSettingsWindow().show("Document Settings", pane, contentPane);
         }
     }
 
@@ -626,6 +659,10 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public Object toJsonColor(Color c) {
             return new ArrayList<>(Arrays.asList(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()));
+        }
+
+        public void shutDown() {
+            updater.getExecutor().shutdown();
         }
     }
 

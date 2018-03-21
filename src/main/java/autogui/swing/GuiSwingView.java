@@ -7,6 +7,7 @@ import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.table.TableTargetMenu;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
@@ -97,6 +98,24 @@ public interface GuiSwingView extends GuiSwingElement {
         default void loadPreferences(GuiPreferences prefs) {
             loadPreferencesDefault(asComponent(), prefs);
         }
+
+        default void shutDown() { }
+    }
+
+    interface SettingsWindowClient {
+        void setSettingsWindow(SettingsWindow settingWindow);
+        SettingsWindow getSettingsWindow();
+    }
+
+    static <T> void forEach(Class<T> type, Component comp, Consumer<T> f) {
+        if (type.isInstance(comp)) {
+            f.accept(type.cast(comp));
+        }
+        if (comp instanceof Container) {
+            for (Component sub : ((Container) comp).getComponents()) {
+                forEach(type, sub, f);
+            }
+        }
     }
 
     static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane) {
@@ -110,26 +129,24 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     static void saveChildren(GuiPreferences prefs, JComponent comp) {
-        for (Component c : comp.getComponents()) {
-            if (c instanceof GuiSwingView.ValuePane) {
-                GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) c;
+        forEach(ValuePane.class, comp, e -> {
+            GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) e;
+            if (valuePane != comp) { //skip top
                 try {
-                    valuePane.savePreferences(prefs);
+                    valuePane.savePreferences(
+                            prefs.getDescendant(valuePane.getContext()));
                 } catch (Exception ex) {
                     GuiLogManager.get().logError(ex);
                 }
-            } else if (c instanceof JComponent) {
-                saveChildren(prefs, (JComponent) c);
             }
-        }
+        });
     }
 
     @SuppressWarnings("unchecked")
     static void savePreferencesDefault(JComponent pane, GuiPreferences prefs) {
         if (pane instanceof ValuePane<?>) {
-            prefs = prefs.getDescendant(((ValuePane<?>) pane).getContext());
+            prefs.getDescendant(((ValuePane<?>) pane).getContext());
         }
-        saveChildren(prefs, pane);
     }
 
     @SuppressWarnings("unchecked")
@@ -140,25 +157,21 @@ public interface GuiSwingView extends GuiSwingElement {
             if (context.isHistoryValueSupported()) {
                 setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane);
             }
-            prefs = targetPrefs;
         }
-        loadChildren(prefs, pane);
-
     }
 
     static void loadChildren(GuiPreferences prefs, JComponent comp) {
-        for (Component c : comp.getComponents()) {
-            if (c instanceof GuiSwingView.ValuePane) {
+        forEach(ValuePane.class, comp, c -> {
+            if (c != comp) { //skip top
                 GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) c;
                 try {
-                    valuePane.loadPreferences(prefs);
+                    valuePane.loadPreferences(
+                            prefs.getDescendant(valuePane.getContext()));
                 } catch (Exception ex) {
                     GuiLogManager.get().logError(ex);
                 }
-            } else if (c instanceof JComponent) {
-                loadChildren(prefs, (JComponent) c);
             }
-        }
+        });
     }
 
     class ValueScrollPane<ValueType> extends JScrollPane implements ValuePane<ValueType> {
@@ -218,7 +231,6 @@ public interface GuiSwingView extends GuiSwingElement {
 
         @Override
         public void loadPreferences(GuiPreferences prefs) {
-            GuiSwingView.loadChildren(prefs.getDescendant(getContext()), this);
         }
     }
 
@@ -286,7 +298,6 @@ public interface GuiSwingView extends GuiSwingElement {
 
         @Override
         public void loadPreferences(GuiPreferences prefs) {
-            GuiSwingView.loadChildren(prefs.getDescendant(getContext()), this);
         }
     }
 

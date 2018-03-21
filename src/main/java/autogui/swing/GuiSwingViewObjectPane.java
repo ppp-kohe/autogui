@@ -323,6 +323,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         protected GuiMappingContext context;
         protected Supplier<List<JSplitPane>> panes;
         protected PreferencesForSplit prefs;
+        protected boolean savingDisabled = false;
 
         public SplitPreferencesUpdater(GuiMappingContext context, Supplier<List<JSplitPane>> panes) {
             this.context = context;
@@ -336,13 +337,17 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            prefs.set(panes.get());
-            updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, prefs));
+            if (!savingDisabled) {
+                prefs.set(panes.get());
+                updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, prefs));
+            }
         }
 
         public void apply(GuiPreferences p) {
+            savingDisabled = true;
             prefs.loadFrom(p);
             prefs.applyTo(panes.get());
+            savingDisabled = false;
         }
 
         public PreferencesForSplit getPrefs() {

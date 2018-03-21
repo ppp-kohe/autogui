@@ -7,12 +7,15 @@ import autogui.base.type.GuiTypeBuilder;
 import autogui.swing.log.GuiSwingLogManager;
 import autogui.swing.util.ApplicationIconGenerator;
 import autogui.swing.util.MenuBuilder;
+import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.function.Supplier;
 
 public class GuiSwingWindow extends JFrame {
@@ -20,12 +23,16 @@ public class GuiSwingWindow extends JFrame {
     protected GuiSwingView view;
     protected GuiSwingPreferences preferences;
     protected GuiSwingLogManager logManager;
+    protected GuiSwingLogManager.GuiSwingLogWindow logWindow;
 
     protected JComponent viewComponent;
     protected JMenu objectMenu;
+    protected WindowMenuBuilder windowMenuBuilder;
 
     protected GuiSwingPreferences.WindowPreferencesUpdater preferencesUpdater;
     protected GuiSwingPreferences.WindowPreferencesUpdater logPreferencesUpdater;
+
+    protected SettingsWindow settingsWindow;
 
     public static GuiSwingWindow createForObject(Object o) {
         return new GuiSwingWindow(new GuiMappingContext(
@@ -68,6 +75,8 @@ public class GuiSwingWindow extends JFrame {
         initPrefs();
         pack();
         initPrefsLoad();
+        initClosing();
+        initSettingWindow();
 
         context.updateSourceFromRoot();
     }
@@ -91,6 +100,9 @@ public class GuiSwingWindow extends JFrame {
 
         bar.add(objectMenu);
 
+        windowMenuBuilder = new WindowMenuBuilder();
+        bar.add(windowMenuBuilder.getMenu());
+
         setJMenuBar(bar);
     }
 
@@ -110,7 +122,7 @@ public class GuiSwingWindow extends JFrame {
         logManager = new GuiSwingLogManager();
         logManager.setupConsole(true, true, true);
         GuiLogManager.setManager(logManager);
-        GuiSwingLogManager.GuiSwingLogWindow logWindow = logManager.createWindow();
+        logWindow = logManager.createWindow();
         logPreferencesUpdater = new GuiSwingPreferences.WindowPreferencesUpdater(logWindow, context, "$logWindow");
         logPreferencesUpdater.setUpdater(preferences.getUpdateRunner());
         logWindow.addComponentListener(logPreferencesUpdater);
@@ -132,6 +144,38 @@ public class GuiSwingWindow extends JFrame {
         loadPreferences(context.getPreferences());
     }
 
+    protected void initClosing() {
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (isApplicationRoot()) {
+                    cleanUp();
+                }
+            }
+        });
+    }
+
+    protected void initSettingWindow() {
+        settingsWindow = new SettingsWindow();
+        preferences.setSettingsWindow(settingsWindow);
+        GuiSwingView.forEach(GuiSwingView.SettingsWindowClient.class, viewComponent,
+                c -> c.setSettingsWindow(settingsWindow));
+    }
+
+    public boolean isApplicationRoot() {
+        return true;
+    }
+
+    public void cleanUp() {
+        context.getTaskRunner().shutdown();
+        GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
+                GuiSwingView.ValuePane::shutDown);
+        preferences.shutdown();
+        logWindow.dispose();
+        settingsWindow.getWindow().dispose();
+        dispose();
+    }
+
     public GuiSwingPreferences getPreferences() {
         return preferences;
     }
@@ -144,9 +188,8 @@ public class GuiSwingWindow extends JFrame {
 
             if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
                 ((GuiSwingView.ValuePane) viewComponent).loadPreferences(prefs);
-            } else {
-                GuiSwingView.loadChildren(prefs, viewComponent);
             }
+            GuiSwingView.loadChildren(prefs, viewComponent);
         } catch (Exception ex) {
             GuiLogManager.get().logError(ex);
         }
@@ -160,9 +203,8 @@ public class GuiSwingWindow extends JFrame {
 
             if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
                 ((GuiSwingView.ValuePane) viewComponent).savePreferences(prefs);
-            } else {
-                GuiSwingView.saveChildren(prefs, viewComponent);
             }
+            GuiSwingView.saveChildren(prefs, viewComponent);
         } catch (Exception ex) {
             GuiLogManager.get().logError(ex);
         }
@@ -181,6 +223,112 @@ public class GuiSwingWindow extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             preferences.get().show(sender);
+        }
+    }
+
+    public static class WindowMenuBuilder {
+        protected JMenu menu;
+
+        protected WindowMenuMinimizeAction minimizeAction;
+        protected WindowMenuZoomAction zoomAction;
+
+        public WindowMenuBuilder() {
+            menu = new JMenu("Window");
+            minimizeAction = new WindowMenuMinimizeAction();
+            zoomAction = new WindowMenuZoomAction();
+            updateMenuItems();
+            menu.addMenuListener(new MenuListener() {
+                @Override
+                public void menuSelected(MenuEvent e) {
+                    updateMenuItems();
+                }
+                @Override
+                public void menuDeselected(MenuEvent e) { }
+                @Override
+                public void menuCanceled(MenuEvent e) { }
+            });
+        }
+
+        public JMenu getMenu() {
+            return menu;
+        }
+
+        public void updateMenuItems() {
+            menu.removeAll();
+            menu.add(minimizeAction);
+            menu.add(zoomAction);
+            menu.addSeparator();
+            updateMenuItemsForFrames();
+        }
+
+        public void updateMenuItemsForFrames() {
+            for (Frame f : Frame.getFrames()) {
+                menu.add(new JCheckBoxMenuItem(new WindowMenuToFromAction(f)));
+            }
+        }
+    }
+
+    public static Frame getActiveFrame() {
+        for (Frame f : Frame.getFrames()) {
+            if (f.isActive()) {
+                return f;
+            }
+        }
+        return null;
+    }
+
+    public static class WindowMenuMinimizeAction extends AbstractAction {
+        public WindowMenuMinimizeAction() {
+            putValue(NAME, "Minimize");
+            ///putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_M, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Frame f = getActiveFrame();
+            if (f != null) {
+                f.setState(Frame.ICONIFIED);
+            }
+        }
+    }
+
+    public static class WindowMenuZoomAction extends AbstractAction {
+        public WindowMenuZoomAction() {
+            putValue(NAME, "Zoom");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Frame frm = getActiveFrame();
+            if (frm != null) {
+                int ex = frm.getExtendedState();
+                if ((ex & Frame.MAXIMIZED_HORIZ) != 0 || (ex & Frame.MAXIMIZED_VERT) != 0) {
+                    frm.setExtendedState(Frame.NORMAL);
+                } else {
+                    frm.setExtendedState(Frame.MAXIMIZED_BOTH);
+                }
+            }
+        }
+    }
+
+    public static class WindowMenuToFromAction extends AbstractAction {
+        protected Frame frame;
+
+        public WindowMenuToFromAction(Frame frame) {
+            this.frame = frame;
+            putValue(NAME, frame.getTitle());
+
+            putValue(SELECTED_KEY, frame.isActive());
+        }
+
+        public boolean isSelected() {
+            return (Boolean) getValue(SELECTED_KEY);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            frame.setVisible(true);
+            frame.toFront();
         }
     }
 }

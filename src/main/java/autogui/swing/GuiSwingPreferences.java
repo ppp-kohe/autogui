@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
+import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.swing.icons.GuiSwingIcons;
@@ -24,6 +25,8 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -62,12 +65,15 @@ import java.util.stream.IntStream;
  *        <pre>
  *       class PropUpdater implements XListener {
  *           GuiMappingContext context;
+ *           boolean enabled = true;
  *           Consumer&lt;{@link PreferencesUpdateEvent}&gt; updater;
  *           PreferencesForX prefs = new PreferencesForX();
  *
  *           void changed(Event e) { //suppose an event handler
+ *              if (enabled) {
  *               prefs.set(e.getComponent());
  *               updater.accept(new PreferencesUpdateEvent(context, prefs);
+ *              }
  *           }
  *       }
  *        </pre>
@@ -93,7 +99,9 @@ import java.util.stream.IntStream;
  *            public void loadPreferences(GuiPreferences p) {
  *                GuiSwingView.loadPreferencesDefault(this, p);
  *                updater.prefs.loadFrom(p.getDescendant(context));
+ *                updater.enabled = false;
  *                updater.prefs.applyTo(this);
+ *                updater.enabled = true;
  *            }
  *            public void savePreferences(GuiPreferences p) {
  *                GuiSwingView.savePreferencesDefault(this, p);
@@ -114,6 +122,8 @@ public class GuiSwingPreferences {
 
     protected JEditorPane contentTextPane;
     protected WindowPreferencesUpdater prefsWindowUpdater;
+
+    protected SettingsWindow settingsWindow;
 
     public GuiSwingPreferences(GuiSwingWindow rootWindow) {
         this.rootContext = rootWindow.getContext();
@@ -181,7 +191,12 @@ public class GuiSwingPreferences {
     }
 
     public void show(JComponent sender) {
-        SettingsWindow.get().show("Preferences", sender, mainPane, prefsWindowUpdater);
+        (settingsWindow == null ? SettingsWindow.get() : settingsWindow)
+                .show("Preferences", sender, mainPane, prefsWindowUpdater);
+    }
+
+    public void setSettingsWindow(SettingsWindow settingsWindow) {
+        this.settingsWindow = settingsWindow;
     }
 
     public GuiMappingContext getRootContext() {
@@ -232,6 +247,7 @@ public class GuiSwingPreferences {
                 ((GuiSwingView.ValuePane) rootComponent).loadPreferences(
                         rootContext.getPreferences());
             }
+            GuiSwingView.loadChildren(rootContext.getPreferences(), rootComponent);
         }
     }
 
@@ -243,6 +259,7 @@ public class GuiSwingPreferences {
                 ((GuiSwingView.ValuePane) rootComponent).savePreferences(
                         prefs);
             }
+            GuiSwingView.saveChildren(rootContext.getPreferences(), rootComponent);
         }
     }
 
@@ -268,6 +285,16 @@ public class GuiSwingPreferences {
             doc.insertString(0, w.toSource(), null);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
+        }
+    }
+
+    public void shutdown() {
+        ScheduledExecutorService s = getUpdater().getExecutor();
+        s.shutdown();
+        try {
+            s.awaitTermination(2, TimeUnit.SECONDS);
+        } catch (Exception ex) {
+            GuiLogManager.get().logError(ex);
         }
     }
 
@@ -524,14 +551,12 @@ public class GuiSwingPreferences {
     }
 
     protected void initRunnerToSupports(Component component) {
-        if (component instanceof PreferencesUpdateSupport) {
-            ((PreferencesUpdateSupport) component).setPreferencesUpdater(getUpdateRunner());
-        }
-        if (component instanceof Container) {
-            for (Component sub : ((Container) component).getComponents()) {
-                initRunnerToSupports(sub);
-            }
-        }
+        GuiSwingView.forEach(PreferencesUpdateSupport.class, component,
+                c -> c.setPreferencesUpdater(getUpdateRunner()));
+    }
+
+    public ScheduledTaskRunner<PreferencesUpdateEvent> getUpdater() {
+        return updater;
     }
 
     public Consumer<PreferencesUpdateEvent> getUpdateRunner() {
@@ -697,6 +722,7 @@ public class GuiSwingPreferences {
         protected GuiMappingContext context;
         protected PreferencesForWindow prefs;
         protected Consumer<PreferencesUpdateEvent> updater;
+        protected boolean savingDisabled = false;
 
         public WindowPreferencesUpdater(Window window, GuiMappingContext context) {
             this.window = window;
@@ -720,26 +746,34 @@ public class GuiSwingPreferences {
 
         @Override
         public void resized(JFrame window) {
-            prefs.setSizeFrom(window);
-            sendToUpdater();
+            if (!savingDisabled) {
+                prefs.setSizeFrom(window);
+                sendToUpdater();
+            }
         }
 
         @Override
         public void moved(JFrame window) {
-            prefs.setLocationFrom(window);
-            sendToUpdater();
+            if (!savingDisabled) {
+                prefs.setLocationFrom(window);
+                sendToUpdater();
+            }
         }
 
         @Override
         public void setup(JFrame window) {
+            savingDisabled = true;
             prefs.applyTo(window);
+            savingDisabled = false;
         }
 
         public void apply(GuiPreferences p) {
+            savingDisabled = true;
             prefs.loadFrom(p);
             if (window != null) {
                 prefs.applyTo(window);
             }
+            savingDisabled = false;
         }
 
         public void sendToUpdater() {
@@ -748,7 +782,7 @@ public class GuiSwingPreferences {
 
         @Override
         public void componentResized(ComponentEvent e) {
-            if (window != null) {
+            if (window != null && !savingDisabled) {
                 prefs.setSizeFrom(window);
                 sendToUpdater();
             }
@@ -756,7 +790,7 @@ public class GuiSwingPreferences {
 
         @Override
         public void componentMoved(ComponentEvent e) {
-            if (window != null) {
+            if (window != null && !savingDisabled) {
                 prefs.setLocationFrom(window);
                 sendToUpdater();
             }

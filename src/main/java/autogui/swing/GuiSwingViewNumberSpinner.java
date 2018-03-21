@@ -194,11 +194,12 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     }
 
     public static class PropertyNumberSpinner extends InfinityNumberSpinner
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>, SettingsWindowClient {
         protected GuiMappingContext context;
         protected ScheduledTaskRunner.EditingRunner editingRunner;
         protected PopupExtensionText popup;
         protected KeyUndoManager undoManager = new KeyUndoManager();
+        protected SettingsWindow settingsWindow;
 
         public PropertyNumberSpinner(GuiMappingContext context) {
             super(createModel(context));
@@ -218,7 +219,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             update(context, context.getSource());
 
             //popup actions
-            TextServiceDefaultMenuSpinner menu = new TextServiceDefaultMenuSpinner(context,
+            TextServiceDefaultMenuSpinner menu = new TextServiceDefaultMenuSpinner(context, this,
                     (TypedSpinnerNumberModel) getModel(), field);
             menu.getEditActions().addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
             menu.getEditActions().add(new HistoryMenu<>(this, context));
@@ -300,14 +301,13 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void savePreferences(GuiPreferences prefs) {
+            GuiSwingView.savePreferencesDefault(this, prefs);
             GuiPreferences targetPrefs = prefs.getDescendant(getContext());
             GuiPreferences.GuiValueStore prefsStore = targetPrefs.getValueStore();
             TypedSpinnerNumberModel model = getModelTyped();
             prefsStore.putString("maximum", model.getActualMaximum().toString());
             prefsStore.putString("minimum", model.getActualMinimum().toString());
             prefsStore.putString("stepSize", model.getStepSize().toString());
-
-            GuiSwingView.saveChildren(targetPrefs, this);
         }
 
         @Override
@@ -328,25 +328,36 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             if (!step.isEmpty()) {
                 model.setStepSize(type.fromString(step));
             }
+            GuiSwingView.loadPreferencesDefault(this, prefs);
+        }
 
-            if (context.isHistoryValueSupported()) {
-                GuiSwingView.setLastHistoryValue(prefs, this);
-            }
-            GuiSwingView.loadChildren(prefs, this);
+        @Override
+        public void setSettingsWindow(SettingsWindow settingsWindow) {
+            this.settingsWindow = settingsWindow;
+        }
+
+        @Override
+        public SettingsWindow getSettingsWindow() {
+            return settingsWindow == null ? SettingsWindow.get() : settingsWindow;
+        }
+
+        @Override
+        public void shutDown() {
+            editingRunner.getExecutor().shutdown();
         }
     }
 
     public static class TextServiceDefaultMenuSpinner extends PopupExtensionText.TextServiceDefaultMenu {
         protected GuiMappingContext context;
 
-        public TextServiceDefaultMenuSpinner(GuiMappingContext context, TypedSpinnerNumberModel model, JTextComponent textComponent) {
+        public TextServiceDefaultMenuSpinner(GuiMappingContext context, SettingsWindowClient settings, TypedSpinnerNumberModel model, JTextComponent textComponent) {
             super(textComponent);
             this.context = context;
             GuiSwingContextInfo info = GuiSwingContextInfo.get();
             editActions.add(0, info.getInfoLabel(context));
             editActions.add(new JMenuItem(new ContextRefreshAction(context)));
             editActions.add(new JPopupMenu.Separator());
-            editActions.add(new JMenuItem(new NumberSettingAction(info.getInfoLabel(context), model)));
+            editActions.add(new JMenuItem(new NumberSettingAction(settings, info.getInfoLabel(context), model)));
             editActions.add(new JMenuItem(new NumberMaximumAction(false, model)));
             editActions.add(new JMenuItem(new NumberMaximumAction(true, model)));
         }
@@ -551,8 +562,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     public static class NumberSettingAction extends AbstractAction {
         protected NumberSettingPane pane;
         protected JPanel contentPane;
-        public NumberSettingAction(JComponent label, TypedSpinnerNumberModel model) {
+        protected SettingsWindowClient client;
+        public NumberSettingAction(SettingsWindowClient client, JComponent label, TypedSpinnerNumberModel model) {
             putValue(NAME, "Settings...");
+            this.client = client;
             pane = new NumberSettingPane(model);
             contentPane = new JPanel(new BorderLayout());
             contentPane.add(label, BorderLayout.NORTH);
@@ -561,7 +574,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            SettingsWindow.get().show("Number Settings", pane, contentPane);
+            client.getSettingsWindow().show("Number Settings", pane, contentPane);
         }
     }
 
