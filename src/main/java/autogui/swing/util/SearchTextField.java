@@ -185,6 +185,7 @@ public class SearchTextField extends JComponent {
         icon.setBorderPainted(false);
         icon.setOpaque(false);
         icon.setFocusable(false);
+        icon.setContentAreaFilled(false);
         icon.setBackground(new Color(0, 0, 0, 0));
     }
 
@@ -264,6 +265,7 @@ public class SearchTextField extends JComponent {
         PopupExtensionText.putUnregisteredEditActions(field);
         popup = new PopupExtensionText(field, PopupExtensionText.getDefaultKeyMatcher(), categorized);
         popupButton = new JButton(popup.getAction());
+        popupButton.setContentAreaFilled(false);
         addSearchItemsListener(getPopupUpdateListener(popup, categorized));
     }
 

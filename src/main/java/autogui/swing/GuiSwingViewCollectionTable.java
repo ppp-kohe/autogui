@@ -129,6 +129,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             //cell selection
             setCellSelectionEnabled(true);
             setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            setGridColor(getBackground());
+            setShowGrid(false);
 
             //initial update
             update(context, context.getSource());
@@ -346,7 +348,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                         }
                     }
                     if (row != null) {
-                        g2.draw(new RoundRectangle2D.Float(row.x + 1, row.y + 1, row.width - 2, row.height - 2, 5, 5));
+                        g2.draw(new RoundRectangle2D.Float(row.x + 1, row.y + 1, row.width - 3, row.height - 3, 5, 5));
                     }
                 }
             }

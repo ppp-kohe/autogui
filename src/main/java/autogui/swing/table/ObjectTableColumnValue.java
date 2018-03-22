@@ -146,8 +146,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             if (valuePane != null) {
                 valuePane.setSwingViewValue(value);
             }
-
-            component.setBorder(BorderFactory.createMatteBorder(0, 10, 0, 5, component.getBackground()));
+            ObjectTableColumn.setCellBorder(table, component, row, column);
             return component;
         }
 

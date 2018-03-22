@@ -241,6 +241,16 @@ public class ObjectTableColumn {
         }
     }
 
+    public static void setCellBorder(JTable table, JComponent cell, int row, int column) {
+        boolean leftEnd = (column == 0);
+        boolean rightEnd = (table.getColumnCount() == column + 1);
+
+        cell.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, leftEnd ? 2 : 0, 2, rightEnd ? 2 : 0, table.getBackground()),
+                BorderFactory.createMatteBorder(1, 10, 1, 5, cell.getBackground())));
+
+    }
+
     /**
      * a renderer for index numbers
      */
@@ -259,7 +269,7 @@ public class ObjectTableColumn {
                                                        int column) {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus,
                     row, column);
-            setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+            setCellBorder(table, this, row, column);
             return this;
         }
 

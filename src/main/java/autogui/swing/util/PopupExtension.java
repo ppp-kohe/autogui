@@ -1,5 +1,7 @@
 package autogui.swing.util;
 
+import autogui.swing.icons.GuiSwingIcons;
+
 import javax.swing.*;
 import javax.swing.event.MenuKeyEvent;
 import javax.swing.event.MenuKeyListener;
@@ -259,6 +261,9 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     public Action getAction() {
         if (action == null) {
             action = new AbstractAction() {
+                {
+                    putValue(Action.LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("search-", "pulldown", 16, 10));
+                }
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     PopupExtension.this.actionPerformed(e);

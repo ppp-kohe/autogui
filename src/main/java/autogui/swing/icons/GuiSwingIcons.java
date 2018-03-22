@@ -24,6 +24,7 @@ public class GuiSwingIcons {
     protected Map<String, String> synonyms = new HashMap<>();
 
     protected Icon defaultIcon;
+    protected String suffix = "@2x.png";
 
     public static GuiSwingIcons getInstance() {
         return instance;
@@ -38,7 +39,7 @@ public class GuiSwingIcons {
     }
 
     public Icon getIcon(String prefix, String name, int width, int height) {
-        return iconMap.computeIfAbsent(prefix + name, k -> loadIcon(prefix, name, "@2x.png", width, height));
+        return iconMap.computeIfAbsent(prefix + name, k -> loadIcon(prefix, name, suffix, width, height));
     }
 
     public Icon loadIconOrDefault(String name) {
@@ -51,7 +52,7 @@ public class GuiSwingIcons {
 
     public Icon loadIcon(String name) {
         return loadIcon("action-",
-                synonyms.getOrDefault(name, name), "@2x.png", 32, 32);
+                synonyms.getOrDefault(name, name), suffix, 32, 32);
     }
 
     public Icon loadIcon(String prefix, String name, String suffix, int width, int height) {
@@ -70,7 +71,7 @@ public class GuiSwingIcons {
 
     public Icon getDefaultIcon(String name) {
         if (defaultIcon == null) {
-            URL url = getClass().getResource("action@2x.png");
+            URL url = getClass().getResource("action" + suffix);
             if (url != null) {
                 try {
                     defaultIcon = new ResourceIcon(ImageIO.read(url), 32, 32);
@@ -167,7 +168,7 @@ public class GuiSwingIcons {
     }
 
     public Icon getPressedIcon(String prefix, String name, int width, int height) {
-        return pressedIconMap.computeIfAbsent(prefix + name, k -> loadPressedIcon(loadIcon(prefix, name, "@2x.png", width, height)));
+        return pressedIconMap.computeIfAbsent(prefix + name, k -> loadPressedIcon(loadIcon(prefix, name, suffix, width, height)));
     }
 
     /** an {@link Icon} with an {@link Image} and size*/
@@ -215,6 +216,7 @@ public class GuiSwingIcons {
             super(a);
             setFocusable(true);
             //setBorderPainted(false);
+            setContentAreaFilled(false);
             setBorder(BorderFactory.createCompoundBorder(
                     new GuiSwingViewLabel.FocusBorder(this),
                     BorderFactory.createEmptyBorder(2, 5, 2, 5)));

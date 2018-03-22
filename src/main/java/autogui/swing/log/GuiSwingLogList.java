@@ -775,6 +775,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         JButton icon = new JButton();
         icon.setIcon(GuiSwingIcons.getInstance().getPressedIcon("log-", "find", 16, 16));
         icon.setBorderPainted(false);
+        icon.setContentAreaFilled(false);
         findPane.add(icon, BorderLayout.WEST);
 
         JTextField field = new JTextField(20);
