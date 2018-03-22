@@ -24,7 +24,7 @@ public class GuiReprObjectPane extends GuiReprValue {
 
     @Override
     public boolean match(GuiMappingContext context) {
-        if (context.isTypeElementObject() && !context.isRecursive()) {
+        if (matchWithoutSetting(context)) {
             context.setRepresentation(this);
             for (GuiMappingContext subContext : context.createChildCandidates()) {
                 if (subRepresentation.match(subContext)) {
@@ -35,6 +35,10 @@ public class GuiReprObjectPane extends GuiReprValue {
         } else {
             return false;
         }
+    }
+
+    protected boolean matchWithoutSetting(GuiMappingContext context) {
+        return context.isTypeElementObject() && !context.isRecursive();
     }
 
     @Override

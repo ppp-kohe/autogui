@@ -151,6 +151,7 @@ public interface GuiRepresentation {
                 new GuiReprValueStringField());
 
         set.add(new GuiReprCollectionTable(set),
+                new GuiReprObjectTabbedPane(set),
                 new GuiReprObjectPane(set),
                 new GuiReprPropertyPane(set),
                 new GuiReprAction(),

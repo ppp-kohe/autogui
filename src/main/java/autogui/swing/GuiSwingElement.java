@@ -26,6 +26,7 @@ public interface GuiSwingElement {
                 new GuiReprValueImagePane());
 
         set.add(new GuiReprCollectionTable(set),
+                new GuiReprObjectTabbedPane(set),
                 new GuiReprObjectPane(set),
                 new GuiReprPropertyPane(set),
                 new GuiReprAction(),
@@ -59,6 +60,7 @@ public interface GuiSwingElement {
             .addReprClass(GuiReprValueStringField.class, new GuiSwingViewStringField())
             .addReprClass(GuiReprCollectionTable.class, new GuiSwingViewCollectionTable(set))
             .addReprClass(GuiReprPropertyPane.class, new GuiSwingViewPropertyPane(set))
+            .addReprClass(GuiReprObjectTabbedPane.class, new GuiSwingViewTabbedPane(set))
             .addReprClass(GuiReprObjectPane.class, new GuiSwingViewObjectPane(set))
             .addReprClass(GuiReprAction.class, new GuiSwingActionDefault())
             .addReprClass(GuiRepresentation.class, new GuiSwingViewLabel());
