@@ -40,13 +40,14 @@ public class GuiSwingWindow extends JFrame {
 
     public GuiSwingWindow(GuiMappingContext context) {
         this.context = context;
-        setTitle(context.getDisplayName());
         if (context.getRepresentation() == null) {
             GuiSwingElement.getReprDefaultSet().match(context);
         }
         this.view = (GuiSwingView) GuiSwingElement.getDefaultMapperSet().view(context);
         init();
     }
+
+
 
     public GuiSwingWindow(GuiMappingContext context, GuiSwingView view) throws HeadlessException {
         this.context = context;
@@ -63,21 +64,35 @@ public class GuiSwingWindow extends JFrame {
     }
 
     protected void init() {
-        viewComponent = view.createView(context);
-
-        preferences = new GuiSwingPreferences(this);
-
-        setContentPane(viewComponent);
+        initTitle();
+        initViewComponent();
+        initPrefs(); //read context, viewComponent
+        initViewComponentSet();
         initMenu();
         initLog();
         initIcon();
-        initPrefs();
+        initPrefsUpdater();
         pack();
-        context.updateSourceFromRoot(); //set context sources
+        initContextUpdate(); //set context sources
         initPrefsLoad();  //may update properties of context sources
         initClosing();
         initSettingWindow();
+    }
 
+    protected void initTitle() {
+        setTitle(context.getDisplayName());
+    }
+
+    protected void initViewComponent() {
+        viewComponent = view.createView(context);
+    }
+
+    protected void initViewComponentSet() {
+        setContentPane(viewComponent);
+    }
+
+    protected void initPrefs() {
+        preferences = new GuiSwingPreferences(this);
     }
 
     protected void initMenu() {
@@ -145,10 +160,14 @@ public class GuiSwingWindow extends JFrame {
                 .setAppIcon(this);
     }
 
-    protected void initPrefs() {
+    protected void initPrefsUpdater() {
         preferencesUpdater = new GuiSwingPreferences.WindowPreferencesUpdater(this, context);
         preferencesUpdater.setUpdater(preferences.getUpdateRunner());
         addComponentListener(preferencesUpdater);
+    }
+
+    protected void initContextUpdate() {
+        context.updateSourceFromRoot();
     }
 
     protected void initPrefsLoad() {

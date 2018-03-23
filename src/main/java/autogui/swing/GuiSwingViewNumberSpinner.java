@@ -17,6 +17,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.*;
@@ -61,6 +63,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     public static class InfinityNumberSpinner extends JSpinner {
         public InfinityNumberSpinner(TypedSpinnerNumberModel model) {
             super(model);
+            setMinimumSize(new Dimension(32, getMinimumSize().height));
         }
 
         @Override
@@ -444,6 +447,9 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public Object getValue() {
+            if (extendedValue == null) {
+                return numberType.getZero();
+            }
             return extendedValue;
         }
 

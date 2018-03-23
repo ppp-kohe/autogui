@@ -9,16 +9,11 @@ import autogui.swing.GuiSwingWindow;
 import javax.swing.*;
 
 public class AutoGuiShell {
-    protected GuiTypeBuilder typeBuilder = new GuiTypeBuilder();
-    protected GuiReprSet representationSet = GuiSwingElement.getReprDefaultSet();
-    protected GuiSwingMapperSet viewMapperSet = GuiSwingElement.getDefaultMapperSet();
-
     public static AutoGuiShell get() {
         return new AutoGuiShell();
     }
 
     public void showWindow(Object o) {
-
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -27,8 +22,29 @@ public class AutoGuiShell {
                 ex.printStackTrace();
             }
 
-            GuiSwingWindow window = GuiSwingWindow.createForObject(o);
-            window.setVisible(true);
+            createWindow(o).setVisible(true);
         });
+    }
+
+    /**
+     * if the current thread is the event dispatching thread, it will immediately create a window for o and return it.
+     * otherwise, it invoke the same task to the event dispatching thread and waits it
+     * @param o the target object
+     * @return the created window for o, with default component-set
+     */
+    public GuiSwingWindow createWindow(Object o) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            return GuiSwingWindow.createForObject(o);
+        } else {
+            GuiSwingWindow[] w = new GuiSwingWindow[1];
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    w[0] = GuiSwingWindow.createForObject(o);
+                });
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+            return w[0];
+        }
     }
 }

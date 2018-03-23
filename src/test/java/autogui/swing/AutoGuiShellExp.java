@@ -8,6 +8,8 @@ import autogui.swing.icons.GuiSwingIcons;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -22,15 +24,21 @@ public class AutoGuiShellExp {
     public static class TestClass {
         protected TestTopPane topPane = new TestTopPane();
         protected TestValueList valueList = new TestValueList();
+        protected TestNumbers numbers = new TestNumbers();
 
-        @GuiIncluded
+        @GuiIncluded(index = 1)
         public TestTopPane getTopPane() {
             return topPane;
         }
 
-        @GuiIncluded
+        @GuiIncluded(index = 2)
         public TestValueList getValueList() {
             return valueList;
+        }
+
+        @GuiIncluded(index = 3)
+        public TestNumbers getNumbers() {
+            return numbers;
         }
     }
 
@@ -103,6 +111,17 @@ public class AutoGuiShellExp {
                 values.add("value-" + i);
             }
         }
+    }
+
+    @GuiIncluded
+    public static class TestNumbers {
+        @GuiIncluded(index = 1) public int intValue;
+        @GuiIncluded(index = 2) public float floatValue;
+        @GuiIncluded(index = 3) public long longValue;
+        @GuiIncluded(index = 4) public double doubleValue;
+        @GuiIncluded(index = 5) public Integer intObj;
+        @GuiIncluded(index = 6) public BigInteger bigIntegerValue = BigInteger.ZERO;
+        @GuiIncluded(index = 7) public BigDecimal bigDecimalValue = BigDecimal.ZERO;
     }
 
     @GuiIncluded
