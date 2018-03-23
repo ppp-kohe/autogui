@@ -179,11 +179,11 @@ public class GuiReprValue implements GuiRepresentation {
      * <ul>
      *   <li>it first adds <code>newValue</code> to the history. </li>
      *   <li>using {@link GuiMappingContext#execute(Callable)}</li>
+     *   <li>if the parent is a collection element, </li>
      *   <li>if this is a property, {@link GuiMappingContext#getParentSource()} and
      *        {@link GuiMappingContext#updateSourceFromGui(Object)} with the <code>newValue</code></li>
      *   <li>if the parent is a property, {@link GuiReprPropertyPane#updateFromGuiChild(GuiMappingContext, Object)}
      *          with <code>newValue</code></li>
-     *   <li>if the parent is a collection element, nothing happen</li>
      *   <li>if this is a value, use {@link GuiMappingContext#getSource()} as the previous value,
      *        {@link GuiTypeValue#writeValue(Object, Object)} with the prev and <code>newValue</code>,
      *        and {@link GuiMappingContext#updateSourceFromGui(Object)}</li>
@@ -202,8 +202,13 @@ public class GuiReprValue implements GuiRepresentation {
             context.errorWhileUpdateSource(ex);
         }
 
-        if (context.isTypeElementProperty()) {
+        if (context.isParentCollectionElement()) {
+            //
+        } else if (context.isTypeElementProperty()) {
             Object src = context.getParentSource();
+            if (src ==  null) {
+                System.err.println("src is null: context="  +context.getRepresentation() + " : parent=" + context.getParent().getRepresentation());
+            }
             try {
                 GuiTypeMemberProperty prop = context.getTypeElementAsProperty();
                 context.execute(() ->
@@ -214,8 +219,6 @@ public class GuiReprValue implements GuiRepresentation {
             }
         } else if (context.isParentPropertyPane()) {
             context.getParentPropertyPane().updateFromGuiChild(context, newValue);
-        } else if (context.isParentCollectionElement()) {
-            //TODO nothing?
         } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
             Object prev = context.getSource();
             GuiTypeValue val = context.getTypeElementValue();

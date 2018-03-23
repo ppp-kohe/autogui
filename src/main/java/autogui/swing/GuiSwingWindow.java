@@ -73,11 +73,11 @@ public class GuiSwingWindow extends JFrame {
         initIcon();
         initPrefs();
         pack();
-        initPrefsLoad();
+        context.updateSourceFromRoot(); //set context sources
+        initPrefsLoad();  //may update properties of context sources
         initClosing();
         initSettingWindow();
 
-        context.updateSourceFromRoot();
     }
 
     protected void initMenu() {

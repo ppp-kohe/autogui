@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.AutoGuiShell;
 import autogui.GuiIncluded;
+import autogui.base.type.GuiTypeObject;
 import autogui.swing.icons.GuiSwingIcons;
 
 import javax.imageio.ImageIO;
@@ -19,6 +20,22 @@ public class AutoGuiShellExp {
 
     @GuiIncluded
     public static class TestClass {
+        protected TestTopPane topPane = new TestTopPane();
+        protected TestValueList valueList = new TestValueList();
+
+        @GuiIncluded
+        public TestTopPane getTopPane() {
+            return topPane;
+        }
+
+        @GuiIncluded
+        public TestValueList getValueList() {
+            return valueList;
+        }
+    }
+
+    @GuiIncluded
+    public static class TestTopPane {
         @GuiIncluded(index = 0)
         public String hello = "Hello";
 
@@ -73,6 +90,18 @@ public class AutoGuiShellExp {
         @GuiIncluded(index = 5)
         public List<TestRow> getList() {
             return rows;
+        }
+    }
+
+    @GuiIncluded
+    public static class TestValueList {
+        @GuiIncluded
+        public List<String> values = new ArrayList<>();
+
+        public TestValueList() {
+            for (int i = 0; i < 100; ++i) {
+                values.add("value-" + i);
+            }
         }
     }
 

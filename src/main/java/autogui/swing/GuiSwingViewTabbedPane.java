@@ -11,6 +11,11 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
     }
 
     @Override
+    protected ObjectPane createObjectPane(GuiMappingContext context) {
+        return new ObjectTabbedPane(context);
+    }
+
+    @Override
     public void createSubView(GuiMappingContext subContext, ObjectPane pane, GuiSwingView view) {
         JComponent comp = view.createView(subContext);
         if (comp != null) {

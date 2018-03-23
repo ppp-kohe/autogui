@@ -49,7 +49,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
     @Override
     public JComponent createView(GuiMappingContext context) {
-        ObjectPane pane = new ObjectPane(context);
+        ObjectPane pane = createObjectPane(context);
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement e = mapperSet.view(subContext);
             if (e != null) {
@@ -61,6 +61,10 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             }
         }
         return pane;
+    }
+
+    protected ObjectPane createObjectPane(GuiMappingContext context) {
+        return new ObjectPane(context);
     }
 
     public void createSubView(GuiMappingContext subContext, ObjectPane pane, GuiSwingView view) {
@@ -114,6 +118,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             this.context = context;
             setLayout(new BorderLayout());
             initContentPane();
+            setOpaque(false);
             add(contentPane, BorderLayout.CENTER);
 
             preferencesUpdater = new SplitPreferencesUpdater(context, this::getSplitPanes);

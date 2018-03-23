@@ -104,8 +104,13 @@ public class GuiReprCollectionElement implements GuiRepresentation {
                 return src;
             } else if (subContext.isTypeElementValue() || subContext.isTypeElementObject() || subContext.isTypeElementCollection()) {
                 GuiTypeValue val = subContext.getTypeElementValue();
-                return subContext.execute(() ->
-                        val.updatedValueList(rowIndex, null));
+                 Object ret = subContext.execute(() ->
+                        val.updatedValueList(rowIndex, src));
+                 if (ret != null && ret.equals(GuiTypeValue.NO_UPDATE)) {
+                     return src;
+                 } else {
+                     return ret;
+                 }
             }
         }
         return null;

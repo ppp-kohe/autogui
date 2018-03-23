@@ -18,6 +18,20 @@ public class GuiReprValueStringField extends GuiReprValue {
     }
 
     /**
+     * @param context the context of the repr.
+     * @return false if the type is a value (String).
+     *          a String is immutable.
+     */
+    @Override
+    public boolean isEditable(GuiMappingContext context) {
+        if (context.isTypeElementValue()) {
+            return false;
+        } else {
+            return super.isEditable(context);
+        }
+    }
+
+    /**
      *
      * @param context a context holds the representation
      * @param source  the converted object

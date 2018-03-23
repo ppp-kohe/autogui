@@ -33,7 +33,7 @@ public class GuiReprObjectTabbedPane extends GuiReprObjectPane {
 
     public boolean matchWithoutSettingSubContexts(GuiMappingContext context) {
         boolean ok = false;
-        for (GuiMappingContext subContext : context.getChildren()) {
+        for (GuiMappingContext subContext : context.createChildCandidates()) {
             if ((subContext.isTypeElementProperty() &&
                     (subContext.getTypeElementAsProperty().getType() instanceof GuiTypeObject ||
                      subContext.getTypeElementAsProperty().getType() instanceof GuiTypeCollection)) ||

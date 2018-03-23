@@ -30,4 +30,13 @@ public class GuiReprValueLabel extends GuiReprValue {
     public boolean isHistoryValueSupported() {
         return false;
     }
+
+    @Override
+    public boolean isEditable(GuiMappingContext context) {
+        if (context.isTypeElementValue()) {
+            return false;
+        } else {
+            return super.isEditable(context);
+        }
+    }
 }

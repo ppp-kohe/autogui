@@ -214,15 +214,29 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         @SuppressWarnings("unchecked")
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            if (component instanceof GuiSwingView.ValuePane) {
-                ((GuiSwingView.ValuePane<Object>) component).setSwingViewValue(value);
+            if (component instanceof GuiSwingView.ValuePane<?>) {
+                GuiSwingView.ValuePane<Object> pane = (GuiSwingView.ValuePane<Object>) component;
+                pane.setSwingViewValue(value);
+//                if (table.getModel() instanceof ObjectTableModel) {
+//                    ObjectTableModel model = (ObjectTableModel) table.getModel() ;
+//                    List<?> rows = model.getSource();
+//                    if (rows != null && row < rows.size()) {
+//                        Object rowObject = rows.get(row);
+//                        //it can give (model, rowObject, row) to the pane as auxiliary info. for updating the context
+//                    }
+//                }
             }
             component.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createEmptyBorder(0, 5, 0, 3),
                     BorderFactory.createCompoundBorder(
                             getTableFocusBorder(),
-                            BorderFactory.createEmptyBorder(0, 5, 0, 2))));
+                            BorderFactory.createEmptyBorder(1, 5, 1, 2))));
             return component;
+        }
+
+        @Override
+        public boolean stopCellEditing() {
+            return super.stopCellEditing();
         }
 
         @Override
