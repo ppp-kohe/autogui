@@ -22,7 +22,7 @@ public class AutoGuiShell {
                 ex.printStackTrace();
             }
 
-            createWindow(o).setVisible(true);
+            createWindow(o, true).setVisible(true);
         });
     }
 
@@ -30,16 +30,20 @@ public class AutoGuiShell {
      * if the current thread is the event dispatching thread, it will immediately create a window for o and return it.
      * otherwise, it invoke the same task to the event dispatching thread and waits it
      * @param o the target object
+     * @param appRoot if true, the returned window will clean-up windows and task-runners at closing of the window.
      * @return the created window for o, with default component-set
      */
-    public GuiSwingWindow createWindow(Object o) {
+    public GuiSwingWindow createWindow(Object o, boolean appRoot) {
         if (SwingUtilities.isEventDispatchThread()) {
-            return GuiSwingWindow.createForObject(o);
+            GuiSwingWindow w = GuiSwingWindow.createForObject(o);
+            w.setApplicationRoot(appRoot);
+            return w;
         } else {
             GuiSwingWindow[] w = new GuiSwingWindow[1];
             try {
                 SwingUtilities.invokeAndWait(() -> {
                     w[0] = GuiSwingWindow.createForObject(o);
+                    w[0].setApplicationRoot(appRoot);
                 });
             } catch (Exception ex) {
                 throw new RuntimeException(ex);

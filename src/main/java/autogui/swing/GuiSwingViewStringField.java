@@ -112,7 +112,9 @@ public class GuiSwingViewStringField implements GuiSwingView {
             super.updateFieldInEvent(modified);
             if (modified) {
                 GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
-                str.updateFromGui(context, getField().getText());
+                if (str.isEditable(context)) {
+                    str.updateFromGui(context, getField().getText());
+                }
             }
         }
 
@@ -148,8 +150,8 @@ public class GuiSwingViewStringField implements GuiSwingView {
         }
 
         @Override
-        public void shutDown() {
-            getEditingRunner().getExecutor().shutdown();
+        public void shutdown() {
+            getEditingRunner().shutdown();
         }
     }
 

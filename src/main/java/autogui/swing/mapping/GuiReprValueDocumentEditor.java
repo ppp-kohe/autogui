@@ -37,6 +37,18 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         return false;
     }
 
+    @Override
+    public void setSource(GuiMappingContext context, Object value) {
+        if (value instanceof StyledDocument) {
+            StyledDocument doc = (StyledDocument) value;
+            Style style = doc.getStyle(StyleContext.DEFAULT_STYLE);
+            if (setUpStyle(style)) {
+                doc.setParagraphAttributes(0, doc.getLength(), style, true);
+            }
+        }
+        super.setSource(context, value);
+    }
+
     /**
      * a function interface for processed in {@link SwingInvoker}
      */
@@ -112,7 +124,11 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     public boolean isStyledDocument(GuiMappingContext context) {
-        return StyledDocument.class.isAssignableFrom(getValueType(context));
+        Class<?> cls = this.getValueType(context);
+        return StyledDocument.class.isAssignableFrom(cls) ||
+                //those wrapped documents are also StyledDocuments
+                AbstractDocument.Content.class.isAssignableFrom(cls) ||
+                StringBuilder.class.isAssignableFrom(cls);
         //return true; //enables style change
     }
 
@@ -206,19 +222,31 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         return tabSet;
     }
 
-    public static void setUpStyle(Style style) {
-        StyleConstants.setTabSet(style, getTabSet());
-        StyleConstants.setFontSize(style, 14);
-        String os = System.getProperty("os.name", "?").toLowerCase();
-        if (os.contains("mac")) {
-            StyleConstants.setFontFamily(style, "Menlo");
+    public static boolean setUpStyle(Style style) {
+        boolean set = false;
+        if (StyleConstants.getTabSet(style) == null) {
+            StyleConstants.setTabSet(style, getTabSet());
+            set = true;
         }
+        if (style.getAttribute(StyleConstants.FontSize) == null) {
+            StyleConstants.setFontSize(style, 14);
+            set = true;
+        }
+        if (style.getAttribute(StyleConstants.FontFamily) == null) {
+            String os = System.getProperty("os.name", "?").toLowerCase();
+            if (os.contains("mac")) {
+                StyleConstants.setFontFamily(style, "Menlo");
+                set = true;
+            }
+        }
+        return set;
     }
 
     public static void setUpStyle(StyledDocument doc) {
         Style style = doc.getStyle(StyleContext.DEFAULT_STYLE);
-        setUpStyle(style);
-        doc.setParagraphAttributes(0, doc.getLength(), style, true);
+        if (setUpStyle(style)) {
+            doc.setParagraphAttributes(0, doc.getLength(), style, true);
+        }
     }
 
     /**

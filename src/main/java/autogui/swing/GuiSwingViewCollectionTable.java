@@ -246,13 +246,21 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(List<?> value) {
             setSwingViewValue(value);
-            ((GuiReprCollectionTable) getContext().getRepresentation())
-                    .updateFromGui(getContext(), value);
+            GuiReprCollectionTable table = (GuiReprCollectionTable) getContext().getRepresentation();
+            if (table.isEditable(context)) {
+                table.updateFromGui(getContext(), value);
+            }
         }
 
         @Override
         public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
             this.preferencesUpdater.setUpdater(updater);
+        }
+
+        @Override
+        public void shutdown() {
+            getObjectTableModel().getColumns()
+                    .forEach(ObjectTableColumn::shutdown);
         }
 
         /////////////////

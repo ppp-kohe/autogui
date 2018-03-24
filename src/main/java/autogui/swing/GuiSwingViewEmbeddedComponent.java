@@ -89,8 +89,10 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(JComponent value) {
             setSwingViewValue(value);
-            ((GuiReprEmbeddedComponent) getContext().getRepresentation())
-                    .updateFromGui(getContext(), value);
+            GuiReprEmbeddedComponent repr = (GuiReprEmbeddedComponent) getContext().getRepresentation();
+            if (repr.isEditable(getContext())) {
+                repr.updateFromGui(getContext(), value);
+            }
         }
     }
 }

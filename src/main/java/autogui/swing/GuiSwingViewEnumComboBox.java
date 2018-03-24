@@ -108,7 +108,9 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             if (listenerEnabled) {
                 Object item = getSelectedItem();
                 GuiReprValueEnumComboBox box = (GuiReprValueEnumComboBox) context.getRepresentation();
-                box.updateFromGui(context, item);
+                if (box.isEditable(context)) {
+                    box.updateFromGui(context, item);
+                }
             }
         }
 

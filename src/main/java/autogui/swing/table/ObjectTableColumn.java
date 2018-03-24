@@ -53,6 +53,9 @@ public class ObjectTableColumn {
         this.comparator = comparator;
     }
 
+    public void shutdown() {
+
+    }
 
     /**
      *

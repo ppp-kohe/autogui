@@ -222,7 +222,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public void setImage(Image image) {
             setImageWithoutContextUpdate(image);
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
-            img.updateFromGui(context, image);
+            if (img.isEditable(context)) {
+                img.updateFromGui(context, image);
+            }
         }
 
         public Dimension getImageSize() {

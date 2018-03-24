@@ -163,7 +163,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             new LineNumberPane(pane).install();
             pane.repaint();
         }
-        if (contextUpdate) {
+        if (contextUpdate && docEditor.isEditable(context)) {
             //newValue will be a Document
             if (newValue instanceof Document) {
                 newValue = docEditor.toSourceValue(context, (Document) newValue);
@@ -194,7 +194,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
     public static class PropertyDocumentEditorPane extends JEditorPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
-                SettingsWindowClient  { //ValuePane<StringBuilder|Content|Document>
+                SettingsWindowClient { //ValuePane<StringBuilder|Content|Document>
         protected GuiMappingContext context;
         protected PopupExtension popup;
         protected boolean wrapLine = true;
@@ -266,7 +266,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
     public static class PropertyDocumentTextPane extends JTextPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
-            SettingsWindowClient  { //ValuePane<StringBuilder|Content|Document>
+            SettingsWindowClient, GuiSwingPreferences.PreferencesUpdateSupport   { //ValuePane<StringBuilder|Content|Document>
         protected GuiMappingContext context;
         protected PopupExtension popup;
         protected boolean wrapLine = true;
@@ -335,18 +335,14 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public void savePreferences(GuiPreferences prefs) {
             GuiSwingView.savePreferencesDefault(this, prefs);
             GuiPreferences targetPrefs = prefs.getDescendant(context);
-            Map<String, Object> jsonObj = settingPane.getJson();
-            GuiPreferences.GuiValueStore store = targetPrefs.getValueStore();
-            store.putString("style", JsonWriter.create().write(jsonObj).toSource());
+            settingPane.saveTo(targetPrefs);
         }
 
         @Override
         public void loadPreferences(GuiPreferences prefs) {
             GuiSwingView.loadPreferencesDefault(this, prefs);
             GuiPreferences targetPrefs = prefs.getDescendant(context);
-            GuiPreferences.GuiValueStore store = targetPrefs.getValueStore();
-            Object jsonObj = JsonReader.create(store.getString("style", "null")).parseValue();
-            settingPane.setJson(jsonObj);
+            settingPane.loadFrom(targetPrefs);
         }
 
         @Override
@@ -360,8 +356,13 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public void shutDown() {
+        public void shutdown() {
             settingPane.shutDown();
+        }
+
+        @Override
+        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+            settingPane.setPreferencesUpdater(updater);
         }
     }
 
@@ -449,7 +450,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
     }
 
-    public static class DocumentSettingPane extends JPanel implements ItemListener, ChangeListener {
+    public static class DocumentSettingPane extends JPanel implements ItemListener, ChangeListener,
+            GuiSwingPreferences.Preferences {
         protected JEditorPane pane;
         protected Map<String, Font> nameFonts = new HashMap<>();
 
@@ -467,6 +469,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected SettingsWindow.ColorButton foregroundColor;
 
         protected ScheduledTaskRunner.EditingRunner updater;
+        protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> preferencesUpdater;
 
         public DocumentSettingPane(JEditorPane pane) {
             setBorder(BorderFactory.createEmptyBorder(3, 10, 10, 10));
@@ -563,11 +566,15 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 pane.setCaretColor(foregroundColor.getColor());
                 StyleConstants.setForeground(style, foregroundColor.getColor());
                 doc.setParagraphAttributes(0, doc.getLength(), style, true);
+                sendPreferences();
             }
             pane.repaint();
         }
 
         public void updateFromStyle() {
+            if (updateDisabled) {
+                return;
+            }
             updateDisabled = true;
             try {
                 Style style = getTargetStyle();
@@ -615,7 +622,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 if (c != null) {
                     backgroundColor.setColor(c);
                 }
-                c = fromJsonColor("foregroundColor");
+                c = fromJsonColor(map.get("foregroundColor"));
                 if (c != null) {
                     foregroundColor.setColor(c);
                 }
@@ -625,7 +632,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         public Map<String,Object> getJson() {
-            Map<String, Object> json = new HashMap<>();
+            Map<String, Object> json = new LinkedHashMap<>();
             json.put("lineSpacing", ((Number) lineSpacing.getValue()).floatValue());
             json.put("fontFamily", (String) fontFamily.getSelectedItem());
             json.put("fontSize", ((Number) fontSize.getValue()).intValue());
@@ -662,7 +669,66 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         public void shutDown() {
-            updater.getExecutor().shutdown();
+            updater.shutdown();
+            backgroundColor.dispose();
+            foregroundColor.dispose();
+        }
+
+        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> preferencesUpdater) {
+            this.preferencesUpdater = preferencesUpdater;
+        }
+
+        public void sendPreferences() {
+            if (pane instanceof ValuePane<?> && preferencesUpdater != null) {
+                preferencesUpdater.accept(
+                        new GuiSwingPreferences.PreferencesUpdateEvent(((ValuePane) pane).getContext(), this));
+            }
+        }
+
+        @Override
+        public void loadFrom(GuiPreferences prefs) {
+            GuiPreferences.GuiValueStore store = prefs.getValueStore();
+            Map<String,Object> json = new HashMap<>();
+            for (Map.Entry<String,Object> e : getJson().entrySet()) { //JSON has all keys and values
+                String k = e.getKey();
+                String storeVal = store.getString(k, "");
+                Object exVal = e.getValue();
+                if (!storeVal.isEmpty()) {
+                    if (exVal instanceof String) {
+                        json.put(k, storeVal);
+                    } else if (exVal instanceof Boolean) {
+                        json.put(k, storeVal.endsWith("true"));
+                    } else if (exVal instanceof Number) {
+                        try {
+                            json.put(k, Integer.valueOf(storeVal));
+                        } catch (Exception ex) {
+                            json.put(k, Float.valueOf(storeVal));
+                        }
+                    } else {
+                        json.put(k, JsonReader.create(storeVal).parseValue());
+                    }
+                }
+            }
+            setJson(json);
+            updateStyle();
+        }
+
+        @Override
+        public void saveTo(GuiPreferences prefs) {
+            GuiPreferences.GuiValueStore store = prefs.getValueStore();
+            for (Map.Entry<String,Object> e : getJson().entrySet()) {
+                String k = e.getKey();
+                Object v = e.getValue();
+                if (v instanceof String) {
+                    store.putString(k, (String) v);
+                } else if (v instanceof Number) {
+                    store.putString(k, v.toString());
+                } else if (v instanceof Boolean) {
+                    store.putString(k, v.equals(Boolean.TRUE) ? "true" : "false");
+                } else {
+                    store.putString(k, JsonWriter.create().write(v).toSource());
+                }
+            }
         }
     }
 

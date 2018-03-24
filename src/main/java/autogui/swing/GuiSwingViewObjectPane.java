@@ -255,15 +255,19 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         /** special case: update the source */
         @Override
         public void setSwingViewValue(Object value) {
-            context.setSource(value);
+            context.updateSourceFromGui(value);
             revalidate();
             repaint();
         }
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            ((GuiReprObjectPane) getContext().getRepresentation())
-                    .updateFromGui(getContext(), value);
+            GuiReprObjectPane objectPane = (GuiReprObjectPane) getContext().getRepresentation();
+            if (objectPane.isEditable(getContext())) {
+                objectPane.updateFromGui(getContext(), value);
+            } else {
+                context.updateSourceFromGui(value);
+            }
             revalidate();
             repaint();
         }

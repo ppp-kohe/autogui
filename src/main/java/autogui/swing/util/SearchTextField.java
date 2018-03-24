@@ -530,6 +530,10 @@ public class SearchTextField extends JComponent {
         });
     }
 
+    public void shutdown() {
+        this.editingRunner.shutdown();
+    }
+
     /** the background searching task */
     public static class SearchTask extends SwingWorker<List<PopupCategorized.CategorizedPopupItem>, List<PopupCategorized.CategorizedPopupItem>>
         implements SearchTextFieldPublisher {

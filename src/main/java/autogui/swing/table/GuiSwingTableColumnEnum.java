@@ -24,7 +24,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
         comboBox.setBorder(BorderFactory.createEmptyBorder());
         comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         ObjectTableColumnValue.ObjectTableCellEditor editor = new ObjectTableColumnValue.ObjectTableCellEditor(
-                comboBox);
+                comboBox, false);
         editor.setClickCount(2);
 
         return new ObjectTableColumnValue(context,

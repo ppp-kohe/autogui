@@ -32,6 +32,7 @@ public class GuiSwingWindow extends JFrame {
     protected GuiSwingPreferences.WindowPreferencesUpdater logPreferencesUpdater;
 
     protected SettingsWindow settingsWindow;
+    protected boolean applicationRoot;
 
     public static GuiSwingWindow createForObject(Object o) {
         return new GuiSwingWindow(new GuiMappingContext(
@@ -196,10 +197,14 @@ public class GuiSwingWindow extends JFrame {
         return true;
     }
 
+    public void setApplicationRoot(boolean applicationRoot) {
+        this.applicationRoot = applicationRoot;
+    }
+
     public void cleanUp() {
         context.getTaskRunner().shutdown();
         GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
-                GuiSwingView.ValuePane::shutDown);
+                GuiSwingView.ValuePane::shutdown);
         preferences.shutdown();
         logWindow.dispose();
         settingsWindow.getWindow().dispose();

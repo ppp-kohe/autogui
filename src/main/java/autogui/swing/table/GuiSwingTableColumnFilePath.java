@@ -27,7 +27,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     public ObjectTableColumn createColumn(GuiMappingContext context) {
         return new ObjectTableColumnValue(context,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, false)),
-                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, true)))
+                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, true), false))
                 .withComparator(Comparator.comparing(Path.class::cast));
     }
 

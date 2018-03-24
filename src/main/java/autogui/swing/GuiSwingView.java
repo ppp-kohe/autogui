@@ -99,7 +99,7 @@ public interface GuiSwingView extends GuiSwingElement {
             loadPreferencesDefault(asComponent(), prefs);
         }
 
-        default void shutDown() { }
+        default void shutdown() { }
     }
 
     interface SettingsWindowClient {

@@ -289,8 +289,8 @@ public class GuiSwingPreferences {
     }
 
     public void shutdown() {
+        getUpdater().shutdown();
         ScheduledExecutorService s = getUpdater().getExecutor();
-        s.shutdown();
         try {
             s.awaitTermination(2, TimeUnit.SECONDS);
         } catch (Exception ex) {

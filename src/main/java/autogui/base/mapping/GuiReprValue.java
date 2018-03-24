@@ -61,20 +61,28 @@ public class GuiReprValue implements GuiRepresentation {
             if (next != null && next.equals(GuiTypeValue.NO_UPDATE)) {
                 return false;
             } else {
-                try {
-                    if (isHistoryValueSupported()) {
-                        context.getPreferences().addHistoryValue(next);
-                    }
-                } catch (Throwable ex) {
-                    context.errorWhileUpdateSource(ex);
-                }
-                context.setSource(next);
+                addHistoryValue(context, next);
+                setSource(context, next);
                 return true;
             }
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
             return false;
         }
+    }
+
+    public void addHistoryValue(GuiMappingContext context, Object value) {
+        try {
+            if (isHistoryValueSupported()) {
+                context.getPreferences().addHistoryValue(value);
+            }
+        } catch (Throwable ex) {
+            context.errorWhileUpdateSource(ex);
+        }
+    }
+
+    public void setSource(GuiMappingContext context, Object value) {
+        context.setSource(value);
     }
 
     /**
@@ -194,13 +202,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @param newValue the updated property value
      */
     public void updateFromGui(GuiMappingContext context, Object newValue) {
-        try {
-            if (isHistoryValueSupported()) {
-                context.getPreferences().addHistoryValue(newValue);
-            }
-        } catch (Throwable ex) {
-            context.errorWhileUpdateSource(ex);
-        }
+        addHistoryValue(context, newValue);
 
         if (context.isParentCollectionElement()) {
             //

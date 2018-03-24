@@ -116,7 +116,9 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(Boolean value) {
             GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
-            repr.updateFromGui(context, value);
+            if (repr.isEditable(context)) {
+                repr.updateFromGui(context, value);
+            }
             setSwingViewValue(value);
         }
 

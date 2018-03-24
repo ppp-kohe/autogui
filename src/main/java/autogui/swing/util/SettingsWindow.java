@@ -6,6 +6,7 @@ import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /** a shared window manager for the setting panel */
@@ -97,8 +98,6 @@ public class SettingsWindow {
         void setup(JFrame window);
     }
 
-
-
     ///////// header text:
 
     /** a group of labels */
@@ -172,7 +171,7 @@ public class SettingsWindow {
         if (colorWindow == null) {
             colorWindow = new ColorWindow();
         }
-         return colorWindow;
+        return colorWindow;
     }
 
     /** a window holder for the color chooser */
@@ -182,6 +181,8 @@ public class SettingsWindow {
         protected Consumer<Color> callback;
         protected JColorChooser colorChooser;
         protected boolean updateDisabled;
+
+        protected AtomicInteger refCount = new AtomicInteger();
 
         public ColorWindow() {
             window = new JFrame();
@@ -221,12 +222,29 @@ public class SettingsWindow {
                 callback.accept(c);
             }
         }
+
+        public void retain() {
+            refCount.incrementAndGet();
+        }
+
+        public boolean release() {
+            if (refCount.decrementAndGet() <= 0) {
+                window.dispose();
+                if (colorWindow == this) {
+                    colorWindow = null;
+                }
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 
     /** a color well can be changed by a shared color-panel */
     public static class ColorButton extends JButton implements ActionListener {
         protected Color color;
         protected Consumer<Color> callback;
+        protected ColorWindow window;
 
         public ColorButton(Color color, Consumer<Color> callback) {
             this.color = color;
@@ -237,8 +255,17 @@ public class SettingsWindow {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            ColorWindow w = getColorWindow();
-            w.show(this, color, this::setColor);
+            if (window == null) {
+                window = getColorWindow();
+                window.retain();
+            }
+            window.show(this, color, this::setColor);
+        }
+
+        public void dispose() {
+            if (window != null) {
+                window.release();
+            }
         }
 
         public void setColor(Color color) {

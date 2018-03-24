@@ -22,8 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
@@ -37,7 +36,8 @@ import java.util.stream.Collectors;
 public class ObjectTableColumnValue extends ObjectTableColumn {
     protected GuiMappingContext context;
     protected int contextIndex = -1;
-
+    protected TableCellRenderer renderer;
+    protected TableCellEditor editor;
     /**
      * the representation of the context must be a sub-type of {@link GuiReprValue}.
      * view must be a {@link autogui.swing.GuiSwingView.ValuePane}
@@ -50,12 +50,15 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
     public ObjectTableColumnValue(GuiMappingContext context, JComponent view, JComponent editorView) {
         this(context, new ObjectTableCellRenderer(view),
-                editorView == null ? null : new ObjectTableCellEditor(editorView));
+                editorView == null ? null : new ObjectTableCellEditor(editorView, view == editorView));
         setRowHeight(view.getPreferredSize().height + 4);
     }
 
     public ObjectTableColumnValue(GuiMappingContext context, TableCellRenderer renderer, TableCellEditor editor) {
         this.context = context;
+        this.renderer = renderer;
+        this.editor = editor;
+
         this.contextIndex = ((GuiReprCollectionElement) context.getParent().getRepresentation())
                 .getFixedColumnIndex(context.getParent(), context);
 
@@ -66,6 +69,17 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         if (renderer instanceof ObjectTableCellRenderer) {
             ((ObjectTableCellRenderer) renderer).setOwnerColumn(this);
+        }
+    }
+
+    @Override
+    public void shutdown() {
+        super.shutdown();
+        if (renderer instanceof ObjectTableCellRenderer) {
+            ((ObjectTableCellRenderer) renderer).shutdown();
+        }
+        if (editor instanceof ObjectTableCellEditor) {
+            ((ObjectTableCellEditor) editor).shutdown();
         }
     }
 
@@ -169,6 +183,13 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
                 return null;
             }
         }
+
+        public void shutdown() {
+            GuiSwingView.ValuePane<?> p = getMenuTargetPane();
+            if (p != null) {
+                p.shutdown();
+            }
+        }
     }
 
     public static void setTableColor(JTable table, JComponent component, boolean isSelected) {
@@ -187,12 +208,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     public static class ObjectTableCellEditor extends AbstractCellEditor implements TableCellEditor {
         protected JComponent component;
         protected int clickCount = 2;
+        protected boolean skipShutDown;
 
         /**
          * @param component the editor component, must be a {@link autogui.swing.GuiSwingView.ValuePane}
          */
-        public ObjectTableCellEditor(JComponent component) {
+        public ObjectTableCellEditor(JComponent component, boolean skipShutDown) {
             this.component = component;
+            this.skipShutDown = skipShutDown;
             if (component instanceof GuiSwingView.ValuePane<?>) {
                 ((GuiSwingView.ValuePane<?>) component).addSwingEditFinishHandler(e -> stopCellEditing());
             }
@@ -257,6 +280,12 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         public int getClickCount() {
             return clickCount;
+        }
+
+        public void shutdown() {
+            if (!skipShutDown && component instanceof GuiSwingView.ValuePane<?>) {
+                ((GuiSwingView.ValuePane) component).shutdown();
+            }
         }
     }
 

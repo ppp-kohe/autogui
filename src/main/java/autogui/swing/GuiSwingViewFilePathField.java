@@ -110,7 +110,9 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         public void selectSearchedItemFromModel(PopupCategorized.CategorizedPopupItem item) {
             super.selectSearchedItemFromModel(item);
             GuiReprValueFilePathField path = (GuiReprValueFilePathField) context.getRepresentation();
-            path.updateFromGui(context, getFile());
+            if (path.isEditable(context)) {
+                path.updateFromGui(context, getFile());
+            }
         }
 
         /** no property update
@@ -157,8 +159,8 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         }
 
         @Override
-        public void shutDown() {
-            getEditingRunner().getExecutor().shutdown();
+        public void shutdown() {
+            getEditingRunner().shutdown();
         }
     }
 }

@@ -229,7 +229,9 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public void updateNumber(List<Object> events) {
             SwingUtilities.invokeLater(() -> {
                 GuiReprValueNumberSpinner field = (GuiReprValueNumberSpinner) context.getRepresentation();
-                field.updateFromGui(context, getValue());
+                if (field.isEditable(context)) {
+                    field.updateFromGui(context, getValue());
+                }
             });
         }
 
@@ -299,8 +301,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        public void shutDown() {
-            editingRunner.getExecutor().shutdown();
+        public void shutdown() {
+            editingRunner.shutdown();
         }
 
         @Override
