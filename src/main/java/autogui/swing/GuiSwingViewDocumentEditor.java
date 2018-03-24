@@ -502,8 +502,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             wrapText = new TextWrapTextAction(pane);
             fontStyleMenu.add(new JCheckBoxMenuItem(wrapText));
             //delay checking after component setting-up
-            new Timer(200, e -> wrapText.updateSelected())
-                    .start();
+            Timer timer = new Timer(200, e -> wrapText.updateSelected());
+            timer.setRepeats(false);
+            timer.start();
 
             JButton styleButton = new JButton("Style");
             PopupButtonListener buttonListener = new PopupButtonListener(styleButton, fontStyleMenu);
