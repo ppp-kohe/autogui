@@ -39,6 +39,11 @@ public class GuiSwingWindow extends JFrame {
             new GuiTypeBuilder().get(o.getClass()), o));
     }
 
+    public static GuiSwingWindow createForObjectRelaxed(Object o) {
+        return new GuiSwingWindow(new GuiMappingContext(
+                new GuiTypeBuilder.GuiTypeBuilderRelaxed().get(o.getClass()), o));
+    }
+
     public GuiSwingWindow(GuiMappingContext context) {
         this.context = context;
         if (context.getRepresentation() == null) {

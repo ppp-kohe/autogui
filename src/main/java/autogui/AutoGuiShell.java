@@ -42,8 +42,30 @@ public class AutoGuiShell {
             GuiSwingWindow[] w = new GuiSwingWindow[1];
             try {
                 SwingUtilities.invokeAndWait(() -> {
-                    w[0] = GuiSwingWindow.createForObject(o);
-                    w[0].setApplicationRoot(appRoot);
+                    w[0] = createWindow(o, appRoot);
+                });
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+            return w[0];
+        }
+    }
+
+    public static GuiSwingWindow liveShow(Object o) {
+        return get().createWindowRelaxed(o);
+    }
+
+    public GuiSwingWindow createWindowRelaxed(Object o) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            GuiSwingWindow w = GuiSwingWindow.createForObjectRelaxed(o);
+            w.setApplicationRoot(false);
+            w.setVisible(true);
+            return w;
+        } else {
+            GuiSwingWindow[] w = new GuiSwingWindow[1];
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    w[0] = createWindowRelaxed(o);
                 });
             } catch (Exception ex) {
                 throw new RuntimeException(ex);

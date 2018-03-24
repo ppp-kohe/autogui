@@ -129,12 +129,12 @@ public class GuiTypeBuilder {
 
         Map<String, MemberDefinitions> definitionsMap = new HashMap<>();
 
-        Arrays.stream(cls.getFields())
+        listFields(cls).stream()
                 .filter(this::isMemberField)
                 .forEachOrdered(f -> definitionsMap.computeIfAbsent(getMemberNameFromField(f), MemberDefinitions::new)
                         .fields.add(f));
 
-        Arrays.stream(cls.getMethods())
+        listMethods(cls).stream()
                 .filter(this::isMemberMethod)
                 .forEachOrdered(m -> definitionsMap.computeIfAbsent(getMemberNameFromMethod(m), MemberDefinitions::new)
                         .methods.add(m));
@@ -149,6 +149,14 @@ public class GuiTypeBuilder {
         ((ArrayList<?>) objType.getActions()).trimToSize();
 
         return objType;
+    }
+
+    public List<Field> listFields(Class<?> cls) {
+        return Arrays.asList(cls.getFields());
+    }
+
+    public List<Method> listMethods(Class<?> cls) {
+        return Arrays.asList(cls.getMethods());
     }
 
     /** a temporarily created member group in {@link #createObjectFromClass(Class)} */
@@ -308,7 +316,7 @@ public class GuiTypeBuilder {
      * @return {@link #getMemberNameFromMethodName(String)} or attached {@link GuiIncluded#name()}*/
     public String getMemberNameFromMethod(Method m) {
         GuiIncluded included = m.getAnnotation(GuiIncluded.class);
-        if (included.name().isEmpty()) {
+        if (included == null || included.name().isEmpty()) {
             return getMemberNameFromMethodName(m.getName());
         } else {
             return included.name();
@@ -433,6 +441,78 @@ public class GuiTypeBuilder {
             return Object[].class; //do not support
         } else {
             return Object.class;
+        }
+    }
+
+    public static class GuiTypeBuilderRelaxed extends GuiTypeBuilder {
+        @Override
+        public boolean isExcludedType(Class<?> cls) {
+            return Modifier.isPrivate(cls.getModifiers()) &&
+                    (cls.getName().startsWith("java.") ||
+                     cls.getName().startsWith("javax."));
+        }
+
+        @Override
+        public List<Field> listFields(Class<?> cls) {
+            Class<?> p = cls;
+            List<Field> fs = new ArrayList<>(Arrays.asList(p.getFields()));
+            while (p != null && !p.equals(Object.class)) {
+                Arrays.stream(p.getDeclaredFields())
+                        .filter(f -> fs.stream()
+                                        .noneMatch(parent -> parent.getName().equals(f.getName())))
+                        .filter(this::setAccessible)
+                        .forEach(fs::add);
+                p = p.getSuperclass();
+            }
+            return fs;
+        }
+
+        @Override
+        public List<Method> listMethods(Class<?> cls) {
+            Class<?> p = cls;
+            List<Method> ms = new ArrayList<>(Arrays.asList(cls.getMethods()));
+            while (p != null && !p.equals(Object.class)) {
+                Arrays.stream(p.getDeclaredMethods())
+                    .filter(m -> ms.stream()
+                            .noneMatch(parent -> match(parent, m)))
+                    .filter(this::setAccessible)
+                    .forEach(ms::add);
+                p = p.getSuperclass();
+            }
+            return ms;
+        }
+
+        public boolean setAccessible(AccessibleObject a) {
+            try {
+                a.setAccessible(true);
+                return true;
+            } catch (Exception ex) {
+                return false;
+            }
+        }
+
+        public boolean match(Method parent, Method child) {
+            if (parent.getName().equals(child.getName())) {
+                //simple overloading checking
+                return Arrays.asList(parent.getParameterTypes())
+                        .equals(Arrays.asList(child.getParameterTypes()));
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public boolean isMemberMethod(Method m) {
+            return isMemberModifiers(m.getModifiers()) && !m.getDeclaringClass().equals(Object.class);
+        }
+
+        @Override
+        public boolean isMemberField(Field f) {
+            return isMemberModifiers(f.getModifiers()) && !f.getDeclaringClass().equals(Object.class);
+        }
+
+        public boolean isMemberModifiers(int mod){
+            return !Modifier.isStatic(mod) && !Modifier.isPrivate(mod) && !Modifier.isProtected(mod);
         }
     }
 }

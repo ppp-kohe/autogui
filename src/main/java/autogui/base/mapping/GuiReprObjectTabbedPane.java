@@ -32,20 +32,20 @@ public class GuiReprObjectTabbedPane extends GuiReprObjectPane {
     }
 
     public boolean matchWithoutSettingSubContexts(GuiMappingContext context) {
-        boolean ok = false;
+        int panes = 0;
         for (GuiMappingContext subContext : context.createChildCandidates()) {
             if ((subContext.isTypeElementProperty() &&
                     (subContext.getTypeElementAsProperty().getType() instanceof GuiTypeObject ||
                      subContext.getTypeElementAsProperty().getType() instanceof GuiTypeCollection)) ||
                 subContext.isTypeElementObject() ||
-                subContext.isTypeElementCollection() ||
-                subContext.isTypeElementAction() ||
-                subContext.isTypeElementActionList()) {
-                ok = true;
+                subContext.isTypeElementCollection()) {
+                ++panes;
+            } else if (subContext.isTypeElementAction() || subContext.isTypeElementActionList()) {
+                //ok
             } else {
                 return false;
             }
         }
-        return ok;
+        return panes >= 2;
     }
 }
