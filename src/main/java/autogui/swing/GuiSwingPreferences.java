@@ -55,7 +55,7 @@ import java.util.stream.IntStream;
  *           public String getKey() { return "$x"; } //the entry key
  *           public Object toJson() { Map m = new HashMap(); m.put("p", prop); return m; } //to a JSON entry
  *           public void setJson(Object j) {
- *               if (j != null && j instanceof Map) { prop = (Integer) ((Map) j).get("p"); }
+ *               if (j != null &amp;&amp; j instanceof Map) { prop = (Integer) ((Map) j).get("p"); }
  *           }
  *       }
  *         </pre>

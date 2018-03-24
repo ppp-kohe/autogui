@@ -8,10 +8,10 @@ import java.lang.annotation.Target;
 /**
  * indicates that the method is automatically called when some cells of a related table are selected
  * <pre>
- *     &#64GuiIncluded public class Table {
- *         &#64GuiIncluded public List&lt;E&gt; list;
+ *     &#64;GuiIncluded public class Table {
+ *         &#64;GuiIncluded public List&lt;E&gt; list;
  *         ...
- *         &#64;GuiListSelectionCallback &#64GuiIncluded
+ *         &#64;GuiListSelectionCallback &#64;GuiIncluded
  *         public void select(List&lt;E&gt; itemsInList) {
  *             ...
  *         }

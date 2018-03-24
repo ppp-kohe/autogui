@@ -212,6 +212,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         /**
          * @param component the editor component, must be a {@link autogui.swing.GuiSwingView.ValuePane}
+         * @param skipShutDown if true, {@link #shutdown()} process for the component will be skipped
          */
         public ObjectTableCellEditor(JComponent component, boolean skipShutDown) {
             this.component = component;
