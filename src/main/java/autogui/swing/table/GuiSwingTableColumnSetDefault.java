@@ -77,6 +77,14 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                 setEnabled(true);
             }
         }
+
+        /**
+         * @return if true, the action will be called automatically when some cells are selected
+         */
+        public boolean isAutomaticSelectionAction() {
+            return ((GuiReprActionList) context.getRepresentation())
+                    .isSelectionAction(context);
+        }
     }
 
     /**
@@ -106,6 +114,12 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                 source.selectionActionFinished();
                 setEnabled(true);
             }
+        }
+
+        @Override
+        public boolean isAutomaticSelectionAction() {
+            return ((GuiReprAction) context.getRepresentation())
+                    .isSelectionAction(context);
         }
     }
 }

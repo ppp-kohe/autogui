@@ -10,6 +10,7 @@ import autogui.swing.table.*;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionSender;
+import autogui.swing.util.ScheduledTaskRunner;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -83,6 +84,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     siblingContext.getTypeElementAsActionList().getElementType()
                             .equals(context.getTypeElementCollection().getElementType())) {
                     //takes multiple selected items
+
                     actions.add(new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table));
                 }
             }
@@ -102,11 +104,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected List<?> source;
         protected PopupExtensionCollection popup;
         protected List<Action> actions = new ArrayList<>();
+        protected List<Action> autoSelectionActions = new ArrayList<>();
+        protected ScheduledTaskRunner.EditingRunner selectionRunner;
 
         protected TablePreferencesUpdater preferencesUpdater;
 
         public CollectionTable(GuiMappingContext context) {
             this.context = context;
+
 
             //model
             ObjectTableModel model = new ObjectTableModel(this::getSource);
@@ -131,6 +136,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             //improve precedence of the popup listener
 
             //cell selection
+            selectionRunner = new ScheduledTaskRunner.EditingRunner(100, this::runAutoSelectionActions);
             setCellSelectionEnabled(true);
             setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             setGridColor(getBackground());
@@ -158,6 +164,13 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public JComponent initAfterAddingColumns(List<Action> actions) {
             this.actions.addAll(actions);
+
+            actions.stream()
+                    .filter(GuiSwingTableColumnSetDefault.TableSelectionListAction.class::isInstance)
+                    .map(GuiSwingTableColumnSetDefault.TableSelectionListAction.class::cast)
+                    .filter(GuiSwingTableColumnSetDefault.TableSelectionListAction::isAutomaticSelectionAction)
+                    .forEach(this.autoSelectionActions::add);
+
             ObjectTableModel model = getObjectTableModel();
             model.initTableWithoutScrollPane(this);
 
@@ -196,11 +209,20 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             getSelectionModel().addListSelectionListener(e -> {
                 boolean enabled = !isSelectionEmpty();
                 actions.forEach(a -> a.setEnabled(enabled));
+
+                if (enabled) {
+                    selectionRunner.schedule(e);
+                }
             });
 
             actions.forEach(a -> initAction(actionToolBar, a));
 
             return actionToolBar;
+        }
+
+        public void runAutoSelectionActions(List<Object> es) {
+            this.autoSelectionActions.forEach(a ->
+                    a.actionPerformed(null));
         }
 
         public void initAction(JToolBar actionToolBar, Action action) {
@@ -265,6 +287,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void shutdown() {
             getObjectTableModel().getColumns()
                     .forEach(ObjectTableColumn::shutdown);
+            selectionRunner.shutdown();
         }
 
         /////////////////

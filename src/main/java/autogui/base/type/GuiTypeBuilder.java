@@ -444,6 +444,10 @@ public class GuiTypeBuilder {
         }
     }
 
+    /**
+     * another type-builder with relaxed rules:
+     *   including non-public (without access-modifiers) members.
+     * */
     public static class GuiTypeBuilderRelaxed extends GuiTypeBuilder {
         @Override
         public boolean isExcludedType(Class<?> cls) {

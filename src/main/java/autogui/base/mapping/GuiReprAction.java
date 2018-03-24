@@ -61,4 +61,8 @@ public class GuiReprAction implements GuiRepresentation {
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         return target;
     }
+
+    public boolean isSelectionAction(GuiMappingContext context) {
+        return context.getTypeElementAsAction().isSelectionAction();
+    }
 }

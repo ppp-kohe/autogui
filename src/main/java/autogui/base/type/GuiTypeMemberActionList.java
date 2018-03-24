@@ -1,5 +1,7 @@
 package autogui.base.type;
 
+import autogui.base.mapping.GuiMappingContext;
+
 import java.lang.reflect.Method;
 import java.util.List;
 

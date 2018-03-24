@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.AutoGuiShell;
 import autogui.GuiIncluded;
+import autogui.GuiListSelectionCallback;
 import autogui.base.type.GuiTypeObject;
 import autogui.swing.icons.GuiSwingIcons;
 
@@ -128,7 +129,7 @@ public class AutoGuiShellExp {
                     .collect(Collectors.toList()));
         }
 
-        @GuiIncluded
+        @GuiIncluded @GuiListSelectionCallback
         public void select(List<String> items) {
             System.err.println("selected : " + items);
         }
@@ -226,5 +227,11 @@ public class AutoGuiShellExp {
         @GuiIncluded(index = 1) public int y;
         @GuiIncluded(index = 2) public String name;
         @GuiIncluded(index = 3) public Image icon;
+
+        @GuiListSelectionCallback
+        @GuiIncluded
+        public void sayHello() {
+            System.err.println(x + "," + y + "," + name + "," + icon);
+        }
     }
 }

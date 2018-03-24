@@ -46,7 +46,7 @@ public interface GuiSwingElement {
             .addReprClassTableColumn(GuiReprValueFilePathField.class, new GuiSwingTableColumnFilePath())
             .addReprClassTableColumn(GuiReprValueNumberSpinner.class, new GuiSwingTableColumnNumber())
             .addReprClassTableColumn(GuiReprValueImagePane.class, new GuiSwingTableColumnImage())
-            .addReprClassTableColumn(GuiRepresentation.class, new GuiSwingTableColumnLabel())
+            .addReprClassTableColumn(GuiReprValue.class, new GuiSwingTableColumnLabel())
             .addReprClass(GuiReprCollectionElement.class, new GuiSwingTableColumnSetDefault(set))
             .addReprClass(GuiReprActionList.class, null); //nothing: handled by a sibling GuiSwingViewCollectionTable
 
@@ -63,7 +63,7 @@ public interface GuiSwingElement {
             .addReprClass(GuiReprObjectTabbedPane.class, new GuiSwingViewTabbedPane(set))
             .addReprClass(GuiReprObjectPane.class, new GuiSwingViewObjectPane(set))
             .addReprClass(GuiReprAction.class, new GuiSwingActionDefault())
-            .addReprClass(GuiRepresentation.class, new GuiSwingViewLabel());
+            .addReprClass(GuiReprValue.class, new GuiSwingViewLabel());
         return set;
     }
 }

@@ -1,5 +1,7 @@
 package autogui.base.type;
 
+import autogui.GuiListSelectionCallback;
+
 import java.lang.reflect.Method;
 
 /**
@@ -46,5 +48,9 @@ public class GuiTypeMemberAction extends GuiTypeMember {
         } else {
             throw new UnsupportedOperationException("no method: " + methodName);
         }
+    }
+
+    public boolean isSelectionAction() {
+        return getMethod().isAnnotationPresent(GuiListSelectionCallback.class);
     }
 }
