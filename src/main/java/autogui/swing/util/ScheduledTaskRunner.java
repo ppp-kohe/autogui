@@ -80,7 +80,7 @@ public class ScheduledTaskRunner<EventType> {
         if (enabled) {
             accumulatedEvents.add(event);
             if (scheduledTask != null) {
-                if (scheduledTask.cancel(false)) {
+                if (!scheduledTask.cancel(false)) {
                     return;
                 }
             }

@@ -7,6 +7,8 @@ import autogui.swing.icons.GuiSwingIcons;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.text.DefaultStyledDocument;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -25,6 +27,7 @@ public class AutoGuiShellExp {
         protected TestTopPane topPane = new TestTopPane();
         protected TestValueList valueList = new TestValueList();
         protected TestNumbers numbers = new TestNumbers();
+        protected TestDoc doc = new TestDoc();
 
         @GuiIncluded(index = 1)
         public TestTopPane getTopPane() {
@@ -39,6 +42,11 @@ public class AutoGuiShellExp {
         @GuiIncluded(index = 3)
         public TestNumbers getNumbers() {
             return numbers;
+        }
+
+        @GuiIncluded(index = 4)
+        public TestDoc getDoc() {
+            return doc;
         }
     }
 
@@ -115,13 +123,88 @@ public class AutoGuiShellExp {
 
     @GuiIncluded
     public static class TestNumbers {
-        @GuiIncluded(index = 1) public int intValue;
-        @GuiIncluded(index = 2) public float floatValue;
-        @GuiIncluded(index = 3) public long longValue;
-        @GuiIncluded(index = 4) public double doubleValue;
-        @GuiIncluded(index = 5) public Integer intObj;
-        @GuiIncluded(index = 6) public BigInteger bigIntegerValue = BigInteger.ZERO;
-        @GuiIncluded(index = 7) public BigDecimal bigDecimalValue = BigDecimal.ZERO;
+        private int intValue;
+        private float floatValue;
+        private long longValue;
+        private double doubleValue;
+        private Integer intObj;
+        private BigInteger bigIntegerValue = BigInteger.ZERO;
+        private BigDecimal bigDecimalValue = BigDecimal.ZERO;
+
+        @GuiIncluded(index = 1) public int getIntValue() {
+            return intValue;
+        }
+
+        @GuiIncluded public void setIntValue(int intValue) {
+            this.intValue = intValue;
+            System.err.println("int " + intValue);
+        }
+
+        @GuiIncluded(index = 2) public float getFloatValue() {
+            return floatValue;
+        }
+
+        @GuiIncluded public void setFloatValue(float floatValue) {
+            this.floatValue = floatValue;
+            System.err.println("float " + floatValue);
+        }
+
+        @GuiIncluded(index = 3) public long getLongValue() {
+            return longValue;
+        }
+
+        @GuiIncluded public void setLongValue(long longValue) {
+            this.longValue = longValue;
+            System.err.println("long " + longValue);
+        }
+
+        @GuiIncluded(index = 4) public double getDoubleValue() {
+            return doubleValue;
+        }
+
+        @GuiIncluded public void setDoubleValue(double doubleValue) {
+            this.doubleValue = doubleValue;
+            System.err.println("double " + doubleValue);
+        }
+
+        @GuiIncluded(index = 5) public Integer getIntObj() {
+            return intObj;
+        }
+
+        @GuiIncluded public void setIntObj(Integer intObj) {
+            this.intObj = intObj;
+            System.err.println("intObj " + intObj);
+        }
+
+        @GuiIncluded(index = 6) public BigInteger getBigIntegerValue() {
+            return bigIntegerValue;
+        }
+
+        @GuiIncluded public void setBigIntegerValue(BigInteger bigIntegerValue) {
+            this.bigIntegerValue = bigIntegerValue;
+            System.err.println("bigInt " + bigIntegerValue);
+        }
+
+        @GuiIncluded(index = 7) public BigDecimal getBigDecimalValue() {
+            return bigDecimalValue;
+        }
+
+        @GuiIncluded public void setBigDecimalValue(BigDecimal bigDecimalValue) {
+            this.bigDecimalValue = bigDecimalValue;
+            System.err.println("bigDecimal " + bigDecimalValue);
+        }
+    }
+
+    @GuiIncluded
+    public static class TestDoc {
+        protected StyledDocument doc;
+        @GuiIncluded
+        public StyledDocument getDoc() {
+            if (doc == null) {
+                doc = new DefaultStyledDocument();
+            }
+            return doc;
+        }
     }
 
     @GuiIncluded

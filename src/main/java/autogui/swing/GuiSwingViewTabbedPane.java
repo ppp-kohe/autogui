@@ -120,7 +120,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         }
     }
 
-    public static class PreferencesForTab implements GuiSwingPreferences.Preferences {
+    public static class PreferencesForTab implements GuiSwingPreferences.PreferencesByJsonEntry {
         protected int selectedIndex;
 
         public void applyTo(JTabbedPane tabbedPane) {

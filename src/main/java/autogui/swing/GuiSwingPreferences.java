@@ -604,13 +604,19 @@ public class GuiSwingPreferences {
     }
 
     public interface Preferences {
+        void loadFrom(GuiPreferences prefs);
+
+        void saveTo(GuiPreferences prefs);
+    }
+
+    public interface PreferencesByJsonEntry extends Preferences {
         String getKey();
         Object toJson();
         void setJson(Object json);
 
         default void loadFrom(GuiPreferences prefs) {
             setJson(JsonReader.create(prefs.getValueStore().getString(getKey(), "null"))
-                .parseValue());
+                    .parseValue());
         }
 
         default void saveTo(GuiPreferences prefs) {
@@ -619,7 +625,7 @@ public class GuiSwingPreferences {
         }
     }
 
-    public static class PreferencesForWindow implements Preferences {
+    public static class PreferencesForWindow implements PreferencesByJsonEntry {
         protected int x;
         protected int y;
         protected int width;
@@ -777,7 +783,9 @@ public class GuiSwingPreferences {
         }
 
         public void sendToUpdater() {
-            updater.accept(new PreferencesUpdateEvent(context, prefs));
+            if (updater != null) {
+                updater.accept(new PreferencesUpdateEvent(context, prefs));
+            }
         }
 
         @Override

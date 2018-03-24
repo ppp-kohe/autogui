@@ -577,14 +577,14 @@ public class GuiPreferences {
         protected GuiValueStore valueStore;
         protected Instant time;
 
-        public HistoryValueEntry(GuiPreferences preferences, Object value) {
+        public HistoryValueEntry(GuiPreferences preferences, Object rawObject) {
             this.preferences = preferences;
             this.time = Instant.now();
-            if (isJsonValue() && value != null) {
+            if (isJsonValue() && rawObject != null) {
                 this.value = preferences.getContext().getRepresentation()
-                        .toJsonWithNamed(preferences.getContext(), value);
+                        .toJsonWithNamed(preferences.getContext(), rawObject);
             } else {
-                this.value = value;
+                this.value = rawObject;
             }
         }
 

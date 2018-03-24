@@ -2,6 +2,8 @@ package autogui.base.mapping;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 /**
  * a spinner text-field component for a {@link Number} or primitive number property
@@ -51,10 +53,15 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
-        if (source instanceof BigInteger || source instanceof BigDecimal) {
-            return source.toString();
+        NumberType numType = getType(getValueType(context));
+        if (numType instanceof NumberTypeBigDecimal || numType instanceof NumberTypeBigInteger) {
+            return numType.toString((Comparable<?>) source);
         } else {
-            return toUpdateValue(context, source);
+            if (source instanceof BigInteger || source instanceof BigDecimal) {
+                return source.toString();
+            } else {
+                return toUpdateValue(context, source);
+            }
         }
     }
 
@@ -68,7 +75,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             }
         } else {
             if (json instanceof Number) {
-                return (Number) json;
+                return numType.convert(json);
             }
         }
         return null;
@@ -101,8 +108,10 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         Number getZero();
         Comparable<?> convert(Object value);
 
-        String toString(Number n);
-        Number fromString(String s);
+        String toString(Comparable<?> n);
+        Comparable<?> fromString(String s);
+
+        NumberFormat getFormat();
     }
 
     public static Infinity MAXIMUM = new Infinity(true);
@@ -135,7 +144,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         } else if (cls.equals(BigDecimal.class)) {
             return BIG_DECIMAL;
         } else {
-            return null;
+            throw new RuntimeException("unsupported " + cls);
         }
     }
 
@@ -274,6 +283,10 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             this.upper = upper;
         }
 
+        public boolean isUpper() {
+            return upper;
+        }
+
         @Override
         public int compareTo(Object o) {
             if (o.equals(this)) {
@@ -284,7 +297,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
         @Override
         public String toString() {
-            return (upper ? "+" : "-") + "\u221e";
+            return (upper ? "+\u221e" : "-\u221e");
         }
     }
 
@@ -316,8 +329,21 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
 
         @Override
-        public String toString(Number n) {
+        public String toString(Comparable<?> n) {
+            if (n instanceof Infinity) {
+                return ((Infinity) n).isUpper() ? "Infinity" : "-Infinity";
+            }
             return n.toString();
+        }
+
+        public Infinity fromStringInfinity(String str) {
+            if (str.equals("-Infinity") || str.equals(MINIMUM.toString())) {
+                return MINIMUM;
+            } else if (str.equals("Infinity") || str.equals("+Infinity") || str.equals(MAXIMUM.toString())) {
+                return MAXIMUM;
+            } else {
+                return null;
+            }
         }
     }
 
@@ -347,8 +373,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
 
         @Override
-        public Number fromString(String s) {
+        public Comparable<?> fromString(String s) {
             return Integer.valueOf(s);
+        }
+
+        @Override
+        public NumberFormat getFormat() {
+            DecimalFormat df = new DecimalFormat("#,###");
+            df.setParseIntegerOnly(true);
+            df.setMaximumFractionDigits(0);
+            return df;
         }
     }
 
@@ -378,8 +412,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
 
         @Override
-        public Number fromString(String s) {
+        public Comparable<?> fromString(String s) {
             return Byte.valueOf(s);
+        }
+
+        @Override
+        public NumberFormat getFormat() {
+            DecimalFormat df = new DecimalFormat("#,###");
+            df.setParseIntegerOnly(true);
+            df.setMaximumFractionDigits(0);
+            return df;
         }
     }
 
@@ -410,8 +452,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
 
         @Override
-        public Number fromString(String s) {
+        public Comparable<?> fromString(String s) {
             return Short.valueOf(s);
+        }
+
+        @Override
+        public NumberFormat getFormat() {
+            DecimalFormat df = new DecimalFormat("#,###");
+            df.setParseIntegerOnly(true);
+            df.setMaximumFractionDigits(0);
+            return df;
         }
     }
 
@@ -441,8 +491,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
 
         @Override
-        public Number fromString(String s) {
+        public Comparable<?> fromString(String s) {
             return Long.valueOf(s);
+        }
+
+        @Override
+        public NumberFormat getFormat() {
+            DecimalFormat df = new DecimalFormat("#,###");
+            df.setParseIntegerOnly(true);
+            df.setMaximumFractionDigits(0);
+            return df;
         }
     }
 
@@ -472,8 +530,20 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
 
         @Override
-        public Number fromString(String s) {
-            return Float.valueOf(s);
+        public Comparable<?> fromString(String s) {
+            Infinity i = fromStringInfinity(s);
+            if (i != null) {
+                return i.isUpper() ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY;
+            } else {
+                return Float.valueOf(s);
+            }
+        }
+
+        @Override
+        public NumberFormat getFormat() {
+            DecimalFormat df = new DecimalFormat("#,###.#");
+            df.setMaximumFractionDigits(Short.MAX_VALUE);
+            return df;
         }
     }
 
@@ -503,8 +573,20 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
 
         @Override
-        public Number fromString(String s) {
-            return Double.valueOf(s);
+        public Comparable<?> fromString(String s) {
+            Infinity i = fromStringInfinity(s);
+            if (i != null) {
+                return i.isUpper() ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+            } else {
+                return Double.valueOf(s);
+            }
+        }
+
+        @Override
+        public NumberFormat getFormat() {
+            DecimalFormat df = new DecimalFormat("#,###.#");
+            df.setMaximumFractionDigits(Short.MAX_VALUE);
+            return df;
         }
     }
 
@@ -538,8 +620,21 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
 
         @Override
-        public Number fromString(String s) {
-            return new BigInteger(s);
+        public Comparable<?> fromString(String s) {
+            Infinity i = fromStringInfinity(s);
+            if (i != null) {
+                return i;
+            } else {
+                return new BigInteger(s);
+            }
+        }
+
+        @Override
+        public NumberFormat getFormat() {
+            DecimalFormat df = new DecimalFormat("#,###.#");
+            df.setMaximumFractionDigits(0);
+            df.setParseBigDecimal(true);
+            return df;
         }
     }
 
@@ -573,8 +668,21 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
 
         @Override
-        public Number fromString(String s) {
-            return new BigDecimal(s);
+        public Comparable<?> fromString(String s) {
+            Infinity i = fromStringInfinity(s);
+            if (i != null) {
+                return i;
+            } else {
+                return new BigDecimal(s);
+            }
+        }
+
+        @Override
+        public NumberFormat getFormat() {
+            DecimalFormat df = new DecimalFormat("#,###.#");
+            df.setMaximumFractionDigits(Short.MAX_VALUE);
+            df.setParseBigDecimal(true);
+            return df;
         }
     }
 

@@ -344,7 +344,9 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         public void propertyChange(PropertyChangeEvent evt) {
             if (!savingDisabled) {
                 prefs.set(panes.get());
-                updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, prefs));
+                if (updater != null) {
+                    updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, prefs));
+                }
             }
         }
 
@@ -360,7 +362,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         }
     }
 
-    public static class PreferencesForSplit implements GuiSwingPreferences.Preferences {
+    public static class PreferencesForSplit implements GuiSwingPreferences.PreferencesByJsonEntry {
         protected List<PreferencesForSplitEntry> splits = new ArrayList<>();
 
         @Override

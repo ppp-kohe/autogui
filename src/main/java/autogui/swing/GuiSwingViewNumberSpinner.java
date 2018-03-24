@@ -7,6 +7,9 @@ import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.NumberFormatter;
@@ -14,14 +17,12 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.*;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
@@ -47,7 +48,8 @@ import java.util.stream.Collectors;
  * <h3>string-transfer</h3>
  *  {@link NumberTransferHandler}.
  *   formatted by formatter of {@link PropertyNumberSpinner#getEditorField()}
- *      which is actually a {@link InfinityNumberFormatter} with {@link InfinityDecimalFormat}.
+ *      which is actually a {@link TypedNumberFormatter} with format returned
+ *        by {@link GuiReprValueNumberSpinner.NumberType#getFormat()}
  */
 public class GuiSwingViewNumberSpinner implements GuiSwingView {
     @Override
@@ -70,16 +72,21 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected JComponent createEditor(SpinnerModel model) {
             return new InfinityNumberEditor(this);
         }
-
     }
 
-    public static class InfinityNumberFormatter extends NumberFormatter {
+    public static class TypedNumberFormatter extends NumberFormatter {
         protected SpinnerNumberModel model;
 
-        public InfinityNumberFormatter(NumberFormat format, SpinnerNumberModel model) {
+        public TypedNumberFormatter(NumberFormat format, SpinnerNumberModel model) {
             super(format);
             this.model = model;
+            if (model instanceof TypedSpinnerNumberModel) {
+                setValueClass(((TypedSpinnerNumberModel) model).getType());
+            } else {
+                setValueClass(BigDecimal.class);
+            }
         }
+
 
         @Override
         public void setMinimum(Comparable minimum) {
@@ -88,7 +95,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public Comparable<?> getMinimum() {
-            return new InfinityComparable(model.getMinimum());
+            return model.getMinimum();
         }
 
         @Override
@@ -98,115 +105,73 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public Comparable<?> getMaximum() {
-            return new InfinityComparable(model.getMaximum());
-        }
-    }
-
-    public static class InfinityComparable implements Comparable<Object> {
-        protected Comparable<?> value;
-        protected GuiReprValueNumberSpinner.NumberType numberType;
-
-        public InfinityComparable(Comparable<?> value) {
-            this.value = value;
-            if (value instanceof Number) {
-                numberType = GuiReprValueNumberSpinner.getType(value.getClass());
-            }
+            return model.getMaximum();
         }
 
-        @SuppressWarnings("unchecked")
-        @Override
-        public int compareTo(Object o) {
-            if (value instanceof GuiReprValueNumberSpinner.Infinity) {
-                return ((GuiReprValueNumberSpinner.Infinity) value).compareTo(o);
-            } else if (o instanceof Number) {
-                GuiReprValueNumberSpinner.NumberType common = GuiReprValueNumberSpinner.getCommonType(
-                        numberType,
-                        GuiReprValueNumberSpinner.getType(o.getClass()));
-                return ((Comparable) common.convert(value)).compareTo(common.convert(o));
-
-            }
-            return 0;
-        }
     }
 
     public static class InfinityNumberEditor extends JSpinner.DefaultEditor {
         public InfinityNumberEditor(JSpinner spinner) {
             super(spinner);
-            DecimalFormat df = new DecimalFormat();
-            df.setParseBigDecimal(true);
-            InfinityDecimalFormat format = new InfinityDecimalFormat(df);
+
             SpinnerNumberModel model = (SpinnerNumberModel) spinner.getModel();
-            InfinityNumberFormatter formatter = new InfinityNumberFormatter(format, model);
-            DefaultFormatterFactory factory = new DefaultFormatterFactory(formatter);
+            DefaultFormatterFactory formatterFactory = createFormat(model);
+
             JFormattedTextField field = getTextField();
             field.setEditable(true);
-            field.setFormatterFactory(factory);
+            field.setFormatterFactory(formatterFactory);
             field.setHorizontalAlignment(JTextField.RIGHT);
             try {
+                JFormattedTextField.AbstractFormatter formatter = formatterFactory.getDefaultFormatter();
                 String max = formatter.valueToString(model.getMaximum());
                 String min = formatter.valueToString(model.getMinimum());
-                field.setColumns(Math.max(min.length(), max.length()));
+                field.setColumns(Math.min(20, Math.max(min.length(), max.length())));
             } catch (ParseException ex) {
                 System.err.println("ex: " + ex);
                 //nothing
             }
+        }
 
+        public DefaultFormatterFactory createFormat(SpinnerNumberModel model) {
+            NumberFormat fmt;
+            if (model instanceof TypedSpinnerNumberModel) {
+                fmt = ((TypedSpinnerNumberModel) model).getFormat();
+            } else {
+                fmt = GuiReprValueNumberSpinner.DOUBLE.getFormat();
+            }
+            TypedNumberFormatter formatter = new TypedNumberFormatter(fmt, model);
 
+            return new DefaultFormatterFactory(formatter);
+        }
+
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            getTextField().setFormatterFactory(createFormat(getModel()));
+            super.stateChanged(e);
         }
 
         public SpinnerNumberModel getModel() {
             return (SpinnerNumberModel) getSpinner().getModel();
         }
-
-        public InfinityDecimalFormat getFormat() {
-            return (InfinityDecimalFormat) ((InfinityNumberFormatter) getTextField().getFormatter()).getFormat();
-        }
-    }
-
-    public static class InfinityDecimalFormat extends NumberFormat {
-        protected DecimalFormat format;
-
-        public InfinityDecimalFormat(DecimalFormat format) {
-            this.format = format;
-        }
-
-        @Override
-        public StringBuffer format(double number, StringBuffer toAppendTo, FieldPosition pos) {
-            return format.format(number, toAppendTo, pos);
-        }
-
-        @Override
-        public StringBuffer format(long number, StringBuffer toAppendTo, FieldPosition pos) {
-            return format.format(number, toAppendTo, pos);
-        }
-
-        @Override
-        public StringBuffer format(Object number, StringBuffer toAppendTo, FieldPosition pos) {
-            if (number instanceof GuiReprValueNumberSpinner.Infinity) {
-                toAppendTo.append(number.toString());
-                return toAppendTo;
-            }  else {
-                return format.format(number, toAppendTo, pos);
-            }
-        }
-
-        @Override
-        public Number parse(String source, ParsePosition parsePosition) {
-            return format.parse(source, parsePosition);
-        }
     }
 
     public static class PropertyNumberSpinner extends InfinityNumberSpinner
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>, SettingsWindowClient {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>, SettingsWindowClient,
+            GuiSwingPreferences.PreferencesUpdateSupport {
         protected GuiMappingContext context;
         protected ScheduledTaskRunner.EditingRunner editingRunner;
         protected PopupExtensionText popup;
         protected KeyUndoManager undoManager = new KeyUndoManager();
         protected SettingsWindow settingsWindow;
 
+        protected TextServiceDefaultMenuSpinner menu;
+        protected TypedSpinnerNumberModelPreferencesUpdater modelPreferencesUpdater;
+
         public PropertyNumberSpinner(GuiMappingContext context) {
             super(createModel(context));
             this.context = context;
+
+            initModelPreferencesUpdater();
 
             //value update
             editingRunner = new ScheduledTaskRunner.EditingRunner(500, this::updateNumber);
@@ -216,13 +181,18 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             JTextField field = ((DefaultEditor) getEditor()).getTextField();
             field.addActionListener(editingRunner);
 
+            //editable
+            if (!((GuiReprValueNumberSpinner) context.getRepresentation()).isEditable(context)) {
+                field.setEditable(false);
+            }
+
             //context update
             context.addSourceUpdateListener(this);
             //initial update
             update(context, context.getSource());
 
             //popup actions
-            TextServiceDefaultMenuSpinner menu = new TextServiceDefaultMenuSpinner(context, this,
+            menu = new TextServiceDefaultMenuSpinner(context, this,
                     (TypedSpinnerNumberModel) getModel(), field);
             menu.getEditActions().addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
             menu.getEditActions().add(new HistoryMenu<>(this, context));
@@ -306,31 +276,15 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public void savePreferences(GuiPreferences prefs) {
             GuiSwingView.savePreferencesDefault(this, prefs);
             GuiPreferences targetPrefs = prefs.getDescendant(getContext());
-            GuiPreferences.GuiValueStore prefsStore = targetPrefs.getValueStore();
-            TypedSpinnerNumberModel model = getModelTyped();
-            prefsStore.putString("maximum", model.getActualMaximum().toString());
-            prefsStore.putString("minimum", model.getActualMinimum().toString());
-            prefsStore.putString("stepSize", model.getStepSize().toString());
+            getModelTyped().saveTo(targetPrefs);
+            menu.saveTo(targetPrefs);
         }
 
         @Override
         public void loadPreferences(GuiPreferences prefs) {
             GuiPreferences targetPrefs = prefs.getDescendant(getContext());
-            GuiPreferences.GuiValueStore store = targetPrefs.getValueStore();
-            TypedSpinnerNumberModel model = getModelTyped();
-            GuiReprValueNumberSpinner.NumberType type = model.getNumberType();
-            String max = store.getString("maximum", "");
-            String min = store.getString("minimum", "");
-            String step = store.getString("stepSize", "");
-            if (!max.isEmpty()) {
-                model.setMaximum((Comparable<?>) type.fromString(max));
-            }
-            if (!min.isEmpty()) {
-                model.setMinimum((Comparable<?>) type.fromString(min));
-            }
-            if (!step.isEmpty()) {
-                model.setStepSize(type.fromString(step));
-            }
+            getModelTyped().loadFrom(targetPrefs);
+            menu.loadFrom(targetPrefs);
             GuiSwingView.loadPreferencesDefault(this, prefs);
         }
 
@@ -348,10 +302,32 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public void shutDown() {
             editingRunner.getExecutor().shutdown();
         }
+
+        @Override
+        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+            menu.setPreferencesUpdater(updater);
+            modelPreferencesUpdater.setUpdater(updater);
+        }
+
+        @Override
+        public void setModel(SpinnerModel model) {
+            super.setModel(model);
+            if (context != null && model instanceof TypedSpinnerNumberModel) {
+                initModelPreferencesUpdater();
+            }
+        }
+
+        protected void initModelPreferencesUpdater() {
+            TypedSpinnerNumberModel m = getModelTyped();
+            modelPreferencesUpdater = new TypedSpinnerNumberModelPreferencesUpdater(context, m);
+            m.addChangeListener(modelPreferencesUpdater);
+        }
     }
 
-    public static class TextServiceDefaultMenuSpinner extends PopupExtensionText.TextServiceDefaultMenu {
+    public static class TextServiceDefaultMenuSpinner extends PopupExtensionText.TextServiceDefaultMenu
+            implements GuiSwingPreferences.PreferencesUpdateSupport {
         protected GuiMappingContext context;
+        protected NumberSettingAction settingAction;
 
         public TextServiceDefaultMenuSpinner(GuiMappingContext context, SettingsWindowClient settings, TypedSpinnerNumberModel model, JTextComponent textComponent) {
             super(textComponent);
@@ -360,7 +336,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             editActions.add(0, info.getInfoLabel(context));
             editActions.add(new JMenuItem(new ContextRefreshAction(context)));
             editActions.add(new JPopupMenu.Separator());
-            editActions.add(new JMenuItem(new NumberSettingAction(settings, info.getInfoLabel(context), model)));
+            settingAction = new NumberSettingAction(context, settings, info.getInfoLabel(context), model);
+            editActions.add(new JMenuItem(settingAction));
             editActions.add(new JMenuItem(new NumberMaximumAction(false, model)));
             editActions.add(new JMenuItem(new NumberMaximumAction(true, model)));
         }
@@ -372,6 +349,27 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                     .filter(e -> !(e instanceof PopupExtensionText.TextOpenBrowserAction))
                     .collect(Collectors.toList());
         }
+
+        @Override
+        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+            if (settingAction.getPreferencesUpdater() != null) {
+                settingAction.getPreferencesUpdater().setUpdater(updater);
+            }
+        }
+
+        public void loadFrom(GuiPreferences prefs) {
+            if (settingAction.getPreferencesUpdater() != null) {
+                settingAction.getPreferencesUpdater().getPrefs().loadFrom(prefs);
+            }
+        }
+
+        public void saveTo(GuiPreferences prefs) {
+            if (settingAction.getPreferencesUpdater() != null) {
+                settingAction.getPreferencesUpdater().getPrefs().saveTo(prefs);
+            }
+        }
+
+
     }
 
     public static class NumberMaximumAction extends AbstractAction {
@@ -390,10 +388,11 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
     }
 
-    public static class TypedSpinnerNumberModel extends SpinnerNumberModel {
+    public static class TypedSpinnerNumberModel extends SpinnerNumberModel implements GuiSwingPreferences.Preferences {
         protected GuiReprValueNumberSpinner.NumberType numberType;
         protected int depth;
         protected Object extendedValue;
+        protected String formatPattern;
 
         public TypedSpinnerNumberModel(GuiReprValueNumberSpinner.NumberType numberType) {
             this.numberType = numberType;
@@ -425,20 +424,37 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             }
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public Object getNextValue() {
-            return numberType.next(getValue(), getStepSize(), 1);
+            Object next = numberType.next(getValue(), getStepSize(), 1);
+            int r = getMaximum().compareTo(next);
+            if (r <= 0) {
+                return null;
+            } else {
+                return next;
+            }
         }
 
 
+        @SuppressWarnings("unchecked")
         @Override
         public Object getPreviousValue() {
-            return numberType.next(getValue(), getStepSize(), -1);
+            Object next = numberType.next(getValue(), getStepSize(), -1);
+            int r = getMinimum().compareTo(next);
+            if (r > 0) {
+                return null;
+            } else {
+                return next;
+            }
         }
 
 
         @Override
         public void setValue(Object value) {
+            if (value instanceof Number) {
+                value = numberType.convert(value);
+            }
             if (extendedValue == null || !extendedValue.equals(value)) {
                 extendedValue = value;
                 fireStateChanged();
@@ -462,15 +478,15 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             }
         }
 
-//        @Override
-//        public Comparable<?> getMaximum() {
-//            return toNumber(super.getMaximum(), true);
-//        }
-//
-//        @Override
-//        public Comparable<?> getMinimum() {
-//            return toNumber(super.getMinimum(), false);
-//        }
+        @Override
+        public Comparable getMaximum() {
+            return (Comparable<?>) toNumber(super.getMaximum(), true);
+        }
+
+        @Override
+        public Comparable getMinimum() {
+            return (Comparable<?>) toNumber(super.getMinimum(), false);
+        }
 
         static BigInteger nayuta = BigInteger.valueOf(10).pow(60);
 
@@ -514,12 +530,108 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public Number getNumberMinimum() {
             return toNumber(super.getMinimum(), false);
         }
+
+        @Override
+        public void saveTo(GuiPreferences prefs) {
+            GuiPreferences.GuiValueStore prefsStore = prefs.getValueStore();
+            if (getActualMaximum().equals(getNumberType().getMaximum())) {
+                prefsStore.remove("maximum");
+            } else {
+                prefsStore.putString("maximum", getActualMaximum().toString());
+            }
+            if (getActualMinimum().equals(getNumberType().getMinimum())) {
+                prefsStore.remove("minimum");
+            } else {
+                prefsStore.putString("minimum", getActualMinimum().toString());
+            }
+            if (getStepSize().equals(getNumberType().getOne())) {
+                prefsStore.remove("stepSize");
+            } else {
+                prefsStore.putString("stepSize", getStepSize().toString());
+            }
+
+            if (formatPattern == null) {
+                prefsStore.remove("format");
+            } else {
+                prefsStore.putString("format", formatPattern);
+            }
+        }
+
+        @Override
+        public void loadFrom(GuiPreferences prefs) {
+            GuiPreferences.GuiValueStore store = prefs.getValueStore();
+            TypedSpinnerNumberModel model = this;
+            GuiReprValueNumberSpinner.NumberType type = model.getNumberType();
+            String max = store.getString("maximum", "");
+            String min = store.getString("minimum", "");
+            String step = store.getString("stepSize", "");
+            if (!max.isEmpty()) {
+                model.setMaximum(type.fromString(max));
+            }
+            if (!min.isEmpty()) {
+                model.setMinimum(type.fromString(min));
+            }
+            if (!step.isEmpty()) {
+                Comparable<?> c = type.fromString(step);
+                if (c instanceof Number) {
+                    model.setStepSize((Number) c);
+                }
+            }
+
+            String format = store.getString("format", "");
+            if (!format.isEmpty()) {
+                setFormatPattern(format);
+            }
+        }
+
+        public void setFormatPattern(String formatPattern) {
+            this.formatPattern = formatPattern;
+            fireStateChanged();
+        }
+
+        public String getFormatPattern() {
+            return formatPattern;
+        }
+
+        public NumberFormat getFormat() {
+            if (formatPattern == null) {
+                return getNumberType().getFormat();
+            } else {
+                DecimalFormat fmt = new DecimalFormat(formatPattern);
+                if (getType().equals(BigInteger.class) || getType().equals(BigDecimal.class)) {
+                    fmt.setParseBigDecimal(true);
+                }
+                return fmt;
+            }
+        }
+    }
+
+    public static class TypedSpinnerNumberModelPreferencesUpdater implements ChangeListener {
+        protected GuiMappingContext context;
+        protected TypedSpinnerNumberModel model;
+
+        protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater;
+
+        public TypedSpinnerNumberModelPreferencesUpdater(GuiMappingContext context, TypedSpinnerNumberModel model) {
+            this.context = context;
+            this.model = model;
+        }
+
+        public void setUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+            this.updater = updater;
+        }
+
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            if (updater != null) {
+                updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, model));
+            }
+        }
     }
 
 
     public static class NumberTransferHandler extends TransferHandler {
         protected PropertyNumberSpinner pane;
-
         public NumberTransferHandler(PropertyNumberSpinner pane) {
             this.pane = pane;
         }
@@ -569,18 +681,29 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected NumberSettingPane pane;
         protected JPanel contentPane;
         protected SettingsWindowClient client;
-        public NumberSettingAction(SettingsWindowClient client, JComponent label, TypedSpinnerNumberModel model) {
+        protected GuiSwingPreferences.WindowPreferencesUpdater preferencesUpdater;
+
+        public NumberSettingAction(GuiMappingContext context, SettingsWindowClient client, JComponent label, TypedSpinnerNumberModel model) {
             putValue(NAME, "Settings...");
             this.client = client;
             pane = new NumberSettingPane(model);
             contentPane = new JPanel(new BorderLayout());
             contentPane.add(label, BorderLayout.NORTH);
             contentPane.add(pane, BorderLayout.CENTER);
+
+            if (context != null) {
+                preferencesUpdater = new GuiSwingPreferences.WindowPreferencesUpdater(null,
+                        context, "$settingsWindow");
+            }
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            client.getSettingsWindow().show("Number Settings", pane, contentPane);
+            client.getSettingsWindow().show("Number Settings", pane, contentPane, preferencesUpdater);
+        }
+
+        public GuiSwingPreferences.WindowPreferencesUpdater getPreferencesUpdater() {
+            return preferencesUpdater;
         }
     }
 
@@ -592,7 +715,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected JSpinner maxSpinner;
         protected JSpinner stepSpinner;
 
-        protected boolean disableChange = false;
+        protected JCheckBox formatCheckBox;
+        protected JTextField formatField;
+
+        protected int disableChange;
 
         public NumberSettingPane(TypedSpinnerNumberModel model) {
             setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
@@ -621,21 +747,50 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             maxSpinner.setMinimumSize(new Dimension(100, maxSpinner.getMinimumSize().height));
             stepSpinner.setMinimumSize(new Dimension(100, stepSpinner.getMinimumSize().height));
 
+            formatCheckBox = new JCheckBox("Format:");
+            formatCheckBox.addChangeListener(this::updateFromGui);
+            formatField = new JTextField("#,###.######");
+            formatField.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    updateFormat(e);
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    updateFormat(e);
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    updateFormat(e);
+                }
+            });
+
             updateFromModel(null);
             new SettingsWindow.LabelGroup(this)
                     .addRow(minCheckBox, minSpinner)
                     .addRow(maxCheckBox, maxSpinner)
                     .addRow("Step:", stepSpinner)
+                    .addRow(formatCheckBox, formatField)
                     .fitWidth();
         }
 
         public void updateFromModel(ChangeEvent e) {
-            disableChange = true;
+            if (disableChange <= 0) {
+                disableChange++;
 
-            updateFromModelField(true);
-            updateFromModelField(false);
-            stepSpinner.setValue(model.getStepSize());
-            disableChange = false;
+                updateFromModelField(true);
+                updateFromModelField(false);
+                stepSpinner.setValue(model.getStepSize());
+
+                String fmt = model.getFormatPattern();
+                formatCheckBox.setSelected(fmt != null);
+                if (fmt != null) {
+                    formatField.setText(fmt);
+                }
+                disableChange--;
+            }
         }
 
         private void updateFromModelField(boolean max) {
@@ -667,9 +822,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         public void updateFromGui(ChangeEvent e) {
-            if (disableChange) {
+            if (disableChange > 0) {
                 return;
             }
+            disableChange++;
             Object min;
             if (minCheckBox.isSelected()) {
                 minSpinner.setEnabled(true);
@@ -690,6 +846,36 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             model.setMinimum((Comparable<?>) min);
             model.setMaximum((Comparable<?>) max);
             model.setStepSize((Number) step);
+
+            if (formatCheckBox.isSelected()) {
+                formatField.setEnabled(true);
+                String fmt = formatField.getText();
+                if (validFormat(fmt)) {
+                    model.setFormatPattern(fmt);
+                }
+            } else {
+                formatField.setEnabled(false);
+                model.setFormatPattern(null);
+            }
+            disableChange--;
+        }
+
+        public void updateFormat(DocumentEvent e) {
+            if (validFormat(formatField.getText())) {
+                formatField.setForeground(Color.black);
+                updateFromGui(null);
+            } else {
+                formatField.setForeground(Color.red);
+            }
+        }
+
+        public boolean validFormat(String pat) {
+            try {
+                new DecimalFormat(pat);
+                return true;
+            } catch (Exception ex){
+                return false;
+            }
         }
     }
 }

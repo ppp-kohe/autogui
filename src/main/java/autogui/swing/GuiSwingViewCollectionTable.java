@@ -402,7 +402,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void sendToUpdater() {
-            updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, prefs));
+            if (updater != null) {
+                updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, prefs));
+            }
         }
 
         @Override
@@ -431,7 +433,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
     }
 
-    public static class PreferencesForTable implements GuiSwingPreferences.Preferences {
+    public static class PreferencesForTable implements GuiSwingPreferences.PreferencesByJsonEntry {
         protected List<Integer> columnOrder = new ArrayList<>();
         protected List<Integer> columnWidth = new ArrayList<>();
         protected List<PreferencesForTableRowSort> rowSort = new ArrayList<>();
