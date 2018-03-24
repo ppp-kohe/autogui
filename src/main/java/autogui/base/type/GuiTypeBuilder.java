@@ -266,7 +266,7 @@ public class GuiTypeBuilder {
     public void createMemberAction(GuiTypeObject objType, String name, Method method, boolean isList) {
         GuiTypeMemberAction action;
         if (isList) {
-            ParameterizedType pType = (ParameterizedType) method.getGenericParameterTypes()[1];
+            ParameterizedType pType = (ParameterizedType) method.getGenericParameterTypes()[0];
             action = new GuiTypeMemberActionList(name, get(pType.getActualTypeArguments()[0]), method);
         } else {
             action = new GuiTypeMemberAction(name, method);

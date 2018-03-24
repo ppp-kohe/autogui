@@ -106,6 +106,10 @@ public class SettingsWindow {
         protected int align;
         protected JComponent pane;
 
+        /** just for names: only {@link #addName(JComponent)} and {@link #fitWidth()} are valid */
+        public LabelGroup() {
+        }
+
         public LabelGroup(JComponent pane) {
             this(pane, FlowLayout.RIGHT);
         }

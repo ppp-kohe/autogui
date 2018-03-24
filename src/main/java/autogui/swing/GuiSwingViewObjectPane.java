@@ -5,8 +5,10 @@ import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprObjectPane;
 import autogui.base.mapping.GuiReprPropertyPane;
 import autogui.swing.icons.GuiSwingIcons;
+import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.ResizableFlowLayout;
+import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,6 +62,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
                 }
             }
         }
+        pane.fit();
         return pane;
     }
 
@@ -113,6 +116,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         protected List<JSplitPane> splitPanes = new ArrayList<>();
         protected SplitPreferencesUpdater preferencesUpdater;
+        protected SettingsWindow.LabelGroup labelGroup;
 
         public ObjectPane(GuiMappingContext context) {
             this.context = context;
@@ -120,6 +124,8 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             initContentPane();
             setOpaque(false);
             add(contentPane, BorderLayout.CENTER);
+
+            labelGroup = new SettingsWindow.LabelGroup();
 
             preferencesUpdater = new SplitPreferencesUpdater(context, this::getSplitPanes);
 
@@ -174,10 +180,17 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             //nothing to do?
         }
 
+
         public void addSubComponent(JComponent component, boolean resizable) {
             if (resizable) {
                 addSubComponentResizable(component);
             } else {
+                if (component instanceof NamedPane) {
+                    JComponent label = ((NamedPane) component).getLabel();
+                    if (label != null) {
+                        labelGroup.addName(label);
+                    }
+                }
                 ResizableFlowLayout.add(contentPane, component, false);
             }
         }
@@ -217,6 +230,10 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             pane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, preferencesUpdater);
             pane.addPropertyChangeListener(JSplitPane.ORIENTATION_PROPERTY, preferencesUpdater);
             return pane;
+        }
+
+        public void fit() {
+            labelGroup.fitWidth();
         }
 
         public List<JSplitPane> getSplitPanes() {

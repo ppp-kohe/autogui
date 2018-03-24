@@ -74,7 +74,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         if (context.getParent() != null) {
-            for (GuiMappingContext siblingContext : context.getParent().getChildren()) {
+            GuiMappingContext parent = context.getParent();
+            if (parent.isTypeElementProperty() && parent.getParent() != null) {
+                parent = parent.getParent();
+            }
+            for (GuiMappingContext siblingContext : parent.getChildren()) {
                 if (siblingContext.isTypeElementActionList() &&
                     siblingContext.getTypeElementAsActionList().getElementType()
                             .equals(context.getTypeElementCollection().getElementType())) {

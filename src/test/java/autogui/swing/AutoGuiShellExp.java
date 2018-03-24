@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AutoGuiShellExp {
     public static void main(String[] args) {
@@ -118,6 +119,18 @@ public class AutoGuiShellExp {
             for (int i = 0; i < 100; ++i) {
                 values.add("value-" + i);
             }
+        }
+
+        @GuiIncluded
+        public void updateList() {
+            values = new ArrayList<>(values.stream()
+                    .map(e -> e + "!")
+                    .collect(Collectors.toList()));
+        }
+
+        @GuiIncluded
+        public void select(List<String> items) {
+            System.err.println("selected : " + items);
         }
     }
 

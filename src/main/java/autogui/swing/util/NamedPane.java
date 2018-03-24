@@ -25,6 +25,10 @@ public class NamedPane extends JComponent {
         }
     }
 
+    public JLabel getLabel() {
+        return label;
+    }
+
     public JComponent getContentPane() {
         return contentPane;
     }

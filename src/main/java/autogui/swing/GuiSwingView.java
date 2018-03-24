@@ -240,6 +240,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
         public ValueWrappingPane(Component view) {
             super(new BorderLayout());
+            setOpaque(false);
             add(view, BorderLayout.CENTER);
         }
 
