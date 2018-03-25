@@ -111,4 +111,14 @@ public class GuiTypeValue implements GuiTypeElement {
     public boolean equals(Object prevValue, Object nextValue) {
         return Objects.equals(prevValue, nextValue);
     }
+
+    /** optional operation
+     * @return a newly created by a default constructor, or null  */
+    public Object createNewValue() {
+        try {
+            return getType().getConstructor().newInstance();
+        } catch (Throwable ex) {
+            return null;
+        }
+    }
 }

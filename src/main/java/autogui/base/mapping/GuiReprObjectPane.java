@@ -74,18 +74,18 @@ public class GuiReprObjectPane extends GuiReprValue {
     public static Object toJsonFromObject(GuiMappingContext context, Object source) {
         Map<String, Object> map = new LinkedHashMap<>(context.getChildren().size());
         BiConsumer<GuiMappingContext, Object> processor = (s, nextValue) -> {
-            Object subObj = s.getRepresentation().toJsonWithNamed(s, nextValue);
+            Object subObj = unwrapPropertyMap(s, s.getRepresentation().toJsonWithNamed(s, nextValue));
             if (subObj != null) {
                 map.put(s.getName(), subObj);
             }
         };
         boolean collection = false;
         for (GuiMappingContext subContext : context.getChildren()) {
-            if (subContext.isTypeElementProperty()) {
-                runSubPropertyValue(subContext, source, processor);
-            } else if (subContext.isTypeElementCollection()) {
+            if (subContext.isReprCollectionTable()) {
                 runSubCollectionValue(subContext, source, processor);
                 collection = true;
+            } else if (subContext.isReprValue()) {
+                runSubPropertyValue(subContext, source, processor);
             }
         }
         if (map.size() == 1 && collection) { //collection: not object{property}, but property{collection},
@@ -95,6 +95,17 @@ public class GuiReprObjectPane extends GuiReprValue {
         } else {
             return map;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Object unwrapPropertyMap(GuiMappingContext s, Object subObj) {
+        if (subObj != null && subObj instanceof Map<?,?>) {
+            Map<String,?> subMap = (Map<String,?>) subObj;
+            if (subMap.size() == 1 && subMap.containsKey(s.getName())) { //not a value entry, but a property
+                return subMap.get(s.getName());
+            }
+        }
+        return subObj;
     }
 
     /**
@@ -124,33 +135,30 @@ public class GuiReprObjectPane extends GuiReprValue {
             Map<String,?> jsonMap = (Map<String,?>) json;
             try {
                 if (target == null) {
-                    Class<?> valType = ((GuiReprValue) context.getRepresentation()).getValueType(context);
-                    target = valType.getConstructor().newInstance();
+                    try {
+                        target = ((GuiReprValue) context.getRepresentation()).createNewValue(context);
+                    } catch (Throwable ex) {
+                        context.errorWhileJson(ex);
+                    }
                 }
                 for (GuiMappingContext subContext : context.getChildren()) {
-                    if (subContext.isTypeElementProperty()) {
-                        GuiRepresentation subRepr = subContext.getRepresentation();
+                    if (subContext.isReprValue()) {
                         try {
-                            Object jsonEntry = jsonMap.get(subContext.getName());
-                            if (jsonEntry != null) {
-                                Object t = target;
-                                subContext.execute(() -> {
-                                    GuiTypeMemberProperty prop = subContext.getTypeElementAsProperty();
-                                    Object subPrev = prop.executeGet(t, null);
-                                    Object subObj = subRepr.fromJson(subContext, subPrev, jsonEntry);
-                                    if (subObj != null && subPrev != subObj) {
-                                        prop.executeSet(t, subObj);
-                                    }
-                                    return null;
-                                });
+                            GuiReprValue reprValue = subContext.getReprValue();
+                            Object jsonEntry = jsonMap;
+                            if (!reprValue.isFromJsonTakingMapWithContextNameEntry(subContext)) {
+                                jsonEntry = jsonMap.get(subContext.getName());
                             }
+                            Object subNewValue = reprValue.fromJson(subContext,
+                                    reprValue.getValueWithoutNoUpdate(subContext, target), jsonEntry);
+                            reprValue.update(subContext, target, subNewValue);
                         } catch (Throwable ex) {
-                            //nothing
+                            subContext.errorWhileJson(ex);
                         }
                     }
                 }
             } catch (Throwable ex) {
-                //nothing
+                context.errorWhileJson(ex);
             }
         }
         return target;
@@ -187,10 +195,10 @@ public class GuiReprObjectPane extends GuiReprValue {
         List<String> strs = new ArrayList<>(context.getChildren().size());
         BiConsumer<GuiMappingContext, Object> processor = getAddingHumanReadableStringToList(strs);
         for (GuiMappingContext subContext : context.getChildren()) {
-            if (subContext.isTypeElementProperty()) {
-                runSubPropertyValue(subContext, source, processor);
-            } else if (subContext.isTypeElementCollection()) {
+            if (subContext.isTypeElementCollection()) {
                 runSubCollectionValue(subContext, source, processor);
+            } else if (subContext.isReprValue()) {
+                runSubPropertyValue(subContext, source, processor);
             }
         }
         return String.join("\t", strs);
@@ -207,22 +215,16 @@ public class GuiReprObjectPane extends GuiReprValue {
 
     public static void runSubPropertyValue(GuiMappingContext subContext, Object source, BiConsumer<GuiMappingContext, Object> subAndNext) {
         try {
-            Object prevValue = subContext.getSource();
-            Object nextValue = subContext.execute(() ->
-                    subContext.getTypeElementAsProperty().executeGet(source, prevValue));
-            if (nextValue != null && nextValue.equals(GuiTypeValue.NO_UPDATE)) {
-                nextValue = prevValue;
-            }
-            subAndNext.accept(subContext, nextValue);
+            subAndNext.accept(subContext, subContext.getReprValue().getValueWithoutNoUpdate(subContext, source));
         } catch (Throwable ex) {
-            //nothing
+            subContext.errorWhileJson(ex);
         }
     }
 
     public static void runSubCollectionValue(GuiMappingContext subContext, Object source, BiConsumer<GuiMappingContext, Object> subAndNext) {
         //Object prevValue = subContext.getSource();
         for (GuiMappingContext listElementContext : subContext.getChildren()) {
-            if (listElementContext.isCollectionElement()) {
+            if (listElementContext.isReprCollectionElement()) {
                 subAndNext.accept(listElementContext, source);
             }
         }

@@ -15,7 +15,7 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
 
     public String getDisplayName(GuiMappingContext context, Enum<?> enumValue) {
         String n = enumValue.name();
-        return context.nameJoinForDisplay(context.nameSplit(n, true));
+        return context.nameJoinForDisplay(GuiMappingContext.nameSplit(n, true));
     }
 
     @Override
@@ -84,7 +84,7 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
         Object[] es = getEnumConstants(context);
         if (numPattern.matcher(nameOrIndex).matches()) {
             int ord = Integer.parseInt(nameOrIndex);
-            return es[ord];
+            return (ord >= 0 && ord < es.length) ? es[ord] : null;
         } else {
             List<String> names = Arrays.stream(es)
                     .map(Enum.class::cast)

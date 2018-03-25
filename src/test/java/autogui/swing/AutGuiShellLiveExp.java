@@ -1,7 +1,5 @@
 package autogui.swing;
 
-import autogui.AutoGuiShell;
-
 public class AutGuiShellLiveExp {
     public static void main(String[] args) {
         AutoGuiShell.liveShow(new Hello());

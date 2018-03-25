@@ -1,9 +1,7 @@
 package autogui.swing;
 
-import autogui.AutoGuiShell;
 import autogui.GuiIncluded;
 import autogui.GuiListSelectionCallback;
-import autogui.base.type.GuiTypeObject;
 import autogui.swing.icons.GuiSwingIcons;
 
 import javax.imageio.ImageIO;

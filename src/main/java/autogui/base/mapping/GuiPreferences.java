@@ -56,6 +56,9 @@ public class GuiPreferences {
 
     public GuiPreferences(GuiValueStore valueStore, GuiMappingContext context) {
         this.valueStore = valueStore;
+        if (valueStore != null) {
+            valueStore.setPreferences(this);
+        }
         this.context = context;
     }
 
@@ -403,6 +406,10 @@ public class GuiPreferences {
 
         public GuiPreferences getPreferences() {
             return preferences;
+        }
+
+        public void setPreferences(GuiPreferences preferences) {
+            this.preferences = preferences;
         }
 
         public abstract void putString(String key, String val);
@@ -833,6 +840,11 @@ public class GuiPreferences {
      */
     public static class GuiValueStoreOnMemory extends GuiValueStore {
         protected Map<String,Object> values;
+
+        /** for test purpose: it's preferences can be set by the GuiPreferences constructor that takes the store */
+        public GuiValueStoreOnMemory() {
+            this(null);
+        }
 
         public GuiValueStoreOnMemory(GuiPreferences preferences) {
             super(preferences);

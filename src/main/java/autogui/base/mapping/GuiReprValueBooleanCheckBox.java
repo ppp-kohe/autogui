@@ -59,13 +59,17 @@ public class GuiReprValueBooleanCheckBox extends GuiReprValue {
     static Pattern numPattern = Pattern.compile("\\d+");
 
     public Boolean getBooleanValue(String data) {
-        data = data.toLowerCase();
-        if (data.equals("true") || numPattern.matcher(data).matches()) {
-            return true;
-        } else if (data.equals("false") || data.equals("0")) {
-            return false;
-        } else {
+        if (data == null) {
             return null;
+        } else {
+            data = data.toLowerCase();
+            if (data.equals("false") || data.equals("0")) {
+                return false;
+            } else if (data.equals("true") || numPattern.matcher(data).matches()) {
+                return true;
+            } else {
+                return null;
+            }
         }
     }
 }

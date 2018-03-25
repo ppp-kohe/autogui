@@ -1,6 +1,10 @@
 package autogui.base.mapping;
 
+import autogui.base.type.GuiTypeElement;
+import autogui.base.type.GuiTypeValue;
+
 import java.util.*;
+import java.util.function.BiConsumer;
 
 /** a property member definition: [propertyName: [  propertyValueField  ] ]
  * */
@@ -53,11 +57,12 @@ public class GuiReprPropertyPane extends GuiReprValue {
         return new GuiReprPropertyPane();
     }
 
+    /*
     public boolean checkAndUpdateSourceFromChild(GuiMappingContext child) {
         Object prev = child.getSource();
         Object next = child.getParentSource();
         try {
-            if (child.execute(() -> !Objects.equals(prev, next))) {
+            if (child.execute(() -> !equals(child, prev, next))) {
                 child.setSource(next);
                 return true;
             } else {
@@ -69,8 +74,28 @@ public class GuiReprPropertyPane extends GuiReprValue {
         }
     }
 
+    public boolean equals(GuiMappingContext context, Object prev, Object next) {
+        if (context.isTypeElementProperty()) {
+            return equalsWithType(context.getTypeElementAsProperty().getType(), prev, next);
+        } else {
+            return equalsWithType(context.getTypeElement(), prev, next);
+        }
+    }
+
+    public boolean equalsWithType(GuiTypeElement type, Object prev, Object next) {
+        if (type != null && type instanceof GuiTypeValue) {
+            return ((GuiTypeValue) type).equals(prev, next);
+        } else {
+            return Objects.equals(prev, next);
+        }
+    }*/
+
     public void updateFromGuiChild(GuiMappingContext child, Object newValue) {
         updateFromGui(child.getParent(), newValue);
+    }
+
+    public Object updateFromChild(GuiMappingContext child, Object parentSource, Object newValue) {
+        return update(child.getParent(), parentSource, newValue);
     }
 
     public boolean isEditableFromChild(GuiMappingContext context) {
@@ -94,7 +119,7 @@ public class GuiReprPropertyPane extends GuiReprValue {
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
-        if (source instanceof GuiReprValue.NamedValue) {
+        if (source != null && source instanceof GuiReprValue.NamedValue) {
             GuiReprValue.NamedValue named = (GuiReprValue.NamedValue) source;
             return toJsonProperty(context, named.value);
         } else {
@@ -111,6 +136,16 @@ public class GuiReprPropertyPane extends GuiReprValue {
         return map;
     }
 
+    /**
+     *
+     * @param context the target context
+     * @param target the target value,
+     *               which might be a {@link autogui.base.mapping.GuiReprValue.NamedValue} or
+     *                the value of the property.
+     *                Note: the target is not a property owner object.
+     * @param json a {@link Map} json
+     * @return the property value or a {@link autogui.base.mapping.GuiReprValue.NamedValue} if the target is also the one.
+     */
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         boolean namedValue = false;
@@ -126,7 +161,7 @@ public class GuiReprPropertyPane extends GuiReprValue {
     }
 
     public Object fromJsonProperty(GuiMappingContext context, Object target, Object json) {
-        if (json instanceof Map<?,?>) {
+        if (json != null && json instanceof Map<?,?>) {
             Object entry = ((Map<?,?>) json).get(context.getName());
             Object ret = null;
             for (GuiMappingContext subContext : context.getChildren()) {
@@ -138,6 +173,10 @@ public class GuiReprPropertyPane extends GuiReprValue {
         }
     }
 
+    @Override
+    public boolean isFromJsonTakingMapWithContextNameEntry(GuiMappingContext context) {
+        return true;
+    }
 
     @Override
     public boolean isJsonSetter() {
@@ -147,14 +186,11 @@ public class GuiReprPropertyPane extends GuiReprValue {
     @Override
     public String toHumanReadableString(GuiMappingContext context, Object source) {
         List<String> list = new ArrayList<>(1);
-        GuiReprObjectPane.runSubPropertyValue(context, source,
-                GuiReprObjectPane.getAddingHumanReadableStringToList(list));
+        BiConsumer<GuiMappingContext, Object> adder = GuiReprObjectPane.getAddingHumanReadableStringToList(list);
+        for (GuiMappingContext child : context.getChildren()) {
+            adder.accept(child, source);
+        }
         return String.join("\t", list);
-    }
-
-    @Override
-    public boolean isHistoryValueStored() {
-        return false;
     }
 
     /**

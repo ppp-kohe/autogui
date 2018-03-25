@@ -111,18 +111,34 @@ public class GuiReprValue implements GuiRepresentation {
      */
     public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Throwable {
         Object prev = context.getSource();
+        Object src = null;
         if (context.isTypeElementProperty()) {
-            Object src = getParentSource(context, executeParent);
+            src = getParentSource(context, executeParent);
+        } else if (context.isParentPropertyPane()) {
+            src = getParentSource(context, executeParent);
+        }
+        return getValue(context, src, prev);
+    }
+
+    /**
+     * obtain the property value from parentSource as an owner.
+     * @param context the context holding the repr.
+     * @param parentSource the property owner. if null then nothing will happen for properties
+     * @param prev a previous value compared to the obtained value (nullable)
+     * @return an obtained property value (nullable) or {@link GuiTypeValue#NO_UPDATE} if the value is equivalent to the previous value.
+     * @throws Throwable might be caused by executing method invocations.
+     */
+    public Object getValue(GuiMappingContext context, Object parentSource, Object prev) throws Throwable {
+        if (context.isTypeElementProperty()) {
             GuiTypeMemberProperty prop = context.getTypeElementAsProperty();
             return context.execute(() ->
-                    prop.executeGet(src, prev));
+                    prop.executeGet(parentSource, prev));
         } else {
             if (context.isParentPropertyPane()) {
                 //GuiReprPropertyPane matches to GuiTypeMemberProperty, and it has compareGet(p,n)
                 GuiTypeMemberProperty prop = context.getParent().getTypeElementAsProperty();
-                Object obj = getParentSource(context, executeParent);
                 return context.execute(() ->
-                        prop.compareGet(prev, obj));
+                        prop.compareGet(prev, parentSource));
             } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
                 GuiTypeValue val = context.getTypeElementValue();
                 return context.execute(() ->
@@ -146,7 +162,21 @@ public class GuiReprValue implements GuiRepresentation {
             ret = prev;
         }
         return ret;
+    }
 
+    /**
+     * call {@link #getValue(GuiMappingContext, Object, Object)} and never return NO_UPDATE
+     * @param context the context
+     * @param parentSource the property owner. if null then nothing will happen for properties
+     * @return an obtained value or null
+     * @throws Throwable might be caused by executing method invocation
+     */
+    public Object getValueWithoutNoUpdate(GuiMappingContext context, Object parentSource) throws Throwable {
+        Object ret = getValue(context, parentSource, null);
+        if (ret != null && ret.equals(GuiTypeValue.NO_UPDATE)) {
+            ret = null;
+        }
+        return ret;
     }
 
     /**
@@ -205,32 +235,60 @@ public class GuiReprValue implements GuiRepresentation {
         addHistoryValue(context, newValue);
 
         if (context.isParentCollectionElement()) {
-            //
+            Object ret = update(context, null, newValue);
+            if (ret != null) {
+                context.updateSourceFromGui(ret);
+            }
         } else if (context.isTypeElementProperty()) {
             Object src = context.getParentSource();
             if (src ==  null) {
                 System.err.println("src is null: context="  +context.getRepresentation() + " : parent=" + context.getParent().getRepresentation());
             }
+            Object ret = update(context, src, newValue);
+            if (ret != null) {
+                context.updateSourceFromGui(ret);
+            }
+        } else if (context.isParentPropertyPane()) {
+            context.getParentPropertyPane().updateFromGuiChild(context, newValue);
+        } else {
+            Object ret = update(context, null, newValue);
+            if (ret != null) {
+                context.updateSourceFromGui(ret);
+            }
+        }
+    }
+
+    /**
+     * set a new value to an property of an object, which specified by the context
+     * @param context the target context
+     * @param parentSource the property owner
+     * @param newValue a new value to be set to the property
+     * @return newValue which will need to be pass to {@link GuiMappingContext#updateSourceFromGui(Object)},  or null if error
+     */
+    public Object update(GuiMappingContext context, Object parentSource, Object newValue) {
+        if (context.isParentCollectionElement()) {
+            //
+        } else if (context.isTypeElementProperty()) {
             try {
                 GuiTypeMemberProperty prop = context.getTypeElementAsProperty();
                 context.execute(() ->
-                        prop.executeSet(src, newValue));
-                context.updateSourceFromGui(newValue);
+                        prop.executeSet(parentSource, newValue));
+                return newValue;
             } catch (Throwable ex) {
                 context.errorWhileUpdateSource(ex);
             }
         } else if (context.isParentPropertyPane()) {
-            context.getParentPropertyPane().updateFromGuiChild(context, newValue);
+            return context.getParentPropertyPane().updateFromChild(context, parentSource, newValue);
         } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
             Object prev = context.getSource();
             GuiTypeValue val = context.getTypeElementValue();
             try {
-                Object next = context.execute(() -> val.writeValue(prev, newValue));
-                context.updateSourceFromGui(next);
+                return context.execute(() -> val.writeValue(prev, newValue));
             } catch (Throwable ex) {
                 context.errorWhileUpdateSource(ex);
             }
         }
+        return null;
     }
 
     /***
@@ -286,6 +344,18 @@ public class GuiReprValue implements GuiRepresentation {
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         return target;
+    }
+
+    /**
+     * @return true means {@link #fromJson(GuiMappingContext, Object, Object)} takes a map with
+     *          the entry named {@link GuiMappingContext#getName()}
+     */
+    public boolean isFromJsonTakingMapWithContextNameEntry(GuiMappingContext context) {
+        return false;
+    }
+
+    public Object createNewValue(GuiMappingContext context) throws Throwable {
+        return context.execute(() -> context.getTypeElementValue().createNewValue());
     }
 
     /**

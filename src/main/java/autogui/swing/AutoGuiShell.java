@@ -1,10 +1,4 @@
-package autogui;
-
-import autogui.base.mapping.GuiReprSet;
-import autogui.base.type.GuiTypeBuilder;
-import autogui.swing.GuiSwingElement;
-import autogui.swing.GuiSwingMapperSet;
-import autogui.swing.GuiSwingWindow;
+package autogui.swing;
 
 import javax.swing.*;
 

@@ -16,7 +16,7 @@ public interface GuiRepresentation {
     boolean match(GuiMappingContext context);
 
     /** invoke the associated method and check the returned value whether it is updated or not.
-     *   if updated, update the source of context.
+     *   if updated, set the source of context to the value.
      *   This is non-recursive operation; {@link GuiMappingContext} recursively calls this method.
      *    The source of parent is already updated by the order of the calls.
      * @param context the context of the repr.
@@ -82,7 +82,7 @@ public interface GuiRepresentation {
     Object toJson(GuiMappingContext context, Object source);
 
     /**
-     * create a new value object from the JSON as the target is treated as an old value,
+     * create a new value object from the JSON with treating the target as an old value,
      *    or update the target with the JSON contents.
      *  the behavior can be varied by each representation, confirmed by {@link #isJsonSetter()}.
      * @param context a context holds the representation

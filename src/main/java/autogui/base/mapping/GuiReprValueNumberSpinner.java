@@ -68,15 +68,14 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         NumberType numType = getType(getValueType(context));
-        if (numType instanceof NumberTypeBigDecimal || numType instanceof NumberTypeBigInteger) {
-            if (json instanceof String) {
-                String jsonStr = (String) json;
-                return numType.fromString(jsonStr);
-            }
-        } else {
-            if (json instanceof Number) {
-                return numType.convert(json);
-            }
+        if (json == null) {
+            return null;
+        } else if ((numType instanceof NumberTypeBigDecimal || numType instanceof NumberTypeBigInteger) &&
+                json instanceof String) {
+            String jsonStr = (String) json;
+            return numType.fromString(jsonStr);
+        } else if (json instanceof Number) {
+            return numType.convert(json);
         }
         return null;
     }

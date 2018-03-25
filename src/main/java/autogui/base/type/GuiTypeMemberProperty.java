@@ -1,9 +1,11 @@
 package autogui.base.type;
 
 import autogui.GuiIncluded;
+import autogui.base.mapping.GuiReprValue;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -145,6 +147,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
 
     /**
      * execute the property method or obtain value of the property field
+     * if target is null then nothing will happen and always return {@link GuiTypeValue#NO_UPDATE}.
      * @param target the property holder
      * @param prevValue a previous value of the property, which can be compared to the new value and if it equals,
      *                   the returned value will be {@link GuiTypeValue#NO_UPDATE}.
@@ -154,10 +157,16 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     public Object executeGet(Object target, Object prevValue) throws Exception {
         Method getter = getGetter();
         if (getter != null) {
+            if (target == null && !Modifier.isStatic(getter.getModifiers())) {
+                return GuiTypeValue.NO_UPDATE;
+            }
             return compareGet(prevValue, getter.invoke(target));
         } else {
             Field field = getField();
             if (field != null) {
+                if (target == null && !Modifier.isStatic(field.getModifiers())) {
+                    return GuiTypeValue.NO_UPDATE;
+                }
                 return compareGet(prevValue, field.get(target));
             }
         }
@@ -166,7 +175,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
 
     /**
      * use {@link Objects#equals(Object, Object)} or
-     *  if {@link GuiTypeValue}, use {@link GuiTypeValue#equals(Object, Object)}
+     *  if {@link GuiTypeValue}, use {@link GuiTypeValue#equals(Object, Object)}.
      * @param prevValue the compared value 1
      * @param newValue the compared value 2
      * @return <code>newValue</code> if equivalent, or {@link GuiTypeValue#NO_UPDATE}.
@@ -187,6 +196,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
 
     /**
      * execute the setter method or set the value of the property field
+     * if the target is null, nothing will happen.
      * @param target the field or setter target
      * @param value the value to be set
      * @return setter returned value or null
@@ -195,10 +205,16 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     public Object executeSet(Object target, Object value) throws Exception {
         Method setter = getSetter();
         if (setter != null) {
+            if (target == null && !Modifier.isStatic(getter.getModifiers())) {
+                return null;
+            }
             return setter.invoke(target, value);
         } else {
             Field field = getField();
             if (field != null) {
+                if (target == null && !Modifier.isStatic(field.getModifiers())) {
+                    return null;
+                }
                 field.set(target, value);
                 return null;
             }

@@ -118,7 +118,7 @@ public class GuiMappingContext {
                 .collect(Collectors.toList());
     }
 
-    protected List<GuiMappingContext> getChildrenForAdding() {
+    public List<GuiMappingContext> getChildrenForAdding() {
         if (children == null) {
             children = new ArrayList<>();
         }
@@ -273,7 +273,8 @@ public class GuiMappingContext {
         return listeners;
     }
 
-    /** set the source to newValue, call {@link #updateSourceFromRoot(GuiMappingContext)} starting with this
+    /** set the source to newValue, call {@link #updateSourceFromRoot(GuiMappingContext)} starting with this.
+     * Note: the method does not update any properties of parent or other source objects
      * @param newValue the new source value to be set
      */
     public void updateSourceFromGui(Object newValue) {
@@ -420,6 +421,10 @@ public class GuiMappingContext {
         GuiLogManager.get().logError(error);
     }
 
+    public void errorWhileJson(Throwable error) {
+        GuiLogManager.get().logError(error);
+    }
+
     public boolean isParentPropertyPane() {
         return getParent() != null &&
                 getParent().getRepresentation() instanceof GuiReprPropertyPane;
@@ -431,12 +436,19 @@ public class GuiMappingContext {
     }
 
     public boolean isParentValuePane() {
-        return getParent() != null &&
-                getParent().getRepresentation() instanceof GuiReprValue;
+        return getParent() != null && getParent().isReprValue();
+    }
+
+    public boolean isReprValue() {
+        return getRepresentation() != null && getRepresentation() instanceof GuiReprValue;
+    }
+
+    public GuiReprValue getReprValue() {
+        return (GuiReprValue) getRepresentation();
     }
 
     public GuiReprValue getParentValuePane() {
-        return (GuiReprValue) getParent().getRepresentation();
+        return getParent().getReprValue();
     }
 
     public Object getParentSource() {
@@ -445,26 +457,28 @@ public class GuiMappingContext {
 
 
     public boolean isParentCollectionTable() {
-        return getParent() != null &&
-                getParent().getRepresentation() instanceof GuiReprCollectionTable;
+        return getParent() != null && getParent().isReprCollectionTable();
+    }
+
+    public boolean isReprCollectionTable() {
+        return getRepresentation() != null && getRepresentation() instanceof GuiReprCollectionTable;
     }
 
     public boolean isParentCollectionElement() {
-        return getParent() != null &&
-                getParent().getRepresentation() instanceof GuiReprCollectionElement;
+        return getParent() != null && getParent().isReprCollectionElement();
     }
 
-    public boolean isCollectionElement() {
+    public boolean isReprCollectionElement() {
         return getRepresentation() != null && getRepresentation() instanceof GuiReprCollectionElement;
     }
 
     public boolean isHistoryValueSupported() {
-        return getRepresentation() != null && getRepresentation() instanceof GuiReprValue
+        return isReprValue()
                 && ((GuiReprValue) getRepresentation()).isHistoryValueSupported();
     }
 
     public boolean isHistoryValueStored() {
-        return getRepresentation() != null && getRepresentation() instanceof GuiReprValue
+        return isReprValue()
                 && ((GuiReprValue) getRepresentation()).isHistoryValueStored();
     }
 
@@ -517,5 +531,9 @@ public class GuiMappingContext {
 
     public void clearPreferences() {
         this.preferences = null;
+    }
+
+    public void setPreferences(GuiPreferences preferences) {
+        this.preferences = preferences;
     }
 }
