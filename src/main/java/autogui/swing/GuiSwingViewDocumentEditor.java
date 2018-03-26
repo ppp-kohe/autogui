@@ -511,9 +511,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             styleButton.addActionListener(buttonListener);
             fontStyleMenu.addPopupMenuListener(buttonListener);
 
-            //line spacing
-            lineSpacing = new JSpinner(new SpinnerNumberModel(StyleConstants.getLineSpacing(getTargetStyle()),
-                    Short.MIN_VALUE, Short.MAX_VALUE, 0.1f));
+            //line spacing: the model support double instead of float
+            lineSpacing = new JSpinner(new SpinnerNumberModel((double) StyleConstants.getLineSpacing(getTargetStyle()),
+                    Short.MIN_VALUE, Short.MAX_VALUE, 0.1));
             lineSpacing.addChangeListener(this);
 
             updater = new ScheduledTaskRunner.EditingRunner(500, l -> updateStyle());
@@ -580,7 +580,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             try {
                 Style style = getTargetStyle();
                 if (style != null) {
-                    lineSpacing.setValue(StyleConstants.getLineSpacing(style));
+                    lineSpacing.setValue((double) StyleConstants.getLineSpacing(style));
                     fontFamily.setSelectedItem(StyleConstants.getFontFamily(style));
                     fontSize.setValue(StyleConstants.getFontSize(style));
                     styleBold.putValue(Action.SELECTED_KEY, StyleConstants.isBold(style));
@@ -614,7 +614,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public void setJson(Object obj) {
             if (obj instanceof Map<?,?>) {
                 Map<String, ?> map = (Map<String, ?>) obj;
-                jsonSet(map, "lineSpacing", Number.class, v -> lineSpacing.setValue(v));
+                jsonSet(map, "lineSpacing", Number.class, v -> lineSpacing.setValue(v.doubleValue()));
                 jsonSet(map, "fontFamily", String.class, v -> fontFamily.setSelectedItem(v));
                 jsonSet(map, "fontSize", Number.class, v -> fontSize.setValue(v));
                 jsonSet(map, "bold", Boolean.class, v -> styleBold.putValue(Action.SELECTED_KEY, v));

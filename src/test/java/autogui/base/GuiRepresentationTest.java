@@ -290,6 +290,7 @@ public class GuiRepresentationTest {
     public void testObj() {
         GuiMappingContext context = new GuiMappingContext(new GuiTypeBuilder().get(TestObj.class));
         Assert.assertTrue(GuiRepresentation.getDefaultSet().match(context));
+        context.setPreferences(new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context));
 
         TestObj obj = new TestObj();
         obj.o = new TestValueString("world");

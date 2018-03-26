@@ -131,6 +131,11 @@ public class AutoGuiShellExp {
         public void select(List<String> items) {
             System.err.println("selected : " + items);
         }
+
+        @GuiIncluded @GuiListSelectionCallback(index = true)
+        public void selectRows(List<Integer> rows) {
+            System.err.println("selected rows: " + rows);
+        }
     }
 
     @GuiIncluded

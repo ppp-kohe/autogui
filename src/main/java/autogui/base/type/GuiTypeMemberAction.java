@@ -58,4 +58,14 @@ public class GuiTypeMemberAction extends GuiTypeMember {
             return false;
         }
     }
+
+    public boolean isSelectionIndexAction() {
+        Method method = getMethod();
+        if (method != null) {
+            return method.isAnnotationPresent(GuiListSelectionCallback.class) &&
+                    method.getAnnotation(GuiListSelectionCallback.class).index();
+        } else {
+            return false;
+        }
+    }
 }

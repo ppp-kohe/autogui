@@ -4,6 +4,7 @@ import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
+import autogui.base.mapping.GuiReprActionList;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.table.*;
@@ -80,12 +81,18 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 parent = parent.getParent();
             }
             for (GuiMappingContext siblingContext : parent.getChildren()) {
-                if (siblingContext.isTypeElementActionList() &&
-                    siblingContext.getTypeElementAsActionList().getElementType()
-                            .equals(context.getTypeElementCollection().getElementType())) {
-                    //takes multiple selected items
-
-                    actions.add(new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table));
+                if (siblingContext.getRepresentation() instanceof GuiReprActionList) {
+                    GuiReprActionList listAction = (GuiReprActionList) siblingContext.getRepresentation();
+                    if (listAction.isSelectionAction(siblingContext, context)) {
+                        actions.add(new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table));
+                        //isAutomaticSelectionAction(context) is included
+                    } else if (listAction.isAutomaticSelectionRowIndexesAction(siblingContext)) {
+                        actions.add(new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
+                                table.getSelectionSourceForRowIndexes()));
+                    } else if (listAction.isAutomaticSelectionRowAndColumnIndexesAction(siblingContext)) {
+                        actions.add(new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
+                                table.getSelectionSourceForRowAndColumnIndexes()));
+                    }
                 }
             }
         }
@@ -109,10 +116,12 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected ScheduledTaskRunner.EditingRunner selectionRunner;
 
         protected TablePreferencesUpdater preferencesUpdater;
+        protected List<Integer> lastSelectionActionIndexes = Collections.emptyList();
+        protected TableSelectionSourceForIndexes selectionSourceForRowIndexes;
+        protected TableSelectionSourceForIndexes selectionSourceForRowAndColumnIndexes;
 
         public CollectionTable(GuiMappingContext context) {
             this.context = context;
-
 
             //model
             ObjectTableModel model = new ObjectTableModel(this::getSource);
@@ -137,11 +146,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             //improve precedence of the popup listener
 
             //cell selection
-            selectionRunner = new ScheduledTaskRunner.EditingRunner(100, this::runAutoSelectionActions);
+            selectionRunner = new ScheduledTaskRunner.EditingRunner(200, this::runAutoSelectionActions);
             setCellSelectionEnabled(true);
             setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             setGridColor(getBackground());
             setShowGrid(false);
+
+            selectionSourceForRowIndexes = new TableSelectionSourceForIndexes(this, false);
+            selectionSourceForRowAndColumnIndexes = new TableSelectionSourceForIndexes(this, true);
 
             //initial update
             update(context, context.getSource());
@@ -220,7 +232,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     boolean enabled = !isSelectionEmpty();
                     actions.forEach(a -> a.setEnabled(enabled));
 
-                    if (enabled) {
+                    if (enabled && !e.getValueIsAdjusting()) { //excludes events under mouse-pressing state
                         selectionRunner.schedule(e);
                     }
                 } finally {
@@ -259,6 +271,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public List<?> getSource() {
             return source;
+        }
+
+        public TableSelectionSourceForIndexes getSelectionSourceForRowAndColumnIndexes() {
+            return selectionSourceForRowAndColumnIndexes;
+        }
+
+        public TableSelectionSourceForIndexes getSelectionSourceForRowIndexes() {
+            return selectionSourceForRowIndexes;
         }
 
         @Override
@@ -310,13 +330,17 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public List<?> getSelectedItems() {
             ListSelectionModel sel = getSelectionModel();
             List<Object> selected = new ArrayList<>();
+            List<Integer> selectedIndexes = new ArrayList<>();
             if (source != null) {
                 for (int i = sel.getMinSelectionIndex(), max = sel.getMaxSelectionIndex(); i <= max; ++i) {
                     if (i >= 0 && sel.isSelectedIndex(i)) {
-                        selected.add(source.get(convertRowIndexToModel(i)));
+                        int modelIndex = convertRowIndexToModel(i);
+                        selectedIndexes.add(modelIndex);
+                        selected.add(source.get(modelIndex));
                     }
                 }
             }
+            lastSelectionActionIndexes = selectedIndexes;
             return selected;
         }
 
@@ -327,15 +351,19 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     autoSelectionDepth++;
                 }
                 ListSelectionModel sel = getSelectionModel();
-                List<Integer> is = new ArrayList<>();
-                for (int i = sel.getMinSelectionIndex(), max = sel.getMaxSelectionIndex(); i <= max; ++i) {
-                    if (i >= 0 && sel.isSelectedIndex(i)) {
-                        is.add(convertRowIndexToModel(i));
-                    }
-                }
 
-                getObjectTableModel().refreshRows(is.stream()
-                        .mapToInt(Integer::intValue).toArray());
+                int rows = getRowCount();
+                int[] selectedRowsIndexes = lastSelectionActionIndexes.stream()
+                        .filter(i -> i >= 0 && i < rows)
+                        .mapToInt(Integer::intValue).toArray();
+                getObjectTableModel().refreshRows(selectedRowsIndexes);
+
+                //re-selection
+                sel.setValueIsAdjusting(true);
+                IntStream.of(selectedRowsIndexes)
+                    .map(this::convertRowIndexToView)
+                    .forEach(i -> sel.addSelectionInterval(i, i));
+                sel.setValueIsAdjusting(false);
             } finally {
                 if (autoSelection) {
                     autoSelectionDepth--;
@@ -405,6 +433,48 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * a table source for obtaining indexes instead of row items.
+     * This can be supplied for {@link autogui.swing.table.GuiSwingTableColumnSetDefault.TableSelectionListAction}.
+     */
+    public static class TableSelectionSourceForIndexes implements GuiSwingTableColumnSet.TableSelectionSource {
+        protected CollectionTable table;
+        protected TableTargetCellForJTable cellTargets;
+        protected boolean rowAndColumns;
+
+        public TableSelectionSourceForIndexes(CollectionTable table, boolean rowAndColumns) {
+            this.table = table;
+            cellTargets = new TableTargetCellForJTable(table);
+            this.rowAndColumns = rowAndColumns;
+        }
+
+        @Override
+        public boolean isSelectionEmpty() {
+            return table.isSelectionEmpty();
+        }
+
+        @Override
+        public List<?> getSelectedItems() {
+            table.getSelectedItems(); //saving selected indexes
+
+            if (rowAndColumns) {
+                //List<int[]>
+                return cellTargets.getSelectedRowAllCellIndexesStream()
+                        .collect(Collectors.toList());
+            } else {
+                //List<Integer>
+                return cellTargets.getSelectedRows()
+                        .boxed()
+                        .collect(Collectors.toList());
+            }
+        }
+
+        @Override
+        public void selectionActionFinished(boolean autoSelection) {
+            table.selectionActionFinished(autoSelection);
         }
     }
 

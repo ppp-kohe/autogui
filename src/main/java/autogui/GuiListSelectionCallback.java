@@ -15,10 +15,20 @@ import java.lang.annotation.Target;
  *         public void select(List&lt;E&gt; itemsInList) {
  *             ...
  *         }
+ *         &#64;GuiListSelectionCallback(index=true) &#64;GuiIncluded
+ *         public void selectRowIndexes(List&lt;Integer&gt; rows) {
+ *             ...
+ *         }
+ *
+ *         &#64;GuiListSelectionCallback(index=true) &#64;GuiIncluded
+ *         public void selectRowAndColumnIndexes(List&lt;int[]&gt; rowAndColumn) {
+ *             ...
+ *         }
  *     }
  * </pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface GuiListSelectionCallback {
+    boolean index() default false;
 }

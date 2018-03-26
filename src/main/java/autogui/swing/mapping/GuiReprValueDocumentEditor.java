@@ -1,5 +1,6 @@
 package autogui.swing.mapping;
 
+import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 
@@ -58,6 +59,13 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
 
     /**
      * a task runner in the Swing Event dispatching thread.
+     * currently the runner will return null if it over 2 seconds.
+     * This will happen when the case for
+     *    a task under the event dispatching thread -&gt;
+     *       another thread waiting -&gt;
+     *          SwingInvoker#run().
+     *    In the case, the first task on the event dispatching thread causes blocking of the thread
+     *          in the run() method.
      */
     public static class SwingInvoker {
         public volatile Object result;
@@ -85,8 +93,8 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
                 while (result != null) {
                     Thread.sleep(100);
                     waitCount++;
-                    if (waitCount > Short.MAX_VALUE) {
-                        throw new RuntimeException("failed running: " + runnable);
+                    if (waitCount >= 20) {
+                        break;
                     }
                 }
                 if (exception != null) {

@@ -1,5 +1,6 @@
 package autogui.base.mapping;
 
+import autogui.base.type.GuiTypeElement;
 import autogui.base.type.GuiTypeValue;
 
 import java.util.List;
@@ -49,7 +50,49 @@ public class GuiReprActionList implements GuiRepresentation {
         return target;
     }
 
-    public boolean isSelectionAction(GuiMappingContext context) {
+    public boolean isAutomaticSelectionAction(GuiMappingContext context) {
         return context.getTypeElementAsAction().isSelectionAction();
+    }
+
+    public boolean isSelectionAction(GuiMappingContext context, GuiMappingContext tableContext) {
+        return context.isTypeElementActionList() &&
+                context.getTypeElementAsActionList().getElementType()
+                .equals(tableContext.getTypeElementCollection().getElementType());
+    }
+
+    /**
+     * <pre>
+     *     &#64;GuiListSelectionCallback(index=true)
+     *     public void select(List&lt;Integer&gt; rows) {...}
+     * </pre>
+     * @param context the action context
+     * @return true if the action is automatic selection and taking a list of row indexes
+     */
+    public boolean isAutomaticSelectionRowIndexesAction(GuiMappingContext context) {
+        if (context.isTypeElementActionList() &&
+                context.getTypeElementAsActionList().isSelectionIndexAction()) {
+            GuiTypeElement elementType = context.getTypeElementAsActionList().getElementType();
+            return elementType.equals(new GuiTypeValue(Integer.class));
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * <pre>
+     *     &#64;GuiListSelectionCallback(index=true)
+     *     public void select(List&lt;int[]&gt; rows) {...}
+     * </pre>
+     * @param context the action context
+     * @return true if the action is automatic selection and taking a list of row and column pair indexes
+     */
+    public boolean isAutomaticSelectionRowAndColumnIndexesAction(GuiMappingContext context) {
+        if (context.isTypeElementActionList() &&
+                context.getTypeElementAsActionList().isSelectionIndexAction()) {
+            GuiTypeElement elementType = context.getTypeElementAsActionList().getElementType();
+            return elementType.equals(new GuiTypeValue(int[].class));
+        } else {
+            return false;
+        }
     }
 }

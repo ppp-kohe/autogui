@@ -102,7 +102,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
          */
         public boolean isAutomaticSelectionAction() {
             return ((GuiReprActionList) context.getRepresentation())
-                    .isSelectionAction(context);
+                    .isAutomaticSelectionAction(context);
         }
     }
 
