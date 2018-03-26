@@ -104,7 +104,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected List<?> source;
         protected PopupExtensionCollection popup;
         protected List<Action> actions = new ArrayList<>();
-        protected List<Action> autoSelectionActions = new ArrayList<>();
+        protected List<GuiSwingTableColumnSetDefault.TableSelectionListAction> autoSelectionActions = new ArrayList<>();
+        protected int autoSelectionDepth;
         protected ScheduledTaskRunner.EditingRunner selectionRunner;
 
         protected TablePreferencesUpdater preferencesUpdater;
@@ -206,23 +207,31 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             actionToolBar.setFloatable(false);
             actionToolBar.setOpaque(false);
 
-            getSelectionModel().addListSelectionListener(e -> {
-                boolean enabled = !isSelectionEmpty();
-                actions.forEach(a -> a.setEnabled(enabled));
-
-                if (enabled) {
-                    selectionRunner.schedule(e);
-                }
-            });
-
+            getSelectionModel().addListSelectionListener(this::runListSelection);
             actions.forEach(a -> initAction(actionToolBar, a));
 
             return actionToolBar;
         }
 
+        public void runListSelection(ListSelectionEvent e) {
+            if (autoSelectionDepth <= 0) {
+                autoSelectionDepth++;
+                try {
+                    boolean enabled = !isSelectionEmpty();
+                    actions.forEach(a -> a.setEnabled(enabled));
+
+                    if (enabled) {
+                        selectionRunner.schedule(e);
+                    }
+                } finally {
+                    autoSelectionDepth--;
+                }
+            }
+        }
+
         public void runAutoSelectionActions(List<Object> es) {
-            this.autoSelectionActions.forEach(a ->
-                    a.actionPerformed(null));
+            this.autoSelectionActions.forEach(
+                    GuiSwingTableColumnSetDefault.TableSelectionListAction::actionPerformedBySelection);
         }
 
         public void initAction(JToolBar actionToolBar, Action action) {
@@ -312,17 +321,26 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         @Override
-        public void selectionActionFinished() {
-            ListSelectionModel sel = getSelectionModel();
-            List<Integer> is = new ArrayList<>();
-            for (int i = sel.getMinSelectionIndex(), max = sel.getMaxSelectionIndex(); i <= max; ++i) {
-                if (i >= 0 && sel.isSelectedIndex(i)) {
-                    is.add(convertRowIndexToModel(i));
+        public void selectionActionFinished(boolean autoSelection) {
+            try {
+                if (autoSelection) {
+                    autoSelectionDepth++;
+                }
+                ListSelectionModel sel = getSelectionModel();
+                List<Integer> is = new ArrayList<>();
+                for (int i = sel.getMinSelectionIndex(), max = sel.getMaxSelectionIndex(); i <= max; ++i) {
+                    if (i >= 0 && sel.isSelectedIndex(i)) {
+                        is.add(convertRowIndexToModel(i));
+                    }
+                }
+
+                getObjectTableModel().refreshRows(is.stream()
+                        .mapToInt(Integer::intValue).toArray());
+            } finally {
+                if (autoSelection) {
+                    autoSelectionDepth--;
                 }
             }
-
-            getObjectTableModel().refreshRows(is.stream()
-                    .mapToInt(Integer::intValue).toArray());
         }
 
         @Override

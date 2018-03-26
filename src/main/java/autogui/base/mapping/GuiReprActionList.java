@@ -33,7 +33,7 @@ public class GuiReprActionList implements GuiRepresentation {
         try {
             Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), true);
             context.execute(() -> context.getTypeElementAsActionList().execute(target, selection));
-            context.updateSourceFromRoot();
+            context.updateSourceFromRoot(context);
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
         }

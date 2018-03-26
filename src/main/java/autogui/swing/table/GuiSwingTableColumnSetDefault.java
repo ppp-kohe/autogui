@@ -64,18 +64,37 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         public TableSelectionListAction(GuiMappingContext context, TableSelectionSource source) {
             super(context);
             this.source = source;
+            if (isAutomaticSelectionAction()) {
+                putValue(NAME, "*" + getValue(NAME));
+                putValue(Action.SHORT_DESCRIPTION, "The action is automatically executed by table selection");
+            }
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            actionPerformedAround(false);
+        }
+
+        /**
+         * action runner for automatic selection
+         */
+        public void actionPerformedBySelection() {
+            actionPerformedAround(true);
+        }
+
+        protected void actionPerformedAround(boolean autoSelection) {
             setEnabled(false);
             try {
-                ((GuiReprActionList) context.getRepresentation())
-                        .executeActionForList(context, source.getSelectedItems());
+                actionPerformedBody();
             } finally {
-                source.selectionActionFinished();
+                source.selectionActionFinished(autoSelection);
                 setEnabled(true);
             }
+        }
+
+        protected void actionPerformedBody() {
+            ((GuiReprActionList) context.getRepresentation())
+                    .executeActionForList(context, source.getSelectedItems());
         }
 
         /**
@@ -105,15 +124,9 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-            setEnabled(false);
-            try {
-                ((GuiReprAction) context.getRepresentation())
-                        .executeActionForTargets(context, source.getSelectedItems());
-            } finally {
-                source.selectionActionFinished();
-                setEnabled(true);
-            }
+        protected void actionPerformedBody() {
+            ((GuiReprAction) context.getRepresentation())
+                    .executeActionForTargets(context, source.getSelectedItems());
         }
 
         @Override

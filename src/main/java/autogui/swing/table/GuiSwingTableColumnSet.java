@@ -25,6 +25,15 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
     interface TableSelectionSource {
         boolean isSelectionEmpty();
         List<?> getSelectedItems();
-        void selectionActionFinished();
+
+        /**
+         * the finisher for the action: the table implements the method in order to refresh
+         *  selected rows.
+         *  However, naive executions of the action by list selection changes will cause infinite loop.
+         *  To avoid this, an impl. of the method needs to check the flag and
+         *     avoid handling list selection events caused by the method.
+         *  @param autoSelection true if the action is automatically executed by selection changes
+         */
+        void selectionActionFinished(boolean autoSelection);
     }
 }

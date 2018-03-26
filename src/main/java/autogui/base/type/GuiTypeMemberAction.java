@@ -51,6 +51,11 @@ public class GuiTypeMemberAction extends GuiTypeMember {
     }
 
     public boolean isSelectionAction() {
-        return getMethod().isAnnotationPresent(GuiListSelectionCallback.class);
+        Method method = getMethod();
+        if (method != null) {
+            return method.isAnnotationPresent(GuiListSelectionCallback.class);
+        } else {
+            return false;
+        }
     }
 }

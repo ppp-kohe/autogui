@@ -60,7 +60,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
      * a task runner in the Swing Event dispatching thread.
      */
     public static class SwingInvoker {
-        public Object result;
+        public volatile Object result;
         public Throwable exception;
 
         protected Task runnable;
@@ -73,13 +73,22 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
             if (SwingUtilities.isEventDispatchThread()) {
                 return runnable.call();
             } else {
-                SwingUtilities.invokeAndWait(() -> {
+                result = null;
+                SwingUtilities.invokeLater(() -> {
                     try {
                         result = runnable.call();
                     } catch (Throwable ex) {
                         exception = ex;
                     }
                 });
+                int waitCount = 0;
+                while (result != null) {
+                    Thread.sleep(100);
+                    waitCount++;
+                    if (waitCount > Short.MAX_VALUE) {
+                        throw new RuntimeException("failed running: " + runnable);
+                    }
+                }
                 if (exception != null) {
                     throw exception;
                 } else {
