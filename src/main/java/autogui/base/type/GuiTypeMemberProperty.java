@@ -251,4 +251,8 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         return executeSet(target, value);
     }
 
+    @Override
+    public String toString() {
+        return "property(" + type + ", " + name + ")";
+    }
 }

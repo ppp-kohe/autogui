@@ -55,4 +55,9 @@ public class GuiTypeMemberActionList extends GuiTypeMemberAction {
             throw new UnsupportedOperationException("no method: " + methodName);
         }
     }
+
+    @Override
+    public String toString() {
+        return "actionList(" + name + ", " + elementType + ")";
+    }
 }

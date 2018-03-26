@@ -83,4 +83,9 @@ public class GuiTypeObject extends GuiTypeValue {
         }
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "object(" + name + ")";
+    }
 }

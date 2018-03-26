@@ -136,7 +136,10 @@ public class GuiReprObjectPane extends GuiReprValue {
             try {
                 if (target == null) {
                     try {
-                        target = ((GuiReprValue) context.getRepresentation()).createNewValue(context);
+                        GuiReprValue repr = getReprValue(context.getRepresentation());
+                        if (repr != null) {
+                            target = repr.createNewValue(context);
+                        }
                     } catch (Throwable ex) {
                         context.errorWhileJson(ex);
                     }
@@ -162,6 +165,16 @@ public class GuiReprObjectPane extends GuiReprValue {
             }
         }
         return target;
+    }
+
+    public static GuiReprValue getReprValue(GuiRepresentation repr) {
+        if (repr instanceof GuiReprCollectionElement) {
+            return getReprValue(((GuiReprCollectionElement) repr).getRepresentation());
+        } else if (repr instanceof GuiReprValue) {
+            return (GuiReprValue) repr;
+        } else {
+            return null;
+        }
     }
 
     @Override

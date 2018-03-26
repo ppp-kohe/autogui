@@ -68,4 +68,9 @@ public class GuiTypeMemberAction extends GuiTypeMember {
             return false;
         }
     }
+
+    @Override
+    public String toString() {
+        return "action(" + name  +")";
+    }
 }

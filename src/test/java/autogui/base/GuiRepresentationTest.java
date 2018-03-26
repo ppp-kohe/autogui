@@ -334,7 +334,106 @@ public class GuiRepresentationTest {
         String str = repr.toHumanReadableString(context, obj2);
         Set<String> words = new HashSet<>(Arrays.asList(str.split("\t")));
         Assert.assertEquals(new HashSet<>(Arrays.asList("test", "456", pathSrcMain, "HelloWorld", "true", "world")), words);
+
+        GuiMappingContext act = context.getChildren().stream()
+                .filter(e -> e.getName().equals("action"))
+                .findFirst().orElse(null);
+
+        GuiReprAction a = (GuiReprAction) act.getRepresentation();
+        a.executeAction(act);
+        Assert.assertEquals(457, obj.i);
     }
+
+    @SuppressWarnings("all")
+    @Test
+    public void testUpdate() {
+        GuiMappingContext context = new GuiMappingContext(new GuiTypeBuilder().get(TestUpdate.class));
+        Assert.assertTrue(GuiRepresentation.getDefaultSet().match(context));
+        context.setPreferences(new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context));
+
+        GuiMappingContext iCtx = context.getChildren().stream()
+                .filter(e -> e.getName().equals("i"))
+                .findFirst().orElse(null);
+
+        GuiMappingContext lCtx = context.getChildren().stream()
+                .filter(e -> e.getName().equals("l"))
+                .findFirst().orElse(null);
+
+        GuiMappingContext sCtx = context.getChildren().stream()
+                .filter(e -> e.getName().equals("s"))
+                .findFirst().orElse(null);
+
+        GuiMappingContext hCtx = sCtx.getChildren().get(0).getChildren().stream()
+                .filter(e -> e.getName().equals("hello"))
+                .findFirst().orElse(null);
+
+        TestUpdate o = new TestUpdate();
+        o.l.add("hello");
+        context.setSource(o);
+        context.updateSourceFromRoot();
+
+        List<Object> is = new ArrayList<>();
+        List<Object> is2 = new ArrayList<>();
+        List<Object> is3 = new ArrayList<>();
+        iCtx.addSourceUpdateListener((c,v) -> {
+            is.add(v);
+        });
+        iCtx.addSourceUpdateListener((c,v) -> {
+            is2.add(v);
+        });
+        iCtx.addSourceUpdateListener((c,v) -> {
+            is3.add(v);
+        });
+
+        List<Object> ls = new ArrayList<>();
+        lCtx.addSourceUpdateListener((c,v) -> {
+            ls.add(v);
+        });
+        List<Object> ss = new ArrayList<>();
+        sCtx.addSourceUpdateListener((c,v) -> {
+            ss.add(v);
+        });
+
+        List<Object> hs = new ArrayList<>();
+        hCtx.addSourceUpdateListener((c,v) -> {
+            hs.add(v);
+        });
+
+        o.i++;
+        context.updateSourceFromRoot(sCtx);
+        Assert.assertEquals(Arrays.asList(124), is);
+        Assert.assertEquals(Arrays.asList(124), is2);
+        Assert.assertEquals(Arrays.asList(124), is3);
+        o.s = new TestValueString("world");
+        context.updateSourceFromRoot(iCtx);
+        Assert.assertEquals(1, ss.size());
+        Assert.assertEquals(o.s, ss.get(0));
+
+        o.s = new TestValueString("world"); //another object but same contents
+        context.updateSourceFromRoot(iCtx);
+        Assert.assertEquals(1, ss.size());
+        Assert.assertEquals(o.s, ss.get(0));
+
+
+        o.l = new ArrayList<>();
+        o.l.add("hello");
+        context.updateSourceFromRoot();
+        Assert.assertEquals(1, ls.size());
+        Assert.assertTrue(o.l == ls.get(0));
+
+        o.s.hello = "test"; //same object but different property
+        context.updateSourceFromRoot();
+        Assert.assertEquals(2, hs.size());
+        Assert.assertEquals(Arrays.asList("world", "test"), hs);
+    }
+
+    @GuiIncluded
+    public static class TestUpdate {
+        @GuiIncluded public int i = 123;
+        @GuiIncluded public List<String> l = new ArrayList<>();
+        @GuiIncluded public TestValueString s = new TestValueString("hello");
+    }
+
 
     public enum EnumValue {
         HelloWorld,
@@ -355,6 +454,19 @@ public class GuiRepresentationTest {
         @Override
         public String toString() {
             return "hello:" + hello;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TestValueString that = (TestValueString) o;
+            return Objects.equals(hello, that.hello);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(hello);
         }
     }
 

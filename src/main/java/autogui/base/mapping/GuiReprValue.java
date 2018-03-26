@@ -217,8 +217,9 @@ public class GuiReprValue implements GuiRepresentation {
      * <ul>
      *   <li>it first adds <code>newValue</code> to the history. </li>
      *   <li>using {@link GuiMappingContext#execute(Callable)}</li>
-     *   <li>if the parent is a collection element, </li>
-     *   <li>if this is a property, {@link GuiMappingContext#getParentSource()} and
+     *   <li>if the parent is a collection element, do the following process with null as the parent source </li>
+     *   <li>if this is a property, {@link GuiMappingContext#getParentSource()},
+     *         update the property by {@link GuiTypeMemberProperty#executeSet(Object, Object)} with the parent source, and
      *        {@link GuiMappingContext#updateSourceFromGui(Object)} with the <code>newValue</code></li>
      *   <li>if the parent is a property, {@link GuiReprPropertyPane#updateFromGuiChild(GuiMappingContext, Object)}
      *          with <code>newValue</code></li>
@@ -266,9 +267,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @return newValue which will need to be pass to {@link GuiMappingContext#updateSourceFromGui(Object)},  or null if error
      */
     public Object update(GuiMappingContext context, Object parentSource, Object newValue) {
-        if (context.isParentCollectionElement()) {
-            //
-        } else if (context.isTypeElementProperty()) {
+        if (context.isTypeElementProperty()) {
             try {
                 GuiTypeMemberProperty prop = context.getTypeElementAsProperty();
                 context.execute(() ->

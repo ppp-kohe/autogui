@@ -50,7 +50,10 @@ public class NamedPane extends JComponent {
 
         ResizableFlowLayout layout = new ResizableFlowLayout(true, 5);
         setLayout(layout);
+        initNameLabel();
+    }
 
+    public void initNameLabel() {
         label = new JLabel(displayName + ":");
         label.setHorizontalAlignment(JLabel.RIGHT);
         ResizableFlowLayout.add(this, label, false);

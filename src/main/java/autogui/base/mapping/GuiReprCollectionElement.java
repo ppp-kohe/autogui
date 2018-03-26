@@ -82,18 +82,18 @@ public class GuiReprCollectionElement implements GuiRepresentation {
      * </ul>
      * @param context the context of the repr.
      * @param subContext the main context as a value of the collection
-     * @param src  the target collection
+     * @param rowSource  the target collection element
      * @param rowIndex the element index of the collection
      * @param columnIndex the table column index, ignored in the impl.
      * @return the updated value of the cell
      * @throws Throwable an error caused by the execution
      */
     public Object getCellValue(GuiMappingContext context, GuiMappingContext subContext,
-                               Object src, int rowIndex, int columnIndex) throws Throwable {
+                               Object rowSource, int rowIndex, int columnIndex) throws Throwable {
         if (subContext.isTypeElementProperty()) {
             GuiTypeMemberProperty prop = subContext.getTypeElementAsProperty();
             Object val = subContext.execute(() ->
-                    prop.executeGetList(rowIndex, src, null));
+                    prop.executeGetList(rowIndex, rowSource, null));
             if (val != null && val.equals(GuiTypeValue.NO_UPDATE)) {
                 return null;
             } else {
@@ -101,13 +101,13 @@ public class GuiReprCollectionElement implements GuiRepresentation {
             }
         } else {
             if (representation instanceof GuiReprPropertyPane) {
-                return src;
+                return rowSource;
             } else if (subContext.isTypeElementValue() || subContext.isTypeElementObject() || subContext.isTypeElementCollection()) {
                 GuiTypeValue val = subContext.getTypeElementValue();
                  Object ret = subContext.execute(() ->
-                        val.updatedValueList(rowIndex, src));
+                        val.updatedValueList(rowIndex, rowSource));
                  if (ret != null && ret.equals(GuiTypeValue.NO_UPDATE)) {
-                     return src;
+                     return rowSource;
                  } else {
                      return ret;
                  }
@@ -119,18 +119,18 @@ public class GuiReprCollectionElement implements GuiRepresentation {
     /** the table cell version of {@link GuiReprValue#updateFromGui(GuiMappingContext, Object)}
      * @param context the context of the repr.
      * @param subContext the main context as a value of the collection
-     * @param src  the target collection
+     * @param rowSource  the target collection element
      * @param rowIndex the element index of the collection
      * @param columnIndex the table column index, ignored in the impl.
      * @param newValue the edited new value of the cell
      */
     public void updateCellFromGui(GuiMappingContext context, GuiMappingContext subContext,
-                                  Object src, int rowIndex, int columnIndex, Object newValue) {
+                                  Object rowSource, int rowIndex, int columnIndex, Object newValue) {
         if (subContext.isTypeElementProperty()) {
             try {
                 GuiTypeMemberProperty prop = subContext.getTypeElementAsProperty();
                 subContext.execute(() ->
-                        prop.executeSetList(rowIndex, src, newValue));
+                        prop.executeSetList(rowIndex, rowSource, newValue));
             } catch (Throwable ex) {
                 subContext.errorWhileUpdateSource(ex);
             }
@@ -191,6 +191,7 @@ public class GuiReprCollectionElement implements GuiRepresentation {
         }
         return null;
     }
+
 
     @Override
     public boolean isJsonSetter() {

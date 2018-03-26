@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
+import autogui.base.mapping.GuiReprPropertyPane;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupExtension;
@@ -19,9 +20,9 @@ import java.util.function.Consumer;
  *    (see {@link GuiReprValue#getValueType(GuiMappingContext)}).
  *
  * <h3>{@link PropertyPane#getSwingViewValue()}</h3>
- *  {@link autogui.base.mapping.GuiReprValue.NamedValue}.
- *     obtaining and setting ({@link PropertyPane#setSwingViewValue(GuiReprValue.NamedValue)} and
- *        {@link PropertyPane#setSwingViewValueWithUpdate(GuiReprValue.NamedValue)}) delete to the contentPane.
+ *  {@link autogui.base.mapping.GuiReprValue.NamedValue}, or other value type.
+ *     obtaining and setting ({@link PropertyPane#setSwingViewValue(Object)} and
+ *        {@link PropertyPane#setSwingViewValueWithUpdate(Object)}) delete to the contentPane.
  *     Note the setting of the property will be treated by the value's contentPane.
  *        {@link GuiReprValue#updateFromGui(GuiMappingContext, Object)} by the value's contentPane
  *         supports the case of the parent is a property.
@@ -74,14 +75,35 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         public PropertyPane(GuiMappingContext context, boolean showName) {
             super(context.getDisplayName(), context.getName());
             this.context = context;
-            setLayout(new BorderLayout());
-            setOpaque(false);
-            setBorder(BorderFactory.createEmptyBorder());
             if (showName) {
                 initNameLabel();
             }
+            initPopup();
+        }
 
-            //popup
+        public PropertyPane(GuiMappingContext context, boolean showName, JComponent content) {
+            this(context, showName);
+            setContentPane(content);
+        }
+
+        @Override
+        public void init() {
+            setLayout(new BorderLayout());
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder());
+            //skip init
+        }
+
+        public void initNameLabel() {
+            label = new JLabel(displayName);
+
+            label.setName(context.getName() + ".label");
+            label.setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
+
+            add(label, BorderLayout.NORTH);
+        }
+
+        public void initPopup() {
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
             ContextRefreshAction refreshAction = new ContextRefreshAction(context);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
@@ -92,19 +114,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
                 menu.accept(new ToStringCopyAction(this, context));
             });
             setInheritsPopupMenu(true);
-        }
 
-        public PropertyPane(GuiMappingContext context, boolean showName, JComponent content) {
-            this(context, showName);
-            setContentPane(content);
-        }
-
-        public void initNameLabel() {
-            label = new JLabel(displayName);
-
-            label.setName(context.getName() + ".label");
-            label.setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
-            add(label, BorderLayout.NORTH);
         }
 
         @Override
@@ -127,7 +137,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
     }
 
-    public static class NamedPropertyPane extends NamedPane implements ValuePane<GuiReprValue.NamedValue> {
+    public static class NamedPropertyPane extends NamedPane implements ValuePane<Object> {
         protected PopupExtension popup;
 
         public NamedPropertyPane() { }
@@ -158,27 +168,35 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
 
         @Override
-        public GuiReprValue.NamedValue getSwingViewValue() {
+        public Object getSwingViewValue() {
             if (hasContentValuePane()) {
                 Object value = getContentPaneAsValuePane().getSwingViewValue();
-                if (value != null) {
+                if (value != null && isProperty()) {
                     return new GuiReprValue.NamedValue(getName(), value);
+                } else {
+                    return value;
                 }
             }
             return null;
         }
 
         @Override
-        public void setSwingViewValue(GuiReprValue.NamedValue value) {
+        public void setSwingViewValue(Object value) {
             if (hasContentValuePane() && value != null) {
-                getContentPaneAsValuePane().setSwingViewValue((value).value);
+                if (isProperty() && value instanceof GuiReprValue.NamedValue) {
+                    value = ((GuiReprValue.NamedValue) value).value;
+                }
+                getContentPaneAsValuePane().setSwingViewValue(value);
             }
         }
 
         @Override
-        public void setSwingViewValueWithUpdate(GuiReprValue.NamedValue value) {
+        public void setSwingViewValueWithUpdate(Object value) {
             if (hasContentValuePane() && value != null) {
-                getContentPaneAsValuePane().setSwingViewValueWithUpdate(value.value);
+                if (isProperty() && value instanceof GuiReprValue.NamedValue) {
+                    value = ((GuiReprValue.NamedValue) value).value;
+                }
+                getContentPaneAsValuePane().setSwingViewValueWithUpdate(value);
             }
         }
 
@@ -195,6 +213,15 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
             if (hasContentValuePane()) {
                 getContentPaneAsValuePane().addSwingEditFinishHandler(eventHandler);
+            }
+        }
+
+        public boolean isProperty() {
+            GuiMappingContext context = getContext();
+            if (context != null && context.getRepresentation() instanceof GuiReprPropertyPane) {
+                return true;
+            } else {
+                return false;
             }
         }
 
