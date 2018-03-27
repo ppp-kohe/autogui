@@ -230,8 +230,8 @@ public class ObjectTableColumn {
             int index = getTableColumn().getModelIndex();
             return Arrays.asList(
                     new ToStringCopyCell.TableMenuCompositeToStringValue(index),
-                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index),
-                    new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(index));
+                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index));
+                    //,new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(index));
         }
 
         @Override
@@ -239,8 +239,8 @@ public class ObjectTableColumn {
             int index = getTableColumn().getModelIndex();
             return Arrays.asList(
                     new ToStringCopyCell.TableMenuCompositeToStringValue(index),
-                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index),
-                    new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(index));
+                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index));
+                    //,new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(index));
         }
     }
 

@@ -9,6 +9,8 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
@@ -33,6 +35,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     protected JComponent pane;
     protected Predicate<KeyEvent> keyMatcher;
     protected PopupMenuBuilder menuBuilder;
+    protected PopupCancelChecker cancelChecker;
 
     protected Action action;
 
@@ -88,7 +91,51 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         if (pane != null) {
             addListenersToPane();
         }
+        setupCancelChecker();
     }
+
+    protected void setupCancelChecker() {
+        JPopupMenu m = menu.get();
+        //reuse existing checker
+        for (PopupMenuListener l : m.getPopupMenuListeners()) {
+            if (l instanceof PopupCancelChecker) {
+                PopupCancelChecker existingChecker = (PopupCancelChecker) l;
+                if (existingChecker.isReusable()) {
+                    cancelChecker = existingChecker;
+                }
+            }
+        }
+        if (cancelChecker == null) {
+            cancelChecker = new PopupCancelChecker();
+            m.addPopupMenuListener(cancelChecker);
+        }
+    }
+
+    /** improve default behavior of showing popup menu: clicking a menu button while the menu is visible can hide it  */
+    public static class PopupCancelChecker implements PopupMenuListener {
+        protected Instant lastCancelTime = Instant.EPOCH;
+        protected Duration limit = Duration.ofMillis(500);
+
+        @Override
+        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {}
+        @Override
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
+
+        @Override
+        public void popupMenuCanceled(PopupMenuEvent e) {
+            lastCancelTime = Instant.now();
+        }
+
+        public boolean isReusable() {
+            return true;
+        }
+
+        public boolean isValidMenuOpen() {
+            Duration diff = Duration.between(lastCancelTime, Instant.now());
+            return diff.compareTo(limit) >= 0;
+        }
+    }
+
 
     /**
      * call {@link #PopupExtension(JComponent, Predicate, PopupMenuBuilder, Supplier)}.
@@ -112,7 +159,6 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         pane.addMouseListener(this);
         pane.addKeyListener(this);
     }
-
 
 
     ////////////////
@@ -250,6 +296,9 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (!cancelChecker.isValidMenuOpen()) {
+            return;
+        }
         Object src = e.getSource();
         if (src instanceof Component) {
             show((Component) src);
@@ -266,7 +315,8 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
                 }
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    PopupExtension.this.actionPerformed(e);
+                    PopupExtension ext = PopupExtension.this;
+                    ext.actionPerformed(e);
                 }
             };
         }

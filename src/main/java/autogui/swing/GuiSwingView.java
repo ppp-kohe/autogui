@@ -100,6 +100,11 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         default void shutdown() { }
+
+        default boolean isEditable() {
+            GuiMappingContext context = getContext();
+            return !context.isReprValue() || context.getReprValue().isEditable(context);
+        }
     }
 
     interface SettingsWindowClient {
@@ -119,6 +124,9 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane) {
+        if (!pane.isEditable()) {
+            return;
+        }
         List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefs.getHistoryValues());
         es.sort(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime));
         if (!es.isEmpty()) {
@@ -312,6 +320,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            context.clearSourceSubTree();
             context.updateSourceSubTree();
         }
     }
@@ -469,6 +478,11 @@ public interface GuiSwingView extends GuiSwingElement {
             super(name);
             this.value = value;
             this.component = component;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return component.isEditable();
         }
 
         @Override

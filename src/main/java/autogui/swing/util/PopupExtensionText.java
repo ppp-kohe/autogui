@@ -406,6 +406,11 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
 
         @Override
+        public boolean isEnabled() {
+            return field.isEditable();
+        }
+
+        @Override
         public void actionPerformed(ActionEvent e) {
             paste(field::setText);
         }
@@ -455,6 +460,11 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextAbstractHistoryAction(String name, JTextComponent field) {
             putValue(NAME, name);
             this.field = field;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return field.isEditable();
         }
 
         @Override

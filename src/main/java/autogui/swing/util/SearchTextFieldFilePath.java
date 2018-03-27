@@ -222,6 +222,11 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
 
         @Override
+        public boolean isEnabled() {
+            return component.getField().isEditable();
+        }
+
+        @Override
         public void actionPerformed(ActionEvent e) {
             run(fs -> {
                 if (fs == null) {

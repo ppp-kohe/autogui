@@ -96,6 +96,7 @@ public class AutoGuiShellExp {
 
         protected List<TestRow> rows = new ArrayList<>();
         {
+            int idx = 0;
             for (String w : GuiSwingIcons.getInstance().getIconWords()) {
                 Icon i = GuiSwingIcons.getInstance().getIcon(w);
                 if (i instanceof GuiSwingIcons.ResourceIcon) {
@@ -106,7 +107,9 @@ public class AutoGuiShellExp {
                     r.y = ri.getIconHeight();
                     r.name = w;
                     r.icon = img;
+                    r.setEven(idx % 2 == 0);
                     rows.add(r);
+                    ++idx;
                 }
             }
         }
@@ -260,6 +263,25 @@ public class AutoGuiShellExp {
         @GuiIncluded(index = 1) public int y;
         @GuiIncluded(index = 2) public String name;
         @GuiIncluded(index = 3) public Image icon;
+
+        private TestEnum select = TestEnum.Hello;
+
+        private boolean even;
+
+        @GuiIncluded(index = 4) public boolean isEven() {
+            return even;
+        }
+
+        @GuiIncluded
+        public void setEven(boolean even) {
+            this.even = even;
+            select = (even ? TestEnum.Hello : TestEnum.World);
+        }
+
+        @GuiIncluded(index = 5)
+        public TestEnum getSelect() {
+            return select;
+        }
 
         @GuiListSelectionCallback
         @GuiIncluded

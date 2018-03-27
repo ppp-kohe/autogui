@@ -120,6 +120,11 @@ public class GuiSwingJsonTransfer {
             putValue(NAME, "Paste JSON");
         }
 
+        @Override
+        public boolean isEnabled() {
+            return !context.isReprValue() || context.getReprValue().isEditable(context);
+        }
+
         @SuppressWarnings("unchecked")
         @Override
         public void actionPerformed(ActionEvent e) {

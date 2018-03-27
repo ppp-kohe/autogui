@@ -305,6 +305,14 @@ public class GuiMappingContext {
                 .forEach(l -> l.update(this, c.getSource())));
     }
 
+    public void clearSourceSubTree() {
+        if (hasParent()) {
+            setSource(null);
+        }
+        getChildren()
+                .forEach(GuiMappingContext::clearSourceSubTree);
+    }
+
     /** recursively collect updated sub-contexts from this and call listeners*/
     public void updateSourceSubTree() {
         List<GuiMappingContext> updated = new ArrayList<>();
