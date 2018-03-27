@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.GuiIncluded;
 import autogui.GuiListSelectionCallback;
 import autogui.swing.icons.GuiSwingIcons;
+import autogui.swing.util.SwingDeferredRunner;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -15,7 +16,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -251,6 +251,12 @@ public class AutoGuiShellExp {
         @GuiIncluded
         public StyledDocument getDoc() {
             if (doc == null) {
+                System.err.println("before wait");
+                SwingDeferredRunner.getDefaultService().execute(() -> System.err.println("hello"));
+                try {
+                    Thread.sleep(3000);
+                } catch (Exception ex) {}
+                System.err.println("after wait eventThread=" + SwingUtilities.isEventDispatchThread());
                 doc = new DefaultStyledDocument();
             }
             return doc;

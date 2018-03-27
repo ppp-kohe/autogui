@@ -1,6 +1,7 @@
 package autogui.base.mapping;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /** abstract GUI component:
  *    most methods of the interface always take  a {@link GuiMappingContext},
@@ -169,5 +170,9 @@ public interface GuiRepresentation {
 
     default String toStringHeader() {
         return getClass().getSimpleName();
+    }
+
+    default boolean isTaskRunnerUsedFor(Callable<?> task) {
+        return true;
     }
 }

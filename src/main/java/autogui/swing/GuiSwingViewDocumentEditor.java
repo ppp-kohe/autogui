@@ -155,7 +155,14 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
     public static void setSwingViewValue(JEditorPane pane, GuiMappingContext context, Object newValue, boolean contextUpdate) {
         GuiReprValueDocumentEditor docEditor = (GuiReprValueDocumentEditor) context.getRepresentation();
-        Document doc = docEditor.toUpdateValue(context, newValue);
+        Document doc = docEditor.toUpdateValue(context, newValue, delayedDoc -> {
+            setSwingViewValueDocument(pane, context, delayedDoc, delayedDoc, contextUpdate);
+        });
+        setSwingViewValueDocument(pane, context, newValue, doc, contextUpdate);
+    }
+
+    public static void setSwingViewValueDocument(JEditorPane pane, GuiMappingContext context, Object newValue, Document doc, boolean contextUpdate) {
+        GuiReprValueDocumentEditor docEditor = (GuiReprValueDocumentEditor) context.getRepresentation();
         if (pane.getDocument() != doc && doc != null) {
             pane.setDocument(doc);
 

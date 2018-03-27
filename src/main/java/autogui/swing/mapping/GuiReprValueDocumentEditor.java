@@ -1,8 +1,8 @@
 package autogui.swing.mapping;
 
-import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
+import autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -15,12 +15,19 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 /** a GUI representation for a property holding
  * a {@link Document}, {@link javax.swing.text.AbstractDocument.Content}, or a {@link StringBuilder}.
  *  the representation depends on some Swing classes(java.desktop module)  */
 public class GuiReprValueDocumentEditor extends GuiReprValue {
+    @Override
+    public boolean isTaskRunnerUsedFor(Callable<?> task) {
+        return !SwingUtilities.isEventDispatchThread();
+    }
+
     @Override
     public boolean matchValueType(Class<?> cls) {
         return Document.class.isAssignableFrom(cls) ||
@@ -29,8 +36,17 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     @Override
-    public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Throwable {
-        return new SwingInvoker(() -> super.getUpdatedValue(context, executeParent)).run();
+    public Object getValue(GuiMappingContext context, Object parentSource, Object prev) throws Throwable {
+        return SwingDeferredRunner.run(() -> super.getValue(context, parentSource, prev));
+    }
+
+    @Override
+    public Object update(GuiMappingContext context, Object parentSource, Object newValue) {
+        try {
+            return SwingDeferredRunner.run(() -> super.update(context, parentSource, newValue));
+        } catch (Throwable ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override
@@ -50,71 +66,32 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         super.setSource(context, value);
     }
 
-    /**
-     * a function interface for processed in {@link SwingInvoker}
-     */
-    public interface Task {
-        Object call() throws Throwable;
-    }
-
-    /**
-     * a task runner in the Swing Event dispatching thread.
-     * currently the runner will return null if it over 2 seconds.
-     * This will happen when the case for
-     *    a task under the event dispatching thread -&gt;
-     *       another thread waiting -&gt;
-     *          SwingInvoker#run().
-     *    In the case, the first task on the event dispatching thread causes blocking of the thread
-     *          in the run() method.
-     */
-    public static class SwingInvoker {
-        public volatile Object result;
-        public Throwable exception;
-
-        protected Task runnable;
-
-        public SwingInvoker(Task runnable) {
-            this.runnable = runnable;
-        }
-
-        public Object run() throws Throwable {
-            if (SwingUtilities.isEventDispatchThread()) {
-                return runnable.call();
-            } else {
-                result = null;
-                SwingUtilities.invokeLater(() -> {
-                    try {
-                        result = runnable.call();
-                    } catch (Throwable ex) {
-                        exception = ex;
-                    }
-                });
-                int waitCount = 0;
-                while (result != null) {
-                    Thread.sleep(100);
-                    waitCount++;
-                    if (waitCount >= 20) {
-                        break;
-                    }
-                }
-                if (exception != null) {
-                    throw exception;
-                } else {
-                    return result;
-                }
-            }
-        }
-
-        public Object runNoError() {
-            try {
-                return run();
-            } catch (Throwable ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-    }
-
     public Document toUpdateValue(GuiMappingContext context, Object value) {
+        return toUpdateValue(context, value, null);
+    }
+
+    public Document toUpdateValue(GuiMappingContext context, Object value, Consumer<Document> delayed) {
+        if (value instanceof SwingDeferredRunner.TaskResultFuture) {
+            Future<Object> f = ((SwingDeferredRunner.TaskResultFuture) value).getFuture();
+            if (f.isDone()) {
+                try {
+                    value = f.get();
+                } catch (Exception ex) {
+                    return null;
+                }
+            } else {
+                if (delayed != null) {
+                    SwingDeferredRunner.defaultService.execute(() -> {
+                        try {
+                            delayed.accept(toUpdateValue(context, f.get()));
+                        } catch (Exception ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    });
+                }
+                return null;
+            }
+        }
         if (value instanceof Document) {
             return (Document) value;
         } else if (value instanceof AbstractDocument.Content) {

@@ -506,7 +506,16 @@ public class GuiMappingContext {
             if (parent != null) {
                 taskRunner = parent.getTaskRunner();
             } else {
-                taskRunner = Executors.newSingleThreadScheduledExecutor();
+                taskRunner = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+                    ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread th = defaultFactory.newThread(r);
+                        th.setDaemon(true);
+                        th.setName(GuiMappingContext.class.getSimpleName() + "-" + th.getName());
+                        return th;
+                    }
+                });
             }
         }
         return taskRunner;
@@ -520,9 +529,13 @@ public class GuiMappingContext {
      * */
     public <T> T execute(Callable<T> task) throws Throwable {
         try {
-            return getTaskRunner()
-                    .submit(task)
-                    .get();
+            if (getRepresentation() == null || getRepresentation().isTaskRunnerUsedFor(task)) {
+                return getTaskRunner()
+                        .submit(task)
+                        .get();
+            } else {
+                return task.call();
+            }
         } catch (ExecutionException e) {
             throw e.getCause();
         }

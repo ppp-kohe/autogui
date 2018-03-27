@@ -23,7 +23,7 @@ import java.awt.*;
 public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
-        ValuePane<JComponent> comp = new PropertyEmbeddedPane(context);
+        ValuePane<Object> comp = new PropertyEmbeddedPane(context);
         if (context.isTypeElementProperty()) {
             return comp.wrapProperty();
         } else {
@@ -37,9 +37,10 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
     }
 
     public static class PropertyEmbeddedPane extends JComponent
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<JComponent> {
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
         protected GuiMappingContext context;
         protected PopupExtension popup;
+        protected JComponent component;
 
         public PropertyEmbeddedPane(GuiMappingContext context) {
             setLayout(new BorderLayout());
@@ -61,44 +62,45 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
-            if (newValue == null && cause == context) {
-                //TODO
-                Timer timer = new Timer(100, e -> {try {
-                    update(context, context.getReprValue().getUpdatedValue(context, true));
-                } catch (Throwable ex) { throw new RuntimeException(ex); }});
-                timer.setRepeats(false);
-                timer.start();
-            } else {
-                System.err.println("comp " + newValue);
-            }
-            SwingUtilities.invokeLater(() -> setSwingViewValue((JComponent) newValue));
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
         }
 
         @Override
-        public JComponent getSwingViewValue() {
+        public Object getSwingViewValue() {
             if (getComponentCount() == 0) {
                 return null;
             } else {
-                return (JComponent) getComponent(0);
+                return getComponent(0);
             }
         }
 
         @Override
-        public void setSwingViewValue(JComponent value) {
-            if (value == null) {
-                if (getComponentCount() > 0) {
-                    remove(0);
+        public void setSwingViewValue(Object value) {
+            GuiReprEmbeddedComponent embeddedComponent = (GuiReprEmbeddedComponent) getContext().getRepresentation();
+
+            JComponent comp = embeddedComponent.toUpdateValue(getContext(), value, this::setSwingViewValueComponent);
+            setSwingViewValueComponent(comp);
+        }
+
+        public void setSwingViewValueComponent(JComponent comp) {
+            if (comp != null && comp != component) {
+//                if (getComponentCount() > 0) {
+//                    remove(0);
+//                }
+//            } else {
+                if (component != null && getComponentCount() > 0) {
+                    remove(component);
                 }
-            } else {
-                add(value, 0);
-                setPreferredSize(value.getPreferredSize());
+                add(comp, 0);
+                setPreferredSize(comp.getPreferredSize());
+                component = comp;
+                revalidate();
             }
-            revalidate();
             repaint();
         }
 
         @Override
-        public void setSwingViewValueWithUpdate(JComponent value) {
+        public void setSwingViewValueWithUpdate(Object value) {
             setSwingViewValue(value);
             GuiReprEmbeddedComponent repr = (GuiReprEmbeddedComponent) getContext().getRepresentation();
             if (repr.isEditable(getContext())) {
