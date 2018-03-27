@@ -53,7 +53,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
         public PropertyLabel(GuiMappingContext context) {
             this.context = context;
             putClientProperty("html.disable", Boolean.TRUE);
-            setMinimumSize(new Dimension(100, 20));
+            setText(" ");
 
             setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10),
                     new FocusBorder(this)));
@@ -103,6 +103,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
             GuiReprValue label = (GuiReprValue) context.getRepresentation();
             this.value = value;
             setText("" + label.toUpdateValue(context, value));
+            revalidate();
         }
 
         @Override

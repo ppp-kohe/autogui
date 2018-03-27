@@ -203,7 +203,16 @@ public class SearchTextField extends JComponent {
 
     public void initField() {
         editingRunner = new ScheduledTaskRunner.EditingRunner(getEditingRunnerDelay(), this::updateField);
-        field = new JTextField();
+        field = new JTextField() {
+            @Override
+            public Dimension getPreferredSize() {
+                Dimension dim = super.getPreferredSize();
+                if (dim.width < 100) {
+                    dim.width = 100;
+                }
+                return dim;
+            }
+        };
         field.setOpaque(false);
         setOpaque(false);
 

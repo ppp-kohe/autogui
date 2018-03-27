@@ -14,6 +14,8 @@ import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,6 +30,7 @@ public class AutoGuiShellExp {
         protected TestValueList valueList = new TestValueList();
         protected TestNumbers numbers = new TestNumbers();
         protected TestDoc doc = new TestDoc();
+        protected TestOther other = new TestOther();
 
         @GuiIncluded(index = 1)
         public TestTopPane getTopPane() {
@@ -47,6 +50,11 @@ public class AutoGuiShellExp {
         @GuiIncluded(index = 4)
         public TestDoc getDoc() {
             return doc;
+        }
+
+        @GuiIncluded
+        public TestOther getOther() {
+            return other;
         }
     }
 
@@ -210,6 +218,28 @@ public class AutoGuiShellExp {
             this.bigDecimalValue = bigDecimalValue;
             System.err.println("bigDecimal " + bigDecimalValue);
         }
+    }
+
+    @GuiIncluded
+    public static class TestOther {
+        @GuiIncluded public boolean flag;
+        @GuiIncluded public TestEnum selection = TestEnum.Hello;
+        @GuiIncluded public Object label = Arrays.asList("hello", "world");
+        @GuiIncluded public TestSubObj subObj = new TestSubObj();
+
+        @GuiIncluded public String getReadOnly() {
+            return "hello, world";
+        }
+    }
+
+    @GuiIncluded
+    public static class TestSubObj {
+        @GuiIncluded public String str = "";
+    }
+
+    public enum TestEnum {
+        Hello,
+        World
     }
 
     @GuiIncluded
