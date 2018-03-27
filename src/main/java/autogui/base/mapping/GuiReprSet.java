@@ -3,6 +3,7 @@ package autogui.base.mapping;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /** a composition of representations.
  * if {@link #match(GuiMappingContext)} matches a member representation, it immediately stops the matching and returns true.
@@ -49,5 +50,10 @@ public class GuiReprSet implements GuiRepresentation {
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         return target;
+    }
+
+    @Override
+    public String toString() {
+        return toStringHeader() + "@" + Integer.toHexString(hashCode());
     }
 }

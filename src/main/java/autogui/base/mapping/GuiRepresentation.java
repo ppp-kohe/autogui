@@ -133,6 +133,11 @@ public interface GuiRepresentation {
         public Object fromJson(GuiMappingContext context, Object target, Object json) {
             return target;
         }
+
+        @Override
+        public String toString() {
+            return toStringHeader();
+        }
     }
 
     /**
@@ -160,5 +165,9 @@ public interface GuiRepresentation {
         set.add(new GuiReprValueLabel());
 
         return set;
+    }
+
+    default String toStringHeader() {
+        return getClass().getSimpleName();
     }
 }

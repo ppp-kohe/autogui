@@ -28,7 +28,7 @@ public class GuiRepresentationTest {
 
         Assert.assertEquals("", fld.toUpdateValue(ctx, null));
 
-        Assert.assertFalse(fld.isEditable(ctx));
+        Assert.assertTrue(fld.isEditable(ctx));
 
         Assert.assertTrue(fld.matchValueType(String.class));
         Assert.assertFalse(fld.isJsonSetter());
@@ -52,7 +52,7 @@ public class GuiRepresentationTest {
 
         Assert.assertTrue(repr.matchValueType(Boolean.class));
         Assert.assertTrue(repr.matchValueType(boolean.class));
-        Assert.assertFalse(repr.isEditable(ctx));
+        Assert.assertTrue(repr.isEditable(ctx));
         Assert.assertFalse(repr.isJsonSetter());
 
         Assert.assertEquals(Boolean.TRUE, repr.toUpdateValue(ctx, Boolean.TRUE));

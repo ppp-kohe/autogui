@@ -112,9 +112,7 @@ public class GuiReprValue implements GuiRepresentation {
     public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Throwable {
         Object prev = context.getSource();
         Object src = null;
-        if (context.isTypeElementProperty()) {
-            src = getParentSource(context, executeParent);
-        } else if (context.isParentPropertyPane()) {
+        if (context.isTypeElementProperty() || context.isParentPropertyPane() || context.isParentValuePane()) {
             src = getParentSource(context, executeParent);
         }
         return getValue(context, src, prev);
@@ -134,7 +132,7 @@ public class GuiReprValue implements GuiRepresentation {
             return context.execute(() ->
                     prop.executeGet(parentSource, prev));
         } else {
-            if (context.isParentPropertyPane()) {
+            if (context.isParentPropertyPane()) { //if the context is a GuiTypeValue, the parent will be a property or a collection element
                 //GuiReprPropertyPane matches to GuiTypeMemberProperty, and it has compareGet(p,n)
                 GuiTypeMemberProperty prop = context.getParent().getTypeElementAsProperty();
                 return context.execute(() ->
@@ -243,7 +241,7 @@ public class GuiReprValue implements GuiRepresentation {
         } else if (context.isTypeElementProperty()) {
             Object src = context.getParentSource();
             if (src ==  null) {
-                System.err.println("src is null: context="  +context.getRepresentation() + " : parent=" + context.getParent().getRepresentation());
+                System.err.println("src is null: context="  +context.getRepresentation() + " : parent=" + context.getParentRepresentation());
             }
             Object ret = update(context, src, newValue);
             if (ret != null) {
@@ -369,6 +367,11 @@ public class GuiReprValue implements GuiRepresentation {
      */
     public static <T> T castOrMake(Class<T> cls, Object o, Supplier<T> v) {
         return o != null && cls.isInstance(o) ? cls.cast(o) : v.get();
+    }
+
+    @Override
+    public String toString() {
+        return toStringHeader();
     }
 
     /**

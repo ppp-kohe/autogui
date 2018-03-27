@@ -215,6 +215,11 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
         return false;
     }
 
+    @Override
+    public String toString() {
+        return toStringHeader() + "(" + subRepresentation + ")";
+    }
+
     /** interface for actions which handle selected-rows;
      *    an actual implementation relies on a concrete GUI component */
     public interface TableTarget {

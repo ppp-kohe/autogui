@@ -1,9 +1,6 @@
 package autogui.swing.table;
 
-import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprCollectionElement;
-import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.*;
 import autogui.swing.GuiSwingActionDefault;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
@@ -59,10 +56,12 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         this.renderer = renderer;
         this.editor = editor;
 
-        this.contextIndex = ((GuiReprCollectionElement) context.getParent().getRepresentation())
-                .getFixedColumnIndex(context.getParent(), context);
+        GuiRepresentation parentRepr =  context.getParentRepresentation();
+        if (parentRepr != null && parentRepr instanceof GuiReprCollectionElement) {
+            this.contextIndex = ((GuiReprCollectionElement) parentRepr).getFixedColumnIndex(context.getParent(), context);
+        }
 
-        GuiReprValue value = (GuiReprValue) context.getRepresentation();
+        GuiReprValue value = context.getReprValue();
         setTableColumn(new TableColumn(0, 64, renderer,
                 value.isEditable(context) ? editor : null));
         getTableColumn().setHeaderValue(context.getDisplayName());
@@ -122,7 +121,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
      */
     @Override
     public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
-        GuiReprCollectionElement col = (GuiReprCollectionElement) context.getParent().getRepresentation();
+        GuiReprCollectionElement col = (GuiReprCollectionElement) context.getParentRepresentation();
         col.updateCellFromGui(context.getParent(), context, rowObject, rowIndex, this.contextIndex, newColumnValue);
         return null;
     }

@@ -31,12 +31,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         }
         @Override
         public void actionPerformed(ActionEvent e) {
-            setEnabled(false);
-            try {
-                ((GuiReprAction) context.getRepresentation()).executeAction(context);
-            } finally {
-                setEnabled(true);
-            }
+            ((GuiReprAction) context.getRepresentation()).executeAction(context);
         }
 
         public String getIconName() {

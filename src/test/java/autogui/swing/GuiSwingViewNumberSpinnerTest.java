@@ -113,5 +113,10 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
             System.err.println("set " + value);
             return null;
         }
+
+        @Override
+        public boolean isWritable() {
+            return true;
+        }
     }
 }

@@ -4,6 +4,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
+import autogui.swing.util.SearchTextField;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -139,10 +140,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
 
         public void initFocusColor() {
-            focusColor = UIManager.getColor("Focus.color");
-            if (focusColor == null) {
-                focusColor = new Color(150, 150, 150);
-            }
+            focusColor = SearchTextField.getFocusColor();
         }
 
         public void initStrokes() {
@@ -154,6 +152,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             if (focusColor == null) {
                 initFocusColor();
             }
@@ -167,7 +166,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
 
         public void paintStrokes(Graphics g, int x, int y, int width, int height) {
-            RoundRectangle2D rr = new RoundRectangle2D.Float(x, y, width - 1, height - 1, 3, 3);
+            RoundRectangle2D rr = new RoundRectangle2D.Float(x + 1.5f, y + 1.5f, width - 3f, height - 3f, 4, 4);
             Graphics2D g2 = (Graphics2D) g;
             Color color2 = new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 150);
             g2.setColor(color2);
@@ -179,7 +178,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         @Override
         public Insets getBorderInsets(Component c) {
-            return new Insets(1, 1, 1, 1);
+            return new Insets(3, 3, 3, 3);
         }
 
         @Override

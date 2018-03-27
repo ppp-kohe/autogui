@@ -220,6 +220,8 @@ public class GuiSwingIcons {
             setBorder(BorderFactory.createCompoundBorder(
                     new GuiSwingViewLabel.FocusBorder(this),
                     BorderFactory.createEmptyBorder(2, 5, 2, 5)));
+            setFocusPainted(false);
+
             Object o = a.getValue(PRESSED_ICON_KEY);
             if (o != null) {
                 setPressedIcon((Icon) o);

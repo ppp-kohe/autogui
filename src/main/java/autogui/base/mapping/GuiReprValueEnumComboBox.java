@@ -18,15 +18,6 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
         return context.nameJoinForDisplay(GuiMappingContext.nameSplit(n, true));
     }
 
-    @Override
-    public boolean isEditable(GuiMappingContext context) {
-        if (context.isTypeElementValue()) {
-            return false;
-        } else {
-            return super.isEditable(context);
-        }
-    }
-
     /**
      *
      * @param context a context holds the representation

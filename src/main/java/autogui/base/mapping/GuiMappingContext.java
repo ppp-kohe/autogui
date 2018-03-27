@@ -130,8 +130,8 @@ public class GuiMappingContext {
     }
 
     public void addToParent() {
-        if (parent != null) {
-            parent.getChildrenForAdding().add(this);
+        if (hasParent()) {
+            getParent().getChildrenForAdding().add(this);
         }
     }
 
@@ -149,10 +149,14 @@ public class GuiMappingContext {
 
     public GuiMappingContext getRoot() {
         GuiMappingContext ctx = this;
-        while (ctx.getParent() != null) {
+        while (ctx.hasParent()) {
             ctx = ctx.getParent();
         }
         return ctx;
+    }
+
+    public boolean hasParent() {
+        return parent != null;
     }
 
     /** @return the name of {@link #typeElement} */
@@ -426,17 +430,19 @@ public class GuiMappingContext {
     }
 
     public boolean isParentPropertyPane() {
-        return getParent() != null &&
-                getParent().getRepresentation() instanceof GuiReprPropertyPane;
+        return getParentRepresentation() instanceof GuiReprPropertyPane;
     }
 
+    public GuiRepresentation getParentRepresentation() {
+        return hasParent() ? getParent().getRepresentation() : null;
+    }
 
     public GuiReprPropertyPane getParentPropertyPane() {
-        return (GuiReprPropertyPane) getParent().getRepresentation();
+        return (GuiReprPropertyPane) getParentRepresentation();
     }
 
     public boolean isParentValuePane() {
-        return getParent() != null && getParent().isReprValue();
+        return hasParent() && getParent().isReprValue();
     }
 
     public boolean isReprValue() {
@@ -448,16 +454,16 @@ public class GuiMappingContext {
     }
 
     public GuiReprValue getParentValuePane() {
-        return getParent().getReprValue();
+        return hasParent() ? getParent().getReprValue() : null;
     }
 
     public Object getParentSource() {
-        return getParent() != null ? getParent().getSource() : null;
+        return hasParent() ? getParent().getSource() : null;
     }
 
 
     public boolean isParentCollectionTable() {
-        return getParent() != null && getParent().isReprCollectionTable();
+        return hasParent() && getParent().isReprCollectionTable();
     }
 
     public boolean isReprCollectionTable() {
@@ -465,7 +471,7 @@ public class GuiMappingContext {
     }
 
     public boolean isParentCollectionElement() {
-        return getParent() != null && getParent().isReprCollectionElement();
+        return hasParent() && getParent().isReprCollectionElement();
     }
 
     public boolean isReprCollectionElement() {
@@ -474,12 +480,12 @@ public class GuiMappingContext {
 
     public boolean isHistoryValueSupported() {
         return isReprValue()
-                && ((GuiReprValue) getRepresentation()).isHistoryValueSupported();
+                && getReprValue().isHistoryValueSupported();
     }
 
     public boolean isHistoryValueStored() {
         return isReprValue()
-                && ((GuiReprValue) getRepresentation()).isHistoryValueStored();
+                && getReprValue().isHistoryValueStored();
     }
 
     //////////////////////
@@ -519,9 +525,8 @@ public class GuiMappingContext {
      *     so it does not recommend to hold the returned instance. */
     public GuiPreferences getPreferences() {
         if (preferences == null) {
-            GuiMappingContext parent = getParent();
-            if (parent != null) {
-                preferences = parent.getPreferences().getChild(this);
+            if (hasParent()) {
+                preferences = getParent().getPreferences().getChild(this);
             } else {
                 preferences = new GuiPreferences(this);
             }
@@ -535,5 +540,12 @@ public class GuiMappingContext {
 
     public void setPreferences(GuiPreferences preferences) {
         this.preferences = preferences;
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "@" + Integer.toHexString(hashCode())
+                + "(" + getName() + "," + getTypeElement() + "," + getRepresentation() + "," + getSource() + ")"
+                + (!hasParent() ? "!" : "") + "[" + getChildren().size() + "]";
     }
 }

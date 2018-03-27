@@ -61,6 +61,16 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue) {
+            if (newValue == null && cause == context) {
+                //TODO
+                Timer timer = new Timer(100, e -> {try {
+                    update(context, context.getReprValue().getUpdatedValue(context, true));
+                } catch (Throwable ex) { throw new RuntimeException(ex); }});
+                timer.setRepeats(false);
+                timer.start();
+            } else {
+                System.err.println("comp " + newValue);
+            }
             SwingUtilities.invokeLater(() -> setSwingViewValue((JComponent) newValue));
         }
 
@@ -84,6 +94,7 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
                 setPreferredSize(value.getPreferredSize());
             }
             revalidate();
+            repaint();
         }
 
         @Override

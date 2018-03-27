@@ -598,6 +598,18 @@ public class SearchTextField extends JComponent {
         public void paintComponent(Graphics g) { }
     }
 
+    public static Color getFocusColor() {
+        Color focusColor = UIManager.getColor("Focus.color");
+        if (focusColor == null) {
+            focusColor = new Color(150, 150, 150);
+        } else {
+            float[] hsb = new float[3];
+            hsb = Color.RGBtoHSB(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), hsb);
+            focusColor = Color.getHSBColor(hsb[0] * 0.97f, hsb[1] * 0.53f, hsb[2]);
+        }
+        return focusColor;
+    }
+
     /** the painter impl. */
     public static class SearchBackgroundPainterBordered extends SearchBackgroundPainter {
         protected JComponent component;
@@ -633,14 +645,7 @@ public class SearchTextField extends JComponent {
         }
 
         public void initFocusColor() {
-            focusColor = UIManager.getColor("Focus.color");
-            if (focusColor == null) {
-                focusColor = new Color(150, 150, 150);
-            } else {
-                float[] hsb = new float[3];
-                hsb = Color.RGBtoHSB(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), hsb);
-                focusColor = Color.getHSBColor(hsb[0] * 0.97f, hsb[1] * 0.53f, hsb[2]);
-            }
+            focusColor = getFocusColor();
         }
 
         public void initStrokes() {

@@ -242,4 +242,9 @@ public class GuiReprObjectPane extends GuiReprValue {
             }
         }
     }
+
+    @Override
+    public String toString() {
+        return toStringHeader() + "(" + subRepresentation + ")";
+    }
 }

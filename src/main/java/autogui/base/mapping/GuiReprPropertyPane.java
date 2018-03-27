@@ -200,4 +200,9 @@ public class GuiReprPropertyPane extends GuiReprValue {
     public boolean isHistoryValueSupported() {
         return false;
     }
+
+    @Override
+    public String toString() {
+        return toStringHeader() + "(" + subRepresentations + ")";
+    }
 }

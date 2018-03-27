@@ -95,4 +95,9 @@ public class GuiReprActionList implements GuiRepresentation {
             return false;
         }
     }
+
+    @Override
+    public String toString() {
+        return toStringHeader();
+    }
 }

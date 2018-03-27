@@ -65,4 +65,9 @@ public class GuiReprAction implements GuiRepresentation {
     public boolean isSelectionAction(GuiMappingContext context) {
         return context.getTypeElementAsAction().isSelectionAction();
     }
+
+    @Override
+    public String toString() {
+        return toStringHeader();
+    }
 }

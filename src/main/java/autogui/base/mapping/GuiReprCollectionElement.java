@@ -225,4 +225,9 @@ public class GuiReprCollectionElement implements GuiRepresentation {
     public int getFixedColumnIndex(GuiMappingContext context, GuiMappingContext columnContext) {
         return context.getChildren().indexOf(columnContext);
     }
+
+    @Override
+    public String toString() {
+        return toStringHeader() + "(" + representation + ")";
+    }
 }
