@@ -246,7 +246,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     ///////////// text actions for a specific target
 
     /** the action for opening selection as an URL in a browser */
-    public static class TextOpenBrowserAction extends AbstractAction {
+    public static class TextOpenBrowserAction extends AbstractAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         protected JComponent component;
         public TextOpenBrowserAction(JComponent component) {
             this.component = component;
@@ -290,10 +291,16 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                 }
             }
         }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_JUMP;
+        }
     }
 
     /** a cut action */
-    public static class TextCutAction extends AbstractAction {
+    public static class TextCutAction extends AbstractAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextCutAction(JTextComponent field) {
@@ -314,10 +321,21 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public void actionPerformed(ActionEvent e) {
             field.cut();
         }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_CUT;
+        }
     }
 
     /** a copy action */
-    public static class TextCopyAction extends AbstractAction {
+    public static class TextCopyAction extends AbstractAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextCopyAction(JTextComponent field) {
@@ -337,10 +355,21 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public void actionPerformed(ActionEvent e) {
             field.copy();
         }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_COPY;
+        }
     }
 
     /** a paste action*/
-    public static class TextPasteAction extends AbstractAction {
+    public static class TextPasteAction extends AbstractAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextPasteAction(JTextComponent field) {
@@ -360,10 +389,21 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public void actionPerformed(ActionEvent e) {
             field.paste();
         }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_PASTE;
+        }
     }
 
     /** a copy-all action: copying all text in a text-component */
-    public static class TextCopyAllAction extends AbstractAction {
+    public static class TextCopyAllAction extends AbstractAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextCopyAllAction(JTextComponent field) {
@@ -390,10 +430,21 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             StringSelection sel = new StringSelection(data);
             board.setContents(sel, sel);
         }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_COPY;
+        }
     }
 
     /** a paste-all action: replacing entire text with the clipboard contents */
-    public static class TextPasteAllAction extends AbstractAction {
+    public static class TextPasteAllAction extends AbstractAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextPasteAllAction(JTextComponent field) {
@@ -430,10 +481,21 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                 }
             }
         }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_PASTE;
+        }
     }
 
     /** a select-all action */
-    public static class TextSelectAllAction extends AbstractAction {
+    public static class TextSelectAllAction extends AbstractAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
 
@@ -448,6 +510,16 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         @Override
         public void actionPerformed(ActionEvent e) {
             field.selectAll();
+        }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_SELECT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_SELECT;
         }
     }
 
@@ -510,7 +582,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     }
 
     /** an delete-to-line-end action */
-    public static class TextDeleteToLineEndAction extends TextAbstractHistoryAction {
+    public static class TextDeleteToLineEndAction extends TextAbstractHistoryAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
 
         public TextDeleteToLineEndAction(JTextComponent field) {
             super("delete-line-end", field);
@@ -533,10 +606,21 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             }
             cut(target, sel, end);
         }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_DELETE;
+        }
     }
 
     /** an delete-next-word action */
-    public static class TextDeleteNextWordAction extends TextAbstractHistoryAction {
+    public static class TextDeleteNextWordAction extends TextAbstractHistoryAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         public TextDeleteNextWordAction(JTextComponent field) {
             super("delete-next-word", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -561,10 +645,21 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             }
             cut(target, sel, end);
         }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_DELETE;
+        }
     }
 
     /** an delete-previous-word action */
-    public static class TextDeletePreviousWordAction extends TextAbstractHistoryAction {
+    public static class TextDeletePreviousWordAction extends TextAbstractHistoryAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         public TextDeletePreviousWordAction(JTextComponent field) {
             super("delete-previous-word", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -589,10 +684,21 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             }
             cut(target, sel, end);
         }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_DELETE;
+        }
     }
 
     /** an paste the history-buffer action (yank) */
-    public static class TextPasteHistoryAction extends TextAbstractHistoryAction {
+    public static class TextPasteHistoryAction extends TextAbstractHistoryAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         public TextPasteHistoryAction(JTextComponent field) {
             super("yank", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -608,6 +714,16 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             } catch (Exception ex) {
                 //nothing
             }
+        }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_PASTE;
         }
     }
 
@@ -669,7 +785,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     ////////////
 
     /** a file loading action */
-    public static class TextLoadAction extends AbstractAction {
+    public static class TextLoadAction extends AbstractAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         protected JTextComponent field;
         protected static JFileChooser fileChooser;
         protected static Charset charset = StandardCharsets.UTF_8;
@@ -723,10 +840,21 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             }
             return fileChooser;
         }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_TRANSFER;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_IMPORT;
+        }
     }
 
     /** a file saving action */
-    public static class TextSaveAction extends TextLoadAction {
+    public static class TextSaveAction extends TextLoadAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         public TextSaveAction(JTextComponent component) {
             super(component);
             putValue(NAME, "Save...");
@@ -755,6 +883,16 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
+        }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_TRANSFER;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_EXPORT;
         }
     }
 

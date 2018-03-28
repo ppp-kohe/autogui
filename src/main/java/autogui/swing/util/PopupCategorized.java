@@ -2,8 +2,10 @@ package autogui.swing.util;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,9 +37,13 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         String getName();
         Icon getIcon();
         String getCategory();
+
+        default String getSubCategory() {
+            return "";
+        }
     }
 
-    public static String CATEGORY_LABEL = "#label";
+    public static String CATEGORY_LABEL = MenuBuilder.getImplicitCategory(".label");
 
     /** a label: special category */
     public interface CategorizedPopupItemLabel extends CategorizedPopupItem {
@@ -68,13 +74,70 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         }
     }
 
+    public interface CategorizedPopupItemMenuAction extends CategorizedPopupItemMenu, Action {
+        @Override
+        default JComponent getMenuItem(PopupCategorized sender) {
+            return new JMenuItem(this);
+        }
+    }
+
+    public static class CategorizedPopupItemMenuActionDelegate implements CategorizedPopupItemMenuAction {
+        protected Action action;
+
+        public CategorizedPopupItemMenuActionDelegate(Action action) {
+            this.action = action;
+        }
+
+        @Override
+        public Object getValue(String key) {
+            return action.getValue(key);
+        }
+
+        @Override
+        public void putValue(String key, Object value) {
+            action.putValue(key, value);
+        }
+
+        @Override
+        public void setEnabled(boolean b) {
+            action.setEnabled(b);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return action.isEnabled();
+        }
+
+        @Override
+        public void addPropertyChangeListener(PropertyChangeListener listener) {
+            action.addPropertyChangeListener(listener);
+        }
+
+        @Override
+        public void removePropertyChangeListener(PropertyChangeListener listener) {
+            action.removePropertyChangeListener(listener);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            action.actionPerformed(e);
+        }
+    }
 
     public static Supplier<? extends Collection<CategorizedPopupItem>> getSupplierWithActions(
             List<? extends Action> topActions,
             Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier) {
-        return getSupplierWithMenuItems(topActions.stream()
-                .map(JMenuItem::new)
-                .collect(Collectors.toList()), itemSupplier);
+        return () ->
+                Stream.concat(
+                    Stream.concat(
+                            topActions.stream()
+                                .filter(CategorizedPopupItem.class::isInstance)
+                                .map(CategorizedPopupItem.class::cast),
+                            topActions.stream()
+                                .filter(c -> !CategorizedPopupItem.class.isInstance(c))
+                                .map(CategorizedPopupItemMenuActionDelegate::new)),
+                    itemSupplier.get().stream())
+                .collect(Collectors.toList());
     }
 
     public static Supplier<? extends Collection<CategorizedPopupItem>> getSupplierWithMenuItems(
@@ -82,10 +145,15 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
             Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier) {
         return () ->
                 Stream.concat(
-                        topItems.stream()
-                                .<CategorizedPopupItemMenu>map(i -> (sender) -> i),
-                        itemSupplier.get().stream())
-                        .collect(Collectors.toList());
+                    Stream.concat(
+                            topItems.stream()
+                                    .filter(CategorizedPopupItem.class::isInstance)
+                                    .map(CategorizedPopupItem.class::cast),
+                            topItems.stream()
+                                    .filter(c -> !CategorizedPopupItem.class.isInstance(c))
+                                    .<CategorizedPopupItemMenu>map(i -> (sender) -> i)),
+                    itemSupplier.get().stream())
+                .collect(Collectors.toList());
     }
 
     public PopupCategorized(Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier) {
@@ -110,16 +178,26 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
     public void build(PopupExtensionSender sender, Consumer<Object> menu) {
         Iterable<CategorizedPopupItem> items = itemSupplier.get();
         if (items != null) {
-            Map<String,List<JComponent>> categorizedMenuItems = new LinkedHashMap<>();
-            categorizedMenuItems.put(CATEGORY_LABEL, new ArrayList<>());
+            //category -> subCategory -> list item
+            Map<String,Map<String,List<JComponent>>> subCategorizedMenuItems = new LinkedHashMap<>();
+            subCategorizedMenuItems.put(CATEGORY_LABEL, new LinkedHashMap<>());
 
             int size = 0;
             for (CategorizedPopupItem item : items) {
                 String category = item.getCategory();
-                categorizedMenuItems.computeIfAbsent(category, (c) -> new ArrayList<>())
+                subCategorizedMenuItems.computeIfAbsent(category, (c) -> new LinkedHashMap<>())
+                        .computeIfAbsent(item.getSubCategory(), (sc) -> new ArrayList<>())
                         .add(createMenuItem(item));
                 ++size;
             }
+
+            Map<String,List<JComponent>> categorizedMenuItems = new LinkedHashMap<>();
+
+            //flatten sub-category maps to lists
+            subCategorizedMenuItems.forEach((k,map) ->
+                    map.values().stream()
+                                .flatMap(List::stream)
+                                .forEach(categorizedMenuItems.computeIfAbsent(k, (c) -> new ArrayList<>())::add));
 
             buildCategories(sender, menu, categorizedMenuItems, size);
 
@@ -149,11 +227,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         MenuBuilder menuBuilder = getMenuBuilder();
         MenuBuilder.AddingProcess process = menuBuilder.addingProcess(menu, totalSize);
         for (Map.Entry<String, List<JComponent>> e : categorizedMenuItems.entrySet()) {
-            if (e.getKey() != null && e.getKey().equals(CATEGORY_LABEL)) {
-                menuBuilder.addMenuItems(process, e.getValue(), null);
-            } else {
-                menuBuilder.addMenuItems(process, e.getValue(), e.getKey());
-            }
+            menuBuilder.addMenuItems(process, e.getValue(), e.getKey());
         }
     }
 

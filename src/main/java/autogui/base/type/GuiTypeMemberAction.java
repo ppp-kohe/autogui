@@ -1,5 +1,6 @@
 package autogui.base.type;
 
+import autogui.GuiIncluded;
 import autogui.GuiListSelectionCallback;
 
 import java.lang.reflect.Method;
@@ -72,5 +73,29 @@ public class GuiTypeMemberAction extends GuiTypeMember {
     @Override
     public String toString() {
         return "action(" + name  +")";
+    }
+
+    @Override
+    public String getDescription() {
+        Method method = getMethod();
+        if (method != null) {
+            GuiIncluded included = method.getAnnotation(GuiIncluded.class);
+            if (included != null) {
+                return included.description();
+            }
+        }
+        return "";
+    }
+
+    @Override
+    public String getAcceleratorKeyStroke() {
+        Method method = getMethod();
+        if (method != null) {
+            GuiIncluded included = method.getAnnotation(GuiIncluded.class);
+            if (included != null) {
+                return included.keyStroke();
+            }
+        }
+        return "";
     }
 }

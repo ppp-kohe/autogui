@@ -57,6 +57,9 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         public PropertyFilePathPane(GuiMappingContext context, SearchTextFieldModelFilePath model) {
             super(model);
             this.context = context;
+            GuiSwingView.setDescriptionToolTipText(context, this);
+            GuiSwingView.setDescriptionToolTipText(context, getField());
+
             initLazy();
             //editable
             getField().setEditable(((GuiReprValueFilePathField) context.getRepresentation())

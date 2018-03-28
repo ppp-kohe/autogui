@@ -28,6 +28,11 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             if (pressIcon != null) {
                 putValue(GuiSwingIcons.PRESSED_ICON_KEY, pressIcon);
             }
+
+            String desc = context.getDescription();
+            if (!desc.isEmpty()) {
+                putValue(Action.SHORT_DESCRIPTION, desc);
+            }
         }
         @Override
         public void actionPerformed(ActionEvent e) {

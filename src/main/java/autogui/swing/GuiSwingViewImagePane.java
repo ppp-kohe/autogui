@@ -73,6 +73,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public PropertyImagePane(GuiMappingContext context) {
             this.context = context;
+            GuiSwingView.setDescriptionToolTipText(context, this);
             init();
         }
 

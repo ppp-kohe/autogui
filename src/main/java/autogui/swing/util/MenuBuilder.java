@@ -69,10 +69,14 @@ public class MenuBuilder {
         if (process.getCount() > 0 && !items.isEmpty()) {
             menu.accept(new JPopupMenu.Separator());
         }
-        if (title != null) {
+        if (title != null && !title.startsWith(".")) {
             menu.accept(createLabel(title));
         }
         items.forEach(process::add);
+    }
+
+    public static String getImplicitCategory(String name) {
+        return "." + name;
     }
 
     public static class AddingProcess {

@@ -13,4 +13,11 @@ public interface GuiTypeElement {
     default List<GuiTypeElement> getChildren() {
         return Collections.emptyList();
     }
+
+    String getDescription();
+
+    /**
+     * @return accelerator key chair or ""
+     */
+    String getAcceleratorKeyStroke();
 }

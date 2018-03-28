@@ -75,6 +75,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         public PropertyPane(GuiMappingContext context, boolean showName) {
             super(context.getDisplayName(), context.getName());
             this.context = context;
+            GuiSwingView.setDescriptionToolTipText(context, this);
             if (showName) {
                 initNameLabel();
             }

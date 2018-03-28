@@ -121,6 +121,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         public ObjectPane(GuiMappingContext context) {
             this.context = context;
             setLayout(new BorderLayout());
+            GuiSwingView.setDescriptionToolTipText(context, this);
             initContentPane();
             setOpaque(false);
             add(contentPane, BorderLayout.CENTER);

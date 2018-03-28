@@ -65,5 +65,9 @@ public class NamedPane extends JComponent {
         }
         this.contentPane = contentPane;
         ResizableFlowLayout.add(this, contentPane, true);
+
+        if (contentPane != null && contentPane.getToolTipText() != null){ //copy tool-tip text
+            setToolTipText(contentPane.getToolTipText());
+        }
     }
 }

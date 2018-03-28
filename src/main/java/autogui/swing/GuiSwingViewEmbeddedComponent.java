@@ -45,6 +45,7 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         public PropertyEmbeddedPane(GuiMappingContext context) {
             setLayout(new BorderLayout());
             this.context = context;
+            GuiSwingView.setDescriptionToolTipText(context, this);
             update(context, context.getSource());
             setPreferredSize(new Dimension(300, 200));
         }

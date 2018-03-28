@@ -52,6 +52,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
             addActionListener(this);
             this.context = context;
             setName(context.getName());
+            GuiSwingView.setDescriptionToolTipText(context, this);
 
             //editable
             GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();

@@ -32,22 +32,22 @@ public class AutoGuiShellExp {
         protected TestDoc doc = new TestDoc();
         protected TestOther other = new TestOther();
 
-        @GuiIncluded(index = 1)
+        @GuiIncluded(index = 1, description = "the top pane")
         public TestTopPane getTopPane() {
             return topPane;
         }
 
-        @GuiIncluded(index = 2)
+        @GuiIncluded(index = 2, description = "a immutable value list")
         public TestValueList getValueList() {
             return valueList;
         }
 
-        @GuiIncluded(index = 3)
+        @GuiIncluded(index = 3, description = "number spinners")
         public TestNumbers getNumbers() {
             return numbers;
         }
 
-        @GuiIncluded(index = 4)
+        @GuiIncluded(index = 4, description = "document editor")
         public TestDoc getDoc() {
             return doc;
         }
@@ -60,7 +60,7 @@ public class AutoGuiShellExp {
 
     @GuiIncluded
     public static class TestTopPane {
-        @GuiIncluded(index = 0)
+        @GuiIncluded(index = 0, description = "<html>hello, <B>w</B>orld!</html>")
         public String hello = "Hello";
 
         private Path dir = Paths.get(".");

@@ -265,9 +265,11 @@ public class SearchTextField extends JComponent {
 
     public void initPopup() {
         PopupCategorized categorized = initPopupCategorized(
-                PopupCategorized.getSupplierWithMenuItems(
-                        getPopupEditMenuItems(),
-                        this::getSearchedItems),
+                PopupCategorized.getSupplierWithActions(
+                        getPopupEditActions(),
+                        PopupCategorized.getSupplierWithMenuItems(
+                            getPopupEditMenuItems(),
+                            this::getSearchedItems)),
                 this::selectSearchedItemFromGui);
 
         PopupExtensionText.putInputEditActions(field);
@@ -286,10 +288,12 @@ public class SearchTextField extends JComponent {
 
     }
 
+    public List<? extends Action> getPopupEditMenuActions() {
+        return getPopupEditActions();
+    }
+
     public List<? extends JComponent> getPopupEditMenuItems() {
-        return getPopupEditActions().stream()
-                .map(JMenuItem::new)
-                .collect(Collectors.toList());
+        return Collections.emptyList();
     }
 
     public List<Action> getPopupEditActions() {

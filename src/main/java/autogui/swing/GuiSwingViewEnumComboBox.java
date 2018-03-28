@@ -60,6 +60,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             this.context = context;
             setRenderer(new PropertyEnumListRenderer(context));
 
+            GuiSwingView.setDescriptionToolTipText(context, this);
+
             //editable
             setEnabled(((GuiReprValueEnumComboBox) context.getRepresentation())
                     .isEditable(context));

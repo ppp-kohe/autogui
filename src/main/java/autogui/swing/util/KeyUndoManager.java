@@ -131,7 +131,8 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
         endEdits();
     }
 
-    public static class UndoAction extends AbstractAction {
+    public static class UndoAction extends AbstractAction
+        implements PopupCategorized.CategorizedPopupItemMenuAction {
         protected UndoManager manager;
         protected boolean undo;
 
@@ -166,6 +167,17 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
                     manager.redo();
                 }
             }
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_UNDO;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return undo ? PopupExtension.MENU_SUB_CATEGORY_UNDO :
+                          PopupExtension.MENU_SUB_CATEGORY_REDO;
         }
     }
 

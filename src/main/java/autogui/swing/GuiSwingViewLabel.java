@@ -54,6 +54,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
             this.context = context;
             putClientProperty("html.disable", Boolean.TRUE);
             setText(" ");
+            GuiSwingView.setDescriptionToolTipText(context, this);
 
             setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10),
                     new FocusBorder(this)));

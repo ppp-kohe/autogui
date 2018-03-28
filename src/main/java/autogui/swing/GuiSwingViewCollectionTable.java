@@ -132,6 +132,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             //update context
             context.addSourceUpdateListener(this);
 
+            GuiSwingView.setDescriptionToolTipText(context, this);
+
             //popup
             JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
             List<JComponent> items = new ArrayList<>();

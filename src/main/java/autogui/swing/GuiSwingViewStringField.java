@@ -61,6 +61,9 @@ public class GuiSwingViewStringField implements GuiSwingView {
             initLazy();
             getIcon().setVisible(false);
 
+            GuiSwingView.setDescriptionToolTipText(context, this);
+            GuiSwingView.setDescriptionToolTipText(context, getField());
+
             //editable
             GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
             getField().setEditable(str.isEditable(context));

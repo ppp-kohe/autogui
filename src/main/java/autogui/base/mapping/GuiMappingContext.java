@@ -164,6 +164,9 @@ public class GuiMappingContext {
         return typeElement.getName();
     }
 
+    public String getDescription() {
+        return typeElement.getDescription();
+    }
 
     ///////////////////////
 

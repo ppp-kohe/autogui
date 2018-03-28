@@ -45,7 +45,6 @@ public abstract class GuiTypeMember implements GuiTypeElement {
         return null;
     }
 
-
     public void setOrdinal(MemberOrdinal ordinal) {
         this.ordinal = ordinal;
     }

@@ -209,6 +209,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public PropertyDocumentEditorPane(GuiMappingContext context) {
             this.context = context;
+            GuiSwingView.setDescriptionToolTipText(context, this);
             popup = initText(this, context);
         }
 
@@ -282,6 +283,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public PropertyDocumentTextPane(GuiMappingContext context) {
             this.context = context;
+            GuiSwingView.setDescriptionToolTipText(context, this);
             settingPane = new DocumentSettingPane(this);
             popup = initText(this, context);
         }

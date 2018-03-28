@@ -3,6 +3,7 @@ package autogui.base.type;
 import autogui.GuiIncluded;
 import autogui.base.mapping.GuiReprValue;
 
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -38,6 +39,9 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     protected Method setter;
     protected Method getter;
     protected Field field;
+
+    protected String description;
+    protected String keyStroke;
 
     public GuiTypeMemberProperty(String name) {
         super(name);
@@ -254,5 +258,45 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     @Override
     public String toString() {
         return "property(" + type + ", " + name + ")";
+    }
+
+    @Override
+    public String getDescription() {
+        if (description == null) {
+            description = join(join(
+                    description(getField()),
+                    description(getGetter())),
+                    description(getSetter()));
+        }
+        return description;
+    }
+
+
+    @Override
+    public String getAcceleratorKeyStroke() {
+        if (keyStroke == null) {
+            keyStroke = join(join(
+                    keyStroke(getField()),
+                    keyStroke(getGetter())),
+                    keyStroke(getField()));
+        }
+        return keyStroke;
+    }
+
+    private String join(String a, String b) {
+        return a.isEmpty() ? b :
+                (b.isEmpty() ? a : a + "\t" + b);
+    }
+
+    private String description(AnnotatedElement e) {
+        return e != null && e.isAnnotationPresent(GuiIncluded.class) ?
+                e.getAnnotation(GuiIncluded.class).description() :
+                "";
+    }
+
+    private String keyStroke(AnnotatedElement e) {
+        return e != null && e.isAnnotationPresent(GuiIncluded.class) ?
+                e.getAnnotation(GuiIncluded.class).keyStroke() :
+                "";
     }
 }

@@ -66,7 +66,12 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
             this.source = source;
             if (isAutomaticSelectionAction()) {
                 putValue(NAME, "*" + getValue(NAME));
-                putValue(Action.SHORT_DESCRIPTION, "The action is automatically executed by table selection");
+                String desc = (String) getValue(Action.SHORT_DESCRIPTION);
+                if (desc == null) {
+                    desc = "";
+                }
+                putValue(Action.SHORT_DESCRIPTION,
+                        desc + " The action is automatically executed by table selection.");
             }
         }
 

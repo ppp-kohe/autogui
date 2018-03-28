@@ -6,6 +6,7 @@ import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.table.TableTargetMenu;
+import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.SettingsWindow;
 
@@ -104,6 +105,18 @@ public interface GuiSwingView extends GuiSwingElement {
         default boolean isEditable() {
             GuiMappingContext context = getContext();
             return !context.isReprValue() || context.getReprValue().isEditable(context);
+        }
+    }
+
+    ///////////////////////////////
+
+
+    ///////////////////////////////
+
+    static void setDescriptionToolTipText(GuiMappingContext context, JComponent comp) {
+        String d = context.getDescription();
+        if (!d.isEmpty()) {
+            comp.setToolTipText(d);
         }
     }
 

@@ -1,5 +1,7 @@
 package autogui.base.type;
 
+import autogui.GuiIncluded;
+
 import java.util.Objects;
 
 /**
@@ -41,6 +43,30 @@ public class GuiTypeValue implements GuiTypeElement {
     @Override
     public String toString() {
         return "type(" + name + ")";
+    }
+
+    @Override
+    public String getDescription() {
+        Class<?> cls = getType();
+        if (cls != null) {
+            GuiIncluded included = cls.getAnnotation(GuiIncluded.class);
+            if (included != null) {
+                return included.description();
+            }
+        }
+        return "";
+    }
+
+    @Override
+    public String getAcceleratorKeyStroke() {
+        Class<?> cls = getType();
+        if (cls != null) {
+            GuiIncluded included = cls.getAnnotation(GuiIncluded.class);
+            if (included != null) {
+                return included.keyStroke();
+            }
+        }
+        return "";
     }
 
     /**

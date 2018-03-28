@@ -171,6 +171,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             super(createModel(context));
             this.context = context;
 
+            GuiSwingView.setDescriptionToolTipText(context, this);
+
             initModelPreferencesUpdater();
 
             //value update

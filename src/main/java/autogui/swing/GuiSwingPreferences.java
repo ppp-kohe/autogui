@@ -398,6 +398,7 @@ public class GuiSwingPreferences {
         public NewPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Save");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("add"));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("add"));
             this.owner = owner;
         }
 
@@ -421,6 +422,7 @@ public class GuiSwingPreferences {
         public DeletePrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Delete");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("delete"));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("delete"));
             this.owner = owner;
             owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
 
@@ -449,6 +451,7 @@ public class GuiSwingPreferences {
         public SavePrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Write To File...");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("save"));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("save"));
             this.owner = owner;
             owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
         }
@@ -482,6 +485,7 @@ public class GuiSwingPreferences {
         public LoadPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Load From File...");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("load"));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("load"));
             this.owner = owner;
         }
 
@@ -505,6 +509,7 @@ public class GuiSwingPreferences {
         public ApplyPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Apply");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("apply"));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("apply"));
             this.owner = owner;
             owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
         }
@@ -526,6 +531,7 @@ public class GuiSwingPreferences {
         public ResetPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Reset");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("reset"));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("reset"));
             this.owner = owner;
         }
 

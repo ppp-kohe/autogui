@@ -52,7 +52,12 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         }
 
         public void addSubComponent(GuiMappingContext subContext, JComponent component) {
-            tabbedPane.addTab(subContext.getDisplayName(), component);
+            String desc = subContext.getDescription();
+            if (desc.isEmpty()) {
+                tabbedPane.addTab(subContext.getDisplayName(), component);
+            } else {
+                tabbedPane.addTab(subContext.getDisplayName(), null, component, desc);
+            }
         }
 
         @Override

@@ -30,6 +30,22 @@ import java.util.regex.Pattern;
  *
  */
 public class PopupExtension implements MouseListener, KeyListener, ActionListener, PopupExtensionSender {
+
+    public static String MENU_CATEGORY_UNDO = MenuBuilder.getImplicitCategory("undo");
+    public static String MENU_CATEGORY_EDIT = MenuBuilder.getImplicitCategory("edit");
+    public static String MENU_CATEGORY_JUMP = MenuBuilder.getImplicitCategory("jump");
+    public static String MENU_CATEGORY_SELECT = MenuBuilder.getImplicitCategory("select");
+    public static String MENU_CATEGORY_TRANSFER = MenuBuilder.getImplicitCategory("transfer");
+    public static String MENU_SUB_CATEGORY_UNDO = "undo";
+    public static String MENU_SUB_CATEGORY_REDO = "redo";
+    public static String MENU_SUB_CATEGORY_CUT = "cut";
+    public static String MENU_SUB_CATEGORY_COPY = "copy";
+    public static String MENU_SUB_CATEGORY_PASTE = "paste";
+    public static String MENU_SUB_CATEGORY_DELETE = "delete";
+    public static String MENU_SUB_CATEGORY_SELECT = "select";
+    public static String MENU_SUB_CATEGORY_IMPORT = "import";
+    public static String MENU_SUB_CATEGORY_EXPORT = "export";
+
     /** the supplier is frequently called and expected to return same menu object */
     protected Supplier<JPopupMenu> menu;
     protected JComponent pane;
@@ -309,18 +325,23 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     public Action getAction() {
         if (action == null) {
-            action = new AbstractAction() {
-                {
-                    putValue(Action.LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("search-", "pulldown", 16, 10));
-                }
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    PopupExtension ext = PopupExtension.this;
-                    ext.actionPerformed(e);
-                }
-            };
+            action = new PopupExtensionDisplayAction(this);
         }
         return action;
+    }
+
+    public static class PopupExtensionDisplayAction extends AbstractAction {
+        protected PopupExtension extension;
+
+        public PopupExtensionDisplayAction(PopupExtension extension) {
+            this.extension = extension;
+            putValue(Action.LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("search-", "pulldown", 16, 10));
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            extension.actionPerformed(e);
+        }
     }
 
     ////////////////

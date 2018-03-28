@@ -25,4 +25,14 @@ public @interface GuiIncluded {
      * @return ordinal index for sorting members. the default value is the max value of int
      */
     int index() default Integer.MAX_VALUE;
+
+    /**
+     * @return short description for the target, typically presented as a tool-tip
+     */
+    String description() default "";
+
+    /**
+     * @return accelerator key stroke
+     */
+    String keyStroke() default "";
 }
