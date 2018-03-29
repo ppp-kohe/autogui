@@ -30,14 +30,15 @@ import java.util.regex.Pattern;
  *
  */
 public class PopupExtension implements MouseListener, KeyListener, ActionListener, PopupExtensionSender {
-    public static String MENU_CATEGORY_UNDO = MenuBuilder.getImplicitCategory("undo");
-    public static String MENU_CATEGORY_EDIT = MenuBuilder.getImplicitCategory("edit");
-    public static String MENU_CATEGORY_JUMP = MenuBuilder.getImplicitCategory("jump");
-    public static String MENU_CATEGORY_SELECT = MenuBuilder.getImplicitCategory("select");
-    public static String MENU_CATEGORY_TRANSFER = MenuBuilder.getImplicitCategory("transfer");
-    public static String MENU_CATEGORY_VIEW = MenuBuilder.getImplicitCategory("view");
-    public static String MENU_CATEGORY_PREFS = MenuBuilder.getImplicitCategory("preferences");
-    public static String MENU_CATEGORY_WINDOW = MenuBuilder.getImplicitCategory("window");
+    public static String MENU_CATEGORY_UNDO = MenuBuilder.getCategoryImplicit("Undo");
+    public static String MENU_CATEGORY_EDIT = MenuBuilder.getCategoryImplicit("Edit");
+    public static String MENU_CATEGORY_SET = MenuBuilder.getCategoryImplicit("Set");
+    public static String MENU_CATEGORY_JUMP = MenuBuilder.getCategoryImplicit("Jump");
+    public static String MENU_CATEGORY_SELECT = MenuBuilder.getCategoryImplicit("Select");
+    public static String MENU_CATEGORY_TRANSFER = MenuBuilder.getCategoryImplicit("Transfer");
+    public static String MENU_CATEGORY_VIEW = MenuBuilder.getCategoryImplicit("View");
+    public static String MENU_CATEGORY_PREFS = MenuBuilder.getCategoryImplicit("Preferences");
+    public static String MENU_CATEGORY_WINDOW = MenuBuilder.getCategoryImplicit("Window");
 
     public static String MENU_SUB_CATEGORY_NEW = "new";
 
@@ -50,7 +51,6 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     public static String MENU_SUB_CATEGORY_COPY = "copy";
     public static String MENU_SUB_CATEGORY_PASTE = "paste";
     public static String MENU_SUB_CATEGORY_DELETE = "delete";
-    public static String MENU_SUB_CATEGORY_SET = "set";
 
     ///select
     public static String MENU_SUB_CATEGORY_SELECT = "select";

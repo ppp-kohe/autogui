@@ -159,6 +159,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             items.add(label);
             items.add(new JMenuItem(new ContextRefreshAction(context)));
             items.add(new JMenuItem(new SelectAllAction(this)));
+            items.add(new JMenuItem(new UnSelectAction(this)));
 
             MouseListener[] listeners = getMouseListeners();
             Arrays.stream(listeners).forEach(this::removeMouseListener);
@@ -991,7 +992,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected JTable table;
 
         public UnSelectAction(JTable table) {
-            super("clear-selection");
+            super("Clear Selection");
             this.table = table;
         }
 

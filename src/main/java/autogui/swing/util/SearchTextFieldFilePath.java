@@ -518,12 +518,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         @Override
         public String getCategory() {
-            return PopupExtension.MENU_CATEGORY_EDIT;
-        }
-
-        @Override
-        public String getSubCategory() {
-            return PopupExtension.MENU_SUB_CATEGORY_SET;
+            return PopupExtension.MENU_CATEGORY_SET;
         }
     }
 
@@ -696,7 +691,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 } else {
                     return iconSource.getSystemIcon(p.toFile());
                 }
-            }, category, nameOnly);
+            }, category, "", nameOnly);
         }
 
         @Override
@@ -715,9 +710,10 @@ public class SearchTextFieldFilePath extends SearchTextField {
         protected Path path;
         protected Function<Path,Icon> iconGetter;
         protected String category;
+        protected String subCategory = "";
         protected boolean nameOnly;
 
-        public FileItem(Path path, Function<Path, Icon> iconGetter, String category, boolean nameOnly) {
+        public FileItem(Path path, Function<Path, Icon> iconGetter, String category, String subCategory, boolean nameOnly) {
             this.path = path;
             this.iconGetter = iconGetter;
             this.category = category;
@@ -743,12 +739,22 @@ public class SearchTextFieldFilePath extends SearchTextField {
             return category;
         }
 
+        @Override
+        public String getSubCategory() {
+            return subCategory;
+        }
+
         public Path getPath() {
             return path;
         }
 
         public Function<Path, Icon> getIconGetter() {
             return iconGetter;
+        }
+
+        @Override
+        public PopupCategorized.CategorizedMenuItem remap(String category, String subCategory) {
+            return new FileItem(path, iconGetter, category, subCategory, nameOnly);
         }
     }
 

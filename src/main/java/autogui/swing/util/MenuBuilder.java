@@ -75,8 +75,24 @@ public class MenuBuilder {
         items.forEach(process::add);
     }
 
-    public static String getImplicitCategory(String name) {
+    public static String getCategoryImplicit(String name) {
         return "." + name;
+    }
+
+    public static String getCategoryName(String name) {
+        if (name.startsWith(".")) {
+            return name.substring(1);
+        } else {
+            return name;
+        }
+    }
+
+    public static String getCategoryWithPrefix(String prefix, String name) {
+        if (name.startsWith(".")) {
+            return "." + prefix + name;
+        } else {
+            return prefix + name;
+        }
     }
 
     public static class AddingProcess {

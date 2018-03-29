@@ -387,13 +387,9 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public String getCategory() {
-            return PopupExtension.MENU_CATEGORY_EDIT;
+            return PopupExtension.MENU_CATEGORY_SET;
         }
 
-        @Override
-        public String getSubCategory() {
-            return PopupExtension.MENU_SUB_CATEGORY_SET;
-        }
     }
 
     public static class TypedSpinnerNumberModel extends SpinnerNumberModel implements GuiSwingPreferences.Preferences {

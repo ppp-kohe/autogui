@@ -7,7 +7,6 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  *
@@ -27,7 +26,7 @@ import java.util.stream.Stream;
  *      ]
  * </pre>
  */
-public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
+public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Cloneable {
     protected Supplier<? extends Collection<CategorizedMenuItem>> itemSupplier;
     protected Consumer<CategorizedMenuItem> itemConsumer;
 
@@ -40,10 +39,12 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         default String getSubCategory() {
             return "";
         }
+
+        CategorizedMenuItem remap(String category, String subCategory);
     }
 
-    public static String CATEGORY_LABEL = MenuBuilder.getImplicitCategory(".label");
-    public static String CATEGORY_ACTION = MenuBuilder.getImplicitCategory(".action");
+    public static String CATEGORY_LABEL = MenuBuilder.getCategoryImplicit("Info");
+    public static String CATEGORY_ACTION = MenuBuilder.getCategoryImplicit("Action");
 
     public static String SUB_CATEGORY_LABEL_TYPE = "type";
     public static String SUB_CATEGORY_LABEL_VALUE = "value";
@@ -55,6 +56,11 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         @Override
         default String getCategory() {
             return CATEGORY_LABEL;
+        }
+
+        @Override
+        default CategorizedMenuItem remap(String category, String subCategory) {
+            return new CategorizedMenuItemLabelDelegate(this, category, subCategory);
         }
     }
 
@@ -76,6 +82,102 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         @Override
         default String getCategory() {
             return CATEGORY_ACTION;
+        }
+
+        @Override
+        default CategorizedMenuItem remap(String category, String subCategory) {
+            return new CategorizedMenuItemComponentDelegate(this, category, subCategory);
+        }
+    }
+
+    public static class CategorizedMenuItemLabelDelegate implements CategorizedMenuItemLabel {
+        protected CategorizedMenuItemLabel label;
+        protected String category;
+        protected String subCategory;
+
+        public CategorizedMenuItemLabelDelegate(CategorizedMenuItemLabel label) {
+            this.label = label;
+            category = label.getCategory();
+            subCategory = label.getSubCategory();
+        }
+
+        public CategorizedMenuItemLabelDelegate(CategorizedMenuItemLabel label, String category, String subCategory) {
+            this.label = label;
+            this.category = category;
+            this.subCategory = subCategory;
+        }
+
+        @Override
+        public String getName() {
+            return label.getName();
+        }
+
+        @Override
+        public Icon getIcon() {
+            return label.getIcon();
+        }
+
+        @Override
+        public String getCategory() {
+            return category;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return subCategory;
+        }
+
+        @Override
+        public CategorizedMenuItem remap(String category, String subCategory) {
+            return new CategorizedMenuItemLabelDelegate(label, category, subCategory);
+        }
+    }
+
+    public static class CategorizedMenuItemComponentDelegate implements CategorizedMenuItemComponent  {
+        protected CategorizedMenuItemComponent component;
+        protected String category = "";
+        protected String subCategory = "";
+
+        public CategorizedMenuItemComponentDelegate(CategorizedMenuItemComponent component) {
+            this.component = component;
+            category = component.getCategory();
+            subCategory = component.getSubCategory();
+        }
+
+        public CategorizedMenuItemComponentDelegate(CategorizedMenuItemComponent component, String category, String subCategory) {
+            this.component = component;
+            this.category = category;
+            this.subCategory = subCategory;
+        }
+
+        @Override
+        public JComponent getMenuItem(PopupCategorized sender) {
+            return component.getMenuItem(sender);
+        }
+
+        @Override
+        public String getName() {
+            return component.getName();
+        }
+
+        @Override
+        public Icon getIcon() {
+            return component.getIcon();
+        }
+
+        @Override
+        public String getCategory() {
+            return category;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return subCategory;
+        }
+
+        @Override
+        public CategorizedMenuItem remap(String category, String subCategory) {
+            return new CategorizedMenuItemComponentDelegate(component, category, subCategory);
         }
     }
 
@@ -113,6 +215,11 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         public String getSubCategory() {
             return subCategory;
         }
+
+        @Override
+        public CategorizedMenuItem remap(String category, String subCategory) {
+            return new CategorizedMenuItemComponentDefault(component, category, subCategory);
+        }
     }
 
     /**
@@ -122,6 +229,11 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         @Override
         default JComponent getMenuItem(PopupCategorized sender) {
             return new JMenuItem(this);
+        }
+
+        @Override
+        default CategorizedMenuItem remap(String category, String subCategory) {
+            return new CategorizedMenuItemActionDelegate(this, category, subCategory);
         }
     }
 
@@ -133,16 +245,33 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         default JComponent getMenuItem(PopupCategorized sender) {
             return new JCheckBoxMenuItem(this);
         }
+
+        @Override
+        default CategorizedMenuItem remap(String category, String subCategory) {
+            return new CategorizedMenuItemActionCheckDelegate(this, category, subCategory);
+        }
     }
 
     /**
-     * an action wraps another action for supplying category info. by sub-classing
+     * an action wraps another action for supplying category info.
      */
     public static class CategorizedMenuItemActionDelegate implements CategorizedMenuItemAction {
         protected Action action;
+        protected String category = PopupCategorized.CATEGORY_ACTION;
+        protected String subCategory = "";
 
         public CategorizedMenuItemActionDelegate(Action action) {
             this.action = action;
+            if (action instanceof CategorizedMenuItem) {
+                this.category = ((CategorizedMenuItem) action).getCategory();
+                this.subCategory = ((CategorizedMenuItem) action).getSubCategory();
+            }
+        }
+
+        public CategorizedMenuItemActionDelegate(Action action, String category, String subCategory) {
+            this.action = action;
+            this.category = category;
+            this.subCategory = subCategory;
         }
 
         @Override
@@ -178,6 +307,41 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         @Override
         public void actionPerformed(ActionEvent e) {
             action.actionPerformed(e);
+        }
+
+        @Override
+        public String getCategory() {
+            return category;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return subCategory;
+        }
+
+        @Override
+        public CategorizedMenuItem remap(String category, String subCategory) {
+            return new CategorizedMenuItemActionDelegate(action, category, subCategory);
+        }
+    }
+
+    public static class CategorizedMenuItemActionCheckDelegate extends CategorizedMenuItemActionDelegate {
+        public CategorizedMenuItemActionCheckDelegate(Action action) {
+            super(action);
+        }
+
+        public CategorizedMenuItemActionCheckDelegate(Action action, String category, String subCategory) {
+            super(action, category, subCategory);
+        }
+
+        @Override
+        public JComponent getMenuItem(PopupCategorized sender) {
+            return new JCheckBoxMenuItem(action);
+        }
+
+        @Override
+        public CategorizedMenuItem remap(String category, String subCategory) {
+            return new CategorizedMenuItemActionCheckDelegate(action, category, subCategory);
         }
     }
 

@@ -4,16 +4,19 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprPropertyPane;
 import autogui.base.mapping.GuiReprValue;
+import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * <h3>representation</h3>
@@ -76,6 +79,8 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         protected PopupExtension popup;
         protected boolean showName;
 
+        protected List<PopupCategorized.CategorizedMenuItem> menuItems;
+
         public PropertyPane(GuiMappingContext context, boolean showName) {
             super(context.getDisplayName(), context.getName());
             this.context = context;
@@ -84,8 +89,11 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
 
         public PropertyPane(GuiMappingContext context, boolean showName, JComponent content) {
-            this(context, showName);
+            super(context.getDisplayName(), context.getName());
+            this.context = context;
+            this.showName = showName;
             setContentPane(content);
+            initLazy();
         }
 
         @Override
@@ -118,31 +126,59 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
 
         public void initPopup() {
-            //TODO
-            JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
-            ContextRefreshAction refreshAction = new ContextRefreshAction(context);
-            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-                menu.accept(info);
-                menu.accept(refreshAction);
-                GuiSwingJsonTransfer.getActions(this, context)
-                        .forEach(menu::accept);
-                menu.accept(new ToStringCopyAction(this, context));
-            });
+            popup = new PopupExtension(this, null);
+            setPopupBuilder();
             setInheritsPopupMenu(true);
+        }
+
+        public void setPopupBuilder() {
+            if (popup != null) {
+                PopupExtension.PopupMenuBuilder builder;
+                if (hasContentValuePane()) {
+                    PopupExtension.PopupMenuBuilder contentBuilder = getContentPaneAsValuePane().getSwingMenuBuilder();
+                    if (contentBuilder instanceof PopupCategorized) {
+                        builder = new PopupCategorized(PopupCategorized.getMenuItemsSupplier(
+                                this::getSwingStaticMenuItems,
+                                () -> ((PopupCategorized) contentBuilder).getItemSupplier().get().stream()
+                                        .map(c -> c.remap(MenuBuilder.getCategoryWithPrefix("Value ", c.getCategory()), c.getSubCategory()))
+                                        .collect(Collectors.toList())));
+                    } else {
+                        builder = new PopupCategorized(this::getSwingStaticMenuItems);
+                    }
+                } else {
+                    builder = new PopupCategorized(this::getSwingStaticMenuItems);
+                }
+                popup.setMenuBuilder(builder);
+            }
         }
 
         @Override
         public void setContentPane(JComponent content) {
+            boolean diff = (this.contentPane != content);
             if (this.contentPane != null) {
                 remove(contentPane);
             }
             this.contentPane = content;
             add(this.contentPane, BorderLayout.CENTER);
+
+            if (diff) {
+                setPopupBuilder();
+            }
         }
 
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
-            return super.getSwingStaticMenuItems();
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(
+                        Arrays.asList(
+                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                new ContextRefreshAction(context),
+                                new ToStringCopyAction(this, context)),
+                        GuiSwingJsonTransfer.getActions(this, context)).stream()
+                        .map(i -> i.remap("Property " + MenuBuilder.getCategoryName(i.getCategory()), i.getSubCategory()))
+                        .collect(Collectors.toList());
+            }
+            return menuItems;
         }
 
         @Override

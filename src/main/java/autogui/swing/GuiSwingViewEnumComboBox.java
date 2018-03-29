@@ -124,7 +124,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                                 new HistoryMenu<>(this, context)),
                         GuiSwingJsonTransfer.getActions(this, context));
             }
-            return null;
+            return menuItems;
         }
 
         @Override

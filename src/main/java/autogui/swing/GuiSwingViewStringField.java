@@ -41,7 +41,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyStringPane field = new PropertyStringPane(context);
         if (context.isTypeElementProperty()) {
-            return new NamedPane(context.getDisplayName(), field);
+            return field.wrapNamed();
         } else {
             return field;
         }
