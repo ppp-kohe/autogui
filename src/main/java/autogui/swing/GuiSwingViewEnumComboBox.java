@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueEnumComboBox;
+import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
@@ -15,6 +16,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.EventObject;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -54,45 +56,74 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         protected GuiMappingContext context;
         protected boolean listenerEnabled = true;
         protected PopupExtension popup;
+        protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
         public PropertyEnumComboBox(GuiMappingContext context) {
             super(getEnumConstants(context));
             this.context = context;
-            setRenderer(new PropertyEnumListRenderer(context));
+            init();
+        }
 
+        public void init() {
+            initName();
+            initRenderer();
+            initEditable();
+            initContextUpdate();
+            initValue();
+            initListener();
+            initPopup();
+            initDragDrop();
+        }
+
+        public void initName() {
+            setName(context.getName());
             GuiSwingView.setDescriptionToolTipText(context, this);
+        }
 
-            //editable
+        public void initRenderer() {
+            setRenderer(new PropertyEnumListRenderer(context));
+        }
+
+        public void initEditable() {
             setEnabled(((GuiReprValueEnumComboBox) context.getRepresentation())
                     .isEditable(context));
+        }
 
-            //update context
+        public void initContextUpdate() {
             context.addSourceUpdateListener(this);
-            //initial context
+        }
+
+        public void initValue() {
             update(context, context.getSource());
+        }
 
+        public void initListener() {
             addItemListener(this);
+        }
 
-            //popup
-            JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
-            ContextRefreshAction refreshAction = new ContextRefreshAction(context);
-            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender,menu) -> {
-                menu.accept(info);
-                menu.accept(refreshAction);
-                GuiSwingJsonTransfer.getActions(this, context)
-                        .forEach(menu::accept);
-                menu.accept(new HistoryMenu<>(this, context));
-            });
+        public void initPopup() {
+            popup = new PopupExtension(this, new PopupCategorized(this::getSwingStaticMenuItems));
             setInheritsPopupMenu(true);
-
-            //popup trigger
             //it supposes that the combo-box has a button that describes popup selection
             Arrays.stream(getComponents())
                     .filter(JButton.class::isInstance)
                     .forEach(c -> c.addMouseListener(popup));
+        }
 
-            //drag drop
+        public void initDragDrop() {
             GuiSwingView.setupTransferHandler(this, new EnumTransferHandler(this));
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(
+                        Arrays.asList(GuiSwingContextInfo.get().getInfoLabel(context),
+                                new ContextRefreshAction(context),
+                                new HistoryMenu<>(this, context)),
+                        GuiSwingJsonTransfer.getActions(this, context));
+            }
+            return null;
         }
 
         @Override

@@ -20,7 +20,7 @@ public class SearchTextFieldTest extends GuiSwingTestCase {
     AtomicInteger cancelCount = new AtomicInteger();
     AtomicInteger startCount = new AtomicInteger();
     AtomicInteger finishCount = new AtomicInteger();
-    PopupCategorized.CategorizedPopupItem selectedItem;
+    PopupCategorized.CategorizedMenuItem selectedItem;
 
     String selectedName;
 
@@ -68,10 +68,10 @@ public class SearchTextFieldTest extends GuiSwingTestCase {
 
     public class TestModel implements SearchTextField.SearchTextFieldModel {
         @Override
-        public List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextField.SearchTextFieldPublisher publisher) {
+        public List<PopupCategorized.CategorizedMenuItem> getCandidates(String text, boolean editable, SearchTextField.SearchTextFieldPublisher publisher) {
             startCount.incrementAndGet();
             finishCount.set(0);
-            List<PopupCategorized.CategorizedPopupItem> items = new ArrayList<>();
+            List<PopupCategorized.CategorizedMenuItem> items = new ArrayList<>();
             for (int i = 0; i < 100; ++i) {
                 if (publisher.isSearchCancelled()) {
                     cancelCount.incrementAndGet();
@@ -95,17 +95,17 @@ public class SearchTextFieldTest extends GuiSwingTestCase {
         }
 
         @Override
-        public void select(PopupCategorized.CategorizedPopupItem item) {
+        public void select(PopupCategorized.CategorizedMenuItem item) {
             selectedItem = item;
         }
 
         @Override
-        public PopupCategorized.CategorizedPopupItem getSelection() {
+        public PopupCategorized.CategorizedMenuItem getSelection() {
             return selectedItem;
         }
     }
 
-    public class TestItem implements PopupCategorized.CategorizedPopupItemMenu {
+    public class TestItem implements PopupCategorized.CategorizedMenuItemComponent {
         protected String name;
         protected String category;
 

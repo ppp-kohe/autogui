@@ -5,10 +5,7 @@ import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprObjectPane;
 import autogui.base.mapping.GuiReprPropertyPane;
 import autogui.swing.icons.GuiSwingIcons;
-import autogui.swing.util.NamedPane;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.ResizableFlowLayout;
-import autogui.swing.util.SettingsWindow;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,10 +13,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -113,6 +108,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         protected JComponent resizableSubComponents;
         protected PopupExtension popup;
         protected List<Action> actions = new ArrayList<>();
+        protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
         protected List<JSplitPane> splitPanes = new ArrayList<>();
         protected SplitPreferencesUpdater preferencesUpdater;
@@ -120,36 +116,33 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         public ObjectPane(GuiMappingContext context) {
             this.context = context;
-            setLayout(new BorderLayout());
-            GuiSwingView.setDescriptionToolTipText(context, this);
+            init();
+        }
+
+        public void init() {
+            initName();
+            initLayout();
+            initBorder();
             initContentPane();
-            setOpaque(false);
-            add(contentPane, BorderLayout.CENTER);
+            initLabelGroup();
+            initPreferencesUpdater();
+            initContextUpdate();
+            initPopup();
+            initFocus();
+            initDragDrop();
+        }
 
-            labelGroup = new SettingsWindow.LabelGroup();
+        public void initName() {
+            setName(context.getName());
+            GuiSwingView.setDescriptionToolTipText(context, this);
+        }
 
-            preferencesUpdater = new SplitPreferencesUpdater(context, this::getSplitPanes);
+        public void initLayout() {
+            setLayout(new BorderLayout());
+        }
 
-            //context update
-            context.addSourceUpdateListener(this);
-
-            //popup
-            JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
-            ContextRefreshAction refreshAction = new ContextRefreshAction(context);
-            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-                menu.accept(info);
-                menu.accept(refreshAction);
-                GuiSwingJsonTransfer.getActions(this, context)
-                        .forEach(menu::accept);
-                menu.accept(new ToStringCopyAction(this, context));
-                menu.accept(new JPopupMenu.Separator());
-                actions.forEach(menu::accept);
-            });
-            setInheritsPopupMenu(true);
-
+        public void initBorder() {
             setBorder(new GuiSwingViewLabel.FocusBorder(this));
-            setFocusable(true);
-            GuiSwingView.setupTransferHandler(this, new ToStringTransferHandler(this));
         }
 
         public void initContentPane() {
@@ -158,6 +151,47 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             ResizableFlowLayout layout = new ResizableFlowLayout(false, 10);
             layout.setFitHeight(true);
             contentPane.setLayout(layout);
+            setOpaque(false);
+            add(contentPane, BorderLayout.CENTER);
+        }
+
+        public void initLabelGroup() {
+            labelGroup = new SettingsWindow.LabelGroup();
+        }
+
+        public void initPreferencesUpdater() {
+            preferencesUpdater = new SplitPreferencesUpdater(context, this::getSplitPanes);
+        }
+
+        public void initContextUpdate() {
+            context.addSourceUpdateListener(this);
+        }
+
+        public void initPopup() {
+            popup = new PopupExtension(this, new PopupCategorized(this::getSwingStaticMenuItems));
+            setInheritsPopupMenu(true);
+        }
+
+        public void initFocus() {
+            setFocusable(true);
+        }
+
+        public void initDragDrop() {
+            GuiSwingView.setupTransferHandler(this, new ToStringTransferHandler(this));
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(
+                        Arrays.asList(
+                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                new ContextRefreshAction(context),
+                                new ToStringCopyAction(this, context)),
+                        GuiSwingJsonTransfer.getActions(this, context),
+                        actions);
+            }
+            return menuItems;
         }
 
         public List<Action> getActions() {

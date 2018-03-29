@@ -247,7 +247,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** the action for opening selection as an URL in a browser */
     public static class TextOpenBrowserAction extends AbstractAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         protected JComponent component;
         public TextOpenBrowserAction(JComponent component) {
             this.component = component;
@@ -300,7 +300,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** a cut action */
     public static class TextCutAction extends AbstractAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextCutAction(JTextComponent field) {
@@ -335,7 +335,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** a copy action */
     public static class TextCopyAction extends AbstractAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextCopyAction(JTextComponent field) {
@@ -369,7 +369,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** a paste action*/
     public static class TextPasteAction extends AbstractAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextPasteAction(JTextComponent field) {
@@ -403,7 +403,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** a copy-all action: copying all text in a text-component */
     public static class TextCopyAllAction extends AbstractAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextCopyAllAction(JTextComponent field) {
@@ -444,7 +444,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** a paste-all action: replacing entire text with the clipboard contents */
     public static class TextPasteAllAction extends AbstractAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextPasteAllAction(JTextComponent field) {
@@ -495,7 +495,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** a select-all action */
     public static class TextSelectAllAction extends AbstractAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         private static final long serialVersionUID = 1L;
         protected JTextComponent field;
 
@@ -583,7 +583,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** an delete-to-line-end action */
     public static class TextDeleteToLineEndAction extends TextAbstractHistoryAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
 
         public TextDeleteToLineEndAction(JTextComponent field) {
             super("delete-line-end", field);
@@ -620,7 +620,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** an delete-next-word action */
     public static class TextDeleteNextWordAction extends TextAbstractHistoryAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         public TextDeleteNextWordAction(JTextComponent field) {
             super("delete-next-word", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -659,7 +659,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** an delete-previous-word action */
     public static class TextDeletePreviousWordAction extends TextAbstractHistoryAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         public TextDeletePreviousWordAction(JTextComponent field) {
             super("delete-previous-word", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -698,7 +698,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** an paste the history-buffer action (yank) */
     public static class TextPasteHistoryAction extends TextAbstractHistoryAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         public TextPasteHistoryAction(JTextComponent field) {
             super("yank", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -786,7 +786,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** a file loading action */
     public static class TextLoadAction extends AbstractAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         protected JTextComponent field;
         protected static JFileChooser fileChooser;
         protected static Charset charset = StandardCharsets.UTF_8;
@@ -854,7 +854,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** a file saving action */
     public static class TextSaveAction extends TextLoadAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         public TextSaveAction(JTextComponent component) {
             super(component);
             putValue(NAME, "Save...");

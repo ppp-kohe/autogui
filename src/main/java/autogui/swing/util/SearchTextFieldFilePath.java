@@ -4,8 +4,6 @@ import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.awt.datatransfer.*;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
@@ -76,7 +74,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
     public Path getFile() {
-        PopupCategorized.CategorizedPopupItem item = getModel().getSelection();
+        PopupCategorized.CategorizedMenuItem item = getModel().getSelection();
         if (item instanceof FileItem) {
             return ((FileItem) item).getPath();
         } else {
@@ -86,11 +84,11 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     @Override
     public boolean isUpdateFieldModifiedEvent(Object e) {
-        return super.isUpdateFieldModifiedEvent(e) || e instanceof PopupCategorized.CategorizedPopupItem;
+        return super.isUpdateFieldModifiedEvent(e) || e instanceof PopupCategorized.CategorizedMenuItem;
     }
 
     @Override
-    public void setTextFromSearchedItem(PopupCategorized.CategorizedPopupItem item) {
+    public void setTextFromSearchedItem(PopupCategorized.CategorizedMenuItem item) {
         if (item == null) {
             setTextWithoutUpdateField("");
         } else if (item instanceof FileItem) {
@@ -488,7 +486,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** the model definition for the completing file items */
     public static class SearchTextFieldModelFilePath implements SearchTextFieldModel {
-        protected PopupCategorized.CategorizedPopupItem selection;
+        protected PopupCategorized.CategorizedMenuItem selection;
         protected FileSystemView iconSource;
 
         @Override
@@ -497,8 +495,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
 
         @Override
-        public List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher) {
-            List<PopupCategorized.CategorizedPopupItem> items = new ArrayList<>();
+        public List<PopupCategorized.CategorizedMenuItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher) {
+            List<PopupCategorized.CategorizedMenuItem> items = new ArrayList<>();
             try {
                 Path path = setSelection(text);
 
@@ -659,18 +657,18 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
 
         @Override
-        public void select(PopupCategorized.CategorizedPopupItem item) {
+        public void select(PopupCategorized.CategorizedMenuItem item) {
             this.selection = item;
         }
 
         @Override
-        public PopupCategorized.CategorizedPopupItem getSelection() {
+        public PopupCategorized.CategorizedMenuItem getSelection() {
             return selection;
         }
     }
 
     /** a completed file item */
-    public static class FileItem implements PopupCategorized.CategorizedPopupItem {
+    public static class FileItem implements PopupCategorized.CategorizedMenuItem {
         protected Path path;
         protected Function<Path,Icon> iconGetter;
         protected String category;
@@ -712,7 +710,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
     /** a file info item */
-    public static class FileInfoItem implements PopupCategorized.CategorizedPopupItemLabel {
+    public static class FileInfoItem implements PopupCategorized.CategorizedMenuItemLabel {
         protected Path path;
         public FileInfoItem(Path path) {
             this.path = path;

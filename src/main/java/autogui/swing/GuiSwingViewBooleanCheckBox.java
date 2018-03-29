@@ -2,18 +2,19 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueBooleanCheckBox;
+import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EventObject;
+import java.util.List;
 import java.util.function.Consumer;
-import java.util.regex.Pattern;
 
 /**
  * <h3>representation</h3>
@@ -48,42 +49,69 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         protected GuiMappingContext context;
         protected PopupExtension popup;
 
+        protected List<PopupCategorized.CategorizedMenuItem> menuItems;
+
         public PropertyCheckBox(GuiMappingContext context) {
-            addActionListener(this);
             this.context = context;
+            init();
+        }
+
+        public void init() {
+            initName();
+            initEditable();
+            initContextUpdate();
+            initValue();
+            initListener();
+            initPopup();
+            initDragDrop();
+        }
+
+        public void initName() {
             setName(context.getName());
-            GuiSwingView.setDescriptionToolTipText(context, this);
-
-            //editable
-            GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
-            setEnabled(repr.isEditable(context));
-
-            //context update
-            context.addSourceUpdateListener(this);
-
-            //set name label
             if (context.isTypeElementProperty()) {
                 setText(context.getDisplayName());
             }
+            GuiSwingView.setDescriptionToolTipText(context, this);
+        }
 
-            //initial value
+        public void initEditable() {
+            GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
+            setEnabled(repr.isEditable(context));
+        }
+
+        public void initContextUpdate() {
+            context.addSourceUpdateListener(this);
+        }
+
+        public void initValue() {
             update(context, context.getSource());
+        }
 
-            //popup
-            JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
-            ContextRefreshAction refreshAction = new ContextRefreshAction(context);
-            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-                menu.accept(info);
-                menu.accept(refreshAction);
-                GuiSwingJsonTransfer.getActions(this, context)
-                        .forEach(menu::accept);
-                menu.accept(new ToStringCopyAction(this, context));
-                menu.accept(new HistoryMenu<>(this, getContext()));
-            });
+        public void initListener() {
+            addActionListener(this);
+        }
+
+        public void initPopup() {
+            popup = new PopupExtension(this, new PopupCategorized(this::getSwingStaticMenuItems));
             setInheritsPopupMenu(true);
+        }
 
-            //drag drop
+        public void initDragDrop() {
             GuiSwingView.setupTransferHandler(this, new BooleanTransferHandler(this));
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(
+                        Arrays.asList(
+                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                new ContextRefreshAction(context),
+                                new ToStringCopyAction(this, context),
+                                new HistoryMenu<>(this, getContext()),
+                        GuiSwingJsonTransfer.getActions(this, context)));
+            }
+            return menuItems;
         }
 
         @Override

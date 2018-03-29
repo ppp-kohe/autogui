@@ -110,6 +110,30 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         setupCancelChecker();
     }
 
+
+    /**
+     * call {@link #PopupExtension(JComponent, Predicate, PopupMenuBuilder, Supplier)}.
+     * the menu is supplied by the pane's {@link JComponent#getComponentPopupMenu()} or creating a new one if it returns null.
+     *   it also call {@link MenuKeySelector#addToMenu(JPopupMenu)} for incremental item search while showing the popup menu
+     * @param pane the host pane of the popup-menu, can be null
+     * @param keyMatcher  matching with a key-event for displaying the menu
+     * @param menuBuilder a builder for constructing menu-items
+     */
+    public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder) {
+        this(pane, keyMatcher, menuBuilder, new DefaultPopupGetter(pane));
+        new MenuKeySelector().addToMenu(menu.get());
+        //new PopupMenuHidingFix(menu);
+    }
+
+    /**
+     * call {@link #PopupExtension(JComponent, Predicate, PopupMenuBuilder)} with {@link #getDefaultKeyMatcher()}
+     * @param pane the host pane of the popup-menu, can be null
+     * @param menuBuilder a builder for constructing menu-items
+     */
+    public PopupExtension(JComponent pane, PopupMenuBuilder menuBuilder) {
+        this(pane, getDefaultKeyMatcher(), menuBuilder);
+    }
+
     protected void setupCancelChecker() {
         JPopupMenu m = menu.get();
         //reuse existing checker
@@ -126,6 +150,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
             m.addPopupMenuListener(cancelChecker);
         }
     }
+
 
     /** improve default behavior of showing popup menu: clicking a menu button while the menu is visible can hide it  */
     public static class PopupCancelChecker implements PopupMenuListener {
@@ -152,20 +177,6 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         }
     }
 
-
-    /**
-     * call {@link #PopupExtension(JComponent, Predicate, PopupMenuBuilder, Supplier)}.
-     * the menu is supplied by the pane's {@link JComponent#getComponentPopupMenu()} or creating a new one if it returns null.
-     *   it also call {@link MenuKeySelector#addToMenu(JPopupMenu)} for incremental item search while showing the popup menu
-     * @param pane the host pane of the popup-menu, can be null
-     * @param keyMatcher  matching with a key-event for displaying the menu
-     * @param menuBuilder a builder for constructing menu-items
-     */
-    public PopupExtension(JComponent pane, Predicate<KeyEvent> keyMatcher, PopupMenuBuilder menuBuilder) {
-        this(pane, keyMatcher, menuBuilder, new DefaultPopupGetter(pane));
-        new MenuKeySelector().addToMenu(menu.get());
-        //new PopupMenuHidingFix(menu);
-    }
 
     public void addListenersToPane() {
         addListenersTo(pane);

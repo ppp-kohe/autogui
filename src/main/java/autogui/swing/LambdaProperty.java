@@ -78,7 +78,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
 
     ////////////
 
-    public static class LambdaTextPane extends GuiSwingViewStringField.PropertyTextPane {
+    public static class LambdaTextPane extends GuiSwingViewStringField.PropertyStringPane {
         public LambdaTextPane(Supplier<String> getter, Consumer<String> setter) {
             super(create(String.class, getter, setter, new GuiReprValueStringField()));
             setPreferredSize(new Dimension(100, getPreferredSize().height ));

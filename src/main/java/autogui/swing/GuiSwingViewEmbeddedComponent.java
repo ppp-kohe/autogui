@@ -2,10 +2,13 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.mapping.GuiReprEmbeddedComponent;
+import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * <h3>representation</h3>
@@ -43,11 +46,41 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         protected JComponent component;
 
         public PropertyEmbeddedPane(GuiMappingContext context) {
-            setLayout(new BorderLayout());
             this.context = context;
+        }
+
+        public void init() {
+            initName();
+            initLayout();
+            initContextUpdate();
+            initValue();
+            initSize();
+        }
+
+        public void initName() {
+            setName(context.getName());
             GuiSwingView.setDescriptionToolTipText(context, this);
+        }
+
+        public void initLayout() {
+            setLayout(new BorderLayout());
+        }
+
+        public void initContextUpdate() {
+            context.addSourceUpdateListener(this);
+        }
+
+        public void initValue() {
             update(context, context.getSource());
+        }
+
+        public void initSize() {
             setPreferredSize(new Dimension(300, 200));
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            return Collections.emptyList();
         }
 
         @Override

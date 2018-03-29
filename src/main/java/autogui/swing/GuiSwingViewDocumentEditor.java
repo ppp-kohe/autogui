@@ -59,55 +59,94 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         return true;
     }
 
-    public static PopupExtension initText(JEditorPane pane, GuiMappingContext context) {
-        GuiMappingContext.SourceUpdateListener l = (GuiMappingContext.SourceUpdateListener) pane;
-        //context update
-        context.addSourceUpdateListener(l);
-        //initial update
-        l.update(context, context.getSource());
+    public static class TextPaneInitializer {
+        protected JEditorPane pane;
+        protected GuiMappingContext context;
+        protected PopupExtension popup;
 
-        pane.setMinimumSize(new Dimension(1, 1));
+        public TextPaneInitializer(JEditorPane pane, GuiMappingContext context) {
+            this.pane = pane;
+            this.context = context;
+            init();
+        }
 
-        //popup
-        JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
-        JComponent infoForSetting = GuiSwingContextInfo.get().getInfoLabel(context);
-        List<Action> actions = PopupExtensionText.getEditActions(pane);
-        ContextRefreshAction refreshAction = new ContextRefreshAction(context);
-        DocumentSettingAction settingAction = (pane instanceof PropertyDocumentTextPane ?
-                new DocumentSettingAction(infoForSetting, (SettingsWindowClient) pane,
-                        ((PropertyDocumentTextPane) pane).getSettingPane()) : null);
-        PopupExtensionText ext = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-            menu.accept(info);
-            menu.accept(refreshAction);
-            actions.forEach(menu::accept);
+        public PopupExtension getPopup() {
+            return popup;
+        }
 
-            menu.accept(new JPopupMenu.Separator());
-            if (pane instanceof ValuePane) {
-                GuiSwingJsonTransfer.getActions((ValuePane) pane, context)
-                    .forEach(menu::accept);
+        public void init() {
+            initName();
+            initContextUpdate();
+            initValue();
+            initSize();
+            initPopup();
+            initKeyBindings();
+            initHighlight();
+        }
+
+        public void initName() {
+            pane.setName(context.getName());
+            GuiSwingView.setDescriptionToolTipText(context, pane);
+        }
+
+        public void initContextUpdate() {
+            GuiMappingContext.SourceUpdateListener l = (GuiMappingContext.SourceUpdateListener) pane;
+            context.addSourceUpdateListener(l);
+        }
+
+        public void initValue() {
+            GuiMappingContext.SourceUpdateListener l = (GuiMappingContext.SourceUpdateListener) pane;
+            l.update(context, context.getSource());
+        }
+
+        public void initSize() {
+            pane.setMinimumSize(new Dimension(1, 1));
+        }
+
+        public void initPopup() {
+            PopupExtension.PopupMenuBuilder builder;
+            if (pane instanceof ValuePane<?>) {
+                builder = new PopupCategorized(((ValuePane<?>) pane)::getSwingStaticMenuItems);
+            } else {
+                builder = (sender,menu) -> {};
             }
+            popup = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), builder);
+            pane.setInheritsPopupMenu(true);
+        }
 
-            if (settingAction != null) {
-                menu.accept(new JPopupMenu.Separator());
-                menu.accept(settingAction);
-            }
-        });
-        pane.setInheritsPopupMenu(true);
+        public void initKeyBindings() {
+            PopupExtensionText.putInputEditActions(pane);
+            PopupExtensionText.putUnregisteredEditActions(pane);
+        }
 
-        //key-binding
-        PopupExtensionText.putInputEditActions(pane);
-        PopupExtensionText.putUnregisteredEditActions(pane);
+        public void initHighlight() {
+            pane.setCaret(new DefaultCaret() {
+                SelectionHighlightPainter painter = new SelectionHighlightPainter();
+                @Override
+                protected Highlighter.HighlightPainter getSelectionPainter() {
+                    return painter;
+                }
+            });
+        }
+    }
 
-        //selection highlight
-        pane.setCaret(new DefaultCaret() {
-            SelectionHighlightPainter painter = new SelectionHighlightPainter();
-            @Override
-            protected Highlighter.HighlightPainter getSelectionPainter() {
-                return painter;
-            }
-        });
-
-        return ext;
+    public static List<PopupCategorized.CategorizedMenuItem> getTextMenuItems(ValuePane<?> pane) {
+        GuiMappingContext context = pane.getContext();
+        List<Action> settingActions = Collections.emptyList();
+        if (pane instanceof PropertyDocumentTextPane) {
+            settingActions = Collections.singletonList(
+                    new DocumentSettingAction(
+                            GuiSwingContextInfo.get().getInfoLabel(context),
+                            (SettingsWindowClient) pane,
+                            ((PropertyDocumentTextPane) pane).getSettingPane()));
+        }
+        return PopupCategorized.getMenuItems(
+                Arrays.asList(
+                        GuiSwingContextInfo.get().getInfoLabel(context),
+                        new ContextRefreshAction(context)),
+                settingActions,
+                PopupExtensionText.getEditActions((JTextComponent) pane),
+                GuiSwingJsonTransfer.getActions(pane, context));
     }
 
     public static class SelectionHighlightPainter extends DefaultHighlighter.DefaultHighlightPainter {
@@ -209,8 +248,12 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public PropertyDocumentEditorPane(GuiMappingContext context) {
             this.context = context;
-            GuiSwingView.setDescriptionToolTipText(context, this);
-            popup = initText(this, context);
+            popup = new TextPaneInitializer(this, context).getPopup();
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            return getTextMenuItems(this);
         }
 
         @Override
@@ -283,9 +326,13 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public PropertyDocumentTextPane(GuiMappingContext context) {
             this.context = context;
-            GuiSwingView.setDescriptionToolTipText(context, this);
             settingPane = new DocumentSettingPane(this);
-            popup = initText(this, context);
+            popup = new TextPaneInitializer(this, context).getPopup();
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            return getTextMenuItems(this);
         }
 
         @Override

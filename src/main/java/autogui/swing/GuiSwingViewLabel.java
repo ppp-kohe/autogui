@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
+import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
 import autogui.swing.util.SearchTextField;
@@ -16,6 +17,8 @@ import java.awt.dnd.DragSource;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.geom.RoundRectangle2D;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * <h3>representation</h3>
@@ -49,39 +52,73 @@ public class GuiSwingViewLabel implements GuiSwingView {
         protected GuiMappingContext context;
         protected Object value;
         protected PopupExtension popup;
+        protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
         public PropertyLabel(GuiMappingContext context) {
             this.context = context;
-            putClientProperty("html.disable", Boolean.TRUE);
-            setText(" ");
-            GuiSwingView.setDescriptionToolTipText(context, this);
+            init();
+        }
 
+        public void init() {
+            initName();
+            initFocus();
+            initVisualProperty();
+            initBorder();
+            initContextUpdate();
+            initValue();
+            initPopup();
+            initDragDrop();
+        }
+
+        public void initName() {
+            setName(context.getName());
+            GuiSwingView.setDescriptionToolTipText(context, this);
+        }
+
+        public void initVisualProperty() {
+            putClientProperty("html.disable", Boolean.TRUE);
+            setText(" "); //initialize preferred size
+        }
+
+        public void initFocus() {
+            setFocusable(true);
+        }
+
+        public void initBorder() {
             setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10),
                     new FocusBorder(this)));
+        }
 
-            //context update
+        public void initContextUpdate() {
             context.addSourceUpdateListener(this);
-            //initial update
+        }
+
+        public void initValue() {
             update(context, context.getSource());
+        }
 
-            //popup
-            JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
-            ContextRefreshAction refreshAction = new ContextRefreshAction(context);
-
-            PopupExtensionText.TextOpenBrowserAction browserAction = new PopupExtensionText.TextOpenBrowserAction(this);
-            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-                menu.accept(info);
-                menu.accept(refreshAction);
-                menu.accept(browserAction);
-                menu.accept(new LabelJsonCopyAction(this, context));
-                menu.accept(new ToStringCopyAction(this, context));
-            });
+        public void initPopup() {
+            popup = new PopupExtension(this, new PopupCategorized(this::getSwingStaticMenuItems));
             setInheritsPopupMenu(true);
+        }
 
-            //drag
+        public void initDragDrop() {
             GuiSwingView.setupTransferHandler(this, new LabelTransferHandler(this));
-            setFocusable(true);
+        }
 
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(
+                        Arrays.asList(
+                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                new ContextRefreshAction(context),
+                                new PopupExtensionText.TextOpenBrowserAction(this),
+                                new LabelJsonCopyAction(this, context),
+                                new ToStringCopyAction(this, context))
+                );
+            }
+            return menuItems;
         }
 
         @Override

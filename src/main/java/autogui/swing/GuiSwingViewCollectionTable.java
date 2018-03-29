@@ -1,17 +1,12 @@
 package autogui.swing;
 
-import autogui.base.JsonReader;
-import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprActionList;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.table.*;
-import autogui.swing.util.MenuBuilder;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.PopupExtensionSender;
-import autogui.swing.util.ScheduledTaskRunner;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -96,7 +91,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 }
             }
         }
-        return table.initAfterAddingColumns(actions);
+        return table.setupAfterAddingColumns(actions);
     }
 
     @Override
@@ -110,6 +105,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected GuiMappingContext context;
         protected List<?> source;
         protected PopupExtensionCollection popup;
+        protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected List<Action> actions = new ArrayList<>();
         protected List<GuiSwingTableColumnSetDefault.TableSelectionListAction> autoSelectionActions = new ArrayList<>();
         protected int autoSelectionDepth;
@@ -122,19 +118,41 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public CollectionTable(GuiMappingContext context) {
             this.context = context;
+            init();
+        }
 
-            //model
+        public void init() {
+            initName();
+            initModel();
+            initContextUpdate();
+            initPopup();
+            initGrid();
+            initSelection();
+            initSelectionSource();
+            initSelectionClear();
+            initValue();
+            initPreferencesUpdater();
+            initDragDrop();
+            initFocus();
+        }
+
+        public void initName() {
+            setName(context.getName());
+            GuiSwingView.setDescriptionToolTipText(context, this);
+        }
+
+        public void initModel() {
             ObjectTableModel model = new ObjectTableModel(this::getSource);
             model.setTable(this);
             setModel(model);
             setColumnModel(model.getColumnModel());
+        }
 
-            //update context
+        public void initContextUpdate() {
             context.addSourceUpdateListener(this);
+        }
 
-            GuiSwingView.setDescriptionToolTipText(context, this);
-
-            //popup
+        public void initPopup() {
             JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
             List<JComponent> items = new ArrayList<>();
             items.add(label);
@@ -146,38 +164,61 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             popup = new PopupExtensionCollection(this, PopupExtension.getDefaultKeyMatcher(), items);
             Arrays.stream(listeners).forEach(this::addMouseListener);
             //improve precedence of the popup listener
+        }
 
-            //cell selection
+        public void initGrid() {
+            setGridColor(getBackground());
+            setShowGrid(false);
+        }
+
+        public void initSelection() {
             selectionRunner = new ScheduledTaskRunner.EditingRunner(200, this::runAutoSelectionActions);
             setCellSelectionEnabled(true);
             setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-            setGridColor(getBackground());
-            setShowGrid(false);
+        }
 
+        public void initSelectionSource() {
             selectionSourceForRowIndexes = new TableSelectionSourceForIndexes(this, false);
             selectionSourceForRowAndColumnIndexes = new TableSelectionSourceForIndexes(this, true);
+        }
 
-            //initial update
-            update(context, context.getSource());
-
-            preferencesUpdater = new TablePreferencesUpdater(this, context);
-
-            //TODO drag drop
-            setTransferHandler(new ToStringCollectionTransferHandler(this));
-            GuiSwingView.setupCopyAndPasteActions(this);
-            setFocusable(true);
-
-            //esc. to clear selection
+        public void initSelectionClear() {
             UnSelectAction unSelectAction = new UnSelectAction(this);
             getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), unSelectAction.getValue(Action.NAME));
             getActionMap().put(unSelectAction.getValue(Action.NAME), unSelectAction);
+        }
+
+        public void initValue() {
+            update(context, context.getSource());
+        }
+
+        public void initPreferencesUpdater() {
+            preferencesUpdater = new TablePreferencesUpdater(this, context);
+        }
+
+        public void initDragDrop() {
+            //TODO drag drop
+            setTransferHandler(new ToStringCollectionTransferHandler(this));
+        }
+
+        public void initFocus() {
+            GuiSwingView.setupCopyAndPasteActions(this);
+            setFocusable(true);
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(); //TODO
+            }
+            return menuItems;
         }
 
         public PopupExtensionCollection getPopup() {
             return popup;
         }
 
-        public JComponent initAfterAddingColumns(List<Action> actions) {
+        public JComponent setupAfterAddingColumns(List<Action> actions) {
             this.actions.addAll(actions);
 
             actions.stream()

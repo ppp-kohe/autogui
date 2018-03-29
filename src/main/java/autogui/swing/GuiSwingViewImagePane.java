@@ -6,6 +6,7 @@ import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.mapping.GuiReprValueImagePane;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.MenuBuilder;
+import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
 import javax.imageio.ImageIO;
@@ -13,11 +14,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
@@ -70,23 +71,30 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         protected boolean imageScaleAutoSwitchByMouseWheel = true;
 
         protected PopupExtension popup;
+        protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
         public PropertyImagePane(GuiMappingContext context) {
             this.context = context;
-            GuiSwingView.setDescriptionToolTipText(context, this);
             init();
         }
 
-        protected void init() {
+        public void init() {
+            initName();
             initScale();
             initEditable();
+            initContextUpdate();
+            initValue();
             initPopup();
-            initDragAndDrop();
+            initDragDrop();
             initFocus();
-            initContext();
         }
 
-        protected void initScale() {
+        public void initName() {
+            setName(context.getName());
+            GuiSwingView.setDescriptionToolTipText(context, this);
+        }
+
+        public void initScale() {
             imageScaleDefault = new ImageScaleFit(1f);
             setImageScale(imageScaleDefault);
 
@@ -121,53 +129,31 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             return imageScaleAutoSwitchByMouseWheel;
         }
 
-        protected void initEditable() {
+        public void initEditable() {
             setEditable(((GuiReprValueImagePane) context.getRepresentation())
                     .isEditable(context));
         }
 
-        protected void initPopup() {
-            JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
-            ContextRefreshAction refreshAction = new ContextRefreshAction(context);
-            popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
-                menu.accept(label);
-                menu.accept(refreshAction);
-                menu.accept(createSizeInfo(getImageSize()));
-                menu.accept(createScaleInfo(getImageSize()));
-                menu.accept(new JCheckBoxMenuItem(new ImageScaleSwitchFitAction(this)));
-                menu.accept(new ImageScaleOriginalSizeAction(this));
-                menu.accept(new JCheckBoxMenuItem(new ImageScaleAutoSwitchByMouseWheel(this)));
-
-                JMenu scaleMenu = new JMenu("Scale");
-                scaleMenu.add(new ImageScaleSizeAction(this, 0.5f));
-                scaleMenu.add(new ImageScaleSizeAction(this, 1.5f));
-                scaleMenu.add(new ImageScaleSizeAction(this, 2f));
-                scaleMenu.add(new ImageScaleSizeAction(this, 4f));
-                scaleMenu.add(new ImageScaleSizeAction(this, 8f));
-                menu.accept(scaleMenu);
-
-
-                menu.accept(new ImageCopyAction(getImage()));
-                menu.accept(new ImagePasteAction(this));
-                GuiSwingJsonTransfer.getActions(this, context)
-                        .forEach(menu::accept);
-                menu.accept(new HistoryMenuImage(this, context));
-            });
-            setInheritsPopupMenu(true);
-        }
-
-        protected void initDragAndDrop() {
-            GuiSwingView.setupTransferHandler(this, new ImageTransferHandler(this));
-        }
-
-        protected void initContext() {
-            //context update
+        public void initContextUpdate() {
             context.addSourceUpdateListener(this);
-            //initial update
+        }
+
+        public void initValue() {
             update(context, context.getSource());
         }
 
-        protected void initFocus() {
+        public void initPopup() {
+            popup = new PopupExtension(this, new PopupCategorized(
+                    PopupCategorized.getMenuItemsSupplier(this::getSwingStaticMenuItems, this::getDynamicMenuItems)));
+            setInheritsPopupMenu(true);
+        }
+
+        public void initDragDrop() {
+            GuiSwingView.setupTransferHandler(this, new ImageTransferHandler(this));
+        }
+
+
+        public void initFocus() {
             setFocusable(true);
         }
 
@@ -183,6 +169,38 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public JComponent createScaleInfo(Dimension size) {
             return MenuBuilder.get().createLabel(String.format("Scale: %s",
                     imageScale == null ? "null" : imageScale.getInfo(size, getViewSize())));
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                JMenu scaleMenu = new JMenu("Scale");
+                scaleMenu.add(new ImageScaleSizeAction(this, 0.5f));
+                scaleMenu.add(new ImageScaleSizeAction(this, 1.5f));
+                scaleMenu.add(new ImageScaleSizeAction(this, 2f));
+                scaleMenu.add(new ImageScaleSizeAction(this, 4f));
+                scaleMenu.add(new ImageScaleSizeAction(this, 8f));
+
+                menuItems = PopupCategorized.getMenuItems(
+                        Arrays.asList(
+                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                new ContextRefreshAction(context),
+                                new JCheckBoxMenuItem(new ImageScaleSwitchFitAction(this)),
+                                new ImageScaleOriginalSizeAction(this),
+                                new JCheckBoxMenuItem(new ImageScaleAutoSwitchByMouseWheel(this)),
+                                scaleMenu,
+                                new ImageCopyAction(getImage()),
+                                new ImagePasteAction(this),
+                                new HistoryMenuImage(this, context)),
+                        GuiSwingJsonTransfer.getActions(this, context)
+                );
+            }
+            return menuItems;
+        }
+
+        public List<PopupCategorized.CategorizedMenuItem> getDynamicMenuItems() {
+            return PopupCategorized.getMenuItems(
+                    Arrays.asList(createSizeInfo(getImageSize()), createScaleInfo(getImageSize())));
         }
 
         @Override

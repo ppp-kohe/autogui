@@ -5,11 +5,14 @@ import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprPropertyPane;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.util.NamedPane;
+import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.EventObject;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -71,15 +74,13 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
     public static class PropertyPane extends NamedPropertyPane {
         protected GuiMappingContext context;
         protected PopupExtension popup;
+        protected boolean showName;
 
         public PropertyPane(GuiMappingContext context, boolean showName) {
             super(context.getDisplayName(), context.getName());
             this.context = context;
-            GuiSwingView.setDescriptionToolTipText(context, this);
-            if (showName) {
-                initNameLabel();
-            }
-            initPopup();
+            this.showName = showName;
+            initLazy();
         }
 
         public PropertyPane(GuiMappingContext context, boolean showName, JComponent content) {
@@ -92,7 +93,19 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             setLayout(new BorderLayout());
             setOpaque(false);
             setBorder(BorderFactory.createEmptyBorder());
-            //skip init
+        }
+
+        public void initLazy() {
+            initName();
+            initPopup();
+        }
+
+        public void initName() {
+            setName(context.getName());
+            GuiSwingView.setDescriptionToolTipText(context, this);
+            if (showName) {
+                initNameLabel();
+            }
         }
 
         public void initNameLabel() {
@@ -105,6 +118,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
 
         public void initPopup() {
+            //TODO
             JComponent info = GuiSwingContextInfo.get().getInfoLabel(context);
             ContextRefreshAction refreshAction = new ContextRefreshAction(context);
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), (sender, menu) -> {
@@ -115,7 +129,6 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
                 menu.accept(new ToStringCopyAction(this, context));
             });
             setInheritsPopupMenu(true);
-
         }
 
         @Override
@@ -125,6 +138,11 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             }
             this.contentPane = content;
             add(this.contentPane, BorderLayout.CENTER);
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            return super.getSwingStaticMenuItems();
         }
 
         @Override
@@ -199,6 +217,11 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
                 }
                 getContentPaneAsValuePane().setSwingViewValueWithUpdate(value);
             }
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            return Collections.emptyList();
         }
 
         @Override

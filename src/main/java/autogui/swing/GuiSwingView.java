@@ -6,9 +6,7 @@ import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.table.TableTargetMenu;
-import autogui.swing.util.MenuBuilder;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.SettingsWindow;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
@@ -55,6 +53,30 @@ public interface GuiSwingView extends GuiSwingElement {
 
         default void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) { }
 
+        /**
+         * a typical implementation becomes like the following code:
+         *  <pre>
+         *      if (menuItems == null) { menuItems = {@link PopupCategorized}.getMenuItems(actions, menus); }
+         *      return menuItems;
+         *  </pre>
+         *  <p>
+         *      the method returns original menu items for the pane. so,
+         *       if a wrapper pane has a wrapped sub-pane added as a child component,
+         *         it should not include items of the wrapped sub-pane.
+         * @return a list of actions (or menu-components) statically determined,
+         *     that should be always same instances
+         */
+        List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems();
+
+        /**
+         * a typical implementation if there are no dynamic items becomes like the following code:
+         * <pre>
+         *     if (popup == null) { popup = new {@link PopupExtension}(this,
+         *                                    new {@link PopupCategorized}(this::getSwingStaticMenuItems)); }
+         *     return popup.getMenuBuilder();
+         * </pre>
+         * @return a menu builder
+         */
         PopupExtension.PopupMenuBuilder getSwingMenuBuilder();
 
         default ValueScrollPane<ValueType> wrapScrollPane(boolean verticalAlways, boolean horizontalAlways) {
@@ -234,6 +256,11 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            return Collections.emptyList();
+        }
+
+        @Override
         public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
             return pane == null ? null : pane.getSwingMenuBuilder();
         }
@@ -299,6 +326,11 @@ public interface GuiSwingView extends GuiSwingElement {
             if (pane != null) {
                 pane.setSwingViewValueWithUpdate(value);
             }
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            return Collections.emptyList();
         }
 
         @Override

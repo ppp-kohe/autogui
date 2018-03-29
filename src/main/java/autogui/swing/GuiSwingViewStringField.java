@@ -3,31 +3,30 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueStringField;
 import autogui.swing.util.NamedPane;
+import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.SearchTextField;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragSource;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * <h3>representation</h3>
  * {@link GuiReprValueStringField}
  *
- * <h3>{@link PropertyTextPane#getSwingViewValue()}</h3>
+ * <h3>{@link PropertyStringPane#getSwingViewValue()}</h3>
  *  the field text: {@link String}.
  * <p>
  *   updating is caused by field's setText(String) -&gt;
  *      document listener -&gt;
- *      taskRunner -&gt; {@link PropertyTextPane#updateFieldInEvent(boolean)}.
+ *      taskRunner -&gt; {@link PropertyStringPane#updateFieldInEvent(boolean)}.
  *
  * <h3>history-value</h3>
  * supported.
@@ -39,7 +38,7 @@ import java.util.function.Consumer;
 public class GuiSwingViewStringField implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context) {
-        PropertyTextPane field = new PropertyTextPane(context);
+        PropertyStringPane field = new PropertyStringPane(context);
         if (context.isTypeElementProperty()) {
             return new NamedPane(context.getDisplayName(), field);
         } else {
@@ -52,33 +51,14 @@ public class GuiSwingViewStringField implements GuiSwingView {
         return false;
     }
 
-    public static class PropertyTextPane extends SearchTextField
+    public static class PropertyStringPane extends SearchTextField
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<String> {
         protected GuiMappingContext context;
+        protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyTextPane(GuiMappingContext context) {
+        public PropertyStringPane(GuiMappingContext context) {
             this.context = context;
             initLazy();
-            getIcon().setVisible(false);
-
-            GuiSwingView.setDescriptionToolTipText(context, this);
-            GuiSwingView.setDescriptionToolTipText(context, getField());
-
-            //editable
-            GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
-            getField().setEditable(str.isEditable(context));
-
-            //context update
-            context.addSourceUpdateListener(this);
-            //initial update
-            update(context, context.getSource());
-
-            //popup menu
-            setInheritsPopupMenu(true);
-
-            //drag drop
-            StringTransferHandler h = new StringTransferHandler(this);
-            setTransferHandlerWithSettingExportingDragSource(h);
         }
 
         @Override
@@ -88,6 +68,41 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         public void initLazy() {
             super.init();
+            initName();
+            initEditable();
+            initContextUpdate();
+            initValue();
+            initDragDrop();
+        }
+
+        public void initPopup() {
+            super.initPopup();
+            setInheritsPopupMenu(true);
+        }
+
+        public void initName() {
+            setName(context.getName());
+            getIcon().setVisible(false);
+            GuiSwingView.setDescriptionToolTipText(context, this);
+            GuiSwingView.setDescriptionToolTipText(context, getField());
+        }
+
+        public void initEditable() {
+            GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
+            getField().setEditable(str.isEditable(context));
+        }
+
+        public void initContextUpdate() {
+            context.addSourceUpdateListener(this);
+        }
+
+        public void initValue() {
+            update(context, context.getSource());
+        }
+
+        public void initDragDrop() {
+            StringTransferHandler h = new StringTransferHandler(this);
+            setTransferHandlerWithSettingExportingDragSource(h);
         }
 
         @Override
@@ -101,11 +116,33 @@ public class GuiSwingViewStringField implements GuiSwingView {
         }
 
         @Override
+        public Supplier<List<PopupCategorized.CategorizedMenuItem>> getMenuItems() {
+            return () -> PopupCategorized.getMenuItems(
+                    getSwingStaticMenuItems(),
+                    getSearchedItems());
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(getPopupEditActions(), getPopupEditMenuItems());
+            }
+            return menuItems;
+        }
+
+        @Override
+        public List<Action> getPopupEditActions() {
+            List<Action> actions = new ArrayList<>();
+            actions.add(new ContextRefreshAction(context));
+            actions.addAll(super.getPopupEditActions());
+            actions.addAll(GuiSwingJsonTransfer.getActions(this, context));
+            return actions;
+        }
+
+        @Override
         public List<? extends JComponent> getPopupEditMenuItems() {
             List<JComponent> menus = new ArrayList<>();
             menus.add(GuiSwingContextInfo.get().getInfoLabel(context));
-            menus.add(new JMenuItem(new ContextRefreshAction(context)));
-            menus.addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
             menus.addAll(super.getPopupEditMenuItems());
             menus.add(new HistoryMenu<>(this, getContext()));
             return menus;
@@ -161,9 +198,9 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
     /** handle entire text */
     public static class StringTransferHandler extends TransferHandler {
-        protected PropertyTextPane pane;
+        protected PropertyStringPane pane;
 
-        public StringTransferHandler(PropertyTextPane pane) {
+        public StringTransferHandler(PropertyStringPane pane) {
             this.pane = pane;
         }
 

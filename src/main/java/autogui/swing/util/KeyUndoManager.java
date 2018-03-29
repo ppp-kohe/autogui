@@ -132,7 +132,7 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
     }
 
     public static class UndoAction extends AbstractAction
-        implements PopupCategorized.CategorizedPopupItemMenuAction {
+        implements PopupCategorized.CategorizedMenuItemAction {
         protected UndoManager manager;
         protected boolean undo;
 

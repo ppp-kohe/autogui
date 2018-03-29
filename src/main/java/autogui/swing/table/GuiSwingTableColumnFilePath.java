@@ -7,10 +7,7 @@ import autogui.swing.util.SearchTextField;
 import autogui.swing.util.SearchTextFieldFilePath;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.geom.RoundRectangle2D;
-import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -81,7 +78,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         }
 
         @Override
-        public void selectSearchedItemFromModel(PopupCategorized.CategorizedPopupItem item) {
+        public void selectSearchedItemFromModel(PopupCategorized.CategorizedMenuItem item) {
             super.selectSearchedItemFromModel(item);
         }
     }
@@ -96,7 +93,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         }
 
         @Override
-        public List<PopupCategorized.CategorizedPopupItem> getCandidates(String text, boolean editable, SearchTextField.SearchTextFieldPublisher publisher) {
+        public List<PopupCategorized.CategorizedMenuItem> getCandidates(String text, boolean editable, SearchTextField.SearchTextFieldPublisher publisher) {
             setSelection(text);
             return new ArrayList<>();
         }

@@ -163,7 +163,7 @@ public class GuiSwingPreferences {
             {
                 contentTextPane = new JTextPane();
                 contentTextPane.setEditable(false);
-                GuiReprValueDocumentEditor.setUpStyle((StyledDocument) contentTextPane.getDocument());
+                GuiReprValueDocumentEditor.setupStyle((StyledDocument) contentTextPane.getDocument());
                 viewPane.add(new JScrollPane(contentTextPane));
             }
 

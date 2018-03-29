@@ -22,7 +22,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     }
 
     /** a component for editor and renderer */
-    public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyTextPane {
+    public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyStringPane {
         protected boolean editor;
         public ColumnEditTextPane(GuiMappingContext context, boolean editor) {
             super(context);

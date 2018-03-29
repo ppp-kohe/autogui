@@ -59,7 +59,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         if (value instanceof StyledDocument) {
             StyledDocument doc = (StyledDocument) value;
             Style style = doc.getStyle(StyleContext.DEFAULT_STYLE);
-            if (setUpStyle(style)) {
+            if (setupStyle(style)) {
                 doc.setParagraphAttributes(0, doc.getLength(), style, true);
             }
         }
@@ -216,7 +216,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         return tabSet;
     }
 
-    public static boolean setUpStyle(Style style) {
+    public static boolean setupStyle(Style style) {
         boolean set = false;
         if (StyleConstants.getTabSet(style) == null) {
             StyleConstants.setTabSet(style, getTabSet());
@@ -236,9 +236,9 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         return set;
     }
 
-    public static void setUpStyle(StyledDocument doc) {
+    public static void setupStyle(StyledDocument doc) {
         Style style = doc.getStyle(StyleContext.DEFAULT_STYLE);
-        if (setUpStyle(style)) {
+        if (setupStyle(style)) {
             doc.setParagraphAttributes(0, doc.getLength(), style, true);
         }
     }
@@ -256,7 +256,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
 
         public void initDefaultStyle() {
-            setUpStyle(this);
+            setupStyle(this);
         }
 
         public Content getContentValue() {

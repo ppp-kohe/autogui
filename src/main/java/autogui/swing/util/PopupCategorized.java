@@ -5,7 +5,6 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -14,7 +13,7 @@ import java.util.stream.Stream;
  *
  * a menu builder for categorizing items.
  * <pre>
- *     [ labelItem1 //{@link CategorizedPopupItemLabel},
+ *     [ labelItem1 //{@link CategorizedMenuItemLabel},
  *       labelItem2,
  *       ...
  *      category1,
@@ -29,11 +28,11 @@ import java.util.stream.Stream;
  * </pre>
  */
 public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
-    protected Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier;
-    protected Consumer<CategorizedPopupItem> itemConsumer;
+    protected Supplier<? extends Collection<CategorizedMenuItem>> itemSupplier;
+    protected Consumer<CategorizedMenuItem> itemConsumer;
 
     /** the categorized menu item */
-    public interface CategorizedPopupItem {
+    public interface CategorizedMenuItem {
         String getName();
         Icon getIcon();
         String getCategory();
@@ -46,7 +45,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
     public static String CATEGORY_LABEL = MenuBuilder.getImplicitCategory(".label");
 
     /** a label: special category */
-    public interface CategorizedPopupItemLabel extends CategorizedPopupItem {
+    public interface CategorizedMenuItemLabel extends CategorizedMenuItem {
         @Override
         default String getCategory() {
             return CATEGORY_LABEL;
@@ -55,7 +54,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
 
     /** a categorized menu item with a menu-item component.
      *  name and icon are ignored, the default category is same as itemLabel */
-    public interface CategorizedPopupItemMenu extends CategorizedPopupItem {
+    public interface CategorizedMenuItemComponent extends CategorizedMenuItem {
         JComponent getMenuItem(PopupCategorized sender);
 
         @Override
@@ -74,17 +73,23 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         }
     }
 
-    public interface CategorizedPopupItemMenuAction extends CategorizedPopupItemMenu, Action {
+    /**
+     * an action with category info.
+     */
+    public interface CategorizedMenuItemAction extends CategorizedMenuItemComponent, Action {
         @Override
         default JComponent getMenuItem(PopupCategorized sender) {
             return new JMenuItem(this);
         }
     }
 
-    public static class CategorizedPopupItemMenuActionDelegate implements CategorizedPopupItemMenuAction {
+    /**
+     * an action wraps another action for supplying category info. by sub-classing
+     */
+    public static class CategorizedMenuItemActionDelegate implements CategorizedMenuItemAction {
         protected Action action;
 
-        public CategorizedPopupItemMenuActionDelegate(Action action) {
+        public CategorizedMenuItemActionDelegate(Action action) {
             this.action = action;
         }
 
@@ -124,66 +129,85 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         }
     }
 
-    public static Supplier<? extends Collection<CategorizedPopupItem>> getSupplierWithActions(
-            List<? extends Action> topActions,
-            Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier) {
-        return () ->
-                Stream.concat(
-                    Stream.concat(
-                            topActions.stream()
-                                .filter(CategorizedPopupItem.class::isInstance)
-                                .map(CategorizedPopupItem.class::cast),
-                            topActions.stream()
-                                .filter(c -> !CategorizedPopupItem.class.isInstance(c))
-                                .map(CategorizedPopupItemMenuActionDelegate::new)),
-                    itemSupplier.get().stream())
-                .collect(Collectors.toList());
+    /**
+     *
+     * @param itemsList array of list of one of {@link CategorizedMenuItem}, {@link Action} or {@link JComponent}
+     * @return a list of {@link CategorizedMenuItem} converted from arguments
+     */
+    public static List<CategorizedMenuItem> getMenuItems(List<?>... itemsList) {
+        List<CategorizedMenuItem> result = new ArrayList<>();
+        for (List<?> items : itemsList) {
+            for (Object o : items) {
+                try {
+                    result.add(getMenuItem(o));
+                } catch (IllegalArgumentException e) {
+                    //skip
+                }
+            }
+        }
+        return result;
     }
 
-    public static Supplier<? extends Collection<CategorizedPopupItem>> getSupplierWithMenuItems(
-            List<? extends JComponent> topItems,
-            Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier) {
-        return () ->
-                Stream.concat(
-                    Stream.concat(
-                            topItems.stream()
-                                    .filter(CategorizedPopupItem.class::isInstance)
-                                    .map(CategorizedPopupItem.class::cast),
-                            topItems.stream()
-                                    .filter(c -> !CategorizedPopupItem.class.isInstance(c))
-                                    .<CategorizedPopupItemMenu>map(i -> (sender) -> i)),
-                    itemSupplier.get().stream())
-                .collect(Collectors.toList());
+    /**
+     * @param item  one of {@link CategorizedMenuItem}, {@link Action} or {@link JComponent},
+     *              otherwise, throws an exception
+     * @return a {@link CategorizedMenuItem} converted from the item
+     */
+    public static CategorizedMenuItem getMenuItem(Object item) {
+        if (item instanceof CategorizedMenuItem) {
+            return (CategorizedMenuItem) item;
+        } else if (item instanceof Action) {
+            return new CategorizedMenuItemActionDelegate((Action) item);
+        } else if (item instanceof JComponent) {
+            return new CategorizedMenuItemComponent() {
+                @Override
+                public JComponent getMenuItem(PopupCategorized sender) {
+                    return (JComponent) item;
+                }
+            };
+        } else {
+            throw new IllegalArgumentException("unsupported type: " + item.getClass());
+        }
     }
 
-    public PopupCategorized(Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier) {
+    @SafeVarargs
+    public static Supplier<? extends Collection<CategorizedMenuItem>> getMenuItemsSupplier(
+            Supplier<? extends Collection<CategorizedMenuItem>>... itemsList) {
+        return () ->
+            Arrays.stream(itemsList)
+                    .map(Supplier::get)
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+    }
+
+    public PopupCategorized(Supplier<? extends Collection<CategorizedMenuItem>> itemSupplier) {
         this(itemSupplier, null);
     }
 
-    public PopupCategorized(Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier,
-                            Consumer<CategorizedPopupItem> itemConsumer) {
+    public PopupCategorized(Supplier<? extends Collection<CategorizedMenuItem>> itemSupplier,
+                            Consumer<CategorizedMenuItem> itemConsumer) {
         this.itemSupplier = itemSupplier;
         this.itemConsumer = itemConsumer;
     }
 
-    public Supplier<? extends Collection<CategorizedPopupItem>> getItemSupplier() {
+    public Supplier<? extends Collection<CategorizedMenuItem>> getItemSupplier() {
         return itemSupplier;
     }
 
-    public void setItemSupplier(Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier) {
+    public void setItemSupplier(Supplier<? extends Collection<CategorizedMenuItem>> itemSupplier) {
         this.itemSupplier = itemSupplier;
     }
 
     @Override
     public void build(PopupExtensionSender sender, Consumer<Object> menu) {
-        Iterable<CategorizedPopupItem> items = itemSupplier.get();
+        Iterable<CategorizedMenuItem> items = itemSupplier.get();
         if (items != null) {
             //category -> subCategory -> list item
             Map<String,Map<String,List<JComponent>>> subCategorizedMenuItems = new LinkedHashMap<>();
             subCategorizedMenuItems.put(CATEGORY_LABEL, new LinkedHashMap<>());
 
             int size = 0;
-            for (CategorizedPopupItem item : items) {
+            for (CategorizedMenuItem item : items) {
                 String category = item.getCategory();
                 subCategorizedMenuItems.computeIfAbsent(category, (c) -> new LinkedHashMap<>())
                         .computeIfAbsent(item.getSubCategory(), (sc) -> new ArrayList<>())
@@ -212,11 +236,15 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         return MenuBuilder.get();
     }
 
-    public JComponent createMenuItem(CategorizedPopupItem item) {
-        if (item instanceof CategorizedPopupItemLabel) {
+    public JComponent createMenuItem(CategorizedMenuItem item) {
+        if (item instanceof CategorizedMenuItemLabel) {
             return getMenuBuilder().createLabel(item.getName());
-        } else if (item instanceof CategorizedPopupItemMenu) {
-            return ((CategorizedPopupItemMenu) item).getMenuItem(this);
+        } else if (item instanceof CategorizedMenuItemComponent) {
+            return ((CategorizedMenuItemComponent) item).getMenuItem(this);
+        } else if (item instanceof JComponent) {
+            return (JComponent) item;
+        } else if (item instanceof Action) {
+            return new JMenuItem((Action) item);
         } else {
             return new JMenuItem(new SearchPopupAction(this, item));
         }
@@ -231,20 +259,20 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         }
     }
 
-    public void select(CategorizedPopupItem item) {
+    public void select(CategorizedMenuItem item) {
         if (itemConsumer != null) {
             itemConsumer.accept(item);
         }
     }
 
     /**
-     * an action for selecting a {@link CategorizedPopupItem}
+     * an action for selecting a {@link CategorizedMenuItem}
      */
     public static class SearchPopupAction extends AbstractAction {
         protected PopupCategorized popup;
-        protected CategorizedPopupItem item;
+        protected CategorizedMenuItem item;
 
-        public SearchPopupAction(PopupCategorized popup, CategorizedPopupItem item) {
+        public SearchPopupAction(PopupCategorized popup, CategorizedMenuItem item) {
             this.popup = popup;
             this.item = item;
             putValue(NAME, item.getName());
@@ -263,11 +291,11 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
      * another menu builder with limiting items
      */
     public static class PopupCategorizedFixed extends PopupCategorized {
-        public PopupCategorizedFixed(Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier) {
+        public PopupCategorizedFixed(Supplier<? extends Collection<CategorizedMenuItem>> itemSupplier) {
             super(itemSupplier);
         }
 
-        public PopupCategorizedFixed(Supplier<? extends Collection<CategorizedPopupItem>> itemSupplier, Consumer<CategorizedPopupItem> itemConsumer) {
+        public PopupCategorizedFixed(Supplier<? extends Collection<CategorizedMenuItem>> itemSupplier, Consumer<CategorizedMenuItem> itemConsumer) {
             super(itemSupplier, itemConsumer);
         }
 

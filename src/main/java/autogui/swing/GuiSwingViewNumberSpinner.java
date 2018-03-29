@@ -23,6 +23,7 @@ import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
@@ -164,54 +165,100 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected KeyUndoManager undoManager = new KeyUndoManager();
         protected SettingsWindow settingsWindow;
 
-        protected TextServiceDefaultMenuSpinner menu;
         protected TypedSpinnerNumberModelPreferencesUpdater modelPreferencesUpdater;
+
+        protected List<PopupCategorized.CategorizedMenuItem> menuItems;
+        protected NumberSettingAction settingAction;
 
         public PropertyNumberSpinner(GuiMappingContext context) {
             super(createModel(context));
             this.context = context;
+            init();
+        }
 
-            GuiSwingView.setDescriptionToolTipText(context, this);
-
+        public void init() {
+            initName();
+            initEditable();
             initModelPreferencesUpdater();
+            initContextUpdate();
+            initValue();
+            initListener();
+            initPopup();
+            initDragDrop();
+            initUndo();
+        }
 
-            //value update
+        public void initName() {
+            setName(context.getName());
+            GuiSwingView.setDescriptionToolTipText(context, this);
+        }
+
+        public void initEditable() {
+            if (!((GuiReprValueNumberSpinner) context.getRepresentation()).isEditable(context)) {
+                getEditorField().setEditable(false);
+            }
+        }
+
+        public void initModelPreferencesUpdater() {
+            TypedSpinnerNumberModel m = getModelTyped();
+            modelPreferencesUpdater = new TypedSpinnerNumberModelPreferencesUpdater(context, m);
+            m.addChangeListener(modelPreferencesUpdater);
+        }
+
+        public void initContextUpdate() {
+            context.addSourceUpdateListener(this);
+        }
+
+        public void initValue() {
+            update(context, context.getSource());
+        }
+
+        public void initListener() {
             editingRunner = new ScheduledTaskRunner.EditingRunner(500, this::updateNumber);
             addChangeListener(editingRunner);
+            getEditorField().addActionListener(editingRunner);
+        }
 
-            //value update: text
-            JTextField field = ((DefaultEditor) getEditor()).getTextField();
-            field.addActionListener(editingRunner);
+        public void initPopup() {
+            settingAction = new NumberSettingAction(context, this,
+                    GuiSwingContextInfo.get().getInfoLabel(context), getModelTyped());
 
-            //editable
-            if (!((GuiReprValueNumberSpinner) context.getRepresentation()).isEditable(context)) {
-                field.setEditable(false);
-            }
-
-            //context update
-            context.addSourceUpdateListener(this);
-            //initial update
-            update(context, context.getSource());
-
-            //popup actions
-            menu = new TextServiceDefaultMenuSpinner(context, this,
-                    (TypedSpinnerNumberModel) getModel(), field);
-            menu.getEditActions().addAll(GuiSwingJsonTransfer.getActionMenuItems(this, context));
-            menu.getEditActions().add(new HistoryMenu<>(this, context));
-
-            //popup
+            JTextField field = getEditorField();
             PopupExtensionText.putInputEditActions(field);
             PopupExtensionText.putUnregisteredEditActions(field);
-            popup = new PopupExtensionText(field, PopupExtension.getDefaultKeyMatcher(), menu);
+            popup = new PopupExtensionText(field, PopupExtension.getDefaultKeyMatcher(),
+                        new PopupCategorized(this::getSwingStaticMenuItems));
             setInheritsPopupMenu(true);
+        }
 
-            //drag drop
+        public void initDragDrop() {
             NumberTransferHandler h = new NumberTransferHandler(this);
             GuiSwingView.setupTransferHandler(this, h);
-            GuiSwingView.setupTransferHandler(field, h);
+            GuiSwingView.setupTransferHandler(getEditorField(), h);
+        }
 
-            //undo
-            undoManager.putListenersAndActionsTo(field);
+        public void initUndo() {
+            undoManager.putListenersAndActionsTo(getEditorField());
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                JTextField field = getEditorField();
+                menuItems = PopupCategorized.getMenuItems(
+                        Arrays.asList(
+                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                new ContextRefreshAction(context),
+                                settingAction,
+                                new NumberMaximumAction(false, getModelTyped()),
+                                new NumberMaximumAction(true, getModelTyped()),
+                                new HistoryMenu<>(this, context)),
+                        PopupExtensionText.getEditActions(field),
+                        GuiSwingJsonTransfer.getActions(this, context).stream()
+                                .filter(e -> !(e instanceof PopupExtensionText.TextOpenBrowserAction))
+                                .collect(Collectors.toList()));
+            }
+            return menuItems;
         }
 
         @Override
@@ -281,14 +328,14 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             GuiSwingView.savePreferencesDefault(this, prefs);
             GuiPreferences targetPrefs = prefs.getDescendant(getContext());
             getModelTyped().saveTo(targetPrefs);
-            menu.saveTo(targetPrefs);
+            settingAction.saveTo(targetPrefs);
         }
 
         @Override
         public void loadPreferences(GuiPreferences prefs) {
             GuiPreferences targetPrefs = prefs.getDescendant(getContext());
             getModelTyped().loadFrom(targetPrefs);
-            menu.loadFrom(targetPrefs);
+            settingAction.loadFrom(targetPrefs);
             GuiSwingView.loadPreferencesDefault(this, prefs);
         }
 
@@ -309,7 +356,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
-            menu.setPreferencesUpdater(updater);
+            settingAction.setUpdater(updater);
             modelPreferencesUpdater.setUpdater(updater);
         }
 
@@ -320,60 +367,6 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 initModelPreferencesUpdater();
             }
         }
-
-        protected void initModelPreferencesUpdater() {
-            TypedSpinnerNumberModel m = getModelTyped();
-            modelPreferencesUpdater = new TypedSpinnerNumberModelPreferencesUpdater(context, m);
-            m.addChangeListener(modelPreferencesUpdater);
-        }
-    }
-
-    public static class TextServiceDefaultMenuSpinner extends PopupExtensionText.TextServiceDefaultMenu
-            implements GuiSwingPreferences.PreferencesUpdateSupport {
-        protected GuiMappingContext context;
-        protected NumberSettingAction settingAction;
-
-        public TextServiceDefaultMenuSpinner(GuiMappingContext context, SettingsWindowClient settings, TypedSpinnerNumberModel model, JTextComponent textComponent) {
-            super(textComponent);
-            this.context = context;
-            GuiSwingContextInfo info = GuiSwingContextInfo.get();
-            editActions.add(0, info.getInfoLabel(context));
-            editActions.add(new JMenuItem(new ContextRefreshAction(context)));
-            editActions.add(new JPopupMenu.Separator());
-            settingAction = new NumberSettingAction(context, settings, info.getInfoLabel(context), model);
-            editActions.add(new JMenuItem(settingAction));
-            editActions.add(new JMenuItem(new NumberMaximumAction(false, model)));
-            editActions.add(new JMenuItem(new NumberMaximumAction(true, model)));
-        }
-
-        @Override
-        public List<Action> getActionsInInitEditActions(JTextComponent textComponent) {
-            return super.getActionsInInitEditActions(textComponent)
-                    .stream()
-                    .filter(e -> !(e instanceof PopupExtensionText.TextOpenBrowserAction))
-                    .collect(Collectors.toList());
-        }
-
-        @Override
-        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
-            if (settingAction.getPreferencesUpdater() != null) {
-                settingAction.getPreferencesUpdater().setUpdater(updater);
-            }
-        }
-
-        public void loadFrom(GuiPreferences prefs) {
-            if (settingAction.getPreferencesUpdater() != null) {
-                settingAction.getPreferencesUpdater().getPrefs().loadFrom(prefs);
-            }
-        }
-
-        public void saveTo(GuiPreferences prefs) {
-            if (settingAction.getPreferencesUpdater() != null) {
-                settingAction.getPreferencesUpdater().getPrefs().saveTo(prefs);
-            }
-        }
-
-
     }
 
     public static class NumberMaximumAction extends AbstractAction {
@@ -709,6 +702,25 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public GuiSwingPreferences.WindowPreferencesUpdater getPreferencesUpdater() {
             return preferencesUpdater;
         }
+
+        public void setUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+            if (getPreferencesUpdater() != null) {
+                getPreferencesUpdater().setUpdater(updater);
+            }
+        }
+
+        public void loadFrom(GuiPreferences prefs) {
+            if (getPreferencesUpdater() != null) {
+                getPreferencesUpdater().getPrefs().loadFrom(prefs);
+            }
+        }
+
+        public void saveTo(GuiPreferences prefs) {
+            if (getPreferencesUpdater() != null) {
+                getPreferencesUpdater().getPrefs().saveTo(prefs);
+            }
+        }
+
     }
 
     public static class NumberSettingPane extends JPanel {
