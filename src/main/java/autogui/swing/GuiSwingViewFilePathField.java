@@ -13,6 +13,7 @@ import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 
 /**
@@ -110,7 +111,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
             if (menuItems == null) {
-                menuItems = PopupCategorized.getMenuItems(getPopupEditActions(), getPopupEditMenuItems());
+                menuItems = PopupCategorized.getMenuItems(getMenuItemsSource());
             }
             return menuItems;
         }
@@ -121,22 +122,17 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
     }
 
         @Override
-        public List<Action> getPopupEditActions() {
-            List<Action> actions = new ArrayList<>();
-            actions.add(new ContextRefreshAction(context));
-            actions.addAll(super.getPopupEditActions());
-            actions.addAll(GuiSwingJsonTransfer.getActions(this, context));
-            return actions;
-        }
+        public List<Object> getMenuItemsSource() {
+            if (menuItemsSource == null) {
+                List<Object> actions = super.getMenuItemsSource();
+                actions.add(GuiSwingContextInfo.get().getInfoLabel(context));
+                actions.add(new ContextRefreshAction(context));
 
-        @Override
-        public List<? extends JComponent> getPopupEditMenuItems() {
-            //popup menus
-            List<JComponent> menus = new ArrayList<>();
-            menus.add(GuiSwingContextInfo.get().getInfoLabel(context));
-            menus.addAll(super.getPopupEditMenuItems());
-            menus.add(new HistoryMenu<>(this, context));
-            return menus;
+                actions.addAll(GuiSwingJsonTransfer.getActions(this, context));
+                actions.add(new HistoryMenu<>(this, context));
+                menuItemsSource = actions;
+            }
+            return menuItemsSource;
         }
 
         /** update property: the user selects the item from the menu, and then update the target property */

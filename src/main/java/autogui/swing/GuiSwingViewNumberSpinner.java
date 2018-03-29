@@ -11,7 +11,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.DefaultFormatterFactory;
-import javax.swing.text.JTextComponent;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -246,17 +245,19 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             if (menuItems == null) {
                 JTextField field = getEditorField();
                 menuItems = PopupCategorized.getMenuItems(
+                        PopupExtensionText.getEditActions(field).stream()
+                                .filter(e -> !(e instanceof PopupExtensionText.TextOpenBrowserAction) &&
+                                             !(e instanceof PopupExtensionText.TextSaveAction) &&
+                                             !(e instanceof PopupExtensionText.TextLoadAction))
+                                .collect(Collectors.toList()),
                         Arrays.asList(
                                 GuiSwingContextInfo.get().getInfoLabel(context),
                                 new ContextRefreshAction(context),
-                                settingAction,
                                 new NumberMaximumAction(false, getModelTyped()),
                                 new NumberMaximumAction(true, getModelTyped()),
-                                new HistoryMenu<>(this, context)),
-                        PopupExtensionText.getEditActions(field),
-                        GuiSwingJsonTransfer.getActions(this, context).stream()
-                                .filter(e -> !(e instanceof PopupExtensionText.TextOpenBrowserAction))
-                                .collect(Collectors.toList()));
+                                new HistoryMenu<>(this, context),
+                                settingAction),
+                        GuiSwingJsonTransfer.getActions(this, context));
             }
             return menuItems;
         }
@@ -369,7 +370,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
     }
 
-    public static class NumberMaximumAction extends AbstractAction {
+    public static class NumberMaximumAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected TypedSpinnerNumberModel model;
         protected boolean max;
 
@@ -382,6 +383,16 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         @Override
         public void actionPerformed(ActionEvent e) {
             model.setValue(max ? model.getNumberMaximum() : model.getNumberMinimum());
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_SET;
         }
     }
 
@@ -674,7 +685,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
     ///////////////////
 
-    public static class NumberSettingAction extends AbstractAction {
+    public static class NumberSettingAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected NumberSettingPane pane;
         protected JPanel contentPane;
         protected SettingsWindowClient client;
@@ -721,6 +732,15 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             }
         }
 
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PREFS_WINDOW;
+        }
     }
 
     public static class NumberSettingPane extends JPanel {

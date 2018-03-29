@@ -355,7 +355,7 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
-    class ContextRefreshAction extends AbstractAction {
+    class ContextRefreshAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiMappingContext context;
 
         public ContextRefreshAction(GuiMappingContext context) {
@@ -368,19 +368,15 @@ public interface GuiSwingView extends GuiSwingElement {
             context.clearSourceSubTree();
             context.updateSourceSubTree();
         }
-    }
 
-    class ContextRefreshRootAction extends AbstractAction {
-        protected GuiMappingContext context;
-
-        public ContextRefreshRootAction(GuiMappingContext context) {
-            putValue(NAME, "Refresh All");
-            this.context = context;
+        @Override
+        public String getCategory() {
+            return PopupCategorized.CATEGORY_LABEL;
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
-            context.updateSourceFromRoot();
+        public String getSubCategory() {
+            return PopupCategorized.SUB_CATEGORY_LABEL_ACTION;
         }
     }
 
@@ -416,11 +412,22 @@ public interface GuiSwingView extends GuiSwingElement {
                     .map(this::toString)
                     .collect(Collectors.joining("\n")));
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_COPY;
+        }
     }
 
     ///////////////////////////
 
-    class HistoryMenu<ValueType, PaneType extends ValuePane<ValueType>> extends JMenu implements TableTargetMenu {
+    class HistoryMenu<ValueType, PaneType extends ValuePane<ValueType>> extends JMenu implements TableTargetMenu,
+            PopupCategorized.CategorizedMenuItemComponent {
         protected PaneType component;
         protected GuiMappingContext context;
 
@@ -442,6 +449,11 @@ public interface GuiSwingView extends GuiSwingElement {
                 @Override
                 public void menuCanceled(MenuEvent e) { }
             });
+        }
+
+        @Override
+        public JComponent getMenuItem(PopupCategorized sender) {
+            return this;
         }
 
         @Override
@@ -499,6 +511,16 @@ public interface GuiSwingView extends GuiSwingElement {
             }
             return name;
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_SET;
+        }
     }
 
     class HistoryMenuForTableColumn<ValueType, PaneType extends ValuePane<ValueType>> extends HistoryMenu<ValueType, PaneType> {
@@ -513,9 +535,14 @@ public interface GuiSwingView extends GuiSwingElement {
         public Action createAction(GuiPreferences.HistoryValueEntry e) {
             return new HistorySetForColumnAction<>(getActionName(e), (ValueType) e.getValue(), target);
         }
+
+        @Override
+        public String getCategory() {
+            return MENU_COLUMN_ROWS;
+        }
     }
 
-    class HistorySetAction<ValueType> extends AbstractAction {
+    class HistorySetAction<ValueType> extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected ValueType value;
         protected ValuePane<ValueType> component;
 
@@ -536,7 +563,7 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
-    class HistorySetForColumnAction<ValueType> extends AbstractAction {
+    class HistorySetForColumnAction<ValueType> extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected ValueType value;
         protected GuiReprCollectionTable.TableTargetColumn target;
 
@@ -552,7 +579,7 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
-    class HistoryClearAction extends AbstractAction {
+    class HistoryClearAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected HistoryMenu menu;
 
         public HistoryClearAction(HistoryMenu menu) {
@@ -563,6 +590,16 @@ public interface GuiSwingView extends GuiSwingElement {
         @Override
         public void actionPerformed(ActionEvent e) {
             menu.clearHistory();
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_DELETE;
         }
     }
 

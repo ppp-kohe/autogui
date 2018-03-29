@@ -30,21 +30,42 @@ import java.util.regex.Pattern;
  *
  */
 public class PopupExtension implements MouseListener, KeyListener, ActionListener, PopupExtensionSender {
-
     public static String MENU_CATEGORY_UNDO = MenuBuilder.getImplicitCategory("undo");
     public static String MENU_CATEGORY_EDIT = MenuBuilder.getImplicitCategory("edit");
     public static String MENU_CATEGORY_JUMP = MenuBuilder.getImplicitCategory("jump");
     public static String MENU_CATEGORY_SELECT = MenuBuilder.getImplicitCategory("select");
     public static String MENU_CATEGORY_TRANSFER = MenuBuilder.getImplicitCategory("transfer");
+    public static String MENU_CATEGORY_VIEW = MenuBuilder.getImplicitCategory("view");
+    public static String MENU_CATEGORY_PREFS = MenuBuilder.getImplicitCategory("preferences");
+    public static String MENU_CATEGORY_WINDOW = MenuBuilder.getImplicitCategory("window");
+
+    public static String MENU_SUB_CATEGORY_NEW = "new";
+
+    ///undo
     public static String MENU_SUB_CATEGORY_UNDO = "undo";
     public static String MENU_SUB_CATEGORY_REDO = "redo";
+
+    ///edit
     public static String MENU_SUB_CATEGORY_CUT = "cut";
     public static String MENU_SUB_CATEGORY_COPY = "copy";
     public static String MENU_SUB_CATEGORY_PASTE = "paste";
     public static String MENU_SUB_CATEGORY_DELETE = "delete";
+    public static String MENU_SUB_CATEGORY_SET = "set";
+
+    ///select
     public static String MENU_SUB_CATEGORY_SELECT = "select";
+
+    ///transfer
     public static String MENU_SUB_CATEGORY_IMPORT = "import";
     public static String MENU_SUB_CATEGORY_EXPORT = "export";
+
+    //prefs
+    public static String MENU_SUB_CATEGORY_PREFS_CHANGE = "prefsChange";
+    public static String MENU_SUB_CATEGORY_PREFS_WINDOW = "prefsWindow";
+
+    //window
+    public static String MENU_SUB_CATEGORY_WINDOW_VIEW = "windowView";
+    public static String MENU_SUB_CATEGORY_WINDOW_SELECT = "windowSelect";
 
     /** the supplier is frequently called and expected to return same menu object */
     protected Supplier<JPopupMenu> menu;

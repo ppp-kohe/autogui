@@ -46,16 +46,19 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
     @Override
-    public List<Action> getPopupEditActions() {
-        return Arrays.asList(
-                new PopupExtensionText.TextCutAction(field),
-                new PopupExtensionText.TextCopyAction(field),
-                new FileCopyAllAction(this),
-                new FilePasteAction(this),
-                new PopupExtensionText.TextSelectAllAction(field),
-                new DesktopOpenAction(this),
-                new DesktopRevealAction(this),
-                new OpenDialogAction(this));
+    public List<Object> getMenuItemsSource() {
+        if (menuItemsSource == null) {
+            menuItemsSource = new ArrayList<>(Arrays.asList(
+                    new PopupExtensionText.TextCutAction(field),
+                    new PopupExtensionText.TextCopyAction(field),
+                    new FileCopyAllAction(this),
+                    new FilePasteAction(this),
+                    new PopupExtensionText.TextSelectAllAction(field),
+                    new DesktopOpenAction(this),
+                    new DesktopRevealAction(this),
+                    new OpenDialogAction(this)));
+        }
+        return menuItemsSource;
     }
 
     /** the method is a simulated GUI task originally caused by the user.
@@ -213,7 +216,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
     /** the action for text paste */
-    public static class FilePasteAction extends FileListEditAction {
+    public static class FilePasteAction extends FileListEditAction implements PopupCategorized.CategorizedMenuItemAction {
 
         public FilePasteAction(SearchTextFieldFilePath component) {
             super("Paste Value", component);
@@ -258,6 +261,16 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 proc.accept(null);
             }
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PASTE;
+        }
     }
 
     /** an abstract definition of a file-list */
@@ -285,7 +298,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
     /** copying the selected file */
-    public static class FileCopyAllAction extends FileListAction {
+    public static class FileCopyAllAction extends FileListAction implements PopupCategorized.CategorizedMenuItemAction {
 
         public FileCopyAllAction(SearchTextFieldFilePath component) {
             super("Copy Value", component);
@@ -298,6 +311,16 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 FileSelection selection = new FileSelection(list);
                 board.setContents(selection, selection);
             }
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_COPY;
         }
     }
 
@@ -345,7 +368,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
     }
 
     /** the action for opening files */
-    public static class DesktopOpenAction extends FileListAction {
+    public static class DesktopOpenAction extends FileListAction implements PopupCategorized.CategorizedMenuItemAction {
 
         public DesktopOpenAction(SearchTextFieldFilePath component) {
             super("Open In Desktop", component);
@@ -373,10 +396,15 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 throw new RuntimeException(ex);
             }
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_JUMP;
+        }
     }
 
     /** the action for showing files in Finder or Explorer */
-    public static class DesktopRevealAction extends FileListAction {
+    public static class DesktopRevealAction extends FileListAction implements PopupCategorized.CategorizedMenuItemAction {
         protected Consumer<Path> command;
 
 
@@ -435,10 +463,15 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 command.accept(file);
             }
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_JUMP;
+        }
     }
 
     /** an action for selecting a file item from an open dialog */
-    public static class OpenDialogAction extends FileListEditAction {
+    public static class OpenDialogAction extends FileListEditAction implements PopupCategorized.CategorizedMenuItemAction {
         protected JFileChooser fileChooser;
 
         public OpenDialogAction(SearchTextFieldFilePath component) {
@@ -481,6 +514,16 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 }
                 fileChooser.setCurrentDirectory(path.toFile());
             }
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_SET;
         }
     }
 
@@ -788,6 +831,11 @@ public class SearchTextFieldFilePath extends SearchTextField {
         @Override
         public Icon getIcon() {
             return null;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupCategorized.SUB_CATEGORY_LABEL_VALUE;
         }
     }
 

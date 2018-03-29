@@ -43,6 +43,12 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
     }
 
     public static String CATEGORY_LABEL = MenuBuilder.getImplicitCategory(".label");
+    public static String CATEGORY_ACTION = MenuBuilder.getImplicitCategory(".action");
+
+    public static String SUB_CATEGORY_LABEL_TYPE = "type";
+    public static String SUB_CATEGORY_LABEL_VALUE = "value";
+    public static String SUB_CATEGORY_LABEL_MISC = "misc";
+    public static String SUB_CATEGORY_LABEL_ACTION = "action";
 
     /** a label: special category */
     public interface CategorizedMenuItemLabel extends CategorizedMenuItem {
@@ -69,7 +75,43 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
 
         @Override
         default String getCategory() {
-            return CATEGORY_LABEL;
+            return CATEGORY_ACTION;
+        }
+    }
+
+    public static class CategorizedMenuItemComponentDefault implements CategorizedMenuItemComponent  {
+        protected JComponent component;
+        protected String category = "";
+        protected String subCategory = "";
+
+        public CategorizedMenuItemComponentDefault(JComponent component) {
+            this.component = component;
+            if (component instanceof JLabel) {
+                category = CATEGORY_LABEL;
+            } else {
+                category = CATEGORY_ACTION;
+            }
+        }
+
+        public CategorizedMenuItemComponentDefault(JComponent component, String category, String subCategory) {
+            this.component = component;
+            this.category = category;
+            this.subCategory = subCategory;
+        }
+
+        @Override
+        public JComponent getMenuItem(PopupCategorized sender) {
+            return component;
+        }
+
+        @Override
+        public String getCategory() {
+            return category;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return subCategory;
         }
     }
 
@@ -80,6 +122,16 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         @Override
         default JComponent getMenuItem(PopupCategorized sender) {
             return new JMenuItem(this);
+        }
+    }
+
+    /**
+     * an action with category info, which becomes an check-box menu item
+     */
+    public interface CategorizedMenuItemActionCheck extends CategorizedMenuItemAction {
+        @Override
+        default JComponent getMenuItem(PopupCategorized sender) {
+            return new JCheckBoxMenuItem(this);
         }
     }
 
@@ -159,12 +211,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
         } else if (item instanceof Action) {
             return new CategorizedMenuItemActionDelegate((Action) item);
         } else if (item instanceof JComponent) {
-            return new CategorizedMenuItemComponent() {
-                @Override
-                public JComponent getMenuItem(PopupCategorized sender) {
-                    return (JComponent) item;
-                }
-            };
+            return new CategorizedMenuItemComponentDefault((JComponent) item);
         } else {
             throw new IllegalArgumentException("unsupported type: " + item.getClass());
         }
@@ -205,6 +252,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
             //category -> subCategory -> list item
             Map<String,Map<String,List<JComponent>>> subCategorizedMenuItems = new LinkedHashMap<>();
             subCategorizedMenuItems.put(CATEGORY_LABEL, new LinkedHashMap<>());
+            subCategorizedMenuItems.put(CATEGORY_ACTION, new LinkedHashMap<>());
 
             int size = 0;
             for (CategorizedMenuItem item : items) {
@@ -304,11 +352,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder {
                                     Map<String,List<JComponent>> categorizedMenuItems, int totalSize) {
             MenuBuilder menuBuilder = getMenuBuilder();
             for (Map.Entry<String, List<JComponent>> e : categorizedMenuItems.entrySet()) {
-                if (e.getKey() != null && e.getKey().equals(CATEGORY_LABEL)) {
-                    menuBuilder.addMenuItems(menu, e.getValue(), null);
-                } else {
-                    menuBuilder.addMenuItems(menu, e.getValue(), e.getKey());
-                }
+                menuBuilder.addMenuItems(menu, e.getValue(), e.getKey());
             }
         }
 

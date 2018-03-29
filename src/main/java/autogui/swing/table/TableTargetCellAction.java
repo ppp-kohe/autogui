@@ -1,6 +1,8 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -42,6 +44,15 @@ import java.util.List;
  *     and the action can take custom table info including GuiMappingContext:
  *      for instance, GuiSwingCollectionTable provides PopupExtensionCollection.
  */
-public interface TableTargetCellAction extends Action {
+public interface TableTargetCellAction extends PopupCategorized.CategorizedMenuItemAction {
+
+    String MENU_CATEGORY_ROW = "Rows";
+    String MENU_CATEGORY_CELL = "Cells";
+
     void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target);
+
+    @Override
+    default String getCategory() {
+        return MENU_CATEGORY_ROW;
+    }
 }

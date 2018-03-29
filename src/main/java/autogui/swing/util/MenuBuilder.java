@@ -126,13 +126,33 @@ public class MenuBuilder {
     }
 
     public JComponent createLabel(String name) {
-        JComponent comp = new JPanel(new FlowLayout(FlowLayout.LEADING, 3, 3));
-        JLabel label = new JLabel(name);
-        label.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 10));
-        label.setForeground(Color.darkGray);
-        comp.add(label);
-        comp.setOpaque(false);
-        return comp;
+        return new MenuLabel(name);
+    }
+
+    public static class MenuLabel extends JPanel implements PopupCategorized.CategorizedMenuItemComponent {
+        public MenuLabel(String name) {
+            super(new FlowLayout(FlowLayout.LEADING, 3, 3));
+            JLabel label = new JLabel(name);
+            label.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 10));
+            label.setForeground(Color.darkGray);
+            add(label);
+            setOpaque(false);
+        }
+
+        @Override
+        public JComponent getMenuItem(PopupCategorized sender) {
+            return this;
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupCategorized.CATEGORY_LABEL;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return "";
+        }
     }
 
     public MenuAppender createAppender(JComponent menu) {

@@ -185,10 +185,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                         Arrays.asList(
                                 GuiSwingContextInfo.get().getInfoLabel(context),
                                 new ContextRefreshAction(context),
-                                new JCheckBoxMenuItem(new ImageScaleSwitchFitAction(this)),
+                                new ImageScaleSwitchFitAction(this),
                                 new ImageScaleOriginalSizeAction(this),
-                                new JCheckBoxMenuItem(new ImageScaleAutoSwitchByMouseWheel(this)),
-                                scaleMenu,
+                                new ImageScaleAutoSwitchByMouseWheel(this),
+                                new PopupCategorized.CategorizedMenuItemComponentDefault(scaleMenu,
+                                        PopupExtension.MENU_CATEGORY_VIEW, ""),
                                 new ImageCopyAction(getImage()),
                                 new ImagePasteAction(this),
                                 new HistoryMenuImage(this, context)),
@@ -412,7 +413,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
-    public static class ImageScaleSwitchFitAction extends AbstractAction {
+    public static class ImageScaleSwitchFitAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemActionCheck {
         protected PropertyImagePane pane;
 
         public ImageScaleSwitchFitAction(PropertyImagePane pane) {
@@ -438,9 +439,14 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public void updateSelected() {
             putValue(SELECTED_KEY, isSelected());
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_VIEW;
+        }
     }
 
-    public static class ImageScaleOriginalSizeAction extends AbstractAction {
+    public static class ImageScaleOriginalSizeAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected PropertyImagePane pane;
 
         public ImageScaleOriginalSizeAction(PropertyImagePane pane) {
@@ -454,9 +460,14 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             pane.getImageScaleMouseWheel().setCurrentZoom(1.0f);
             pane.updateScale();
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_VIEW;
+        }
     }
 
-    public static class ImageScaleSizeAction extends AbstractAction {
+    public static class ImageScaleSizeAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected PropertyImagePane pane;
         protected float n;
 
@@ -472,9 +483,14 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             pane.getImageScaleMouseWheel().setCurrentZoom(n);
             pane.updateScale();
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_VIEW;
+        }
     }
 
-    public static class ImageScaleAutoSwitchByMouseWheel extends AbstractAction {
+    public static class ImageScaleAutoSwitchByMouseWheel extends AbstractAction implements PopupCategorized.CategorizedMenuItemActionCheck {
         protected PropertyImagePane pane;
 
         public ImageScaleAutoSwitchByMouseWheel(PropertyImagePane pane) {
@@ -495,6 +511,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public void updateSelected() {
             putValue(SELECTED_KEY, isSelected());
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_VIEW;
         }
     }
 
@@ -548,6 +569,16 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 copy((Image) o);
             }
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_COPY;
+        }
     }
 
     public static class ImagePasteAction extends AbstractAction implements TableTargetColumnAction {
@@ -581,6 +612,17 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         @Override
         public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
             paste(img -> target.setCellValues(target.getSelectedCellIndexesStream(), r -> img));
+        }
+
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PASTE;
         }
     }
 

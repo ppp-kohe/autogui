@@ -144,9 +144,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 Arrays.asList(
                         GuiSwingContextInfo.get().getInfoLabel(context),
                         new ContextRefreshAction(context)),
-                settingActions,
                 PopupExtensionText.getEditActions((JTextComponent) pane),
-                GuiSwingJsonTransfer.getActions(pane, context));
+                GuiSwingJsonTransfer.getActions(pane, context),
+                settingActions);
     }
 
     public static class SelectionHighlightPainter extends DefaultHighlighter.DefaultHighlightPainter {
@@ -437,7 +437,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
     }
 
-    public static class TextWrapTextAction extends AbstractAction {
+    public static class TextWrapTextAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected JTextComponent field;
 
         public TextWrapTextAction(JTextComponent field) {
@@ -484,10 +484,20 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             JScrollPane pane = scroll(field.getParent());
             setWrapLine(pane, f);
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
+        }
     }
 
 
-    public static class DocumentSettingAction extends AbstractAction {
+    public static class DocumentSettingAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected DocumentSettingPane pane;
         protected JPanel contentPane;
         protected SettingsWindowClient editorPane;
@@ -503,6 +513,16 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public void actionPerformed(ActionEvent e) {
             editorPane.getSettingsWindow().show("Document Settings", pane, contentPane);
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PREFS_WINDOW;
         }
     }
 
@@ -821,7 +841,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
     }
 
-    public static class StyleSetAction extends AbstractAction {
+    public static class StyleSetAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected Consumer<StyleSetAction> callback;
         public StyleSetAction(String name, boolean initVal, Consumer<StyleSetAction> callback) {
             putValue(NAME, name);
@@ -832,6 +852,16 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public void actionPerformed(ActionEvent e) {
             callback.accept(this);
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
         }
     }
 

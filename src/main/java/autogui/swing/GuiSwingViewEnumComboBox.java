@@ -118,7 +118,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
             if (menuItems == null) {
                 menuItems = PopupCategorized.getMenuItems(
-                        Arrays.asList(GuiSwingContextInfo.get().getInfoLabel(context),
+                        Arrays.asList(
+                                GuiSwingContextInfo.get().getInfoLabel(context),
                                 new ContextRefreshAction(context),
                                 new HistoryMenu<>(this, context)),
                         GuiSwingJsonTransfer.getActions(this, context));

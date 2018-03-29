@@ -5,9 +5,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.type.GuiTypeBuilder;
 import autogui.swing.log.GuiSwingLogManager;
-import autogui.swing.util.ApplicationIconGenerator;
-import autogui.swing.util.MenuBuilder;
-import autogui.swing.util.SettingsWindow;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
@@ -250,7 +248,7 @@ public class GuiSwingWindow extends JFrame {
         }
     }
 
-    public static class ShowPreferencesAction extends AbstractAction {
+    public static class ShowPreferencesAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected Supplier<GuiSwingPreferences> preferences;
         protected JComponent sender;
 
@@ -263,6 +261,16 @@ public class GuiSwingWindow extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             preferences.get().show(sender);
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PREFS_WINDOW;
         }
     }
 
@@ -327,7 +335,7 @@ public class GuiSwingWindow extends JFrame {
         return null;
     }
 
-    public static class WindowMenuMinimizeAction extends AbstractAction {
+    public static class WindowMenuMinimizeAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         public WindowMenuMinimizeAction() {
             putValue(NAME, "Minimize");
             ///putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_M, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
@@ -340,9 +348,19 @@ public class GuiSwingWindow extends JFrame {
                 f.setState(Frame.ICONIFIED);
             }
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_WINDOW;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_WINDOW_VIEW;
+        }
     }
 
-    public static class WindowMenuZoomAction extends AbstractAction {
+    public static class WindowMenuZoomAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         public WindowMenuZoomAction() {
             putValue(NAME, "Zoom");
         }
@@ -359,9 +377,19 @@ public class GuiSwingWindow extends JFrame {
                 }
             }
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_WINDOW;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_WINDOW_VIEW;
+        }
     }
 
-    public static class WindowMenuToFromAction extends AbstractAction {
+    public static class WindowMenuToFromAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected Frame frame;
 
         public WindowMenuToFromAction(Frame frame) {
@@ -379,6 +407,16 @@ public class GuiSwingWindow extends JFrame {
         public void actionPerformed(ActionEvent e) {
             frame.setVisible(true);
             frame.toFront();
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_WINDOW;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_WINDOW_SELECT;
         }
     }
 }

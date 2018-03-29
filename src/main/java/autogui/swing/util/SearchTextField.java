@@ -28,7 +28,7 @@ import java.util.function.Supplier;
  * </pre>
  *
  * The popup menus are composition of
- *    {@link #getPopupEditMenuItems()} -&gt; {@link #getPopupEditActions()}
+ *    {@link #getMenuItemsSource()}
  *       -&gt; {@link PopupExtensionText#getEditActions(JTextComponent)},
  *      and
  *       {@link #getSearchedItems()} whose items are set by
@@ -57,6 +57,7 @@ public class SearchTextField extends JComponent {
 
     protected PopupExtensionText popup;
     protected JButton popupButton;
+    protected List<Object> menuItemsSource;
 
     protected List<PopupCategorized.CategorizedMenuItem> currentSearchedItems;
     protected SearchTask currentTask;
@@ -285,17 +286,19 @@ public class SearchTextField extends JComponent {
 
     public Supplier<List<PopupCategorized.CategorizedMenuItem>> getMenuItems() {
         return () -> PopupCategorized.getMenuItems(
-                getPopupEditActions(),
-                getPopupEditMenuItems(),
+                getMenuItemsSource(),
                 getSearchedItems());
     }
 
-    public List<? extends JComponent> getPopupEditMenuItems() {
-        return Collections.emptyList();
-    }
-
-    public List<Action> getPopupEditActions() {
-        return PopupExtensionText.getEditActions(field);
+    /**
+     * @return list of menu items including {@link Action} or {@link JComponent}
+     */
+    public List<Object> getMenuItemsSource() {
+        if (menuItemsSource == null) {
+            menuItemsSource = new ArrayList<>();
+            menuItemsSource.addAll(PopupExtensionText.getEditActions(field));
+        }
+        return menuItemsSource;
     }
 
     public SearchedItemsListener getPopupUpdateListener(PopupExtensionText popup, PopupCategorized categorized) {

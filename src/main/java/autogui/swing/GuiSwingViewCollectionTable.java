@@ -153,6 +153,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initPopup() {
+            //TODO
             JComponent label = GuiSwingContextInfo.get().getInfoLabel(context);
             List<JComponent> items = new ArrayList<>();
             items.add(label);
@@ -744,7 +745,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
     }
 
-    public static class SelectAllAction extends AbstractAction {
+    public static class SelectAllAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected JTable table;
 
         public SelectAllAction(JTable table) {
@@ -755,6 +756,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void actionPerformed(ActionEvent e) {
             table.selectAll();
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_SELECT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_SELECT;
         }
     }
 
@@ -976,7 +987,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
     }
 
-    public static class UnSelectAction extends AbstractAction {
+    public static class UnSelectAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected JTable table;
 
         public UnSelectAction(JTable table) {
@@ -987,6 +998,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void actionPerformed(ActionEvent e) {
             table.clearSelection();
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_SELECT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_SELECT;
         }
     }
 }

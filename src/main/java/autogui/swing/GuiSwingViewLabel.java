@@ -113,9 +113,9 @@ public class GuiSwingViewLabel implements GuiSwingView {
                         Arrays.asList(
                                 GuiSwingContextInfo.get().getInfoLabel(context),
                                 new ContextRefreshAction(context),
-                                new PopupExtensionText.TextOpenBrowserAction(this),
                                 new LabelJsonCopyAction(this, context),
-                                new ToStringCopyAction(this, context))
+                                new ToStringCopyAction(this, context),
+                                new PopupExtensionText.TextOpenBrowserAction(this))
                 );
             }
             return menuItems;

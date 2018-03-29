@@ -10,6 +10,8 @@ import autogui.swing.table.ObjectTableColumn;
 import autogui.swing.table.ObjectTableModel;
 import autogui.swing.table.TableTargetCellAction;
 import autogui.swing.table.TableTargetColumnAction;
+import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,7 +80,8 @@ public class GuiSwingJsonTransfer {
         }
     }
 
-    public static class JsonCopyAction extends AbstractAction implements TableTargetColumnAction {
+    public static class JsonCopyAction extends AbstractAction implements TableTargetColumnAction,
+            PopupCategorized.CategorizedMenuItemAction  {
         protected GuiSwingView.ValuePane<?> component;
         protected GuiMappingContext context;
 
@@ -108,9 +111,20 @@ public class GuiSwingJsonTransfer {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList()));
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_COPY;
+        }
     }
 
-    public static class JsonPasteAction extends AbstractAction {
+    public static class JsonPasteAction extends AbstractAction
+        implements PopupCategorized.CategorizedMenuItemAction  {
         protected GuiSwingView.ValuePane<?> component;
         protected GuiMappingContext context;
 
@@ -136,6 +150,16 @@ public class GuiSwingJsonTransfer {
                 v = context.getRepresentation().fromJson(context, component.getSwingViewValue(), json);
             }
             ((GuiSwingView.ValuePane<Object>) component).setSwingViewValueWithUpdate(v);
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_COPY;
         }
     }
 
@@ -272,6 +296,15 @@ public class GuiSwingJsonTransfer {
                     .toJson(context, target.getSelectedRowValues()));
         }
 
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_ROW;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_COPY;
+        }
     }
 
     public static class JsonCopyCellsAction extends AbstractAction implements TableTargetCellAction {
@@ -322,6 +355,16 @@ public class GuiSwingJsonTransfer {
                     .filter(cmp -> cmp.getIndex() == cell.getColumn())
                     .findFirst()
                     .orElse(null);
+        }
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_CELL;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_COPY;
         }
     }
 
@@ -405,11 +448,13 @@ public class GuiSwingJsonTransfer {
 
     public static class JsonPasteCellAction extends AbstractAction implements TableTargetCellAction {
         protected List<TableMenuCompositeJsonPaste> activeComposite;
+        protected boolean rows;
 
         public JsonPasteCellAction(List<TableMenuCompositeJsonPaste> activeComposite, boolean allCells) {
             putValue(NAME, allCells
                     ? "Paste JSON To Selected Rows"
                     : "Paste JSON To Selected Cells");
+            rows = allCells;
             this.activeComposite = activeComposite;
         }
 
@@ -522,6 +567,16 @@ public class GuiSwingJsonTransfer {
                     .filter(c -> c.matchJsonKey(str))
                     .findFirst()
                     .orElse(null);
+        }
+
+        @Override
+        public String getCategory() {
+            return rows ? MENU_CATEGORY_ROW : MENU_CATEGORY_CELL;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PASTE;
         }
     }
 

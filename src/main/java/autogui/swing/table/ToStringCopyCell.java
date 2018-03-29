@@ -2,6 +2,7 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
@@ -130,6 +131,16 @@ public class ToStringCopyCell {
             Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
             StringSelection sel = new StringSelection(data);
             board.setContents(sel, sel);
+        }
+
+        @Override
+        public String getCategory() {
+            return onlyApplyingSelectedColumns ? MENU_CATEGORY_CELL : MENU_CATEGORY_ROW;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_COPY;
         }
     }
 }

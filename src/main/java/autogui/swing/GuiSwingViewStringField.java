@@ -12,6 +12,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
@@ -125,27 +126,21 @@ public class GuiSwingViewStringField implements GuiSwingView {
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
             if (menuItems == null) {
-                menuItems = PopupCategorized.getMenuItems(getPopupEditActions(), getPopupEditMenuItems());
+                menuItems = PopupCategorized.getMenuItems(getMenuItemsSource());
             }
             return menuItems;
         }
 
         @Override
-        public List<Action> getPopupEditActions() {
-            List<Action> actions = new ArrayList<>();
-            actions.add(new ContextRefreshAction(context));
-            actions.addAll(super.getPopupEditActions());
-            actions.addAll(GuiSwingJsonTransfer.getActions(this, context));
-            return actions;
-        }
-
-        @Override
-        public List<? extends JComponent> getPopupEditMenuItems() {
-            List<JComponent> menus = new ArrayList<>();
-            menus.add(GuiSwingContextInfo.get().getInfoLabel(context));
-            menus.addAll(super.getPopupEditMenuItems());
-            menus.add(new HistoryMenu<>(this, getContext()));
-            return menus;
+        public List<Object> getMenuItemsSource() {
+            if (menuItemsSource == null) {
+                menuItemsSource = super.getMenuItemsSource();
+                menuItemsSource.add(GuiSwingContextInfo.get().getInfoLabel(context));
+                menuItemsSource.add(new ContextRefreshAction(context));
+                menuItemsSource.add(new HistoryMenu<>(this, getContext()));
+                menuItemsSource.addAll(GuiSwingJsonTransfer.getActions(this, context));
+            }
+            return menuItemsSource;
         }
 
         @Override

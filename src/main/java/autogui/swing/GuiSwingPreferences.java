@@ -7,6 +7,8 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
+import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupExtension;
 import autogui.swing.util.ScheduledTaskRunner;
 import autogui.swing.util.SettingsWindow;
 
@@ -393,7 +395,7 @@ public class GuiSwingPreferences {
         }
     }
 
-    public static class NewPrefsAction extends AbstractAction {
+    public static class NewPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiSwingPreferences owner;
         public NewPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Save");
@@ -415,9 +417,19 @@ public class GuiSwingPreferences {
             newStore.getValueStore().flush();
             owner.reloadList();
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_NEW;
+        }
     }
 
-    public static class DeletePrefsAction extends AbstractAction {
+    public static class DeletePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiSwingPreferences owner;
         public DeletePrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Delete");
@@ -435,6 +447,16 @@ public class GuiSwingPreferences {
             }
             owner.reloadList();
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_DELETE;
+        }
     }
 
     protected JFileChooser chooser;
@@ -446,7 +468,7 @@ public class GuiSwingPreferences {
         return chooser;
     }
 
-    public static class SavePrefsAction extends AbstractAction {
+    public static class SavePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiSwingPreferences owner;
         public SavePrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Write To File...");
@@ -478,9 +500,20 @@ public class GuiSwingPreferences {
         public String toSafeName(String name) {
             return name.replaceAll("[\\-:/]", "_");
         }
+
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_EXPORT;
+        }
     }
 
-    public static class LoadPrefsAction extends AbstractAction {
+    public static class LoadPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiSwingPreferences owner;
         public LoadPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Load From File...");
@@ -502,9 +535,19 @@ public class GuiSwingPreferences {
                 owner.reloadList();
             }
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_IMPORT;
+        }
     }
 
-    public static class ApplyPrefsAction extends AbstractAction {
+    public static class ApplyPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction  {
         protected GuiSwingPreferences owner;
         public ApplyPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Apply");
@@ -523,9 +566,19 @@ public class GuiSwingPreferences {
                 owner.applyPreferences();
             }
         }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
+        }
     }
 
-    public static class ResetPrefsAction extends AbstractAction {
+    public static class ResetPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiSwingPreferences owner;
 
         public ResetPrefsAction(GuiSwingPreferences owner) {
@@ -543,6 +596,16 @@ public class GuiSwingPreferences {
                 owner.getRootContext().getPreferences().clearAll();
                 owner.applyPreferences();
             }
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
         }
     }
 

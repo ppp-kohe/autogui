@@ -4,10 +4,7 @@ import autogui.base.mapping.*;
 import autogui.swing.GuiSwingActionDefault;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.PopupExtensionSender;
-import autogui.swing.util.PopupExtensionText;
-import autogui.swing.util.SearchTextFieldFilePath;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -19,7 +16,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EventObject;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
@@ -329,7 +327,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     /**
      * an action for selecting cells of a target column and all rows
      */
-    public static class ColumnSelectionAction extends AbstractAction {
+    public static class ColumnSelectionAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected JTable table;
         protected int column;
 
@@ -343,6 +341,16 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         public void actionPerformed(ActionEvent e) {
             table.getColumnModel().getSelectionModel().setSelectionInterval(column, column);
             table.getSelectionModel().setSelectionInterval(0, table.getRowCount());
+        }
+
+        @Override
+        public String getCategory() {
+            return TableTargetMenu.MENU_COLUMN_ROWS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_SELECT;
         }
     }
 
@@ -417,7 +425,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     /**
      * a wrapper class for {@link TableTargetCellAction}
      */
-    public static class TableTargetExecutionAction extends AbstractAction {
+    public static class TableTargetExecutionAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected TableTargetColumnAction action;
         protected GuiReprCollectionTable.TableTargetColumn target;
 
@@ -448,12 +456,22 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         public void actionPerformed(ActionEvent e) {
             action.actionPerformedOnTableColumn(e, target);
         }
+
+        @Override
+        public String getCategory() {
+            return TableTargetColumnAction.MENU_CATEGORY_COLUMN;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return action.getSubCategory();
+        }
     }
 
     /**
      * an action for selected rows of a column with a lambda
      */
-    public static class TableTargetInvocationAction extends AbstractAction {
+    public static class TableTargetInvocationAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected Action action;
         protected GuiReprCollectionTable.TableTargetColumn target;
         protected BiConsumer<ActionEvent, GuiReprCollectionTable.TableTargetColumn> invoker;
@@ -483,13 +501,27 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         public void actionPerformed(ActionEvent e) {
             invoker.accept(e, target);
         }
+
+        @Override
+        public String getCategory() {
+            return TableTargetMenu.MENU_COLUMN_ROWS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            if (action instanceof PopupCategorized.CategorizedMenuItem) {
+                return ((PopupCategorized.CategorizedMenuItem) action).getSubCategory();
+            } else {
+                return "";
+            }
+        }
     }
 
     /**
      * an action for wrapping another action.
      *   this action iterates over the selected rows and changing the target column value with the each row value.
      */
-    public static class TableRowsRepeatAction extends AbstractAction {
+    public static class TableRowsRepeatAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected JTable table;
         protected ObjectTableColumn column;
         protected Action action;
@@ -526,6 +558,20 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
                     //TODO compare?
 
                 }
+            }
+        }
+
+        @Override
+        public String getCategory() {
+            return TableTargetMenu.MENU_COLUMN_ROWS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            if (action instanceof PopupCategorized.CategorizedMenuItem) {
+                return ((PopupCategorized.CategorizedMenuItem) action).getSubCategory();
+            } else {
+                return "";
             }
         }
     }
