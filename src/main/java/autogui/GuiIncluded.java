@@ -22,17 +22,28 @@ public @interface GuiIncluded {
     String name() default "";
 
     /**
-     * @return ordinal index for sorting members. the default value is the max value of int
+     * @return ordinal index for sorting members. the default value is the max value of int.
+     *   for properties, minimum value is used from field, getter or setter.
      */
     int index() default Integer.MAX_VALUE;
 
     /**
-     * @return short description for the target, typically presented as a tool-tip
+     * @return short description for the target, typically presented as a tool-tip.
+     *    for properties, combines field, getter and setter.
      */
     String description() default "";
 
     /**
-     * @return accelerator key stroke
+     * @return accelerator key stroke: passed to KeyStroke.getStroke(String) or "".
+     *    <pre>
+     *        control* key
+     *
+     *        control ::= "shift" | "meta" | "control" | "alt"
+     *        key  ::= "0" | "1" | ... | "9" | "A" | "B" | ... | "Z"
+     *    </pre>
+     *
+     *    for properties, selects one of field(high-precedence), getter or setter.
+     *    if the stroke is empty (default), then the first character of the name will be used.
      */
     String keyStroke() default "";
 }

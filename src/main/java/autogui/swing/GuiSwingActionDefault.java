@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprAction;
 import autogui.swing.icons.GuiSwingIcons;
+import autogui.swing.util.PopupCategorized;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -14,13 +15,14 @@ public class GuiSwingActionDefault implements GuiSwingAction {
     }
 
 
-    public static class ExecutionAction extends AbstractAction {
+    public static class ExecutionAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction,
+            GuiSwingView.RecommendedKeyStroke {
         protected GuiMappingContext context;
         public ExecutionAction(GuiMappingContext context) {
             this.context = context;
             putValue(Action.NAME, context.getDisplayName());
 
-            Icon icon = getActionIcon();
+            Icon icon = getIcon();
             if (icon != null) {
                 putValue(LARGE_ICON_KEY, icon);
             }
@@ -43,12 +45,24 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             return context.getIconName();
         }
 
-        public Icon getActionIcon() {
+        @Override
+        public Icon getIcon() {
             return GuiSwingIcons.getInstance().getIcon(getIconName());
         }
 
         public Icon getActionPressedIcon() {
             return GuiSwingIcons.getInstance().getPressedIcon(getIconName());
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupCategorized.CATEGORY_ACTION;
+        }
+
+
+        @Override
+        public KeyStroke getRecommendedKeyStroke() {
+            return GuiSwingKeyBinding.getKeyStroke(context.getAcceleratorKeyStroke());
         }
     }
 }

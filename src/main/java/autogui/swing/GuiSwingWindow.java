@@ -11,13 +11,12 @@ import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class GuiSwingWindow extends JFrame {
     protected GuiMappingContext context;
@@ -103,112 +102,23 @@ public class GuiSwingWindow extends JFrame {
         preferences = new GuiSwingPreferences(this);
     }
 
+
     protected void initKeyBinding() {
-        //TODO
-        Map<KeyStroke, Map<Integer,List<KeyStrokeAction>>> keyToDepthToActions = new HashMap<>();
-        traverseKeyBinding(keyToDepthToActions, viewComponent, 0);
-        List<KeyStrokeAction> assigned = new ArrayList<>();
-        Set<KeyStroke> assignedKeys = new HashSet<>();
-        while (!keyToDepthToActions.isEmpty()) {
-            if (new ArrayList<>(keyToDepthToActions.entrySet()).stream()
-                    .noneMatch(e -> {
-                        if (!assignedKeys.contains(e.getKey())) {
-                            List<Integer> depth = new ArrayList<>(e.getValue().keySet());
-                            depth.sort(Comparator.reverseOrder());
-                            int d = depth.remove(0);
-                            List<KeyStrokeAction> actions = e.getValue().get(d);
-                            assigned.add(actions.remove(0));
-                            assignedKeys.add(e.getKey());
-                            actions.stream()
-                                    .flatMap(a -> a.powerSet().stream())
-                                    .forEach(a -> putKeyStroke(keyToDepthToActions, a));
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    })) {
-                break;
+        new GuiSwingKeyBinding().bind(viewComponent);
+
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                System.err.println("presed " + e);
             }
-        }
-        InputMap inputMap = viewComponent.getInputMap();
-        for (KeyStrokeAction action : assigned) {
-            inputMap.put(action.stroke, action.action);
-        }
-    }
-
-    public static class KeyStrokeAction {
-        public PopupCategorized.CategorizedMenuItem item;
-        public Action action;
-        public int depth;
-        public KeyStroke originalStroke;
-        public KeyStroke stroke;
-
-        public KeyStrokeAction(PopupCategorized.CategorizedMenuItem item, Action action, int depth, KeyStroke originalStroke) {
-            this.item = item;
-            this.action = action;
-            this.depth = depth;
-            this.originalStroke = originalStroke;
-            this.stroke = originalStroke;
-        }
-
-        public Set<KeyStrokeAction> powerSet() {
-            int mods = stroke.getModifiers();
-            return null; //TODO
-        }
-    }
-
-    public void traverseKeyBinding(Map<KeyStroke, Map<Integer,List<KeyStrokeAction>>> keyToDepthToActions, Component c, int depth) {
-        if (c instanceof GuiSwingView.ValuePane<?>) {
-            List<PopupCategorized.CategorizedMenuItem> items = ((GuiSwingView.ValuePane<?>) c).getSwingStaticMenuItems();
-            for (PopupCategorized.CategorizedMenuItem item : items) {
-                boolean hasStroke = false;
-                if (item instanceof PopupCategorized.CategorizedMenuItemAction) {
-                    if (putKeyStroke(keyToDepthToActions, depth, item, (PopupCategorized.CategorizedMenuItemAction) item)) {
-                        hasStroke = true;
-                    }
-                } else if (item instanceof PopupCategorized.CategorizedMenuItemComponent) {
-                    JComponent comp = ((PopupCategorized.CategorizedMenuItemComponent) item).getMenuItem();
-                    if (comp instanceof AbstractButton) {
-                        if (putKeyStroke(keyToDepthToActions, depth, item, ((AbstractButton) comp).getAction())) {
-                            hasStroke = true;
-                        }
-                    }
-                } else if (item instanceof AbstractButton) {
-                    if (putKeyStroke(keyToDepthToActions, depth, item, ((AbstractButton) item).getAction())) {
-                        hasStroke = true;
-                    }
-                }
-
-                if (!hasStroke) {
-                    //TODO
-                }
-            }
-        }
-        if (c instanceof Container) {
-            for (Component sub : ((Container) c).getComponents()) {
-                traverseKeyBinding(keyToDepthToActions, sub, depth + 1);
-            }
-        }
-    }
-
-
-    private void putKeyStroke(Map<KeyStroke, Map<Integer,List<KeyStrokeAction>>> keyToDepthToActions, KeyStrokeAction item) {
-        keyToDepthToActions.computeIfAbsent(item.stroke, s -> new HashMap<>())
-                .computeIfAbsent(item.depth, d -> new ArrayList<>())
-                .add(item);
-    }
-
-    private boolean putKeyStroke(Map<KeyStroke, Map<Integer,List<KeyStrokeAction>>> keyToDepthToActions, int depth,
-                                 PopupCategorized.CategorizedMenuItem i, Action item) {
-        KeyStroke stroke = (item == null ? null : (KeyStroke) item.getValue(Action.ACCELERATOR_KEY));
-        if (stroke != null) {
-            keyToDepthToActions.computeIfAbsent(stroke, s -> new HashMap<>())
-                    .computeIfAbsent(depth, d -> new ArrayList<>())
-                    .add(new KeyStrokeAction(i, item, depth, stroke));
-            return true;
-        } else {
-            return false;
-        }
+        });
+//        put(KeyStroke.getKeyStroke(KeyEvent.VK_P, KeyEvent.META_DOWN_MASK),
+//                new AbstractAction() {
+//                    @Override
+//                    public void actionPerformed(ActionEvent e) {
+//                        System.err.println("test");
+//                    }
+//                }); //DEBUG
     }
 
     protected void initMenu() {

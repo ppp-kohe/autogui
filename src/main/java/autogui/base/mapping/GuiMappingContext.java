@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -166,6 +167,22 @@ public class GuiMappingContext {
 
     public String getDescription() {
         return typeElement.getDescription();
+    }
+
+    Pattern keyPattern = Pattern.compile("[0-9a-zA-Z]");
+
+    public String getAcceleratorKeyStroke() {
+        String s = typeElement.getAcceleratorKeyStroke();
+        if (s.isEmpty()) {
+            String name = getName();
+            if (name.length() > 0) {
+                char c = name.charAt(0);
+                return Character.toString(Character.toUpperCase(c));
+            }
+            return "";
+        } else {
+            return s;
+        }
     }
 
     ///////////////////////

@@ -275,12 +275,21 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     @Override
     public String getAcceleratorKeyStroke() {
         if (keyStroke == null) {
-            keyStroke = join(join(
+            keyStroke = select(
                     keyStroke(getField()),
-                    keyStroke(getGetter())),
-                    keyStroke(getField()));
+                    keyStroke(getGetter()),
+                    keyStroke(getSetter()));
         }
         return keyStroke;
+    }
+
+    private String select(String... ss) {
+        for (String s : ss) {
+            if (!s.isEmpty()) {
+                return s;
+            }
+        }
+        return "";
     }
 
     private String join(String a, String b) {

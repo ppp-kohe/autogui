@@ -34,6 +34,9 @@ public interface GuiSwingView extends GuiSwingElement {
         return false;
     }
 
+    interface RecommendedKeyStroke {
+        KeyStroke getRecommendedKeyStroke();
+    }
 
     interface ValuePane<ValueType> {
         /** @return basically, the source value of the context, held by the component without touching the context.  */

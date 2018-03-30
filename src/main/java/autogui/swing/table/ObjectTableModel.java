@@ -486,7 +486,8 @@ public class ObjectTableModel extends AbstractTableModel {
     /**
      * an action for wrapping {@link TableTargetCellAction}
      */
-    public static class TableTargetCellExecutionAction extends AbstractAction {
+    public static class TableTargetCellExecutionAction extends AbstractAction
+            implements PopupCategorized.CategorizedMenuItemAction {
         protected TableTargetCellAction action;
         protected GuiReprCollectionTable.TableTargetCell target;
 
@@ -512,6 +513,16 @@ public class ObjectTableModel extends AbstractTableModel {
         @Override
         public void actionPerformed(ActionEvent e) {
             action.actionPerformedOnTableCell(e, target);
+        }
+
+        @Override
+        public String getCategory() {
+            return action.getCategory();
+        }
+
+        @Override
+        public String getSubCategory() {
+            return action.getSubCategory();
         }
     }
 }
