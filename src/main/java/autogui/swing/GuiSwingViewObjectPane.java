@@ -3,7 +3,6 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprObjectPane;
-import autogui.base.mapping.GuiReprPropertyPane;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.util.*;
 
@@ -189,7 +188,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
                                 new ContextRefreshAction(context),
                                 new ToStringCopyAction(this, context)),
                         GuiSwingJsonTransfer.getActions(this, context),
-                        actions);
+                        getActions());
             }
             return menuItems;
         }
@@ -314,9 +313,9 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            GuiReprObjectPane objectPane = (GuiReprObjectPane) getContext().getRepresentation();
-            if (objectPane.isEditable(getContext())) {
-                objectPane.updateFromGui(getContext(), value);
+            GuiReprObjectPane objectPane = (GuiReprObjectPane) getSwingViewContext().getRepresentation();
+            if (objectPane.isEditable(getSwingViewContext())) {
+                objectPane.updateFromGui(getSwingViewContext(), value);
             } else {
                 context.updateSourceFromGui(value);
             }
@@ -330,20 +329,20 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
 
         @Override
-        public void loadPreferences(GuiPreferences prefs) {
+        public void loadSwingPreferences(GuiPreferences prefs) {
             GuiSwingView.loadPreferencesDefault(this, prefs);
-            preferencesUpdater.apply(prefs.getDescendant(getContext()));
+            preferencesUpdater.apply(prefs.getDescendant(getSwingViewContext()));
         }
 
         @Override
-        public void savePreferences(GuiPreferences prefs) {
+        public void saveSwingPreferences(GuiPreferences prefs) {
             GuiSwingView.savePreferencesDefault(this, prefs);
-            preferencesUpdater.getPrefs().saveTo(prefs.getDescendant(getContext()));
+            preferencesUpdater.getPrefs().saveTo(prefs.getDescendant(getSwingViewContext()));
         }
 
         @Override
@@ -373,8 +372,8 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         @Override
         protected Transferable createTransferable(JComponent c) {
-            String data = pane.getContext().getRepresentation()
-                            .toHumanReadableString(pane.getContext(), pane.getSwingViewValue());
+            String data = pane.getSwingViewContext().getRepresentation()
+                            .toHumanReadableString(pane.getSwingViewContext(), pane.getSwingViewValue());
             return new StringSelection(data);
         }
     }

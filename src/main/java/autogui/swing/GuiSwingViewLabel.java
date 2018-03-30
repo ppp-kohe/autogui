@@ -12,8 +12,6 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragSource;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.geom.RoundRectangle2D;
@@ -41,7 +39,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyLabel label = new PropertyLabel(context);
         if (context.isTypeElementProperty()) {
-            return label.wrapNamed();
+            return label.wrapSwingNamed();
         } else {
             return label;
         }
@@ -155,7 +153,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
     }

@@ -310,8 +310,8 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         //// action
 
         public <E> LambdaCollectionTable addAction(String name, Consumer<List<E>> action) {
-            GuiMappingContext context = getContext().createChildCandidate(new GuiTypeMemberActionList(name,
-                    ((GuiTypeCollection) getContext().getTypeElementAsProperty().getType()).getElementType(), (String) null));
+            GuiMappingContext context = getSwingViewContext().createChildCandidate(new GuiTypeMemberActionList(name,
+                    ((GuiTypeCollection) getSwingViewContext().getTypeElementAsProperty().getType()).getElementType(), (String) null));
             context.setRepresentation(new GuiReprActionList());
             context.addToParent();
 
@@ -331,7 +331,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             return this;
         }
 
-        public GuiSwingView.ValueWrappingPane<List<?>> wrapPane() {
+        public GuiSwingView.ValueWrappingPane<List<?>> wrapSwingPane() {
             return wrapPane(true, true);
         }
 
@@ -340,7 +340,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
                     verticalAlways ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     horizontalAlways ? ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             initTableScrollPane(s);
-            GuiSwingView.ValueWrappingPane<List<?>> pane = s.wrapPane();
+            GuiSwingView.ValueWrappingPane<List<?>> pane = s.wrapSwingPane();
             pane.add(initActionToolBar(getActions()), BorderLayout.PAGE_START);
             return pane;
         }

@@ -54,12 +54,12 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
             LambdaProperty.LambdaDocumentPlainEditorPane editPane = new LambdaProperty.LambdaDocumentPlainEditorPane(obj::getDoc);
             LambdaProperty.LambdaDocumentTextPane textPane = new LambdaProperty.LambdaDocumentTextPane(obj::getBuf);
             tabbedPane.add("TextPane", new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-                    editPane.wrapScrollPane(true, false),
-                    textPane.wrapScrollPane(true, false)));
+                    editPane.wrapSwingScrollPane(true, false),
+                    textPane.wrapSwingScrollPane(true, false)));
 
             LambdaProperty.LambdaCollectionTable listTable = new LambdaProperty.LambdaCollectionTable(TestElem.class, obj::getElems);
             listTable.addColumnBoolean("boolVal", TestElem::isBoolVal, TestElem::setBoolVal);
-            tabbedPane.add("ListTable", listTable.wrapScrollPane(true, true));
+            tabbedPane.add("ListTable", listTable.wrapSwingScrollPane(true, true));
 
             LambdaProperty.LambdaLabel label = new LambdaProperty.LambdaLabel(obj::toString);
             tabbedPane.add("Label", pane(label));

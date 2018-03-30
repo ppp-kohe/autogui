@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.type.*;
 import autogui.swing.util.MenuBuilder;
+import autogui.swing.util.PopupCategorized;
 
 import javax.swing.*;
 
@@ -14,7 +15,7 @@ public class GuiSwingContextInfo {
     }
 
     public JComponent getInfoLabel(GuiMappingContext context) {
-        return MenuBuilder.get().createLabel(getInfo(context));
+        return MenuBuilder.get().createLabel(getInfo(context), PopupCategorized.SUB_CATEGORY_LABEL_TYPE);
     }
 
     public String getInfo(GuiMappingContext context) {

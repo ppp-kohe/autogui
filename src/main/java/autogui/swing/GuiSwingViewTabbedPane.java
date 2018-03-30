@@ -63,20 +63,20 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         @Override
         public void addSubComponent(JComponent component, boolean resizable) {
             if (component instanceof ValuePane<?>) {
-                addSubComponent(((ValuePane) component).getContext(), component);
+                addSubComponent(((ValuePane) component).getSwingViewContext(), component);
             }
         }
 
         @Override
-        public void loadPreferences(GuiPreferences prefs) {
-            super.loadPreferences(prefs);
-            tabPreferencesUpdater.apply(prefs.getDescendant(getContext()));
+        public void loadSwingPreferences(GuiPreferences prefs) {
+            super.loadSwingPreferences(prefs);
+            tabPreferencesUpdater.apply(prefs.getDescendant(getSwingViewContext()));
         }
 
         @Override
-        public void savePreferences(GuiPreferences prefs) {
-            super.savePreferences(prefs);
-            tabPreferencesUpdater.getPrefs().saveTo(prefs.getDescendant(getContext()));
+        public void saveSwingPreferences(GuiPreferences prefs) {
+            super.saveSwingPreferences(prefs);
+            tabPreferencesUpdater.getPrefs().saveTo(prefs.getDescendant(getSwingViewContext()));
         }
 
         @Override

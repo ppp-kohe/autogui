@@ -390,7 +390,7 @@ public class SearchTextField extends JComponent {
         return searchedItemsListeners;
     }
 
-    public boolean isEditable() {
+    public boolean isSwingEditable() {
         return isEnabled() && getField().isEnabled() && getField().isEditable();
     }
 
@@ -568,7 +568,7 @@ public class SearchTextField extends JComponent {
         @Override
         protected List<PopupCategorized.CategorizedMenuItem> doInBackground() throws Exception {
             try{
-                return field.getModel().getCandidates(text, field.isEditable(), this);
+                return field.getModel().getCandidates(text, field.isSwingEditable(), this);
             } catch (CancellationException ex) {
                 return new ArrayList<>();
             }

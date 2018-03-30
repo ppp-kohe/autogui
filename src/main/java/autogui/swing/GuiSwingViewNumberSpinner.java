@@ -56,7 +56,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyNumberSpinner spinner = new PropertyNumberSpinner(context);
         if (context.isTypeElementProperty()) {
-            return spinner.wrapNamed();
+            return spinner.wrapSwingNamed();
         } else {
             return spinner;
         }
@@ -320,21 +320,21 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
 
         @Override
-        public void savePreferences(GuiPreferences prefs) {
+        public void saveSwingPreferences(GuiPreferences prefs) {
             GuiSwingView.savePreferencesDefault(this, prefs);
-            GuiPreferences targetPrefs = prefs.getDescendant(getContext());
+            GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
             getModelTyped().saveTo(targetPrefs);
             settingAction.saveTo(targetPrefs);
         }
 
         @Override
-        public void loadPreferences(GuiPreferences prefs) {
-            GuiPreferences targetPrefs = prefs.getDescendant(getContext());
+        public void loadSwingPreferences(GuiPreferences prefs) {
+            GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
             getModelTyped().loadFrom(targetPrefs);
             settingAction.loadFrom(targetPrefs);
             GuiSwingView.loadPreferencesDefault(this, prefs);
@@ -351,7 +351,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        public void shutdown() {
+        public void shutdownSwingView() {
             editingRunner.shutdown();
         }
 

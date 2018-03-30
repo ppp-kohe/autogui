@@ -4,6 +4,7 @@ import autogui.base.mapping.*;
 import autogui.swing.GuiSwingActionDefault;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingViewCollectionTable;
 import autogui.swing.util.*;
 
 import javax.swing.*;
@@ -172,10 +173,16 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
 
         @Override
-        public PopupExtension.PopupMenuBuilder getMenuBuilder() {
+        public PopupExtension.PopupMenuBuilder getMenuBuilder(JTable table) {
             if (component instanceof GuiSwingView.ValuePane) {
                 PopupExtension.PopupMenuBuilder rendererPaneOriginalBuilder = ((GuiSwingView.ValuePane) component).getSwingMenuBuilder();;
-                return new ObjectTableColumnActionBuilder(getOwnerColumn(), rendererPaneOriginalBuilder);
+
+                if (rendererPaneOriginalBuilder instanceof PopupCategorized) {
+                    ((PopupCategorized) rendererPaneOriginalBuilder).setMenuBuilder(
+                            new GuiSwingViewCollectionTable.MenuBuilderWithEmptySeparator());
+                }
+
+                return new ObjectTableColumnActionBuilder(table, getOwnerColumn(), rendererPaneOriginalBuilder);
             } else {
                 return null;
             }
@@ -184,7 +191,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         public void shutdown() {
             GuiSwingView.ValuePane<?> p = getMenuTargetPane();
             if (p != null) {
-                p.shutdown();
+                p.shutdownSwingView();
             }
         }
     }
@@ -282,7 +289,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         public void shutdown() {
             if (!skipShutDown && component instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane) component).shutdown();
+                ((GuiSwingView.ValuePane) component).shutdownSwingView();
             }
         }
     }
@@ -298,29 +305,23 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
      *    with {@link autogui.swing.table.ObjectTableModel.CollectionRowsAndCellsActionBuilder}.
       */
     public static class ObjectTableColumnActionBuilder implements PopupExtension.PopupMenuBuilder {
+        protected JTable table;
         protected ObjectTableColumn column;
         protected PopupExtension.PopupMenuBuilder paneOriginalBuilder;
 
-        public ObjectTableColumnActionBuilder(ObjectTableColumn column, PopupExtension.PopupMenuBuilder paneOriginalBuilder) {
+        public ObjectTableColumnActionBuilder(JTable table, ObjectTableColumn column, PopupExtension.PopupMenuBuilder paneOriginalBuilder) {
+            this.table = table;
             this.column = column;
             this.paneOriginalBuilder = paneOriginalBuilder;
         }
 
         @Override
-        public void build(PopupExtensionSender sender, Consumer<Object> menu) {
-            JComponent pane = sender.getPane();
-            if (pane instanceof JTable &&
-                    ((JTable) pane).getModel() instanceof ObjectTableModel) {
-                JTable table = (JTable) pane;
-
-                paneOriginalBuilder.build(sender, new CollectionRowsActionBuilder(table, column, menu));
-
-                addColumnSelection(table, menu);
+        public void build(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu) {
+            if (table.getModel() instanceof ObjectTableModel) {
+                paneOriginalBuilder.build(new CollectionRowsActionBuilder(table, column, filter), menu);
+            } else {
+                new PopupExtension.PopupMenuBuilderEmpty().build(filter, menu);
             }
-        }
-
-        protected void addColumnSelection(JTable table, Consumer<Object> menu) {
-            menu.accept(new ColumnSelectionAction(table, column.getTableColumn().getModelIndex()));
         }
     }
 
@@ -345,7 +346,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         @Override
         public String getCategory() {
-            return TableTargetMenu.MENU_COLUMN_ROWS;
+            return MenuBuilder.getCategoryWithPrefix(TableTargetMenu.MENU_COLUMN_ROWS, PopupExtension.MENU_CATEGORY_SELECT);
         }
 
         @Override
@@ -355,70 +356,92 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     }
 
     /**
-     * a menu appending wrapper for converting an action to another action which supports a selected rows.
+     * a menu filter for converting an action to another action which supports a selected rows.
      * <ul>
      *  <li>{@link TableTargetMenu#convert(GuiReprCollectionTable.TableTargetColumn)}</li>
      *  <li>the class currently explicitly handles actions in {@link PopupExtensionText} and in {@link SearchTextFieldFilePath}.</li>
      *  <li>a {@link TableTargetCellAction} is converted to a {@link TableTargetExecutionAction}.</li>
      * </ul>
      */
-    public static class CollectionRowsActionBuilder implements Consumer<Object> {
+    public static class CollectionRowsActionBuilder implements PopupExtension.PopupMenuFilter {
         protected JTable table;
         protected ObjectTableColumn column;
-        protected Consumer<Object> menu;
         protected GuiReprCollectionTable.TableTargetColumn target;
+        protected PopupExtension.PopupMenuFilter filter;
+        protected boolean afterReturned;
 
-        public CollectionRowsActionBuilder(JTable table, ObjectTableColumn column, Consumer<Object> menu) {
+        public CollectionRowsActionBuilder(JTable table, ObjectTableColumn column, PopupExtension.PopupMenuFilter filter) {
             this.table = table;
             this.column = column;
-            this.menu = menu;
+            this.filter = filter;
             target = new TableTargetColumnForJTable(table, column.getTableColumn().getModelIndex());
         }
 
         @Override
-        public void accept(Object o) {
+        public Object convert(Object o) {
+            Object r;
             if (o instanceof Action) {
-                addAction((Action) o);
+                r = convertAction((Action) o);
             } else if (o instanceof TableTargetMenu) {
-                menu.accept(((TableTargetMenu) o).convert(target));
+                r = ((TableTargetMenu) o).convert(target);
             } else if (o instanceof JMenuItem) {
-                Action action = ((JMenuItem) o).getAction();
-                addAction(action);
+                r = convertAction(((JMenuItem) o).getAction());
             } else {
-                menu.accept(o);
+                r = o;
+            }
+            if (r != null) {
+                return filter.convert(r);
+            } else {
+                return null;
             }
         }
 
-        public void addAction(Action a) {
+        public Object convertAction(Action a) {
             if (a instanceof TableTargetColumnAction) {
-                menu.accept(new TableTargetExecutionAction((TableTargetColumnAction) a, target));
+                return new TableTargetExecutionAction((TableTargetColumnAction) a, target);
 
             } else if (a instanceof PopupExtensionText.TextCopyAllAction) {
-                menu.accept(new TableTargetInvocationAction(a, target,
+                return new TableTargetInvocationAction(a, target,
                         (e, t) -> ((PopupExtensionText.TextCopyAllAction) a).actionPerformedOnTable(e,
-                                t.getSelectedCellValues())));
+                                t.getSelectedCellValues()));
 
             } else if (a instanceof PopupExtensionText.TextPasteAllAction) {
-                menu.accept(new TableTargetInvocationAction(a, target,
+                return new TableTargetInvocationAction(a, target,
                         (e, t) -> ((PopupExtensionText.TextPasteAllAction) a)
-                                .pasteLines(t::setSelectedCellValuesLoop)));
+                                .pasteLines(t::setSelectedCellValuesLoop));
 
             } else if (a instanceof SearchTextFieldFilePath.FileListEditAction) {
-                menu.accept(new TableTargetInvocationAction(a, target,
+                return new TableTargetInvocationAction(a, target,
                         (e, t) -> ((SearchTextFieldFilePath.FileListEditAction) a)
-                                .run(t::setSelectedCellValuesLoop)));
+                                .run(t::setSelectedCellValuesLoop));
 
             } else if (a instanceof SearchTextFieldFilePath.FileListAction) {
-                menu.accept(new TableTargetInvocationAction(a, target,
+                return new TableTargetInvocationAction(a, target,
                         (e, t) -> ((SearchTextFieldFilePath.FileListAction) a)
                                 .run(t.getSelectedCellValues().stream()
                                         .map(Path.class::cast)
-                                        .collect(Collectors.toList()))));
+                                        .collect(Collectors.toList())));
 
             } else if (a instanceof GuiSwingActionDefault.ExecutionAction) {
-                menu.accept(new TableRowsRepeatAction(table, column, a));
+                return new TableRowsRepeatAction(table, column, a);
+            } else {
+                return null; //disabled
             }
-            //else : disabled
+        }
+
+        @Override
+        public List<Object> aroundItems(boolean before) {
+            if (!before && !afterReturned) {
+                List<Object> afters = new ArrayList<>(filter.aroundItems(false));
+                Object a = filter.convert(new ColumnSelectionAction(table, column.getTableColumn().getModelIndex()));
+                if (a != null) {
+                    afters.add(a);
+                }
+                afterReturned = true;
+                return afters;
+            } else {
+                return filter.aroundItems(before);
+            }
         }
     }
 
@@ -459,7 +482,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         @Override
         public String getCategory() {
-            return TableTargetColumnAction.MENU_CATEGORY_COLUMN;
+            return MenuBuilder.getCategoryWithPrefix(TableTargetMenu.MENU_COLUMN_ROWS, action.getCategory());
         }
 
         @Override
@@ -504,7 +527,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         @Override
         public String getCategory() {
-            return TableTargetMenu.MENU_COLUMN_ROWS;
+            String category = PopupCategorized.CATEGORY_ACTION;
+            if (action instanceof PopupCategorized.CategorizedMenuItem) {
+                category = ((PopupCategorized.CategorizedMenuItem) action).getCategory();
+            }
+            return MenuBuilder.getCategoryWithPrefix(TableTargetMenu.MENU_COLUMN_ROWS, category);
         }
 
         @Override
@@ -563,7 +590,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         @Override
         public String getCategory() {
-            return TableTargetMenu.MENU_COLUMN_ROWS;
+            String category = PopupCategorized.CATEGORY_ACTION;
+            if (action instanceof PopupCategorized.CategorizedMenuItem) {
+                category = ((PopupCategorized.CategorizedMenuItem) action).getCategory();
+            }
+            return MenuBuilder.getCategoryWithPrefix(TableTargetMenu.MENU_COLUMN_ROWS, category);
         }
 
         @Override

@@ -46,11 +46,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
         ValuePane<Object> text = doc.isStyledDocument(context) ?
                 new PropertyDocumentTextPane(context) : new PropertyDocumentEditorPane(context);
-        ValuePane<Object> pane = text.wrapScrollPane(true, false);
+        ValuePane<Object> pane = text.wrapSwingScrollPane(true, false);
         if (context.isTypeElementProperty()) {
-            return pane.wrapProperty();
+            return pane.wrapSwingProperty();
         } else {
-            return pane.asComponent();
+            return pane.asSwingViewComponent();
         }
     }
 
@@ -108,7 +108,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             if (pane instanceof ValuePane<?>) {
                 builder = new PopupCategorized(((ValuePane<?>) pane)::getSwingStaticMenuItems);
             } else {
-                builder = (sender,menu) -> {};
+                builder = new PopupExtension.PopupMenuBuilderEmpty();
             }
             popup = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), builder);
             pane.setInheritsPopupMenu(true);
@@ -131,7 +131,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     }
 
     public static List<PopupCategorized.CategorizedMenuItem> getTextMenuItems(ValuePane<?> pane) {
-        GuiMappingContext context = pane.getContext();
+        GuiMappingContext context = pane.getSwingViewContext();
         List<Action> settingActions = Collections.emptyList();
         if (pane instanceof PropertyDocumentTextPane) {
             settingActions = Collections.singletonList(
@@ -300,7 +300,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
 
@@ -379,7 +379,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
 
@@ -388,14 +388,14 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public void savePreferences(GuiPreferences prefs) {
+        public void saveSwingPreferences(GuiPreferences prefs) {
             GuiSwingView.savePreferencesDefault(this, prefs);
             GuiPreferences targetPrefs = prefs.getDescendant(context);
             settingPane.saveTo(targetPrefs);
         }
 
         @Override
-        public void loadPreferences(GuiPreferences prefs) {
+        public void loadSwingPreferences(GuiPreferences prefs) {
             GuiSwingView.loadPreferencesDefault(this, prefs);
             GuiPreferences targetPrefs = prefs.getDescendant(context);
             settingPane.loadFrom(targetPrefs);
@@ -412,7 +412,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public void shutdown() {
+        public void shutdownSwingView() {
             settingPane.shutDown();
         }
 
@@ -758,7 +758,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public void sendPreferences() {
             if (pane instanceof ValuePane<?> && preferencesUpdater != null) {
                 preferencesUpdater.accept(
-                        new GuiSwingPreferences.PreferencesUpdateEvent(((ValuePane) pane).getContext(), this));
+                        new GuiSwingPreferences.PreferencesUpdateEvent(((ValuePane) pane).getSwingViewContext(), this));
             }
         }
 

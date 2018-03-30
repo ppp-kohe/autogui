@@ -79,28 +79,28 @@ public interface GuiSwingView extends GuiSwingElement {
          */
         PopupExtension.PopupMenuBuilder getSwingMenuBuilder();
 
-        default ValueScrollPane<ValueType> wrapScrollPane(boolean verticalAlways, boolean horizontalAlways) {
-            return new ValueScrollPane<>(asComponent(),
+        default ValueScrollPane<ValueType> wrapSwingScrollPane(boolean verticalAlways, boolean horizontalAlways) {
+            return new ValueScrollPane<>(asSwingViewComponent(),
                     verticalAlways ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     horizontalAlways ? ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         }
 
-        default ValueWrappingPane<ValueType> wrapPane() {
-            return new ValueWrappingPane<>(asComponent());
+        default ValueWrappingPane<ValueType> wrapSwingPane() {
+            return new ValueWrappingPane<>(asSwingViewComponent());
         }
 
-        GuiMappingContext getContext();
+        GuiMappingContext getSwingViewContext();
 
-        default GuiSwingViewPropertyPane.PropertyPane wrapProperty() {
-            return new GuiSwingViewPropertyPane.PropertyPane(getContext(), true, asComponent());
+        default GuiSwingViewPropertyPane.PropertyPane wrapSwingProperty() {
+            return new GuiSwingViewPropertyPane.PropertyPane(getSwingViewContext(), true, asSwingViewComponent());
         }
 
-        default GuiSwingViewPropertyPane.NamedPropertyPane wrapNamed() {
-            return new GuiSwingViewPropertyPane.NamedPropertyPane(getContext().getDisplayName(), getContext().getName(),
-                    asComponent(), getSwingMenuBuilder());
+        default GuiSwingViewPropertyPane.NamedPropertyPane wrapSwingNamed() {
+            return new GuiSwingViewPropertyPane.NamedPropertyPane(getSwingViewContext().getDisplayName(), getSwingViewContext().getName(),
+                    asSwingViewComponent(), getSwingMenuBuilder());
         }
 
-        default JComponent asComponent() {
+        default JComponent asSwingViewComponent() {
             return (JComponent) this;
         }
 
@@ -108,8 +108,8 @@ public interface GuiSwingView extends GuiSwingElement {
          * @param prefs target prefs or ancestor of the target;
          *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
          */
-        default void savePreferences(GuiPreferences prefs) {
-            savePreferencesDefault(asComponent(), prefs);
+        default void saveSwingPreferences(GuiPreferences prefs) {
+            savePreferencesDefault(asSwingViewComponent(), prefs);
         }
 
         /**
@@ -118,14 +118,14 @@ public interface GuiSwingView extends GuiSwingElement {
          * @param prefs target prefs or ancestor of the target;
          *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
          */
-        default void loadPreferences(GuiPreferences prefs) {
-            loadPreferencesDefault(asComponent(), prefs);
+        default void loadSwingPreferences(GuiPreferences prefs) {
+            loadPreferencesDefault(asSwingViewComponent(), prefs);
         }
 
-        default void shutdown() { }
+        default void shutdownSwingView() { }
 
-        default boolean isEditable() {
-            GuiMappingContext context = getContext();
+        default boolean isSwingEditable() {
+            GuiMappingContext context = getSwingViewContext();
             return !context.isReprValue() || context.getReprValue().isEditable(context);
         }
     }
@@ -159,7 +159,7 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane) {
-        if (!pane.isEditable()) {
+        if (!pane.isSwingEditable()) {
             return;
         }
         List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefs.getHistoryValues());
@@ -176,8 +176,8 @@ public interface GuiSwingView extends GuiSwingElement {
             GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) e;
             if (valuePane != comp) { //skip top
                 try {
-                    valuePane.savePreferences(
-                            prefs.getDescendant(valuePane.getContext()));
+                    valuePane.saveSwingPreferences(
+                            prefs.getDescendant(valuePane.getSwingViewContext()));
                 } catch (Exception ex) {
                     GuiLogManager.get().logError(ex);
                 }
@@ -188,14 +188,14 @@ public interface GuiSwingView extends GuiSwingElement {
     @SuppressWarnings("unchecked")
     static void savePreferencesDefault(JComponent pane, GuiPreferences prefs) {
         if (pane instanceof ValuePane<?>) {
-            prefs.getDescendant(((ValuePane<?>) pane).getContext());
+            prefs.getDescendant(((ValuePane<?>) pane).getSwingViewContext());
         }
     }
 
     @SuppressWarnings("unchecked")
     static void loadPreferencesDefault(JComponent pane, GuiPreferences prefs) {
         if (pane instanceof ValuePane<?>) {
-            GuiMappingContext context = ((ValuePane) pane).getContext();
+            GuiMappingContext context = ((ValuePane) pane).getSwingViewContext();
             GuiPreferences targetPrefs = prefs.getDescendant(context);
             if (context.isHistoryValueSupported()) {
                 setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane);
@@ -208,8 +208,8 @@ public interface GuiSwingView extends GuiSwingElement {
             if (c != comp) { //skip top
                 GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) c;
                 try {
-                    valuePane.loadPreferences(
-                            prefs.getDescendant(valuePane.getContext()));
+                    valuePane.loadSwingPreferences(
+                            prefs.getDescendant(valuePane.getSwingViewContext()));
                 } catch (Exception ex) {
                     GuiLogManager.get().logError(ex);
                 }
@@ -273,12 +273,12 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         @Override
-        public GuiMappingContext getContext() {
-            return pane == null ? null : pane.getContext();
+        public GuiMappingContext getSwingViewContext() {
+            return pane == null ? null : pane.getSwingViewContext();
         }
 
         @Override
-        public void loadPreferences(GuiPreferences prefs) {
+        public void loadSwingPreferences(GuiPreferences prefs) {
         }
     }
 
@@ -346,12 +346,12 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         @Override
-        public GuiMappingContext getContext() {
-            return pane == null ? null : pane.getContext();
+        public GuiMappingContext getSwingViewContext() {
+            return pane == null ? null : pane.getSwingViewContext();
         }
 
         @Override
-        public void loadPreferences(GuiPreferences prefs) {
+        public void loadSwingPreferences(GuiPreferences prefs) {
         }
     }
 
@@ -452,7 +452,7 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         @Override
-        public JComponent getMenuItem(PopupCategorized sender) {
+        public JComponent getMenuItem() {
             return this;
         }
 
@@ -534,7 +534,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
         @Override
         public String getCategory() {
-            return MENU_COLUMN_ROWS;
+            return MenuBuilder.getCategoryWithPrefix(MENU_COLUMN_ROWS, PopupExtension.MENU_CATEGORY_SET);
         }
     }
 
@@ -550,7 +550,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
         @Override
         public boolean isEnabled() {
-            return component.isEditable();
+            return component.isSwingEditable();
         }
 
         @Override

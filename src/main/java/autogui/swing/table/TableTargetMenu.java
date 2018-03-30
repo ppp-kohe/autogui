@@ -9,7 +9,10 @@ import javax.swing.*;
  * a menu factory for selected column-rows
  */
 public interface TableTargetMenu {
-    String MENU_COLUMN_ROWS = MenuBuilder.getCategoryImplicit("Column Rows");
+    /**
+     * the category prefix
+     */
+    String MENU_COLUMN_ROWS = "Column Rows ";
 
     JMenu convert(GuiReprCollectionTable.TableTargetColumn target);
 }

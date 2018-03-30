@@ -4,10 +4,8 @@ import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.base.mapping.GuiReprPropertyPane;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.table.ObjectTableColumn;
-import autogui.swing.table.ObjectTableModel;
 import autogui.swing.table.TableTargetCellAction;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.PopupCategorized;
@@ -251,22 +249,21 @@ public class GuiSwingJsonTransfer {
 
     public static class TableMenuCompositeSharedJsonCopy implements ObjectTableColumn.TableMenuCompositeShared {
         @Override
-        public ObjectTableModel.PopupMenuBuilderForRowsOrCells composite(JTable table,
-                                                                         List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
+        public List<PopupCategorized.CategorizedMenuItem> composite(JTable table,
+                                                                   List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
+            List<PopupCategorized.CategorizedMenuItem> actions = new ArrayList<>();
             if (row) {
-                return (sender, menu) -> {
-                    if (sender instanceof GuiSwingViewCollectionTable.PopupExtensionCollection) {
-                        menu.accept(new JsonCopyRowAction(
-                                ((GuiSwingViewCollectionTable.PopupExtensionCollection) sender).getTable().getContext()));
-                    } else {
-                        menu.accept(new JsonCopyCellsAction(toJsonCopies(columns)));
-                    }
-                };
+                if (table instanceof GuiSwingViewCollectionTable.CollectionTable) {
+                    actions.add(new JsonCopyRowAction(
+                            ((GuiSwingViewCollectionTable.CollectionTable) table).getSwingViewContext()));
+                } else {
+                    actions.add(new JsonCopyCellsAction(toJsonCopies(columns)));
+                }
             } else {
-                return (sender, menu) -> {
-                    menu.accept(new JsonCopyCellsAction(toJsonCopies(columns)));
-                };
+                actions.add(new JsonCopyCellsAction(toJsonCopies(columns)));
             }
+            return actions;
+
         }
 
         private List<TableMenuCompositeJsonCopy> toJsonCopies(List<ObjectTableColumn.TableMenuComposite> cols) {
@@ -421,12 +418,10 @@ public class GuiSwingJsonTransfer {
 
     public static class TableMenuCompositeSharedJsonPaste implements ObjectTableColumn.TableMenuCompositeShared {
         @Override
-        public ObjectTableModel.PopupMenuBuilderForRowsOrCells composite(JTable table,
-                                                                         List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
+        public List<PopupCategorized.CategorizedMenuItem> composite(JTable table,
+                                                                   List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
 
-            return (sender, menu) -> {
-                menu.accept(new JsonPasteCellAction(toJsonPaste(columns), row));
-            };
+            return Collections.singletonList(new JsonPasteCellAction(toJsonPaste(columns), row));
         }
 
         private List<TableMenuCompositeJsonPaste> toJsonPaste(List<ObjectTableColumn.TableMenuComposite> columns) {

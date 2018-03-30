@@ -130,7 +130,7 @@ public class SearchTextFieldTest extends GuiSwingTestCase {
         }
 
         @Override
-        public JComponent getMenuItem(PopupCategorized sender) {
+        public JComponent getMenuItem() {
             return new JMenuItem(new TestAction(name));
         }
     }

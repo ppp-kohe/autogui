@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 /**
  * <h3>representation</h3>
  * {@link autogui.base.mapping.GuiReprPropertyPane},
- *  or another repr. called {@link ValuePane#wrapProperty()}
+ *  or another repr. called {@link ValuePane#wrapSwingProperty()}
  *  The latter case is that a context has a property type, but the representation matched to the value type of the property.
  *    (see {@link GuiReprValue#getValueType(GuiMappingContext)}).
  *
@@ -187,7 +187,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
     }
@@ -277,7 +277,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
 
         public boolean isProperty() {
-            GuiMappingContext context = getContext();
+            GuiMappingContext context = getSwingViewContext();
             if (context != null && context.getRepresentation() instanceof GuiReprPropertyPane) {
                 return true;
             } else {
@@ -286,17 +286,17 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             if (hasContentValuePane()) {
-                return getContentPaneAsValuePane().getContext();
+                return getContentPaneAsValuePane().getSwingViewContext();
             } else {
                 return null;
             }
         }
 
         @Override
-        public void loadPreferences(GuiPreferences prefs) {
-            GuiSwingView.loadChildren(prefs.getDescendant(getContext()), this);
+        public void loadSwingPreferences(GuiPreferences prefs) {
+            GuiSwingView.loadChildren(prefs.getDescendant(getSwingViewContext()), this);
         }
     }
 }

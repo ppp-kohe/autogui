@@ -2,7 +2,6 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueStringField;
-import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.SearchTextField;
@@ -11,8 +10,6 @@ import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
@@ -41,7 +38,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyStringPane field = new PropertyStringPane(context);
         if (context.isTypeElementProperty()) {
-            return field.wrapNamed();
+            return field.wrapSwingNamed();
         } else {
             return field;
         }
@@ -137,7 +134,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
                 menuItemsSource = super.getMenuItemsSource();
                 menuItemsSource.add(GuiSwingContextInfo.get().getInfoLabel(context));
                 menuItemsSource.add(new ContextRefreshAction(context));
-                menuItemsSource.add(new HistoryMenu<>(this, getContext()));
+                menuItemsSource.add(new HistoryMenu<>(this, getSwingViewContext()));
                 menuItemsSource.addAll(GuiSwingJsonTransfer.getActions(this, context));
             }
             return menuItemsSource;
@@ -181,12 +178,12 @@ public class GuiSwingViewStringField implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
 
         @Override
-        public void shutdown() {
+        public void shutdownSwingView() {
             getEditingRunner().shutdown();
         }
     }

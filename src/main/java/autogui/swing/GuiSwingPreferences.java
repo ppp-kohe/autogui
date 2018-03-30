@@ -95,8 +95,8 @@ import java.util.stream.IntStream;
  *         </pre>
  *      </li>
  *      <li> a GUI component overrides
- *          {@link autogui.swing.GuiSwingView.ValuePane#savePreferences(GuiPreferences)} and
- *           {@link autogui.swing.GuiSwingView.ValuePane#loadPreferences(GuiPreferences)} for bulk loading/saving.
+ *          {@link autogui.swing.GuiSwingView.ValuePane#saveSwingPreferences(GuiPreferences)} and
+ *           {@link autogui.swing.GuiSwingView.ValuePane#loadSwingPreferences(GuiPreferences)} for bulk loading/saving.
  *       <pre>
  *            public void loadPreferences(GuiPreferences p) {
  *                GuiSwingView.loadPreferencesDefault(this, p);
@@ -246,7 +246,7 @@ public class GuiSwingPreferences {
             rootWindow.loadPreferences(rootContext.getPreferences());
         } else {
             if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane) rootComponent).loadPreferences(
+                ((GuiSwingView.ValuePane) rootComponent).loadSwingPreferences(
                         rootContext.getPreferences());
             }
             GuiSwingView.loadChildren(rootContext.getPreferences(), rootComponent);
@@ -258,7 +258,7 @@ public class GuiSwingPreferences {
             rootWindow.savePreferences(prefs);
         } else {
             if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane) rootComponent).savePreferences(
+                ((GuiSwingView.ValuePane) rootComponent).saveSwingPreferences(
                         prefs);
             }
             GuiSwingView.saveChildren(rootContext.getPreferences(), rootComponent);

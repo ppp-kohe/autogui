@@ -28,9 +28,9 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         ValuePane<Object> comp = new PropertyEmbeddedPane(context);
         if (context.isTypeElementProperty()) {
-            return comp.wrapProperty();
+            return comp.wrapSwingProperty();
         } else {
-            return comp.asComponent();
+            return comp.asSwingViewComponent();
         }
     }
 
@@ -85,12 +85,11 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
 
         @Override
         public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
-            return (sender, menu) -> {
-            };
+            return new PopupExtension.PopupMenuBuilderEmpty();
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
 
@@ -110,9 +109,9 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(Object value) {
-            GuiReprEmbeddedComponent embeddedComponent = (GuiReprEmbeddedComponent) getContext().getRepresentation();
+            GuiReprEmbeddedComponent embeddedComponent = (GuiReprEmbeddedComponent) getSwingViewContext().getRepresentation();
 
-            JComponent comp = embeddedComponent.toUpdateValue(getContext(), value, this::setSwingViewValueComponent);
+            JComponent comp = embeddedComponent.toUpdateValue(getSwingViewContext(), value, this::setSwingViewValueComponent);
             setSwingViewValueComponent(comp);
         }
 
@@ -136,9 +135,9 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
             setSwingViewValue(value);
-            GuiReprEmbeddedComponent repr = (GuiReprEmbeddedComponent) getContext().getRepresentation();
-            if (repr.isEditable(getContext())) {
-                repr.updateFromGui(getContext(), value);
+            GuiReprEmbeddedComponent repr = (GuiReprEmbeddedComponent) getSwingViewContext().getRepresentation();
+            if (repr.isEditable(getSwingViewContext())) {
+                repr.updateFromGui(getSwingViewContext(), value);
             }
         }
     }

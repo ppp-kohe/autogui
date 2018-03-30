@@ -3,6 +3,9 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingViewCollectionTable;
+import autogui.swing.util.MenuBuilder;
+import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
 
@@ -170,7 +173,7 @@ public class ObjectTableColumn {
             return null;
         }
 
-        PopupExtension.PopupMenuBuilder getMenuBuilder();
+        PopupExtension.PopupMenuBuilder getMenuBuilder(JTable table);
     }
 
     ////////////////
@@ -195,16 +198,16 @@ public class ObjectTableColumn {
     public interface TableMenuCompositeShared  {
         /**
          * actually composite the selected columns if row is false, or all columns if row is true.
-         *  The built actions within the returned builder are {@link TableTargetCellAction},
+         *  The built actions include {@link TableTargetCellAction}s,
          *    and their actionPerformed(ActionEvent) will never be called.
          *    So you can just throw an exception in the method.
          * @param table the target table
          * @param columns the selected target columns
          * @param row true if the target are all columns of a row, or false if the target are only selected columns
-         * @return a menu builder for composite items
+         * @return menu items for composite items
          */
-        ObjectTableModel.PopupMenuBuilderForRowsOrCells composite(JTable table,
-                                                                  List<TableMenuComposite> columns, boolean row);
+        List<PopupCategorized.CategorizedMenuItem> composite(JTable table,
+                                                             List<TableMenuComposite> columns, boolean row);
     }
 
 
@@ -277,10 +280,10 @@ public class ObjectTableColumn {
         }
 
         @Override
-        public PopupExtension.PopupMenuBuilder getMenuBuilder() {
-            return new ObjectTableColumnValue.ObjectTableColumnActionBuilder(column, (sender, menu) -> {
-                menu.accept(new NumberCopyAction());
-            });
+        public PopupExtension.PopupMenuBuilder getMenuBuilder(JTable table) {
+            return new ObjectTableColumnValue.ObjectTableColumnActionBuilder(table, column,
+                    new PopupCategorized(() -> Collections.singletonList(new NumberCopyAction()), null,
+                            new GuiSwingViewCollectionTable.MenuBuilderWithEmptySeparator()));
         }
     }
 

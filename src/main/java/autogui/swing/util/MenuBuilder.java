@@ -65,14 +65,28 @@ public class MenuBuilder {
     }
 
     public void addMenuItems(AddingProcess process, List<? extends JComponent> items, String title) {
-        Consumer<Object>  menu = process.getMenu();
-        if (process.getCount() > 0 && !items.isEmpty()) {
-            menu.accept(new JPopupMenu.Separator());
-        }
-        if (title != null && !title.startsWith(".")) {
-            menu.accept(createLabel(title));
-        }
+        addMenuSeparator(process, !items.isEmpty());
+        addMenuTitle(process, title);
         items.forEach(process::add);
+    }
+
+    public boolean addMenuSeparator(AddingProcess process, boolean nonEmpty) {
+        if (process.isSeparatorNeeded() && nonEmpty) {
+            process.setSeparatorNeeded(false);
+            process.getMenu().accept(new JPopupMenu.Separator());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean addMenuTitle(AddingProcess process, String title) {
+        if (title != null && !title.startsWith(".")) {
+            process.getMenu().accept(createLabel(title));
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public static String getCategoryImplicit(String name) {
@@ -101,6 +115,7 @@ public class MenuBuilder {
         protected int[] max;
         protected int size;
         protected int level;
+        protected boolean separatorNeeded;
 
         public AddingProcess(Consumer<Object> menu, int size, int... max) {
             this.menu = menu;
@@ -116,6 +131,14 @@ public class MenuBuilder {
 
         public int getCount() {
             return count;
+        }
+
+        public boolean isSeparatorNeeded() {
+            return count > 0 || separatorNeeded;
+        }
+
+        public void setSeparatorNeeded(boolean separatorNeeded) {
+            this.separatorNeeded = separatorNeeded;
         }
 
         public void add(JComponent item) {
@@ -141,22 +164,44 @@ public class MenuBuilder {
         }
     }
 
-    public JComponent createLabel(String name) {
-        return new MenuLabel(name);
+    public MenuLabel createLabel(String name) {
+        return createLabel(name, PopupCategorized.SUB_CATEGORY_LABEL_HEADER);
+    }
+
+    public MenuLabel createLabel(String name, String subCategory) {
+        return new MenuLabel(name, subCategory);
     }
 
     public static class MenuLabel extends JPanel implements PopupCategorized.CategorizedMenuItemComponent {
-        public MenuLabel(String name) {
+        protected String subCategory = "";
+        protected JLabel label;
+        public MenuLabel(String name, String subCategory) {
             super(new FlowLayout(FlowLayout.LEADING, 3, 3));
-            JLabel label = new JLabel(name);
-            label.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 10));
-            label.setForeground(Color.darkGray);
+            label = new JLabel(name);
+            if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_VALUE)) {
+                label.setBorder(BorderFactory.createEmptyBorder(1, 15, 1, 10));
+                label.setForeground(new Color(80, 100, 64));
+            } else if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_TYPE)) {
+                label.setBorder(BorderFactory.createEmptyBorder(1, 15, 1, 10));
+                label.setForeground(new Color(64, 80, 100));
+            } else if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_MISC)) {
+                label.setBorder(BorderFactory.createEmptyBorder(1, 15, 1, 10));
+                label.setForeground(new Color(100, 80, 64));
+            } else {
+                label.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 10));
+                label.setForeground(Color.darkGray);
+            }
             add(label);
             setOpaque(false);
+            this.subCategory = subCategory;
+        }
+
+        public JLabel getLabel() {
+            return label;
         }
 
         @Override
-        public JComponent getMenuItem(PopupCategorized sender) {
+        public JComponent getMenuItem() {
             return this;
         }
 
@@ -167,7 +212,7 @@ public class MenuBuilder {
 
         @Override
         public String getSubCategory() {
-            return "";
+            return subCategory;
         }
     }
 

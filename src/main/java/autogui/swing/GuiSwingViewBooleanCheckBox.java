@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
@@ -108,7 +107,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
                                 GuiSwingContextInfo.get().getInfoLabel(context),
                                 new ContextRefreshAction(context),
                                 new ToStringCopyAction(this, context),
-                                new HistoryMenu<>(this, getContext()),
+                                new HistoryMenu<>(this, getSwingViewContext()),
                         GuiSwingJsonTransfer.getActions(this, context)));
             }
             return menuItems;
@@ -157,7 +156,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
     }
@@ -181,7 +180,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
             if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 try {
                     String data = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-                    Boolean value = ((GuiReprValueBooleanCheckBox) pane.getContext().getRepresentation()).getBooleanValue(data);
+                    Boolean value = ((GuiReprValueBooleanCheckBox) pane.getSwingViewContext().getRepresentation()).getBooleanValue(data);
                     if (value != null) {
                         pane.setSwingViewValue(value);
                         return true;

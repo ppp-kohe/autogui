@@ -8,12 +8,10 @@ import autogui.swing.util.SearchTextFieldFilePath;
 
 import javax.swing.*;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 
 /**
@@ -42,7 +40,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyFilePathPane field = new PropertyFilePathPane(context);
         if (context.isTypeElementProperty()) {
-            return field.wrapNamed();
+            return field.wrapSwingNamed();
         } else {
             return field;
         }
@@ -192,12 +190,12 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
 
         @Override
-        public void shutdown() {
+        public void shutdownSwingView() {
             getEditingRunner().shutdown();
         }
     }

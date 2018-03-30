@@ -14,6 +14,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.*;
+import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class GuiSwingWindow extends JFrame {
@@ -72,6 +75,7 @@ public class GuiSwingWindow extends JFrame {
         initViewComponent();
         initPrefs(); //read context, viewComponent
         initViewComponentSet();
+        initKeyBinding();
         initMenu();
         initLog();
         initIcon();
@@ -97,6 +101,114 @@ public class GuiSwingWindow extends JFrame {
 
     protected void initPrefs() {
         preferences = new GuiSwingPreferences(this);
+    }
+
+    protected void initKeyBinding() {
+        //TODO
+        Map<KeyStroke, Map<Integer,List<KeyStrokeAction>>> keyToDepthToActions = new HashMap<>();
+        traverseKeyBinding(keyToDepthToActions, viewComponent, 0);
+        List<KeyStrokeAction> assigned = new ArrayList<>();
+        Set<KeyStroke> assignedKeys = new HashSet<>();
+        while (!keyToDepthToActions.isEmpty()) {
+            if (new ArrayList<>(keyToDepthToActions.entrySet()).stream()
+                    .noneMatch(e -> {
+                        if (!assignedKeys.contains(e.getKey())) {
+                            List<Integer> depth = new ArrayList<>(e.getValue().keySet());
+                            depth.sort(Comparator.reverseOrder());
+                            int d = depth.remove(0);
+                            List<KeyStrokeAction> actions = e.getValue().get(d);
+                            assigned.add(actions.remove(0));
+                            assignedKeys.add(e.getKey());
+                            actions.stream()
+                                    .flatMap(a -> a.powerSet().stream())
+                                    .forEach(a -> putKeyStroke(keyToDepthToActions, a));
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    })) {
+                break;
+            }
+        }
+        InputMap inputMap = viewComponent.getInputMap();
+        for (KeyStrokeAction action : assigned) {
+            inputMap.put(action.stroke, action.action);
+        }
+    }
+
+    public static class KeyStrokeAction {
+        public PopupCategorized.CategorizedMenuItem item;
+        public Action action;
+        public int depth;
+        public KeyStroke originalStroke;
+        public KeyStroke stroke;
+
+        public KeyStrokeAction(PopupCategorized.CategorizedMenuItem item, Action action, int depth, KeyStroke originalStroke) {
+            this.item = item;
+            this.action = action;
+            this.depth = depth;
+            this.originalStroke = originalStroke;
+            this.stroke = originalStroke;
+        }
+
+        public Set<KeyStrokeAction> powerSet() {
+            int mods = stroke.getModifiers();
+            return null; //TODO
+        }
+    }
+
+    public void traverseKeyBinding(Map<KeyStroke, Map<Integer,List<KeyStrokeAction>>> keyToDepthToActions, Component c, int depth) {
+        if (c instanceof GuiSwingView.ValuePane<?>) {
+            List<PopupCategorized.CategorizedMenuItem> items = ((GuiSwingView.ValuePane<?>) c).getSwingStaticMenuItems();
+            for (PopupCategorized.CategorizedMenuItem item : items) {
+                boolean hasStroke = false;
+                if (item instanceof PopupCategorized.CategorizedMenuItemAction) {
+                    if (putKeyStroke(keyToDepthToActions, depth, item, (PopupCategorized.CategorizedMenuItemAction) item)) {
+                        hasStroke = true;
+                    }
+                } else if (item instanceof PopupCategorized.CategorizedMenuItemComponent) {
+                    JComponent comp = ((PopupCategorized.CategorizedMenuItemComponent) item).getMenuItem();
+                    if (comp instanceof AbstractButton) {
+                        if (putKeyStroke(keyToDepthToActions, depth, item, ((AbstractButton) comp).getAction())) {
+                            hasStroke = true;
+                        }
+                    }
+                } else if (item instanceof AbstractButton) {
+                    if (putKeyStroke(keyToDepthToActions, depth, item, ((AbstractButton) item).getAction())) {
+                        hasStroke = true;
+                    }
+                }
+
+                if (!hasStroke) {
+                    //TODO
+                }
+            }
+        }
+        if (c instanceof Container) {
+            for (Component sub : ((Container) c).getComponents()) {
+                traverseKeyBinding(keyToDepthToActions, sub, depth + 1);
+            }
+        }
+    }
+
+
+    private void putKeyStroke(Map<KeyStroke, Map<Integer,List<KeyStrokeAction>>> keyToDepthToActions, KeyStrokeAction item) {
+        keyToDepthToActions.computeIfAbsent(item.stroke, s -> new HashMap<>())
+                .computeIfAbsent(item.depth, d -> new ArrayList<>())
+                .add(item);
+    }
+
+    private boolean putKeyStroke(Map<KeyStroke, Map<Integer,List<KeyStrokeAction>>> keyToDepthToActions, int depth,
+                                 PopupCategorized.CategorizedMenuItem i, Action item) {
+        KeyStroke stroke = (item == null ? null : (KeyStroke) item.getValue(Action.ACCELERATOR_KEY));
+        if (stroke != null) {
+            keyToDepthToActions.computeIfAbsent(stroke, s -> new HashMap<>())
+                    .computeIfAbsent(depth, d -> new ArrayList<>())
+                    .add(new KeyStrokeAction(i, item, depth, stroke));
+            return true;
+        } else {
+            return false;
+        }
     }
 
     protected void initMenu() {
@@ -130,7 +242,7 @@ public class GuiSwingWindow extends JFrame {
         objectMenu.addSeparator();
         if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
             ((GuiSwingView.ValuePane) viewComponent).getSwingMenuBuilder()
-                    .build(() -> viewComponent,
+                    .build(i -> i,
                             new MenuBuilder.MenuAppender(objectMenu));
         }
     }
@@ -207,7 +319,7 @@ public class GuiSwingWindow extends JFrame {
     public void cleanUp() {
         context.getTaskRunner().shutdown();
         GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
-                GuiSwingView.ValuePane::shutdown);
+                GuiSwingView.ValuePane::shutdownSwingView);
         preferences.shutdown();
         logWindow.dispose();
         settingsWindow.getWindow().dispose();
@@ -225,7 +337,7 @@ public class GuiSwingWindow extends JFrame {
             logPreferencesUpdater.apply(context.getPreferences());
 
             if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane) viewComponent).loadPreferences(prefs);
+                ((GuiSwingView.ValuePane) viewComponent).loadSwingPreferences(prefs);
             }
             GuiSwingView.loadChildren(prefs, viewComponent);
         } catch (Exception ex) {
@@ -240,7 +352,7 @@ public class GuiSwingWindow extends JFrame {
             logPreferencesUpdater.getPrefs().saveTo(prefs);
 
             if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane) viewComponent).savePreferences(prefs);
+                ((GuiSwingView.ValuePane) viewComponent).saveSwingPreferences(prefs);
             }
             GuiSwingView.saveChildren(prefs, viewComponent);
         } catch (Exception ex) {

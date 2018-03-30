@@ -11,9 +11,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -26,10 +27,10 @@ import java.util.regex.Pattern;
  *     <li>{@link KeyListener}  with {@link #keyMatcher}, can be {@link #getDefaultKeyMatcher()}</li>
  *     <li>{@link ActionListener} caused by {@link #getAction()} </li>
  * </ul>
- * {@link #menuBuilder} determines menu items in the popup menu via {@link PopupMenuBuilder#buildWithClear(PopupExtensionSender, JPopupMenu)}.
+ * {@link #menuBuilder} determines menu items in the popup menu via {@link PopupMenuBuilder#buildWithClear(PopupMenuFilter, JPopupMenu)}.
  *
  */
-public class PopupExtension implements MouseListener, KeyListener, ActionListener, PopupExtensionSender {
+public class PopupExtension implements MouseListener, KeyListener, ActionListener {
     public static String MENU_CATEGORY_UNDO = MenuBuilder.getCategoryImplicit("Undo");
     public static String MENU_CATEGORY_EDIT = MenuBuilder.getCategoryImplicit("Edit");
     public static String MENU_CATEGORY_SET = MenuBuilder.getCategoryImplicit("Set");
@@ -69,6 +70,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     /** the supplier is frequently called and expected to return same menu object */
     protected Supplier<JPopupMenu> menu;
+    protected PopupMenuFilter filter = i -> i;
     protected JComponent pane;
     protected Predicate<KeyEvent> keyMatcher;
     protected PopupMenuBuilder menuBuilder;
@@ -86,20 +88,58 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
          *    <li>{@link JMenuItem}</li>
          *    <li>{@link JComponent}</li>
          *  </ul>
-         * @param sender the sender extension
+         * @param filter an item filter
          * @param menu the target for appending menus
          */
-        void build(PopupExtensionSender sender, Consumer<Object> menu);
+        void build(PopupMenuFilter filter, Consumer<Object> menu);
 
-        /** the default behavior reconstruct entire items by {@link #build(PopupExtensionSender, Consumer)}.
+        /** the default behavior reconstruct entire items by {@link #build(PopupMenuFilter, Consumer)}.
          *    The Consumer can append an item to the menu.
-         * @param sender the sender extension
+         * @param filter an item filter
          * @param menu the target for appending menus
          */
-        default void buildWithClear(PopupExtensionSender sender, JPopupMenu menu) {
+        default void buildWithClear(PopupMenuFilter filter, JPopupMenu menu) {
             menu.removeAll();
-            build(sender, new MenuBuilder.MenuAppender(menu));
+            build(filter, new MenuBuilder.MenuAppender(menu));
             menu.revalidate();
+        }
+    }
+
+    public static class PopupMenuBuilderEmpty implements PopupMenuBuilder {
+        @Override
+        public void build(PopupMenuFilter filter, Consumer<Object> menu) {
+            filter.aroundItems(true).forEach(menu);
+            filter.aroundItems(false).forEach(menu);
+        }
+    }
+
+    public interface PopupMenuFilter {
+        /**
+         * @param item a converted item, one of {@link JComponent} (including {@link JMenuItem}), {@link Action},
+         *             {@link autogui.swing.table.TableTargetCellAction}
+         *             or {@link autogui.swing.util.PopupCategorized.CategorizedMenuItem}
+         * @return a converted item or null if not matched
+         */
+        Object convert(Object item);
+
+        default <T> List<T> convertItems(Class<T> type, Iterable<? extends T> items) {
+            ArrayList<T> result = new ArrayList<>();
+            for (Object item : items) {
+                Object r = convert(item);
+                if (r != null) {
+                    result.add(type.cast(r));
+                }
+            }
+            return result;
+        }
+
+        /**
+         * a menu-builder calls the method before and after of a building process and appends returned items
+         * @param before true if before of a building process or false if after of the process.
+         * @return additional menu items provided by the filter. it needs to return once for the same item list
+         */
+        default List<Object> aroundItems(boolean before) {
+            return Collections.emptyList();
         }
     }
 
@@ -131,6 +171,13 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         setupCancelChecker();
     }
 
+    public void setFilter(PopupMenuFilter filter) {
+        this.filter = filter;
+    }
+
+    public PopupMenuFilter getFilter() {
+        return filter;
+    }
 
     /**
      * call {@link #PopupExtension(JComponent, Predicate, PopupMenuBuilder, Supplier)}.
@@ -390,7 +437,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     }
 
     public void setupMenu() {
-        menuBuilder.buildWithClear(this, menu.get());
+        menuBuilder.buildWithClear(filter, menu.get());
     }
 
     /////////////////

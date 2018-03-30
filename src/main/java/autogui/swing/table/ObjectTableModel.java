@@ -1,8 +1,9 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.swing.GuiSwingViewCollectionTable;
+import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
-import autogui.swing.util.PopupExtensionSender;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -17,6 +18,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -430,18 +432,18 @@ public class ObjectTableModel extends AbstractTableModel {
     ///////////
 
     public PopupExtension.PopupMenuBuilder getBuilderForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
-        return (sender,menu) -> getBuildersForRowsOrCells(table, cols, row)
-                .forEach(b -> b.build(sender, new CollectionRowsAndCellsActionBuilder(table, menu)));
+        return new PopupCategorized(() -> getBuildersForRowsOrCells(table, cols, row), null,
+                new GuiSwingViewCollectionTable.MenuBuilderWithEmptySeparator());
     }
 
     /**
      * a menu builder for {@link TableTargetCellAction}s
      */
     public interface PopupMenuBuilderForRowsOrCells {
-        void build(PopupExtensionSender sender, Consumer<TableTargetCellAction> menu);
+        void build(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu);
     }
 
-    public Stream<PopupMenuBuilderForRowsOrCells> getBuildersForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
+    public List<PopupCategorized.CategorizedMenuItem> getBuildersForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
         Map<ObjectTableColumn.TableMenuCompositeShared, List<ObjectTableColumn.TableMenuComposite>> rows
                 = new LinkedHashMap<>();
         cols.forEach(c ->
@@ -451,7 +453,10 @@ public class ObjectTableModel extends AbstractTableModel {
                                 .add(cmp)));
 
         return rows.entrySet().stream()
-                .map(e -> e.getKey().composite(table, e.getValue(), row));
+                .flatMap(e ->
+                        e.getKey().composite(table, e.getValue(), row)
+                                    .stream())
+                .collect(Collectors.toList());
 
     }
 
@@ -459,19 +464,22 @@ public class ObjectTableModel extends AbstractTableModel {
     /**
      * a builder accepting a {@link TableTargetCellAction} and wrapping it to a {@link TableTargetCellExecutionAction}.
      */
-    public static class CollectionRowsAndCellsActionBuilder implements Consumer<TableTargetCellAction> {
-        protected Consumer<Object> menu;
+    public static class CollectionRowsAndCellsActionBuilder implements PopupExtension.PopupMenuFilter {
+        protected PopupExtension.PopupMenuFilter filter;
         protected GuiReprCollectionTable.TableTargetCell target;
 
-        public CollectionRowsAndCellsActionBuilder(JTable table, Consumer<Object> menu) {
-            this.menu = menu;
+        public CollectionRowsAndCellsActionBuilder(JTable table, PopupExtension.PopupMenuFilter filter) {
+            this.filter = filter;
             target = new TableTargetCellForJTable(table);
         }
 
         @Override
-        public void accept(TableTargetCellAction a) {
-            menu.accept(new TableTargetCellExecutionAction(a, target));
-            //otherwise: disabled
+        public Object convert(Object item) {
+            if (item instanceof TableTargetCellAction) {
+                return filter.convert(new TableTargetCellExecutionAction((TableTargetCellAction) item, target));
+            } else {
+                return null; //disabled
+            }
         }
     }
 

@@ -18,7 +18,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
@@ -45,9 +44,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         PropertyImagePane imagePane = new PropertyImagePane(context);
         ValuePane<Image> pane = new GuiSwingView.ValueScrollPane<>(imagePane);
         if (context.isTypeElementProperty()) {
-            return pane.wrapProperty();
+            return pane.wrapSwingProperty();
         } else {
-            return pane.asComponent();
+            return pane.asSwingViewComponent();
         }
     }
 
@@ -158,17 +157,19 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
 
         public JComponent createSizeInfo(Dimension size) {
-            return MenuBuilder.get().createLabel(String.format("Size: %,d x %,d", size.width, size.height));
+            return MenuBuilder.get().createLabel(String.format("Size: %,d x %,d", size.width, size.height),
+                    PopupCategorized.SUB_CATEGORY_LABEL_VALUE);
         }
 
         public JComponent createScaleInfo(Dimension size) {
             return MenuBuilder.get().createLabel(String.format("Scale: %s",
-                    imageScale == null ? "null" : imageScale.getInfo(size, getViewSize())));
+                    imageScale == null ? "null" : imageScale.getInfo(size, getViewSize())),
+                    PopupCategorized.SUB_CATEGORY_LABEL_VALUE);
         }
 
         @Override
@@ -209,7 +210,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             return popup.getMenuBuilder();
         }
 
-        public boolean isEditable() {
+        public boolean isSwingEditable() {
             return editable;
         }
 
@@ -591,7 +592,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public boolean isEnabled() {
-            return pane.isEditable();
+            return pane.isSwingEditable();
         }
 
         @Override
@@ -677,7 +678,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public boolean canImport(TransferSupport support) {
-            return imagePane.isEditable() &&
+            return imagePane.isSwingEditable() &&
                     (support.isDataFlavorSupported(DataFlavor.imageFlavor) ||
                         support.isDataFlavorSupported(DataFlavor.javaFileListFlavor));
         }

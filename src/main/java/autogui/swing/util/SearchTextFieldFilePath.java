@@ -26,6 +26,13 @@ import java.util.stream.Stream;
 /** a text-field with background searching file-items */
 public class SearchTextFieldFilePath extends SearchTextField {
 
+    public static String MENU_CATEGORY_FILE_DEFAULT = "Default";
+    public static String MENU_CATEGORY_FILE_CHILD = "Child";
+    public static String MENU_CATEGORY_FILE_SIBLING = "Sibling";
+    public static String MENU_CATEGORY_FILE_PARENT = "Parent";
+    public static String MENU_CATEGORY_FILE_CURRENT = "Current";
+    public static String MENU_CATEGORY_FILE_CANDIDATE = "Candidate";
+
     public SearchTextFieldFilePath() {
         this(new SearchTextFieldModelFilePath());
     }
@@ -204,7 +211,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
         @Override
         public boolean isEnabled() {
-            return super.isEnabled() && component.isEditable();
+            return super.isEnabled() && component.isSwingEditable();
         }
 
         @Override
@@ -575,7 +582,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         public Path setSelection(String text) {
             Path path = Paths.get(text);
-            selection = getFileItem(path, "Current", false);
+            selection = getFileItem(path, MENU_CATEGORY_FILE_CURRENT, false);
             return path;
         }
 
@@ -593,7 +600,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 if (dir != null && Files.isDirectory(dir)) {
                     return Files.list(dir)
                             .filter(p -> p.getFileName().toString().toLowerCase().startsWith(head))
-                            .map(p -> getFileItem(p, "Candidate", true))
+                            .map(p -> getFileItem(p, MENU_CATEGORY_FILE_CANDIDATE, true))
                             .collect(Collectors.toList());
                 } else {
                     return Collections.emptyList();
@@ -610,7 +617,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
             List<FileItem> items = new ArrayList<>();
             while (p != null) {
                 if (Files.exists(p)) {
-                    items.add(getFileItem(p, "Parent", false));
+                    items.add(getFileItem(p, MENU_CATEGORY_FILE_PARENT, false));
                 }
                 p = p.getParent();
             }
@@ -621,13 +628,13 @@ public class SearchTextFieldFilePath extends SearchTextField {
             try {
                 String category;
                 if (!Files.isDirectory(path)) {
-                    category = "Sibling";
+                    category = MENU_CATEGORY_FILE_SIBLING;
                     path = path.getParent();
                     if (!Files.isDirectory(path)) {
                         return Collections.emptyList();
                     }
                 } else {
-                    category = "Child";
+                    category = MENU_CATEGORY_FILE_CHILD;
                 }
                 return Files.list(path)
                         .sorted(this::compare)
@@ -661,12 +668,12 @@ public class SearchTextFieldFilePath extends SearchTextField {
             //home
             String home = System.getProperty("user.home", "");
             if (!home.isEmpty()) {
-                items.add(getFileItem(Paths.get(home), "Default", false));
+                items.add(getFileItem(Paths.get(home), MENU_CATEGORY_FILE_DEFAULT, false));
             }
 
             //root
             for (Path p : FileSystems.getDefault().getRootDirectories()) {
-                items.add(getFileItem(p, "Default", false));
+                items.add(getFileItem(p, MENU_CATEGORY_FILE_DEFAULT, false));
             }
             return items;
         }
@@ -676,7 +683,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
             if (p.getFileName().toString().equals(".") && p.getParent() != null) {
                 p = p.getParent();
             }
-            return getFileItem(p, "Default", false);
+            return getFileItem(p, MENU_CATEGORY_FILE_DEFAULT, false);
         }
 
 

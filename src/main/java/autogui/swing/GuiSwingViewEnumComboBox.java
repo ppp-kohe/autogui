@@ -10,15 +10,12 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragSource;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.regex.Pattern;
 
 /**
  * <h3>representation</h3>
@@ -45,7 +42,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     public JComponent createView(GuiMappingContext context) {
         PropertyEnumComboBox box = new PropertyEnumComboBox(context);
         if (context.isTypeElementProperty()) {
-            return box.wrapNamed();
+            return box.wrapSwingNamed();
         } else {
             return box;
         }
@@ -174,7 +171,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         }
 
         @Override
-        public GuiMappingContext getContext() {
+        public GuiMappingContext getSwingViewContext() {
             return context;
         }
     }
@@ -219,8 +216,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 try {
                     String str = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-                    Object enumValue = ((GuiReprValueEnumComboBox) pane.getContext().getRepresentation()).getEnumValue(
-                            pane.getContext(), str);
+                    Object enumValue = ((GuiReprValueEnumComboBox) pane.getSwingViewContext().getRepresentation()).getEnumValue(
+                            pane.getSwingViewContext(), str);
                     if (enumValue != null) {
                         pane.setSwingViewValueWithUpdate(enumValue);
                         return true;

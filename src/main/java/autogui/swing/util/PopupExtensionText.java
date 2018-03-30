@@ -127,9 +127,17 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
 
         @Override
-        public void build(PopupExtensionSender sender, Consumer<Object> menu) {
+        public void build(PopupMenuFilter filter, Consumer<Object> menu) {
+            List<Object> aroundItems = filter.aroundItems(true);
             MenuBuilder builder = getMenuBuilder();
-            builder.addMenuItems(menu, editActions, null);
+            builder.addMenuItems(menu, convert(aroundItems), null);
+            builder.addMenuItems(menu, filter.convertItems(JComponent.class, editActions), null);
+            aroundItems = filter.aroundItems(false);
+            builder.addMenuItems(menu, convert(aroundItems), null);
+        }
+
+        private List<JComponent> convert(List<Object> items) {
+            return new PopupCategorized(null).createMenuItems(items); //just for converting items
         }
 
         public MenuBuilder getMenuBuilder() {

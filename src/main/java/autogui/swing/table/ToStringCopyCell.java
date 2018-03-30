@@ -2,6 +2,7 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
@@ -10,6 +11,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,12 +61,11 @@ public class ToStringCopyCell {
      */
     public static class TableMenuCompositeSharedToStringValue implements ObjectTableColumn.TableMenuCompositeShared {
         @Override
-        public ObjectTableModel.PopupMenuBuilderForRowsOrCells composite(JTable table, List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
-            return (sender, menu) -> {
-                menu.accept(new ToStringCopyForCellsAction(columns.stream()
+        public List<PopupCategorized.CategorizedMenuItem> composite(JTable table, List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
+            return Collections.singletonList(
+                    new ToStringCopyForCellsAction(columns.stream()
                         .map(TableMenuCompositeToStringValue.class::cast)
                         .collect(Collectors.toList()), !row));
-            };
         }
     }
 
