@@ -479,7 +479,6 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** an action for selecting a file item from an open dialog */
     public static class OpenDialogAction extends FileListEditAction implements PopupCategorized.CategorizedMenuItemAction {
-        protected JFileChooser fileChooser;
 
         public OpenDialogAction(SearchTextFieldFilePath component) {
             super("Select...", component);
@@ -487,39 +486,15 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            setup(component.getFile());
+            SettingsWindow.getFileDialogManager().setCurrentPath(component.getFile());
             super.actionPerformed(e);
         }
 
         @Override
         public void run(Consumer<List<Path>> setter) {
-            setup(null);
-            fileChooser.setMultiSelectionEnabled(false);
-
-            int r = fileChooser.showOpenDialog(component);
-            if (r == JFileChooser.APPROVE_OPTION) {
-                if (fileChooser.isMultiSelectionEnabled()) {
-                    File[] fs = fileChooser.getSelectedFiles();
-                    setter.accept(Arrays.stream(fs)
-                            .map(File::toPath)
-                            .collect(Collectors.toList()));
-                } else {
-                    File f = fileChooser.getSelectedFile();
-                    setter.accept(Collections.singletonList(f.toPath()));
-                }
-            }
-        }
-
-        private void setup(Path path) {
-            if (fileChooser == null) {
-                fileChooser = new JFileChooser();
-                fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-            }
-            if (path != null && Files.exists(path)) {
-                if (!Files.isDirectory(path)) {
-                    path = path.getParent();
-                }
-                fileChooser.setCurrentDirectory(path.toFile());
+            Path path = SettingsWindow.getFileDialogManager().showOpenDialog(component, null);
+            if (path != null) {
+                setter.accept(Collections.singletonList(path));
             }
         }
 

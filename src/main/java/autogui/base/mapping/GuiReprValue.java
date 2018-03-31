@@ -344,6 +344,7 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
+     * @param context the target context
      * @return true means {@link #fromJson(GuiMappingContext, Object, Object)} takes a map with
      *          the entry named {@link GuiMappingContext#getName()}
      */

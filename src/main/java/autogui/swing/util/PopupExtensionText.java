@@ -792,12 +792,32 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     ////////////
 
+    public static Charset selectedCharset = StandardCharsets.UTF_8;
+    protected static JComponent encodingPane;
+
+    public static JComponent getEncodingPane() {
+        if (encodingPane == null) {
+            JPanel pane = new JPanel(new BorderLayout());
+            SortedMap<String,Charset> map = Charset.availableCharsets();
+            JComboBox<String> box = new JComboBox<>(map.keySet()
+                    .toArray(new String[map.size()]));
+            box.setSelectedItem(StandardCharsets.UTF_8.displayName());
+            box.addActionListener(e -> {
+                selectedCharset = map.get((String) box.getSelectedItem());
+            });
+            JLabel label = new JLabel("Encoding:");
+            label.setHorizontalAlignment(SwingConstants.LEADING);
+            pane.add(label, BorderLayout.NORTH);
+            pane.add(box, BorderLayout.CENTER);
+            encodingPane = pane;
+        }
+        return encodingPane;
+    }
+
     /** a file loading action */
     public static class TextLoadAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
         protected JTextComponent field;
-        protected static JFileChooser fileChooser;
-        protected static Charset charset = StandardCharsets.UTF_8;
 
         public TextLoadAction(JTextComponent field) {
             putValue(NAME, "Load...");
@@ -818,35 +838,15 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
 
         public String load() {
-            JFileChooser fileChooser = getFileChooser();
-            int r = fileChooser.showOpenDialog(field);
-            if (r == JFileChooser.APPROVE_OPTION) {
-                Path path = fileChooser.getSelectedFile().toPath();
+            Path path = SettingsWindow.getFileDialogManager().showOpenDialog(field, getEncodingPane());
+            if (path != null) {
                 try {
-                    return new String(Files.readAllBytes(path), charset);
+                    return new String(Files.readAllBytes(path), selectedCharset);
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
             }
             return null;
-        }
-
-        public static JFileChooser getFileChooser() {
-            if (fileChooser == null) {
-                fileChooser = new JFileChooser();
-                JPanel pane = new JPanel();
-                SortedMap<String,Charset> map = Charset.availableCharsets();
-                JComboBox<String> box = new JComboBox<>(map.keySet()
-                        .toArray(new String[map.size()]));
-                box.setSelectedItem(StandardCharsets.UTF_8.displayName());
-                box.addActionListener(e -> {
-                    charset = map.get((String) box.getSelectedItem());
-                });
-                pane.add(new JLabel("Encoding:"));
-                pane.add(box);
-                fileChooser.setAccessory(pane);
-            }
-            return fileChooser;
         }
 
         @Override
@@ -870,24 +870,18 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            JFileChooser fileChooser = getFileChooser();
-            int r = fileChooser.showSaveDialog(field);
-            if (r == JFileChooser.APPROVE_OPTION) {
-                Path path = fileChooser.getSelectedFile().toPath();
-                if (Files.exists(path)) {
-                    int op = JOptionPane.showConfirmDialog(field, path.toString() + " exists. Overwrites?",
-                            "File Saving", JOptionPane.OK_CANCEL_OPTION);
-                    if (op == JOptionPane.OK_OPTION) {
-                        save(path);
-                    }
-                }
+            SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
+            Path path = fd.showConfirmDialogIfOverwriting(field,
+                    fd.showSaveDialog(field, getEncodingPane(), null));
+            if (path != null) {
+                save(path);
             }
         }
 
         public void save(Path path) {
             String text = field.getText();
             try {
-                Files.write(path, Collections.singletonList(text), charset);
+                Files.write(path, Collections.singletonList(text), selectedCharset);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }

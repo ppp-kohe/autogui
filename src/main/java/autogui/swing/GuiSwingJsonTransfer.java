@@ -10,16 +10,20 @@ import autogui.swing.table.TableTargetCellAction;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class GuiSwingJsonTransfer {
@@ -34,7 +38,9 @@ public class GuiSwingJsonTransfer {
     public static List<Action> getActions(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
         return Arrays.asList(
                 new JsonCopyAction(component, context),
-                new JsonPasteAction(component, context));
+                new JsonPasteAction(component, context),
+                new JsonSaveAction(component, context),
+                new JsonLoadAction(component, context));
     }
 
     public static void copy(Object map) {
@@ -137,10 +143,13 @@ public class GuiSwingJsonTransfer {
             return !context.isReprValue() || context.getReprValue().isEditable(context);
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public void actionPerformed(ActionEvent e) {
-            Object json = readJson();
+            set(readJson());
+        }
+
+        @SuppressWarnings("unchecked")
+        public void set(Object json) {
             Object v;
             if (context.isTypeElementProperty()) {
                 v = context.getRepresentation().fromJsonWithNamed(context, component.getSwingViewValue(), json);
@@ -158,6 +167,70 @@ public class GuiSwingJsonTransfer {
         @Override
         public String getSubCategory() {
             return PopupExtension.MENU_SUB_CATEGORY_COPY;
+        }
+    }
+
+    public static class JsonSaveAction extends JsonCopyAction implements PopupCategorized.CategorizedMenuItemAction {
+        public JsonSaveAction(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
+            super(component, context);
+            putValue(NAME, "Export JSON...");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            save(() -> toCopiedJson(component.getSwingViewValue()));
+        }
+
+        public void save(Supplier<Object> json) {
+            Path path = SettingsWindow.getFileDialogManager().showSaveDialog(
+                    component.asSwingViewComponent(), null,
+                    context.getName() + ".json");
+            if (path != null) {
+                JsonWriter.write(json.get(), path.toFile());
+            }
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            save(() -> target.getSelectedCellValues().stream()
+                    .map(this::toCopiedJson)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()));
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_TRANSFER;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_EXPORT;
+        }
+    }
+
+    public static class JsonLoadAction extends JsonPasteAction implements PopupCategorized.CategorizedMenuItemAction {
+        public JsonLoadAction(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
+            super(component, context);
+            putValue(NAME, "Import JSON...");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Path path = SettingsWindow.getFileDialogManager().showOpenDialog(component.asSwingViewComponent(), null);
+            if (path != null) {
+                set(JsonReader.read(path.toFile()));
+            }
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_TRANSFER;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_IMPORT;
         }
     }
 

@@ -1,9 +1,11 @@
 package autogui.swing.log;
 
 import autogui.base.log.GuiLogEntry;
+import autogui.base.log.GuiLogManagerConsole;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.util.ResizableFlowLayout;
 import autogui.swing.util.SearchTextField;
+import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -12,6 +14,13 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -24,6 +33,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
     protected Timer activePainter;
     protected GuiSwingLogEventDispatcher eventDispatcher;
 
+    protected LogListSaveAction saveAction;
     protected LogListClearAction clearAction;
     protected LogListCopyTextAction copyAction;
 
@@ -51,6 +61,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         setCellRenderer(new GuiSwingLogManager.GuiSwingLogRenderer(manager, GuiSwingLogEntry.ContainerType.List));
 
+        saveAction = new LogListSaveAction(this);
+
         //clear action
         clearAction = new LogListClearAction(this);
         Object name = clearAction.getValue(Action.NAME);
@@ -68,6 +80,10 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
     public void removeFromManager() {
         manager.removeView(managerKey);
+    }
+
+    public LogListSaveAction getSaveAction() {
+        return saveAction;
     }
 
     public LogListCopyTextAction getCopyAction() {
@@ -744,6 +760,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         JToolBar bar = new JToolBar();
         bar.setBorderPainted(false);
         bar.setFloatable(false);
+        bar.add(new GuiSwingIcons.ActionButton(getSaveAction()));
         bar.add(new GuiSwingIcons.ActionButton(getClearAction()));
 
 
@@ -787,6 +804,39 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                 .withBorder(5, 5)
                 .add(findPane, true).getContainer());
         return bar;
+    }
+
+    public static class LogListSaveAction extends AbstractAction {
+        protected GuiSwingLogList list;
+        protected DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd-HH-mm");
+
+        public LogListSaveAction(GuiSwingLogList list) {
+            this.list = list;
+            putValue(NAME, "Save...");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("save"));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("save"));
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
+
+            Path path = fd.showConfirmDialogIfOverwriting(list,
+                    fd.showSaveDialog(list, null, "log-" + LocalDateTime.now().format(formatter)+ ".txt"));
+            if (path != null) {
+                try (PrintStream out = new PrintStream(Files.newOutputStream(path), false, StandardCharsets.UTF_8.name())) {
+                    GuiLogManagerConsole console = new GuiLogManagerConsole(out);
+                    console.setControlSequence(false);
+
+                    new ArrayList<>(list.getLogListModel().getEntries())
+                            .forEach(console::show);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
     }
 
     /**

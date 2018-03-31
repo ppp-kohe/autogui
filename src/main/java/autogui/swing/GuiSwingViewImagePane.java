@@ -8,6 +8,7 @@ import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.SettingsWindow;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -18,9 +19,12 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * <h3>representation</h3>
@@ -191,8 +195,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                                 new ImageScaleAutoSwitchByMouseWheel(this),
                                 new PopupCategorized.CategorizedMenuItemComponentDefault(scaleMenu,
                                         PopupExtension.MENU_CATEGORY_VIEW, ""),
-                                new ImageCopyAction(getImage()),
+                                new ImageCopyAction(this::getImage),
                                 new ImagePasteAction(this),
+                                new ImageSaveAction(this),
+                                new ImageLoadAction(this),
                                 new HistoryMenuImage(this, context)),
                         GuiSwingJsonTransfer.getActions(this, context)
                 );
@@ -538,21 +544,21 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageCopyAction extends AbstractAction implements TableTargetColumnAction {
-        protected Image image;
+        protected Supplier<Image> image;
 
-        public ImageCopyAction(Image image) {
+        public ImageCopyAction(Supplier<Image> image) {
             putValue(NAME, "Copy");
             this.image = image;
         }
 
         @Override
         public boolean isEnabled() {
-            return image != null;
+            return image.get() != null;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            copy(this.image);
+            copy(this.image.get());
         }
 
         public void copy(Image image) {
@@ -624,6 +630,77 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         @Override
         public String getSubCategory() {
             return PopupExtension.MENU_SUB_CATEGORY_PASTE;
+        }
+    }
+
+    public static class ImageSaveAction extends ImageCopyAction {
+        protected PropertyImagePane pane;
+        public ImageSaveAction(PropertyImagePane pane) {
+            super(pane::getImage);
+            putValue(NAME, "Export...");
+            this.pane = pane;
+        }
+
+        @Override
+        public void copy(Image image) {
+            SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
+            Path path = fd.showConfirmDialogIfOverwriting(pane.asSwingViewComponent(),
+                    fd.showSaveDialog(pane.asSwingViewComponent(), null, pane.getName() + ".png"));
+            if (path != null) {
+                try {
+                    String name = path.getFileName().toString();
+                    int suffIdx = name.lastIndexOf('.');
+                    String format = "png";
+                    if (suffIdx > 0) {
+                        format = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
+                    }
+
+                    GuiReprValueImagePane imagePane = (GuiReprValueImagePane) pane.getSwingViewContext().getRepresentation();
+                    ImageIO.write(imagePane.getRenderedImage(pane.getSwingViewContext(), image), format, path.toFile());
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_TRANSFER;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_EXPORT;
+        }
+    }
+
+    public static class ImageLoadAction extends ImagePasteAction {
+
+        public ImageLoadAction(PropertyImagePane pane) {
+            super(pane);
+            putValue(NAME, "Import...");
+        }
+
+        @Override
+        public void paste(Consumer<Image> c) {
+            Path path = SettingsWindow.getFileDialogManager().showOpenDialog(pane, null);
+            if (path != null) {
+                try {
+                    c.accept(ImageIO.read(path.toFile()));
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_TRANSFER;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_IMPORT;
         }
     }
 

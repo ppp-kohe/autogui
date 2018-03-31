@@ -25,6 +25,7 @@ import java.awt.event.ComponentListener;
 import java.io.File;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -459,17 +460,9 @@ public class GuiSwingPreferences {
         }
     }
 
-    protected JFileChooser chooser;
-
-    public JFileChooser getChooser() {
-        if (chooser == null) {
-            chooser = new JFileChooser();
-        }
-        return chooser;
-    }
-
     public static class SavePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiSwingPreferences owner;
+
         public SavePrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Write To File...");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("save"));
@@ -480,14 +473,17 @@ public class GuiSwingPreferences {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            JFileChooser chooser = owner.getChooser();
             GuiPreferences pref = owner.getSelectedSavedPreferences();
+            if (pref == null) {
+                return;
+            }
+
             String name = toSafeName(pref.getValueStore().getString("$name", "pref")) + ".json";
-            chooser.setSelectedFile(new File(name));
-            int ret = chooser.showSaveDialog(owner.getMainPane());
-            if (ret == JFileChooser.APPROVE_OPTION) {
-                File file = chooser.getSelectedFile();
-                try (Writer w = Files.newBufferedWriter(file.toPath())) {
+            SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
+            Path file = fd.showConfirmDialogIfOverwriting(owner.getMainPane(),
+                    fd.showSaveDialog(owner.getMainPane(), null, name));
+            if (file != null) {
+                try (Writer w = Files.newBufferedWriter(file)) {
                     new JsonWriter(w).withNewLines(true)
                             .write(pref.toJson());
                 } catch (Exception ex) {
@@ -525,11 +521,9 @@ public class GuiSwingPreferences {
         @SuppressWarnings("unchecked")
         @Override
         public void actionPerformed(ActionEvent e) {
-            JFileChooser chooser = owner.getChooser();
-            int ret = chooser.showOpenDialog(owner.getMainPane());
-            if (ret == JFileChooser.APPROVE_OPTION) {
-                File file = chooser.getSelectedFile();
-                Object json = JsonReader.read(file);
+            Path file = SettingsWindow.getFileDialogManager().showOpenDialog(owner.getMainPane(), null);
+            if (file != null) {
+                Object json = JsonReader.read(file.toFile());
                 owner.getRootContext().getPreferences().addNewSavedStoreAsRoot()
                         .fromJson((Map<String,Object>) json);
                 owner.reloadList();
