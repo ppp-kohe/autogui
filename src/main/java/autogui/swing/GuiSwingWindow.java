@@ -10,12 +10,11 @@ import autogui.swing.util.*;
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import javax.swing.plaf.LayerUI;
 import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.Rectangle2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class GuiSwingWindow extends JFrame {
     protected GuiMappingContext context;
@@ -102,7 +101,7 @@ public class GuiSwingWindow extends JFrame {
     }
 
     protected void initViewComponentSet() {
-        setContentPane(new JLayer<>(viewComponent, keyBinding.getToolTipLayer()));
+        setContentPane(viewComponent);
     }
 
     protected void initPrefs() {
@@ -138,7 +137,6 @@ public class GuiSwingWindow extends JFrame {
     public void setupObjectMenu() {
         objectMenu.removeAll();
         objectMenu.add(new ShowPreferencesAction(GuiSwingWindow.this::getPreferences, viewComponent));
-        objectMenu.add(new JCheckBoxMenuItem(keyBinding.getToolTipLayerAction()));
         objectMenu.addSeparator();
         if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
             ((GuiSwingView.ValuePane) viewComponent).getSwingMenuBuilder()

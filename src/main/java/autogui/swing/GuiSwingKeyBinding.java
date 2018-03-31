@@ -2,12 +2,9 @@ package autogui.swing;
 
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupCategorized;
-import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
-import javax.swing.plaf.LayerUI;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
@@ -19,9 +16,6 @@ public class GuiSwingKeyBinding {
     protected Map<KeyStroke, Map<KeyPrecedenceSet,List<KeyStrokeAction>>> keyToPrecToActions = new HashMap<>();
     protected List<KeyStrokeAction> assigned = new ArrayList<>();
     protected Set<KeyStroke> assignedKeys = new HashSet<>();
-
-    protected ToolTipLayer toolTipLayer;
-    protected ToolTipLayerAction toolTipLayerAction;
 
     interface RecommendedKeyStroke {
         KeyStroke getRecommendedKeyStroke();
@@ -745,116 +739,6 @@ public class GuiSwingKeyBinding {
         @Override
         public boolean equals(Object obj) {
             return equalsDefault(obj);
-        }
-    }
-
-    public ToolTipLayer getToolTipLayer() {
-        if (toolTipLayer == null) {
-            toolTipLayer = new ToolTipLayer(getAssigned().stream()
-                            .map(k -> k.pane.asSwingViewComponent())
-                            .collect(Collectors.toList()));
-        }
-        return toolTipLayer;
-    }
-
-    public ToolTipLayerAction getToolTipLayerAction() {
-        if (toolTipLayerAction == null) {
-            toolTipLayerAction = new ToolTipLayerAction(this);
-        }
-        return toolTipLayerAction;
-    }
-
-    public static class ToolTipLayerAction extends AbstractAction implements
-            PopupCategorized.CategorizedMenuItemAction {
-        protected GuiSwingKeyBinding keyBinding;
-
-        public ToolTipLayerAction(GuiSwingKeyBinding keyBinding) {
-            this.keyBinding = keyBinding;
-            putValue(NAME, "Key Guide");
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-            putValue(SELECTED_KEY, keyBinding.getToolTipLayer().isVisible());
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            boolean v = !keyBinding.getToolTipLayer().isVisible();
-            putValue(SELECTED_KEY, v);
-            keyBinding.getToolTipLayer().setVisible(v);
-        }
-
-        @Override
-        public String getCategory() {
-            return PopupExtension.MENU_CATEGORY_PREFS;
-        }
-
-        @Override
-        public String getSubCategory() {
-            return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
-        }
-    }
-
-
-    public static class ToolTipLayer extends LayerUI<JComponent> {
-        protected boolean visible;
-        protected List<JComponent> assigned;
-        protected JComponent target;
-
-        public ToolTipLayer(List<JComponent> assigned) {
-            this.assigned = assigned;
-        }
-
-        @Override
-        public void installUI(JComponent c) {
-            super.installUI(c);
-            this.target = c;
-        }
-
-        public boolean isVisible() {
-            return visible;
-        }
-
-        public void setVisible(boolean visible) {
-            this.visible = visible;
-            if (target != null) {
-                target.repaint();
-            }
-        }
-
-        @Override
-        public void paint(Graphics g, JComponent c) {
-            super.paint(g, c);
-            if (visible) {
-                Graphics2D g2 = (Graphics2D) g.create();
-
-                assigned.stream()
-                        .filter(JComponent::isShowing)
-                        .forEach(ac -> paintToolTip(g2, ac));
-
-                g2.dispose();
-            }
-        }
-
-        public void paintToolTip(Graphics2D g, JComponent view) {
-            String tool = view.getToolTipText();
-            if (tool == null || tool.isEmpty()) {
-                return;
-            }
-            JLabel l = new JLabel(tool);
-
-            Rectangle bounds = view.getBounds();
-            double x = bounds.getMaxX();
-            double y = bounds.getMaxY();
-            Dimension size = l.getPreferredSize();
-            x -= size.getWidth() * 0.7;
-            y -= size.getHeight() * 0.7;
-            Point p = SwingUtilities.convertPoint(view, new Point((int) x, (int) y), target);
-            l.validate();
-            l.setSize(l.getPreferredSize());
-            Graphics tg = g.create();
-            tg.translate(p.x, p.y);
-            l.paint(tg);
-            tg.dispose();
         }
     }
 }
