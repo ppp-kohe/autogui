@@ -977,6 +977,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void build(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu) {
             CollectionTable table = popup.getTable();
 
+            filter = new ObjectTableModel.CollectionRowsAndCellsActionBuilder(table, filter);
+
             List<ObjectTableColumn> allCols = table.getObjectTableModel().getColumns();
             table.getObjectTableModel().getBuilderForRowsOrCells(table, allCols, true)
                     .build(new MenuSeparator(filter), menu);

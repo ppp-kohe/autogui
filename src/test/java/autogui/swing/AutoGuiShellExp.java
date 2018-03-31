@@ -10,8 +10,10 @@ import javax.swing.*;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -293,6 +295,25 @@ public class AutoGuiShellExp {
         @GuiIncluded(keyStroke = "E")
         public void sayHello() {
             System.err.println(x + "," + y + "," + name + "," + icon);
+        }
+
+        private Path sourcePath;
+
+        @GuiIncluded(index = 6)
+        public Path getSourcePath() {
+            return sourcePath;
+        }
+
+        @GuiIncluded
+        public void setSourcePath(Path sourcePath) {
+            this.sourcePath = sourcePath;
+            try {
+                if (Files.isRegularFile(sourcePath)) {
+                    icon = ImageIO.read(sourcePath.toFile());
+                }
+            } catch (Exception ex) {
+                System.err.println("load error " + ex);
+            }
         }
     }
 }

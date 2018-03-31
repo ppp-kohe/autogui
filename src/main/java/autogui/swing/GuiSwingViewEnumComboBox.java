@@ -82,6 +82,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         }
 
         public void initEditable() {
+            //combo-box editable meaning editing with a text field, and enable meaning selectable from a popup
             setEnabled(((GuiReprValueEnumComboBox) context.getRepresentation())
                     .isEditable(context));
         }
@@ -174,6 +175,14 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         public GuiMappingContext getSwingViewContext() {
             return context;
         }
+
+        @Override
+        public GuiSwingViewPropertyPane.NamedPropertyPane wrapSwingNamed() {
+            GuiSwingViewPropertyPane.NamedPropertyPane p = new GuiSwingViewPropertyPane.NamedPropertyPane(getSwingViewContext().getDisplayName(), getSwingViewContext().getName(),
+                    asSwingViewComponent(), getSwingMenuBuilder());
+            GuiSwingView.setupTransferHandler(p, getTransferHandler());
+            return p;
+        }
     }
 
     public static Object[] getEnumConstants(GuiMappingContext context) {
@@ -207,7 +216,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         @Override
         public boolean canImport(TransferSupport support) {
-            return pane.isEditable() &&
+            return pane.isEnabled() &&
                     support.isDataFlavorSupported(DataFlavor.stringFlavor);
         }
 
@@ -241,7 +250,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         protected Transferable createTransferable(JComponent c) {
             Enum e= (Enum) pane.getSwingViewValue();
             if (e != null) {
-                String name = e.name();
+                String name = pane.getSwingViewContext().getRepresentation()
+                                .toHumanReadableString(pane.getSwingViewContext(), e);
                 return new StringSelection(name);
             } else {
                 return null;

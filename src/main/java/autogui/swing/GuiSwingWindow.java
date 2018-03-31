@@ -140,7 +140,7 @@ public class GuiSwingWindow extends JFrame {
         objectMenu.addSeparator();
         if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
             ((GuiSwingView.ValuePane) viewComponent).getSwingMenuBuilder()
-                    .build(i -> i,
+                    .build(PopupExtension.MENU_FILTER_IDENTITY,
                             new MenuBuilder.MenuAppender(objectMenu));
         }
     }

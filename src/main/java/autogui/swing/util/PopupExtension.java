@@ -70,7 +70,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     /** the supplier is frequently called and expected to return same menu object */
     protected Supplier<JPopupMenu> menu;
-    protected PopupMenuFilter filter = i -> i;
+    protected PopupMenuFilter filter = MENU_FILTER_IDENTITY;
     protected JComponent pane;
     protected Predicate<KeyEvent> keyMatcher;
     protected PopupMenuBuilder menuBuilder;
@@ -140,6 +140,15 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
          */
         default List<Object> aroundItems(boolean before) {
             return Collections.emptyList();
+        }
+    }
+
+    public static PopupMenuFilterAsIs MENU_FILTER_IDENTITY = new PopupMenuFilterAsIs();
+
+    public static class PopupMenuFilterAsIs implements PopupMenuFilter {
+        @Override
+        public Object convert(Object item) {
+            return item;
         }
     }
 

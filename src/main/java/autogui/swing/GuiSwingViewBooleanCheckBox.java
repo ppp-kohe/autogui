@@ -8,6 +8,8 @@ import autogui.swing.util.PopupExtension;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
@@ -71,6 +73,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
                 setText(context.getDisplayName());
             }
             GuiSwingView.setDescriptionToolTipText(context, this);
+            setOpaque(false);
         }
 
         public void initEditable() {
@@ -192,6 +195,18 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
             } else {
                 return false;
             }
+        }
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return COPY;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            return new StringSelection(
+                    pane.getSwingViewContext().getRepresentation()
+                            .toHumanReadableString(pane.getSwingViewContext(), pane.getSwingViewValue()));
         }
     }
 }

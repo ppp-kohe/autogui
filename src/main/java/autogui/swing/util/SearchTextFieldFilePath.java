@@ -130,7 +130,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
     }
 
-    /** a transfer-hander for copying and pasting a file-list */
+    /** a transfer-handler for copying and pasting a file-list */
     public static class FileTransferHandler extends TransferHandler {
         protected SearchTextFieldFilePath component;
 
@@ -140,7 +140,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         @Override
         public boolean canImport(TransferSupport support) {
-            return component.getField().isEnabled() &&
+            return component.getField().isEnabled() && component.getField().isEditable() &&
                     support.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
                     support.isDataFlavorSupported(DataFlavor.stringFlavor);
         }

@@ -185,14 +185,14 @@ public class SearchTextField extends JComponent {
         icon.setOpaque(false);
         icon.setFocusable(false);
         icon.setContentAreaFilled(false);
-        icon.setBackground(new Color(0, 0, 0, 0));
+        icon.setBackground(getBackground());
     }
 
     public Icon getEmptyIcon() {
         if (emptyIcon == null) {
             BufferedImage img = new BufferedImage(16,16, BufferedImage.TYPE_4BYTE_ABGR);
             Graphics g = img.createGraphics();
-            g.setColor(new Color(0, 0, 0, 0));
+            g.setColor(new Color(255, 255, 255, 0));
             g.fillRect(0, 0, img.getWidth(), img.getHeight());
             g.dispose();
             emptyIcon = new ImageIcon(img);
