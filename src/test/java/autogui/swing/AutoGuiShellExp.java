@@ -32,27 +32,27 @@ public class AutoGuiShellExp {
         protected TestDoc doc = new TestDoc();
         protected TestOther other = new TestOther();
 
-        @GuiIncluded(index = 1, description = "the top pane")
+        @GuiIncluded(index = 1, description = "the top pane", keyStroke = "1")
         public TestTopPane getTopPane() {
             return topPane;
         }
 
-        @GuiIncluded(index = 2, description = "a immutable value list")
+        @GuiIncluded(index = 2, description = "a immutable value list", keyStroke = "2")
         public TestValueList getValueList() {
             return valueList;
         }
 
-        @GuiIncluded(index = 3, description = "number spinners")
+        @GuiIncluded(index = 3, description = "number spinners", keyStroke = "3")
         public TestNumbers getNumbers() {
             return numbers;
         }
 
-        @GuiIncluded(index = 4, description = "document editor")
+        @GuiIncluded(index = 4, description = "document editor", keyStroke = "4")
         public TestDoc getDoc() {
             return doc;
         }
 
-        @GuiIncluded
+        @GuiIncluded(keyStroke = "5")
         public TestOther getOther() {
             return other;
         }
@@ -60,7 +60,7 @@ public class AutoGuiShellExp {
 
     @GuiIncluded
     public static class TestTopPane {
-        @GuiIncluded(index = 0, description = "<html>hello, <B>w</B>orld!</html>")
+        @GuiIncluded(index = 0, description = "<html><body>hello, <B>w</B>orld!</body></html>", keyStroke = "P")
         public String hello = "Hello";
 
         private Path dir = Paths.get(".");
@@ -131,7 +131,7 @@ public class AutoGuiShellExp {
             }
         }
 
-        @GuiIncluded
+        @GuiIncluded(keyStroke = "P")
         public void updateList() {
             values = new ArrayList<>(values.stream()
                     .map(e -> e + "!")
@@ -143,7 +143,7 @@ public class AutoGuiShellExp {
             System.err.println("selected : " + items);
         }
 
-        @GuiIncluded @GuiListSelectionCallback(index = true)
+        @GuiIncluded(keyStroke = "O") @GuiListSelectionCallback(index = true)
         public void selectRows(List<Integer> rows) {
             System.err.println("selected rows: " + rows);
         }
@@ -290,7 +290,7 @@ public class AutoGuiShellExp {
         }
 
         @GuiListSelectionCallback
-        @GuiIncluded
+        @GuiIncluded(keyStroke = "E")
         public void sayHello() {
             System.err.println(x + "," + y + "," + name + "," + icon);
         }

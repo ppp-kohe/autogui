@@ -38,8 +38,8 @@ public @interface GuiIncluded {
      *    <pre>
      *        control* key
      *
-     *        control ::= "shift" | "meta" | "control" | "alt"
-     *        key  ::= "0" | "1" | ... | "9" | "A" | "B" | ... | "Z"
+     *        control ::= "shift" | "meta" | "control" | "alt"        //lower cases
+     *        key  ::= "0" | "1" | ... | "9" | "A" | "B" | ... | "Z"  //upper cases
      *    </pre>
      *
      *    for properties, selects one of field(high-precedence), getter or setter.

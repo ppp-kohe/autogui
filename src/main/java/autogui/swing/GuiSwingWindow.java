@@ -10,11 +10,10 @@ import autogui.swing.util.*;
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import javax.swing.plaf.LayerUI;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
-import java.util.List;
-import java.util.function.Function;
+import java.awt.geom.Rectangle2D;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -33,6 +32,8 @@ public class GuiSwingWindow extends JFrame {
 
     protected SettingsWindow settingsWindow;
     protected boolean applicationRoot;
+
+    protected GuiSwingKeyBinding keyBinding;
 
     public static GuiSwingWindow createForObject(Object o) {
         return new GuiSwingWindow(new GuiMappingContext(
@@ -73,8 +74,8 @@ public class GuiSwingWindow extends JFrame {
         initTitle();
         initViewComponent();
         initPrefs(); //read context, viewComponent
-        initViewComponentSet();
         initKeyBinding();
+        initViewComponentSet();
         initMenu();
         initLog();
         initIcon();
@@ -94,32 +95,20 @@ public class GuiSwingWindow extends JFrame {
         viewComponent = view.createView(context);
     }
 
+
+    protected void initKeyBinding() {
+        keyBinding = new GuiSwingKeyBinding();
+        keyBinding.bind(viewComponent);
+    }
+
     protected void initViewComponentSet() {
-        setContentPane(viewComponent);
+        setContentPane(new JLayer<>(viewComponent, keyBinding.getToolTipLayer()));
     }
 
     protected void initPrefs() {
         preferences = new GuiSwingPreferences(this);
     }
 
-
-    protected void initKeyBinding() {
-        new GuiSwingKeyBinding().bind(viewComponent);
-
-        addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                System.err.println("presed " + e);
-            }
-        });
-//        put(KeyStroke.getKeyStroke(KeyEvent.VK_P, KeyEvent.META_DOWN_MASK),
-//                new AbstractAction() {
-//                    @Override
-//                    public void actionPerformed(ActionEvent e) {
-//                        System.err.println("test");
-//                    }
-//                }); //DEBUG
-    }
 
     protected void initMenu() {
         JMenuBar bar = new JMenuBar();
@@ -149,6 +138,7 @@ public class GuiSwingWindow extends JFrame {
     public void setupObjectMenu() {
         objectMenu.removeAll();
         objectMenu.add(new ShowPreferencesAction(GuiSwingWindow.this::getPreferences, viewComponent));
+        objectMenu.add(new JCheckBoxMenuItem(keyBinding.getToolTipLayerAction()));
         objectMenu.addSeparator();
         if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
             ((GuiSwingView.ValuePane) viewComponent).getSwingMenuBuilder()
@@ -163,7 +153,7 @@ public class GuiSwingWindow extends JFrame {
         logPreferencesUpdater = new GuiSwingPreferences.WindowPreferencesUpdater(logWindow, context, "$logWindow");
         logPreferencesUpdater.setUpdater(preferences.getUpdateRunner());
         logWindow.addComponentListener(logPreferencesUpdater);
-        setContentPane(logWindow.getPaneWithStatusBar(viewComponent));
+        setContentPane(logWindow.getPaneWithStatusBar((JComponent) getContentPane()));
     }
 
     protected GuiSwingLogManager initSwingLogManager() {

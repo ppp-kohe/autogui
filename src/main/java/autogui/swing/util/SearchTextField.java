@@ -283,6 +283,13 @@ public class SearchTextField extends JComponent {
 
     }
 
+    @Override
+    public void setToolTipText(String text) {
+        super.setToolTipText(text);
+        getField().setToolTipText(text);
+        getIcon().setToolTipText(text);
+        getPopupButton().setToolTipText(text);
+    }
 
     public Supplier<List<PopupCategorized.CategorizedMenuItem>> getMenuItems() {
         return () -> PopupCategorized.getMenuItems(

@@ -71,7 +71,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                     desc = "";
                 }
                 putValue(Action.SHORT_DESCRIPTION,
-                        desc + " The action is automatically executed by table selection.");
+                        desc + " The action will be automatically executed by table selection.");
             }
         }
 

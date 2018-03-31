@@ -169,7 +169,7 @@ public class GuiMappingContext {
         return typeElement.getDescription();
     }
 
-    Pattern keyPattern = Pattern.compile("[0-9a-zA-Z]");
+    protected static Pattern keyPattern = Pattern.compile("[0-9a-zA-Z]");
 
     public String getAcceleratorKeyStroke() {
         String s = typeElement.getAcceleratorKeyStroke();
@@ -183,6 +183,10 @@ public class GuiMappingContext {
         } else {
             return s;
         }
+    }
+
+    public boolean isAcceleratorKeyStrokeSpecified() {
+        return !typeElement.getAcceleratorKeyStroke().isEmpty();
     }
 
     ///////////////////////

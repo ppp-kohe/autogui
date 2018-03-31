@@ -16,7 +16,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
 
 
     public static class ExecutionAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction,
-            GuiSwingView.RecommendedKeyStroke {
+            GuiSwingKeyBinding.RecommendedKeyStroke {
         protected GuiMappingContext context;
         public ExecutionAction(GuiMappingContext context) {
             this.context = context;
@@ -63,6 +63,15 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         @Override
         public KeyStroke getRecommendedKeyStroke() {
             return GuiSwingKeyBinding.getKeyStroke(context.getAcceleratorKeyStroke());
+        }
+
+        @Override
+        public GuiSwingKeyBinding.KeyPrecedenceSet getRecommendedKeyPrecedence() {
+            if (context.isAcceleratorKeyStrokeSpecified()) {
+                return new GuiSwingKeyBinding.KeyPrecedenceSet(GuiSwingKeyBinding.PRECEDENCE_FLAG_USER_SPECIFIED);
+            } else {
+                return new GuiSwingKeyBinding.KeyPrecedenceSet();
+            }
         }
     }
 }

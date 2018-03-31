@@ -1,22 +1,34 @@
 package autogui.swing;
 
+import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
+import javax.swing.plaf.LayerUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.security.KeyStore;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class GuiSwingKeyBinding {
 
-    protected Map<KeyStroke, Map<Integer,List<KeyStrokeAction>>> keyToDepthToActions = new HashMap<>();
+    protected Map<KeyStroke, Map<KeyPrecedenceSet,List<KeyStrokeAction>>> keyToPrecToActions = new HashMap<>();
     protected List<KeyStrokeAction> assigned = new ArrayList<>();
     protected Set<KeyStroke> assignedKeys = new HashSet<>();
+
+    protected ToolTipLayer toolTipLayer;
+    protected ToolTipLayerAction toolTipLayerAction;
+
+    interface RecommendedKeyStroke {
+        KeyStroke getRecommendedKeyStroke();
+        default GuiSwingKeyBinding.KeyPrecedenceSet getRecommendedKeyPrecedence() {
+            return new KeyPrecedenceSet();
+        }
+    }
 
     public static KeyStroke getKeyStroke(String key) {
         if (key.isEmpty()) {
@@ -44,17 +56,17 @@ public class GuiSwingKeyBinding {
 
     public void traverseKeyBinding(Component c, int depth) {
         if (c instanceof GuiSwingView.ValuePane<?>) {
-            List<PopupCategorized.CategorizedMenuItem> items = ((GuiSwingView.ValuePane<?>) c).getSwingStaticMenuItems();
+            GuiSwingView.ValuePane<?> pane = (GuiSwingView.ValuePane<?>) c;
+            List<PopupCategorized.CategorizedMenuItem> items = pane.getSwingStaticMenuItems();
             for (PopupCategorized.CategorizedMenuItem item : items) {
-                if (item instanceof GuiSwingView.RecommendedKeyStroke) {
-                    putItemRecommended((GuiSwingView.ValuePane<?>) c, depth, (GuiSwingView.RecommendedKeyStroke) item);
+                if (item instanceof RecommendedKeyStroke) {
+                    putItemRecommended(pane, depth, (RecommendedKeyStroke) item);
                 }
             }
 
-            KeyStroke paneStroke = getKeyStroke(
-                    ((GuiSwingView.ValuePane<?>) c).getSwingViewContext().getAcceleratorKeyStroke());
+            KeyStroke paneStroke = pane.getSwingFocusKeyStroke();
             if (paneStroke != null) {
-                putKeyStroke((GuiSwingView.ValuePane<?>) c, depth, paneStroke);
+                putKeyStrokeFocus((GuiSwingView.ValuePane<?>) c, depth, paneStroke);
             }
         }
         if (c instanceof Container) {
@@ -65,10 +77,10 @@ public class GuiSwingKeyBinding {
     }
 
     public void assign() {
-        while (!keyToDepthToActions.isEmpty()) {
-            List<Map.Entry<KeyStroke, Map<Integer,List<KeyStrokeAction>>>> next = new ArrayList<>(keyToDepthToActions.entrySet());
+        while (!keyToPrecToActions.isEmpty()) {
+            List<Map.Entry<KeyStroke, Map<KeyPrecedenceSet,List<KeyStrokeAction>>>> next = new ArrayList<>(keyToPrecToActions.entrySet());
             next.sort(Comparator.comparing(k ->
-                    Integer.bitCount(k.getKey().getModifiers())));
+                    Integer.bitCount(k.getKey().getModifiers()))); //a smaller number of modifiers precedes
             if (next.stream()
                     .noneMatch(e -> bind(e.getKey(), e.getValue()))) {
                 break;
@@ -95,17 +107,19 @@ public class GuiSwingKeyBinding {
             }
         }
 
-        if (!hasStroke && item instanceof GuiSwingView.RecommendedKeyStroke) {
-            putItemRecommended(pane, depth, (GuiSwingView.RecommendedKeyStroke) item);
+        if (!hasStroke && item instanceof RecommendedKeyStroke) {
+            putItemRecommended(pane, depth, (RecommendedKeyStroke) item);
         }
         return hasStroke;
     }
 
-    public boolean putItemRecommended(GuiSwingView.ValuePane<?> pane, int depth, GuiSwingView.RecommendedKeyStroke item) {
+    public boolean putItemRecommended(GuiSwingView.ValuePane<?> pane, int depth, RecommendedKeyStroke item) {
         KeyStroke stroke = item.getRecommendedKeyStroke();
         if (stroke != null) {
             putKeyStroke(new KeyStrokeAction(pane, (PopupCategorized.CategorizedMenuItem) item,
-                    (item instanceof Action ? (Action) item : null), depth, stroke));
+                    (item instanceof Action ? (Action) item : null),
+                    new KeyPrecedenceSet(item.getRecommendedKeyPrecedence(), new KeyPrecedenceDepth(depth)),
+                    stroke));
             return true;
         } else {
             return false;
@@ -117,60 +131,150 @@ public class GuiSwingKeyBinding {
                                 PopupCategorized.CategorizedMenuItem i, Action item) {
         KeyStroke stroke = (item == null ? null : (KeyStroke) item.getValue(Action.ACCELERATOR_KEY));
         if (stroke != null) {
-            keyToDepthToActions.computeIfAbsent(stroke, s -> new HashMap<>())
-                    .computeIfAbsent(depth, d -> new ArrayList<>())
-                    .add(new KeyStrokeAction(pane, i, item, depth, stroke));
+            KeyPrecedenceSet prec = new KeyPrecedenceSet(PRECEDENCE_FLAG_LIB_SPECIFIED, new KeyPrecedenceDepth(depth));
+            putKeyStroke(new KeyStrokeAction(pane, i, item, prec, stroke));
             return true;
         } else {
             return false;
         }
     }
 
-    public boolean putKeyStroke(GuiSwingView.ValuePane<?> pane, int depth, KeyStroke stroke) {
+    public boolean putKeyStrokeFocus(GuiSwingView.ValuePane<?> pane, int depth, KeyStroke stroke) {
         if (stroke != null) {
-            keyToDepthToActions.computeIfAbsent(stroke, s -> new HashMap<>())
-                    .computeIfAbsent(depth, d -> new ArrayList<>())
-                    .add(new KeyStrokeAction(pane, null, null, depth, stroke));
+            KeyPrecedenceSet prec;
+            if (pane.getSwingViewContext().isAcceleratorKeyStrokeSpecified()) {
+                prec = new KeyPrecedenceSet(PRECEDENCE_FLAG_USER_SPECIFIED, new KeyPrecedenceDepth(depth));
+            } else {
+                prec = new KeyPrecedenceSet(new KeyPrecedenceDepth(depth));
+            }
+            putKeyStroke(new KeyStrokeAction(pane, null, null, prec, stroke));
             return true;
         } else {
             return false;
         }
     }
+
+    public void putKeyStroke(KeyStrokeAction item) {
+        keyToPrecToActions.computeIfAbsent(item.stroke, s -> new HashMap<>())
+                .computeIfAbsent(item.precedence, d -> new ArrayList<>())
+                .add(item);
+    }
+
 
     public static class KeyStrokeAction {
         public GuiSwingView.ValuePane<?> pane;
         public PopupCategorized.CategorizedMenuItem item;
         public Action action;
-        public int depth;
+        public KeyPrecedenceSet precedence;
         public KeyStroke stroke;
         protected boolean assigned;
 
         protected KeyStrokeAction base;
         protected List<KeyStrokeAction> derived;
 
+        protected String description;
+
         public KeyStrokeAction(GuiSwingView.ValuePane<?> pane, PopupCategorized.CategorizedMenuItem item,
-                               Action action, int depth, KeyStroke originalStroke) {
+                               Action action, KeyPrecedenceSet precedence, KeyStroke originalStroke) {
             this.pane = pane;
             this.item = item;
             this.action = action;
-            this.depth = depth;
+            this.precedence = precedence;
             this.stroke = originalStroke;
         }
 
-        public void updateTooltip() {
-            String newDesc = getKeyStrokeString();
+        public void updateToolTip() {
+            String newDesc = getDescription();
             if (action != null) {
-                String desc = (String) action.getValue(Action.SHORT_DESCRIPTION);
-                if (desc != null) {
-                    newDesc = desc + " " + newDesc;
-                }
-                action.putValue(Action.SHORT_DESCRIPTION, newDesc);
+                action.putValue(Action.SHORT_DESCRIPTION,
+                        appendToolTipText((String) action.getValue(Action.SHORT_DESCRIPTION),  newDesc));
             } else if (pane != null) {
                 JComponent comp = pane.asSwingViewComponent();
-                if (comp.getToolTipText() != null) {
-                    newDesc = comp.getToolTipText() + " " + newDesc;
+                appendToolTip(comp, newDesc);
+                if (comp.getParent() instanceof NamedPane) {
+                    JComponent namedPane = (JComponent) comp.getParent();
+                    appendToolTip(namedPane, newDesc);
+                    if (namedPane.getParent() instanceof JTabbedPane) {
+                        updateToolTipForTab(namedPane, (JTabbedPane) namedPane.getParent(), newDesc);
+                    }
+                } else if (comp.getParent() instanceof JTabbedPane) {
+                    updateToolTipForTab(comp, (JTabbedPane) comp.getParent(), newDesc);
                 }
-                comp.setToolTipText(newDesc);
+            }
+        }
+
+        public void updateToolTipForTab(JComponent child, JTabbedPane tabbedPane, String newDesc) {
+            int i = tabbedPane.indexOfComponent(child);
+            if (i != -1) {
+                tabbedPane.setToolTipTextAt(i,
+                        appendToolTipText(tabbedPane.getToolTipTextAt(i), newDesc));
+            }
+        }
+
+        public void appendToolTip(JComponent comp, String newDesc) {
+            comp.setToolTipText(appendToolTipText(comp.getToolTipText(), newDesc));
+        }
+
+        public String appendToolTipText(String existing, String newDesc) {
+            if (existing != null && !existing.isEmpty()) {
+                String exTrim = existing.trim();
+                if (exTrim.toLowerCase().endsWith("</html>")) { //casual insertion for html
+                    int i = existing.lastIndexOf("</");
+                    int bodyEnd = existing.lastIndexOf("</body>", i);
+                    if (bodyEnd != -1) {
+                        i = bodyEnd;
+                    }
+                    return existing.substring(0, i) + " <br>" + newDesc + existing.substring(i);
+                } else {
+                    int tail = tailCodePoint(exTrim);
+                    if (!exTrim.isEmpty() && Character.isLetterOrDigit(tail)) {
+                        return existing + ", " + newDesc;
+                    } else {
+                        return existing + " " + newDesc;
+                    }
+                }
+            } else {
+                return newDesc;
+            }
+        }
+
+        private int tailCodePoint(String s) {
+            if (!s.isEmpty()) {
+                char c = s.charAt(s.length() - 1);
+                if (Character.isSurrogate(c) && s.length() >= 2) {
+                    char c2 = s.charAt(s.length() - 2);
+                    if (Character.isHighSurrogate(c2)) {
+                        return Character.toCodePoint(c2, c);
+                    } else {
+                        return Character.toCodePoint(c, c2);
+                    }
+                } else {
+                    return (int) c;
+                }
+            } else {
+                return -1;
+            }
+        }
+
+        public String getDescription() {
+            if (description == null) {
+                String actionStr = getActionString();
+                String keyStr = getKeyStrokeString();
+                description = actionStr + ": " + keyStr;
+            }
+            return description;
+        }
+
+
+        public String getActionString() {
+            String name = "";
+            if (pane != null) {
+                name = "\"" + pane.getSwingViewContext().getDisplayName() + "\"";
+            }
+            if (action == null) {
+                return "Focus " + name;
+            } else {
+                return "Action " + name;
             }
         }
 
@@ -219,8 +323,9 @@ public class GuiSwingKeyBinding {
         public void process() {
             show(pane.asSwingViewComponent());
             pane.asSwingViewComponent().requestFocusInWindow();
-            if (action != null) {
+            if (action != null && action.isEnabled()) {
                 action.actionPerformed(null);
+                System.err.println("Executed by Key: " + getDescription());
             }
         }
 
@@ -236,9 +341,6 @@ public class GuiSwingKeyBinding {
                     ((JTabbedPane) parent).setSelectedComponent(c);
                 }
             }
-
-            System.err.println(c.getClass().getSimpleName() + " : show=" + c.isShowing() + ", visi=" + c.isVisible());
-
         }
 
         public boolean isAssigned() {
@@ -276,7 +378,7 @@ public class GuiSwingKeyBinding {
             return available.stream()
                     .map(s -> toModifiers(mods, s))
                     .map(mod -> copyWithModifiers(stroke, mod))
-                    .map(k -> connectToChild(new KeyStrokeAction(pane, item, action, depth, k)))
+                    .map(k -> connectToChild(new KeyStrokeAction(pane, item, action, precedence, k)))
                     .collect(Collectors.toSet());
         }
 
@@ -301,8 +403,9 @@ public class GuiSwingKeyBinding {
                             (action.getClass().getSimpleName() + "@" +
                              Integer.toHexString(action.hashCode()) + ":" +
                                     action.getValue(Action.NAME))) +
-                    ", depth=" + depth +
+                    ", precedence=" + precedence +
                     ", assigned=" + assigned +
+                    ", pane=" + (pane != null ? pane.getClass().getSimpleName() + ":"+ pane.getSwingViewContext().getName() : "null") +
                     ")";
         }
 
@@ -362,61 +465,62 @@ public class GuiSwingKeyBinding {
     }
 
 
-    public void putKeyStroke(KeyStrokeAction item) {
-        keyToDepthToActions.computeIfAbsent(item.stroke, s -> new HashMap<>())
-                .computeIfAbsent(item.depth, d -> new ArrayList<>())
-                .add(item);
-    }
 
-
-    public boolean bind(KeyStroke key, Map<Integer,List<KeyStrokeAction>> entry) {
+    public boolean bind(KeyStroke key, Map<KeyPrecedenceSet,List<KeyStrokeAction>> precToActions) {
         if (!assignedKeys.contains(key)) {
-            List<Integer> depth = new ArrayList<>(entry.keySet());
-            depth.sort(Comparator.reverseOrder());
-            int d = depth.remove(0); //deepest item for the key
-            List<KeyStrokeAction> actions = entry.get(d);
+            List<KeyPrecedenceSet> precedences = new ArrayList<>(precToActions.keySet());
+            precedences.sort(Comparator.naturalOrder());
+
+            KeyPrecedenceSet prec = precedences.remove(0);
+            List<KeyStrokeAction> actions = precToActions.get(prec);
             KeyStrokeAction assignedAction = actions.remove(0);
 
             assigned.add(assignedAction);
             assignedKeys.add(key);
             assignedAction.setAssigned(true);
 
-            new ArrayList<>(entry.values()).stream()
-                    .flatMap(List::stream)
-                    .filter(a -> !a.isAssigned())
-                    .flatMap(a -> a.derive().stream())
-                    .filter(ak -> !assignedKeys.contains(ak.stroke))
-                    .forEach(this::putKeyStroke);
-            keyToDepthToActions.remove(key);
-
-            new ArrayList<>(keyToDepthToActions.entrySet()).forEach(e -> {
-                new ArrayList<>(e.getValue().entrySet()).forEach(e2 -> {
-                    e2.getValue().removeIf(KeyStrokeAction::isAssigned);
-                    if (e2.getValue().isEmpty()) {
-                        e.getValue().remove(e2.getKey());
-                    }
-                });
-                if (e.getValue().isEmpty()) {
-                    keyToDepthToActions.remove(e.getKey());
-                }
-            });
+            putDerived(precToActions);
+            keyToPrecToActions.remove(key);
+            cleanEmptyActions();
             return true;
         } else {
             return false;
         }
     }
 
+    private void putDerived(Map<KeyPrecedenceSet,List<KeyStrokeAction>> precToActions) {
+        new ArrayList<>(precToActions.values()).stream()
+                .flatMap(List::stream)
+                .filter(a -> !a.isAssigned())
+                .flatMap(a -> a.derive().stream())
+                .filter(ak -> !assignedKeys.contains(ak.stroke))
+                .forEach(this::putKeyStroke);
+    }
+
+    private void cleanEmptyActions() {
+        new ArrayList<>(keyToPrecToActions.entrySet()).forEach(e -> {
+            new ArrayList<>(e.getValue().entrySet()).forEach(e2 -> {
+                e2.getValue().removeIf(KeyStrokeAction::isAssigned);
+                if (e2.getValue().isEmpty()) {
+                    e.getValue().remove(e2.getKey());
+                }
+            });
+            if (e.getValue().isEmpty()) {
+                keyToPrecToActions.remove(e.getKey());
+            }
+        });
+    }
+
     public void bindTo(JComponent component) {
         Map<KeyStroke, KeyStrokeAction> inputMap = new HashMap<>();
         for (KeyStrokeAction action : assigned) {
-            action.updateTooltip();
-            if (action.action != null) {
-                inputMap.put(action.stroke, action);
-            }
+            action.updateToolTip();
+            inputMap.put(action.stroke, action);
         }
 
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(e -> {
-            KeyStrokeAction action = inputMap.get(KeyStroke.getKeyStrokeForEvent(e));
+            KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
+            KeyStrokeAction action = inputMap.get(stroke);
             if (action != null) {
                 action.process();
                 return true;
@@ -426,4 +530,331 @@ public class GuiSwingKeyBinding {
         });
     }
 
+    public List<KeyStrokeAction> getAssigned() {
+        return assigned;
+    }
+
+    public static int PRECEDENCE_TYPE_FLAG_HIGH = 1;
+    public static int PRECEDENCE_TYPE_FLAG_USER_SPECIFIED = 10;
+    public static int PRECEDENCE_TYPE_DEPTH = 1000;
+    public static int PRECEDENCE_TYPE_FLAG_LIB_SPECIFIED = 10000;
+
+    public static KeyPrecedenceFlag PRECEDENCE_FLAG_HIGH = new KeyPrecedenceFlag(PRECEDENCE_TYPE_FLAG_HIGH);
+    public static KeyPrecedenceFlag PRECEDENCE_FLAG_USER_SPECIFIED = new KeyPrecedenceFlag(PRECEDENCE_TYPE_FLAG_USER_SPECIFIED);
+    public static KeyPrecedenceFlag PRECEDENCE_FLAG_LIB_SPECIFIED = new KeyPrecedenceFlag(PRECEDENCE_TYPE_FLAG_LIB_SPECIFIED);
+
+    public static class KeyPrecedenceSet implements Comparable<KeyPrecedenceSet> {
+        protected List<KeyPrecedence> set;
+
+        public KeyPrecedenceSet(List<KeyPrecedence> set) {
+            this.set = new ArrayList<>(set);
+            setup();
+        }
+
+        public KeyPrecedenceSet(KeyPrecedence... set) {
+            this(Arrays.asList(set));
+        }
+
+        public KeyPrecedenceSet(KeyPrecedenceSet set, KeyPrecedence... additional) {
+            this.set = new ArrayList<>(set.set);
+            this.set.addAll(Arrays.asList(additional));
+            setup();
+        }
+
+        protected void setup() {
+            List<KeyPrecedence> used = new ArrayList<>();
+            for (KeyPrecedence p : this.set) {
+                if (used.stream()
+                        .noneMatch(existing -> existing.getPrecedenceType() == p.getPrecedenceType())) {
+                    used.add(p);
+                }
+            }
+            this.set = new ArrayList<>(used);
+            this.set.sort(Comparator.comparing(KeyPrecedence::getPrecedenceType));
+        }
+
+        @Override
+        public int compareTo(KeyPrecedenceSet o) {
+            List<KeyPrecedence> p1 = set;
+            List<KeyPrecedence> p2 = o.set;
+
+            int i = 0;
+            int j = 0;
+            while (i < p1.size() || j < p2.size()) {
+                boolean p1Proceed = i < p1.size();
+                boolean p2Proceed = j < p2.size();
+                KeyPrecedence p1Next = (p1Proceed ? p1.get(i) : null);
+                KeyPrecedence p2Next = (p2Proceed ? p2.get(j) : null);
+
+                if (p1Next == null && p2Next != null) {
+                    p1Next = p2Next.getNone();
+                    p1Proceed = false; //for comprehension
+                } else if (p1Next != null && p2Next == null) {
+                    p2Next = p1Next.getNone();
+                    p2Proceed = false; //for comprehension
+                } else if (p1Next == null/* && p2Next == null*/) {
+                    break; //never
+                }
+
+                int typePre = Integer.compare(p1Next.getPrecedenceType(), p2Next.getPrecedenceType());
+
+                if (typePre < 0 && p1Proceed) { //p1:smaller(higher), p2:larger
+                    p2Proceed = false;
+                } else if (typePre > 0 && p2Proceed) { //p1:larger, p2:smaller(higher)
+                    p1Proceed = false;
+                }
+
+                int r = p1Next.compareTo(p2Next);
+                if (r != 0) {
+                    return r;
+                }
+
+                if (p1Proceed) {
+                    i++;
+                }
+                if (p2Proceed) {
+                    j++;
+                }
+            }
+            return 0;
+        }
+
+        @Override
+        public String toString() {
+            return set.toString();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            KeyPrecedenceSet that = (KeyPrecedenceSet) o;
+            return Objects.equals(set, that.set);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(set);
+        }
+    }
+
+    public interface KeyPrecedence extends Comparable<KeyPrecedence> {
+        /**
+         * @return comparable type info. of the precedence
+         */
+        int getPrecedenceType();
+
+        /**
+         * @return a default precedence of this type, used as compared opponent if no one in a set
+         */
+        KeyPrecedence getNone();
+
+        default boolean equalsDefault(Object o) {
+            return o.getClass().equals(getClass()) &&
+                    compareTo((KeyPrecedence) o) == 0;
+        }
+    }
+
+    public static class KeyPrecedenceDepth implements KeyPrecedence {
+        protected int depth;
+
+        public KeyPrecedenceDepth(int depth) {
+            this.depth = depth;
+        }
+
+        public KeyPrecedenceDepth getNone() {
+            return new KeyPrecedenceDepth(Integer.MAX_VALUE);
+        }
+
+        @Override
+        public int getPrecedenceType() {
+            return PRECEDENCE_TYPE_DEPTH;
+        }
+
+        @Override
+        public int compareTo(KeyPrecedence o) {
+            if (o instanceof KeyPrecedenceDepth) {
+                return Integer.compare(depth, ((KeyPrecedenceDepth) o).depth);
+            }
+            return 0;
+        }
+
+        @Override
+        public String toString() {
+            return "depth(" + depth + ")";
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getPrecedenceType(), depth);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return equalsDefault(obj);
+        }
+    }
+
+    public static class KeyPrecedenceFlag implements KeyPrecedence {
+        protected int type;
+        protected boolean flag;
+
+        public KeyPrecedenceFlag(int type) {
+            this(type, true);
+        }
+
+        public KeyPrecedenceFlag(int type, boolean flag) {
+            this.type = type;
+            this.flag = flag;
+        }
+
+        @Override
+        public KeyPrecedence getNone() {
+            return new KeyPrecedenceFlag(type, false);
+        }
+
+        @Override
+        public int getPrecedenceType() {
+            return type;
+        }
+
+        @Override
+        public int compareTo(KeyPrecedence o) {
+            if (o instanceof KeyPrecedenceFlag) {
+                int p = Integer.compare(type, ((KeyPrecedenceFlag) o).type);
+                if (p == 0) {
+                    return Boolean.compare(flag, ((KeyPrecedenceFlag) o).flag);
+                } else {
+                    return p;
+                }
+            } else {
+                return 0;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "flag(" + type + "," + flag + ")";
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getPrecedenceType(), flag);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return equalsDefault(obj);
+        }
+    }
+
+    public ToolTipLayer getToolTipLayer() {
+        if (toolTipLayer == null) {
+            toolTipLayer = new ToolTipLayer(getAssigned().stream()
+                            .map(k -> k.pane.asSwingViewComponent())
+                            .collect(Collectors.toList()));
+        }
+        return toolTipLayer;
+    }
+
+    public ToolTipLayerAction getToolTipLayerAction() {
+        if (toolTipLayerAction == null) {
+            toolTipLayerAction = new ToolTipLayerAction(this);
+        }
+        return toolTipLayerAction;
+    }
+
+    public static class ToolTipLayerAction extends AbstractAction implements
+            PopupCategorized.CategorizedMenuItemAction {
+        protected GuiSwingKeyBinding keyBinding;
+
+        public ToolTipLayerAction(GuiSwingKeyBinding keyBinding) {
+            this.keyBinding = keyBinding;
+            putValue(NAME, "Key Guide");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            putValue(SELECTED_KEY, keyBinding.getToolTipLayer().isVisible());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            boolean v = !keyBinding.getToolTipLayer().isVisible();
+            putValue(SELECTED_KEY, v);
+            keyBinding.getToolTipLayer().setVisible(v);
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
+        }
+    }
+
+
+    public static class ToolTipLayer extends LayerUI<JComponent> {
+        protected boolean visible;
+        protected List<JComponent> assigned;
+        protected JComponent target;
+
+        public ToolTipLayer(List<JComponent> assigned) {
+            this.assigned = assigned;
+        }
+
+        @Override
+        public void installUI(JComponent c) {
+            super.installUI(c);
+            this.target = c;
+        }
+
+        public boolean isVisible() {
+            return visible;
+        }
+
+        public void setVisible(boolean visible) {
+            this.visible = visible;
+            if (target != null) {
+                target.repaint();
+            }
+        }
+
+        @Override
+        public void paint(Graphics g, JComponent c) {
+            super.paint(g, c);
+            if (visible) {
+                Graphics2D g2 = (Graphics2D) g.create();
+
+                assigned.stream()
+                        .filter(JComponent::isShowing)
+                        .forEach(ac -> paintToolTip(g2, ac));
+
+                g2.dispose();
+            }
+        }
+
+        public void paintToolTip(Graphics2D g, JComponent view) {
+            String tool = view.getToolTipText();
+            if (tool == null || tool.isEmpty()) {
+                return;
+            }
+            JLabel l = new JLabel(tool);
+
+            Rectangle bounds = view.getBounds();
+            double x = bounds.getMaxX();
+            double y = bounds.getMaxY();
+            Dimension size = l.getPreferredSize();
+            x -= size.getWidth() * 0.7;
+            y -= size.getHeight() * 0.7;
+            Point p = SwingUtilities.convertPoint(view, new Point((int) x, (int) y), target);
+            l.validate();
+            l.setSize(l.getPreferredSize());
+            Graphics tg = g.create();
+            tg.translate(p.x, p.y);
+            l.paint(tg);
+            tg.dispose();
+        }
+    }
 }

@@ -24,6 +24,7 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -155,7 +156,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             MouseListener[] listeners = getMouseListeners();
             Arrays.stream(listeners).forEach(this::removeMouseListener);
             popup = new PopupExtensionCollection(this, PopupExtension.getDefaultKeyMatcher(),
-                    getSwingStaticMenuItems());
+                    this::getSwingStaticMenuItems);
             Arrays.stream(listeners).forEach(this::addMouseListener);
             //improve precedence of the popup listener
         }
@@ -781,11 +782,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected boolean showing;
         protected Timer showingTimer;
 
-        public PopupExtensionCollection(CollectionTable pane, Predicate<KeyEvent> keyMatcher, List<PopupCategorized.CategorizedMenuItem> items) {
+        public PopupExtensionCollection(CollectionTable pane, Predicate<KeyEvent> keyMatcher, Supplier<? extends Collection<PopupCategorized.CategorizedMenuItem>> items) {
             super(pane, keyMatcher, null);
             this.table = pane;
 
-            PopupCategorized tableActions = new PopupCategorized(() -> items, null, new MenuBuilderWithEmptySeparator());
+            PopupCategorized tableActions = new PopupCategorized(items, null, new MenuBuilderWithEmptySeparator());
             PopupMenuBuilder columnBuilder = new CollectionColumnMenuSupplier(this);
             PopupMenuBuilder cellBuilder = new CollectionCellMenuSupplier(this);
 

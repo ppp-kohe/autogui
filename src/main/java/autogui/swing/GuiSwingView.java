@@ -34,10 +34,6 @@ public interface GuiSwingView extends GuiSwingElement {
         return false;
     }
 
-    interface RecommendedKeyStroke {
-        KeyStroke getRecommendedKeyStroke();
-    }
-
     interface ValuePane<ValueType> {
         /** @return basically, the source value of the context, held by the component without touching the context.  */
         ValueType getSwingViewValue();
@@ -130,6 +126,10 @@ public interface GuiSwingView extends GuiSwingElement {
         default boolean isSwingEditable() {
             GuiMappingContext context = getSwingViewContext();
             return !context.isReprValue() || context.getReprValue().isEditable(context);
+        }
+
+        default KeyStroke getSwingFocusKeyStroke() {
+            return GuiSwingKeyBinding.getKeyStroke(getSwingViewContext().getAcceleratorKeyStroke());
         }
     }
 

@@ -100,7 +100,6 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         public void init() {
             setLayout(new BorderLayout());
             setOpaque(false);
-            setBorder(BorderFactory.createEmptyBorder());
         }
 
         public void initLazy() {
@@ -213,6 +212,12 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             popup = new PopupExtension(this, PopupExtension.getDefaultKeyMatcher(), menuBuilder);
         }
 
+        @Override
+        public void init() {
+            super.init();
+            setBorder(new GuiSwingViewLabel.FocusBorder(this));
+        }
+
         public boolean hasContentValuePane() {
             return contentPane != null && contentPane instanceof ValuePane;
         }
@@ -297,6 +302,20 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         @Override
         public void loadSwingPreferences(GuiPreferences prefs) {
             GuiSwingView.loadChildren(prefs.getDescendant(getSwingViewContext()), this);
+        }
+
+        /**
+         * @return null
+         *        meaning the named pane will never become key-binding target,
+         *        unless the type-element is explicitly attached a keyStroke annotation.
+         */
+        @Override
+        public KeyStroke getSwingFocusKeyStroke() {
+            if (getSwingViewContext().isAcceleratorKeyStrokeSpecified()) {
+                return GuiSwingKeyBinding.getKeyStroke(getSwingViewContext().getAcceleratorKeyStroke());
+            } else {
+                return null;
+            }
         }
     }
 }
