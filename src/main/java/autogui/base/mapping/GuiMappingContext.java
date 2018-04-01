@@ -555,6 +555,21 @@ public class GuiMappingContext {
         return taskRunner;
     }
 
+    public void shutdownTaskRunner() {
+        GuiMappingContext root = getRoot();
+        root.shutdownTaskRunnerSubTree();
+    }
+
+    protected void shutdownTaskRunnerSubTree() {
+        if (taskRunner != null) {
+            taskRunner.shutdown();
+            taskRunner = null;
+        }
+        for (GuiMappingContext child : getChildren()) {
+            child.shutdownTaskRunnerSubTree();
+        }
+    }
+
     /** submit the task to the task runner and wait the completion of the task
      * @param task the task submitted to the runner
      * @param <T> the returned type

@@ -14,6 +14,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class GuiSwingWindow extends JFrame {
@@ -224,12 +226,14 @@ public class GuiSwingWindow extends JFrame {
     }
 
     public void cleanUp() {
-        context.getTaskRunner().shutdown();
+        context.shutdownTaskRunner();
         GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
                 GuiSwingView.ValuePane::shutdownSwingView);
         preferences.shutdown();
         logWindow.dispose();
         settingsWindow.getWindow().dispose();
+        keyBinding.unbind();
+        fileDialogPreferencesUpdater.removeFromDialogManager();
         dispose();
     }
 
@@ -268,6 +272,81 @@ public class GuiSwingWindow extends JFrame {
         }
         GuiSwingView.saveChildren(prefs, viewComponent);
     }
+
+    @SuppressWarnings("unchecked")
+    public GuiSwingView.ValuePane<Object> getViewValuePane() {
+        if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
+            return (GuiSwingView.ValuePane<Object>) viewComponent;
+        }
+        return null;
+    }
+
+    /**
+     *
+     * @param context the searched context
+     * @return a descendant value pane holding the context, or null.
+     *            wrappers which have the same context are avoided.
+     */
+    public GuiSwingView.ValuePane<Object> getDescendantByContext(GuiMappingContext context) {
+        return GuiSwingView.findChild(getViewComponent(), p ->
+                Objects.equals(context, p.getSwingViewContext()));
+    }
+
+    /**
+     * @param value the searched value
+     * @return a descendant value pane holding the value, or null.
+     *    wrappers holding the same context are avoided.
+     */
+    public GuiSwingView.ValuePane<Object> getDescendantByValue(Object value) {
+        return GuiSwingView.findChild(getViewComponent(),
+                p -> Objects.equals(p.getSwingViewValue(), value));
+    }
+
+
+    /**
+     * @param valuePredicate the condition holds the searched value
+     * @return a first descendant value pane holding a value matched by the predicate, or null.
+     *    wrappers holding the same context are avoided.
+     */
+    public GuiSwingView.ValuePane<Object> getDescendantByValueIf(Predicate<Object> valuePredicate) {
+        return GuiSwingView.findChild(getViewComponent(),
+                p -> valuePredicate.test(p.getSwingViewValue()));
+    }
+
+
+    /**
+     * @param name the searched context name
+     * @return a child (or descendant for wrappers) value pane holding the named context, or null.
+     *    wrappers holding the same context are avoided.
+     */
+    public GuiSwingView.ValuePane<Object> getChildByName(String name) {
+        return GuiSwingView.getChild(getViewComponent(),
+                p -> p.getSwingViewContext() != null &&
+                        Objects.equals(p.getSwingViewContext().getName(), name));
+    }
+
+    public GuiSwingActionDefault.ExecutionAction getActionByName(String name) {
+        GuiSwingView.ValuePane<Object> v = getViewValuePane();
+        if (v != null) {
+            return v.getActionByName(name);
+        } else {
+            return null;
+        }
+    }
+
+    public GuiSwingActionDefault.ExecutionAction getActionByContext(GuiMappingContext context) {
+        GuiSwingView.ValuePane<Object> v = getViewValuePane();
+        if (v != null) {
+            return v.getActionByContext(context);
+        } else {
+            return null;
+        }
+    }
+
+    public GuiSwingActionDefault.ExecutionAction getDescendantActionByContext(GuiMappingContext context) {
+        return GuiSwingView.findNonNullByFunction(getViewComponent(), p -> p.getActionByContext(context));
+    }
+
 
     public static class ShowPreferencesAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected Supplier<GuiSwingPreferences> preferences;

@@ -191,7 +191,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
     }
 
-    public static class NamedPropertyPane extends NamedPane implements ValuePane<Object> {
+    public static class NamedPropertyPane extends NamedPane implements ValuePaneWrapper<Object> {
         protected PopupExtension popup;
 
         public NamedPropertyPane() { }
@@ -313,6 +313,15 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         public KeyStroke getSwingFocusKeyStroke() {
             if (getSwingViewContext().isAcceleratorKeyStrokeSpecified()) {
                 return GuiSwingKeyBinding.getKeyStroke(getSwingViewContext().getAcceleratorKeyStroke());
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public ValuePane<Object> getSwingViewWrappedPane() {
+            if (hasContentValuePane()) {
+                return getContentPaneAsValuePane();
             } else {
                 return null;
             }

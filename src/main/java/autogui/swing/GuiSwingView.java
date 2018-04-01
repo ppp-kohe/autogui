@@ -6,7 +6,10 @@ import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.table.TableTargetMenu;
-import autogui.swing.util.*;
+import autogui.swing.util.MenuBuilder;
+import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupExtension;
+import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
@@ -25,6 +28,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public interface GuiSwingView extends GuiSwingElement {
@@ -131,9 +136,101 @@ public interface GuiSwingView extends GuiSwingElement {
         default KeyStroke getSwingFocusKeyStroke() {
             return GuiSwingKeyBinding.getKeyStroke(getSwingViewContext().getAcceleratorKeyStroke());
         }
+
+        /**
+         * @param context the searched context, a descendant child of the context of the pane
+         * @return a descendant value pane holding the context, or null.
+         *     wrappers holding the same context are avoided.
+         */
+        default ValuePane<Object> getDescendantByContext(GuiMappingContext context) {
+            return GuiSwingView.findChild(asSwingViewComponent(), p ->
+                    Objects.equals(context, p.getSwingViewContext()));
+        }
+
+        /**
+         * @param value the searched value
+         * @return a descendant value pane holding the value, or null.
+         *    wrappers holding the same context are avoided.
+         */
+        default ValuePane<Object> getDescendantByValue(Object value) {
+            return GuiSwingView.findChild(asSwingViewComponent(),
+                    p -> Objects.equals(p.getSwingViewValue(), value));
+        }
+
+        /**
+         * @param valuePredicate the condition holds the searched value
+         * @return a first descendant value pane holding a value matched by the predicate, or null.
+         *    wrappers holding the same context are avoided.
+         */
+        default ValuePane<Object> getDescendantByValueIf(Predicate<Object> valuePredicate) {
+            return GuiSwingView.findChild(asSwingViewComponent(),
+                    p -> valuePredicate.test(p.getSwingViewValue()));
+        }
+
+        /**
+         * @param name the searched context name
+         * @return a child (or descendant for wrappers) value pane holding the named context, or null.
+         *    wrappers holding the same context are avoided.
+         */
+        default ValuePane<Object> getChildByName(String name) {
+            return GuiSwingView.getChild(asSwingViewComponent(),
+                    p -> p.getSwingViewContext() != null &&
+                            Objects.equals(p.getSwingViewContext().getName(), name));
+        }
+
+        default GuiSwingActionDefault.ExecutionAction getActionByName(String name) {
+            return getActionDefault(this,
+                    e ->  e.getContext() != null && e.getContext().getName().equals(name));
+        }
+
+        default GuiSwingActionDefault.ExecutionAction getActionByContext(GuiMappingContext context) {
+            return getActionDefault(this, e ->  Objects.equals(e.getContext(), context));
+        }
+
+        default GuiSwingActionDefault.ExecutionAction getDescendantActionByContext(GuiMappingContext context) {
+            return findNonNullByFunction(asSwingViewComponent(), p -> getActionByContext(context));
+        }
     }
 
-    ///////////////////////////////
+    /**
+     * indicating the pane wraps another {@link ValuePane}
+     * @param <ValueType> the value type
+     */
+    interface ValuePaneWrapper<ValueType> extends ValuePane<ValueType> {
+        /**
+         * @return a wrapped child pane or null.
+         *   the returned pane might have the same context of this, or different one like "property(value)"
+         */
+        ValuePane<Object> getSwingViewWrappedPane();
+
+        default boolean isSwingViewWrappedPaneSameContext() {
+            ValuePane<Object> p = getSwingViewWrappedPane();
+            return p != null && Objects.equals(p.getSwingViewContext(), getSwingViewContext());
+        }
+
+        @Override
+        default GuiSwingActionDefault.ExecutionAction getActionByName(String name) {
+            if (isSwingViewWrappedPaneSameContext()) {
+                GuiSwingActionDefault.ExecutionAction a = getSwingViewWrappedPane().getActionByName(name);
+                if (a != null) {
+                    return a;
+                }
+            }
+            return getActionDefault(this,
+                    e ->  e.getContext() != null && e.getContext().getName().equals(name));
+        }
+
+        @Override
+        default GuiSwingActionDefault.ExecutionAction getActionByContext(GuiMappingContext context) {
+            if (isSwingViewWrappedPaneSameContext()) {
+                GuiSwingActionDefault.ExecutionAction a = getSwingViewWrappedPane().getActionByContext(context);
+                if (a != null) {
+                    return a;
+                }
+            }
+            return getActionDefault(this, e ->  Objects.equals(e.getContext(), context));
+        }
+    }
 
 
     ///////////////////////////////
@@ -224,7 +321,86 @@ public interface GuiSwingView extends GuiSwingElement {
         });
     }
 
-    class ValueScrollPane<ValueType> extends JScrollPane implements ValuePane<ValueType> {
+    @SuppressWarnings("unchecked")
+    static ValuePane<Object> findChild(Component component, Predicate<ValuePane<Object>> predicate) {
+        return findNonNullByFunction(component, p -> predicate.test(p) ? p : null);
+    }
+
+    static GuiSwingView.ValuePane<Object> getChild(Component component, Predicate<ValuePane<Object>> predicate) {
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                GuiSwingView.ValuePane<Object> r = checkNonNull(child, p -> predicate.test(p) ? p : null);
+                if (r != null) {
+                    return r;
+                }
+                //descendant for non value pane
+                if (!(child instanceof ValuePane<?>)) {
+                    r = getChild(child, predicate);
+                    if (r != null) {
+                        return r;
+                    }
+                }
+            }
+        }
+        //descendant for wrapper
+        if (component instanceof ValuePaneWrapper<?>) {
+            ValuePaneWrapper<?> wrapper = (ValuePaneWrapper<?>) component;
+            if (wrapper.isSwingViewWrappedPaneSameContext()) {
+                return getChild(wrapper.getSwingViewWrappedPane().asSwingViewComponent(), predicate);
+            }
+        }
+        return null;
+    }
+
+    static <T> T findNonNullByFunction(Component component, Function<ValuePane<Object>, T> f) {
+        T r = checkNonNull(component, f);
+        if (r != null) {
+            return r;
+        }
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                T t = findNonNullByFunction(child, f);
+                if (t != null) {
+                    return t;
+                }
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    static <T> T checkNonNull(Component component, Function<ValuePane<Object>,T> f) {
+        if (component instanceof ValuePane<?>) {
+            ValuePane<Object> vp = (ValuePane<Object>) component;
+            T t = f.apply(vp);
+            if (t != null) {
+                if (component instanceof GuiSwingView.ValuePaneWrapper<?> &&
+                        ((GuiSwingView.ValuePaneWrapper<Object>) component).isSwingViewWrappedPaneSameContext()) {
+                    GuiSwingView.ValuePane<Object> wrapped = ((GuiSwingView.ValuePaneWrapper<Object>) component).getSwingViewWrappedPane();
+                    T wrappedResult = checkNonNull(wrapped.asSwingViewComponent(), f);
+                    if (wrappedResult != null) {
+                        return wrappedResult;
+                    } else {
+                        return t; //not matched with the wrapped pane, so return the wrapper's one
+                    }
+                } else {
+                    return t;  //different context
+                }
+            }
+        }
+        return null;
+    }
+
+    static GuiSwingActionDefault.ExecutionAction getActionDefault(ValuePane<?> p, Predicate<GuiSwingActionDefault.ExecutionAction> predicate) {
+        return p.getSwingStaticMenuItems().stream()
+                .filter(GuiSwingActionDefault.ExecutionAction.class::isInstance)
+                .map(GuiSwingActionDefault.ExecutionAction.class::cast)
+                .filter(predicate)
+                .findFirst()
+                .orElse(null);
+    }
+
+    class ValueScrollPane<ValueType> extends JScrollPane implements ValuePaneWrapper<ValueType> {
         protected ValuePane<ValueType> pane;
 
         @SuppressWarnings("unchecked")
@@ -287,10 +463,16 @@ public interface GuiSwingView extends GuiSwingElement {
         @Override
         public void loadSwingPreferences(GuiPreferences prefs) {
         }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public ValuePane<Object> getSwingViewWrappedPane() {
+            return (ValuePane<Object>) pane;
+        }
     }
 
 
-    class ValueWrappingPane<ValueType> extends JPanel implements ValuePane<ValueType> {
+    class ValueWrappingPane<ValueType> extends JPanel implements ValuePaneWrapper<ValueType> {
         protected ValuePane<ValueType> pane;
 
         public ValueWrappingPane(Component view) {
@@ -359,6 +541,12 @@ public interface GuiSwingView extends GuiSwingElement {
 
         @Override
         public void loadSwingPreferences(GuiPreferences prefs) {
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public ValuePane<Object> getSwingViewWrappedPane() {
+            return (ValuePane<Object>) pane;
         }
     }
 

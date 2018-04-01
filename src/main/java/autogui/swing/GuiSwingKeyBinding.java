@@ -16,6 +16,7 @@ public class GuiSwingKeyBinding {
     protected Map<KeyStroke, Map<KeyPrecedenceSet,List<KeyStrokeAction>>> keyToPrecToActions = new HashMap<>();
     protected List<KeyStrokeAction> assigned = new ArrayList<>();
     protected Set<KeyStroke> assignedKeys = new HashSet<>();
+    protected KeyBindDispatcher dispatcher;
 
     interface RecommendedKeyStroke {
         KeyStroke getRecommendedKeyStroke();
@@ -528,8 +529,30 @@ public class GuiSwingKeyBinding {
             action.updateToolTip();
             inputMap.put(action.stroke, action);
         }
+        if (dispatcher != null) {
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(dispatcher);
+        }
+        dispatcher = new KeyBindDispatcher(inputMap);
 
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(e -> {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(dispatcher);
+    }
+
+    public void unbind() {
+        if (dispatcher != null) {
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(dispatcher);
+        }
+        dispatcher = null;
+    }
+
+    public static class KeyBindDispatcher implements KeyEventDispatcher {
+        protected Map<KeyStroke, KeyStrokeAction> inputMap;
+
+        public KeyBindDispatcher(Map<KeyStroke, KeyStrokeAction> inputMap) {
+            this.inputMap = inputMap;
+        }
+
+        @Override
+        public boolean dispatchKeyEvent(KeyEvent e) {
             KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
             KeyStrokeAction action = inputMap.get(stroke);
             if (action != null) {
@@ -538,7 +561,7 @@ public class GuiSwingKeyBinding {
             } else {
                 return false;
             }
-        });
+        }
     }
 
     public List<KeyStrokeAction> getAssigned() {

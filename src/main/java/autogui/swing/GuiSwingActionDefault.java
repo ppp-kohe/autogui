@@ -38,11 +38,19 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         }
         @Override
         public void actionPerformed(ActionEvent e) {
-            ((GuiReprAction) context.getRepresentation()).executeAction(context);
+            executeAction();
         }
 
         public String getIconName() {
             return context.getIconName();
+        }
+
+        public GuiMappingContext getContext() {
+            return context;
+        }
+
+        public void executeAction() {
+            context.executeAction();
         }
 
         @Override

@@ -971,6 +971,10 @@ public class GuiSwingPreferences {
             dialogManager.addListener(this);
         }
 
+        public void removeFromDialogManager() {
+            dialogManager.removeListener(this);
+        }
+
         @Override
         public void updateFileList(SettingsWindow.FileListModel listModel) {
             if (!savingDisabled) {

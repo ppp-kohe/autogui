@@ -87,6 +87,11 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
             actionPerformedAround(true);
         }
 
+        @Override
+        public void executeAction() {
+            actionPerformedAround(false);
+        }
+
         protected void actionPerformedAround(boolean autoSelection) {
             setEnabled(false);
             try {
