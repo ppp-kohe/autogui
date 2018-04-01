@@ -3,10 +3,12 @@ package autogui.swing.util;
 import javax.swing.*;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
+import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import javax.swing.undo.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,6 +61,18 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
         c.addKeyListener(this);
         c.addFocusListener(this);
         c.getDocument().addUndoableEditListener(this);
+        c.addPropertyChangeListener("document", this::updateDocument);
+    }
+
+    public void updateDocument(PropertyChangeEvent e) {
+        Document doc = (Document) e.getNewValue();
+        Document oldDoc = (Document) e.getOldValue();
+        if (doc != oldDoc) {
+            if (oldDoc != null) {
+                oldDoc.removeUndoableEditListener(this);
+            }
+            doc.addUndoableEditListener(this);
+        }
     }
 
     public void putUndoActionsTo(JTextComponent c) {

@@ -83,6 +83,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             initPopup();
             initKeyBindings();
             initHighlight();
+            initUndo();
         }
 
         public void initName() {
@@ -128,6 +129,10 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                     return painter;
                 }
             });
+        }
+
+        public void initUndo() {
+            new KeyUndoManager().putListenersAndActionsTo(pane);
         }
     }
 

@@ -255,7 +255,7 @@ public class GuiSwingKeyBinding {
             if (description == null) {
                 String actionStr = getActionString();
                 String keyStr = getKeyStrokeString();
-                description = actionStr + ": " + keyStr;
+                description = actionStr + ": " + keyStr + " ";
             }
             return description;
         }
