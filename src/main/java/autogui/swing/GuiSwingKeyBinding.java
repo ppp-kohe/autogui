@@ -286,20 +286,16 @@ public class GuiSwingKeyBinding {
             }
             int mod = stroke.getModifiers();
             List<String> words = new ArrayList<>();
-            if ((mod & KeyEvent.CTRL_DOWN_MASK) != 0 ||
-                    (mod & KeyEvent.CTRL_MASK) != 0) {
+            if (checkMenuModifiersMask(KeyEvent.CTRL_DOWN_MASK, mod)) {
                 words.add(ctrl);
             }
-            if ((mod & KeyEvent.ALT_DOWN_MASK) != 0 ||
-                    (mod & KeyEvent.ALT_MASK) != 0) {
+            if (checkMenuModifiersMask(KeyEvent.ALT_DOWN_MASK, mod)) {
                 words.add(alt);
             }
-            if ((mod & KeyEvent.SHIFT_DOWN_MASK) != 0 ||
-                    (mod & KeyEvent.SHIFT_MASK) != 0) {
+            if (checkMenuModifiersMask(KeyEvent.SHIFT_DOWN_MASK, mod)) {
                 words.add(shift);
             }
-            if ((mod & KeyEvent.META_DOWN_MASK) != 0 ||
-                    (mod & KeyEvent.META_MASK) != 0) {
+            if (checkMenuModifiersMask(KeyEvent.META_DOWN_MASK, mod)) {
                 words.add(meta);
             }
             if (stroke.getKeyCode() != KeyEvent.VK_UNDEFINED) {
@@ -436,28 +432,49 @@ public class GuiSwingKeyBinding {
             }
             return modifiers;
         }
-
-        public static int getMenuShortcutKeyMask() {
-            int menuMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-            int menuDownMask = menuMask;
-            switch (menuMask) {
-                case Event.SHIFT_MASK:
-                    menuDownMask = InputEvent.SHIFT_DOWN_MASK;
-                    break;
-                case Event.CTRL_MASK:
-                    menuDownMask = InputEvent.CTRL_DOWN_MASK;
-                    break;
-                case Event.ALT_MASK:
-                    menuDownMask = InputEvent.ALT_DOWN_MASK;
-                    break;
-                case Event.META_MASK:
-                    menuDownMask = InputEvent.META_DOWN_MASK;
-                    break;
-            }
-            return menuDownMask;
-        }
     }
 
+    @SuppressWarnings("deprecation")
+    public static int getMenuShortcutKeyMask() {
+        int menuMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        int menuDownMask = menuMask;
+        switch (menuMask) {
+            case InputEvent.SHIFT_MASK:
+                menuDownMask = InputEvent.SHIFT_DOWN_MASK;
+                break;
+            case InputEvent.CTRL_MASK:
+                menuDownMask = InputEvent.CTRL_DOWN_MASK;
+                break;
+            case InputEvent.ALT_MASK:
+                menuDownMask = InputEvent.ALT_DOWN_MASK;
+                break;
+            case InputEvent.META_MASK:
+                menuDownMask = InputEvent.META_DOWN_MASK;
+                break;
+        }
+        return menuDownMask;
+    }
+
+    @SuppressWarnings("deprecation")
+    public static boolean checkMenuModifiersMask(int constKey, int testedMods) {
+        int oldKey = -1;
+        switch (constKey) {
+            case InputEvent.SHIFT_DOWN_MASK:
+                oldKey = InputEvent.SHIFT_MASK;
+                break;
+            case InputEvent.CTRL_DOWN_MASK:
+                oldKey = InputEvent.CTRL_MASK;
+                break;
+            case InputEvent.ALT_DOWN_MASK:
+                oldKey = InputEvent.ALT_MASK;
+                break;
+            case InputEvent.META_DOWN_MASK:
+                oldKey = InputEvent.META_MASK;
+                break;
+        }
+        return (testedMods & oldKey) != 0 ||
+                (testedMods & constKey) != 0;
+    }
 
 
     public boolean bind(KeyStroke key, Map<KeyPrecedenceSet,List<KeyStrokeAction>> precToActions) {

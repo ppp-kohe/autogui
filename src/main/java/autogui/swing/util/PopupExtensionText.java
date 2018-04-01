@@ -13,6 +13,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
+import java.awt.geom.Point2D;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -79,11 +80,21 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         JTextComponent textComponent = getTextComponent();
         int sel = textComponent.getSelectionStart();
         try {
-            Rectangle rect = textComponent.modelToView(sel); //TODO in JDK9, replaced by modelToView2D
+            Rectangle rect = textComponentModelToView(textComponent, sel);
             show(textComponent, rect.x, rect.y + rect.height);
         } catch (BadLocationException ex) {
             error(ex);
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    public static Rectangle textComponentModelToView(JTextComponent textComponent, int sel) throws BadLocationException {
+        return textComponent.modelToView(sel); //TODO in JDK9, replaced by modelToView2D
+    }
+
+    @SuppressWarnings("deprecation")
+    public static int textComponentViewToModel(JTextComponent textComponent, Point p) {
+        return textComponent.viewToModel(p); //TODO in JDK9, replaced by viewToModel2D
     }
 
     protected void error(Exception ex) {

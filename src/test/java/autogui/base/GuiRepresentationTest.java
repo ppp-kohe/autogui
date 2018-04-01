@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+@SuppressWarnings("unchecked")
 public class GuiRepresentationTest {
     @Test
     public void testString() {

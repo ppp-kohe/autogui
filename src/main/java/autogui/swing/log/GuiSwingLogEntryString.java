@@ -3,6 +3,8 @@ package autogui.swing.log;
 import autogui.base.log.GuiLogEntry;
 import autogui.base.log.GuiLogEntryString;
 import autogui.base.log.GuiLogManager;
+import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -100,7 +102,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
             headerEndIndex += headerEnd.length() - 1;
             doc.setCharacterAttributes(0, headerEndIndex, style, true);
             try {
-                Rectangle rect = pane.modelToView(headerEndIndex);
+                Rectangle rect = PopupExtensionText.textComponentModelToView(pane, headerEndIndex);
                 return (float) rect.getMaxX();
             } catch (Exception ex) {
                 //
@@ -224,19 +226,19 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         public void mousePressed(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
             str.setSelectionTo(-1);
-            str.setSelectionFrom(viewToModel(point));
+            str.setSelectionFrom(PopupExtensionText.textComponentViewToModel(this, point));
         }
 
         @Override
         public void mouseDragged(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
-            str.setSelectionTo(viewToModel(point));
+            str.setSelectionTo(PopupExtensionText.textComponentViewToModel(this, point));
         }
 
         @Override
         public void mouseReleased(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
-            str.setSelectionTo(viewToModel(point));
+            str.setSelectionTo(PopupExtensionText.textComponentViewToModel(this, point));
         }
 
         @Override

@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import java.util.*;
 
+@SuppressWarnings("unchecked")
 public class GuiReprCollectionTableTest {
     @SuppressWarnings("all")
     @Test

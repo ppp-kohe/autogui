@@ -325,8 +325,12 @@ public class GuiMappingContext {
         List<GuiMappingContext> updated = new ArrayList<>();
         ctx.collectUpdatedSource(cause, updated);
 
-        updated.forEach(c -> c.getListeners()
-                .forEach(l -> l.update(this, c.getSource())));
+        updated.forEach(c -> c.sendUpdateToListeners(this));
+    }
+
+    public void sendUpdateToListeners(GuiMappingContext cause) {
+        getListeners().forEach(l ->
+                l.update(cause, getSource()));
     }
 
     public void clearSourceSubTree() {
@@ -342,8 +346,7 @@ public class GuiMappingContext {
         List<GuiMappingContext> updated = new ArrayList<>();
         collectUpdatedSource(null, updated);
 
-        updated.forEach(c -> c.getListeners()
-                .forEach(l -> l.update(this, c.getSource())));
+        updated.forEach(c -> c.sendUpdateToListeners(this));
     }
 
     /** recursively call {@link GuiRepresentation#checkAndUpdateSource(GuiMappingContext)}:
@@ -493,6 +496,13 @@ public class GuiMappingContext {
         return hasParent() ? getParent().getSource() : null;
     }
 
+    public boolean isReprAction() {
+        return getRepresentation() != null && getRepresentation() instanceof GuiReprAction;
+    }
+
+    public GuiReprAction getReprAction() {
+        return (GuiReprAction) getRepresentation();
+    }
 
     public boolean isParentCollectionTable() {
         return hasParent() && getParent().isReprCollectionTable();
@@ -592,5 +602,65 @@ public class GuiMappingContext {
         return getClass().getSimpleName() + "@" + Integer.toHexString(hashCode())
                 + "(" + getName() + "," + getTypeElement() + "," + getRepresentation() + "," + getSource() + ")"
                 + (!hasParent() ? "!" : "") + "[" + getChildren().size() + "]";
+    }
+
+    ////////////////////////
+
+    /**
+     * @param name the name
+     * @return a child whose name is the name
+     */
+    public GuiMappingContext getChildByName(String name) {
+        return getChildren().stream()
+                .filter(c -> c.getName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("not found: " + name));
+    }
+
+    /**
+     * @return get current value of the associated property
+     *    obtaining through {@link GuiReprValue} (can be checked by {@link #isReprValue()}) from current value of the parent.
+     */
+    public Object getValue() {
+        if (isReprValue()) {
+            try {
+                return getReprValue().getUpdatedValueWithoutNoUpdate(this, true);
+            } catch (Throwable ex) {
+                throw new RuntimeException("" + getRepresentation(), ex);
+            }
+        } else {
+            throw new UnsupportedOperationException("" + getRepresentation());
+        }
+    }
+
+    /**
+     * update the value of the associated property
+     *   through {@link GuiReprValue} (can be checked by {@link #isReprValue()}).
+     *    the method causes same effects by GUI operation,
+     *      i.e. updating history values, updating other components ...
+     *     Also, the listeners of the context will be updated.
+     * @param value the updated value
+     */
+    public void setValue(Object value) {
+        if (isReprValue()) {
+            getReprValue().updateFromGui(this, value);
+            sendUpdateToListeners(getRoot());
+        } else {
+            throw new UnsupportedOperationException("" + getRepresentation());
+        }
+    }
+
+    /**
+     * execute the associated action through {@link GuiReprAction} (can be checked by {@link #isReprAction()})
+     *   otherwise throw an exception.
+     *   the method causes same effects by GUI operation,
+     *     i.e. updating other components.
+     */
+    public void executeAction() {
+        if (isReprAction()) {
+            getReprAction().executeAction(this);
+        } else {
+            throw new UnsupportedOperationException("" + getRepresentation());
+        }
     }
 }

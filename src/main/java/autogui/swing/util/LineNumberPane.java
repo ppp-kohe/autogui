@@ -236,8 +236,9 @@ public class LineNumberPane extends JComponent implements DocumentListener {
             g.setColor(getBackground());
             g.fillRect(selfRect.x, selfRect.y, selfRect.width, selfRect.height);
 
-            int startIndex = field.viewToModel(textRect.getLocation()); //TODO jdk9: viewToModel2D
-            int endIndex = field.viewToModel(new Point(textRect.x + textRect.width, textRect.y + textRect.height));
+            int startIndex = PopupExtensionText.textComponentViewToModel(field, textRect.getLocation());
+            int endIndex = PopupExtensionText.textComponentViewToModel(field,
+                    new Point(textRect.x + textRect.width, textRect.y + textRect.height));
 
             int selfOffsetY = selfRect.y - textRect.y;
 
@@ -273,7 +274,7 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         } else {
             g.setColor(Color.gray);
         }
-        Rectangle lineRect = field.modelToView(lineStart);
+        Rectangle lineRect = PopupExtensionText.textComponentModelToView(field, lineStart);
         int y = lineRect.y + selfOffsetY;
         g.drawString(Integer.toString(i + 1), 4, y + 12);
     }

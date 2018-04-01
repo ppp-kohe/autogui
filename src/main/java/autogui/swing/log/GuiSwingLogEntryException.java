@@ -3,6 +3,7 @@ package autogui.swing.log;
 import autogui.base.log.GuiLogEntry;
 import autogui.base.log.GuiLogEntryException;
 import autogui.swing.icons.GuiSwingIcons;
+import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -219,7 +220,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
                 int i = getExpansionTextStartIndex();
                 if (!expanded && i >= 0) {
                     try {
-                        int sizeY = stackTrace.modelToView(i).y;
+                        int sizeY = PopupExtensionText.textComponentModelToView(stackTrace, i).y;
                         stackViewport.setPreferredSize(new Dimension(stackTrace.getPreferredSize().width, sizeY));
                         stackViewport.setViewPosition(new Point(0, 0));
                     } catch (Exception dex) {

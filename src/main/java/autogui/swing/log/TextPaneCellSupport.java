@@ -1,5 +1,7 @@
 package autogui.swing.log;
 
+import autogui.swing.util.PopupExtensionText;
+
 import javax.swing.*;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
@@ -186,7 +188,7 @@ public class TextPaneCellSupport {
                 viewPoint.x = (int) bounds.getX() - 1;
             }
 
-            int pos = text.viewToModel(viewPoint);
+            int pos = PopupExtensionText.textComponentViewToModel(text, viewPoint);
             selectionMap.computeIfAbsent(text, k -> new int[] {-1, -1})[start ? 0 : 1] = pos;
         }
         for (Component c : component.getComponents()) {

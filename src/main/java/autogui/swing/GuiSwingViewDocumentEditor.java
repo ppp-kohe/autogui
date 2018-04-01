@@ -164,8 +164,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                     offs1 = tmp;
                 }
 
-                Rectangle startRect = c.modelToView(offs0);
-                Rectangle endRect = c.modelToView(offs1);
+                Rectangle startRect = PopupExtensionText.textComponentModelToView(c, offs0);
+                Rectangle endRect = PopupExtensionText.textComponentModelToView(c, offs1);
 
                 int startLeft = startRect.x;
                 int endRight = endRect.x + endRect.width;
