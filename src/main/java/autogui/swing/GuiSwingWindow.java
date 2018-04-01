@@ -28,6 +28,7 @@ public class GuiSwingWindow extends JFrame {
 
     protected GuiSwingPreferences.WindowPreferencesUpdater preferencesUpdater;
     protected GuiSwingPreferences.WindowPreferencesUpdater logPreferencesUpdater;
+    protected GuiSwingPreferences.FileDialogPreferencesUpdater fileDialogPreferencesUpdater;
 
     protected SettingsWindow settingsWindow;
     protected boolean applicationRoot;
@@ -79,6 +80,7 @@ public class GuiSwingWindow extends JFrame {
         initLog();
         initIcon();
         initPrefsUpdater();
+        initFileDialogPrefsUpdater();
         pack();
         initContextUpdate(); //set context sources
         initPrefsLoad();  //may update properties of context sources
@@ -180,6 +182,13 @@ public class GuiSwingWindow extends JFrame {
         addComponentListener(preferencesUpdater);
     }
 
+    protected void initFileDialogPrefsUpdater() {
+        fileDialogPreferencesUpdater = new GuiSwingPreferences.FileDialogPreferencesUpdater(
+                SettingsWindow.getFileDialogManager(), context);
+        fileDialogPreferencesUpdater.setUpdater(preferences.getUpdateRunner());
+        fileDialogPreferencesUpdater.addToDialogManager();
+    }
+
     protected void initContextUpdate() {
         context.updateSourceFromRoot();
     }
@@ -229,33 +238,35 @@ public class GuiSwingWindow extends JFrame {
     }
 
     public void loadPreferences(GuiPreferences prefs) {
-        try {
-            preferencesUpdater.apply(context.getPreferences());
-            preferences.getPrefsWindowUpdater().apply(context.getPreferences());
-            logPreferencesUpdater.apply(context.getPreferences());
+        withError(() -> preferencesUpdater.apply(prefs));
+        withError(() -> preferences.getPrefsWindowUpdater().apply(prefs));
+        withError(() -> logPreferencesUpdater.apply(prefs));
+        withError(() -> fileDialogPreferencesUpdater.apply(prefs));
 
-            if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane) viewComponent).loadSwingPreferences(prefs);
-            }
-            GuiSwingView.loadChildren(prefs, viewComponent);
+        if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
+            withError(() -> ((GuiSwingView.ValuePane) viewComponent).loadSwingPreferences(prefs));
+        }
+        GuiSwingView.loadChildren(prefs, viewComponent);
+    }
+
+    public void withError(Runnable r) {
+        try {
+            r.run();
         } catch (Exception ex) {
             GuiLogManager.get().logError(ex);
         }
     }
 
     public void savePreferences(GuiPreferences prefs) {
-        try {
-            preferencesUpdater.getPrefs().saveTo(prefs);
-            preferences.getPrefsWindowUpdater().getPrefs().saveTo(prefs);
-            logPreferencesUpdater.getPrefs().saveTo(prefs);
+        withError(() -> preferencesUpdater.getPrefs().saveTo(prefs));
+        withError(() -> preferences.getPrefsWindowUpdater().getPrefs().saveTo(prefs));
+        withError(() -> logPreferencesUpdater.getPrefs().saveTo(prefs));
+        withError(() -> fileDialogPreferencesUpdater.getPrefs().saveTo(prefs));
 
-            if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane) viewComponent).saveSwingPreferences(prefs);
-            }
-            GuiSwingView.saveChildren(prefs, viewComponent);
-        } catch (Exception ex) {
-            GuiLogManager.get().logError(ex);
+        if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
+            withError(() -> ((GuiSwingView.ValuePane) viewComponent).saveSwingPreferences(prefs));
         }
+        GuiSwingView.saveChildren(prefs, viewComponent);
     }
 
     public static class ShowPreferencesAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {

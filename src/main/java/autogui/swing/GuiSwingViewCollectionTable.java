@@ -1,5 +1,6 @@
 package autogui.swing;
 
+import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprActionList;
@@ -422,17 +423,25 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void loadSwingPreferences(GuiPreferences prefs) {
-            GuiSwingView.loadPreferencesDefault(this, prefs);
-            GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
-            preferencesUpdater.apply(targetPrefs);
+            try {
+                GuiSwingView.loadPreferencesDefault(this, prefs);
+                GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
+                preferencesUpdater.apply(targetPrefs);
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
         }
 
         @Override
         public void saveSwingPreferences(GuiPreferences prefs) {
-            GuiSwingView.savePreferencesDefault(this, prefs);
-            GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
-            PreferencesForTable p = preferencesUpdater.getPrefs();
-            p.saveTo(targetPrefs);
+            try {
+                GuiSwingView.savePreferencesDefault(this, prefs);
+                GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
+                PreferencesForTable p = preferencesUpdater.getPrefs();
+                p.saveTo(targetPrefs);
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
         }
 
         @Override
@@ -546,16 +555,22 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public void apply(GuiPreferences p) {
             savingDisabled = true;
-            prefs.loadFrom(p);
-            prefs.applyTo(table);
-            savingDisabled = false;
+            try {
+                prefs.loadFrom(p);
+                prefs.applyTo(table);
+            } finally {
+                savingDisabled = false;
+            }
         }
 
         public void applyJson(Map<String,Object> json) {
             savingDisabled = true;
-            prefs.setJson(json);
-            prefs.applyTo(table);
-            savingDisabled = false;
+            try {
+                prefs.setJson(json);
+                prefs.applyTo(table);
+            } finally {
+                savingDisabled = false;
+            }
         }
 
         public PreferencesForTable getPrefs() {

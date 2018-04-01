@@ -1,6 +1,8 @@
 package autogui.swing.util;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
@@ -332,11 +334,14 @@ public class SettingsWindow {
 
         protected boolean setDirByUser = true;
         protected int settingDirBySystem = 0;
+        protected int maxHistoryList = Integer.MAX_VALUE;
 
         protected JComponent extraAccessory;
 
-        public FileDialogManager setCurrentPath(Path p) {
-            initFileChooser();
+        protected List<FileDialogManagerListener> listeners = new ArrayList<>(1);
+
+        public void setCurrentPath(Path p) {
+            init();
             if (p != null) {
                 if (!Files.isDirectory(p)) {
                     p = p.getParent();
@@ -345,34 +350,49 @@ public class SettingsWindow {
                     fileChooser.setCurrentDirectory(p.toFile());
                 }
             }
-            return this;
+        }
+
+        public void addListener(FileDialogManagerListener l) {
+            listeners.add(l);
+        }
+
+        public void removeListener(FileDialogManagerListener l) {
+            listeners.remove(l);
         }
 
         public Path showOpenDialog(Component sender, JComponent accessory) {
-            initFileChooser();
+            init();
             setAccessory(accessory);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-            int r = fileChooser.showOpenDialog(sender);
+            int r = fileChooser.showOpenDialog(dialogComponent(sender));
             if (r == JFileChooser.APPROVE_OPTION) {
                 Path p = fileChooser.getSelectedFile().toPath();
-                historyListModel.addPath(p);
+                addFileListPath(p);
                 return p;
             } else {
                 return null;
             }
         }
 
+        protected Component dialogComponent(Component sender) {
+            if (sender == null) {
+                return null;
+            } else {
+                return SwingUtilities.getRoot(sender);
+            }
+        }
+
         public Path showSaveDialog(Component sender, JComponent accessory, String defaultName) {
-            initFileChooser();
+            init();
             setAccessory(accessory);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             if (defaultName != null) {
                 fileChooser.setSelectedFile(new File(fileChooser.getCurrentDirectory(), defaultName));
             }
-            int r = fileChooser.showSaveDialog(sender);
+            int r = fileChooser.showSaveDialog(dialogComponent(sender));
             if (r == JFileChooser.APPROVE_OPTION) {
                 Path p = fileChooser.getSelectedFile().toPath();
-                historyListModel.addPath(p);
+                addFileListPath(p);
                 return p;
             } else {
                 return null;
@@ -380,6 +400,7 @@ public class SettingsWindow {
         }
 
         public Path showConfirmDialogIfOverwriting(JComponent sender, Path p) {
+            init();
             if (p != null && Files.isRegularFile(p)) {
                 int op = JOptionPane.showConfirmDialog(sender, p.toString() + " exists. Overwrites?",
                         "File Saving", JOptionPane.OK_CANCEL_OPTION);
@@ -396,11 +417,24 @@ public class SettingsWindow {
             return fileChooser;
         }
 
-        public void initFileChooser() {
-            if (fileChooser == null) {
-                fileChooser = new JFileChooser();
-                initHistory();
+        public void init() {
+            if (fileChooser != null) {
+                return;
             }
+            initFileChooser();
+            initHistory();
+            initAccessory();
+            initPopup();
+            initFileChooserAfter();
+        }
+
+        public void initFileChooser() {
+            fileChooser = new JFileChooser();
+        }
+
+        public void initFileChooserAfter() {
+            fileChooser.addPropertyChangeListener(JFileChooser.DIRECTORY_CHANGED_PROPERTY,
+                    this::currentDirectoryChanged);
         }
 
         public void initHistory() {
@@ -408,10 +442,33 @@ public class SettingsWindow {
             historyList = new JList<>(historyListModel);
             historyList.setCellRenderer(new FileItemRenderer());
             historyList.addListSelectionListener(this::selectList);
+            historyListModel.addListDataListener(new ListDataListener() {
+                @Override
+                public void intervalAdded(ListDataEvent e) {
+                    updateListModel();
+                }
 
-            fileChooser.addPropertyChangeListener(JFileChooser.DIRECTORY_CHANGED_PROPERTY,
-                        this::currentDirectoryChanged);
+                @Override
+                public void intervalRemoved(ListDataEvent e) {
+                    updateListModel();
+                }
 
+                @Override
+                public void contentsChanged(ListDataEvent e) {
+                    updateListModel();
+                }
+            });
+
+
+            List<Path> initPath = new ArrayList<>();
+            initPath.add(Paths.get(System.getProperty("user.home", ".")));
+            Arrays.stream(FileSystemView.getFileSystemView().getRoots())
+                    .map(File::toPath)
+                    .forEach(initPath::add);
+            historyListModel.setInitPaths(initPath);
+        }
+
+        public void initAccessory() {
             accessory = new JPanel(new BorderLayout());
             {
                 backAction = new FileBackAction(fileChooser);
@@ -428,15 +485,7 @@ public class SettingsWindow {
                 extraAccessory.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
                 accessory.add(extraAccessory, BorderLayout.SOUTH);
             }
-            List<Path> initPath = new ArrayList<>();
-            initPath.add(Paths.get(System.getProperty("user.home", ".")));
-            Arrays.stream(FileSystemView.getFileSystemView().getRoots())
-                    .map(File::toPath)
-                    .forEach(initPath::add);
-            historyListModel.setInitPaths(initPath);
             fileChooser.setAccessory(accessory);
-
-            initPopup();
         }
 
         public void initPopup() {
@@ -452,6 +501,7 @@ public class SettingsWindow {
         }
 
         public void setAccessory(JComponent accessory) {
+            init();
             extraAccessory.removeAll();
             if (accessory != null) {
                 extraAccessory.add(accessory);
@@ -473,6 +523,7 @@ public class SettingsWindow {
             }
             if (setDirByUser) {
                 backAction.setPath(fileChooser.getCurrentDirectory().toPath());
+                listeners.forEach(l -> l.updateBackButton(backAction.getPath()));
             }
             setDirByUser = false;
             settingDirBySystem++;
@@ -495,7 +546,69 @@ public class SettingsWindow {
                 setDirByUser = true;
                 historyList.getSelectionModel().clearSelection();
             }
+            Path path = fileChooser.getCurrentDirectory().toPath();
+            listeners.forEach(l -> l.updateCurrentDirectory(path));
         }
+
+        public void updateListModel() {
+            listeners.forEach(l -> l.updateFileList(historyListModel));
+        }
+
+        public void setFieList(List<Path> ps) {
+            init();
+            setFileListWithLimit(ps, true);
+        }
+
+        protected void setFileListWithLimit(List<Path> ps, boolean alwaysSet) {
+            List<Path> paths = new ArrayList<>(ps);
+            int removed = 0;
+            while (paths.size() > maxHistoryList && !paths.isEmpty()) {
+                paths.remove(paths.size() - 1);
+                removed++;
+            }
+            if (removed > 0) {
+                System.err.println("dialog history: removed " + removed + " entries > " + maxHistoryList);
+            }
+            if (removed > 0 || alwaysSet) {
+                historyListModel.setPaths(paths);
+            }
+        }
+
+        public void addFileListPath(Path path) {
+            init();
+            if (path != null) {
+                if (historyListModel.getSize() + 1 > maxHistoryList) {
+                    List<Path> ps = new ArrayList<>(historyListModel.getPaths());
+                    ps.add(path);
+                    setFileListWithLimit(ps, true);
+                } else {
+                    historyListModel.addPath(path);
+                }
+            }
+        }
+
+        public void setBackButtonPath(Path path) {
+            init();
+            if (path != null) {
+                backAction.setPath(path);
+            }
+        }
+
+        public void setMaxHistoryList(int maxHistoryList) {
+            init();
+            this.maxHistoryList = maxHistoryList;
+            setFileListWithLimit(historyListModel.getPaths(), false);
+        }
+
+        public int getMaxHistoryList() {
+            return maxHistoryList;
+        }
+    }
+
+    public interface FileDialogManagerListener {
+        void updateFileList(FileListModel listModel);
+        void updateCurrentDirectory(Path path);
+        void updateBackButton(Path path);
     }
 
     public static class FileBackAction extends AbstractAction {
@@ -522,6 +635,10 @@ public class SettingsWindow {
             }
             putValue(NAME, name);
             putValue(LARGE_ICON_KEY, path == null ? null : iconSource.getSystemIcon(path.toFile()));
+        }
+
+        public Path getPath() {
+            return path;
         }
 
         @Override
@@ -628,6 +745,10 @@ public class SettingsWindow {
 
         public List<Path> getInitPaths() {
             return initPaths;
+        }
+
+        public List<Path> getPaths() {
+            return paths;
         }
 
         public void setInitPaths(List<Path> paths) {

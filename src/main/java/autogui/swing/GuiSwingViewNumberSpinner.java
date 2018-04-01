@@ -1,5 +1,6 @@
 package autogui.swing;
 
+import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
@@ -326,18 +327,26 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void saveSwingPreferences(GuiPreferences prefs) {
-            GuiSwingView.savePreferencesDefault(this, prefs);
-            GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
-            getModelTyped().saveTo(targetPrefs);
-            settingAction.saveTo(targetPrefs);
+            try {
+                GuiSwingView.savePreferencesDefault(this, prefs);
+                GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
+                getModelTyped().saveTo(targetPrefs);
+                settingAction.saveTo(targetPrefs);
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
         }
 
         @Override
         public void loadSwingPreferences(GuiPreferences prefs) {
-            GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
-            getModelTyped().loadFrom(targetPrefs);
-            settingAction.loadFrom(targetPrefs);
-            GuiSwingView.loadPreferencesDefault(this, prefs);
+            try {
+                GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
+                getModelTyped().loadFrom(targetPrefs);
+                settingAction.loadFrom(targetPrefs);
+                GuiSwingView.loadPreferencesDefault(this, prefs);
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
         }
 
         @Override

@@ -22,10 +22,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-import java.io.File;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -42,9 +42,9 @@ import java.util.stream.IntStream;
  * <h3>GUI properties as preferences</h3>
  *
  *  <ol>
- *      <li>define a custom {@link Preferences}.
+ *      <li>define a custom {@link PreferencesByJsonEntry} (or {@link Preferences}).
  *         <pre>
- *       class PreferencesForX implements Preferences {
+ *       class PreferencesForX implements PreferencesByJsonEntry {
  *           protected int prop; //a GUI property
  *
  *           public void applyTo(P guiComp) { //the method for setting the property of the component
@@ -95,18 +95,18 @@ import java.util.stream.IntStream;
  *        }
  *         </pre>
  *      </li>
- *      <li> a GUI component overrides
+ *      <li> the GUI component overrides
  *          {@link autogui.swing.GuiSwingView.ValuePane#saveSwingPreferences(GuiPreferences)} and
  *           {@link autogui.swing.GuiSwingView.ValuePane#loadSwingPreferences(GuiPreferences)} for bulk loading/saving.
  *       <pre>
- *            public void loadPreferences(GuiPreferences p) {
+ *            public void loadSwingPreferences(GuiPreferences p) {
  *                GuiSwingView.loadPreferencesDefault(this, p);
  *                updater.prefs.loadFrom(p.getDescendant(context));
  *                updater.enabled = false;
  *                updater.prefs.applyTo(this);
  *                updater.enabled = true;
  *            }
- *            public void savePreferences(GuiPreferences p) {
+ *            public void saveSwingPreferences(GuiPreferences p) {
  *                GuiSwingView.savePreferencesDefault(this, p);
  *                updater.prefs.saveTo(p.getDescendant(context));
  *            }
@@ -511,6 +511,7 @@ public class GuiSwingPreferences {
 
     public static class LoadPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiSwingPreferences owner;
+
         public LoadPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Load From File...");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("load"));
@@ -684,7 +685,7 @@ public class GuiSwingPreferences {
 
         default void saveTo(GuiPreferences prefs) {
             prefs.getValueStore().putString(getKey(),
-                    JsonWriter.create().write(toJson()).toSource());
+                    JsonWriter.create().withNewLines(false).write(toJson()).toSource());
         }
     }
 
@@ -832,17 +833,23 @@ public class GuiSwingPreferences {
         @Override
         public void setup(JFrame window) {
             savingDisabled = true;
-            prefs.applyTo(window);
-            savingDisabled = false;
+            try {
+                prefs.applyTo(window);
+            } finally {
+                savingDisabled = false;
+            }
         }
 
         public void apply(GuiPreferences p) {
             savingDisabled = true;
-            prefs.loadFrom(p);
-            if (window != null) {
-                prefs.applyTo(window);
+            try {
+                prefs.loadFrom(p);
+                if (window != null) {
+                    prefs.applyTo(window);
+                }
+            } finally {
+                savingDisabled = false;
             }
-            savingDisabled = false;
         }
 
         public void sendToUpdater() {
@@ -872,5 +879,140 @@ public class GuiSwingPreferences {
 
         @Override
         public void componentHidden(ComponentEvent e) { }
+    }
+
+    public static class PreferencesForFileDialog implements PreferencesByJsonEntry {
+        protected List<String> fileList = new ArrayList<>();
+        protected String backPath;
+        protected String currentDirectory;
+        protected String key = "$fileDialog";
+
+        public void setFileList(List<Path> fileList) {
+            this.fileList = fileList.stream()
+                    .map(Path::toString)
+                    .collect(Collectors.toList());
+        }
+
+        public void setBackPath(Path path) {
+            this.backPath = (path == null ? null : path.toString());
+        }
+
+        public void setCurrentDirectory(Path path) {
+            this.currentDirectory = (path == null ? null : path.toString());
+        }
+
+        public void applyTo(SettingsWindow.FileDialogManager dialogManager) {
+            dialogManager.setFieList(fileList.stream()
+                    .map(Paths::get)
+                    .collect(Collectors.toList()));
+            if (currentDirectory != null) {
+                dialogManager.setCurrentPath(Paths.get(currentDirectory));
+            }
+            if (backPath != null) {
+                dialogManager.setBackButtonPath(Paths.get(backPath));
+            }
+        }
+
+        @Override
+        public String getKey() {
+            return key;
+        }
+
+        @Override
+        public Object toJson() {
+            Map<String,Object> map = new LinkedHashMap<>();
+            map.put("fileList", fileList);
+            map.put("currentDirectory", currentDirectory);
+            map.put("backPath", backPath);
+            return map;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void setJson(Object json) {
+            if (json instanceof Map<?,?>) {
+                Map<String,Object> map =  (Map<String,Object>) json;
+                fileList = (List<String>) map.getOrDefault("fileList", new ArrayList<>());
+                currentDirectory = (String) map.getOrDefault("currentDirectory", null);
+                backPath = (String) map.getOrDefault("backPath", null);
+            }
+        }
+    }
+
+    public static class FileDialogPreferencesUpdater implements SettingsWindow.FileDialogManagerListener {
+        protected SettingsWindow.FileDialogManager dialogManager;
+        protected GuiMappingContext context;
+        protected Consumer<PreferencesUpdateEvent> updater;
+        protected PreferencesForFileDialog prefs;
+
+        protected boolean savingDisabled;
+
+        public FileDialogPreferencesUpdater(SettingsWindow.FileDialogManager dialogManager, GuiMappingContext context) {
+            this.dialogManager = dialogManager;
+            this.context = context;
+            prefs = new PreferencesForFileDialog();
+        }
+
+        public void setUpdater(Consumer<PreferencesUpdateEvent> updater) {
+            this.updater = updater;
+        }
+
+        public void addToDialogManager() {
+            int len = GuiPreferences.getStoreValueMaxLength(); //8192
+            int maxPathLength = 255 + 4;
+            int jsonSymbols = 47;
+            //suppose the max length of a path is 255 (actually it would be longer),
+            //   then a path string becomes 255 + (2 of \" : 4), with a comma separator
+            // (note: Windows path separators will be escaped)
+            // JSON keys and symbols: {"fileList":[],"currentDirectory":,"backPath":} :47
+            // 8192 = (n + 2) * 259 + (n - 1) + 47;  thus n = (8192 - 259 * 2 + 1 - 47) / 260 =~ 29
+            int maxList = (len - maxPathLength * 2 + 1 - jsonSymbols) / (maxPathLength + 1);
+            dialogManager.setMaxHistoryList(maxList);
+            dialogManager.addListener(this);
+        }
+
+        @Override
+        public void updateFileList(SettingsWindow.FileListModel listModel) {
+            if (!savingDisabled) {
+                prefs.setFileList(listModel.getPaths());
+                sendToUpdater();
+            }
+        }
+
+        @Override
+        public void updateCurrentDirectory(Path path) {
+            if (!savingDisabled) {
+                prefs.setCurrentDirectory(path);
+                sendToUpdater();
+            }
+        }
+
+        @Override
+        public void updateBackButton(Path path) {
+            if (!savingDisabled) {
+                prefs.setBackPath(path);
+                sendToUpdater();
+            }
+        }
+
+        public void sendToUpdater() {
+            if (updater != null) {
+                updater.accept(new PreferencesUpdateEvent(context, prefs));
+            }
+        }
+
+        public void apply(GuiPreferences p) {
+            savingDisabled = true;
+            try {
+                prefs.loadFrom(p);
+                prefs.applyTo(dialogManager);
+            } finally {
+                savingDisabled = false;
+            }
+        }
+
+        public PreferencesForFileDialog getPrefs() {
+            return prefs;
+        }
     }
 }

@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
+import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
@@ -389,16 +390,24 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void saveSwingPreferences(GuiPreferences prefs) {
-            GuiSwingView.savePreferencesDefault(this, prefs);
-            GuiPreferences targetPrefs = prefs.getDescendant(context);
-            settingPane.saveTo(targetPrefs);
+            try {
+                GuiSwingView.savePreferencesDefault(this, prefs);
+                GuiPreferences targetPrefs = prefs.getDescendant(context);
+                settingPane.saveTo(targetPrefs);
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
         }
 
         @Override
         public void loadSwingPreferences(GuiPreferences prefs) {
-            GuiSwingView.loadPreferencesDefault(this, prefs);
-            GuiPreferences targetPrefs = prefs.getDescendant(context);
-            settingPane.loadFrom(targetPrefs);
+            try {
+                GuiSwingView.loadPreferencesDefault(this, prefs);
+                GuiPreferences targetPrefs = prefs.getDescendant(context);
+                settingPane.loadFrom(targetPrefs);
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
         }
 
         @Override
@@ -803,7 +812,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 } else if (v instanceof Boolean) {
                     store.putString(k, v.equals(Boolean.TRUE) ? "true" : "false");
                 } else {
-                    store.putString(k, JsonWriter.create().write(v).toSource());
+                    store.putString(k, JsonWriter.create()
+                            .withNewLines(false).write(v).toSource());
                 }
             }
         }

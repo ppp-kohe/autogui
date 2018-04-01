@@ -2,6 +2,7 @@ package autogui.base.mapping;
 
 import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
+import autogui.swing.GuiSwingPreferences;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -60,6 +61,19 @@ public class GuiPreferences {
             valueStore.setPreferences(this);
         }
         this.context = context;
+    }
+
+    public static int getStoreValueMaxLength() {
+        return Preferences.MAX_VALUE_LENGTH;
+    }
+
+    public static String toStoreKey(String key) {
+        int max = Math.min(Preferences.MAX_KEY_LENGTH, Preferences.MAX_NAME_LENGTH); //80
+        if (key.length() > max - 8) {
+            return key.substring(0, max - 8) + Integer.toHexString(key.hashCode()); //Java String hashCode is permanent
+        } else {
+            return key;
+        }
     }
 
     /**
@@ -138,10 +152,10 @@ public class GuiPreferences {
         Preferences node;
         if (repr instanceof GuiReprObjectPane) {
             Class<?> type = ((GuiReprObjectPane) repr).getValueType(context);
-            node = Preferences.userNodeForPackage(type).node(type.getSimpleName());
+            node = Preferences.userNodeForPackage(type).node(toStoreKey(type.getSimpleName()));
         } else {
             node = Preferences.userNodeForPackage(GuiPreferences.class)
-                    .node(context.getName().replace('.', '_'));
+                    .node(toStoreKey(context.getName().replace('.', '_')));
         }
         return node;
     }
@@ -423,6 +437,13 @@ public class GuiPreferences {
 
         public abstract boolean hasEntryKey(String key);
         public abstract boolean hasNodeKey(String key);
+
+        /**
+         * @return list of a key which might be different from a given key for put(k,...)
+         *         because of the max key length,
+         *          converted by {@link #toStoreKey(String)}.
+         *          such key will be acceptable as an argument for other methods.
+         */
         public abstract List<String> getKeys();
 
         public abstract void remove(String key);
@@ -441,6 +462,7 @@ public class GuiPreferences {
 
         protected Preferences parentStore;
         protected String storeName;
+        protected String storeNameActual;
 
         public GuiValueStoreDefault(GuiPreferences preferences, Preferences store) {
             super(preferences);
@@ -451,9 +473,10 @@ public class GuiPreferences {
             super(preferences);
             this.parentStore = parentStore;
             this.storeName = storeName;
+            this.storeNameActual = toStoreKey(storeName);
             try {
-                if (parentStore.nodeExists(storeName)) {
-                    store = parentStore.node(storeName);
+                if (parentStore.nodeExists(storeNameActual)) {
+                    store = parentStore.node(storeNameActual);
                 }
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -466,29 +489,29 @@ public class GuiPreferences {
 
         public Preferences getOrCreateStore() {
             if (store == null) {
-                store = parentStore.node(storeName);
+                store = parentStore.node(storeNameActual);
             }
             return store;
         }
 
         @Override
         public void putString(String key, String val) {
-            getOrCreateStore().put(key, val);
+            getOrCreateStore().put(toStoreKey(key), val);
         }
 
         @Override
         public String getString(String key, String def) {
-            return store == null ? def : store.get(key, def);
+            return store == null ? def : store.get(toStoreKey(key), def);
         }
 
         @Override
         public void putInt(String key, int val) {
-            getOrCreateStore().putInt(key, val);
+            getOrCreateStore().putInt(toStoreKey(key), val);
         }
 
         @Override
         public int getInt(String key, int def) {
-            return store == null ? def : store.getInt(key, def);
+            return store == null ? def : store.getInt(toStoreKey(key), def);
         }
 
         @Override
@@ -504,7 +527,7 @@ public class GuiPreferences {
         @Override
         public boolean hasEntryKey(String key) {
             try {
-                return Arrays.asList(getOrCreateStore().keys()).contains(key);
+                return Arrays.asList(getOrCreateStore().keys()).contains(toStoreKey(key));
             } catch (Exception ex) {
                 return false;
             }
@@ -513,7 +536,7 @@ public class GuiPreferences {
         @Override
         public boolean hasNodeKey(String key) {
             try {
-                return getOrCreateStore().nodeExists(key);
+                return getOrCreateStore().nodeExists(toStoreKey(key));
             } catch (Exception ex) {
                 return false;
             }
@@ -532,6 +555,7 @@ public class GuiPreferences {
 
         @Override
         public void remove(String key) {
+            key = toStoreKey(key);
             if (hasEntryKey(key)) {
                 getOrCreateStore().remove(key);
             } else if (hasNodeKey(key)) {
@@ -694,7 +718,7 @@ public class GuiPreferences {
             Object json = isJsonValue() ? this.value :
                     preferences.getContext().getRepresentation()
                             .toJsonWithNamed(preferences.getContext(), this.value);
-            String jsonSource = JsonWriter.create().write(json).toSource();
+            String jsonSource = JsonWriter.create().withNewLines(false).write(json).toSource();
             store.putString("value", jsonSource);
             if (index != -1) {
                 store.putInt("index", index);

@@ -197,12 +197,16 @@ public interface GuiSwingView extends GuiSwingElement {
 
     @SuppressWarnings("unchecked")
     static void loadPreferencesDefault(JComponent pane, GuiPreferences prefs) {
-        if (pane instanceof ValuePane<?>) {
-            GuiMappingContext context = ((ValuePane) pane).getSwingViewContext();
-            GuiPreferences targetPrefs = prefs.getDescendant(context);
-            if (context.isHistoryValueSupported()) {
-                setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane);
+        try {
+            if (pane instanceof ValuePane<?>) {
+                GuiMappingContext context = ((ValuePane) pane).getSwingViewContext();
+                GuiPreferences targetPrefs = prefs.getDescendant(context);
+                if (context.isHistoryValueSupported()) {
+                    setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane);
+                }
             }
+        } catch (Exception ex) {
+            GuiLogManager.get().logError(ex);
         }
     }
 

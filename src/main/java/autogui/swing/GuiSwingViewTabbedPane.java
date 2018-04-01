@@ -1,5 +1,6 @@
 package autogui.swing;
 
+import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 
@@ -69,14 +70,22 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
 
         @Override
         public void loadSwingPreferences(GuiPreferences prefs) {
-            super.loadSwingPreferences(prefs);
-            tabPreferencesUpdater.apply(prefs.getDescendant(getSwingViewContext()));
+            try {
+                super.loadSwingPreferences(prefs);
+                tabPreferencesUpdater.apply(prefs.getDescendant(getSwingViewContext()));
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
         }
 
         @Override
         public void saveSwingPreferences(GuiPreferences prefs) {
-            super.saveSwingPreferences(prefs);
-            tabPreferencesUpdater.getPrefs().saveTo(prefs.getDescendant(getSwingViewContext()));
+            try {
+                super.saveSwingPreferences(prefs);
+                tabPreferencesUpdater.getPrefs().saveTo(prefs.getDescendant(getSwingViewContext()));
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
         }
 
         @Override
@@ -115,9 +124,12 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
 
         public void apply(GuiPreferences p) {
             savingDisabled = true;
-            prefs.loadFrom(p);
-            prefs.applyTo(pane.get());
-            savingDisabled = false;
+            try {
+                prefs.loadFrom(p);
+                prefs.applyTo(pane.get());
+            } finally {
+                savingDisabled = false;
+            }
         }
 
         public PreferencesForTab getPrefs() {

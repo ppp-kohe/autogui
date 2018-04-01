@@ -1,5 +1,6 @@
 package autogui.swing;
 
+import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprObjectPane;
@@ -335,14 +336,22 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         @Override
         public void loadSwingPreferences(GuiPreferences prefs) {
-            GuiSwingView.loadPreferencesDefault(this, prefs);
-            preferencesUpdater.apply(prefs.getDescendant(getSwingViewContext()));
+            try {
+                GuiSwingView.loadPreferencesDefault(this, prefs);
+                preferencesUpdater.apply(prefs.getDescendant(getSwingViewContext()));
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
         }
 
         @Override
         public void saveSwingPreferences(GuiPreferences prefs) {
-            GuiSwingView.savePreferencesDefault(this, prefs);
-            preferencesUpdater.getPrefs().saveTo(prefs.getDescendant(getSwingViewContext()));
+            try {
+                GuiSwingView.savePreferencesDefault(this, prefs);
+                preferencesUpdater.getPrefs().saveTo(prefs.getDescendant(getSwingViewContext()));
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
         }
 
         @Override
@@ -407,9 +416,12 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         public void apply(GuiPreferences p) {
             savingDisabled = true;
-            prefs.loadFrom(p);
-            prefs.applyTo(panes.get());
-            savingDisabled = false;
+            try {
+                prefs.loadFrom(p);
+                prefs.applyTo(panes.get());
+            } finally {
+                savingDisabled = false;
+            }
         }
 
         public PreferencesForSplit getPrefs() {
