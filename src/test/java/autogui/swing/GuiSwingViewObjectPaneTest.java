@@ -16,7 +16,7 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
 
     @Test
     public void test() {
-        GuiSwingViewObjectPane obj = new GuiSwingViewObjectPane(GuiSwingElement.getDefaultMapperSet());
+        GuiSwingViewObjectPane obj = new GuiSwingViewObjectPane(GuiSwingMapperSet.getDefaultMapperSet());
 
         TestObjType src = new TestObjType();
         GuiMappingContext context = new GuiMappingContext(src);

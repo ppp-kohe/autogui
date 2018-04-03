@@ -1,6 +1,8 @@
 package autogui.swing;
 
 import javax.swing.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 public class AutoGuiShell {
     public static AutoGuiShell get() {
@@ -28,43 +30,38 @@ public class AutoGuiShell {
      * @return the created window for o, with default component-set
      */
     public GuiSwingWindow createWindow(Object o, boolean appRoot) {
-        if (SwingUtilities.isEventDispatchThread()) {
+        return invokeAndWait(() -> {
             GuiSwingWindow w = GuiSwingWindow.createForObject(o);
             w.setApplicationRoot(appRoot);
             return w;
-        } else {
-            GuiSwingWindow[] w = new GuiSwingWindow[1];
-            try {
-                SwingUtilities.invokeAndWait(() -> {
-                    w[0] = createWindow(o, appRoot);
-                });
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-            return w[0];
-        }
+        });
     }
 
     public static GuiSwingWindow liveShow(Object o) {
-        return get().createWindowRelaxed(o);
+        GuiSwingWindow w = get().createWindowRelaxed(o);
+        SwingUtilities.invokeLater(() -> w.setVisible(true));
+        return w;
     }
 
     public GuiSwingWindow createWindowRelaxed(Object o) {
-        if (SwingUtilities.isEventDispatchThread()) {
+        return invokeAndWait(() -> {
             GuiSwingWindow w = GuiSwingWindow.createForObjectRelaxed(o);
             w.setApplicationRoot(false);
-            w.setVisible(true);
             return w;
+        });
+    }
+
+    public <T> T invokeAndWait(Supplier<T> factory) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            return factory.get();
         } else {
-            GuiSwingWindow[] w = new GuiSwingWindow[1];
+            AtomicReference<T> res = new AtomicReference<>();
             try {
-                SwingUtilities.invokeAndWait(() -> {
-                    w[0] = createWindowRelaxed(o);
-                });
+                SwingUtilities.invokeAndWait(() -> res.set(factory.get()));
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
-            return w[0];
+            return res.get();
         }
     }
 }

@@ -50,9 +50,9 @@ public class GuiSwingWindow extends JFrame {
     public GuiSwingWindow(GuiMappingContext context) {
         this.context = context;
         if (context.getRepresentation() == null) {
-            GuiSwingElement.getReprDefaultSet().match(context);
+            GuiSwingMapperSet.getReprDefaultSet().match(context);
         }
-        this.view = (GuiSwingView) GuiSwingElement.getDefaultMapperSet().view(context);
+        this.view = (GuiSwingView) GuiSwingMapperSet.getDefaultMapperSet().view(context);
         init();
     }
 
