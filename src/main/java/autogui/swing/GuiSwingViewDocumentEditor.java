@@ -561,10 +561,16 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected ScheduledTaskRunner.EditingRunner updater;
         protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> preferencesUpdater;
 
+        protected int defaultFontSize = 14;
+
         public DocumentSettingPane(JEditorPane pane) {
             setBorder(BorderFactory.createEmptyBorder(3, 10, 10, 10));
             this.pane = pane;
 
+            Style s = getTargetStyle();
+            if (s != null) {
+                defaultFontSize = StyleConstants.getFontSize(s);
+            }
             //font name
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
             fontFamily = new JComboBox<>(env.getAvailableFontFamilyNames());
@@ -572,14 +578,19 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    setFont(getListFont((String) value));
+                    if (isSelected) {
+                        setFont(getListFont((String) value));
+                    } else {
+                        setFont(null);
+                    }
                     return this;
                 }
             });
             fontFamily.addItemListener(this);
 
+
             //font size
-            fontSize = new JSpinner(new SpinnerNumberModel(14, 0, 400, 1));
+            fontSize = new JSpinner(new SpinnerNumberModel(defaultFontSize, 0, 400, 1));
             fontSize.addChangeListener(this);
 
             //font style
@@ -626,7 +637,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public Font getListFont(String family) {
             return nameFonts.computeIfAbsent(family,
-                    n -> new Font(family, Font.PLAIN, 14));
+                    n -> new Font(family, Font.PLAIN, defaultFontSize));
         }
 
         @Override
