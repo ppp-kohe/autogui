@@ -269,7 +269,7 @@ public class GuiSwingKeyBinding {
             if (action == null) {
                 return "Focus " + name;
             } else {
-                return "Action " + name;
+                return "Action \"" + action.getValue(Action.NAME) + "\" of " + name;
             }
         }
 
