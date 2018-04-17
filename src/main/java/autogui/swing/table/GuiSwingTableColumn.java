@@ -8,4 +8,5 @@ import autogui.swing.GuiSwingElement;
  */
 public interface GuiSwingTableColumn extends GuiSwingElement {
     ObjectTableColumn createColumn(GuiMappingContext context);
+    ObjectTableColumnDynamicFactory createColumnDynamic(GuiMappingContext context);
 }

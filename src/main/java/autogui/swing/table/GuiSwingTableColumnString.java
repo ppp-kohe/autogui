@@ -12,9 +12,9 @@ import java.util.Comparator;
  * <p>
  *     both editor and renderer are realized by a sub-class of {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
  */
-public class GuiSwingTableColumnString implements GuiSwingTableColumn {
+public class GuiSwingTableColumnString extends GUiSwingTableColumnStatic implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context) {
+    public ObjectTableColumn createColumnWithIndex(GuiMappingContext context, ObjectColumnIndex index) {
         return new ObjectTableColumnValue(context,
                 new ColumnEditTextPane(context, false),
                 new ColumnEditTextPane(context, true))

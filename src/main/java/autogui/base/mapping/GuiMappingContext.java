@@ -512,12 +512,20 @@ public class GuiMappingContext {
         return getRepresentation() != null && getRepresentation() instanceof GuiReprCollectionTable;
     }
 
+    public GuiReprCollectionTable getReprCollectionTable() {
+        return (GuiReprCollectionTable) getRepresentation();
+    }
+
     public boolean isParentCollectionElement() {
         return hasParent() && getParent().isReprCollectionElement();
     }
 
     public boolean isReprCollectionElement() {
         return getRepresentation() != null && getRepresentation() instanceof GuiReprCollectionElement;
+    }
+
+    public GuiReprCollectionElement getReprCollectionElement() {
+        return (GuiReprCollectionElement) getRepresentation();
     }
 
     public boolean isHistoryValueSupported() {

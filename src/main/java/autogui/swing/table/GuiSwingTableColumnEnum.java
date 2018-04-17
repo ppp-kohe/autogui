@@ -14,9 +14,9 @@ import java.util.Comparator;
  *    The renderer is realized by {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
  *    The editor is realized by {@link autogui.swing.GuiSwingViewEnumComboBox.PropertyEnumComboBox}.
  */
-public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
+public class GuiSwingTableColumnEnum extends GUiSwingTableColumnStatic implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context) {
+    public ObjectTableColumn createColumnWithIndex(GuiMappingContext context, ObjectColumnIndex index) {
         GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context);
         label.setOpaque(true);
 

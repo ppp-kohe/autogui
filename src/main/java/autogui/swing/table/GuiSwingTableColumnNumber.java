@@ -15,9 +15,9 @@ import java.util.Comparator;
  *     the renderer is realized by {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
  *     the editor is realized by {@link autogui.swing.GuiSwingViewNumberSpinner.PropertyNumberSpinner}.
  */
-public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
+public class GuiSwingTableColumnNumber extends GUiSwingTableColumnStatic implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context) {
+    public ObjectTableColumn createColumnWithIndex(GuiMappingContext context, ObjectColumnIndex index) {
         GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context);
         label.setHorizontalAlignment(SwingConstants.RIGHT);
         label.setOpaque(true);

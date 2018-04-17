@@ -19,9 +19,9 @@ import java.util.List;
  *     both editor and renderer are realized by a sub-class of
  *     {@link autogui.swing.GuiSwingViewFilePathField.PropertyFilePathPane}.
  */
-public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
+public class GuiSwingTableColumnFilePath extends GUiSwingTableColumnStatic implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context) {
+    public ObjectTableColumn createColumnWithIndex(GuiMappingContext context, ObjectColumnIndex index) {
         return new ObjectTableColumnValue(context,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, false)),
                 new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, true), false))

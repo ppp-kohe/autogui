@@ -109,13 +109,13 @@ public class GuiReprValue implements GuiRepresentation {
      * @return the current value (nullable) or {@link GuiTypeValue#NO_UPDATE}
      * @throws Throwable might be caused by executing method invocations.
      */
-    public Object getUpdatedValue(GuiMappingContext context, boolean executeParent) throws Throwable {
+    public Object getUpdatedValue(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
         Object prev = context.getSource();
         Object src = null;
         if (context.isTypeElementProperty() || context.isParentPropertyPane() || context.isParentValuePane()) {
-            src = getParentSource(context, executeParent);
+            src = getParentSource(context, specifier.getParent());
         }
-        return getValue(context, src, prev);
+        return getValue(context, src, specifier, prev);
     }
 
     /**
@@ -126,7 +126,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @return an obtained property value (nullable) or {@link GuiTypeValue#NO_UPDATE} if the value is equivalent to the previous value.
      * @throws Throwable might be caused by executing method invocations.
      */
-    public Object getValue(GuiMappingContext context, Object parentSource, Object prev) throws Throwable {
+    public Object getValue(GuiMappingContext context, Object parentSource, ObjectSpecifier specifier, Object prev) throws Throwable {
         if (context.isTypeElementProperty()) {
             GuiTypeMemberProperty prop = context.getTypeElementAsProperty();
             return context.execute(() ->
@@ -153,9 +153,9 @@ public class GuiReprValue implements GuiRepresentation {
      * @return original source (nullable), never NO_UPDATE
      * @throws Throwable might be caused by executing method invocation
      */
-    public Object getUpdatedValueWithoutNoUpdate(GuiMappingContext context, boolean executeParent) throws Throwable {
+    public Object getUpdatedValueWithoutNoUpdate(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
         Object prev = context.getSource();
-        Object ret = getUpdatedValue(context, executeParent);
+        Object ret = getUpdatedValue(context, specifier);
         if (ret != null && ret.equals(GuiTypeValue.NO_UPDATE)) {
             ret = prev;
         }
@@ -169,8 +169,8 @@ public class GuiReprValue implements GuiRepresentation {
      * @return an obtained value or null
      * @throws Throwable might be caused by executing method invocation
      */
-    public Object getValueWithoutNoUpdate(GuiMappingContext context, Object parentSource) throws Throwable {
-        Object ret = getValue(context, parentSource, null);
+    public Object getValueWithoutNoUpdate(GuiMappingContext context, Object parentSource, ObjectSpecifier specifier) throws Throwable {
+        Object ret = getValue(context, parentSource, specifier, null);
         if (ret != null && ret.equals(GuiTypeValue.NO_UPDATE)) {
             ret = null;
         }
@@ -192,16 +192,17 @@ public class GuiReprValue implements GuiRepresentation {
      * @return the source value of the parent
      * @throws Throwable the action might cause an error
      */
-    public Object getParentSource(GuiMappingContext context, boolean executeParent) throws Throwable {
-        if (executeParent) {
+    public Object getParentSource(GuiMappingContext context, ObjectSpecifier parentSpecifier) throws Throwable {
+        if (!parentSpecifier.isUsingCache()) {
             if (context.isParentPropertyPane()) {
                 return context.getParentPropertyPane()
-                        .getUpdatedValueWithoutNoUpdate(context.getParent(), true);
+                        .getUpdatedValueWithoutNoUpdate(context.getParent(), parentSpecifier);
             } else if (context.isParentCollectionElement()) {
-                throw new UnsupportedOperationException("parent is a collection: it requires an index: " + context); //TODO
+                return context.getParent().getReprCollectionElement()
+                        .getUpdatedValueWithoutNoUpdate(context.getParent(), parentSpecifier);
             } else if (context.isParentValuePane()) {
                 return context.getParentValuePane()
-                        .getUpdatedValueWithoutNoUpdate(context.getParent(), true);
+                        .getUpdatedValueWithoutNoUpdate(context.getParent(), parentSpecifier);
             } else {
                 return context.getParentSource();
             }
@@ -402,4 +403,34 @@ public class GuiReprValue implements GuiRepresentation {
         }
     }
 
+    public static class ObjectSpecifier {
+        protected ObjectSpecifier parent;
+        protected boolean usingCache;
+
+        public boolean isUsingCache() {
+            return usingCache;
+        }
+
+        public ObjectSpecifier getParent() {
+            return parent;
+        }
+
+        public int getIndex() {
+            return 0;
+        }
+    }
+
+    public static class ObjectSpecifierIndex extends ObjectSpecifier {
+        protected int index;
+
+        public ObjectSpecifierIndex(ObjectSpecifier parent, int index) {
+            this.parent = parent;
+            this.index = index;
+        }
+
+        @Override
+        public int getIndex() {
+            return index;
+        }
+    }
 }

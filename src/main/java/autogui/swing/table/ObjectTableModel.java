@@ -260,7 +260,7 @@ public class ObjectTableModel extends AbstractTableModel {
         Object cellObject = columns.get(columnIndex)
                 .getCellValue(rowObject, rowIndex, columnIndex);
 
-        if (cellObject != null && cellObject instanceof Future<?>) {
+        if (cellObject instanceof Future<?>) {
             rowData[columnIndex] = NULL_CELL;
             futureWaiter.accept(() -> takeValueFromSourceFuture(rowData, rowIndex, columnIndex, (Future<?>) cellObject));
             return rowData[columnIndex];

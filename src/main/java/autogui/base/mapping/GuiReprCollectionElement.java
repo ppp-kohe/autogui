@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
 /**
  * elements in a collection table {@link GuiReprCollectionTable}
  */
-public class GuiReprCollectionElement implements GuiRepresentation {
+public class GuiReprCollectionElement extends GuiReprValue implements GuiRepresentation {
     protected GuiRepresentation representation;
 
     public GuiReprCollectionElement(GuiRepresentation representation) {
@@ -68,6 +68,18 @@ public class GuiReprCollectionElement implements GuiRepresentation {
     @Override
     public boolean continueCheckAndUpdateSourceForChildren(GuiMappingContext context, boolean parentUpdate) {
         return false;
+    }
+
+    public Object getUpdatedValueWithoutNoUpdate(GuiMappingContext context, GuiReprValue.ObjectSpecifier specifier) throws Throwable {
+        if (context.isParentCollectionTable()) {
+            return context.getParent().getReprCollectionTable()
+                    .getUpdatedValueWithoutNoUpdate(context.getParent(), specifier); //use specifier as is
+        } else if (context.isParentCollectionElement()) { //table(element(element(..)))
+            return context.getParent().getReprCollectionElement()
+                    .getUpdatedValueWithoutNoUpdate(context.getParent(), specifier.getParent());
+        } else {
+            throw new UnsupportedOperationException(); //???
+        }
     }
 
     /** the table cell version of {@link GuiReprValue#getUpdatedValue(GuiMappingContext, boolean)}.

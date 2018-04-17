@@ -12,9 +12,9 @@ import java.awt.*;
  *     both editor and renderer are realized by a sub-class of
  *     {@link autogui.swing.GuiSwingViewImagePane.PropertyImagePane}.
  */
-public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
+public class GuiSwingTableColumnImage extends GUiSwingTableColumnStatic implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context) {
+    public ObjectTableColumn createColumnWithIndex(GuiMappingContext context, ObjectColumnIndex index) {
         ColumnEditImagePane img = new ColumnEditImagePane(context);
         ColumnEditImagePane edit = new ColumnEditImagePane(context);
         return new ObjectTableColumnValue(context, img, edit).withRowHeight(64);

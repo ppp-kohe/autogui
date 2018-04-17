@@ -2,6 +2,7 @@ package autogui.base.type;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * a type information about <code>
@@ -85,5 +86,24 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
     @Override
     public boolean equals(Object prevValue, Object nextValue) {
         return prevValue == nextValue;
+    }
+
+    public Object executeGetElement(Object list, int index, Object prev) {
+        Object o = ((List<?>) list).get(index);
+        return compareGetElement(prev, o);
+    }
+
+    public Object compareGetElement(Object prevValue, Object newValue) {
+        boolean eq;
+        if (elementType instanceof GuiTypeValue) {
+            eq = ((GuiTypeValue) elementType).equals(prevValue, newValue);
+        } else {
+            eq = Objects.equals(prevValue, newValue);
+        }
+        if (eq) {
+            return GuiTypeValue.NO_UPDATE;
+        } else {
+            return newValue;
+        }
     }
 }

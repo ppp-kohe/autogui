@@ -186,7 +186,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
      */
     public Object compareGet(Object prevValue, Object newValue) {
         boolean eq;
-        if (type != null && type instanceof GuiTypeValue) {
+        if (type instanceof GuiTypeValue) {
             eq = ((GuiTypeValue) type).equals(prevValue, newValue);
         } else {
             eq = Objects.equals(prevValue, newValue);

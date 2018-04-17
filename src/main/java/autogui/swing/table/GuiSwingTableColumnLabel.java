@@ -10,9 +10,9 @@ import autogui.swing.GuiSwingViewLabel;
  *     the renderer is realized by {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
  *     no editors.
  */
-public class GuiSwingTableColumnLabel implements GuiSwingTableColumn {
+public class GuiSwingTableColumnLabel extends GUiSwingTableColumnStatic implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context) {
+    public ObjectTableColumn createColumnWithIndex(GuiMappingContext context, ObjectColumnIndex index) {
         GuiSwingViewLabel.PropertyLabel view = new GuiSwingViewLabel.PropertyLabel(context);
         view.setOpaque(true);
         return new ObjectTableColumnValue(context, view);

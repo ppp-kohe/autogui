@@ -1,6 +1,7 @@
 package autogui.base.mapping;
 
 import autogui.base.type.GuiTypeCollection;
+import autogui.base.type.GuiTypeMemberProperty;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -218,6 +219,18 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
     @Override
     public String toString() {
         return toStringHeader() + "(" + subRepresentation + ")";
+    }
+
+    @Override
+    public Object getValue(GuiMappingContext context, Object parentSource, GuiReprValue.ObjectSpecifier specifier, Object prev) throws Throwable {
+        int index = specifier.getIndex();
+        if (context.isTypeElementCollection()) {
+            GuiTypeCollection coll = context.getTypeElementCollection();
+            return context.execute(() ->
+                    coll.executeGetElement(parentSource, index, prev));
+        } else {
+            return prev;
+        }
     }
 
     /** interface for actions which handle selected-rows;
