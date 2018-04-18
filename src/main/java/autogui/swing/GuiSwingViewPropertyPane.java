@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -47,14 +48,15 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
     }
 
     @Override
-    public JComponent createView(GuiMappingContext context) {
-        PropertyPane pane = new PropertyPane(context, context.isTypeElementProperty());
+    public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        PropertyPane pane = new PropertyPane(context, context.isTypeElementProperty(), parentSpecifier);
+        Supplier<GuiReprValue.ObjectSpecifier> specifierForChildren = pane::getSpecifier;
 
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement e = mapperSet.view(subContext);
             if (e != null && e instanceof GuiSwingView) {
                 GuiSwingView view = (GuiSwingView) e;
-                JComponent subComp = view.createView(subContext);
+                JComponent subComp = view.createView(subContext, specifierForChildren);
                 if (subComp != null) {
                     pane.setContentPane(subComp);
                 }
@@ -76,22 +78,26 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
 
     public static class PropertyPane extends NamedPropertyPane {
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected PopupExtension popup;
         protected boolean showName;
 
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyPane(GuiMappingContext context, boolean showName) {
+        public PropertyPane(GuiMappingContext context, boolean showName, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
             super(context.getDisplayName(), context.getName());
             this.context = context;
             this.showName = showName;
+            this.parentSpecifier = parentSpecifier;
             initLazy();
         }
 
-        public PropertyPane(GuiMappingContext context, boolean showName, JComponent content) {
+        public PropertyPane(GuiMappingContext context, boolean showName, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier, JComponent content) {
             super(context.getDisplayName(), context.getName());
             this.context = context;
             this.showName = showName;
+            this.parentSpecifier = parentSpecifier;
             setContentPane(content);
             initLazy();
         }
@@ -188,6 +194,26 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         @Override
         public GuiMappingContext getSwingViewContext() {
             return context;
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
+        }
+    }
+
+    public static class PropertyWrapperPane extends PropertyPane {
+        public PropertyWrapperPane(GuiMappingContext context, boolean showName, ValuePane<?> content) {
+            super(context, showName, null, content.asSwingViewComponent());
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return ((ValuePane<?>) contentPane).getSpecifier();
         }
     }
 
@@ -325,6 +351,11 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             } else {
                 return null;
             }
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiReprValue.NONE;
         }
     }
 }

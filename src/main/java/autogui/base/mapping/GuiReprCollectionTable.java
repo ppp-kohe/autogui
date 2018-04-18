@@ -221,18 +221,6 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
         return toStringHeader() + "(" + subRepresentation + ")";
     }
 
-    @Override
-    public Object getValue(GuiMappingContext context, Object parentSource, GuiReprValue.ObjectSpecifier specifier, Object prev) throws Throwable {
-        int index = specifier.getIndex();
-        if (context.isTypeElementCollection()) {
-            GuiTypeCollection coll = context.getTypeElementCollection();
-            return context.execute(() ->
-                    coll.executeGetElement(parentSource, index, prev));
-        } else {
-            return prev;
-        }
-    }
-
     /** interface for actions which handle selected-rows;
      *    an actual implementation relies on a concrete GUI component */
     public interface TableTarget {

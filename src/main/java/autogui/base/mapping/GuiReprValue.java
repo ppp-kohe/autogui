@@ -1,5 +1,6 @@
 package autogui.base.mapping;
 
+import autogui.base.type.GuiTypeCollection;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
 
@@ -57,7 +58,7 @@ public class GuiReprValue implements GuiRepresentation {
     @Override
     public boolean checkAndUpdateSource(GuiMappingContext context) {
         try {
-            Object next = getUpdatedValue(context, false);
+            Object next = getUpdatedValue(context, NONE);
             if (next != null && next.equals(GuiTypeValue.NO_UPDATE)) {
                 return false;
             } else {
@@ -131,6 +132,11 @@ public class GuiReprValue implements GuiRepresentation {
             GuiTypeMemberProperty prop = context.getTypeElementAsProperty();
             return context.execute(() ->
                     prop.executeGet(parentSource, prev));
+        } else if (context.hasParent() && context.getParent().isTypeElementCollection()) { //parent:Coll(T),ReprCollTable, child:T,ReprCollElem(ReprValueT)
+            int index = specifier.getIndex();
+            GuiTypeCollection coll = context.getParent().getTypeElementCollection();
+            return context.execute(() ->
+                    coll.executeGetElement(parentSource, index, prev));
         } else {
             if (context.isParentPropertyPane()) { //if the context is a GuiTypeValue, the parent will be a property or a collection element
                 //GuiReprPropertyPane matches to GuiTypeMemberProperty, and it has compareGet(p,n)
@@ -193,19 +199,9 @@ public class GuiReprValue implements GuiRepresentation {
      * @throws Throwable the action might cause an error
      */
     public Object getParentSource(GuiMappingContext context, ObjectSpecifier parentSpecifier) throws Throwable {
-        if (!parentSpecifier.isUsingCache()) {
-            if (context.isParentPropertyPane()) {
-                return context.getParentPropertyPane()
-                        .getUpdatedValueWithoutNoUpdate(context.getParent(), parentSpecifier);
-            } else if (context.isParentCollectionElement()) {
-                return context.getParent().getReprCollectionElement()
-                        .getUpdatedValueWithoutNoUpdate(context.getParent(), parentSpecifier);
-            } else if (context.isParentValuePane()) {
-                return context.getParentValuePane()
-                        .getUpdatedValueWithoutNoUpdate(context.getParent(), parentSpecifier);
-            } else {
-                return context.getParentSource();
-            }
+        if (!parentSpecifier.isUsingCache() && context.isParentValuePane()) {
+            return context.getParentValuePane()
+                    .getUpdatedValueWithoutNoUpdate(context.getParent(), parentSpecifier);
         } else {
             return context.getParentSource();
         }
@@ -407,6 +403,11 @@ public class GuiReprValue implements GuiRepresentation {
         protected ObjectSpecifier parent;
         protected boolean usingCache;
 
+        public ObjectSpecifier(ObjectSpecifier parent, boolean usingCache) {
+            this.parent = parent;
+            this.usingCache = usingCache;
+        }
+
         public boolean isUsingCache() {
             return usingCache;
         }
@@ -424,13 +425,24 @@ public class GuiReprValue implements GuiRepresentation {
         protected int index;
 
         public ObjectSpecifierIndex(ObjectSpecifier parent, int index) {
-            this.parent = parent;
+            super(parent, false);
             this.index = index;
         }
 
         @Override
         public int getIndex() {
             return index;
+        }
+    }
+
+    public static ObjectSpecifierNothing NONE = new ObjectSpecifierNothing(false);
+
+    public static ObjectSpecifierNothing NONE_WITH_CACHE = new ObjectSpecifierNothing(true);
+
+    public static class ObjectSpecifierNothing extends ObjectSpecifier {
+        public ObjectSpecifierNothing(boolean usingCache) {
+            super(null, usingCache);
+            this.parent = this;
         }
     }
 }

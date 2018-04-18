@@ -153,7 +153,7 @@ public class GuiReprObjectPane extends GuiReprValue {
                                 jsonEntry = jsonMap.get(subContext.getName());
                             }
                             Object subNewValue = reprValue.fromJson(subContext,
-                                    reprValue.getValueWithoutNoUpdate(subContext, target), jsonEntry);
+                                    reprValue.getValueWithoutNoUpdate(subContext, target, GuiReprValue.NONE), jsonEntry);
                             reprValue.update(subContext, target, subNewValue);
                         } catch (Throwable ex) {
                             subContext.errorWhileJson(ex);
@@ -228,7 +228,7 @@ public class GuiReprObjectPane extends GuiReprValue {
 
     public static void runSubPropertyValue(GuiMappingContext subContext, Object source, BiConsumer<GuiMappingContext, Object> subAndNext) {
         try {
-            subAndNext.accept(subContext, subContext.getReprValue().getValueWithoutNoUpdate(subContext, source));
+            subAndNext.accept(subContext, subContext.getReprValue().getValueWithoutNoUpdate(subContext, source, NONE));
         } catch (Throwable ex) {
             subContext.errorWhileJson(ex);
         }

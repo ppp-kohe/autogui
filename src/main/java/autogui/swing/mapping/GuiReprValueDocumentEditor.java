@@ -36,8 +36,8 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     @Override
-    public Object getValue(GuiMappingContext context, Object parentSource, Object prev) throws Throwable {
-        return SwingDeferredRunner.run(() -> super.getValue(context, parentSource, prev));
+    public Object getValue(GuiMappingContext context, Object parentSource, ObjectSpecifier specifier, Object prev) throws Throwable {
+        return SwingDeferredRunner.run(() -> super.getValue(context, parentSource, specifier, prev));
     }
 
     @Override

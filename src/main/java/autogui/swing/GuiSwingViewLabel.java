@@ -17,6 +17,7 @@ import java.awt.event.FocusListener;
 import java.awt.geom.RoundRectangle2D;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * <h3>representation</h3>
@@ -36,8 +37,8 @@ import java.util.List;
  */
 public class GuiSwingViewLabel implements GuiSwingView {
     @Override
-    public JComponent createView(GuiMappingContext context) {
-        PropertyLabel label = new PropertyLabel(context);
+    public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        PropertyLabel label = new PropertyLabel(context, parentSpecifier);
         if (context.isTypeElementProperty()) {
             return label.wrapSwingNamed();
         } else {
@@ -48,12 +49,15 @@ public class GuiSwingViewLabel implements GuiSwingView {
     public static class PropertyLabel extends JLabel
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected Object value;
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyLabel(GuiMappingContext context) {
+        public PropertyLabel(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
             this.context = context;
+            this.parentSpecifier = parentSpecifier;
             init();
         }
 
@@ -155,6 +159,15 @@ public class GuiSwingViewLabel implements GuiSwingView {
         @Override
         public GuiMappingContext getSwingViewContext() {
             return context;
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
         }
     }
 

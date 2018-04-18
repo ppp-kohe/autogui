@@ -5,6 +5,7 @@ import autogui.base.JsonWriter;
 import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.*;
 
@@ -26,6 +27,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * <h3>representation</h3>
@@ -43,10 +45,11 @@ import java.util.function.Consumer;
  */
 public class GuiSwingViewDocumentEditor implements GuiSwingView {
     @Override
-    public JComponent createView(GuiMappingContext context) {
+    public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
         ValuePane<Object> text = doc.isStyledDocument(context) ?
-                new PropertyDocumentTextPane(context) : new PropertyDocumentEditorPane(context);
+                new PropertyDocumentTextPane(context, parentSpecifier) :
+                new PropertyDocumentEditorPane(context, parentSpecifier);
         ValuePane<Object> pane = text.wrapSwingScrollPane(true, false);
         if (context.isTypeElementProperty()) {
             return pane.wrapSwingProperty();
@@ -248,12 +251,15 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
                 SettingsWindowClient { //ValuePane<StringBuilder|Content|Document>
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected PopupExtension popup;
         protected boolean wrapLine = true;
         protected SettingsWindow settingsWindow;
 
-        public PropertyDocumentEditorPane(GuiMappingContext context) {
+        public PropertyDocumentEditorPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
             this.context = context;
+            this.parentSpecifier = parentSpecifier;
             popup = new TextPaneInitializer(this, context).getPopup();
         }
 
@@ -319,19 +325,31 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public SettingsWindow getSettingsWindow() {
             return settingsWindow == null ? SettingsWindow.get() : settingsWindow;
         }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
+        }
     }
 
     public static class PropertyDocumentTextPane extends JTextPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
             SettingsWindowClient, GuiSwingPreferences.PreferencesUpdateSupport   { //ValuePane<StringBuilder|Content|Document>
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected PopupExtension popup;
         protected boolean wrapLine = true;
         protected DocumentSettingPane settingPane;
         protected SettingsWindow settingsWindow;
 
-        public PropertyDocumentTextPane(GuiMappingContext context) {
+        public PropertyDocumentTextPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
             this.context = context;
+            this.parentSpecifier = parentSpecifier;
             settingPane = new DocumentSettingPane(this);
             popup = new TextPaneInitializer(this, context).getPopup();
         }
@@ -433,6 +451,15 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
             settingPane.setPreferencesUpdater(updater);
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
         }
     }
 

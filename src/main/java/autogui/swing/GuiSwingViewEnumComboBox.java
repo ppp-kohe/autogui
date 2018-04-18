@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueEnumComboBox;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
@@ -16,6 +17,7 @@ import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * <h3>representation</h3>
@@ -39,8 +41,8 @@ import java.util.function.Consumer;
  */
 public class GuiSwingViewEnumComboBox implements GuiSwingView {
     @Override
-    public JComponent createView(GuiMappingContext context) {
-        PropertyEnumComboBox box = new PropertyEnumComboBox(context);
+    public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        PropertyEnumComboBox box = new PropertyEnumComboBox(context, parentSpecifier);
         if (context.isTypeElementProperty()) {
             return box.wrapSwingNamed();
         } else {
@@ -51,13 +53,16 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     public static class PropertyEnumComboBox extends JComboBox<Object>
             implements GuiMappingContext.SourceUpdateListener, ItemListener, GuiSwingView.ValuePane<Object> { //Enum
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected boolean listenerEnabled = true;
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyEnumComboBox(GuiMappingContext context) {
+        public PropertyEnumComboBox(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
             super(getEnumConstants(context));
             this.context = context;
+            this.parentSpecifier = parentSpecifier;
             init();
         }
 
@@ -182,6 +187,15 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                     asSwingViewComponent(), getSwingMenuBuilder());
             GuiSwingView.setupTransferHandler(p, getTransferHandler());
             return p;
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
         }
     }
 

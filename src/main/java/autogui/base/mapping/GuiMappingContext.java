@@ -644,10 +644,10 @@ public class GuiMappingContext {
      * @return get current value of the associated property
      *    obtaining through {@link GuiReprValue} (can be checked by {@link #isReprValue()}) from current value of the parent.
      */
-    public Object getValue() {
+    public Object getValue(GuiReprValue.ObjectSpecifier specifier) {
         if (isReprValue()) {
             try {
-                return getReprValue().getUpdatedValueWithoutNoUpdate(this, true);
+                return getReprValue().getUpdatedValueWithoutNoUpdate(this, specifier);
             } catch (Throwable ex) {
                 throw new RuntimeException("" + getRepresentation(), ex);
             }

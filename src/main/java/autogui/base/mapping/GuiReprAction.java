@@ -29,7 +29,7 @@ public class GuiReprAction implements GuiRepresentation {
      * */
     public void executeAction(GuiMappingContext context) {
         try {
-            Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), true);
+            Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), GuiReprValue.NONE_WITH_CACHE);
             context.execute(() -> context.getTypeElementAsAction().execute(target));
             context.updateSourceFromRoot();
         } catch (Throwable ex) {

@@ -4,6 +4,7 @@ import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprObjectPane;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.util.*;
 
@@ -45,8 +46,8 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
     }
 
     @Override
-    public JComponent createView(GuiMappingContext context) {
-        ObjectPane pane = createObjectPane(context);
+    public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        ObjectPane pane = createObjectPane(context, parentSpecifier);
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement e = mapperSet.view(subContext);
             if (e != null) {
@@ -61,12 +62,12 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         return pane;
     }
 
-    protected ObjectPane createObjectPane(GuiMappingContext context) {
-        return new ObjectPane(context);
+    protected ObjectPane createObjectPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        return new ObjectPane(context, parentSpecifier);
     }
 
     public void createSubView(GuiMappingContext subContext, ObjectPane pane, GuiSwingView view) {
-        JComponent subComp = view.createView(subContext);
+        JComponent subComp = view.createView(subContext, pane::getSpecifier);
         if (subComp != null) {
             pane.addSubComponent(subComp, view.isComponentResizable(subContext));
         }
@@ -103,6 +104,8 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
     public static class ObjectPane extends JPanel implements GuiMappingContext.SourceUpdateListener, ValuePane<Object>,
         GuiSwingPreferences.PreferencesUpdateSupport {
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected JToolBar actionToolBar;
         protected JComponent contentPane;
         protected JComponent resizableSubComponents;
@@ -114,8 +117,9 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         protected SplitPreferencesUpdater preferencesUpdater;
         protected SettingsWindow.LabelGroup labelGroup;
 
-        public ObjectPane(GuiMappingContext context) {
+        public ObjectPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
             this.context = context;
+            this.parentSpecifier = parentSpecifier;
             init();
         }
 
@@ -357,6 +361,15 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         @Override
         public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
             preferencesUpdater.setUpdater(updater);
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
         }
     }
 

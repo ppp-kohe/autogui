@@ -1,10 +1,7 @@
 package autogui.swing;
 
 import autogui.base.log.GuiLogManager;
-import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiPreferences;
-import autogui.base.mapping.GuiReprActionList;
-import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.*;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.table.*;
 import autogui.swing.util.*;
@@ -57,8 +54,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     @Override
-    public JComponent createView(GuiMappingContext context) {
-        CollectionTable table = new CollectionTable(context);
+    public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        CollectionTable table = new CollectionTable(context, parentSpecifier);
         List<Action> actions = new ArrayList<>();
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement subView = columnMapperSet.view(subContext);
@@ -104,6 +101,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<List<?>>,
                         GuiSwingTableColumnSet.TableSelectionSource, GuiSwingPreferences.PreferencesUpdateSupport {
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected List<?> source;
         protected PopupExtensionCollection popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
@@ -117,8 +116,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected TableSelectionSourceForIndexes selectionSourceForRowIndexes;
         protected TableSelectionSourceForIndexes selectionSourceForRowAndColumnIndexes;
 
-        public CollectionTable(GuiMappingContext context) {
+        public CollectionTable(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
             this.context = context;
+            this.parentSpecifier = parentSpecifier;
             init();
         }
 
@@ -486,6 +486,15 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     }
                 }
             }
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
         }
     }
 

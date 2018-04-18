@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
 import autogui.swing.util.*;
 
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 
@@ -54,8 +56,8 @@ import java.util.stream.Collectors;
  */
 public class GuiSwingViewNumberSpinner implements GuiSwingView {
     @Override
-    public JComponent createView(GuiMappingContext context) {
-        PropertyNumberSpinner spinner = new PropertyNumberSpinner(context);
+    public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        PropertyNumberSpinner spinner = new PropertyNumberSpinner(context, parentSpecifier);
         if (context.isTypeElementProperty()) {
             return spinner.wrapSwingNamed();
         } else {
@@ -160,6 +162,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>, SettingsWindowClient,
             GuiSwingPreferences.PreferencesUpdateSupport {
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected ScheduledTaskRunner.EditingRunner editingRunner;
         protected PopupExtensionText popup;
         protected KeyUndoManager undoManager = new KeyUndoManager();
@@ -170,9 +174,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected NumberSettingAction settingAction;
 
-        public PropertyNumberSpinner(GuiMappingContext context) {
+        public PropertyNumberSpinner(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
             super(createModel(context));
             this.context = context;
+            this.parentSpecifier = parentSpecifier;
             init();
         }
 
@@ -376,6 +381,15 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             if (context != null && model instanceof TypedSpinnerNumberModel) {
                 initModelPreferencesUpdater();
             }
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
         }
     }
 

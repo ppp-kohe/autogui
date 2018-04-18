@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueBooleanCheckBox;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
@@ -16,6 +17,7 @@ import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * <h3>representation</h3>
@@ -35,25 +37,28 @@ import java.util.function.Consumer;
  */
 public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     @Override
-    public JComponent createView(GuiMappingContext context) {
+    public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         //wraps the check-box by a panel with flow layout: the size of check-box becomes its preferred size.
         //  mouse clicks only pointing within bounds of the check-box will be processed
         JPanel pane = new GuiSwingView.ValueWrappingPane(new FlowLayout(FlowLayout.LEADING));
         pane.setOpaque(false);
         pane.setBorder(BorderFactory.createEmptyBorder());
-        pane.add(new PropertyCheckBox(context));
+        pane.add(new PropertyCheckBox(context, parentSpecifier));
         return pane;
     }
 
     public static class PropertyCheckBox extends JCheckBox
             implements ActionListener, GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Boolean> {
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected PopupExtension popup;
 
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyCheckBox(GuiMappingContext context) {
+        public PropertyCheckBox(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
             this.context = context;
+            this.parentSpecifier = parentSpecifier;
             init();
         }
 
@@ -161,6 +166,15 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         @Override
         public GuiMappingContext getSwingViewContext() {
             return context;
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
         }
     }
 

@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueFilePathField;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
@@ -37,8 +38,8 @@ import java.util.function.Supplier;
  */
 public class GuiSwingViewFilePathField implements GuiSwingView {
     @Override
-    public JComponent createView(GuiMappingContext context) {
-        PropertyFilePathPane field = new PropertyFilePathPane(context);
+    public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        PropertyFilePathPane field = new PropertyFilePathPane(context, parentSpecifier);
         if (context.isTypeElementProperty()) {
             return field.wrapSwingNamed();
         } else {
@@ -49,15 +50,18 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
     public static class PropertyFilePathPane extends SearchTextFieldFilePath
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> { //ValuePane<File|Path>
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyFilePathPane(GuiMappingContext context) {
-            this(context, new SearchTextFieldModelFilePath());
+        public PropertyFilePathPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+            this(context, parentSpecifier, new SearchTextFieldModelFilePath());
         }
 
-        public PropertyFilePathPane(GuiMappingContext context, SearchTextFieldModelFilePath model) {
+        public PropertyFilePathPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier, SearchTextFieldModelFilePath model) {
             super(model);
             this.context = context;
+            this.parentSpecifier = parentSpecifier;
             initLazy();
         }
 
@@ -197,6 +201,15 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         @Override
         public void shutdownSwingView() {
             getEditingRunner().shutdown();
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
         }
     }
 }

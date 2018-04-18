@@ -4,6 +4,7 @@ import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.table.TableTargetMenu;
 import autogui.swing.util.MenuBuilder;
@@ -30,10 +31,11 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public interface GuiSwingView extends GuiSwingElement {
-    JComponent createView(GuiMappingContext context);
+    JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier);
 
     default boolean isComponentResizable(GuiMappingContext context) {
         return false;
@@ -96,7 +98,7 @@ public interface GuiSwingView extends GuiSwingElement {
         GuiMappingContext getSwingViewContext();
 
         default GuiSwingViewPropertyPane.PropertyPane wrapSwingProperty() {
-            return new GuiSwingViewPropertyPane.PropertyPane(getSwingViewContext(), true, asSwingViewComponent());
+            return new GuiSwingViewPropertyPane.PropertyWrapperPane(getSwingViewContext(), true, this);
         }
 
         default GuiSwingViewPropertyPane.NamedPropertyPane wrapSwingNamed() {
@@ -190,6 +192,8 @@ public interface GuiSwingView extends GuiSwingElement {
         default GuiSwingActionDefault.ExecutionAction getDescendantActionByContext(GuiMappingContext context) {
             return findNonNullByFunction(asSwingViewComponent(), p -> getActionByContext(context));
         }
+
+        GuiReprValue.ObjectSpecifier getSpecifier();
     }
 
     /**
@@ -469,6 +473,11 @@ public interface GuiSwingView extends GuiSwingElement {
         public ValuePane<Object> getSwingViewWrappedPane() {
             return (ValuePane<Object>) pane;
         }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return pane == null ? GuiReprValue.NONE : pane.getSpecifier();
+        }
     }
 
 
@@ -547,6 +556,11 @@ public interface GuiSwingView extends GuiSwingElement {
         @Override
         public ValuePane<Object> getSwingViewWrappedPane() {
             return (ValuePane<Object>) pane;
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return pane == null ? GuiReprValue.NONE : pane.getSpecifier();
         }
     }
 
@@ -823,5 +837,21 @@ public interface GuiSwingView extends GuiSwingElement {
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), copy.getValue(Action.NAME));
         component.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_V,
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), paste.getValue(Action.NAME));
+    }
+
+    static GuiReprValue.ObjectSpecifier getSpecifierDefault(Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier,
+                                                             GuiReprValue.ObjectSpecifier cachePrevious,
+                                                             Consumer<GuiReprValue.ObjectSpecifier> cacheSetter) {
+
+        GuiReprValue.ObjectSpecifier parentSpec = null;
+        if (parentSpecifier != null) {
+            parentSpec = parentSpecifier.get();
+            if (cachePrevious != null && cachePrevious.getParent().equals(parentSpec)) {
+                return cachePrevious;
+            }
+        }
+        GuiReprValue.ObjectSpecifier newSpec = new GuiReprValue.ObjectSpecifier(parentSpec, false);
+        cacheSetter.accept(newSpec);
+        return newSpec;
     }
 }

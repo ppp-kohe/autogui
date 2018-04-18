@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
+import autogui.base.mapping.GuiReprValue;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -19,13 +20,13 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
     }
 
     @Override
-    protected ObjectPane createObjectPane(GuiMappingContext context) {
-        return new ObjectTabbedPane(context);
+    protected ObjectPane createObjectPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        return new ObjectTabbedPane(context, parentSpecifier);
     }
 
     @Override
     public void createSubView(GuiMappingContext subContext, ObjectPane pane, GuiSwingView view) {
-        JComponent comp = view.createView(subContext);
+        JComponent comp = view.createView(subContext, pane::getSpecifier);
         if (comp != null) {
             ((ObjectTabbedPane) pane).addSubComponent(subContext, comp);
         }
@@ -35,8 +36,8 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         protected JTabbedPane tabbedPane;
         protected TabPreferencesUpdater tabPreferencesUpdater;
 
-        public ObjectTabbedPane(GuiMappingContext context) {
-            super(context);
+        public ObjectTabbedPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+            super(context, parentSpecifier);
         }
 
         public JTabbedPane getTabbedPane() {

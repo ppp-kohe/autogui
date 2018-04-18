@@ -221,7 +221,7 @@ public class GuiRepresentationTest {
 
         Object v = "";
         try {
-            v = repr.getUpdatedValueWithoutNoUpdate(ctx, false);
+            v = repr.getUpdatedValueWithoutNoUpdate(ctx, GuiReprValue.NONE);
         } catch (Throwable ex) {
             ex.printStackTrace();
             Assert.fail();

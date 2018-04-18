@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueStringField;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
@@ -35,8 +36,8 @@ import java.util.function.Supplier;
  */
 public class GuiSwingViewStringField implements GuiSwingView {
     @Override
-    public JComponent createView(GuiMappingContext context) {
-        PropertyStringPane field = new PropertyStringPane(context);
+    public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        PropertyStringPane field = new PropertyStringPane(context, parentSpecifier);
         if (context.isTypeElementProperty()) {
             return field.wrapSwingNamed();
         } else {
@@ -52,10 +53,13 @@ public class GuiSwingViewStringField implements GuiSwingView {
     public static class PropertyStringPane extends SearchTextField
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<String> {
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyStringPane(GuiMappingContext context) {
+        public PropertyStringPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
             this.context = context;
+            this.parentSpecifier = parentSpecifier;
             initLazy();
         }
 
@@ -185,6 +189,15 @@ public class GuiSwingViewStringField implements GuiSwingView {
         @Override
         public void shutdownSwingView() {
             getEditingRunner().shutdown();
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
         }
     }
 

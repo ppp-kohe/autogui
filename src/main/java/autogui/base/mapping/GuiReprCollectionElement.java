@@ -70,16 +70,10 @@ public class GuiReprCollectionElement extends GuiReprValue implements GuiReprese
         return false;
     }
 
-    public Object getUpdatedValueWithoutNoUpdate(GuiMappingContext context, GuiReprValue.ObjectSpecifier specifier) throws Throwable {
-        if (context.isParentCollectionTable()) {
-            return context.getParent().getReprCollectionTable()
-                    .getUpdatedValueWithoutNoUpdate(context.getParent(), specifier); //use specifier as is
-        } else if (context.isParentCollectionElement()) { //table(element(element(..)))
-            return context.getParent().getReprCollectionElement()
-                    .getUpdatedValueWithoutNoUpdate(context.getParent(), specifier.getParent());
-        } else {
-            throw new UnsupportedOperationException(); //???
-        }
+    @Override
+    public Object getValue(GuiMappingContext context, Object parentSource, ObjectSpecifier specifier, Object prev) throws Throwable {
+        //TODO
+        return super.getValue(context, parentSource, specifier, prev);
     }
 
     /** the table cell version of {@link GuiReprValue#getUpdatedValue(GuiMappingContext, boolean)}.

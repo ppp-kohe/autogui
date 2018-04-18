@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.mapping.GuiReprValueImagePane;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.MenuBuilder;
@@ -44,8 +45,8 @@ import java.util.function.Supplier;
  */
 public class GuiSwingViewImagePane implements GuiSwingView {
     @Override
-    public JComponent createView(GuiMappingContext context) {
-        PropertyImagePane imagePane = new PropertyImagePane(context);
+    public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        PropertyImagePane imagePane = new PropertyImagePane(context, parentSpecifier);
         ValuePane<Image> pane = new GuiSwingView.ValueScrollPane<>(imagePane);
         if (context.isTypeElementProperty()) {
             return pane.wrapSwingProperty();
@@ -62,6 +63,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     public static class PropertyImagePane extends JComponent
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Image> {
         protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
         protected Image image;
         protected Dimension imageSize = new Dimension(1, 1);
         protected boolean editable;
@@ -76,8 +79,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyImagePane(GuiMappingContext context) {
+        public PropertyImagePane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
             this.context = context;
+            this.parentSpecifier = parentSpecifier;
             init();
         }
 
@@ -349,6 +353,15 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(Image value) {
             setImage(value);
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+        }
+
+        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
+            this.specifierCache = specifierCache;
         }
     }
 
