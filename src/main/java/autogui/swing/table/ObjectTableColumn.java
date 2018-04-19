@@ -283,7 +283,7 @@ public class ObjectTableColumn {
         public PopupExtension.PopupMenuBuilder getMenuBuilder(JTable table) {
             return new ObjectTableColumnValue.ObjectTableColumnActionBuilder(table, column,
                     new PopupCategorized(() -> Collections.singletonList(new NumberCopyAction()), null,
-                            new GuiSwingViewCollectionTable.MenuBuilderWithEmptySeparator()));
+                            new ObjectTableModel.MenuBuilderWithEmptySeparator()));
         }
     }
 

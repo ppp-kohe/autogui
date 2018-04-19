@@ -135,7 +135,7 @@ import java.util.stream.Stream;
  *       </li>
  *   </ul>
  * */
-public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresentation {
+public class GuiReprCollectionTable extends GuiReprValue {
     protected GuiRepresentation subRepresentation;
 
     public GuiReprCollectionTable(GuiRepresentation subRepresentation) {
@@ -163,6 +163,20 @@ public class GuiReprCollectionTable extends GuiReprValue implements GuiRepresent
         } else {
             return (List<?>) newValue;
         }
+    }
+
+    @Override
+    public int getUpdatedValueCollectionSize(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
+        Object list = getUpdatedValueWithoutNoUpdate(context, specifier);
+        GuiTypeCollection collType = context.getTypeElementCollection();
+        return context.execute(() -> collType.getSize(list));
+    }
+
+    @Override
+    public Object getValueCollectionElement(GuiMappingContext context, Object collection, ObjectSpecifier elementSpecifier, Object prev) throws Throwable {
+        GuiTypeCollection collType = context.getTypeElementCollection();
+        return context.execute(() ->
+                collType.executeGetElement(collection, elementSpecifier.getIndex(), prev));
     }
 
     /**

@@ -30,7 +30,12 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement subView = columnMappingSet.view(subContext);
             if (subView != null && subView instanceof GuiSwingTableColumn) {
-                model.addColumn(((GuiSwingTableColumn) subView).createColumn(subContext));
+                GuiSwingTableColumn column = (GuiSwingTableColumn) subView;
+                model.addColumnStatic(column.createColumn(subContext));
+                ObjectTableColumnDynamicFactory columnFactory = column.createColumnDynamic(subContext);
+                if (columnFactory != null) {
+                    model.addColumnDynamic(columnFactory);
+                }
             }
         }
     }

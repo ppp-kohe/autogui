@@ -15,10 +15,10 @@ import java.util.EventObject;
  * <p>
  * Both editor and renderer are realized by {@link autogui.swing.GuiSwingViewBooleanCheckBox.PropertyCheckBox}.
  */
-public class GuiSwingTableColumnBoolean extends GUiSwingTableColumnStatic implements GuiSwingTableColumn {
+public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
 
     @Override
-    public ObjectTableColumn createColumnWithIndex(GuiMappingContext context, ObjectColumnIndex index) {
+    public ObjectTableColumn createColumn(GuiMappingContext context) {
         GuiSwingViewBooleanCheckBox.PropertyCheckBox view = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context);
         view.setHorizontalAlignment(SwingConstants.CENTER);
         view.setBorderPainted(true);

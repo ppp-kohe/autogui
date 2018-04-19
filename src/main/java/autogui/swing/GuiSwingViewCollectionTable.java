@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.*;
+import autogui.base.type.GuiTypeValue;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.table.*;
 import autogui.swing.util.*;
@@ -143,7 +144,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initModel() {
-            ObjectTableModel model = new ObjectTableModel(this::getSource);
+            ObjectTableModel model = new ObjectTableModelCollection(context, this::getSpecifier);
             model.setTable(this);
             setModel(model);
             setColumnModel(model.getColumnModel());
@@ -340,7 +341,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setSwingViewValue(List<?> value) {
             GuiReprCollectionTable repr = (GuiReprCollectionTable) context.getRepresentation();
             source = repr.toUpdateValue(context, value);
-            getObjectTableModel().setSourceFromSupplier();
+            //TODO getObjectTableModel().setSourceFromSupplier();
         }
 
         @Override
@@ -348,7 +349,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             setSwingViewValue(value);
             GuiReprCollectionTable table = (GuiReprCollectionTable) getSwingViewContext().getRepresentation();
             if (table.isEditable(context)) {
-                table.updateFromGui(getSwingViewContext(), value);
+                table.updateFromGui(getSwingViewContext(), value, getSpecifier());
             }
         }
 
@@ -495,6 +496,41 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
             this.specifierCache = specifierCache;
+        }
+    }
+
+    public static class ObjectTableModelCollection extends ObjectTableModel {
+        protected GuiMappingContext context;
+        protected Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier;
+
+        public ObjectTableModelCollection(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier) {
+            this.context = context;
+            this.tableSpecifier = tableSpecifier;
+        }
+
+        @Override
+        public Object getRowAtIndex(int row, Object prev) {
+            GuiReprValue.ObjectSpecifier specifier = new GuiReprValue.ObjectSpecifierIndex(tableSpecifier.get(), row);
+            try {
+                Object v = context.getReprValue()
+                        .getUpdatedValueCollectionElement(context, specifier, prev);
+                if (v != null && v.equals(GuiTypeValue.NO_UPDATE)) {
+                    v = prev;
+                }
+                return v;
+            } catch (Throwable ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        @Override
+        public int getRowCount() {
+            try {
+                return context.getParent().getReprValue()
+                        .getUpdatedValueCollectionSize(context, tableSpecifier.get());
+            } catch (Throwable ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -810,7 +846,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             super(pane, keyMatcher, null);
             this.table = pane;
 
-            PopupCategorized tableActions = new PopupCategorized(items, null, new MenuBuilderWithEmptySeparator());
+            PopupCategorized tableActions = new PopupCategorized(items, null, new ObjectTableModel.MenuBuilderWithEmptySeparator());
             PopupMenuBuilder columnBuilder = new CollectionColumnMenuSupplier(this);
             PopupMenuBuilder cellBuilder = new CollectionCellMenuSupplier(this);
 
@@ -899,28 +935,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     .map(table::convertColumnIndexToModel)
                     .mapToObj(model.getColumns()::get)
                     .collect(Collectors.toList());
-        }
-    }
-
-    public static class MenuBuilderWithEmptySeparator extends MenuBuilder {
-        @Override
-        public boolean addMenuSeparator(AddingProcess process, boolean nonEmpty) {
-            if (process.isSeparatorNeeded() && nonEmpty) {
-                process.setSeparatorNeeded(false);
-                process.getMenu().accept(createSeparator());
-                return true;
-            } else {
-                return false;
-            }
-
-        }
-
-        public JComponent createSeparator() {
-            JComponent sep = new JPanel();
-            sep.setPreferredSize(new Dimension(10, 6));
-            sep.setOpaque(false);
-            sep.setBorder(BorderFactory.createEmptyBorder());
-            return sep;
         }
     }
 

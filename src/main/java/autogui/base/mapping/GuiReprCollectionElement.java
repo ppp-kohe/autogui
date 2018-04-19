@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
 /**
  * elements in a collection table {@link GuiReprCollectionTable}
  */
-public class GuiReprCollectionElement extends GuiReprValue implements GuiRepresentation {
+public class GuiReprCollectionElement extends GuiReprValue {
     protected GuiRepresentation representation;
 
     public GuiReprCollectionElement(GuiRepresentation representation) {
@@ -71,10 +71,42 @@ public class GuiReprCollectionElement extends GuiReprValue implements GuiReprese
     }
 
     @Override
-    public Object getValue(GuiMappingContext context, Object parentSource, ObjectSpecifier specifier, Object prev) throws Throwable {
-        //TODO
-        return super.getValue(context, parentSource, specifier, prev);
+    public Class<?> getValueType(GuiMappingContext context) {
+        if (representation instanceof GuiReprValue) {
+            return ((GuiReprValue) representation).getValueType(context);
+        } else {
+            return null;
+        }
     }
+
+    @Override
+    public Object getValue(GuiMappingContext context, Object parentSource, ObjectSpecifier specifier, Object prev) throws Throwable {
+        if (representation instanceof GuiReprValue) {
+            return ((GuiReprValue) representation).getValue(context, parentSource, specifier, prev);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public Object getValueCollectionElement(GuiMappingContext context, Object collection, ObjectSpecifier elementSpecifier, Object prev) throws Throwable {
+        if (representation instanceof GuiReprValue) {
+            return ((GuiReprValue) representation).getValueCollectionElement(context, collection, elementSpecifier, prev);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public int getUpdatedValueCollectionSize(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
+        if (representation instanceof GuiReprValue) {
+            return ((GuiReprValue) representation).getUpdatedValueCollectionSize(context, specifier);
+        } else {
+            return 1;
+        }
+    }
+
+
 
     /** the table cell version of {@link GuiReprValue#getUpdatedValue(GuiMappingContext, boolean)}.
      * <ul>
@@ -94,6 +126,7 @@ public class GuiReprCollectionElement extends GuiReprValue implements GuiReprese
      * @return the updated value of the cell
      * @throws Throwable an error caused by the execution
      */
+    @Deprecated
     public Object getCellValue(GuiMappingContext context, GuiMappingContext subContext,
                                Object rowSource, int rowIndex, int columnIndex) throws Throwable {
         if (subContext.isTypeElementProperty()) {
@@ -130,6 +163,7 @@ public class GuiReprCollectionElement extends GuiReprValue implements GuiReprese
      * @param columnIndex the table column index, ignored in the impl.
      * @param newValue the edited new value of the cell
      */
+    @Deprecated
     public void updateCellFromGui(GuiMappingContext context, GuiMappingContext subContext,
                                   Object rowSource, int rowIndex, int columnIndex, Object newValue) {
         if (subContext.isTypeElementProperty()) {

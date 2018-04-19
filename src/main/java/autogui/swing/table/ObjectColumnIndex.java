@@ -13,8 +13,7 @@ public class ObjectColumnIndex implements Cloneable {
 
     public ObjectColumnIndex next(int flattenSizeForThisColumn) {
         ObjectColumnIndex n = copy();
-        n.index++;
-        n.flattenIndex += flattenSizeForThisColumn;
+        n.increment(flattenSizeForThisColumn);
         return n;
     }
 
@@ -40,5 +39,10 @@ public class ObjectColumnIndex implements Cloneable {
 
     public int getIndex() {
         return index;
+    }
+
+    public void increment(int flattenSize) {
+        ++index;
+        flattenIndex+=flattenSize;
     }
 }

@@ -1,7 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.swing.GuiSwingViewCollectionTable;
+import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
@@ -17,19 +17,17 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * a table-model based on a list of row objects
  */
-public class ObjectTableModel extends AbstractTableModel {
-    protected Supplier<List<?>> sourceSupplier;
-    protected List<ObjectTableColumn> columns;
+public abstract class ObjectTableModel extends AbstractTableModel {
+    protected List<ObjectTableColumn> columns = new ArrayList<>();
+    protected List<ObjectTableColumn> staticColumns = new ArrayList<>();
+    protected List<ObjectTableColumnDynamicFactory> dynamicColumns = new ArrayList<>();
+    protected List<int[]> dynamicColumnSize = new ArrayList<>(); //{start,endExclusive}
     protected JTable table;
-
-    protected List<?> source;
 
     protected DefaultTableColumnModel columnModel;
     /** cached computed values */
@@ -39,26 +37,6 @@ public class ObjectTableModel extends AbstractTableModel {
 
     public static Object NULL_CELL = new Object();
 
-    public ObjectTableModel(Supplier<List<?>> sourceSupplier) {
-        this(sourceSupplier, new ArrayList<>());
-    }
-
-    public ObjectTableModel(Supplier<List<?>> sourceSupplier, List<ObjectTableColumn> columns) {
-        this(sourceSupplier, columns, null);
-    }
-
-    public ObjectTableModel(Supplier<List<?>> sourceSupplier, List<ObjectTableColumn> columns, JTable table) {
-        this.sourceSupplier = sourceSupplier;
-        this.table = table;
-        columnModel = new DefaultTableColumnModel();
-        if (columns != null) {
-            this.columns = columns;
-            addTableColumnFromColumns();
-        } else {
-            this.columns = new ArrayList<>();
-        }
-        setSourceFromSupplier();
-    }
 
     public void setFutureWaiter(Consumer<Runnable> futureWaiter) {
         this.futureWaiter = futureWaiter;
@@ -66,12 +44,6 @@ public class ObjectTableModel extends AbstractTableModel {
 
     public Consumer<Runnable> getFutureWaiter() {
         return futureWaiter;
-    }
-
-    /** refresh the table contents */
-    public void setSourceFromSupplier() {
-        source = sourceSupplier.get();
-        refreshData();
     }
 
     public void setTable(JTable table) {
@@ -97,23 +69,74 @@ public class ObjectTableModel extends AbstractTableModel {
         column.getTableColumn().setModelIndex(index);
     }
 
-    public void addTableColumnFromColumns() {
-        if (columns != null) {
-            int i = 0;
-            for (ObjectTableColumn column : columns) {
-                columnModel.addColumn(column.getTableColumn());
-                column.getTableColumn().setModelIndex(i);
-                ++i;
-            }
-        }
+    public void addColumnStatic(ObjectTableColumn column) {
+        addColumn(column);
+        staticColumns.add(column);
+    }
+
+    public void addColumnDynamic(ObjectTableColumnDynamicFactory columnFactory) {
+        dynamicColumns.add(columnFactory);
+        dynamicColumnSize.add(new int[] {0, 0});
     }
 
     public List<ObjectTableColumn> getColumns() {
         return columns;
     }
 
-    public List<?> getSource() {
-        return source;
+    public ObjectTableColumn getColumnAt(int columnIndex) {
+        ObjectColumnIndex i = new ObjectColumnIndex(null, columns.size(), 0);
+        while (columnIndex >= columns.size()) {
+            ObjectTableColumn c = getColumnDynamic(columnIndex).createColumn(i);
+            if (c == null) {
+                break;
+            }
+            addColumn(c);
+            i.increment(1);
+        }
+        return columns.get(columnIndex);
+    }
+
+    public ObjectTableColumnDynamicFactory getColumnDynamic(int columnIndex) {
+        int idx = Collections.binarySearch(dynamicColumnSize, columnIndex, (a,b) -> {
+            if (b instanceof Integer && a instanceof int[]) {
+                return -compare((Integer) b, (int[]) a);
+            } else if (b instanceof int[] && a instanceof Integer) {
+                return compare((Integer) a, (int[]) b);
+            } else {
+                return 0;
+            }
+        });
+        if (idx < 0 || idx >= dynamicColumns.size()) {
+            return null;
+        } else {
+            return dynamicColumns.get(idx);
+        }
+    }
+
+    private int compare(int n, int[] r) {
+        if (r[0] <= n && n < r[0]) {
+            return 0;
+        } else if (n < r[0]) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+
+
+    @Override
+    public int getColumnCount() {
+        int i = 0;
+        int sum = staticColumns.size();
+        for (ObjectTableColumnDynamicFactory columnFactory : dynamicColumns) {
+            int n = columnFactory.getColumnCount();
+            int[] r = dynamicColumnSize.get(i);
+            r[0] = sum;
+            sum += n;
+            r[1] = sum;
+            ++i;
+        }
+        return sum;
     }
 
     //////////// table initialization
@@ -179,24 +202,11 @@ public class ObjectTableModel extends AbstractTableModel {
         return super.getColumnName(column);
     }
 
-    @Override
-    public int getRowCount() {
-        return source == null ? 0 : source.size();
-    }
-
-    @Override
-    public int getColumnCount() {
-        return columnModel.getColumnCount();
-    }
+    public abstract Object getRowAtIndex(int row, Object prev);
 
     public boolean buildDataArray() {
-        List<?> src = source;
-        if (src == null) {
-            src = Collections.emptyList();
-        }
-
-        int rows = src.size();
-        int cols = columnModel.getColumnCount();
+        int rows = getRowCount();
+        int cols = getColumnCount();
 
         if (data == null ||
                 data.length != rows ||
@@ -256,8 +266,12 @@ public class ObjectTableModel extends AbstractTableModel {
      * @return the cell value, nullable
      */
     public Object takeValueFromSource(Object[] rowData, int rowIndex, int columnIndex) {
-        Object rowObject = source.get(rowIndex);
-        Object cellObject = columns.get(columnIndex)
+        Object prev = rowData[rowIndex];
+        if (prev != null && prev.equals(NULL_CELL)) {
+            prev = null;
+        }
+        Object rowObject = getRowAtIndex(rowIndex, prev);
+        Object cellObject = getColumnAt(columnIndex)
                 .getCellValue(rowObject, rowIndex, columnIndex);
 
         if (cellObject instanceof Future<?>) {
@@ -319,12 +333,12 @@ public class ObjectTableModel extends AbstractTableModel {
         Object[] rowData = data[rowIndex];
         rowData[columnIndex] = (aValue == null ? NULL_CELL : aValue);
 
-        Object rowObject = source.get(rowIndex);
+        Object rowObject = getRowAtIndex(rowIndex);
         offerValueForSource(rowObject, aValue, rowIndex, columnIndex);
     }
 
     public void offerValueForSource(Object rowObject, Object aValue, int rowIndex, int columnIndex) {
-        Future<?> future = getColumns().get(columnIndex)
+        Future<?> future = getColumnAt(columnIndex)
                 .setCellValue(rowObject, rowIndex, columnIndex, aValue);
         futureWaiter.accept(() -> offsetValueForSourceFuture(rowObject, aValue, rowIndex, columnIndex, future));
     }
@@ -425,7 +439,7 @@ public class ObjectTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return getColumns().get(columnIndex)
+        return getColumnAt(columnIndex)
                 .getTableColumn().getCellEditor() != null;
     }
 
@@ -433,7 +447,7 @@ public class ObjectTableModel extends AbstractTableModel {
 
     public PopupExtension.PopupMenuBuilder getBuilderForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
         return new PopupCategorized(() -> getBuildersForRowsOrCells(table, cols, row), null,
-                new GuiSwingViewCollectionTable.MenuBuilderWithEmptySeparator());
+                new MenuBuilderWithEmptySeparator());
     }
 
     /**
@@ -460,6 +474,28 @@ public class ObjectTableModel extends AbstractTableModel {
 
     }
 
+
+    public static class MenuBuilderWithEmptySeparator extends MenuBuilder {
+        @Override
+        public boolean addMenuSeparator(AddingProcess process, boolean nonEmpty) {
+            if (process.isSeparatorNeeded() && nonEmpty) {
+                process.setSeparatorNeeded(false);
+                process.getMenu().accept(createSeparator());
+                return true;
+            } else {
+                return false;
+            }
+
+        }
+
+        public JComponent createSeparator() {
+            JComponent sep = new JPanel();
+            sep.setPreferredSize(new Dimension(10, 6));
+            sep.setOpaque(false);
+            sep.setBorder(BorderFactory.createEmptyBorder());
+            return sep;
+        }
+    }
 
     /**
      * a builder accepting a {@link TableTargetCellAction} and wrapping it to a {@link TableTargetCellExecutionAction}.

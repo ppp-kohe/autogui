@@ -179,7 +179,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
                 if (rendererPaneOriginalBuilder instanceof PopupCategorized) {
                     ((PopupCategorized) rendererPaneOriginalBuilder).setMenuBuilder(
-                            new GuiSwingViewCollectionTable.MenuBuilderWithEmptySeparator());
+                            new ObjectTableModel.MenuBuilderWithEmptySeparator());
                 }
 
                 return new ObjectTableColumnActionBuilder(table, getOwnerColumn(), rendererPaneOriginalBuilder);

@@ -106,4 +106,8 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
             return newValue;
         }
     }
+
+    public int getSize(Object list) {
+        return ((List<?>) list).size();
+    }
 }

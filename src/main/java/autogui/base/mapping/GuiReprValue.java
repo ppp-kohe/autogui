@@ -207,6 +207,19 @@ public class GuiReprValue implements GuiRepresentation {
         }
     }
 
+    public int getUpdatedValueCollectionSize(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
+        return 1;
+    }
+
+    public Object getUpdatedValueCollectionElement(GuiMappingContext context, ObjectSpecifier elementSpecifier, Object prev) throws Throwable {
+        Object collection = getUpdatedValueWithoutNoUpdate(context, elementSpecifier.getParent());
+        return getValueCollectionElement(context, collection, elementSpecifier, prev);
+    }
+
+    public Object getValueCollectionElement(GuiMappingContext context, Object collection, ObjectSpecifier elementSpecifier, Object prev) throws Throwable {
+        return null;
+    }
+
     /**
      * call the setter by editing on GUI, and {@link GuiMappingContext#updateSourceFromGui(Object)}.
      * <ul>
@@ -227,11 +240,11 @@ public class GuiReprValue implements GuiRepresentation {
      * @param context the context of this repr.
      * @param newValue the updated property value
      */
-    public void updateFromGui(GuiMappingContext context, Object newValue) {
+    public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) {
         addHistoryValue(context, newValue);
 
-        if (context.isParentCollectionElement()) {
-            Object ret = update(context, null, newValue);
+        if (context.isParentCollectionElement()) { //TODO improve with specifier
+            Object ret = update(context, null, specifier, newValue);
             if (ret != null) {
                 context.updateSourceFromGui(ret);
             }
@@ -240,14 +253,14 @@ public class GuiReprValue implements GuiRepresentation {
             if (src ==  null) {
                 System.err.println("src is null: context="  +context.getRepresentation() + " : parent=" + context.getParentRepresentation());
             }
-            Object ret = update(context, src, newValue);
+            Object ret = update(context, src, specifier, newValue);
             if (ret != null) {
                 context.updateSourceFromGui(ret);
             }
         } else if (context.isParentPropertyPane()) {
             context.getParentPropertyPane().updateFromGuiChild(context, newValue);
         } else {
-            Object ret = update(context, null, newValue);
+            Object ret = update(context, null, specifier, newValue);
             if (ret != null) {
                 context.updateSourceFromGui(ret);
             }
@@ -261,7 +274,8 @@ public class GuiReprValue implements GuiRepresentation {
      * @param newValue a new value to be set to the property
      * @return newValue which will need to be pass to {@link GuiMappingContext#updateSourceFromGui(Object)},  or null if error
      */
-    public Object update(GuiMappingContext context, Object parentSource, Object newValue) {
+    public Object update(GuiMappingContext context, Object parentSource, ObjectSpecifier specifier, Object newValue) {
+        //TODO improve with specifier
         if (context.isTypeElementProperty()) {
             try {
                 GuiTypeMemberProperty prop = context.getTypeElementAsProperty();
