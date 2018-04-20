@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
  */
 public class ObjectTableColumnValue extends ObjectTableColumn {
     protected GuiMappingContext context;
+    protected GuiSwingTableColumn.SpecifierManagerIndex specifierIndex;
     protected GuiSwingView.SpecifierManager specifierManager;
     protected int contextIndex = -1;
     protected TableCellRenderer renderer;
@@ -43,21 +44,25 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
      * @param context the associated context
      * @param view the component for both editor and renderer
      */
-    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, JComponent view) {
-        this(context, specifierManager, view, view);
+    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex,
+                                  GuiSwingView.SpecifierManager specifierManager, JComponent view) {
+        this(context, specifierIndex, specifierManager, view, view);
     }
 
-    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, JComponent view, JComponent editorView) {
-        this(context, specifierManager, new ObjectTableCellRenderer(view),
-                editorView == null ? null : new ObjectTableCellEditor(editorView, view == editorView));
+    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex,
+                                  GuiSwingView.SpecifierManager specifierManager, JComponent view, JComponent editorView) {
+        this(context, specifierIndex, specifierManager, new ObjectTableCellRenderer(view, specifierIndex),
+                editorView == null ? null : new ObjectTableCellEditor(editorView, view == editorView, specifierIndex));
         setRowHeight(view.getPreferredSize().height + 4);
     }
 
-    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, TableCellRenderer renderer, TableCellEditor editor) {
+    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex,
+                                  GuiSwingView.SpecifierManager specifierManager, TableCellRenderer renderer, TableCellEditor editor) {
         this.context = context;
         this.renderer = renderer;
         this.editor = editor;
         this.specifierManager = specifierManager;
+        this.specifierIndex = specifierIndex;
 
         GuiRepresentation parentRepr =  context.getParentRepresentation();
         if (parentRepr instanceof GuiReprCollectionElement) {
@@ -104,6 +109,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
         GuiReprValue field = context.getReprValue();
         try {
+            if (specifierIndex != null) {
+                specifierIndex.setIndex(rowIndex);
+            }
             return field.getValueWithoutNoUpdate(context, rowObject, specifierManager.getSpecifier());
                //the columnIndex is an index on the view model, so it passes contextIndex as the context's column index
         } catch (Throwable ex) {
@@ -132,12 +140,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource {
         protected JComponent component;
         protected ObjectTableColumn ownerColumn;
+        protected GuiSwingTableColumn.SpecifierManagerIndex specifierIndex;
 
         /**
          * @param component the renderer component, must be a {@link GuiSwingView.ValuePane}
          */
-        public ObjectTableCellRenderer(JComponent component) {
+        public ObjectTableCellRenderer(JComponent component, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex) {
             this.component = component;
+            this.specifierIndex = specifierIndex;
         }
 
         public JComponent getComponent() {
@@ -154,6 +164,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (specifierIndex != null) {
+                specifierIndex.setIndex(row);
+            }
+
             setTableColor(table, component, isSelected);
             GuiSwingView.ValuePane<Object> valuePane = getMenuTargetPane();
             if (valuePane != null) {
@@ -214,14 +228,16 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         protected JComponent component;
         protected int clickCount = 2;
         protected boolean skipShutDown;
+        protected GuiSwingTableColumn.SpecifierManagerIndex specifierIndex;
 
         /**
          * @param component the editor component, must be a {@link autogui.swing.GuiSwingView.ValuePane}
          * @param skipShutDown if true, {@link #shutdown()} process for the component will be skipped
          */
-        public ObjectTableCellEditor(JComponent component, boolean skipShutDown) {
+        public ObjectTableCellEditor(JComponent component, boolean skipShutDown, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex) {
             this.component = component;
             this.skipShutDown = skipShutDown;
+            this.specifierIndex = specifierIndex;
             if (component instanceof GuiSwingView.ValuePane<?>) {
                 ((GuiSwingView.ValuePane<?>) component).addSwingEditFinishHandler(e -> stopCellEditing());
             }
@@ -243,6 +259,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         @SuppressWarnings("unchecked")
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            if (specifierIndex != null) {
+                specifierIndex.setIndex(row);
+            }
             if (component instanceof GuiSwingView.ValuePane<?>) {
                 GuiSwingView.ValuePane<Object> pane = (GuiSwingView.ValuePane<Object>) component;
                 pane.setSwingViewValue(value);

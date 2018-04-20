@@ -929,7 +929,7 @@ public class GuiPreferences {
         @Override
         public boolean hasNodeKey(String key) {
             Object v = values.get(key);
-            return v != null && v instanceof GuiValueStore;
+            return v instanceof GuiValueStore;
         }
 
         public void putChild(String name, GuiValueStore value) {

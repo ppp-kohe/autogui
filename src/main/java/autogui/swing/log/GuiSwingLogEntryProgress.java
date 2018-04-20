@@ -273,11 +273,11 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
 
         public void setSelectionHighlight() {
-            if (lastValue != null && lastValue instanceof GuiSwingLogEntryProgress) {
+            if (lastValue instanceof GuiSwingLogEntryProgress) {
                 selected = ((GuiSwingLogEntryProgress) lastValue).isSelected();
             }
 
-            if (lastValue != null && lastValue instanceof GuiSwingLogEntryProgress && selected) {
+            if (lastValue instanceof GuiSwingLogEntryProgress && selected) {
                 GuiSwingLogEntryProgress p = (GuiSwingLogEntryProgress) lastValue;
                 if (supports != null) {
                     supports.setSelectionHighlights(p.getSelections());

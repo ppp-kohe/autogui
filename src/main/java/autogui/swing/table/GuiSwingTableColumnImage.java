@@ -1,12 +1,10 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewImagePane;
 
 import java.awt.*;
-import java.util.function.Supplier;
 
 /**
  * a column factory for {@link Image}.
@@ -17,11 +15,11 @@ import java.util.function.Supplier;
  */
 public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
-        GuiSwingView.SpecifierManagerDefault specifierManager = new GuiSwingView.SpecifierManagerDefault(rowSpecifier);
+    public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
+                                          GuiSwingView.SpecifierManager specifierManager) {
         ColumnEditImagePane img = new ColumnEditImagePane(context, specifierManager);
         ColumnEditImagePane edit = new ColumnEditImagePane(context, specifierManager);
-        return new ObjectTableColumnValue(context, specifierManager, img, edit).withRowHeight(64);
+        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager, img, edit).withRowHeight(64);
     }
 
     /**

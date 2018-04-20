@@ -1,14 +1,12 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewEnumComboBox;
 import autogui.swing.GuiSwingViewLabel;
 
 import javax.swing.*;
 import java.util.Comparator;
-import java.util.function.Supplier;
 
 /**
  * a column factory for {@link Enum}.
@@ -19,8 +17,8 @@ import java.util.function.Supplier;
  */
 public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
-        GuiSwingView.SpecifierManagerDefault specifierManager = new GuiSwingView.SpecifierManagerDefault(rowSpecifier);
+    public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
+                                          GuiSwingView.SpecifierManager specifierManager) {
         GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context, specifierManager);
         label.setOpaque(true);
 
@@ -28,11 +26,11 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
         comboBox.setBorder(BorderFactory.createEmptyBorder());
         comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         ObjectTableColumnValue.ObjectTableCellEditor editor = new ObjectTableColumnValue.ObjectTableCellEditor(
-                comboBox, false);
+                comboBox, false, rowSpecifier);
         editor.setClickCount(2);
 
-        return new ObjectTableColumnValue(context, specifierManager,
-                new ObjectTableColumnValue.ObjectTableCellRenderer(label),
+        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager,
+                new ObjectTableColumnValue.ObjectTableCellRenderer(label, rowSpecifier),
                 editor)
                 .withComparator(Comparator.naturalOrder());
     }

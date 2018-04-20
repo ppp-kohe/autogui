@@ -1,7 +1,6 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewLabel;
@@ -9,7 +8,6 @@ import autogui.swing.GuiSwingViewNumberSpinner;
 
 import javax.swing.*;
 import java.util.Comparator;
-import java.util.function.Supplier;
 
 /**
  * a column factory for a {@link Number}.
@@ -20,14 +18,14 @@ import java.util.function.Supplier;
  */
 public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
-        GuiSwingView.SpecifierManagerDefault specifierManager = new GuiSwingView.SpecifierManagerDefault(rowSpecifier);
+    public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
+                                          GuiSwingView.SpecifierManager specifierManager) {
         GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context, specifierManager);
         label.setHorizontalAlignment(SwingConstants.RIGHT);
         label.setOpaque(true);
         GuiSwingViewNumberSpinner.PropertyNumberSpinner spinner = new GuiSwingViewNumberSpinner.PropertyNumberSpinner(context, specifierManager);
         spinner.getEditorField().setBorder(BorderFactory.createEmptyBorder());
-        return new ObjectTableColumnValue(context, specifierManager,
+        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager,
                 label,
                 spinner)
                 .withRowHeight(spinner.getPreferredSize().height)

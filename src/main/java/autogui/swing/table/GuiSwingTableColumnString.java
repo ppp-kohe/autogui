@@ -1,14 +1,12 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewStringField;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
-import java.util.function.Supplier;
 
 /**
  * a column factory for {@link String}.
@@ -17,9 +15,9 @@ import java.util.function.Supplier;
  */
 public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
-        GuiSwingView.SpecifierManagerDefault specifierManager = new GuiSwingView.SpecifierManagerDefault(rowSpecifier);
-        return new ObjectTableColumnValue(context, specifierManager,
+    public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
+                                          GuiSwingView.SpecifierManager specifierManager) {
+        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager,
                 new ColumnEditTextPane(context, specifierManager, false),
                 new ColumnEditTextPane(context, specifierManager, true))
                     .withComparator(Comparator.comparing(String.class::cast));

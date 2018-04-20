@@ -1,11 +1,8 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewLabel;
-
-import java.util.function.Supplier;
 
 /**
  * a column factory for any type of object.
@@ -16,10 +13,10 @@ import java.util.function.Supplier;
  */
 public class GuiSwingTableColumnLabel implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
-        GuiSwingView.SpecifierManagerDefault specifierManager = new GuiSwingView.SpecifierManagerDefault(rowSpecifier);
+    public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
+                                          GuiSwingView.SpecifierManager specifierManager) {
         GuiSwingViewLabel.PropertyLabel view = new GuiSwingViewLabel.PropertyLabel(context, specifierManager);
         view.setOpaque(true);
-        return new ObjectTableColumnValue(context, specifierManager, view);
+        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager, view);
     }
 }

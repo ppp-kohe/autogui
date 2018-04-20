@@ -12,7 +12,7 @@ import java.util.function.Supplier;
  * an interface of a set of {@link GuiSwingTableColumn}.
  */
 public interface GuiSwingTableColumnSet extends GuiSwingElement {
-    void createColumns(GuiMappingContext context, ObjectTableModel model, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier);
+    void createColumns(GuiMappingContext context, ObjectTableModel model, GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier);
 
     /**
      * create actions for sub-contexts associated to {@link autogui.base.mapping.GuiReprAction}.

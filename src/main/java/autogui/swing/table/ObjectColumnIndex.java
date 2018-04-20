@@ -2,12 +2,12 @@ package autogui.swing.table;
 
 public class ObjectColumnIndex implements Cloneable {
     protected ObjectColumnIndex parent;
-    protected int flattenIndex;
+    protected int totalIndex;
     protected int index;
 
-    public ObjectColumnIndex(ObjectColumnIndex parent, int flattenIndex, int index) {
+    public ObjectColumnIndex(ObjectColumnIndex parent, int totalIndex, int index) {
         this.parent = parent;
-        this.flattenIndex = flattenIndex;
+        this.totalIndex = totalIndex;
         this.index = index;
     }
 
@@ -18,7 +18,7 @@ public class ObjectColumnIndex implements Cloneable {
     }
 
     public ObjectColumnIndex child() {
-        return new ObjectColumnIndex(this, flattenIndex, 0);
+        return new ObjectColumnIndex(this, totalIndex, 0);
     }
 
     public ObjectColumnIndex copy() {
@@ -33,8 +33,8 @@ public class ObjectColumnIndex implements Cloneable {
         return parent;
     }
 
-    public int getFlattenIndex() {
-        return flattenIndex;
+    public int getTotalIndex() {
+        return totalIndex;
     }
 
     public int getIndex() {
@@ -43,6 +43,6 @@ public class ObjectColumnIndex implements Cloneable {
 
     public void increment(int flattenSize) {
         ++index;
-        flattenIndex+=flattenSize;
+        totalIndex +=flattenSize;
     }
 }

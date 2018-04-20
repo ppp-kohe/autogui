@@ -381,7 +381,7 @@ public class TextPaneCellSupport {
 
         public TextPaneCellMatchList nextFindMatchedList(Object prevIndex, boolean forward, Object... fixedKeys) {
             //keys: ...fixedKeys, index
-            if (prevIndex != null && prevIndex instanceof TextPaneCellMatchList &&
+            if (prevIndex instanceof TextPaneCellMatchList &&
                     ((TextPaneCellMatch) prevIndex).sameKeys(fixedKeys)) {
                 TextPaneCellMatchList pm = (TextPaneCellMatchList) prevIndex;
                 int supportIndex = pm.getSupportIndex();

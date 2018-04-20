@@ -112,7 +112,7 @@ public class GuiSwingLogStatusBar extends JComponent {
     }
 
     public void dispatch(MouseEvent e) {
-        if (renderer != null && entry != null && entry instanceof GuiSwingLogEntry) {
+        if (renderer != null && entry instanceof GuiSwingLogEntry) {
             GuiSwingLogEntry se = (GuiSwingLogEntry) entry;
             runEntry(se, r -> {
                 Point p = SwingUtilities.convertPoint(this, e.getPoint(), centerPane);

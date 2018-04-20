@@ -31,7 +31,7 @@ public class GuiSwingLogManager extends GuiLogManager {
 
     @SuppressWarnings("unchecked")
     public void removeView(Object v) {
-        if (v != null && v instanceof Consumer<?>) {
+        if (v instanceof Consumer<?>) {
             views.remove((Consumer<GuiLogEntry>) v);
         }
     }
@@ -147,7 +147,7 @@ public class GuiSwingLogManager extends GuiLogManager {
 
         @Override
         public Component getListCellRendererComponent(JList<? extends GuiLogEntry> list, GuiLogEntry value, int index, boolean isSelected, boolean cellHasFocus) {
-            if (value != null && value instanceof GuiSwingLogEntry) {
+            if (value instanceof GuiSwingLogEntry) {
                 ListCellRenderer<GuiLogEntry> renderer = getEntryRenderer((GuiSwingLogEntry) value).getTableCellRenderer();
                 if (renderer != null) {
                     return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -160,7 +160,7 @@ public class GuiSwingLogManager extends GuiLogManager {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                        boolean hasFocus, int row, int column) {
-            if (value != null && value instanceof GuiSwingLogEntry) {
+            if (value instanceof GuiSwingLogEntry) {
                 GuiSwingLogEntry e = (GuiSwingLogEntry) value ;
                 TableCellRenderer renderer = (TableCellRenderer) getEntryRenderer(e).getTableCellRenderer();
                 if (renderer != null) {

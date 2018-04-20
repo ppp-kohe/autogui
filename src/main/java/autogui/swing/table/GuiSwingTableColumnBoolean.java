@@ -1,7 +1,6 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewBooleanCheckBox;
 
@@ -10,7 +9,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.EventObject;
-import java.util.function.Supplier;
 
 /**
  * a column factory for {@link Boolean}.
@@ -21,8 +19,8 @@ import java.util.function.Supplier;
 public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
 
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
-        GuiSwingView.SpecifierManagerDefault specifierManager = new GuiSwingView.SpecifierManagerDefault(rowSpecifier);
+    public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
+                                          GuiSwingView.SpecifierManager specifierManager) {
         GuiSwingViewBooleanCheckBox.PropertyCheckBox view = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, specifierManager);
         view.setHorizontalAlignment(SwingConstants.CENTER);
         view.setBorderPainted(true);
@@ -34,9 +32,9 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
         editor.setBorderPainted(true);
         editor.setOpaque(true);
 
-        ObjectTableColumnValue column = new ObjectTableColumnValue(context, specifierManager,
-                new ObjectTableColumnValue.ObjectTableCellRenderer(view),
-                new CheckBoxEditor(editor, view == editor));
+        ObjectTableColumnValue column = new ObjectTableColumnValue(context, rowSpecifier, specifierManager,
+                new ObjectTableColumnValue.ObjectTableCellRenderer(view, rowSpecifier),
+                new CheckBoxEditor(editor, view == editor, rowSpecifier));
         column.withComparator(Comparator.comparing(Boolean.class::cast));
 
         return column;
@@ -46,8 +44,8 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
      * an editor for a boolean value
      */
     public static class CheckBoxEditor extends ObjectTableColumnValue.ObjectTableCellEditor {
-        public CheckBoxEditor(JComponent component, boolean skipShutDown) {
-            super(component, skipShutDown);
+        public CheckBoxEditor(JComponent component, boolean skipShutDown, SpecifierManagerIndex specifierIndex) {
+            super(component, skipShutDown, specifierIndex);
             setClickCount(0);
         }
 

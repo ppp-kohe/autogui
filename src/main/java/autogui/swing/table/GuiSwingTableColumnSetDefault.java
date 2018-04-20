@@ -3,7 +3,6 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprAction;
 import autogui.base.mapping.GuiReprActionList;
-import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingAction;
 import autogui.swing.GuiSwingActionDefault;
 import autogui.swing.GuiSwingElement;
@@ -13,7 +12,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * the default implementation of table-column-set associated with {@link autogui.base.mapping.GuiReprCollectionElement}.
@@ -28,13 +26,16 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
     @Override
     public void createColumns(GuiMappingContext context, ObjectTableModel model,
-                              Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
+                              GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier) {
         model.addColumnRowIndex();
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement subView = columnMappingSet.view(subContext);
             if (subView instanceof GuiSwingTableColumn) {
                 GuiSwingTableColumn column = (GuiSwingTableColumn) subView;
-                model.addColumnStatic(column.createColumn(subContext, rowSpecifier));
+                ObjectTableColumn columnStatic = column.createColumn(subContext, rowSpecifier);
+                if (columnStatic != null) {
+                    model.addColumnStatic(columnStatic);
+                }
 
                 ObjectTableColumnDynamicFactory columnFactory = column.createColumnDynamic(subContext, rowSpecifier);
                 if (columnFactory != null) {

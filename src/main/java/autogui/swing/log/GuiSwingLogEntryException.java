@@ -211,7 +211,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         }
 
         public void expansionChanged() {
-            if (lastValue != null && lastValue instanceof GuiSwingLogEntryException) {
+            if (lastValue instanceof GuiSwingLogEntryException) {
                 boolean expanded = ((GuiSwingLogEntryException) lastValue).isExpanded();
 
                 expandButton.setIcon(expandAction.getIcon(expanded));
@@ -236,7 +236,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
          * @return an index
          */
         public int getExpansionTextStartIndex() {
-            if (lastValue != null && lastValue instanceof GuiSwingLogEntryException) {
+            if (lastValue instanceof GuiSwingLogEntryException) {
                 List<Integer> lines = getLinesForDocument(stackTrace.getStyledDocument());
                 if (lines.size() >= 2) {
                     int n = lines.get(1);
@@ -249,7 +249,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         }
 
         public void setSelectionHighlights(GuiLogEntryException ex) {
-            if (ex != null && ex instanceof GuiSwingLogEntryException && supports != null) {
+            if (ex instanceof GuiSwingLogEntryException && supports != null) {
                 GuiSwingLogEntryException swingEx = (GuiSwingLogEntryException) ex;
                 selected = swingEx.isSelected();
                 if (selected) {

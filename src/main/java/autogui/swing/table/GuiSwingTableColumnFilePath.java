@@ -1,7 +1,6 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewFilePathField;
 import autogui.swing.util.PopupCategorized;
@@ -14,7 +13,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * a column factory for {@link java.io.File} or {@link Path}.
@@ -24,11 +22,11 @@ import java.util.function.Supplier;
  */
 public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
-        GuiSwingView.SpecifierManagerDefault specifierManager = new GuiSwingView.SpecifierManagerDefault(rowSpecifier);
-        return new ObjectTableColumnValue(context, specifierManager,
-                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, specifierManager,false)),
-                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, specifierManager, true), false))
+    public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
+                                          GuiSwingView.SpecifierManager specifierManager) {
+        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager,
+                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, specifierManager,false), rowSpecifier),
+                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, specifierManager, true), false, rowSpecifier))
                 .withComparator(Comparator.comparing(Path.class::cast));
     }
 
