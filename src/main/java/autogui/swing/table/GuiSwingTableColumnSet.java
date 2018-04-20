@@ -1,16 +1,18 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingElement;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * an interface of a set of {@link GuiSwingTableColumn}.
  */
 public interface GuiSwingTableColumnSet extends GuiSwingElement {
-    void createColumns(GuiMappingContext context, ObjectTableModel model);
+    void createColumns(GuiMappingContext context, ObjectTableModel model, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier);
 
     /**
      * create actions for sub-contexts associated to {@link autogui.base.mapping.GuiReprAction}.

@@ -199,7 +199,14 @@ public class GuiReprValue implements GuiRepresentation {
      * @throws Throwable the action might cause an error
      */
     public Object getParentSource(GuiMappingContext context, ObjectSpecifier parentSpecifier) throws Throwable {
-        if (!parentSpecifier.isUsingCache() && context.isParentValuePane()) {
+        if (parentSpecifier.isIndex() && context.isParentValuePane()) {
+            Object e = context.getParentValuePane()
+                    .getUpdatedValueCollectionElement(context.getParent(), parentSpecifier, null);
+            if (e != null && e.equals(GuiTypeValue.NO_UPDATE)) {
+                e = null;
+            }
+            return e;
+        } else if (!parentSpecifier.isUsingCache() && context.isParentValuePane()) {
             return context.getParentValuePane()
                     .getUpdatedValueWithoutNoUpdate(context.getParent(), parentSpecifier);
         } else {
@@ -208,6 +215,11 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     public int getUpdatedValueCollectionSize(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
+        Object collection = getUpdatedValueWithoutNoUpdate(context, specifier);
+        return getValueCollectionSize(context, collection, specifier);
+    }
+
+    public int getValueCollectionSize(GuiMappingContext context, Object collection, ObjectSpecifier specifier) throws Throwable {
         return 1;
     }
 
@@ -243,8 +255,10 @@ public class GuiReprValue implements GuiRepresentation {
     public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) {
         addHistoryValue(context, newValue);
 
+        //TODO indexed?
+
         if (context.isParentCollectionElement()) { //TODO improve with specifier
-            Object ret = update(context, null, specifier, newValue);
+            Object ret = update(context, null, newValue, specifier);
             if (ret != null) {
                 context.updateSourceFromGui(ret);
             }
@@ -253,14 +267,14 @@ public class GuiReprValue implements GuiRepresentation {
             if (src ==  null) {
                 System.err.println("src is null: context="  +context.getRepresentation() + " : parent=" + context.getParentRepresentation());
             }
-            Object ret = update(context, src, specifier, newValue);
+            Object ret = update(context, src, newValue, specifier);
             if (ret != null) {
                 context.updateSourceFromGui(ret);
             }
         } else if (context.isParentPropertyPane()) {
-            context.getParentPropertyPane().updateFromGuiChild(context, newValue);
+            context.getParentPropertyPane().updateFromGuiChild(context, newValue, specifier);
         } else {
-            Object ret = update(context, null, specifier, newValue);
+            Object ret = update(context, null, newValue, specifier);
             if (ret != null) {
                 context.updateSourceFromGui(ret);
             }
@@ -274,7 +288,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @param newValue a new value to be set to the property
      * @return newValue which will need to be pass to {@link GuiMappingContext#updateSourceFromGui(Object)},  or null if error
      */
-    public Object update(GuiMappingContext context, Object parentSource, ObjectSpecifier specifier, Object newValue) {
+    public Object update(GuiMappingContext context, Object parentSource, Object newValue, ObjectSpecifier specifier) {
         //TODO improve with specifier
         if (context.isTypeElementProperty()) {
             try {
@@ -286,7 +300,7 @@ public class GuiReprValue implements GuiRepresentation {
                 context.errorWhileUpdateSource(ex);
             }
         } else if (context.isParentPropertyPane()) {
-            return context.getParentPropertyPane().updateFromChild(context, parentSource, newValue);
+            return context.getParentPropertyPane().updateFromChild(context, parentSource, newValue, specifier);
         } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
             Object prev = context.getSource();
             GuiTypeValue val = context.getTypeElementValue();
@@ -433,6 +447,10 @@ public class GuiReprValue implements GuiRepresentation {
         public int getIndex() {
             return 0;
         }
+
+        public boolean isIndex() {
+            return false;
+        }
     }
 
     public static class ObjectSpecifierIndex extends ObjectSpecifier {
@@ -446,6 +464,11 @@ public class GuiReprValue implements GuiRepresentation {
         @Override
         public int getIndex() {
             return index;
+        }
+
+        @Override
+        public boolean isIndex() {
+            return true;
         }
     }
 

@@ -24,15 +24,15 @@ public class GuiReprValueFilePathField extends GuiReprValue {
     }
 
     @Override
-    public void updateFromGui(GuiMappingContext context, Object newValue) {
-        if (newValue != null && newValue instanceof Path) {
+    public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) {
+        if (newValue instanceof Path) {
             newValue = toValueFromPath(context, (Path) newValue);
         }
-        super.updateFromGui(context, newValue);
+        super.updateFromGui(context, newValue, specifier);
     }
 
     public Path toUpdateValue(GuiMappingContext context, Object value) {
-        if (value != null && value instanceof File) {
+        if (value instanceof File) {
             return ((File) value).toPath();
         } else {
             return (Path) value;
@@ -63,7 +63,7 @@ public class GuiReprValueFilePathField extends GuiReprValue {
      */
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
-        if (json != null && json instanceof String) {
+        if (json instanceof String) {
             Path p = Paths.get((String) json);
             if (File.class.isAssignableFrom(getValueType(context))) {
                 return p.toFile();

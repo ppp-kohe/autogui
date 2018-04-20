@@ -1,12 +1,15 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
+import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.GuiSwingViewNumberSpinner;
 
 import javax.swing.*;
 import java.util.Comparator;
+import java.util.function.Supplier;
 
 /**
  * a column factory for a {@link Number}.
@@ -15,15 +18,16 @@ import java.util.Comparator;
  *     the renderer is realized by {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
  *     the editor is realized by {@link autogui.swing.GuiSwingViewNumberSpinner.PropertyNumberSpinner}.
  */
-public class GuiSwingTableColumnNumber extends GUiSwingTableColumnStatic implements GuiSwingTableColumn {
+public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumnWithIndex(GuiMappingContext context, ObjectColumnIndex index) {
-        GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context);
+    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
+        GuiSwingView.SpecifierManagerDefault specifierManager = new GuiSwingView.SpecifierManagerDefault(rowSpecifier);
+        GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context, specifierManager);
         label.setHorizontalAlignment(SwingConstants.RIGHT);
         label.setOpaque(true);
-        GuiSwingViewNumberSpinner.PropertyNumberSpinner spinner = new GuiSwingViewNumberSpinner.PropertyNumberSpinner(context);
+        GuiSwingViewNumberSpinner.PropertyNumberSpinner spinner = new GuiSwingViewNumberSpinner.PropertyNumberSpinner(context, specifierManager);
         spinner.getEditorField().setBorder(BorderFactory.createEmptyBorder());
-        return new ObjectTableColumnValue(context,
+        return new ObjectTableColumnValue(context, specifierManager,
                 label,
                 spinner)
                 .withRowHeight(spinner.getPreferredSize().height)

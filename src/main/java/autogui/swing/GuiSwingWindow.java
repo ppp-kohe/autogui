@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.type.GuiTypeBuilder;
 import autogui.swing.log.GuiSwingLogManager;
 import autogui.swing.util.*;
@@ -95,7 +96,7 @@ public class GuiSwingWindow extends JFrame {
     }
 
     protected void initViewComponent() {
-        viewComponent = view.createView(context);
+        viewComponent = view.createView(context, () -> GuiReprValue.NONE);
     }
 
 

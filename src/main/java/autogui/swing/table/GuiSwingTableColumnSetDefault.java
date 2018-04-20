@@ -3,6 +3,7 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprAction;
 import autogui.base.mapping.GuiReprActionList;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingAction;
 import autogui.swing.GuiSwingActionDefault;
 import autogui.swing.GuiSwingElement;
@@ -12,6 +13,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * the default implementation of table-column-set associated with {@link autogui.base.mapping.GuiReprCollectionElement}.
@@ -25,14 +27,16 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     }
 
     @Override
-    public void createColumns(GuiMappingContext context, ObjectTableModel model) {
+    public void createColumns(GuiMappingContext context, ObjectTableModel model,
+                              Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
         model.addColumnRowIndex();
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement subView = columnMappingSet.view(subContext);
-            if (subView != null && subView instanceof GuiSwingTableColumn) {
+            if (subView instanceof GuiSwingTableColumn) {
                 GuiSwingTableColumn column = (GuiSwingTableColumn) subView;
-                model.addColumnStatic(column.createColumn(subContext));
-                ObjectTableColumnDynamicFactory columnFactory = column.createColumnDynamic(subContext);
+                model.addColumnStatic(column.createColumn(subContext, rowSpecifier));
+
+                ObjectTableColumnDynamicFactory columnFactory = column.createColumnDynamic(subContext, rowSpecifier);
                 if (columnFactory != null) {
                     model.addColumnDynamic(columnFactory);
                 }
@@ -45,7 +49,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         List<Action> actions = new ArrayList<>();
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement subView = columnMappingSet.view(subContext);
-            if (subView != null && subView instanceof GuiSwingAction) {
+            if (subView instanceof GuiSwingAction) {
                 actions.add(new TableSelectionAction(subContext, source));
             }
         }

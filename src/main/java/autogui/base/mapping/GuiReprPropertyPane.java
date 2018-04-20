@@ -90,12 +90,12 @@ public class GuiReprPropertyPane extends GuiReprValue {
         }
     }*/
 
-    public void updateFromGuiChild(GuiMappingContext child, Object newValue) {
-        updateFromGui(child.getParent(), newValue);
+    public void updateFromGuiChild(GuiMappingContext child, Object newValue, ObjectSpecifier specifier) {
+        updateFromGui(child.getParent(), newValue, specifier);
     }
 
-    public Object updateFromChild(GuiMappingContext child, Object parentSource, Object newValue) {
-        return update(child.getParent(), parentSource, newValue);
+    public Object updateFromChild(GuiMappingContext child, Object parentSource, Object newValue, ObjectSpecifier specifier) {
+        return update(child.getParent(), parentSource, newValue, specifier);
     }
 
     public boolean isEditableFromChild(GuiMappingContext context) {
@@ -119,7 +119,7 @@ public class GuiReprPropertyPane extends GuiReprValue {
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
-        if (source != null && source instanceof GuiReprValue.NamedValue) {
+        if (source instanceof GuiReprValue.NamedValue) {
             GuiReprValue.NamedValue named = (GuiReprValue.NamedValue) source;
             return toJsonProperty(context, named.value);
         } else {
@@ -149,7 +149,7 @@ public class GuiReprPropertyPane extends GuiReprValue {
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         boolean namedValue = false;
-        if (target != null && target instanceof GuiReprValue.NamedValue) {
+        if (target instanceof GuiReprValue.NamedValue) {
             target = ((GuiReprValue.NamedValue) target).value;
             namedValue = true;
         }
@@ -161,7 +161,7 @@ public class GuiReprPropertyPane extends GuiReprValue {
     }
 
     public Object fromJsonProperty(GuiMappingContext context, Object target, Object json) {
-        if (json != null && json instanceof Map<?,?>) {
+        if (json instanceof Map<?,?>) {
             Object entry = ((Map<?,?>) json).get(context.getName());
             Object ret = null;
             for (GuiMappingContext subContext : context.getChildren()) {

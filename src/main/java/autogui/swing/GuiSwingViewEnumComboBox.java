@@ -42,7 +42,7 @@ import java.util.function.Supplier;
 public class GuiSwingViewEnumComboBox implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        PropertyEnumComboBox box = new PropertyEnumComboBox(context, parentSpecifier);
+        PropertyEnumComboBox box = new PropertyEnumComboBox(context, new SpecifierManagerDefault(parentSpecifier));
         if (context.isTypeElementProperty()) {
             return box.wrapSwingNamed();
         } else {
@@ -53,16 +53,15 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     public static class PropertyEnumComboBox extends JComboBox<Object>
             implements GuiMappingContext.SourceUpdateListener, ItemListener, GuiSwingView.ValuePane<Object> { //Enum
         protected GuiMappingContext context;
-        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
-        protected GuiReprValue.ObjectSpecifier specifierCache;
+        protected SpecifierManager specifierManager;
         protected boolean listenerEnabled = true;
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyEnumComboBox(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        public PropertyEnumComboBox(GuiMappingContext context, SpecifierManager specifierManager) {
             super(getEnumConstants(context));
             this.context = context;
-            this.parentSpecifier = parentSpecifier;
+            this.specifierManager = specifierManager;
             init();
         }
 
@@ -146,7 +145,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                 Object item = getSelectedItem();
                 GuiReprValueEnumComboBox box = (GuiReprValueEnumComboBox) context.getRepresentation();
                 if (box.isEditable(context)) {
-                    box.updateFromGui(context, item);
+                    box.updateFromGui(context, item, getSpecifier());
                 }
             }
         }
@@ -191,11 +190,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
-        }
-
-        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
-            this.specifierCache = specifierCache;
+            return specifierManager.getSpecifier();
         }
     }
 

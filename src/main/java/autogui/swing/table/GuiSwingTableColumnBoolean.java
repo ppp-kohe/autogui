@@ -1,6 +1,8 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
+import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewBooleanCheckBox;
 
 import javax.swing.*;
@@ -8,6 +10,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.EventObject;
+import java.util.function.Supplier;
 
 /**
  * a column factory for {@link Boolean}.
@@ -18,19 +21,20 @@ import java.util.EventObject;
 public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
 
     @Override
-    public ObjectTableColumn createColumn(GuiMappingContext context) {
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox view = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context);
+    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
+        GuiSwingView.SpecifierManagerDefault specifierManager = new GuiSwingView.SpecifierManagerDefault(rowSpecifier);
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox view = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, specifierManager);
         view.setHorizontalAlignment(SwingConstants.CENTER);
         view.setBorderPainted(true);
         view.setOpaque(true);
 
 
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox editor = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context);
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox editor = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, specifierManager);
         editor.setHorizontalAlignment(SwingConstants.CENTER);
         editor.setBorderPainted(true);
         editor.setOpaque(true);
 
-        ObjectTableColumnValue column = new ObjectTableColumnValue(context,
+        ObjectTableColumnValue column = new ObjectTableColumnValue(context, specifierManager,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(view),
                 new CheckBoxEditor(editor, view == editor));
         column.withComparator(Comparator.comparing(Boolean.class::cast));

@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 public class GuiSwingViewLabel implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        PropertyLabel label = new PropertyLabel(context, parentSpecifier);
+        PropertyLabel label = new PropertyLabel(context, new SpecifierManagerDefault(parentSpecifier));
         if (context.isTypeElementProperty()) {
             return label.wrapSwingNamed();
         } else {
@@ -49,15 +49,14 @@ public class GuiSwingViewLabel implements GuiSwingView {
     public static class PropertyLabel extends JLabel
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
         protected GuiMappingContext context;
-        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
-        protected GuiReprValue.ObjectSpecifier specifierCache;
+        protected SpecifierManager specifierManager;
         protected Object value;
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyLabel(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        public PropertyLabel(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
-            this.parentSpecifier = parentSpecifier;
+            this.specifierManager = specifierManager;
             init();
         }
 
@@ -163,11 +162,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
-        }
-
-        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
-            this.specifierCache = specifierCache;
+            return specifierManager.getSpecifier();
         }
     }
 

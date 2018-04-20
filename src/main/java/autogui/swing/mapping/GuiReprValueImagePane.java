@@ -183,7 +183,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
     }
 
     @Override
-    public void updateFromGui(GuiMappingContext context, Object newValue) {
+    public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) {
         Class<?> valueType = getValueType(context);
         //image conversion
         if (valueType != null) {
@@ -193,6 +193,6 @@ public class GuiReprValueImagePane extends GuiReprValue {
                 newValue = getBufferedImage(context, newValue);
             }
         }
-        super.updateFromGui(context, newValue);
+        super.updateFromGui(context, newValue, specifier);
     }
 }

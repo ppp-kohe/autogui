@@ -43,22 +43,21 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         JPanel pane = new GuiSwingView.ValueWrappingPane(new FlowLayout(FlowLayout.LEADING));
         pane.setOpaque(false);
         pane.setBorder(BorderFactory.createEmptyBorder());
-        pane.add(new PropertyCheckBox(context, parentSpecifier));
+        pane.add(new PropertyCheckBox(context, new SpecifierManagerDefault(parentSpecifier)));
         return pane;
     }
 
     public static class PropertyCheckBox extends JCheckBox
             implements ActionListener, GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Boolean> {
         protected GuiMappingContext context;
-        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
-        protected GuiReprValue.ObjectSpecifier specifierCache;
+        protected SpecifierManager specifierManager;
         protected PopupExtension popup;
 
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyCheckBox(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        public PropertyCheckBox(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
-            this.parentSpecifier = parentSpecifier;
+            this.specifierManager = specifierManager;
             init();
         }
 
@@ -129,7 +128,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         @Override
         public void actionPerformed(ActionEvent e) {
             GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
-            repr.updateFromGui(context, isSelected());
+            repr.updateFromGui(context, isSelected(), getSpecifier());
         }
 
         @Override
@@ -153,7 +152,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         public void setSwingViewValueWithUpdate(Boolean value) {
             GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
             if (repr.isEditable(context)) {
-                repr.updateFromGui(context, value);
+                repr.updateFromGui(context, value, getSpecifier());
             }
             setSwingViewValue(value);
         }
@@ -170,11 +169,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
-        }
-
-        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
-            this.specifierCache = specifierCache;
+            return specifierManager.getSpecifier();
         }
     }
 

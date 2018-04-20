@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        ValuePane<Object> comp = new PropertyEmbeddedPane(context, parentSpecifier);
+        ValuePane<Object> comp = new PropertyEmbeddedPane(context, new SpecifierManagerDefault(parentSpecifier));
         if (context.isTypeElementProperty()) {
             return comp.wrapSwingProperty();
         } else {
@@ -44,15 +44,14 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
     public static class PropertyEmbeddedPane extends JComponent
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
         protected GuiMappingContext context;
-        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
-        protected GuiReprValue.ObjectSpecifier specifierCache;
+        protected SpecifierManager specifierManager;
 
         protected PopupExtension popup;
         protected JComponent component;
 
-        public PropertyEmbeddedPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        public PropertyEmbeddedPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
-            this.parentSpecifier = parentSpecifier;
+            this.specifierManager = specifierManager;
         }
 
         public void init() {
@@ -143,17 +142,13 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
             setSwingViewValue(value);
             GuiReprEmbeddedComponent repr = (GuiReprEmbeddedComponent) getSwingViewContext().getRepresentation();
             if (repr.isEditable(getSwingViewContext())) {
-                repr.updateFromGui(getSwingViewContext(), value);
+                repr.updateFromGui(getSwingViewContext(), value, getSpecifier());
             }
         }
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
-        }
-
-        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
-            this.specifierCache = specifierCache;
+            return specifierManager.getSpecifier();
         }
     }
 }

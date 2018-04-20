@@ -63,7 +63,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
     }
 
     protected ObjectPane createObjectPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        return new ObjectPane(context, parentSpecifier);
+        return new ObjectPane(context, new SpecifierManagerDefault(parentSpecifier));
     }
 
     public void createSubView(GuiMappingContext subContext, ObjectPane pane, GuiSwingView view) {
@@ -104,8 +104,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
     public static class ObjectPane extends JPanel implements GuiMappingContext.SourceUpdateListener, ValuePane<Object>,
         GuiSwingPreferences.PreferencesUpdateSupport {
         protected GuiMappingContext context;
-        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
-        protected GuiReprValue.ObjectSpecifier specifierCache;
+        protected SpecifierManager specifierManager;
         protected JToolBar actionToolBar;
         protected JComponent contentPane;
         protected JComponent resizableSubComponents;
@@ -117,9 +116,9 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         protected SplitPreferencesUpdater preferencesUpdater;
         protected SettingsWindow.LabelGroup labelGroup;
 
-        public ObjectPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        public ObjectPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
-            this.parentSpecifier = parentSpecifier;
+            this.specifierManager = specifierManager;
             init();
         }
 
@@ -320,7 +319,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         public void setSwingViewValueWithUpdate(Object value) {
             GuiReprObjectPane objectPane = (GuiReprObjectPane) getSwingViewContext().getRepresentation();
             if (objectPane.isEditable(getSwingViewContext())) {
-                objectPane.updateFromGui(getSwingViewContext(), value);
+                objectPane.updateFromGui(getSwingViewContext(), value, getSpecifier());
             } else {
                 context.updateSourceFromGui(value);
             }
@@ -365,11 +364,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
-        }
-
-        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
-            this.specifierCache = specifierCache;
+            return specifierManager.getSpecifier();
         }
     }
 
@@ -479,7 +474,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
-            if (json != null && json instanceof List<?>) {
+            if (json instanceof List<?>) {
                 splits.clear();
                 for (Object item : (List<?>) json) {
                     PreferencesForSplitEntry e = new PreferencesForSplitEntry();

@@ -99,7 +99,7 @@ public class GuiReprObjectPane extends GuiReprValue {
 
     @SuppressWarnings("unchecked")
     public static Object unwrapPropertyMap(GuiMappingContext s, Object subObj) {
-        if (subObj != null && subObj instanceof Map<?,?>) {
+        if (subObj instanceof Map<?,?>) {
             Map<String,?> subMap = (Map<String,?>) subObj;
             if (subMap.size() == 1 && subMap.containsKey(s.getName())) { //not a value entry, but a property
                 return subMap.get(s.getName());
@@ -154,7 +154,7 @@ public class GuiReprObjectPane extends GuiReprValue {
                             }
                             Object subNewValue = reprValue.fromJson(subContext,
                                     reprValue.getValueWithoutNoUpdate(subContext, target, GuiReprValue.NONE), jsonEntry);
-                            reprValue.update(subContext, target, subNewValue);
+                            reprValue.update(subContext, target, subNewValue, GuiReprValue.NONE); //TODO OK?
                         } catch (Throwable ex) {
                             subContext.errorWhileJson(ex);
                         }

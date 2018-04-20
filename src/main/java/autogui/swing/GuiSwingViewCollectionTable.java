@@ -56,14 +56,15 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        CollectionTable table = new CollectionTable(context, parentSpecifier);
+        CollectionTable table = new CollectionTable(context, new SpecifierManagerDefault(parentSpecifier));
+        Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier = table::getRowSpecifier;
         List<Action> actions = new ArrayList<>();
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement subView = columnMapperSet.view(subContext);
-            if (subView != null && subView instanceof GuiSwingTableColumnSet) {
+            if (subView instanceof GuiSwingTableColumnSet) {
                 GuiSwingTableColumnSet columnSet = (GuiSwingTableColumnSet) subView;
 
-                columnSet.createColumns(subContext, table.getObjectTableModel());
+                columnSet.createColumns(subContext, table.getObjectTableModel(), rowSpecifier);
 
                 actions.addAll(columnSet.createColumnActions(subContext, table));
             }
@@ -102,8 +103,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<List<?>>,
                         GuiSwingTableColumnSet.TableSelectionSource, GuiSwingPreferences.PreferencesUpdateSupport {
         protected GuiMappingContext context;
-        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
-        protected GuiReprValue.ObjectSpecifier specifierCache;
+        protected SpecifierManager specifierManager;
         protected List<?> source;
         protected PopupExtensionCollection popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
@@ -117,9 +117,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected TableSelectionSourceForIndexes selectionSourceForRowIndexes;
         protected TableSelectionSourceForIndexes selectionSourceForRowAndColumnIndexes;
 
-        public CollectionTable(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        public CollectionTable(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
-            this.parentSpecifier = parentSpecifier;
+            this.specifierManager = specifierManager;
             init();
         }
 
@@ -144,7 +144,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initModel() {
-            ObjectTableModel model = new ObjectTableModelCollection(context, this::getSpecifier);
+            ObjectTableModel model = new ObjectTableModelCollection(context, this::getSpecifier, this::getSource);
             model.setTable(this);
             setModel(model);
             setColumnModel(model.getColumnModel());
@@ -311,8 +311,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             return popup.getMenuBuilder();
         }
 
-        public ObjectTableModel getObjectTableModel() {
-            return (ObjectTableModel) getModel();
+        public ObjectTableModelCollection getObjectTableModel() {
+            return (ObjectTableModelCollection) getModel();
         }
 
         public List<?> getSource() {
@@ -341,7 +341,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setSwingViewValue(List<?> value) {
             GuiReprCollectionTable repr = (GuiReprCollectionTable) context.getRepresentation();
             source = repr.toUpdateValue(context, value);
-            //TODO getObjectTableModel().setSourceFromSupplier();
         }
 
         @Override
@@ -491,31 +490,38 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
+            return specifierManager.getSpecifier();
         }
 
-        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
-            this.specifierCache = specifierCache;
+        public GuiReprValue.ObjectSpecifier getRowSpecifier() {
+            return getObjectTableModel().getRowSpecifierManager().getSpecifier();
         }
     }
 
     public static class ObjectTableModelCollection extends ObjectTableModel {
         protected GuiMappingContext context;
         protected Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier;
+        protected Supplier<Object> source;
+        protected SpecifierManagerIndex rowSpecifierManager;
 
-        public ObjectTableModelCollection(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier) {
+        public ObjectTableModelCollection(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier,
+                                          Supplier<Object> source) {
             this.context = context;
             this.tableSpecifier = tableSpecifier;
+            this.source = source;
+            this.rowSpecifierManager = new SpecifierManagerIndex(tableSpecifier);
         }
 
         @Override
-        public Object getRowAtIndex(int row, Object prev) {
+        public Object getRowAtIndex(int row) {
+            Object collection = getCollectionFromSource();
             GuiReprValue.ObjectSpecifier specifier = new GuiReprValue.ObjectSpecifierIndex(tableSpecifier.get(), row);
             try {
+                rowSpecifierManager.setIndex(row);
                 Object v = context.getReprValue()
-                        .getUpdatedValueCollectionElement(context, specifier, prev);
+                        .getValueCollectionElement(context, collection, specifier, null);
                 if (v != null && v.equals(GuiTypeValue.NO_UPDATE)) {
-                    v = prev;
+                    v = null;
                 }
                 return v;
             } catch (Throwable ex) {
@@ -525,12 +531,48 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public int getRowCount() {
+            Object collection = getCollectionFromSource();
             try {
                 return context.getParent().getReprValue()
-                        .getUpdatedValueCollectionSize(context, tableSpecifier.get());
+                        .getValueCollectionSize(context, collection, tableSpecifier.get());
             } catch (Throwable ex) {
                 throw new RuntimeException(ex);
             }
+        }
+
+        public Object getCollectionFromSource() {
+            Object collection = source.get();
+            if (collection == null) {
+                try {
+                    collection = context.getReprValue()
+                            .getUpdatedValueWithoutNoUpdate(context, tableSpecifier.get());
+                } catch (Throwable ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+            return collection;
+        }
+
+        public SpecifierManagerIndex getRowSpecifierManager() {
+            return rowSpecifierManager;
+        }
+    }
+
+    public static class SpecifierManagerIndex implements SpecifierManager {
+        protected Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier;
+        protected int index;
+
+        public SpecifierManagerIndex(Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier) {
+            this.tableSpecifier = tableSpecifier;
+        }
+
+        public void setIndex(int index) {
+            this.index = index;
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return new GuiReprValue.ObjectSpecifierIndex(tableSpecifier.get(), index);
         }
     }
 

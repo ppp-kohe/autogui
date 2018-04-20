@@ -839,19 +839,30 @@ public interface GuiSwingView extends GuiSwingElement {
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), paste.getValue(Action.NAME));
     }
 
-    static GuiReprValue.ObjectSpecifier getSpecifierDefault(Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier,
-                                                             GuiReprValue.ObjectSpecifier cachePrevious,
-                                                             Consumer<GuiReprValue.ObjectSpecifier> cacheSetter) {
-
-        GuiReprValue.ObjectSpecifier parentSpec = null;
-        if (parentSpecifier != null) {
-            parentSpec = parentSpecifier.get();
-            if (cachePrevious != null && cachePrevious.getParent().equals(parentSpec)) {
-                return cachePrevious;
-            }
-        }
-        GuiReprValue.ObjectSpecifier newSpec = new GuiReprValue.ObjectSpecifier(parentSpec, false);
-        cacheSetter.accept(newSpec);
-        return newSpec;
+    interface SpecifierManager {
+        GuiReprValue.ObjectSpecifier getSpecifier();
     }
+
+    class SpecifierManagerDefault implements SpecifierManager {
+        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
+        protected GuiReprValue.ObjectSpecifier specifierCache;
+
+        public SpecifierManagerDefault(Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+            this.parentSpecifier = parentSpecifier;
+        }
+
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            GuiReprValue.ObjectSpecifier parentSpec = null;
+            if (parentSpecifier != null) {
+                parentSpec = parentSpecifier.get();
+                if (specifierCache != null && specifierCache.getParent().equals(parentSpec)) {
+                    return specifierCache;
+                }
+            }
+            specifierCache = new GuiReprValue.ObjectSpecifier(parentSpec, false);
+            return specifierCache;
+        }
+    }
+
+
 }

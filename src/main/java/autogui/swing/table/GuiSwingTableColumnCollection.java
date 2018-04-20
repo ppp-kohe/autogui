@@ -1,14 +1,55 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
+import autogui.swing.GuiSwingViewCollectionTable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
-public class GuiSwingTableColumnCollection implements ObjectTableColumnDynamicFactory {
-    protected GuiSwingTableColumn column;
+public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
+
     @Override
-    public int getColumnCount(GuiMappingContext context, List<?> source) {
+    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
+        return null;
+    }
+
+    @Override
+    public ObjectTableColumnDynamicFactory createColumnDynamic(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
+        return null;
+    }
+
+    public static class ObjectTableColumnDynamicCollection implements ObjectTableColumnDynamicFactory {
+        protected GuiMappingContext context;
+        protected GuiSwingViewCollectionTable.SpecifierManagerIndex columnSpecifidManager;
+
+        @Override
+        public int getColumnCount() {
+
+        }
+
+        @Override
+        public ObjectTableColumn createColumn(ObjectColumnIndex columnIndex) {
+            return null;
+        }
+    }
+
+    protected GuiMappingContext context;
+    protected GuiSwingTableColumn column;
+
+    @Override
+    public int getColumnCount() {
+        context.getParent().getReprValue().getUpdatedValueWithoutNoUpdate(context.getParent(), );
+    }
+
+    @Override
+    public ObjectTableColumn createColumn(ObjectColumnIndex columnIndex) {
+        return null;
+    }
+
+    @Override
+    public int getColumnCount(List<?> source) {
         GuiMappingContext childContext = context.getChildren().get(0);
         ObjectTableColumnDynamicFactory child = column.createColumnDynamic(childContext);
         return source.stream()

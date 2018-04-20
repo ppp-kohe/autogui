@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -31,32 +32,35 @@ import java.util.stream.Collectors;
  */
 public class ObjectTableColumnValue extends ObjectTableColumn {
     protected GuiMappingContext context;
+    protected GuiSwingView.SpecifierManager specifierManager;
     protected int contextIndex = -1;
     protected TableCellRenderer renderer;
     protected TableCellEditor editor;
+
     /**
      * the representation of the context must be a sub-type of {@link GuiReprValue}.
      * view must be a {@link autogui.swing.GuiSwingView.ValuePane}
      * @param context the associated context
      * @param view the component for both editor and renderer
      */
-    public ObjectTableColumnValue(GuiMappingContext context, JComponent view) {
-        this(context, view, view);
+    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, JComponent view) {
+        this(context, specifierManager, view, view);
     }
 
-    public ObjectTableColumnValue(GuiMappingContext context, JComponent view, JComponent editorView) {
-        this(context, new ObjectTableCellRenderer(view),
+    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, JComponent view, JComponent editorView) {
+        this(context, specifierManager, new ObjectTableCellRenderer(view),
                 editorView == null ? null : new ObjectTableCellEditor(editorView, view == editorView));
         setRowHeight(view.getPreferredSize().height + 4);
     }
 
-    public ObjectTableColumnValue(GuiMappingContext context, TableCellRenderer renderer, TableCellEditor editor) {
+    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, TableCellRenderer renderer, TableCellEditor editor) {
         this.context = context;
         this.renderer = renderer;
         this.editor = editor;
+        this.specifierManager = specifierManager;
 
         GuiRepresentation parentRepr =  context.getParentRepresentation();
-        if (parentRepr != null && parentRepr instanceof GuiReprCollectionElement) {
+        if (parentRepr instanceof GuiReprCollectionElement) {
             this.contextIndex = ((GuiReprCollectionElement) parentRepr).getFixedColumnIndex(context.getParent(), context);
         }
 
@@ -98,11 +102,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
      */
     @Override
     public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
-        GuiReprValue field = (GuiReprValue) context.getRepresentation();
-        GuiReprCollectionElement col = (GuiReprCollectionElement) context.getParent().getRepresentation();
+        GuiReprValue field = context.getReprValue();
         try {
-            return field.toUpdateValue(context,
-                    col.getCellValue(context.getParent(), context, rowObject, rowIndex, this.contextIndex));
+            return field.getValueWithoutNoUpdate(context, rowObject, specifierManager.getSpecifier());
                //the columnIndex is an index on the view model, so it passes contextIndex as the context's column index
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
@@ -120,8 +122,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
      */
     @Override
     public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
-        GuiReprCollectionElement col = (GuiReprCollectionElement) context.getParentRepresentation();
-        col.updateCellFromGui(context.getParent(), context, rowObject, rowIndex, this.contextIndex, newColumnValue);
+        context.getReprValue().update(context, rowObject, newColumnValue, specifierManager.getSpecifier());
         return null;
     }
 

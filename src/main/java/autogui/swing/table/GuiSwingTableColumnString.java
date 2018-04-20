@@ -1,31 +1,35 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
+import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewStringField;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.function.Supplier;
 
 /**
  * a column factory for {@link String}.
  * <p>
  *     both editor and renderer are realized by a sub-class of {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
  */
-public class GuiSwingTableColumnString extends GUiSwingTableColumnStatic implements GuiSwingTableColumn {
+public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumnWithIndex(GuiMappingContext context, ObjectColumnIndex index) {
-        return new ObjectTableColumnValue(context,
-                new ColumnEditTextPane(context, false),
-                new ColumnEditTextPane(context, true))
+    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
+        GuiSwingView.SpecifierManagerDefault specifierManager = new GuiSwingView.SpecifierManagerDefault(rowSpecifier);
+        return new ObjectTableColumnValue(context, specifierManager,
+                new ColumnEditTextPane(context, specifierManager, false),
+                new ColumnEditTextPane(context, specifierManager, true))
                     .withComparator(Comparator.comparing(String.class::cast));
     }
 
     /** a component for editor and renderer */
     public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyStringPane {
         protected boolean editor;
-        public ColumnEditTextPane(GuiMappingContext context, boolean editor) {
-            super(context);
+        public ColumnEditTextPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, boolean editor) {
+            super(context, specifierManager);
             this.editor = editor;
             if (!editor) {
                 getField().setEditable(false);

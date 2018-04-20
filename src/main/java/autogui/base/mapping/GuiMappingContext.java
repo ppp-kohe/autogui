@@ -664,9 +664,9 @@ public class GuiMappingContext {
      *     Also, the listeners of the context will be updated.
      * @param value the updated value
      */
-    public void setValue(Object value) {
+    public void setValue(Object value, GuiReprValue.ObjectSpecifier specifier) {
         if (isReprValue()) {
-            getReprValue().updateFromGui(this, value);
+            getReprValue().updateFromGui(this, value, specifier);
             sendUpdateToListeners(getRoot());
         } else {
             throw new UnsupportedOperationException("" + getRepresentation());

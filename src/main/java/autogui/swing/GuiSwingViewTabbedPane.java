@@ -21,7 +21,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
 
     @Override
     protected ObjectPane createObjectPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        return new ObjectTabbedPane(context, parentSpecifier);
+        return new ObjectTabbedPane(context, new SpecifierManagerDefault(parentSpecifier));
     }
 
     @Override
@@ -36,8 +36,8 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         protected JTabbedPane tabbedPane;
         protected TabPreferencesUpdater tabPreferencesUpdater;
 
-        public ObjectTabbedPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-            super(context, parentSpecifier);
+        public ObjectTabbedPane(GuiMappingContext context, SpecifierManager specifierManager) {
+            super(context, specifierManager);
         }
 
         public JTabbedPane getTabbedPane() {
@@ -164,7 +164,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
-            if (json != null && json instanceof Map<?,?>) {
+            if (json instanceof Map<?,?>) {
                 Map<String,Object> map = (Map<String,Object>) json;
                 selectedIndex = (Integer) map.getOrDefault("selectedIndex", selectedIndex);
             }

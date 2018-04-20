@@ -114,7 +114,7 @@ public abstract class ObjectTableModel extends AbstractTableModel {
     }
 
     private int compare(int n, int[] r) {
-        if (r[0] <= n && n < r[0]) {
+        if (r[0] <= n && n < r[1]) {
             return 0;
         } else if (n < r[0]) {
             return -1;
@@ -202,7 +202,7 @@ public abstract class ObjectTableModel extends AbstractTableModel {
         return super.getColumnName(column);
     }
 
-    public abstract Object getRowAtIndex(int row, Object prev);
+    public abstract Object getRowAtIndex(int row);
 
     public boolean buildDataArray() {
         int rows = getRowCount();
@@ -266,11 +266,7 @@ public abstract class ObjectTableModel extends AbstractTableModel {
      * @return the cell value, nullable
      */
     public Object takeValueFromSource(Object[] rowData, int rowIndex, int columnIndex) {
-        Object prev = rowData[rowIndex];
-        if (prev != null && prev.equals(NULL_CELL)) {
-            prev = null;
-        }
-        Object rowObject = getRowAtIndex(rowIndex, prev);
+        Object rowObject = getRowAtIndex(rowIndex);
         Object cellObject = getColumnAt(columnIndex)
                 .getCellValue(rowObject, rowIndex, columnIndex);
 

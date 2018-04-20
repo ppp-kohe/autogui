@@ -46,7 +46,7 @@ import java.util.function.Supplier;
 public class GuiSwingViewImagePane implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        PropertyImagePane imagePane = new PropertyImagePane(context, parentSpecifier);
+        PropertyImagePane imagePane = new PropertyImagePane(context, new SpecifierManagerDefault(parentSpecifier));
         ValuePane<Image> pane = new GuiSwingView.ValueScrollPane<>(imagePane);
         if (context.isTypeElementProperty()) {
             return pane.wrapSwingProperty();
@@ -63,8 +63,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     public static class PropertyImagePane extends JComponent
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Image> {
         protected GuiMappingContext context;
-        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
-        protected GuiReprValue.ObjectSpecifier specifierCache;
+        protected SpecifierManager specifierManager;
         protected Image image;
         protected Dimension imageSize = new Dimension(1, 1);
         protected boolean editable;
@@ -79,9 +78,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyImagePane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        public PropertyImagePane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
-            this.parentSpecifier = parentSpecifier;
+            this.specifierManager = specifierManager;
             init();
         }
 
@@ -123,7 +122,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public void setImageScaleAutoSwitchByMouseWheel(boolean imageScaleAutoSwitchByMouseWheel) {
             this.imageScaleAutoSwitchByMouseWheel = imageScaleAutoSwitchByMouseWheel;
-            if (imageScale != null && imageScale instanceof MouseWheelListener) {
+            if (imageScale instanceof MouseWheelListener) {
                 if (imageScaleAutoSwitchByMouseWheel) {
                     addMouseWheelListener((MouseWheelListener) imageScale);
                 } else {
@@ -254,7 +253,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             setImageWithoutContextUpdate(image);
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
             if (img.isEditable(context)) {
-                img.updateFromGui(context, image);
+                img.updateFromGui(context, image, getSpecifier());
             }
         }
 
@@ -303,7 +302,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public void setImageScale(ImageScale imageScale) {
             if (imageScale != this.imageScale) {
                 ImageScale oldScale = this.imageScale;
-                if (this.imageScale != null && this.imageScale instanceof MouseWheelListener) {
+                if (this.imageScale instanceof MouseWheelListener) {
                     removeMouseWheelListener((MouseWheelListener) this.imageScale);
                 }
                 this.imageScale = imageScale;
@@ -314,7 +313,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                     ((ImageScaleMouseWheel) imageScale).setCurrentZoom(p);
                 }
 
-                if (imageScale != null && imageScale instanceof MouseWheelListener &&
+                if (imageScale instanceof MouseWheelListener &&
                         isImageScaleAutoSwitchByMouseWheel()) {
                     addMouseWheelListener((MouseWheelListener) imageScale);
                 }
@@ -357,11 +356,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
-        }
-
-        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
-            this.specifierCache = specifierCache;
+            return specifierManager.getSpecifier();
         }
     }
 

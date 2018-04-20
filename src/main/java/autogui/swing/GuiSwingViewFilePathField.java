@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 public class GuiSwingViewFilePathField implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        PropertyFilePathPane field = new PropertyFilePathPane(context, parentSpecifier);
+        PropertyFilePathPane field = new PropertyFilePathPane(context, new SpecifierManagerDefault(parentSpecifier));
         if (context.isTypeElementProperty()) {
             return field.wrapSwingNamed();
         } else {
@@ -50,18 +50,17 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
     public static class PropertyFilePathPane extends SearchTextFieldFilePath
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> { //ValuePane<File|Path>
         protected GuiMappingContext context;
-        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
-        protected GuiReprValue.ObjectSpecifier specifierCache;
+        protected SpecifierManager specifierManager;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyFilePathPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-            this(context, parentSpecifier, new SearchTextFieldModelFilePath());
+        public PropertyFilePathPane(GuiMappingContext context, SpecifierManager specifierManager) {
+            this(context, specifierManager, new SearchTextFieldModelFilePath());
         }
 
-        public PropertyFilePathPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier, SearchTextFieldModelFilePath model) {
+        public PropertyFilePathPane(GuiMappingContext context, SpecifierManager specifierManager, SearchTextFieldModelFilePath model) {
             super(model);
             this.context = context;
-            this.parentSpecifier = parentSpecifier;
+            this.specifierManager = specifierManager;
             initLazy();
         }
 
@@ -142,7 +141,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         public void selectSearchedItemFromGui(PopupCategorized.CategorizedMenuItem item) {
             super.selectSearchedItemFromGui(item);
             GuiReprValueFilePathField path = (GuiReprValueFilePathField) context.getRepresentation();
-            path.updateFromGui(context, getFile());
+            path.updateFromGui(context, getFile(), getSpecifier());
         }
 
         /** update property: search done, and then the matched item will be set to the target property*/
@@ -151,7 +150,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
             super.selectSearchedItemFromModel(item);
             GuiReprValueFilePathField path = (GuiReprValueFilePathField) context.getRepresentation();
             if (path.isEditable(context)) {
-                path.updateFromGui(context, getFile());
+                path.updateFromGui(context, getFile(), getSpecifier());
             }
         }
 
@@ -205,11 +204,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
-        }
-
-        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
-            this.specifierCache = specifierCache;
+            return specifierManager.getSpecifier();
         }
     }
 }

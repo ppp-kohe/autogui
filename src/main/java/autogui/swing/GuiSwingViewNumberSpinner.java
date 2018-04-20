@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
 public class GuiSwingViewNumberSpinner implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        PropertyNumberSpinner spinner = new PropertyNumberSpinner(context, parentSpecifier);
+        PropertyNumberSpinner spinner = new PropertyNumberSpinner(context, new SpecifierManagerDefault(parentSpecifier));
         if (context.isTypeElementProperty()) {
             return spinner.wrapSwingNamed();
         } else {
@@ -162,8 +162,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>, SettingsWindowClient,
             GuiSwingPreferences.PreferencesUpdateSupport {
         protected GuiMappingContext context;
-        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
-        protected GuiReprValue.ObjectSpecifier specifierCache;
+        protected SpecifierManager specifierManager;
         protected ScheduledTaskRunner.EditingRunner editingRunner;
         protected PopupExtensionText popup;
         protected KeyUndoManager undoManager = new KeyUndoManager();
@@ -174,10 +173,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected NumberSettingAction settingAction;
 
-        public PropertyNumberSpinner(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        public PropertyNumberSpinner(GuiMappingContext context, SpecifierManager specifierManager) {
             super(createModel(context));
             this.context = context;
-            this.parentSpecifier = parentSpecifier;
+            this.specifierManager = specifierManager;
             init();
         }
 
@@ -286,7 +285,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             SwingUtilities.invokeLater(() -> {
                 GuiReprValueNumberSpinner field = (GuiReprValueNumberSpinner) context.getRepresentation();
                 if (field.isEditable(context)) {
-                    field.updateFromGui(context, getValue());
+                    field.updateFromGui(context, getValue(), getSpecifier());
                 }
             });
         }
@@ -385,11 +384,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
-        }
-
-        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
-            this.specifierCache = specifierCache;
+            return specifierManager.getSpecifier();
         }
     }
 

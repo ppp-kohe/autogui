@@ -166,10 +166,9 @@ public class GuiReprCollectionTable extends GuiReprValue {
     }
 
     @Override
-    public int getUpdatedValueCollectionSize(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
-        Object list = getUpdatedValueWithoutNoUpdate(context, specifier);
+    public int getValueCollectionSize(GuiMappingContext context, Object collection, ObjectSpecifier specifier) throws Throwable {
         GuiTypeCollection collType = context.getTypeElementCollection();
-        return context.execute(() -> collType.getSize(list));
+        return context.execute(() -> collType.getSize(collection));
     }
 
     @Override

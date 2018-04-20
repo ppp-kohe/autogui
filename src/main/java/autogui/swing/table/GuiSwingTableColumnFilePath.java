@@ -1,6 +1,8 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
+import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewFilePathField;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.SearchTextField;
@@ -12,6 +14,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * a column factory for {@link java.io.File} or {@link Path}.
@@ -19,12 +22,13 @@ import java.util.List;
  *     both editor and renderer are realized by a sub-class of
  *     {@link autogui.swing.GuiSwingViewFilePathField.PropertyFilePathPane}.
  */
-public class GuiSwingTableColumnFilePath extends GUiSwingTableColumnStatic implements GuiSwingTableColumn {
+public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     @Override
-    public ObjectTableColumn createColumnWithIndex(GuiMappingContext context, ObjectColumnIndex index) {
-        return new ObjectTableColumnValue(context,
-                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, false)),
-                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, true), false))
+    public ObjectTableColumn createColumn(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
+        GuiSwingView.SpecifierManagerDefault specifierManager = new GuiSwingView.SpecifierManagerDefault(rowSpecifier);
+        return new ObjectTableColumnValue(context, specifierManager,
+                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, specifierManager,false)),
+                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, specifierManager, true), false))
                 .withComparator(Comparator.comparing(Path.class::cast));
     }
 
@@ -33,8 +37,8 @@ public class GuiSwingTableColumnFilePath extends GUiSwingTableColumnStatic imple
      */
     public static class ColumnEditFilePath extends GuiSwingViewFilePathField.PropertyFilePathPane {
         protected boolean editor;
-        public ColumnEditFilePath(GuiMappingContext context, boolean editor) {
-            super(context, editor ?
+        public ColumnEditFilePath(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, boolean editor) {
+            super(context, specifierManager, editor ?
                     new SearchTextFieldModelFilePath() :
                     new SearchTextFieldModelFilePathEmpty());
             this.editor = editor;

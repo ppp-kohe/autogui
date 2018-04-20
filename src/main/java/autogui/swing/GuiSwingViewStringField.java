@@ -37,7 +37,7 @@ import java.util.function.Supplier;
 public class GuiSwingViewStringField implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        PropertyStringPane field = new PropertyStringPane(context, parentSpecifier);
+        PropertyStringPane field = new PropertyStringPane(context, new SpecifierManagerDefault(parentSpecifier));
         if (context.isTypeElementProperty()) {
             return field.wrapSwingNamed();
         } else {
@@ -53,13 +53,12 @@ public class GuiSwingViewStringField implements GuiSwingView {
     public static class PropertyStringPane extends SearchTextField
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<String> {
         protected GuiMappingContext context;
-        protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
-        protected GuiReprValue.ObjectSpecifier specifierCache;
+        protected SpecifierManager specifierManager;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        public PropertyStringPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        public PropertyStringPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
-            this.parentSpecifier = parentSpecifier;
+            this.specifierManager = specifierManager;
             initLazy();
         }
 
@@ -150,7 +149,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
             if (modified) {
                 GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
                 if (str.isEditable(context)) {
-                    str.updateFromGui(context, getField().getText());
+                    str.updateFromGui(context, getField().getText(), getSpecifier());
                 }
             }
         }
@@ -193,11 +192,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return GuiSwingView.getSpecifierDefault(parentSpecifier, this.specifierCache, this::setSpecifierCache);
-        }
-
-        public void setSpecifierCache(GuiReprValue.ObjectSpecifier specifierCache) {
-            this.specifierCache = specifierCache;
+            return specifierManager.getSpecifier();
         }
     }
 
