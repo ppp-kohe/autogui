@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +29,7 @@ public abstract class ObjectTableModel extends AbstractTableModel {
     protected List<ObjectTableColumnDynamicFactory> dynamicColumns = new ArrayList<>();
     protected List<int[]> dynamicColumnSize = new ArrayList<>(); //{start,endExclusive}
     protected JTable table;
+    protected Supplier<Object> source;
 
     protected DefaultTableColumnModel columnModel;
     /** cached computed values */
@@ -84,19 +86,26 @@ public abstract class ObjectTableModel extends AbstractTableModel {
     }
 
     public ObjectTableColumn getColumnAt(int columnIndex) {
-        ObjectColumnIndex i = new ObjectColumnIndex(null, columns.size(), 0);
-        while (columnIndex >= columns.size()) {
-            ObjectTableColumn c = getColumnDynamic(columnIndex).createColumn(i);
-            if (c == null) {
-                break;
+        if (columnIndex >= columns.size()) {
+            int idx = getColumnDynamicIndex(columnIndex);
+            int current = getColumnDynamicIndex(columns.size() - 1);
+            while (current <= idx) {
+                ObjectTableColumnDynamicFactory column = dynamicColumns.get(current);
+                int[] range = dynamicColumnSize.get(current);
+                ObjectColumnIndex totalIndex = new ObjectColumnIndex(null, columns.size(), columns.size() - range[0]);
+                int creating = range[1] - columns.size();
+
+                for (int i = 0; i < creating; ++i) {
+                    columns.add(column.createColumn(totalIndex));
+                    totalIndex.increment(1);
+                }
+                ++current;
             }
-            addColumn(c);
-            i.increment(1);
         }
         return columns.get(columnIndex);
     }
 
-    public ObjectTableColumnDynamicFactory getColumnDynamic(int columnIndex) {
+    public int getColumnDynamicIndex(int columnIndex) {
         int idx = Collections.binarySearch(dynamicColumnSize, columnIndex, (a,b) -> {
             if (b instanceof Integer && a instanceof int[]) {
                 return -compare((Integer) b, (int[]) a);
@@ -107,6 +116,15 @@ public abstract class ObjectTableModel extends AbstractTableModel {
             }
         });
         if (idx < 0 || idx >= dynamicColumns.size()) {
+            return -1;
+        } else {
+            return idx;
+        }
+    }
+
+    public ObjectTableColumnDynamicFactory getColumnDynamic(int columnIndex) {
+        int idx = getColumnDynamicIndex(columnIndex);
+        if (idx == -1) {
             return null;
         } else {
             return dynamicColumns.get(idx);
@@ -128,8 +146,9 @@ public abstract class ObjectTableModel extends AbstractTableModel {
     public int getColumnCount() {
         int i = 0;
         int sum = staticColumns.size();
+        Object list = getCollectionFromSource();
         for (ObjectTableColumnDynamicFactory columnFactory : dynamicColumns) {
-            int n = columnFactory.getColumnCount();
+            int n = columnFactory.getColumnCount(list);
             int[] r = dynamicColumnSize.get(i);
             r[0] = sum;
             sum += n;
@@ -197,12 +216,40 @@ public abstract class ObjectTableModel extends AbstractTableModel {
 
     ////////////
 
+    public void setSource(Supplier<Object> source) {
+        this.source = source;
+    }
+
+    public Object getCollectionFromSource() {
+        return source == null ? null : source.get();
+    }
+
+    @Override
+    public int getRowCount() {
+        Object list = getCollectionFromSource();
+        if (list instanceof List<?>) {
+            return ((List) list).size();
+        } else {
+            return 0;
+        }
+    }
+
+    public Object getRowAtIndex(int row) {
+        Object list = getCollectionFromSource();
+        if (list instanceof List<?>) {
+            return ((List<?>) list).get(row);
+        } else {
+            return null;
+        }
+    }
+
+    ////////////
+
     @Override
     public String getColumnName(int column) {
         return super.getColumnName(column);
     }
 
-    public abstract Object getRowAtIndex(int row);
 
     public boolean buildDataArray() {
         int rows = getRowCount();

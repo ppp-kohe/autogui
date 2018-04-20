@@ -17,62 +17,42 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
 
     @Override
     public ObjectTableColumnDynamicFactory createColumnDynamic(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> rowSpecifier) {
-        return null;
+        return new ObjectTableColumnDynamicCollection(context,
+                new GuiSwingViewCollectionTable.SpecifierManagerIndex(rowSpecifier));
     }
 
     public static class ObjectTableColumnDynamicCollection implements ObjectTableColumnDynamicFactory {
         protected GuiMappingContext context;
-        protected GuiSwingViewCollectionTable.SpecifierManagerIndex columnSpecifidManager;
+        protected GuiSwingViewCollectionTable.SpecifierManagerIndex columnSpecifiedManager;
+        protected GuiSwingTableColumn elementColumn;
+
+        public ObjectTableColumnDynamicCollection(GuiMappingContext context,
+                                                  GuiSwingViewCollectionTable.SpecifierManagerIndex columnSpecifiedManager) {
+            this.context = context;
+            this.columnSpecifiedManager = columnSpecifiedManager;
+        }
 
         @Override
-        public int getColumnCount() {
-
+        public int getColumnCount(Object collection) {
+            if (collection instanceof List<?>) {
+                int columns = 0;
+                for (Object e : (List<?>) collection) {
+                    if (e instanceof List<?>) {
+                        columns = Math.max(columns, ((List<?>) e).size());
+                    }
+                }
+                return columns;
+            } else {
+                return 0;
+            }
         }
 
         @Override
         public ObjectTableColumn createColumn(ObjectColumnIndex columnIndex) {
-            return null;
+            GuiReprValue.ObjectSpecifier specifier = new GuiReprValue.ObjectSpecifierIndex(
+                    columnSpecifiedManager.getTableSpecifier(),
+                    columnIndex.getIndex());
+            return elementColumn.createColumn(context, () -> specifier);
         }
-    }
-
-    protected GuiMappingContext context;
-    protected GuiSwingTableColumn column;
-
-    @Override
-    public int getColumnCount() {
-        context.getParent().getReprValue().getUpdatedValueWithoutNoUpdate(context.getParent(), );
-    }
-
-    @Override
-    public ObjectTableColumn createColumn(ObjectColumnIndex columnIndex) {
-        return null;
-    }
-
-    @Override
-    public int getColumnCount(List<?> source) {
-        GuiMappingContext childContext = context.getChildren().get(0);
-        ObjectTableColumnDynamicFactory child = column.createColumnDynamic(childContext);
-        return source.stream()
-                .map(e -> (List<?>) e)
-                .mapToInt(e -> child.getColumnCount(childContext, e) * e.size())
-                .max()
-                .orElse(0);
-    }
-
-    @Override
-    public List<ObjectTableColumn> createColumns(GuiMappingContext context, List<?> source, ObjectColumnIndex index, int size) {
-        GuiMappingContext childContext = context.getChildren().get(0);
-        ObjectTableColumnDynamicFactory child = column.createColumnDynamic(childContext);
-
-        ArrayList<ObjectTableColumn> totalColumns = new ArrayList<>();
-
-        //TODO repeat
-        List<ObjectTableColumn> subColumns = child.createColumns(childContext, null, index.child(), size); //TODO source
-        index = index.next(subColumns.size());
-
-        totalColumns.addAll(subColumns);
-        totalColumns.trimToSize();
-
-        return totalColumns;
     }
 }

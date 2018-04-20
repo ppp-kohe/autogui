@@ -501,15 +501,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     public static class ObjectTableModelCollection extends ObjectTableModel {
         protected GuiMappingContext context;
         protected Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier;
-        protected Supplier<Object> source;
         protected SpecifierManagerIndex rowSpecifierManager;
 
         public ObjectTableModelCollection(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier,
                                           Supplier<Object> source) {
             this.context = context;
             this.tableSpecifier = tableSpecifier;
-            this.source = source;
             this.rowSpecifierManager = new SpecifierManagerIndex(tableSpecifier);
+            setSource(source);
         }
 
         @Override
@@ -540,8 +539,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             }
         }
 
+        @Override
         public Object getCollectionFromSource() {
-            Object collection = source.get();
+            Object collection = super.getCollectionFromSource();
             if (collection == null) {
                 try {
                     collection = context.getReprValue()
@@ -564,6 +564,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public SpecifierManagerIndex(Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier) {
             this.tableSpecifier = tableSpecifier;
+        }
+
+        public GuiReprValue.ObjectSpecifier getTableSpecifier() {
+            return tableSpecifier.get();
         }
 
         public void setIndex(int index) {

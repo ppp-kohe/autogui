@@ -29,9 +29,9 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
     }
 
     @Override
-    public Object update(GuiMappingContext context, Object parentSource, Object newValue) {
+    public Object update(GuiMappingContext context, Object parentSource, Object newValue, ObjectSpecifier specifier) {
         try {
-            return SwingDeferredRunner.run(() -> super.update(context, parentSource, newValue));
+            return SwingDeferredRunner.run(() -> super.update(context, parentSource, newValue, specifier));
         } catch (Throwable ex) {
             throw new RuntimeException(ex);
         }
