@@ -47,7 +47,9 @@ public class GuiReprCollectionTableTest {
 
         GuiMappingContext elemValueCtx = elementCtx.getChildren().get(0);
         try {
-            Object e = elem.getCellValue(elementCtx, elemValueCtx, "world", 1, 0);
+            //Object e = elem.getCellValue(elementCtx, elemValueCtx, "world", 1, 0);
+            Object e = elem.getUpdatedValueCollectionElement(elemValueCtx,
+                    new GuiReprValue.ObjectSpecifierIndex(GuiReprValue.NONE, 1), "world");
             Assert.assertEquals("world", e);
         } catch (Throwable ex) {
             Assert.fail();

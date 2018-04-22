@@ -232,6 +232,10 @@ public class GuiReprValue implements GuiRepresentation {
         return null;
     }
 
+    public void updateCollectionElementFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) {
+
+    }
+
     /**
      * call the setter by editing on GUI, and {@link GuiMappingContext#updateSourceFromGui(Object)}.
      * <ul>

@@ -174,7 +174,7 @@ public class GuiRepresentationTest {
         Assert.assertEquals(Paths.get(pathSrcMain), repr.toUpdateValue(ctx, Paths.get(pathSrcMain)));
         Assert.assertNull(repr.toUpdateValue(ctx, null));
 
-        repr.updateFromGui(ctx, Paths.get(pathSrcTest));
+        repr.updateFromGui(ctx, Paths.get(pathSrcTest), GuiReprValue.NONE);
         Assert.assertEquals(Paths.get(pathSrcTest), ctx.getSource());
 
         Assert.assertEquals(pathSrcMain, repr.toJson(ctx, Paths.get(pathSrcMain)));
@@ -198,7 +198,7 @@ public class GuiRepresentationTest {
         Assert.assertNull(repr.toUpdateValue(ctx, null));
 
 
-        repr.updateFromGui(ctx, Paths.get(pathSrcTest));
+        repr.updateFromGui(ctx, Paths.get(pathSrcTest), GuiReprValue.NONE);
         Assert.assertEquals(new File(pathSrcTest), ctx.getSource());
 
         Assert.assertEquals(pathSrcMain, repr.toJson(ctx, new File(pathSrcMain)));
@@ -260,7 +260,7 @@ public class GuiRepresentationTest {
         Assert.assertTrue(repr.isEditable(ctx));
         Assert.assertTrue(repr.isEditableFromChild(child));
 
-        repr.updateFromGuiChild(child, "Test");
+        repr.updateFromGuiChild(child, "Test", GuiReprValue.NONE);
         Assert.assertEquals("Test", obj.hello);
 
         Map<String,Object> json = (Map<String,Object>) repr.toJsonWithNamed(ctx, new GuiReprValue.NamedValue("hello", "world"));
@@ -309,7 +309,7 @@ public class GuiRepresentationTest {
             .findFirst().orElse(null);
 
         Assert.assertEquals(123, sub.getSource());
-        ((GuiReprValueNumberSpinner) sub.getRepresentation()).updateFromGui(sub, 456);
+        ((GuiReprValueNumberSpinner) sub.getRepresentation()).updateFromGui(sub, 456, GuiReprValue.NONE);
         Assert.assertEquals(456, obj.i);
 
         GuiReprObjectPane repr = (GuiReprObjectPane) context.getRepresentation();
