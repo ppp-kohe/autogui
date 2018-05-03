@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.swing.mapping.GuiReprEmbeddedComponent;
 import org.junit.Assert;
@@ -14,6 +15,10 @@ public class GuiSwingViewEmbeddedComponentTest extends GuiSwingTestCase {
         new GuiSwingViewEmbeddedComponentTest().test();
     }
 
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
     @Test
     public void test() throws Exception {
         GuiSwingViewEmbeddedComponent com = new GuiSwingViewEmbeddedComponent();
@@ -22,7 +27,7 @@ public class GuiSwingViewEmbeddedComponentTest extends GuiSwingTestCase {
         context.setRepresentation(new GuiReprEmbeddedComponent());
         context.updateSourceFromRoot();
         JComponent component = runGet(() -> {
-            JComponent c = com.createView(context);
+            JComponent c = com.createView(context, this::getSpecifier);
             testFrame(c);
             return c;
         });

@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueBooleanCheckBox;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
@@ -9,10 +10,15 @@ import org.junit.Test;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.util.function.Supplier;
 
 public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
     public static void main(String[] args) {
         new GuiSwingViewBooleanCheckBoxTest().testProp();
+    }
+
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
     }
 
     @Test
@@ -25,7 +31,7 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
         context.updateSourceFromRoot();
 
         JComponent pp = runGet(() -> {
-            JComponent p = box.createView(context);
+            JComponent p = box.createView(context, this::getSpecifier);
             JFrame frame = testFrame(p);
             return p;
         });
@@ -48,7 +54,7 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
         context.updateSourceFromRoot();
 
         JComponent pp = runGet(() -> {
-            JComponent p = box.createView(context);
+            JComponent p = box.createView(context, this::getSpecifier);
             JFrame frame = testFrame(p);
 
             JCheckBox c = new JCheckBox() {

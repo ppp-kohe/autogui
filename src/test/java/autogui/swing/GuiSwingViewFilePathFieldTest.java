@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueFilePathField;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.swing.util.SearchTextFieldFilePath;
@@ -19,6 +20,11 @@ public class GuiSwingViewFilePathFieldTest extends GuiSwingTestCase {
         new GuiSwingViewFilePathFieldTest().test();
     }
 
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
+
     @Test
     public void test() throws Exception {
         GuiSwingViewFilePathField fld = new GuiSwingViewFilePathField();
@@ -28,7 +34,7 @@ public class GuiSwingViewFilePathFieldTest extends GuiSwingTestCase {
         context.updateSourceFromRoot();
 
         JComponent component = runGet(() -> {
-            JComponent comp = fld.createView(context);
+            JComponent comp = fld.createView(context, this::getSpecifier);
             testFrame(comp).setSize(1000, 100);
             return comp;
         });

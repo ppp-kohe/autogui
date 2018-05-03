@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.GuiIncluded;
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiRepresentation;
 import autogui.base.type.*;
 import org.junit.Assert;
@@ -14,6 +15,10 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         new GuiSwingViewObjectPaneTest().test();
     }
 
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
     @Test
     public void test() {
         GuiSwingViewObjectPane obj = new GuiSwingViewObjectPane(GuiSwingMapperSet.getDefaultMapperSet());
@@ -24,7 +29,7 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         context.updateSourceFromRoot();
 
         GuiSwingViewObjectPane.ObjectPane pane = runGet(() -> {
-            GuiSwingViewObjectPane.ObjectPane p = (GuiSwingViewObjectPane.ObjectPane) obj.createView(context);
+            GuiSwingViewObjectPane.ObjectPane p = (GuiSwingViewObjectPane.ObjectPane) obj.createView(context, this::getSpecifier);
             JFrame frame = testFrame(p);
 
             return p;

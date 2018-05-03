@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
@@ -15,6 +16,10 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
     public static void main(String[] args) throws Exception {
         new GuiSwingViewDocumentEditorTest().test();
     }
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
 
     @Test
     public void test() throws Exception {
@@ -24,7 +29,7 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
         GuiMappingContext context = new GuiMappingContext(prop);
         context.setRepresentation(new GuiReprValueDocumentEditor());
         JComponent c = runGet(() -> {
-            JComponent comp = doc.createView(context);
+            JComponent comp = doc.createView(context, this::getSpecifier);
             testFrame(comp);
             return comp;
         });
@@ -61,7 +66,7 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
         GuiMappingContext context = new GuiMappingContext(prop);
         context.setRepresentation(new GuiReprValueDocumentEditor());
         JComponent c = runGet(() -> {
-            JComponent comp = doc.createView(context);
+            JComponent comp = doc.createView(context, this::getSpecifier);
             testFrame(comp);
             return comp;
         });
@@ -95,7 +100,7 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
         GuiMappingContext context = new GuiMappingContext(prop);
         context.setRepresentation(new GuiReprValueDocumentEditor());
         JComponent c = runGet(() -> {
-            JComponent comp = doc.createView(context);
+            JComponent comp = doc.createView(context, this::getSpecifier);
             testFrame(comp);
             return comp;
         });

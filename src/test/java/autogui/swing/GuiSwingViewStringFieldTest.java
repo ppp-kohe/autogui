@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueStringField;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
@@ -17,6 +18,11 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
         new GuiSwingViewStringFieldTest().test();
     }
 
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
+
     @Test
     public void test() throws Exception {
         GuiSwingViewStringField fld = new GuiSwingViewStringField();
@@ -27,7 +33,7 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
         context.updateSourceFromRoot();
 
         JComponent c = runGet(() -> {
-            JComponent comp = fld.createView(context);
+            JComponent comp = fld.createView(context, this::getSpecifier);
             testFrame(comp).setSize(400, 100);
             return comp;
         });

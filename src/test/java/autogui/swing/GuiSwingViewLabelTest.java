@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueLabel;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
@@ -13,6 +14,11 @@ public class GuiSwingViewLabelTest extends GuiSwingTestCase {
     public static void main(String[] args) {
         new GuiSwingViewLabelTest().test();
     }
+
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
     @Test
     public void test() {
         TestObj obj = new TestObj();
@@ -22,7 +28,7 @@ public class GuiSwingViewLabelTest extends GuiSwingTestCase {
         GuiMappingContext context = new GuiMappingContext(obj, repr);
 
         JComponent c = runGet(() -> {
-            JComponent comp = label.createView(context);
+            JComponent comp = label.createView(context, this::getSpecifier);
 
             context.updateSourceFromRoot();
 

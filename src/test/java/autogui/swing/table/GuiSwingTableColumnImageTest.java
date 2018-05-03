@@ -20,7 +20,11 @@ public class GuiSwingTableColumnImageTest extends GuiSwingTestCase {
     public static void main(String[] args) {
         new GuiSwingTableColumnImageTest().test();
     }
-    
+
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
     @Test
     public void test() {
 
@@ -50,7 +54,7 @@ public class GuiSwingTableColumnImageTest extends GuiSwingTestCase {
 
         JComponent component = runGet(() -> {
             GuiSwingView view = (GuiSwingView) sSet.view(context);
-            JComponent comp = view.createView(context);
+            JComponent comp = view.createView(context, this::getSpecifier);
             testFrame(comp);
             return comp;
         });

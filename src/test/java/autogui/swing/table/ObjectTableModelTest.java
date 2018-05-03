@@ -1,6 +1,8 @@
 package autogui.swing.table;
 
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingTestCase;
+import autogui.swing.GuiSwingViewCollectionTable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,6 +23,10 @@ public class ObjectTableModelTest extends GuiSwingTestCase {
         new ObjectTableModelTest().test();
     }
 
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
     @Test
     public void test() {
         List<String> list = new ArrayList<>();
@@ -28,7 +34,8 @@ public class ObjectTableModelTest extends GuiSwingTestCase {
         list.add("world");
         list.add("!!!");
         JScrollPane p = runGet(() -> {
-            ObjectTableModel model = new ObjectTableModel(() -> list);
+            ObjectTableModel model = new ObjectTableModel();
+            model.setSource(() -> list);
             model.addColumnRowIndex();
 
             ObjectTableColumn col = new ObjectTableColumn();

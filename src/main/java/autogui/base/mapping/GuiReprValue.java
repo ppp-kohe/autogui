@@ -112,10 +112,7 @@ public class GuiReprValue implements GuiRepresentation {
      */
     public Object getUpdatedValue(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
         Object prev = context.getSource();
-        Object src = null;
-        if (context.isTypeElementProperty() || context.isParentPropertyPane() || context.isParentValuePane()) {
-            src = getParentSource(context, specifier.getParent());
-        }
+        Object src = getParentSource(context, specifier.getParent());
         return getValue(context, src, specifier, prev);
     }
 
@@ -206,7 +203,8 @@ public class GuiReprValue implements GuiRepresentation {
                 e = null;
             }
             return e;
-        } else if (!parentSpecifier.isUsingCache() && context.isParentValuePane()) {
+        } else if ((context.getParentSource() == null || !parentSpecifier.isUsingCache()) &&
+                    context.isParentValuePane()) {
             return context.getParentValuePane()
                     .getUpdatedValueWithoutNoUpdate(context.getParent(), parentSpecifier);
         } else {
@@ -267,13 +265,17 @@ public class GuiReprValue implements GuiRepresentation {
                 context.updateSourceFromGui(ret);
             }
         } else if (context.isTypeElementProperty()) {
-            Object src = context.getParentSource();
-            if (src ==  null) {
-                System.err.println("src is null: context="  +context.getRepresentation() + " : parent=" + context.getParentRepresentation());
-            }
-            Object ret = update(context, src, newValue, specifier);
-            if (ret != null) {
-                context.updateSourceFromGui(ret);
+            try {
+                Object src = getParentSource(context, specifier.getParent());
+                if (src == null) {
+                    System.err.println("src is null: context=" + context.getRepresentation() + " : parent=" + context.getParentRepresentation());
+                }
+                Object ret = update(context, src, newValue, specifier);
+                if (ret != null) {
+                    context.updateSourceFromGui(ret);
+                }
+            } catch (Throwable e) {
+                context.errorWhileUpdateSource(e);
             }
         } else if (context.isParentPropertyPane()) {
             context.getParentPropertyPane().updateFromGuiChild(context, newValue, specifier);

@@ -65,6 +65,10 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         Assert.assertTrue(worldContext.getRepresentation() instanceof GuiReprValueBooleanCheckBox);
     }
 
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
     @Test
     public void test() {
         GuiReprSet set = getTestSet();
@@ -87,7 +91,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
 
         JComponent component = runGet(() -> {
             GuiSwingView view = (GuiSwingView) sSet.view(context);
-            JComponent comp = view.createView(context);
+            JComponent comp = view.createView(context, this::getSpecifier);
             testFrame(comp);
             return comp;
         });

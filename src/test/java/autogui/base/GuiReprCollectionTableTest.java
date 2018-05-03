@@ -10,6 +10,12 @@ import java.util.*;
 
 @SuppressWarnings("unchecked")
 public class GuiReprCollectionTableTest {
+
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
+
     @SuppressWarnings("all")
     @Test
     public void testList() {
@@ -55,7 +61,9 @@ public class GuiReprCollectionTableTest {
             Assert.fail();
         }
 
-        elem.updateCellFromGui(elementCtx, elemValueCtx, "hello", 0, 0, "test");
+        //elem.updateCellFromGui(elementCtx, elemValueCtx, "hello", 0, 0, "test");
+        elem.updateCollectionElementFromGui(elemValueCtx, "hello",
+                new GuiReprValue.ObjectSpecifierIndex(GuiReprValue.NONE, 1));
         //nothing will happen
 
         Assert.assertEquals(1, elem.getFixedColumnSize(elementCtx));
@@ -110,12 +118,12 @@ public class GuiReprCollectionTableTest {
                 .filter(e -> e.getName().equals("i"))
                 .findFirst().orElse(null);
 
-        elem.updateCellFromGui(elemCtx, strCtx, es.get(0), 0, 1, 1000);
+        //TODO elem.updateCellFromGui(elemCtx, strCtx, es.get(0), 0, 1, 1000);
         Assert.assertEquals(1000, es.get(0).i);
 
         try {
-            Object v = elem.getCellValue(elemCtx, strCtx, es.get(0), 0, 1);
-            Assert.assertEquals(1000, v);
+            //TODO Object v = elem.getCellValue(elemCtx, strCtx, es.get(0), 0, 1);
+            //TODO Assert.assertEquals(1000, v);
         } catch (Throwable ex) {
             Assert.fail();
         }

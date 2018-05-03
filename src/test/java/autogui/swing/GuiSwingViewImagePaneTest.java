@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
 import autogui.swing.mapping.GuiReprValueImagePane;
@@ -17,6 +18,11 @@ public class GuiSwingViewImagePaneTest extends GuiSwingTestCase {
         new GuiSwingViewImagePaneTest().test();
     }
 
+
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
     @Test
     public void test() throws Exception {
         GuiSwingViewImagePane img = new GuiSwingViewImagePane();
@@ -25,7 +31,7 @@ public class GuiSwingViewImagePaneTest extends GuiSwingTestCase {
         GuiMappingContext context = new GuiMappingContext(prop, new GuiReprValueImagePane());
 
         JComponent component = runGet(() -> {
-            JComponent comp = img.createView(context);
+            JComponent comp = img.createView(context, this::getSpecifier);
             testFrame(comp).setSize(1000, 1000);
             return comp;
         });

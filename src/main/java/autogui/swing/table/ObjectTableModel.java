@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * a table-model based on a list of row objects
  */
-public abstract class ObjectTableModel extends AbstractTableModel {
+public class ObjectTableModel extends AbstractTableModel {
     protected List<ObjectTableColumn> columns = new ArrayList<>();
     protected List<ObjectTableColumn> staticColumns = new ArrayList<>();
     protected List<ObjectTableColumnDynamicFactory> dynamicColumns = new ArrayList<>();

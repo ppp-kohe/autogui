@@ -19,6 +19,10 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
         new GuiSwingTableColumnFilePathTest().test();
     }
 
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
     @Test
     public void test() {
         GuiReprSet set = new GuiReprSet();
@@ -47,7 +51,7 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
 
         JComponent component = runGet(() -> {
             GuiSwingView view = (GuiSwingView) sSet.view(context);
-            JComponent comp = view.createView(context);
+            JComponent comp = view.createView(context, this::getSpecifier);
             testFrame(comp);
             return comp;
         });

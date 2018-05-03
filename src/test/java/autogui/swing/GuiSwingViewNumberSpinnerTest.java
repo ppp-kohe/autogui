@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
@@ -17,6 +18,11 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
         System.out.println(format.format(BigDecimal.valueOf(1235.45)));
         new GuiSwingViewNumberSpinnerTest().testBig();
     }
+
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
     @Test
     public void test() throws Exception {
         GuiSwingViewNumberSpinner s = new GuiSwingViewNumberSpinner();
@@ -27,7 +33,7 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
         context.updateSourceFromRoot();
 
         JComponent comp = runGet(() -> {
-            JComponent component = s.createView(context);
+            JComponent component = s.createView(context, this::getSpecifier);
             testFrame(component);
             return component;
         });
@@ -52,7 +58,7 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
         context.updateSourceFromRoot();
 
         JComponent comp = runGet(() -> {
-            JComponent component = s.createView(context);
+            JComponent component = s.createView(context, this::getSpecifier);
             testFrame(component);
             return component;
         });

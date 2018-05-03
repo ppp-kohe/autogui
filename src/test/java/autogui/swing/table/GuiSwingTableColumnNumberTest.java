@@ -17,6 +17,10 @@ public class GuiSwingTableColumnNumberTest extends GuiSwingTestCase {
         new GuiSwingTableColumnNumberTest().test();
     }
 
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
     @Test
     public void test() {
 
@@ -46,7 +50,7 @@ public class GuiSwingTableColumnNumberTest extends GuiSwingTestCase {
 
         JComponent component = runGet(() -> {
             GuiSwingView view = (GuiSwingView) sSet.view(context);
-            JComponent comp = view.createView(context);
+            JComponent comp = view.createView(context, this::getSpecifier);
             testFrame(comp);
             return comp;
         });

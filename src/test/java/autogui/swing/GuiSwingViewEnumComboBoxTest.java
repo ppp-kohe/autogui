@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueEnumComboBox;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
@@ -13,6 +14,11 @@ public class GuiSwingViewEnumComboBoxTest extends GuiSwingTestCase {
     public static void main(String[] args) {
         new GuiSwingViewEnumComboBoxTest().test();
     }
+
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
     @Test
     public void test() {
         GuiSwingViewEnumComboBox box = new GuiSwingViewEnumComboBox();
@@ -22,7 +28,7 @@ public class GuiSwingViewEnumComboBoxTest extends GuiSwingTestCase {
         context.updateSourceFromRoot();
 
         JComponent component = runGet(() -> {
-            JComponent comp = box.createView(context);
+            JComponent comp = box.createView(context, this::getSpecifier);
             testFrame(comp);
             return comp;
         });
