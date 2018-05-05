@@ -70,21 +70,57 @@ public class GuiTypeValue implements GuiTypeElement {
     }
 
     /**
+     * @return NO_UPDATE. a sub-class may returns a special value
+     */
+    public GuiUpdatedValue getValue() {
+        return GuiUpdatedValue.NO_UPDATE;
+    }
+
+    /**
+     * @param inheritedValue the value returned by the upper property
+     * @return inheritedValue if {@link #getValue()} returns NO_UPDATE
+     */
+    public GuiUpdatedValue getValue(Object inheritedValue) {
+        GuiUpdatedValue upValue = getValue();
+        if (upValue.isNone()) {
+            return GuiUpdatedValue.of(inheritedValue);
+        } else {
+            return upValue;
+        }
+    }
+
+    /**
      *
      * @param prevValue  the previous value
-     * @return returns a value other than {@link #NO_UPDATE} if the value is updated from the prevValue;
+     * @return a value other than {@link GuiUpdatedValue#NO_UPDATE} if the value is updated from the prevValue;
      *   the returned value is a next(current) state of the prevValue.
      *   Even if the returned value is equivalent to the prevValue, it is non-NO_UPDATE and then it indicates an update.
      * <p>
-     * the default implementation returns NO_UPDATE.
+     * the default implementation simply call {@link #getValue()} and it will return NO_UPDATE.
      *  The main purpose of the method is provide extensibility for GUI source.
      */
-    public Object updatedValue(Object prevValue) {
-        return NO_UPDATE;
+    public GuiUpdatedValue updatedValue(Object prevValue) {
+        return getValue();
     }
 
-    public Object updatedValueList(int index, Object prevValue) {
-        return updatedValue(prevValue);
+    /**
+     *
+     * @param prevValue the previous value
+     * @param inheritedValue the value obtained from upper type:
+     *                      e.g. for property(type) case, property value is supplied as the inherited value
+     * @return {@link #updatedValue(Object)}, or NO_UPDATE if both values are same as prevValue (NO_UPDATE)
+     */
+    public GuiUpdatedValue updatedValue(Object prevValue, Object inheritedValue) {
+        GuiUpdatedValue upValue = updatedValue(prevValue);
+        if (upValue.isNone()) {
+            if (equals(prevValue, inheritedValue)) {
+                return GuiUpdatedValue.NO_UPDATE;
+            } else {
+                return GuiUpdatedValue.of(inheritedValue);
+            }
+        } else {
+            return upValue;
+        }
     }
 
     /**
@@ -95,23 +131,28 @@ public class GuiTypeValue implements GuiTypeElement {
     }
 
     /**
-     * @param prevValue ignored
      * @param newValue used as the returned value
      * @return newValue
      */
-    public Object writeValue(Object prevValue, Object newValue) {
+    public Object writeValue(Object newValue) {
         return newValue;
     }
 
-    public Object writeValueList(int index, Object prevValue, Object newValue) {
-        return writeValue(prevValue, newValue);
+    /**
+     * @param prevValue ignored
+     * @param newValue used as the returned value
+     * @return newValue, by calling {@link #writeValue(Object)}
+     */
+    public Object writeValue(Object prevValue, Object newValue) {
+        return writeValue(newValue);
     }
 
-    public static NoUpdate NO_UPDATE = NoUpdate.NoUpdate;
+    public Object writeValueInheritedValue(Object inheritedValue, Object newValue) {
+        return writeValue(newValue);
+    }
 
-    /** a constant for describing a property is not updated */
-    public enum NoUpdate {
-        NoUpdate;
+    public Object writeValue(Object prevValue, Object inheritedValue, Object newValue) {
+        return writeValue(prevValue, newValue);
     }
 
     @Override

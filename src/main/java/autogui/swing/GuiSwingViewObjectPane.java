@@ -21,11 +21,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
- * <h3>representation</h3>
- * {@link autogui.base.mapping.GuiReprObjectPane}
+ * a swing view for {@link autogui.base.mapping.GuiReprObjectPane}
  *
- * <h3>{@link ObjectPane#getSwingViewValue()}</h3>
- * latest set raw-object.
+ * <h3>swing-value</h3>
+ * {@link ObjectPane#getSwingViewValue()}:
+ *  latest set raw-object.
  *
  *  Currently, {@link ObjectPane#setSwingViewValue(Object)} also set context's value.
  *    TODO omit to update?
@@ -37,6 +37,14 @@ import java.util.stream.Collectors;
  * no-transfer-handler.
  *  supported by {@link autogui.swing.GuiSwingView.ToStringCopyAction} and
  *     {@link autogui.base.mapping.GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}.
+ *
+ * <h3>preferences</h3>
+ * <pre>
+ *     "$split" : [ {
+ *         "dividerLocation": Integer,
+ *         "horizontal" : Boolean
+ *     } ]
+ * </pre>
  */
 public class GuiSwingViewObjectPane implements GuiSwingView {
     protected GuiSwingMapperSet mapperSet;

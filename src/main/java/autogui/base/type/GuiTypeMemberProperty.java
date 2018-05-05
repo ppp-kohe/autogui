@@ -1,7 +1,6 @@
 package autogui.base.type;
 
 import autogui.GuiIncluded;
-import autogui.base.mapping.GuiReprValue;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
@@ -150,31 +149,46 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     }
 
     /**
-     * execute the property method or obtain value of the property field
-     * if target is null then nothing will happen and always return {@link GuiTypeValue#NO_UPDATE}.
-     * @param target the property holder
-     * @param prevValue a previous value of the property, which can be compared to the new value and if it equals,
-     *                   the returned value will be {@link GuiTypeValue#NO_UPDATE}.
-     * @return the current property value or {@link GuiTypeValue#NO_UPDATE} if no difference from the prevValue
-     * @throws Exception it might be cause exception during the method invocation
+     * execute the property method or obtain the value of the property field
+     * @param target the property holder, nullable.
+     * @return the property value or {@link GuiUpdatedValue#NO_UPDATE} if the target is null or the property is static
+     * @throws Exception it might be cause exception during the execution
      */
-    public Object executeGet(Object target, Object prevValue) throws Exception {
+    public GuiUpdatedValue executeGet(Object target) throws Exception {
         Method getter = getGetter();
         if (getter != null) {
             if (target == null && !Modifier.isStatic(getter.getModifiers())) {
-                return GuiTypeValue.NO_UPDATE;
+                return GuiUpdatedValue.NO_UPDATE;
             }
-            return compareGet(prevValue, getter.invoke(target));
+            return GuiUpdatedValue.of(getter.invoke(target));
         } else {
             Field field = getField();
             if (field != null) {
                 if (target == null && !Modifier.isStatic(field.getModifiers())) {
-                    return GuiTypeValue.NO_UPDATE;
+                    return GuiUpdatedValue.NO_UPDATE;
                 }
-                return compareGet(prevValue, field.get(target));
+                return GuiUpdatedValue.of(field.get(target));
             }
         }
         throw new UnsupportedOperationException("no getter: " + name);
+    }
+
+    /**
+     * execute the property method or obtain the value of the property field
+     * if target is null then nothing will happen and always return {@link GuiUpdatedValue#NO_UPDATE}.
+     * @param target the property holder
+     * @param prevValue a previous value of the property, which can be compared to the new value and if it equals,
+     *                   the returned value will be {@link GuiUpdatedValue#NO_UPDATE}.
+     * @return the current property value or {@link GuiUpdatedValue#NO_UPDATE} if no difference from the prevValue
+     * @throws Exception it might be cause exception during the method invocation
+     */
+    public GuiUpdatedValue executeGet(Object target, Object prevValue) throws Exception {
+        GuiUpdatedValue v = executeGet(target);
+        if (v.isNone()) {
+            return v;
+        } else {
+            return compareGet(prevValue, v.getValue());
+        }
     }
 
     /**
@@ -182,9 +196,9 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
      *  if {@link GuiTypeValue}, use {@link GuiTypeValue#equals(Object, Object)}.
      * @param prevValue the compared value 1
      * @param newValue the compared value 2
-     * @return <code>newValue</code> if equivalent, or {@link GuiTypeValue#NO_UPDATE}.
+     * @return <code>newValue</code> if equivalent, or {@link GuiUpdatedValue#NO_UPDATE}.
      */
-    public Object compareGet(Object prevValue, Object newValue) {
+    public GuiUpdatedValue compareGet(Object prevValue, Object newValue) {
         boolean eq;
         if (type instanceof GuiTypeValue) {
             eq = ((GuiTypeValue) type).equals(prevValue, newValue);
@@ -192,9 +206,9 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
             eq = Objects.equals(prevValue, newValue);
         }
         if (eq) {
-            return GuiTypeValue.NO_UPDATE;
+            return GuiUpdatedValue.NO_UPDATE;
         } else {
-            return newValue;
+            return GuiUpdatedValue.of(newValue);
         }
     }
 
@@ -203,7 +217,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
      * if the target is null, nothing will happen.
      * @param target the field or setter target
      * @param value the value to be set
-     * @return setter returned value or null
+     * @return value, or null if error
      * @throws Exception thrown in the setter
      */
     public Object executeSet(Object target, Object value) throws Exception {
@@ -212,7 +226,8 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
             if (target == null && !Modifier.isStatic(getter.getModifiers())) {
                 return null;
             }
-            return setter.invoke(target, value);
+            setter.invoke(target, value);
+            return value;
         } else {
             Field field = getField();
             if (field != null) {
@@ -220,40 +235,16 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
                     return null;
                 }
                 field.set(target, value);
-                return null;
+                return value;
             }
         }
         throw new UnsupportedOperationException("no setter: " + name);
     }
 
-    /** @return true if it has a setter of a field */
+    /** @return true if it has a setter or a field */
     public boolean isWritable() {
         return getSetter() != null || getField() != null;
     }
-//
-//    /**
-//     * The default implementation just calls {@link #executeGet(Object, Object)}
-//     * @param index  index of the target in the list
-//     * @param target  an element object
-//     * @param prevValue it might be null
-//     * @return property value of the target which is an element of a list
-//     * @throws Exception on error
-//     */
-//    public Object executeGetList(int index, Object target, Object prevValue) throws Exception {
-//       return executeGet(target, prevValue);
-//    }
-//
-//    /**
-//     *  the default implementation just calls {@link #executeSet(Object, Object)}
-//     * @param index the index in the list
-//     * @param target an element object
-//     * @param value the value to be set
-//     * @return the returned value of the setter or null
-//     * @throws Exception thrown in the setter
-//     */
-//    public Object executeSetList(int index, Object target, Object value) throws Exception {
-//        return executeSet(target, value);
-//    }
 
     @Override
     public String toString() {

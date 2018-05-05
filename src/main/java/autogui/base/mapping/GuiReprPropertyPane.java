@@ -57,46 +57,6 @@ public class GuiReprPropertyPane extends GuiReprValue {
         return new GuiReprPropertyPane();
     }
 
-    /*
-    public boolean checkAndUpdateSourceFromChild(GuiMappingContext child) {
-        Object prev = child.getSource();
-        Object next = child.getParentSource();
-        try {
-            if (child.execute(() -> !equals(child, prev, next))) {
-                child.setSource(next);
-                return true;
-            } else {
-                return false;
-            }
-        } catch (Throwable ex) {
-            child.errorWhileUpdateSource(ex);
-            return false;
-        }
-    }
-
-    public boolean equals(GuiMappingContext context, Object prev, Object next) {
-        if (context.isTypeElementProperty()) {
-            return equalsWithType(context.getTypeElementAsProperty().getType(), prev, next);
-        } else {
-            return equalsWithType(context.getTypeElement(), prev, next);
-        }
-    }
-
-    public boolean equalsWithType(GuiTypeElement type, Object prev, Object next) {
-        if (type != null && type instanceof GuiTypeValue) {
-            return ((GuiTypeValue) type).equals(prev, next);
-        } else {
-            return Objects.equals(prev, next);
-        }
-    }*/
-
-    public void updateFromGuiChild(GuiMappingContext child, Object newValue, ObjectSpecifier specifier) {
-        updateFromGui(child.getParent(), newValue, specifier);
-    }
-
-    public Object updateFromChild(GuiMappingContext child, Object parentSource, Object newValue, ObjectSpecifier specifier) {
-        return update(child.getParent(), parentSource, newValue, specifier);
-    }
 
     public boolean isEditableFromChild(GuiMappingContext context) {
         return isEditable(context.getParent());

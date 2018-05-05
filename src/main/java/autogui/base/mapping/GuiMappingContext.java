@@ -6,8 +6,8 @@ import autogui.base.type.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -56,7 +56,7 @@ public class GuiMappingContext {
     protected GuiMappingContext parent;
     protected List<GuiMappingContext> children;
 
-    protected Object source;
+    protected GuiSourceValue source;
     protected List<SourceUpdateListener> listeners = Collections.emptyList();
 
     protected ScheduledExecutorService taskRunner;
@@ -65,28 +65,94 @@ public class GuiMappingContext {
     protected String displayName;
     protected String iconName;
 
+    public static class GuiSourceValue {
+        public boolean isNone() {
+            return false;
+        }
+
+        /**
+         * @return null if none
+         */
+        public Object getValue() {
+            return null;
+        }
+
+        public static GuiSourceValueObject of(Object v) {
+            return new GuiSourceValueObject(v);
+        }
+    }
+
+    public static final class GuiSourceValueObject extends GuiSourceValue {
+        Object value;
+
+        public GuiSourceValueObject(Object value) {
+            this.value = value;
+        }
+
+        @Override
+        public Object getValue() {
+            return value;
+        }
+
+        @Override
+        public String toString() {
+            return "Source(" + Objects.toString(value) + ")";
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            GuiSourceValueObject that = (GuiSourceValueObject) o;
+            return Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(value);
+        }
+
+    }
+
+    public static final GuiSourceValueNone NO_SOURCE = new GuiSourceValueNone();
+
+    public static final class GuiSourceValueNone extends GuiSourceValue {
+        @Override
+        public boolean isNone() {
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "NO_SOURCE";
+        }
+    }
+
     public GuiMappingContext(GuiTypeElement typeElement) {
-        this.typeElement = typeElement;
+        this(typeElement, null, null, NO_SOURCE);
     }
 
     public GuiMappingContext(GuiTypeElement typeElement, GuiMappingContext parent) {
-        this.typeElement = typeElement;
-        this.parent = parent;
+        this(typeElement, null, parent, NO_SOURCE);
     }
 
     public GuiMappingContext(GuiTypeElement typeElement, Object source) {
-        this.typeElement = typeElement;
-        this.source = source;
+        this(typeElement, null, null, GuiSourceValue.of(source));
     }
 
     public GuiMappingContext(GuiTypeElement typeElement, GuiRepresentation representation, Object source) {
-        this.typeElement = typeElement;
-        this.representation = representation;
-        this.source = source;
+        this(typeElement, representation, null, GuiSourceValue.of(source));
     }
 
     public GuiMappingContext(GuiTypeElement typeElement, GuiRepresentation representation) {
-        this(typeElement, representation, null);
+        this(typeElement, representation, null, NO_SOURCE);
+    }
+
+    public GuiMappingContext(GuiTypeElement typeElement, GuiRepresentation representation, GuiMappingContext parent, GuiSourceValue source) {
+        this.typeElement = typeElement;
+        this.representation = representation;
+        this.parent = parent;
+        this.source = source;
     }
 
     public void setRepresentation(GuiRepresentation representation) {
@@ -168,8 +234,6 @@ public class GuiMappingContext {
     public String getDescription() {
         return typeElement.getDescription();
     }
-
-    protected static Pattern keyPattern = Pattern.compile("[0-9a-zA-Z]");
 
     public String getAcceleratorKeyStroke() {
         String s = typeElement.getAcceleratorKeyStroke();
@@ -257,13 +321,13 @@ public class GuiMappingContext {
 
     /** only set the source value
      * @param source  the source */
-    public void setSource(Object source) {
+    public void setSource(GuiSourceValue source) {
         this.source = source;
     }
 
     /**
      * @return actual value of the context */
-    public Object getSource() {
+    public GuiSourceValue getSource() {
         return source;
     }
 
@@ -306,7 +370,7 @@ public class GuiMappingContext {
      * @param newValue the new source value to be set
      */
     public void updateSourceFromGui(Object newValue) {
-        this.source = newValue;
+        setSource(GuiSourceValue.of(newValue));
         updateSourceFromRoot(this);
     }
 
@@ -330,7 +394,7 @@ public class GuiMappingContext {
 
     public void sendUpdateToListeners(GuiMappingContext cause) {
         getListeners().forEach(l ->
-                l.update(cause, getSource()));
+                l.update(cause, getSource().getValue()));
     }
 
     public void clearSourceSubTree() {
@@ -492,8 +556,16 @@ public class GuiMappingContext {
         return hasParent() ? getParent().getReprValue() : null;
     }
 
-    public Object getParentSource() {
-        return hasParent() ? getParent().getSource() : null;
+    public GuiReprCollectionTable getParentCollectionTable() {
+        return isParentCollectionTable() ? getParent().getReprCollectionTable() : null;
+    }
+
+    public GuiReprCollectionElement getParentCollectionElement() {
+        return isParentCollectionElement() ? getParent().getReprCollectionElement() : null;
+    }
+
+    public GuiSourceValue getParentSource() {
+        return hasParent() ? getParent().getSource() : GuiMappingContext.NO_SOURCE;
     }
 
     public boolean isReprAction() {

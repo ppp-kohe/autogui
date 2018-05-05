@@ -14,9 +14,9 @@ import autogui.swing.GuiSwingViewLabel;
 public class GuiSwingTableColumnLabel implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager specifierManager) {
-        GuiSwingViewLabel.PropertyLabel view = new GuiSwingViewLabel.PropertyLabel(context, specifierManager);
+                                          GuiSwingView.SpecifierManager parentSpecifier) {
+        GuiSwingViewLabel.PropertyLabel view = new GuiSwingViewLabel.PropertyLabel(context, parentSpecifier);
         view.setOpaque(true);
-        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager, view);
+        return new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier, view);
     }
 }

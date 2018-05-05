@@ -47,8 +47,8 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     }
 
     @Override
-    public Object executeGet(Object target, Object prevValue) throws Exception {
-        return compareGet(prevValue, getter.get());
+    public GuiUpdatedValue executeGet(Object target) throws Exception {
+        return GuiUpdatedValue.of(getter.get());
     }
 
     @Override
@@ -192,7 +192,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
                                                           Function<E, Boolean> getter, BiConsumer<E, Boolean> setter) {
             return addColumn(new GuiSwingTableColumnBoolean()
                     .createColumn(addColumnContext(name, Boolean.class, getter, setter, new GuiReprValueBooleanCheckBox()),
-                            getRowSpecifier()));
+                            getRowSpecifier(), getRowSpecifier()));
         }
 
         public LambdaCollectionTable addColumnBoolean(String name,
@@ -206,7 +206,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
                                                          Function<E, String> getter, BiConsumer<E, String> setter) {
             return addColumn(new GuiSwingTableColumnString()
                     .createColumn(addColumnContext(name, String.class, getter, setter, new GuiReprValueStringField()),
-                            getRowSpecifier()));
+                            getRowSpecifier(), getRowSpecifier()));
         }
 
         public LambdaCollectionTable addColumnString(String name,
@@ -221,7 +221,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
                                                                            Function<E, T> getter, BiConsumer<E, T> setter) {
             return addColumn(new GuiSwingTableColumnNumber()
                     .createColumn(addColumnContext(name, numType, getter, setter, new GuiReprValueNumberSpinner()),
-                            getRowSpecifier()));
+                            getRowSpecifier(), getRowSpecifier()));
         }
 
         public <T extends Number> LambdaCollectionTable addColumnNumber(String name, Class<T> numType,
@@ -235,7 +235,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
                                                                           Function<E, T> getter, BiConsumer<E, T> setter) {
             return addColumn(new GuiSwingTableColumnEnum()
                     .createColumn(addColumnContext(name, enumType, getter, setter, new GuiReprValueEnumComboBox()),
-                            getRowSpecifier()));
+                            getRowSpecifier(), getRowSpecifier()));
         }
 
         public <T extends Enum<?>> LambdaCollectionTable addColumnEnum(String name, Class<T> enumType,
@@ -249,7 +249,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
                                                            Function<E, Path> getter, BiConsumer<E, Path> setter) {
             return addColumn(new GuiSwingTableColumnFilePath()
                     .createColumn(addColumnContext(name, Path.class, getter, setter, new GuiReprValueFilePathField()),
-                            getRowSpecifier()));
+                            getRowSpecifier(), getRowSpecifier()));
         }
 
         public <T extends Number> LambdaCollectionTable addColumnFilePath(String name,
@@ -263,7 +263,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
                                                                          Function<E, T> getter, BiConsumer<E, T> setter) {
             return addColumn(new GuiSwingTableColumnImage()
                     .createColumn(addColumnContext(name, imageType, getter, setter, new GuiReprValueImagePane()),
-                            getRowSpecifier()));
+                            getRowSpecifier(), getRowSpecifier()));
         }
 
         public <T extends Image> LambdaCollectionTable addColumnImage(String name, Class<T> imageType,
@@ -277,7 +277,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
                                                           Function<E, ?> getter) {
             return addColumn(new GuiSwingTableColumnLabel()
                     .createColumn(addColumnContext(name, Object.class, getter, null, new GuiReprValueLabel()),
-                            getRowSpecifier()));
+                            getRowSpecifier(), getRowSpecifier()));
         }
 
         public LambdaCollectionTable addColumnLabel(String name,
@@ -337,8 +337,8 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
 
         @SuppressWarnings("unchecked")
         @Override
-        public Object executeGet(Object target, Object prevValue) throws Exception {
-            return compareGet(prevValue, getter.apply((E) target));
+        public GuiUpdatedValue executeGet(Object target) throws Exception {
+            return GuiUpdatedValue.of(getter.apply((E) target));
         }
 
         @SuppressWarnings("unchecked")

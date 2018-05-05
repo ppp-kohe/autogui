@@ -4,7 +4,6 @@ import autogui.base.mapping.*;
 import autogui.swing.GuiSwingActionDefault;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
-import autogui.swing.GuiSwingViewCollectionTable;
 import autogui.swing.util.*;
 
 import javax.swing.*;
@@ -23,7 +22,6 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -112,7 +110,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             if (specifierIndex != null) {
                 specifierIndex.setIndex(rowIndex);
             }
-            return field.getValueWithoutNoUpdate(context, rowObject, specifierManager.getSpecifier());
+            return field.getValueWithoutNoUpdate(context, GuiMappingContext.GuiSourceValue.of(rowObject), specifierManager.getSpecifier());
                //the columnIndex is an index on the view model, so it passes contextIndex as the context's column index
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
@@ -130,7 +128,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
      */
     @Override
     public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
-        context.getReprValue().update(context, rowObject, newColumnValue, specifierManager.getSpecifier());
+        try {
+            context.getReprValue().update(context, GuiMappingContext.GuiSourceValue.of(rowObject), newColumnValue, specifierManager.getSpecifier());
+        } catch (Throwable ex) {
+            context.errorWhileUpdateSource(ex);
+        }
         return null;
     }
 

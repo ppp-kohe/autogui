@@ -1,10 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.*;
-import autogui.base.type.GuiTypeCollection;
-import autogui.base.type.GuiTypeMemberProperty;
-import autogui.base.type.GuiTypeObject;
-import autogui.base.type.GuiTypeValue;
+import autogui.base.type.*;
 import autogui.swing.*;
 import org.junit.Test;
 
@@ -108,14 +105,10 @@ public class GuiSwingTableColumnLabelTest extends GuiSwingTestCase {
         }
 
         @Override
-        public Object executeGet(Object target, Object prevValue) throws Exception {
+        public GuiUpdatedValue executeGet(Object target) throws Exception {
             TestLabelElem e = (TestLabelElem) target;
-            System.err.println("get hello: " + target + " prev: " + prevValue);
-            if (e != null) {
-                return compareGet(prevValue, e.hello);
-            } else {
-                return compareGet(prevValue, null);
-            }
+            System.err.println("get hello: " + target);
+            return GuiUpdatedValue.of(e == null ? null : e.hello);
         }
 
         @Override
@@ -139,14 +132,10 @@ public class GuiSwingTableColumnLabelTest extends GuiSwingTestCase {
         }
 
         @Override
-        public Object executeGet(Object target, Object prevValue) throws Exception {
+        public GuiUpdatedValue executeGet(Object target) throws Exception {
             TestLabelElem e = (TestLabelElem) target;
-            System.err.println("get world: " + target + " prev: " + prevValue);
-            if (e != null) {
-                return compareGet(prevValue, e.world);
-            } else {
-                return compareGet(prevValue, null);
-            }
+            System.err.println("get world: " + target);
+            return GuiUpdatedValue.of(e == null ? null : e.world);
         }
 
         @Override

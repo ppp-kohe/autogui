@@ -16,10 +16,10 @@ import java.awt.*;
 public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager specifierManager) {
-        ColumnEditImagePane img = new ColumnEditImagePane(context, specifierManager);
-        ColumnEditImagePane edit = new ColumnEditImagePane(context, specifierManager);
-        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager, img, edit).withRowHeight(64);
+                                          GuiSwingView.SpecifierManager parentSpecifier) {
+        ColumnEditImagePane img = new ColumnEditImagePane(context, parentSpecifier);
+        ColumnEditImagePane edit = new ColumnEditImagePane(context, parentSpecifier);
+        return new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier, img, edit).withRowHeight(64);
     }
 
     /**

@@ -2,6 +2,7 @@ package autogui.swing.mapping;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
+import autogui.base.type.GuiUpdatedValue;
 import autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
@@ -24,12 +25,19 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
     }
 
     @Override
-    public Object getValue(GuiMappingContext context, Object parentSource, ObjectSpecifier specifier, Object prev) throws Throwable {
-        return SwingDeferredRunner.run(() -> super.getValue(context, parentSource, specifier, prev));
+    public GuiUpdatedValue getValue(GuiMappingContext context, GuiMappingContext.GuiSourceValue parentSource,
+                                    ObjectSpecifier specifier, GuiMappingContext.GuiSourceValue prev) throws Throwable {
+        Object v = SwingDeferredRunner.run(() -> super.getValue(context, parentSource, specifier, prev));
+        if (v instanceof GuiUpdatedValue) {
+            return (GuiUpdatedValue) v;
+        } else {
+            return GuiUpdatedValue.of(v);
+        }
     }
 
     @Override
-    public Object update(GuiMappingContext context, Object parentSource, Object newValue, ObjectSpecifier specifier) {
+    public Object update(GuiMappingContext context, GuiMappingContext.GuiSourceValue parentSource,
+                                  Object newValue, ObjectSpecifier specifier) {
         try {
             return SwingDeferredRunner.run(() -> super.update(context, parentSource, newValue, specifier));
         } catch (Throwable ex) {
@@ -64,7 +72,9 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
                 return null;
             }
         }
-        if (value instanceof JComponent) {
+        if (value instanceof GuiUpdatedValue) {
+            return toUpdateValue(context, ((GuiUpdatedValue) value).getValue(), delayed);
+        } else if (value instanceof JComponent) {
             return (JComponent) value;
         } else {
             return null;

@@ -1,7 +1,7 @@
 package autogui.base.mapping;
 
 import autogui.base.type.GuiTypeCollection;
-import autogui.base.type.GuiTypeMemberProperty;
+import autogui.base.type.GuiUpdatedValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,17 +20,16 @@ import java.util.stream.Stream;
  *        {@link GuiTypeCollection#getChildren()} will return the element type of the collection.
  *        Also, the {@link #subRepresentation} will take a factory of {@link GuiReprCollectionElement}.
  *         The factory will match the element type with the {@link GuiTypeCollection} as it's parent
- *           (the element is regular element type but the collection element repr. has higher precedence in the factory).
+ *           (the element itself is a regular element type but the collection element repr. has higher precedence in the factory).
  *
- *        So, a sub-context is a single element with the {@link GuiReprCollectionElement}.
+ *        So, a sub-context becomes a single element with the {@link GuiReprCollectionElement}.
  *
- *   <p>  The sub-contexts of the sub-collection element are regular sub-contexts of the wrapped element representation.
- *        For example, if the wrapped collection element is an {@link GuiReprObjectPane}'s context,
- *          then the context of the collection element has
- *             properties ({@link GuiReprPropertyPane}) (and also actions) of the object members.
- *         As summarize, {@link GuiReprCollectionTable} -&gt;
- *            {@link GuiReprCollectionElement}(wrapping a {@link GuiRepresentation}) -&gt;
- *              member representations.
+ *   <p>  The sub-contexts of the sub-collection element become a singleton list of the wrapped element representation.
+ *       For cases of object elements in a collection, reprs of contexts become
+ *          {@link GuiReprCollectionTable} -&gt;
+ *            {@link GuiReprCollectionElement}(wrapping {@link GuiReprObjectPane}) -&gt;
+ *            {@link GuiReprObjectPane} -&gt; children of {@link GuiReprObjectPane}
+ *
  *      <pre>
  *          [  { "e1": v1_1 , "e2":v1_2},
  *             { "e1": v2_1 , "e2":v2_2},
@@ -44,7 +43,11 @@ import java.util.stream.Stream;
  *           |    v3_1   |    v3_2     |
  *
  *      </pre>
- *
+ *       For cases of a list of a list, {@link GuiReprCollectionElement} wraps {@link GuiReprCollectionTable}.
+ *        {@link GuiReprCollectionTable} -&gt;
+ *          {@link GuiReprCollectionElement} (wrapping {@link GuiReprCollectionTable})
+ *           {@link GuiReprCollectionTable} -&gt;
+ *             {@link GuiReprCollectionElement} (wrapping ...) -&gt; ...
  *      <pre>
  *          [  [  v1_1 , v1_2],
  *             [  v2_1 , v2_2],
@@ -61,27 +64,28 @@ import java.util.stream.Stream;
  *
  * <h3>accessing collection values</h3>
  * <p>
- *    The {@link GuiMappingContext#getSource()} of {@link GuiReprCollectionElement}
- *      holds a collection type, but contexts of {@link GuiReprCollectionElement} do not have any values.
+ *    contexts of {@link GuiReprCollectionElement} do not have any values or have a temporary element value.
  *      {@link GuiReprCollectionElement#checkAndUpdateSource(GuiMappingContext)} do nothing,
  *  <p>
  *    A concrete GUI component for the repr., like GuiSwingViewCollectionTable,
- *       can partially obtains property values of the collection as on-demand cells.
+ *       can partially obtains properties of an element of a collection as on-demand cells.
  *
- *    {@link GuiReprCollectionElement#getCellValue(GuiMappingContext, GuiMappingContext, Object, int, int)}
- *       can be used for the purpose. ObjectTableColumnValue's getCellValue(...) is an actual implementation.
- *     It takes the context of the collection element,
- *        an it's sub-context of the property of the row object,
- *           the source row object and row and column indices.
+ *    A GUI column obtains its model value via {@link GuiReprValue#getUpdatedValue(GuiMappingContext, ObjectSpecifier)} ,
+ *      and then the repr. obtains a parent value which is an element in a list.
+ *    A parent {@link GuiReprCollectionElement} provides an element value by
+ *        the special {@link #getValueCollectionElement(GuiMappingContext, GuiMappingContext.GuiSourceValue,
+ *                          ObjectSpecifier, GuiMappingContext.GuiSourceValue)} .
+ *
  * <h3>examples</h3>
  *   <pre>
  *       class O { List&lt;E&gt; list; }
  *       class E { String prop; }
+ *       class SL { List&lt;String&gt; list; }
  *   </pre>
  *
  *   Notation:
  *   <ul>
- *   <li>(T,r,s) { cs }:
+ *   <li>(t,r,s) { cs }:
  *       {@link GuiMappingContext} where
  *       t is a type {@link autogui.base.type.GuiTypeElement},
  *       r is a {@link GuiRepresentation},
@@ -92,12 +96,16 @@ import java.util.stream.Stream;
  *    <li>Prop(n,t) :{@link autogui.base.type.GuiTypeMemberProperty} </li>
  *    <li>Coll(T&lt;E&gt;) :{@link autogui.base.type.GuiTypeCollection} </li>
  *  </ul>
+ *     For O,
  *   <pre>
+ *
  *       (Obj(O), {@link GuiReprObjectPane}, GuiSwingViewObjectPane) {
  *           (Prop(list,Coll(List&lt;E&gt;)), {@link GuiReprPropertyPane}(subRepr={@link GuiReprCollectionTable}), GuiSwingViewPropertyPane) {
  *               (Coll(List&lt;E&gt;), {@link GuiReprCollectionTable}(subRepr={@link GuiReprCollectionElement}), GuiSwingViewCollectionTable) {
- *                    (Obj(E)), {@link GuiReprCollectionElement}({@link GuiReprObjectPane}), GuiSwingTableColumnSetDefault) {
- *                         (Prop(prop,String), {@link GuiReprValueStringField}, GuiSwingTableColumnString) {}
+ *                    (Obj(E), {@link GuiReprCollectionElement}({@link GuiReprObjectPane}), GuiSwingTableColumnSetDefault) {
+ *                         (Obj(E), {@link GuiReprObjectPane}, ???) { //TODO
+ *                              (Prop(prop,String), {@link GuiReprValueStringField}, GuiSwingTableColumnString) {}
+ *                         }
  *                    }
  *               }
  *           }
@@ -127,8 +135,8 @@ import java.util.stream.Stream;
  *                  <li><code>ObjectTableModel#getValueAt(int,int)</code> builds a table array and
  *                        sets the value obtained by
  *                              <code>ObjectTableColumnValue#getCellValue(...)</code> with a row object,
- *                              which causes {@link GuiReprCollectionElement#getCellValue(GuiMappingContext, GuiMappingContext, Object, int, int)}
- *                                 with the column repr. {@link GuiReprValue}
+ *                              which causes {@link GuiReprCollectionElement#getUpdatedValue(GuiMappingContext, ObjectSpecifier)}
+ *                                 from the column repr. {@link GuiReprValue} //TODO ????
  *                                  and parent repr. {@link GuiReprCollectionElement},
  *                            to the specified cell value.</li>
  *              </ul>
@@ -166,16 +174,27 @@ public class GuiReprCollectionTable extends GuiReprValue {
     }
 
     @Override
-    public int getValueCollectionSize(GuiMappingContext context, Object collection, ObjectSpecifier specifier) throws Throwable {
+    public int getValueCollectionSize(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection, ObjectSpecifier specifier) throws Throwable {
         GuiTypeCollection collType = context.getTypeElementCollection();
-        return context.execute(() -> collType.getSize(collection));
+        return context.execute(() -> collType.getSize(collection.getValue()));
     }
 
     @Override
-    public Object getValueCollectionElement(GuiMappingContext context, Object collection, ObjectSpecifier elementSpecifier, Object prev) throws Throwable {
+    public GuiUpdatedValue getValueCollectionElement(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection,
+                                                     ObjectSpecifier elementSpecifier, GuiMappingContext.GuiSourceValue prev) throws Throwable {
         GuiTypeCollection collType = context.getTypeElementCollection();
         return context.execute(() ->
-                collType.executeGetElement(collection, elementSpecifier.getIndex(), prev));
+                prev.isNone() ?
+                        collType.executeGetElement(collection.getValue(), elementSpecifier.getIndex()) :
+                        collType.executeGetElement(collection.getValue(), elementSpecifier.getIndex(), prev));
+    }
+
+    @Override
+    public Object updateCollectionElement(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection,
+                                          Object newValue, ObjectSpecifier elementSpecifier) throws Throwable {
+        GuiTypeCollection collType = context.getTypeElementCollection();
+        return context.execute(() ->
+                collType.executeSetElement(collection.getValue(), elementSpecifier.getIndex(), newValue));
     }
 
     /**
@@ -186,24 +205,46 @@ public class GuiReprCollectionTable extends GuiReprValue {
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
-        for (GuiMappingContext elementContext : context.getChildren()) {
-            Object obj = elementContext.getRepresentation().toJsonWithNamed(elementContext, source);
-            if (obj != null) {
-                return obj;
+        List<?> list = (List<?>) source;
+        List<Object> array = new ArrayList<>(list.size());
+        GuiMappingContext elementContext = getElementContext(context);
+        for (Object element : list) {
+            Object e = elementContext.getRepresentation().toJson(elementContext, element);
+            if (e != null) {
+                array.add(e);
             }
+        }
+        return array;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Object fromJson(GuiMappingContext context, Object target, Object json) {
+        GuiMappingContext elementContext = getElementContext(context);
+        if (json instanceof List<?>) {
+            List<?> listJson = (List<?>) json;
+
+            List<Object> listTarget = GuiReprValue.castOrMake(List.class, target, () -> null);
+            List<Object> listResult = new ArrayList<>(listJson.size());
+
+            for (int i = 0, l = listJson.size(); i < l; ++i) {
+                Object elementJson = listJson.get(i);
+                Object elementTarget = (listTarget != null && i < listTarget.size()) ? listTarget.get(i) : null;
+                Object e = elementContext.getRepresentation().fromJson(elementContext, elementTarget, elementJson);
+                if (e != null) {
+                    listResult.add(e);
+                }
+            }
+            return listResult;
         }
         return null;
     }
 
-    @Override
-    public Object fromJson(GuiMappingContext context, Object target, Object json) {
-        for (GuiMappingContext elementContext : context.getChildren()) {
-            Object obj = elementContext.getRepresentation().fromJson(elementContext, target, json);
-            if (obj != null) {
-                return obj;
-            }
-        }
-        return null;
+    public GuiMappingContext getElementContext(GuiMappingContext context) {
+        return context.getChildren().stream()
+                .filter(GuiMappingContext::isReprCollectionElement)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("no element"));
     }
 
     @Override
@@ -213,10 +254,13 @@ public class GuiReprCollectionTable extends GuiReprValue {
 
     @Override
     public String toHumanReadableString(GuiMappingContext context, Object source) {
-        List<String> list = new ArrayList<>(1);
-        GuiReprObjectPane.runSubCollectionValue(context, source,
-                GuiReprObjectPane.getAddingHumanReadableStringToList(list));
-        return String.join("\t", list);
+        List<?> list = (List<?>) source;
+        List<String> res = new ArrayList<>(list.size());
+        GuiMappingContext elementContext = getElementContext(context);
+        for (Object o : list) {
+            res.add(elementContext.getRepresentation().toHumanReadableString(elementContext, o));
+        }
+        return String.join("\n", res);
     }
 
     @Override

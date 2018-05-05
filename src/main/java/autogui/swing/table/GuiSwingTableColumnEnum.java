@@ -18,18 +18,18 @@ import java.util.Comparator;
 public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager specifierManager) {
-        GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context, specifierManager);
+                                          GuiSwingView.SpecifierManager parentSpecifier) {
+        GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context, parentSpecifier);
         label.setOpaque(true);
 
-        GuiSwingViewEnumComboBox.PropertyEnumComboBox comboBox = new GuiSwingViewEnumComboBox.PropertyEnumComboBox(context, specifierManager);
+        GuiSwingViewEnumComboBox.PropertyEnumComboBox comboBox = new GuiSwingViewEnumComboBox.PropertyEnumComboBox(context, parentSpecifier);
         comboBox.setBorder(BorderFactory.createEmptyBorder());
         comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         ObjectTableColumnValue.ObjectTableCellEditor editor = new ObjectTableColumnValue.ObjectTableCellEditor(
                 comboBox, false, rowSpecifier);
         editor.setClickCount(2);
 
-        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager,
+        return new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(label, rowSpecifier),
                 editor)
                 .withComparator(Comparator.naturalOrder());

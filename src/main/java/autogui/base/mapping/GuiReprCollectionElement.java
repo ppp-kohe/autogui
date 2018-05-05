@@ -1,11 +1,8 @@
 package autogui.base.mapping;
 
-import autogui.base.type.GuiTypeMemberProperty;
-import autogui.base.type.GuiTypeValue;
+import autogui.base.type.GuiUpdatedValue;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
 
 /**
  * elements in a collection table {@link GuiReprCollectionTable}
@@ -23,18 +20,18 @@ public class GuiReprCollectionElement extends GuiReprValue {
 
     @Override
     public boolean match(GuiMappingContext context) {
-        if (context.isParentCollectionTable() && !context.isReprCollectionElement()) {
-            context.setRepresentation(this); //temporally set this for avoiding self recursion with checking isCollectionElement()
-            if (representation.match(context)) {
-                //overwrites the matched and set representation with wrapping it
-                GuiRepresentation elementRepr = context.getRepresentation();
-                context.setRepresentation(createElement(elementRepr));
+        if (context.isParentCollectionTable() &&
+                !context.isReprCollectionElement()) { //recursive guard
+            GuiMappingContext subContext = context.createChildCandidate(context.getTypeElement());
+            subContext.setRepresentation(this); //temporally set this for avoiding self recursion with checking isReprCollectionElement()
+            context.setRepresentation(this);
 
-                if (context.getChildren().isEmpty()) { //no children: create a new child with the wrapped representation
-                    GuiMappingContext subContext = context.createChildCandidate(context.getTypeElement());
-                    subContext.setRepresentation(elementRepr);
-                    subContext.addToParent();
-                }
+            if (representation.match(subContext)) {
+                //wraps elementRepr with the collection-element
+                GuiRepresentation elementRepr = subContext.getRepresentation();
+                context.setRepresentation(createElement(elementRepr)); //context(GuiReprCollectionElement(elementRepr))
+
+                subContext.addToParent();
 
                 return true;
             } else {
@@ -80,30 +77,35 @@ public class GuiReprCollectionElement extends GuiReprValue {
     }
 
     @Override
-    public Object getValue(GuiMappingContext context, Object parentSource, ObjectSpecifier specifier, Object prev) throws Throwable {
-        if (representation instanceof GuiReprValue) {
-            return ((GuiReprValue) representation).getValue(context, parentSource, specifier, prev);
+    public GuiUpdatedValue getValue(GuiMappingContext context, GuiMappingContext.GuiSourceValue parentSource,
+                                    ObjectSpecifier specifier, GuiMappingContext.GuiSourceValue prev) throws Throwable {
+        if (context.isParentCollectionTable()) {
+            return context.getParentCollectionTable()
+                    .getValueCollectionElement(context.getParent(), parentSource, specifier, prev);
         } else {
-            return null;
+            return super.getValue(context, parentSource, specifier, prev);
         }
     }
 
     @Override
-    public Object getValueCollectionElement(GuiMappingContext context, Object collection, ObjectSpecifier elementSpecifier, Object prev) throws Throwable {
-        if (representation instanceof GuiReprValue) {
-            return ((GuiReprValue) representation).getValueCollectionElement(context, collection, elementSpecifier, prev);
+    public int getValueCollectionSize(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection,
+                                      ObjectSpecifier specifier) throws Throwable {
+        if (context.isParentCollectionTable()) {
+            return context.getParentCollectionTable()
+                    .getValueCollectionSize(context.getParent(), collection, specifier.getParent());
         } else {
-            return null;
+            return super.getValueCollectionSize(context, collection, specifier);
         }
     }
 
-
     @Override
-    public int getValueCollectionSize(GuiMappingContext context, Object collection, ObjectSpecifier specifier) throws Throwable {
-        if (representation instanceof GuiReprValue) {
-            return ((GuiReprValue) representation).getValueCollectionSize(context, collection, specifier);
+    public Object update(GuiMappingContext context, GuiMappingContext.GuiSourceValue parentSource, Object newValue,
+                         ObjectSpecifier specifier) throws Throwable {
+        if (context.isParentCollectionTable()) {
+            return context.getParentCollectionTable()
+                    .updateCollectionElement(context.getParent(), parentSource, newValue, specifier);
         } else {
-            return 1;
+            return super.update(context, parentSource, newValue, specifier);
         }
     }
 
@@ -115,41 +117,17 @@ public class GuiReprCollectionElement extends GuiReprValue {
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
-        List<?> list = (List<?>) source;
-        List<Object> array = new ArrayList<>(list.size());
-        for (Object element : list) {
-            //there are several cases of wrapped repr:
-            //   regular object element: element(object) { property,... }
-            //   value object element: element(String) { String } //child-repr == wrapped-repr
-            // In both cases, the wrapped repr. can properly handle an element as its source
-            Object e = getRepresentation().toJsonWithNamed(context, element);
-            if (e != null) {
-                array.add(e);
-            }
-        }
-        return array;
+        //there are several cases of wrapped repr:
+        //   regular object element: element(object) { property,... }
+        //   value object element: element(String) { String } //child-repr == wrapped-repr
+        // In both cases, the wrapped repr. can properly handle an element as its source
+        return getRepresentation().toJsonWithNamed(context, source);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
-        if (json instanceof List<?>) {
-            List<?> listJson = (List<?>) json;
-
-            List<Object> listTarget = GuiReprValue.castOrMake(List.class, target, () -> null);
-            List<Object> listResult = new ArrayList<>(listJson.size());
-
-            for (int i = 0, l = listJson.size(); i < l; ++i) {
-                Object elementJson = listJson.get(i);
-                Object elementTarget = (listTarget != null && i < listTarget.size()) ? listTarget.get(i) : null;
-                Object e = getRepresentation().fromJson(context, elementTarget, elementJson);
-                if (e != null) {
-                    listResult.add(e);
-                }
-            }
-            return listResult;
-        }
-        return null;
+        return getRepresentation().fromJson(context, target, json);
     }
 
 
@@ -160,12 +138,7 @@ public class GuiReprCollectionElement extends GuiReprValue {
 
     @Override
     public String toHumanReadableString(GuiMappingContext context, Object source) {
-        List<?> list = (List<?>) source;
-        List<String> array = new ArrayList<>(list.size());
-        for (Object element : list) {
-            array.add(getRepresentation().toHumanReadableString(context, element));
-        }
-        return String.join("\n", array);
+        return getRepresentation().toHumanReadableString(context, source);
     }
 
     /**

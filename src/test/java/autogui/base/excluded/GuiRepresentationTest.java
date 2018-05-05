@@ -1,10 +1,8 @@
-package autogui.base;
+package autogui.base.excluded;
 
 import autogui.GuiIncluded;
 import autogui.base.mapping.*;
-import autogui.base.type.GuiTypeBuilder;
-import autogui.base.type.GuiTypeElement;
-import autogui.base.type.GuiTypeMemberProperty;
+import autogui.base.type.*;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -87,7 +85,7 @@ public class GuiRepresentationTest {
 
         Assert.assertEquals("Hello World", repr.getDisplayName(ctx, EnumValue.HelloWorld));
 
-        Assert.assertFalse(repr.isEditable(ctx));
+        Assert.assertTrue(repr.isEditable(ctx));
         Assert.assertFalse(repr.isJsonSetter());
 
         Assert.assertEquals("HelloWorld", repr.toJson(ctx, EnumValue.HelloWorld));
@@ -121,7 +119,7 @@ public class GuiRepresentationTest {
         Assert.assertTrue(repr.isRealNumberType(float.class));
         Assert.assertTrue(repr.isRealNumberType(Float.class));
 
-        Assert.assertFalse(repr.isEditable(ctx));
+        Assert.assertTrue(repr.isEditable(ctx));
         Assert.assertFalse(repr.isJsonSetter());
 
         Assert.assertEquals(123, repr.toJson(ctx, 123));
@@ -165,7 +163,7 @@ public class GuiRepresentationTest {
 
         Assert.assertTrue(repr.matchValueType(File.class));
         Assert.assertTrue(repr.matchValueType(Path.class));
-        Assert.assertFalse(repr.isEditable(ctx));
+        Assert.assertTrue(repr.isEditable(ctx));
         Assert.assertFalse(repr.isJsonSetter());
 
         Assert.assertEquals(Paths.get(pathSrcMain), repr.toValueFromPath(ctx, Paths.get(pathSrcMain)));
@@ -219,6 +217,7 @@ public class GuiRepresentationTest {
         repr.setSource(ctx, "hello");
         Assert.assertEquals("hello", ctx.getSource());
 
+        //obtain the source value
         Object v = "";
         try {
             v = repr.getUpdatedValueWithoutNoUpdate(ctx, GuiReprValue.NONE);
@@ -227,6 +226,24 @@ public class GuiRepresentationTest {
             Assert.fail();
         }
         Assert.assertEquals("hello", v);
+
+        //NO_UPDATE
+        try {
+            v = repr.getUpdatedValue(ctx, GuiReprValue.NONE);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            Assert.fail();
+        }
+        Assert.assertEquals(GuiUpdatedValue.NO_UPDATE, v);
+
+        //parent inherited value
+        try {
+            v = repr.getValueWithoutNoUpdate(ctx, "inherited", GuiReprValue.NONE);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            Assert.fail();
+        }
+        Assert.assertEquals("inherited", v);
 
         Assert.assertEquals("hello", GuiReprValue.castOrMake(String.class, "hello", () -> "world"));
         Assert.assertEquals("world", GuiReprValue.castOrMake(String.class, 123, () -> "world"));
@@ -260,7 +277,7 @@ public class GuiRepresentationTest {
         Assert.assertTrue(repr.isEditable(ctx));
         Assert.assertTrue(repr.isEditableFromChild(child));
 
-        repr.updateFromGuiChild(child, "Test", GuiReprValue.NONE);
+        repr.updateFromGui(child, "Test", GuiReprValue.NONE.child(false));
         Assert.assertEquals("Test", obj.hello);
 
         Map<String,Object> json = (Map<String,Object>) repr.toJsonWithNamed(ctx, new GuiReprValue.NamedValue("hello", "world"));

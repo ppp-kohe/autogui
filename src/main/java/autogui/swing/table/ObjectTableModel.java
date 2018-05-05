@@ -282,7 +282,7 @@ public class ObjectTableModel extends AbstractTableModel {
      *  executed under the event thread.
      *  <p>
      *  the cell value is obtained via the specified {@link ObjectTableColumn}
-     *   with the specified row of {@link #getSource()}.
+     *   with the specified row of {@link #getCollectionFromSource()}.
      *  the cell value is cached and obtained by {@link #takeValueFromSource(Object[], int, int)} at the first time.
      *
      * @param rowIndex the target row

@@ -10,14 +10,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * <h3>representation</h3>
- * {@link autogui.swing.mapping.GuiReprEmbeddedComponent}
+ * a swing view for {@link autogui.swing.mapping.GuiReprEmbeddedComponent}
  *
- * <h3>{@link PropertyEmbeddedPane#getSwingViewValue()}</h3>
- * {@link JComponent}
+ * <h3>swing-value</h3>
+ * {@link PropertyEmbeddedPane#getSwingViewValue()}:
+ * {@link JComponent} or
+ *   {@link autogui.swing.util.SwingDeferredRunner.TaskResultFuture} unwrapped by
+ *      {@link GuiReprEmbeddedComponent#toUpdateValue(GuiMappingContext, Object, Consumer)}
  *
  * <h3>history-value</h3>
  * unsupported

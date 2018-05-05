@@ -2,7 +2,6 @@ package autogui.base.mapping;
 
 import autogui.base.JsonReader;
 import autogui.base.JsonWriter;
-import autogui.swing.GuiSwingPreferences;
 
 import java.time.Instant;
 import java.time.LocalDateTime;

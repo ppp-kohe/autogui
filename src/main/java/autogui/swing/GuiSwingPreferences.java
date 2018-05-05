@@ -411,9 +411,7 @@ public class GuiSwingPreferences {
             GuiPreferences newStore = rootPrefs.addNewSavedStoreAsRoot();
             owner.savePreferences(newStore);
             Map<String,Object> map = rootPrefs.toJson();
-            if (map.containsKey("$name")) {
-                map.remove("$name");
-            }
+            map.remove("$name");
             newStore.fromJson(map);
             newStore.getValueStore().flush();
             owner.reloadList();
@@ -777,7 +775,7 @@ public class GuiSwingPreferences {
         @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
-            if (json != null && json instanceof Map<?,?>) {
+            if (json instanceof Map<?,?>) {
                 Map<String,Object> map = (Map<String,Object>) json;
                 this.x = (Integer) map.getOrDefault("x", 0);
                 this.y = (Integer) map.getOrDefault("y", 0);

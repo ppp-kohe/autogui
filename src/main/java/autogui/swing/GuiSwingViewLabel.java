@@ -20,12 +20,11 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * <h3>representation</h3>
- * {@link GuiReprValue},
- *   a fallback view.
+ * a fallback swing view for {@link GuiReprValue}
  *
- * <h3>{@link PropertyLabel#getSwingViewValue()}</h3>
- * latest set value: (read-only) Object.
+ * <h3>swing-value</h3>
+ * {@link PropertyLabel#getSwingViewValue()}
+ * latest set value as (read-only) Object.
  *   {@link PropertyLabel#setSwingViewValueWithUpdate(Object)} just causes GUI update without updating the context's value.
  *
  *  <h3>history-value</h3>

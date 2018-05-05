@@ -1,8 +1,5 @@
 package autogui.base.mapping;
 
-import autogui.base.type.GuiTypeMemberProperty;
-import autogui.base.type.GuiTypeValue;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -153,8 +150,10 @@ public class GuiReprObjectPane extends GuiReprValue {
                                 jsonEntry = jsonMap.get(subContext.getName());
                             }
                             Object subNewValue = reprValue.fromJson(subContext,
-                                    reprValue.getValueWithoutNoUpdate(subContext, target, GuiReprValue.NONE), jsonEntry);
-                            reprValue.update(subContext, target, subNewValue, GuiReprValue.NONE); //TODO OK?
+                                    reprValue.getValueWithoutNoUpdate(subContext,
+                                            GuiMappingContext.GuiSourceValue.of(target), GuiReprValue.NONE.child(false)), jsonEntry);
+                            reprValue.update(subContext, GuiMappingContext.GuiSourceValue.of(target),
+                                    subNewValue, GuiReprValue.NONE.child(false));
                         } catch (Throwable ex) {
                             subContext.errorWhileJson(ex);
                         }
@@ -228,7 +227,8 @@ public class GuiReprObjectPane extends GuiReprValue {
 
     public static void runSubPropertyValue(GuiMappingContext subContext, Object source, BiConsumer<GuiMappingContext, Object> subAndNext) {
         try {
-            subAndNext.accept(subContext, subContext.getReprValue().getValueWithoutNoUpdate(subContext, source, NONE));
+            subAndNext.accept(subContext, subContext.getReprValue().getValueWithoutNoUpdate(subContext,
+                    GuiMappingContext.GuiSourceValue.of(source), NONE.child(false)));
         } catch (Throwable ex) {
             subContext.errorWhileJson(ex);
         }

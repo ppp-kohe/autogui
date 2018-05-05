@@ -17,11 +17,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * <h3>representation</h3>
- * {@link GuiReprValueStringField}
+ * a swing view for {@link GuiReprValueStringField}
  *
- * <h3>{@link PropertyStringPane#getSwingViewValue()}</h3>
- *  the field text: {@link String}.
+ * <h3>swing-value</h3>
+ * {@link PropertyStringPane#getSwingViewValue()}
+ *  : the field text as {@link String}.
  * <p>
  *   updating is caused by field's setText(String) -&gt;
  *      document listener -&gt;

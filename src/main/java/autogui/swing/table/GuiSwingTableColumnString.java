@@ -16,10 +16,10 @@ import java.util.Comparator;
 public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager specifierManager) {
-        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager,
-                new ColumnEditTextPane(context, specifierManager, false),
-                new ColumnEditTextPane(context, specifierManager, true))
+                                          GuiSwingView.SpecifierManager parentSpecifier) {
+        return new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier,
+                new ColumnEditTextPane(context, parentSpecifier, false),
+                new ColumnEditTextPane(context, parentSpecifier, true))
                     .withComparator(Comparator.comparing(String.class::cast));
     }
 

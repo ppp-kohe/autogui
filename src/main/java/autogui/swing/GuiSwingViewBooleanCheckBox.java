@@ -20,11 +20,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * <h3>representation</h3>
+ * a swing view for
  * {@link GuiReprValueBooleanCheckBox}
  *
- * <h3>{@link PropertyCheckBox#getSwingViewValue()}</h3>
- * check-box selection: {@link Boolean}
+ * <h3>swing-value</h3>
+ * {@link PropertyCheckBox#getSwingViewValue()}: check-box selection as {@link Boolean}
  *
  * <h3>history-value</h3>
  * supported.
@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        //wraps the check-box by a panel with flow layout: the size of check-box becomes its preferred size.
+        //wraps the check-box by a panel with flow layout: the size of the check-box becomes its preferred size.
         //  mouse clicks only pointing within bounds of the check-box will be processed
         JPanel pane = new GuiSwingView.ValueWrappingPane(new FlowLayout(FlowLayout.LEADING));
         pane.setOpaque(false);

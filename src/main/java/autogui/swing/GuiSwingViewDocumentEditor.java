@@ -30,18 +30,34 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * <h3>representation</h3>
- * {@link GuiReprValueDocumentEditor}
+ * a swing view for {@link GuiReprValueDocumentEditor}
  *
- * <h3>{@link PropertyDocumentEditorPane#getSwingViewValue()} or
- *      {@link PropertyDocumentTextPane#getSwingViewValue()}</h3>
- * {@link Document},  {@link AbstractDocument.Content}, or {@link StringBuilder}
+ * <h3>swing-value </h3>
+ * {@link PropertyDocumentEditorPane#getSwingViewValue()} or
+ *      {@link PropertyDocumentTextPane#getSwingViewValue()}:
+ * {@link Document},  {@link AbstractDocument.Content}, {@link StringBuilder},
+ *    or {@link autogui.swing.util.SwingDeferredRunner.TaskResultFuture} handled by
+ *        {@link GuiReprValueDocumentEditor#toUpdateValue(GuiMappingContext, Object, Consumer)}
  *
  * <h3>history-value</h3>
  * TODO unsupported yet
  *
  * <h3>string-transfer</h3>
  * TODO unsupported yet
+ *
+ * <h3>preferences</h3>
+ * <pre>
+ *     {
+ *         "lineSpacing": Number,
+ *         "fontFamily": String,
+ *         "fontSize": Number,
+ *         "bold": Boolean,
+ *         "italic": Boolean,
+ *         "backgroundColor": ...,
+ *         "foregroundColor": ...,
+ *         "wrapText": Boolean
+ *     }
+ * </pre>
  */
 public class GuiSwingViewDocumentEditor implements GuiSwingView {
     @Override

@@ -1,4 +1,4 @@
-package autogui.base;
+package autogui.base.excluded;
 
 import autogui.GuiIncluded;
 import autogui.base.mapping.*;
@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class GuiReprCollectionTableTest {
@@ -19,11 +20,16 @@ public class GuiReprCollectionTableTest {
     @SuppressWarnings("all")
     @Test
     public void testList() {
-        GuiMappingContext context = new GuiMappingContext(new GuiTypeBuilder().get(TestList.class));
+        GuiMappingContext context = new GuiMappingContext(new GuiTypeBuilder().get(TestList.class)) {
+            @Override
+            public <T> T execute(Callable<T> task) throws Throwable {
+                return task.call();
+            }
+        };
         Assert.assertTrue(GuiRepresentation.getDefaultSet().match(context));
         context.setPreferences(new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context));
 
-        TestList list = new TestList();
+        TestList list = new TestList(); //class TestList { List<String> stringList; //[a,b,c] }
         context.setSource(list);
         context.updateSourceFromRoot();
 
@@ -31,7 +37,7 @@ public class GuiReprCollectionTableTest {
                 .filter(e -> e.getName().equals("stringList"))
                 .findFirst().orElse(null);
 
-        GuiMappingContext ctx = prop.getChildren().get(0);
+        GuiMappingContext ctx = prop.getChildren().get(0); //GMC(stringList,CollectionTable(CollectionElement(StringField)))
 
         GuiReprCollectionTable table = (GuiReprCollectionTable) ctx.getRepresentation();
 
@@ -51,23 +57,40 @@ public class GuiReprCollectionTableTest {
         GuiMappingContext elementCtx = ctx.getChildren().get(0);
         GuiReprCollectionElement elem = (GuiReprCollectionElement) elementCtx.getRepresentation();
 
-        GuiMappingContext elemValueCtx = elementCtx.getChildren().get(0);
+        GuiMappingContext elementValueCtx = elementCtx.getChildren().get(0);
+        GuiReprValueStringField elemValue = (GuiReprValueStringField) elementValueCtx.getReprValue();
+
+        GuiReprValue.ObjectSpecifier elemValueSpec =
+                GuiReprValue.NONE
+                        .child(false) //TestList
+                        .child(false) //List
+                        .childIndex(1) //get(0)
+                        .child(false); //String
+
         try {
-            //Object e = elem.getCellValue(elementCtx, elemValueCtx, "world", 1, 0);
-            Object e = elem.getUpdatedValueCollectionElement(elemValueCtx,
-                    new GuiReprValue.ObjectSpecifierIndex(GuiReprValue.NONE, 1), "world");
-            Assert.assertEquals("world", e);
+            Assert.assertEquals(3,
+                    elem.getValueCollectionSize(elementCtx, list.stringList,
+                            elemValueSpec.getParent().getParent()));
         } catch (Throwable ex) {
+            ex.printStackTrace();
             Assert.fail();
         }
 
-        //elem.updateCellFromGui(elementCtx, elemValueCtx, "hello", 0, 0, "test");
-        elem.updateCollectionElementFromGui(elemValueCtx, "hello",
-                new GuiReprValue.ObjectSpecifierIndex(GuiReprValue.NONE, 1));
-        //nothing will happen
+        Object e = null;
+        try {
+            e = elemValue.getUpdatedValueWithoutNoUpdate(elementValueCtx, elemValueSpec);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            Assert.fail();
+        }
+        Assert.assertEquals("b", e);
+
+        elemValue.updateFromGui(elementValueCtx, "hello", elemValueSpec);
+
+        Assert.assertEquals("hello", list.stringList.get(1));
 
         Assert.assertEquals(1, elem.getFixedColumnSize(elementCtx));
-        Assert.assertEquals(0, elem.getFixedColumnIndex(elementCtx, elemValueCtx));
+        Assert.assertEquals(0, elem.getFixedColumnIndex(elementCtx, elementValueCtx));
 
     }
 

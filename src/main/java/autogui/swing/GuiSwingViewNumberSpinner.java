@@ -33,11 +33,11 @@ import java.util.stream.Collectors;
 
 
 /**
- * <h3>representation</h3>
- * {@link GuiReprValueNumberSpinner}
+ * a swing view for {@link GuiReprValueNumberSpinner}
  *
- * <h3>{@link PropertyNumberSpinner#getSwingViewValue()}</h3>
- *  spinner-model's value: {@link Number}, but the value type is Object because
+ * <h3>swing-value</h3>
+ * {@link PropertyNumberSpinner#getSwingViewValue()}:
+ *  spinner-model's value as {@link Number}, but the value type is actually Object because
  *     it includes {@link autogui.base.mapping.GuiReprValueNumberSpinner.Infinity}.
  *  <p>
  *     updating is caused by
@@ -53,6 +53,18 @@ import java.util.stream.Collectors;
  *   formatted by formatter of {@link PropertyNumberSpinner#getEditorField()}
  *      which is actually a {@link TypedNumberFormatter} with format returned
  *        by {@link GuiReprValueNumberSpinner.NumberType#getFormat()}
+ *
+ * <h3>preference</h3>
+ *   <pre>
+ *       {
+ *           "maximum" : String,
+ *           "minimum" : String,
+ *           "stepSize" : String,
+ *           "format" : String
+ *       }
+ *   </pre>
+ *
+ *   <code>$settingWindow</code> : {@link autogui.swing.GuiSwingPreferences.WindowPreferencesUpdater}
  */
 public class GuiSwingViewNumberSpinner implements GuiSwingView {
     @Override

@@ -20,18 +20,21 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
- * <h3>representation</h3>
+ * a swing view for
  * {@link autogui.base.mapping.GuiReprPropertyPane},
- *  or another repr. called {@link ValuePane#wrapSwingProperty()}
+ *  or another repr. called {@link ValuePane#wrapSwingProperty()}.
  *  The latter case is that a context has a property type, but the representation matched to the value type of the property.
  *    (see {@link GuiReprValue#getValueType(GuiMappingContext)}).
  *
- * <h3>{@link PropertyPane#getSwingViewValue()}</h3>
- *  {@link autogui.base.mapping.GuiReprValue.NamedValue}, or other value type.
+ * <h3>swing-value</h3>
+ * {@link PropertyPane#getSwingViewValue()}
+ *  {@link autogui.base.mapping.GuiReprValue.NamedValue}, or other value types.
  *     obtaining and setting ({@link PropertyPane#setSwingViewValue(Object)} and
  *        {@link PropertyPane#setSwingViewValueWithUpdate(Object)}) delete to the contentPane.
+ *  <p>
  *     Note the setting of the property will be treated by the value's contentPane.
- *        {@link GuiReprValue#updateFromGui(GuiMappingContext, Object)} by the value's contentPane
+ *        {@link GuiReprValue#updateFromGui(GuiMappingContext, Object, autogui.base.mapping.GuiReprValue.ObjectSpecifier)}
+ *        by the value's contentPane
  *         supports the case of the parent is a property.
  *
  *  <h3>history-value</h3>

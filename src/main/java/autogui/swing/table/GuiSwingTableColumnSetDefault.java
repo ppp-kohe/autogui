@@ -3,10 +3,7 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprAction;
 import autogui.base.mapping.GuiReprActionList;
-import autogui.swing.GuiSwingAction;
-import autogui.swing.GuiSwingActionDefault;
-import autogui.swing.GuiSwingElement;
-import autogui.swing.GuiSwingMapperSet;
+import autogui.swing.*;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -26,21 +23,31 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
     @Override
     public void createColumns(GuiMappingContext context, ObjectTableModel model,
-                              GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier) {
-        model.addColumnRowIndex();
+                              GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
+                              GuiSwingView.SpecifierManager specifierManager) {
+        if (context.isReprCollectionElement()) {
+            model.addColumnRowIndex();
+        }
+        GuiSwingView.SpecifierManager subManager = new GuiSwingView.SpecifierManagerDefault(specifierManager::getSpecifier);
         for (GuiMappingContext subContext : context.getChildren()) {
+            //context: GuiReprCollectionElement(...) { subContext: GuiReprObjectPane { ... }  }
+            //context: GuiReprCollectionElement(...) { subContext: GuiReprCollectionTable { subSubContext: GuiReprCollectionElement(...) }  }
             GuiSwingElement subView = columnMappingSet.view(subContext);
             if (subView instanceof GuiSwingTableColumn) {
                 GuiSwingTableColumn column = (GuiSwingTableColumn) subView;
-                ObjectTableColumn columnStatic = column.createColumn(subContext, rowSpecifier);
+                ObjectTableColumn columnStatic = column.createColumn(subContext, rowSpecifier, subManager);
                 if (columnStatic != null) {
                     model.addColumnStatic(columnStatic);
                 }
 
-                ObjectTableColumnDynamicFactory columnFactory = column.createColumnDynamic(subContext, rowSpecifier);
+                ObjectTableColumnDynamicFactory columnFactory = column.createColumnDynamic(subContext, rowSpecifier, subManager);
                 if (columnFactory != null) {
                     model.addColumnDynamic(columnFactory);
                 }
+            } else if (subView instanceof GuiSwingTableColumnSet) {
+                GuiSwingTableColumnSet set = (GuiSwingTableColumnSet) subView;
+
+                set.createColumns(subContext, model, rowSpecifier, subManager);
             }
         }
     }
@@ -52,6 +59,8 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
             GuiSwingElement subView = columnMappingSet.view(subContext);
             if (subView instanceof GuiSwingAction) {
                 actions.add(new TableSelectionAction(subContext, source));
+            } else if (subView instanceof GuiSwingTableColumnSet) {
+                actions.addAll(((GuiSwingTableColumnSet) subView).createColumnActions(subContext, source));
             }
         }
         return actions;

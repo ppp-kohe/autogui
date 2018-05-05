@@ -20,11 +20,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * <h3>representation</h3>
- * {@link GuiReprValueEnumComboBox}
+ * a swing view for {@link GuiReprValueEnumComboBox}
  *
- * <h3>{@link PropertyEnumComboBox#getSwingViewValue()}</h3>
- * the selected {@link Enum} member.
+ * <h3>swing-value </h3>
+ * {@link PropertyEnumComboBox#getSwingViewValue()}:
+ *  the selected {@link Enum} member.
  *
  * <p>
  *     updating is caused by {@link PropertyEnumComboBox#setSelectedItem(Object)} -&gt;

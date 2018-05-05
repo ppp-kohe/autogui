@@ -88,12 +88,36 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
         return prevValue == nextValue;
     }
 
-    public Object executeGetElement(Object list, int index, Object prev) {
-        Object o = ((List<?>) list).get(index);
-        return compareGetElement(prev, o);
+    /**
+     * @param list a list object
+     * @param index an index
+     * @return the element at index or {@link GuiUpdatedValue#NO_UPDATE} if list is null
+     */
+    public GuiUpdatedValue executeGetElement(Object list, int index) {
+        if (list == null) {
+            return GuiUpdatedValue.NO_UPDATE;
+        } else {
+            Object v = ((List<?>) list).get(index);
+            return GuiUpdatedValue.of(v);
+        }
     }
 
-    public Object compareGetElement(Object prevValue, Object newValue) {
+    /**
+     * @param list a list object
+     * @param index an index
+     * @param prev the previous value of the element
+     * @return the element at index or {@link GuiUpdatedValue#NO_UPDATE}
+     */
+    public GuiUpdatedValue executeGetElement(Object list, int index, Object prev) {
+        GuiUpdatedValue v = executeGetElement(list, index);
+        if (v.isNone()) {
+            return GuiUpdatedValue.NO_UPDATE;
+        } else {
+            return compareGetElement(prev, v.getValue());
+        }
+    }
+
+    public GuiUpdatedValue compareGetElement(Object prevValue, Object newValue) {
         boolean eq;
         if (elementType instanceof GuiTypeValue) {
             eq = ((GuiTypeValue) elementType).equals(prevValue, newValue);
@@ -101,9 +125,19 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
             eq = Objects.equals(prevValue, newValue);
         }
         if (eq) {
-            return GuiTypeValue.NO_UPDATE;
+            return GuiUpdatedValue.NO_UPDATE;
         } else {
+            return GuiUpdatedValue.of(newValue);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public Object executeSetElement(Object list, int index, Object newValue) {
+        if (list != null) {
+            ((List<Object>) list).set(index, newValue);
             return newValue;
+        } else {
+            return null;
         }
     }
 

@@ -28,11 +28,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * <h3>representation</h3>
- * {@link GuiReprValueImagePane}
+ * a swing view for {@link GuiReprValueImagePane}
  *
- * <h3>{@link PropertyImagePane#getSwingViewValue()}</h3>
- * latest set image: {@link Image}
+ * <h3>swing-value</h3>
+ * {@link PropertyImagePane#getSwingViewValue()}:
+ * latest set image as {@link Image}
  *
  * <p>
  *   updating is caused by {@link PropertyImagePane#setImage(Image)}
@@ -41,7 +41,7 @@ import java.util.function.Supplier;
  * supported.
  *
  * <h3>string-transfer</h3>
- * unsupported.
+ * unsupported. but it can directly handle an image-data, or a file in a file-list.
  */
 public class GuiSwingViewImagePane implements GuiSwingView {
     @Override

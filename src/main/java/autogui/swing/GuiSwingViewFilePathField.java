@@ -16,11 +16,11 @@ import java.util.function.Supplier;
 
 
 /**
- * <h3>representation</h3>
- * {@link GuiReprValueFilePathField}
+ * a swing view for {@link GuiReprValueFilePathField}
  *
- * <h3>{@link PropertyFilePathPane#getSwingViewValue()}</h3>
- * selected path: {@link Path} or {@link java.io.File}
+ * <h3>swing-value</h3>
+ * {@link PropertyFilePathPane#getSwingViewValue()}:
+ * selected path as {@link Path} or {@link java.io.File}
  *
  * <p>
  *     updating is caused by {@link PropertyFilePathPane#setFile(Path)} -&gt; editingRunner -&gt;

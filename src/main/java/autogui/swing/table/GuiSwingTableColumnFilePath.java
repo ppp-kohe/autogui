@@ -23,10 +23,10 @@ import java.util.List;
 public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager specifierManager) {
-        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager,
-                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, specifierManager,false), rowSpecifier),
-                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, specifierManager, true), false, rowSpecifier))
+                                          GuiSwingView.SpecifierManager parentSpecifier) {
+        return new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier,
+                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, parentSpecifier,false), rowSpecifier),
+                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, parentSpecifier, true), false, rowSpecifier))
                 .withComparator(Comparator.comparing(Path.class::cast));
     }
 

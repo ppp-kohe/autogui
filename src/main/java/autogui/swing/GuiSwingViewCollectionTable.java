@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.*;
 import autogui.base.type.GuiTypeValue;
+import autogui.base.type.GuiUpdatedValue;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.table.*;
 import autogui.swing.util.*;
@@ -28,10 +29,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * <h3>representation</h3>
- * {@link GuiReprCollectionTable}
+ * a swing view for {@link GuiReprCollectionTable}
  *
- * <h3>{@link CollectionTable#getSwingViewValue()}</h3>
+ * <h3>swing-value</h3>
+ * {@link CollectionTable#getSwingViewValue()}:
  * latest set {@link List}.
  *
  * <h3>history-value</h3>
@@ -59,14 +60,15 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         CollectionTable table = new CollectionTable(context, new SpecifierManagerDefault(parentSpecifier));
         GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier = table.getRowSpecifier();
         List<Action> actions = new ArrayList<>();
-        for (GuiMappingContext subContext : context.getChildren()) {
-            GuiSwingElement subView = columnMapperSet.view(subContext);
+
+        for (GuiMappingContext elementContext : context.getChildren()) {
+            GuiSwingElement subView = columnMapperSet.view(elementContext);
             if (subView instanceof GuiSwingTableColumnSet) {
                 GuiSwingTableColumnSet columnSet = (GuiSwingTableColumnSet) subView;
 
-                columnSet.createColumns(subContext, table.getObjectTableModel(), rowSpecifier);
+                columnSet.createColumns(elementContext, table.getObjectTableModel(), rowSpecifier, rowSpecifier);
 
-                actions.addAll(columnSet.createColumnActions(subContext, table));
+                actions.addAll(columnSet.createColumnActions(elementContext, table));
             }
         }
 
@@ -500,6 +502,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
     public static class ObjectTableModelCollection extends ObjectTableModel {
         protected GuiMappingContext context;
+        protected GuiMappingContext elementContext;
         protected Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier;
         protected GuiSwingTableColumn.SpecifierManagerIndex rowSpecifierManager;
 
@@ -508,21 +511,21 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             this.context = context;
             this.tableSpecifier = tableSpecifier;
             this.rowSpecifierManager = new GuiSwingTableColumn.SpecifierManagerIndex(tableSpecifier);
+            setElementContextFromContext();
             setSource(source);
+        }
+
+        protected void setElementContextFromContext() {
+            elementContext = context.getReprCollectionTable().getElementContext(context);
         }
 
         @Override
         public Object getRowAtIndex(int row) {
             Object collection = getCollectionFromSource();
-            GuiReprValue.ObjectSpecifier specifier = new GuiReprValue.ObjectSpecifierIndex(tableSpecifier.get(), row);
             try {
-                rowSpecifierManager.setIndex(row);
-                Object v = context.getReprValue()
-                        .getValueCollectionElement(context, collection, specifier, null);
-                if (v != null && v.equals(GuiTypeValue.NO_UPDATE)) {
-                    v = null;
-                }
-                return v;
+                GuiReprValue.ObjectSpecifier specifier = rowSpecifierManager.getSpecifierWithSettingIndex(row);
+                return elementContext.getReprValue()
+                        .getValueWithoutNoUpdate(elementContext, GuiMappingContext.GuiSourceValue.of(collection), specifier);
             } catch (Throwable ex) {
                 throw new RuntimeException(ex);
             }
@@ -532,8 +535,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public int getRowCount() {
             Object collection = getCollectionFromSource();
             try {
-                return context.getParent().getReprValue()
-                        .getValueCollectionSize(context, collection, tableSpecifier.get());
+                return elementContext.getReprValue()
+                            .getValueCollectionSize(elementContext, GuiMappingContext.GuiSourceValue.of(collection), tableSpecifier.get());
             } catch (Throwable ex) {
                 throw new RuntimeException(ex);
             }

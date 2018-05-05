@@ -60,7 +60,7 @@ public interface GuiRepresentation {
         if (json instanceof Map<?,?>) {
             Object entry = ((Map<?,?>) json).get(context.getName());
             boolean namedValue = false;
-            if (target != null && target instanceof GuiReprValue.NamedValue) {
+            if (target instanceof GuiReprValue.NamedValue) {
                 target = ((GuiReprValue.NamedValue) target).value;
                 namedValue = true;
             }

@@ -1,7 +1,6 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprAction;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.util.PopupCategorized;
 

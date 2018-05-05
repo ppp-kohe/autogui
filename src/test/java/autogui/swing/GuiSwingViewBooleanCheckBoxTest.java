@@ -5,6 +5,7 @@ import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueBooleanCheckBox;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
+import autogui.base.type.GuiUpdatedValue;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -86,8 +87,8 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
         }
 
         @Override
-        public Object updatedValue(Object prevValue) {
-            return value;
+        public GuiUpdatedValue getValue() {
+            return GuiUpdatedValue.of(value);
         }
 
         @Override
@@ -110,8 +111,8 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
         }
 
         @Override
-        public Object executeGet(Object target, Object prevValue) throws Exception {
-            return compareGet(prevValue, booleanValue().value);
+        public GuiUpdatedValue executeGet(Object target) throws Exception {
+            return GuiUpdatedValue.of(booleanValue().value);
         }
 
         @Override

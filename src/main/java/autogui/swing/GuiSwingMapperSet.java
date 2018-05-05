@@ -148,6 +148,7 @@ public class GuiSwingMapperSet {
                 .addReprClassTableColumn(GuiReprValueNumberSpinner.class, new GuiSwingTableColumnNumber())
                 .addReprClassTableColumn(GuiReprValueImagePane.class, new GuiSwingTableColumnImage())
                 .addReprClassTableColumn(GuiReprValue.class, new GuiSwingTableColumnLabel())
+                .addReprClassTableColumn(GuiReprObjectPane.class, new GuiSwingTableColumnSetDefault(viewSet))
                 .addReprClass(GuiReprCollectionElement.class, new GuiSwingTableColumnSetDefault(viewSet))
                 .addReprClass(GuiReprActionList.class, null); //nothing: handled by a sibling GuiSwingViewCollectionTable
 

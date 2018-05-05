@@ -11,15 +11,12 @@ import java.util.function.Supplier;
  * a column factory
  */
 public interface GuiSwingTableColumn extends GuiSwingElement {
-    default ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier) {
-        return createColumn(context, rowSpecifier, new GuiSwingView.SpecifierManagerDefault(rowSpecifier::getSpecifier));
-    }
-
     ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                   GuiSwingView.SpecifierManager specifierManager);
+                                   GuiSwingView.SpecifierManager parentSpecifier);
 
     default ObjectTableColumnDynamicFactory createColumnDynamic(GuiMappingContext context,
-                                                                SpecifierManagerIndex rowSpecifier) {
+                                                                SpecifierManagerIndex rowSpecifier,
+                                                                GuiSwingView.SpecifierManager parentSpecifier) {
         return null;
     }
 
@@ -47,6 +44,11 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return new GuiReprValue.ObjectSpecifierIndex(tableSpecifier.get(), index);
+        }
+
+        public GuiReprValue.ObjectSpecifier getSpecifierWithSettingIndex(int index) {
+            setIndex(index);
             return new GuiReprValue.ObjectSpecifierIndex(tableSpecifier.get(), index);
         }
     }

@@ -19,13 +19,13 @@ import java.util.Comparator;
 public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager specifierManager) {
-        GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context, specifierManager);
+                                          GuiSwingView.SpecifierManager parentSpecifier) {
+        GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context, parentSpecifier);
         label.setHorizontalAlignment(SwingConstants.RIGHT);
         label.setOpaque(true);
-        GuiSwingViewNumberSpinner.PropertyNumberSpinner spinner = new GuiSwingViewNumberSpinner.PropertyNumberSpinner(context, specifierManager);
+        GuiSwingViewNumberSpinner.PropertyNumberSpinner spinner = new GuiSwingViewNumberSpinner.PropertyNumberSpinner(context, parentSpecifier);
         spinner.getEditorField().setBorder(BorderFactory.createEmptyBorder());
-        return new ObjectTableColumnValue(context, rowSpecifier, specifierManager,
+        return new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier,
                 label,
                 spinner)
                 .withRowHeight(spinner.getPreferredSize().height)

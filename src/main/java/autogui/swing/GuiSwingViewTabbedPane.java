@@ -13,6 +13,20 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * a swing view for {@link autogui.base.mapping.GuiReprObjectTabbedPane}
+ *
+ * <h3>swing-value</h3>
+ *  {@link ObjectTabbedPane#getSwingViewValue()}: Object.
+ *
+ *
+ * <h3>preferences</h3>
+ * <pre>
+ *     "$tab" {
+ *         "selectedIndex" : Integer
+ *     }
+ * </pre>
+ */
 public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
 
     public GuiSwingViewTabbedPane(GuiSwingMapperSet mapperSet) {
