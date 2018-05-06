@@ -42,6 +42,11 @@ public class GuiReprCollectionElement extends GuiReprValue {
         }
     }
 
+    @Override
+    public boolean isHistoryValueSupported() {
+        return false;
+    }
+
     public GuiRepresentation createElement(GuiRepresentation wrapped) {
          return new GuiReprCollectionElement(wrapped);
     }

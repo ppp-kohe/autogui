@@ -35,7 +35,8 @@ public class GuiReprObjectPane extends GuiReprValue {
     }
 
     protected boolean matchWithoutSetting(GuiMappingContext context) {
-        return context.isTypeElementObject() && !context.isRecursive();
+        return context.isTypeElementObject() &&
+                !context.isRecursive();
     }
 
     @Override

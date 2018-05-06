@@ -152,6 +152,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
 
     @Override
     public boolean match(GuiMappingContext context) {
+        //currently allow: class O { List<E> l; }  class E { List<String> c; } //c becomes a dynamic column
         if (context.isTypeElementCollection()) {
             context.setRepresentation(this);
             for (GuiMappingContext subContext : context.createChildCandidates()) {

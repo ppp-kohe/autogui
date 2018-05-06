@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class GuiReprCollectionTableTest {
     GuiReprCollectionTable colTable;
@@ -29,6 +30,8 @@ public class GuiReprCollectionTableTest {
 
     GuiMappingContext contextObjChild;
     GuiMappingContext contextValChild;
+
+    GuiMappingContext contextObjChildProp;
 
     TestReprCol obj;
 
@@ -59,6 +62,8 @@ public class GuiReprCollectionTableTest {
 
         contextObjChild = contextObjElement.getChildren().get(0);
         contextValChild = contextValElement.getChildren().get(0);
+
+        contextObjChildProp = contextObjChild.getChildByName("prop");
     }
 
     @GuiIncluded
@@ -77,6 +82,19 @@ public class GuiReprCollectionTableTest {
 
         public TestReprColObj(String prop) {
             this.prop = prop;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TestReprColObj that = (TestReprColObj) o;
+            return Objects.equals(prop, that.prop);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(prop);
         }
     }
 
@@ -138,5 +156,80 @@ public class GuiReprCollectionTableTest {
         Assert.assertEquals("updateFromGui collection element with index spec updates an element",
             "HELLO",
                 obj.valueList.get(1));
+    }
+
+    @Test
+    public void testCollectionTableMatchObj() {
+        Assert.assertTrue("collection property becomes property(collection)",
+                contextObjListProp.getRepresentation() instanceof GuiReprPropertyPane);
+
+        Assert.assertTrue("collection table",
+                contextObjList.getRepresentation() instanceof GuiReprCollectionTable);
+
+        Assert.assertTrue("collection table element",
+                contextObjElement.getRepresentation() instanceof GuiReprCollectionElement);
+
+        Assert.assertTrue("collection element always has child",
+                contextObjChild.getRepresentation() instanceof GuiReprObjectPane);
+
+        Assert.assertTrue("column",
+                contextObjChildProp.getRepresentation() instanceof GuiReprValueStringField);
+    }
+
+    @Test
+    public void testCollectionTableGetUpdatedValueObj() throws Throwable {
+        Assert.assertEquals("getUpdatedValue collection table returns obj list",
+                GuiUpdatedValue.of(Arrays.asList(
+                        new TestReprColObj("hello"),
+                        new TestReprColObj("world"))),
+                contextObjList.getReprValue()
+                        .getUpdatedValue(contextObjList, GuiReprValue.NONE));
+    }
+
+    @Test
+    public void testCollectionElementGetUpdatedValueObj() throws Throwable {
+        Assert.assertEquals("getUpdatedValue collection element with index spec returns obj element",
+                GuiUpdatedValue.of(new TestReprColObj("world")),
+                contextObjElement.getReprValue()
+                        .getUpdatedValue(contextObjElement, GuiReprValue.NONE.childIndex(1)));
+    }
+
+    @Test
+    public void testCollectionElementGetUpdatedValueAfterUpdateObj() throws Throwable {
+        contextObjElement.getReprValue()
+                .updateFromGui(contextObjElement, new TestReprColObj("HELLO"), GuiReprValue.NONE.childIndex(1));
+
+        Assert.assertEquals("getUpdatedValue collection element with index spec returns obj element after update",
+                GuiUpdatedValue.of(new TestReprColObj("hello")),
+                contextObjElement.getReprValue()
+                        .getUpdatedValue(contextObjElement, GuiReprValue.NONE.childIndex(0)));
+    }
+
+    @Test
+    public void testCollectionElementPropGetUpdatedValue() throws Throwable {
+        Assert.assertEquals("getUpdatedValue prop of collection element with index spec returns prop value",
+                GuiUpdatedValue.of("world"),
+                contextObjChildProp.getReprValue()
+                        .getUpdatedValue(contextObjChildProp, GuiReprValue.NONE.childIndex(1).child(false).child(false)));
+    }
+
+    @Test
+    public void testCollectionElementPropGetUpdatedValueAfterUpdate() throws Throwable {
+        contextObjChildProp.getReprValue()
+                .updateFromGui(contextObjChildProp, "HELLO", GuiReprValue.NONE.childIndex(0).child(false).child(false));
+
+        Assert.assertEquals("getUpdatedValue prop of collection element with index spec returns prop value after update",
+                GuiUpdatedValue.of("world"),
+                contextObjChildProp.getReprValue()
+                        .getUpdatedValue(contextObjChildProp, GuiReprValue.NONE.childIndex(1).child(false).child(false)));
+    }
+
+    @Test
+    public void testCollectionElementPropUpdateFromGuiObj() {
+        contextObjChildProp.getReprValue()
+                .updateFromGui(contextObjChildProp, "HELLO", GuiReprValue.NONE.childIndex(1).child(false).child(false));
+        Assert.assertEquals("updateFromGui collection element prop with index spec updates an element prop",
+                "HELLO",
+                obj.objList.get(1).prop);
     }
 }

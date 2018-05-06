@@ -206,7 +206,8 @@ public class GuiMappingContext {
         GuiTypeElement s = getTypeElement();
         GuiMappingContext ctx = getParent();
         while (ctx != null) {
-            if (ctx.getTypeElement().equals(s)) {
+            if (ctx.getTypeElement().equals(s) &&
+                    !ctx.isReprCollectionElement()) { // (Obj,ObjectPane) { (List,CollectionTable) { (Obj,CollectionElement()) } }
                 return true;
             }
             ctx = ctx.getParent();
