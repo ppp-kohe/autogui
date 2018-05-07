@@ -232,42 +232,48 @@ public class GuiTypeBuilder {
         property.setOwner(objType);
 
         Type type = null;
-        int index = Integer.MAX_VALUE;
+        Set<Integer> indexes = new HashSet<>();
         if (fld != null) {
             property.setField(fld);
             type = fld.getGenericType();
-            index = Math.min(index, getMemberOrdinalIndex(fld));
+            getMemberOrdinalIndex(fld)
+                    .ifPresent(indexes::add);
         }
         if (setter != null) {
             property.setSetter(setter);
             type = setter.getGenericParameterTypes()[0];
-            index = Math.min(index, getMemberOrdinalIndex(setter));
+            getMemberOrdinalIndex(setter)
+                    .ifPresent(indexes::add);
         }
         if (getter != null) {
             property.setGetter(getter);
             type = getter.getGenericReturnType();
-            index = Math.min(index, getMemberOrdinalIndex(getter));
+            getMemberOrdinalIndex(getter)
+                    .ifPresent(indexes::add);
         }
 
         property.setType(get(type));
-        property.setOrdinal(new GuiTypeMemberProperty.MemberOrdinal(index, name));
+        property.setOrdinal(new GuiTypeMemberProperty.MemberOrdinal(
+                indexes.stream()
+                        .mapToInt(Integer::intValue)
+                        .min().orElse(Short.MAX_VALUE), name));
 
         objType.getProperties().add(property);
     }
 
-    public int getMemberOrdinalIndex(Method m) {
+    public OptionalInt getMemberOrdinalIndex(Method m) {
         if (m.isAnnotationPresent(GuiIncluded.class)) {
-            return m.getAnnotation(GuiIncluded.class).index();
+            return OptionalInt.of(m.getAnnotation(GuiIncluded.class).index());
         } else {
-            return Integer.MAX_VALUE;
+            return OptionalInt.empty();
         }
     }
 
-    public int getMemberOrdinalIndex(Field f) {
+    public OptionalInt getMemberOrdinalIndex(Field f) {
         if (f.isAnnotationPresent(GuiIncluded.class)) {
-            return f.getAnnotation(GuiIncluded.class).index();
+            return OptionalInt.of(f.getAnnotation(GuiIncluded.class).index());
         } else {
-            return Integer.MAX_VALUE;
+            return OptionalInt.empty();
         }
     }
 
@@ -281,8 +287,8 @@ public class GuiTypeBuilder {
         }
         action.setOwner(objType);
         objType.getActions().add(action);
-        int index = getMemberOrdinalIndex(method);
-        action.setOrdinal(new GuiTypeMember.MemberOrdinal(index, name));
+        action.setOrdinal(new GuiTypeMember.MemberOrdinal(
+                getMemberOrdinalIndex(method).orElse(Short.MAX_VALUE), name));
     }
 
     /**

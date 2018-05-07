@@ -184,30 +184,42 @@ public class GuiReprValue implements GuiRepresentation {
                 getUpdatedValue(context, specifier));
     }
 
+    /**
+     * call {@link #getUpdatedValue(GuiMappingContext, ObjectSpecifier)}
+     *  only if the context holds a value pane and 1) the current source is NONE or 2) {@link ObjectSpecifier#isUsingCache()}=false,
+     *  and if NO_UPDATE, then return the current source from the context,
+     *
+     * @param context the context
+     * @param specifier the specifier of the value
+     * @return the updated value as a source-value or the current source value of the context
+     * @throws Throwable might be cause d by executing method invocation
+     */
+    public GuiMappingContext.GuiSourceValue getUpdatedSource(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
+        if (context.isParentValuePane() &&
+                (context.getSource().isNone() || specifier.isUsingCache())) {
+            GuiUpdatedValue v = context.getReprValue().getUpdatedValue(context, specifier);
+            if (v.isNone()) {
+                return context.getSource();
+            } else {
+                return GuiMappingContext.GuiSourceValue.of(v.getValue());
+            }
+        } else {
+            return context.getSource();
+        }
+    }
+
 
     /**
      * obtain the current parent value from the parent context
-     * <ul>
-     *     <li>the parent source is null or specifier indicates using cache ({@link ObjectSpecifier#isUsingCache()}=true),
-     *          and the parent is a {@link GuiReprValue},
-     *          then obtain by {@link #getUpdatedValue(GuiMappingContext, ObjectSpecifier)}</li>
-     *     <li>otherwise, return parent source</li>
-     * </ul>
+     *  by calling {@link #getUpdatedSource(GuiMappingContext, ObjectSpecifier)}
      * @param context the context of the repr.
      * @param parentSpecifier the specifier of the parent value
      * @return the source value of the parent
      * @throws Throwable the action might cause an error
      */
     public GuiMappingContext.GuiSourceValue getParentSource(GuiMappingContext context, ObjectSpecifier parentSpecifier) throws Throwable {
-        if ((context.getParentSource().isNone() || !parentSpecifier.isUsingCache()) &&
-                    context.isParentValuePane()) {
-            GuiUpdatedValue v = context.getParentValuePane()
-                    .getUpdatedValue(context.getParent(), parentSpecifier);
-            if (v.isNone()) {
-                return context.getParentSource();
-            } else{
-                return GuiMappingContext.GuiSourceValue.of(v.getValue());
-            }
+        if (context.hasParent()) {
+            return context.getParent().getReprValue().getUpdatedSource(context.getParent(), parentSpecifier);
         } else {
             return context.getParentSource();
         }

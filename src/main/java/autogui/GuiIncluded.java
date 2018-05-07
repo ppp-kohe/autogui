@@ -22,10 +22,10 @@ public @interface GuiIncluded {
     String name() default "";
 
     /**
-     * @return ordinal index for sorting members. the default value is the max value of int.
+     * @return ordinal index for sorting members. the default value is the max value of short.
      *   for properties, minimum value is used from field, getter or setter.
      */
-    int index() default Integer.MAX_VALUE;
+    int index() default Short.MAX_VALUE;
 
     /**
      * @return short description for the target, typically presented as a tool-tip.

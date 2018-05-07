@@ -372,7 +372,7 @@ public class GuiMappingContext {
      */
     public void updateSourceFromGui(Object newValue) {
         setSource(GuiSourceValue.of(newValue));
-        updateSourceFromRoot(this);
+        updateSourceFromRoot(this); //TODO we might need custom root selection, e.g. a table element as a root from the property of the element
     }
 
     /** {@link #updateSourceFromGui(Object)} with the null cause */

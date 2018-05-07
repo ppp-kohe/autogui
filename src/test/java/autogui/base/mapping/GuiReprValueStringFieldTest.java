@@ -6,7 +6,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class GuiReprStringFieldTest {
+public class GuiReprValueStringFieldTest {
 
     GuiReprValueStringField fld;
 
@@ -15,12 +15,15 @@ public class GuiReprStringFieldTest {
 
     GuiTypeObject typeObject;
     GuiTypeMemberProperty property;
+    GuiTypeMemberProperty propertyReadOnly;
 
     String value;
     TestObjRepr obj;
 
     GuiMappingContext contextValue;
     GuiMappingContext contextProp;
+
+    GuiMappingContext contextReadOnly;
 
     @Before
     public void setUp() {
@@ -32,6 +35,8 @@ public class GuiReprStringFieldTest {
         typeObject = (GuiTypeObject) builder.get(TestObjRepr.class);
         property = (GuiTypeMemberProperty) typeObject.getMemberByName("value");
 
+        propertyReadOnly = (GuiTypeMemberProperty) typeObject.getMemberByName("readOnly");
+
         value = "hello\nworld";
 
         obj = new TestObjRepr();
@@ -39,12 +44,19 @@ public class GuiReprStringFieldTest {
 
         contextValue = new GuiMappingContext(type, fld);
         contextProp = new GuiMappingContext(property, fld);
+
+        contextReadOnly = new GuiMappingContext(propertyReadOnly, fld);
     }
 
     @GuiIncluded
     public static class TestObjRepr {
         @GuiIncluded
         public String value;
+
+        @GuiIncluded
+        public String getReadOnly() {
+            return "hello";
+        }
     }
 
     @Test
@@ -218,5 +230,25 @@ public class GuiReprStringFieldTest {
                 fld.getValueWithoutNoUpdate(contextValue,
                         GuiMappingContext.NO_SOURCE,
                         GuiReprValue.NONE));
+    }
+
+    //////////
+
+    @Test
+    public void testValueIsEditable() {
+        Assert.assertTrue("isEditable prop returns true",
+                fld.isEditable(contextProp));
+    }
+
+    @Test
+    public void testValueIsEditableValue() {
+        Assert.assertTrue("isEditable value returns true",
+                fld.isEditable(contextValue));
+    }
+
+    @Test
+    public void testValueIsEditableReadOnly() {
+        Assert.assertFalse("isEditable returns false for read-only prop",
+                fld.isEditable(contextReadOnly));
     }
 }

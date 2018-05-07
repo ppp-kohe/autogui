@@ -21,6 +21,8 @@ public class GuiReprPropertyPaneTest {
     GuiMappingContext contextProp;
     GuiMappingContext contextValue;
 
+    GuiMappingContext contextReadOnly;
+
     TestObjReprProp obj;
 
     @Before
@@ -31,7 +33,7 @@ public class GuiReprPropertyPaneTest {
         typeProperty = (GuiTypeMemberProperty) typeObject.getMemberByName("value");
 
         prop = new GuiReprPropertyPane(GuiRepresentation.getDefaultSet());
-        objPane = new GuiReprObjectPane(prop);
+        objPane = new GuiReprObjectPane(prop); //custom ObjectPane; holds PropertyPane and the prop of the obj only matches to the PropertyPane
 
         obj = new TestObjReprProp();
         obj.value = "hello";
@@ -43,12 +45,19 @@ public class GuiReprPropertyPaneTest {
 
         contextProp = contextObj.getChildByName("value");
         contextValue = contextProp.getChildByName("String");
+
+        contextReadOnly = contextObj.getChildByName("readOnly").getChildByName("String");
     }
 
     @GuiIncluded
     public static class TestObjReprProp {
         @GuiIncluded
         public String value;
+
+        @GuiIncluded
+        public String getReadOnly() {
+            return "read-only";
+        }
     }
 
     @Test
@@ -88,4 +97,11 @@ public class GuiReprPropertyPaneTest {
                 "world",
                 obj.value);
     }
+
+    @Test
+    public void testValueIsEditableUnderProp() {
+        Assert.assertFalse("isEditable for value under read-only prop returns false",
+                contextReadOnly.getReprValue().isEditable(contextReadOnly));
+    }
+
 }

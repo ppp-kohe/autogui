@@ -33,6 +33,13 @@ public class GuiReprCollectionTableTest {
 
     GuiMappingContext contextObjChildProp;
 
+    GuiMappingContext contextValListListProp;
+    GuiMappingContext contextValListList;
+    GuiMappingContext contextValListListElement;
+    GuiMappingContext contextValListListChild;
+    GuiMappingContext contextValListListChildElement;
+    GuiMappingContext contextValListListChildChild;
+
     TestReprCol obj;
 
     @Before
@@ -47,6 +54,9 @@ public class GuiReprCollectionTableTest {
         obj.objList = new ArrayList<>(Arrays.asList(
                 new TestReprColObj("hello"),
                 new TestReprColObj("world")));
+        obj.valueListList = new ArrayList<>(Arrays.asList(
+                new ArrayList<>(Arrays.asList("hello", "world")),
+                new ArrayList<>(Arrays.asList("foo", "bar"))));
 
         contextObj = new GuiMappingContext(typeObject, obj);
         GuiRepresentation.getDefaultSet().match(contextObj);
@@ -64,6 +74,15 @@ public class GuiReprCollectionTableTest {
         contextValChild = contextValElement.getChildren().get(0);
 
         contextObjChildProp = contextObjChild.getChildByName("prop");
+
+        //////////
+
+        contextValListListProp = contextObj.getChildByName("valueListList");
+        contextValListList = contextValListListProp.getChildByName("List");
+        contextValListListElement = contextValListList.getReprCollectionTable().getElementContext(contextValListList);
+        contextValListListChild = contextValListListElement.getChildren().get(0);
+        contextValListListChildElement = contextValListListChild.getReprCollectionTable().getElementContext(contextValListListChild);
+        contextValListListChildChild = contextValListListChildElement.getChildren().get(0);
     }
 
     @GuiIncluded
@@ -73,6 +92,9 @@ public class GuiReprCollectionTableTest {
 
         @GuiIncluded
         public List<TestReprColObj> objList;
+
+        @GuiIncluded
+        public List<List<String>> valueListList;
     }
 
     @GuiIncluded
@@ -97,6 +119,8 @@ public class GuiReprCollectionTableTest {
             return Objects.hash(prop);
         }
     }
+
+    //////////////// List<String>
 
     @Test
     public void testCollectionTableMatch() {
@@ -157,6 +181,8 @@ public class GuiReprCollectionTableTest {
             "HELLO",
                 obj.valueList.get(1));
     }
+
+    //////////////// List<TestReprColObj>
 
     @Test
     public void testCollectionTableMatchObj() {
@@ -231,5 +257,91 @@ public class GuiReprCollectionTableTest {
         Assert.assertEquals("updateFromGui collection element prop with index spec updates an element prop",
                 "HELLO",
                 obj.objList.get(1).prop);
+    }
+
+
+    //////////////// List<List<String>>
+
+    @Test
+    public void testCollectionTableMatchListList() {
+        Assert.assertTrue("list of list property becomes property(collection(...))",
+                contextValListListProp.getRepresentation() instanceof GuiReprPropertyPane);
+
+        Assert.assertTrue("collection table",
+                contextValListList.getRepresentation() instanceof GuiReprCollectionTable);
+
+        Assert.assertTrue("collection table element",
+                contextValListListElement.getRepresentation() instanceof GuiReprCollectionElement);
+
+        Assert.assertTrue("collection element always has child",
+                contextValListListChild.getRepresentation() instanceof GuiReprCollectionTable);
+
+        Assert.assertTrue("collection table in table",
+                contextValListListChildElement.getRepresentation() instanceof GuiReprCollectionElement);
+
+        Assert.assertTrue("collection element in table has child",
+                contextValListListChildChild.getRepresentation() instanceof  GuiReprValueStringField);
+    }
+
+
+    @Test
+    public void testCollectionTableGetUpdatedValueListList() throws Throwable {
+        Assert.assertEquals("getUpdatedValue collection table returns list list",
+                GuiUpdatedValue.of(Arrays.asList(
+                        Arrays.asList("hello", "world"),
+                        Arrays.asList("foo", "bar"))),
+                contextValListListProp.getReprValue()
+                        .getUpdatedValue(contextValListListProp, GuiReprValue.NONE));
+    }
+
+    @Test
+    public void testCollectionElementGetUpdatedValueListList() throws Throwable {
+        Assert.assertEquals("getUpdatedValue collection element with index spec returns list list element",
+                GuiUpdatedValue.of(Arrays.asList("foo", "bar")),
+                contextValListListElement.getReprValue()
+                        .getUpdatedValue(contextValListListElement, GuiReprValue.NONE.childIndex(1)));
+    }
+
+
+    @Test
+    public void testCollectionElementGetUpdatedValueListListElement() throws Throwable {
+        Assert.assertEquals("getUpdatedValue collection element with index2 spec returns list list element",
+                GuiUpdatedValue.of("bar"),
+                contextValListListChildElement.getReprValue()
+                        .getUpdatedValue(contextValListListChildElement, GuiReprValue.NONE
+                                .childIndex(1) //element
+                                .child(false)  //table
+                                .childIndex(1))); //element in table
+    }
+
+
+    @Test
+    public void testCollectionElementGetUpdatedValueListListElementAfterUpdate() throws Throwable {
+        contextValListListChildElement.getReprValue().updateFromGui(contextValListListChildElement,
+                "HELLO", GuiReprValue.NONE
+                .childIndex(1)
+                .child(false)
+                .childIndex(1));
+        Assert.assertEquals("getUpdatedValue collection element with index2 spec returns list list element",
+                GuiUpdatedValue.of("HELLO"),
+                contextValListListChildElement.getReprValue()
+                        .getUpdatedValue(contextValListListChildElement, GuiReprValue.NONE
+                                .childIndex(1)
+                                .child(false)
+                                .childIndex(1)));
+    }
+
+    @Test
+    public void testCollectionElementUpdateFromGuiListList() throws Throwable {
+        contextValListListChildElement.getReprValue().updateFromGui(contextValListListChildElement,
+                "HELLO", GuiReprValue.NONE
+                        .childIndex(1)
+                        .child(false)
+                        .childIndex(1));
+        Assert.assertEquals("updateFromGui collection table updates element in list of list",
+                Arrays.asList(
+                        Arrays.asList("hello", "world"),
+                        Arrays.asList("foo", "HELLO")),
+                obj.valueListList);
     }
 }
