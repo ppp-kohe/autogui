@@ -94,7 +94,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
 
         public void initValue() {
-            update(context, context.getSource());
+            update(context, context.getSource().getValue());
         }
 
         public void initPopup() {

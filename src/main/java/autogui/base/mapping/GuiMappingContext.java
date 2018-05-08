@@ -400,7 +400,7 @@ public class GuiMappingContext {
 
     public void clearSourceSubTree() {
         if (hasParent()) {
-            setSource(null);
+            setSource(NO_SOURCE);
         }
         getChildren()
                 .forEach(GuiMappingContext::clearSourceSubTree);

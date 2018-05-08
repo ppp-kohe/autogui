@@ -90,7 +90,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         }
 
         public void initValue() {
-            update(context, context.getSource());
+            update(context, context.getSource().getValue());
         }
 
         public void initListener() {
@@ -171,6 +171,10 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return specifierManager.getSpecifier();
         }
+
+        public PopupExtension getPopup() {
+            return popup;
+        }
     }
 
     public static class BooleanTransferHandler extends TransferHandler {
@@ -194,7 +198,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
                     String data = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
                     Boolean value = ((GuiReprValueBooleanCheckBox) pane.getSwingViewContext().getRepresentation()).getBooleanValue(data);
                     if (value != null) {
-                        pane.setSwingViewValue(value);
+                        pane.setSwingViewValueWithUpdate(value);
                         return true;
                     }
                     return false;

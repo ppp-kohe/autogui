@@ -99,7 +99,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         }
 
         public void initValue() {
-            update(context, context.getSource());
+            update(context, context.getSource().getValue());
         }
 
         @Override

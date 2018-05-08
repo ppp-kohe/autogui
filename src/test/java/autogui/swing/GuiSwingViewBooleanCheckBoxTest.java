@@ -1,130 +1,162 @@
 package autogui.swing;
 
+import autogui.GuiIncluded;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
-import autogui.base.mapping.GuiReprValueBooleanCheckBox;
-import autogui.base.type.GuiTypeMemberProperty;
-import autogui.base.type.GuiTypeValue;
-import autogui.base.type.GuiUpdatedValue;
+import autogui.base.type.GuiTypeBuilder;
+import autogui.base.type.GuiTypeObject;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
-import java.util.function.Supplier;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 
 public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
     public static void main(String[] args) {
-        new GuiSwingViewBooleanCheckBoxTest().testProp();
+        GuiSwingViewBooleanCheckBoxTest test = new GuiSwingViewBooleanCheckBoxTest();
+        test.setUp();
+        test.testViewBooleanValuePopupCopy();
     }
 
-    public GuiReprValue.ObjectSpecifier getSpecifier() {
-        return GuiReprValue.NONE;
+    GuiTypeBuilder builder;
+    GuiTypeObject typeObject;
+
+    GuiMappingContext context;
+    GuiMappingContext contextProp;
+    TestObj obj;
+
+    GuiSwingViewBooleanCheckBox box;
+
+    JFrame frame;
+
+    @Before
+    public void setUp() {
+        builder = new GuiTypeBuilder();
+        typeObject = (GuiTypeObject) builder.get(TestObj.class);
+
+        obj = new TestObj();
+
+        context = new GuiMappingContext(typeObject, obj);
+
+        GuiSwingMapperSet.getReprDefaultSet().match(context);
+
+        contextProp = context.getChildByName("value");
+
+        box = new GuiSwingViewBooleanCheckBox();
+
+    }
+
+
+    @GuiIncluded
+    public static class TestObj {
+        @GuiIncluded
+        public boolean value;
+    }
+
+    /////////
+
+    public GuiSwingViewBooleanCheckBox.PropertyCheckBox create() {
+        JComponent c = box.createView(contextProp, () -> GuiReprValue.NONE);
+        frame = createFrame(c);
+        return GuiSwingViewBooleanCheckBox.PropertyCheckBox.class.cast(
+                GuiSwingView.findChild(c,
+                        GuiSwingViewBooleanCheckBox.PropertyCheckBox.class::isInstance));
     }
 
     @Test
-    public void testValue() {
-        GuiSwingViewBooleanCheckBox box = new GuiSwingViewBooleanCheckBox();
+    public void testViewBooleanValueUpdate() {
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox propBox = runGet(this::create);
 
-        TestBooleanValue value = new TestBooleanValue();
-        GuiMappingContext context = new GuiMappingContext(value);
-        context.setRepresentation(new GuiReprValueBooleanCheckBox());
-        context.updateSourceFromRoot();
+        run(this::runWait);
+        obj.value = true;
+        contextProp.updateSourceFromRoot();
 
-        JComponent pp = runGet(() -> {
-            JComponent p = box.createView(context, this::getSpecifier);
-            JFrame frame = testFrame(p);
-            return p;
-        });
-
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox propertyPane = runQuery(pp, query(GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, 0));
-
-        Assert.assertTrue(runGet(propertyPane::isSelected));
-
-        run(propertyPane::doClick);
-        Assert.assertFalse(value.value);
+        Assert.assertTrue("listener update",
+                runGet(propBox::isSelected));
     }
 
     @Test
-    public void testProp() {
-        GuiSwingViewBooleanCheckBox box = new GuiSwingViewBooleanCheckBox();
+    public void testViewBooleanValueClick() {
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox propBox = runGet(this::create);
 
-        TestBooleanProp prop = new TestBooleanProp();
-        GuiMappingContext context = new GuiMappingContext(prop);
-        context.setRepresentation(new GuiReprValueBooleanCheckBox());
-        context.updateSourceFromRoot();
+        run(propBox::doClick);
 
-        JComponent pp = runGet(() -> {
-            JComponent p = box.createView(context, this::getSpecifier);
-            JFrame frame = testFrame(p);
+        Assert.assertTrue("update after click",
+                obj.value);
+    }
 
-            JCheckBox c = new JCheckBox() {
-                @Override
-                protected void processMouseEvent(MouseEvent e) {
-                    super.processMouseEvent(e);
-                }
-            };
-            return p;
+    @Test
+    public void testViewBooleanValuePopupRefresh() {
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox propBox = runGet(this::create);
+
+        run(() -> {
+            obj.value = true;
+            GuiSwingView.ContextRefreshAction a = findMenuItemAction(propBox.getSwingStaticMenuItems(),
+                    GuiSwingView.ContextRefreshAction.class);
+            a.actionPerformed(null);
         });
 
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox propertyPane = runQuery(pp, query(GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, 0));
+        Assert.assertTrue("refresh menu reflects model state",
+                runGet(propBox::isSelected));
+    }
 
-        Assert.assertTrue(runGet(propertyPane::isSelected));
+    @Test
+    public void testViewBooleanValuePopupCopy() {
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox propBox = runGet(this::create);
 
-        run(propertyPane::doClick);
-        Assert.assertFalse(prop.booleanValue().value);
+        GuiSwingView.ToStringCopyAction a = runGet(() -> findMenuItemAction(propBox.getSwingStaticMenuItems(),
+                GuiSwingView.ToStringCopyAction.class));
 
-        Assert.assertEquals("Hello", propertyPane.getText());
+        run(() -> {
+            a.actionPerformed(null);
+        });
+
+        Assert.assertEquals("copy text",
+                "false",
+                runGet(this::getClipboardText));
+
+        run(() -> propBox.setSwingViewValue(true));
+
+        run(() -> {
+            a.actionPerformed(null);
+        });
+
+        Assert.assertEquals("copy text after update",
+                "true",
+                runGet(this::getClipboardText));
 
     }
 
-    public static class TestBooleanValue extends GuiTypeValue {
-        public boolean value = true;
-        public int updateCount;
+    @Test
+    public void testViewBooleanValueTransferHandlerImport() {
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox propBox = runGet(this::create);
 
-        public TestBooleanValue() {
-            super(Boolean.class);
-        }
+        Assert.assertTrue("importData",
+                runGet(() ->
+                propBox.getTransferHandler()
+                        .importData(new TransferHandler.TransferSupport(propBox,
+                                new StringSelection("true")))));
 
-        @Override
-        public GuiUpdatedValue getValue() {
-            return GuiUpdatedValue.of(value);
-        }
+        Assert.assertTrue("paste by transferHandler",
+                runGet(() -> obj.value));
 
-        @Override
-        public Object writeValue(Object prevValue, Object newValue) {
-            this.value = (Boolean) newValue;
-            ++updateCount;
-            System.err.println("update: " + updateCount + " : " + value);
-            return newValue;
-        }
+        Assert.assertTrue("paste by transferHandler, update selection",
+                runGet(propBox::isSelected));
     }
 
-    public static class TestBooleanProp extends GuiTypeMemberProperty {
-        public TestBooleanProp() {
-            super("hello");
-            setType(new TestBooleanValue());
-        }
+    @Test
+    public void testViewBooleanValueTransferHandlerExport() {
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox propBox = runGet(this::create);
 
-        public TestBooleanValue booleanValue() {
-            return ((TestBooleanValue) getType());
-        }
-
-        @Override
-        public GuiUpdatedValue executeGet(Object target) throws Exception {
-            return GuiUpdatedValue.of(booleanValue().value);
-        }
-
-        @Override
-        public Object executeSet(Object target, Object value) throws Exception {
-            booleanValue().value = (Boolean) value;
-            System.err.println("set " + value);
-            return null;
-        }
-
-        @Override
-        public boolean isWritable() {
-            return true;
-        }
+        run(() ->
+                propBox.getTransferHandler()
+                        .exportToClipboard(propBox,
+                                Toolkit.getDefaultToolkit().getSystemClipboard(),
+                                TransferHandler.COPY));
+        Assert.assertEquals("exportData",
+                "false",
+                getClipboardText());
     }
 }

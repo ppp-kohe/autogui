@@ -615,6 +615,10 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
         public CategorizedMenuItem remap(String category, String subCategory) {
             return new CategorizedMenuItemActionDelegate(action, category, subCategory);
         }
+
+        public Action getAction() {
+            return action;
+        }
     }
 
     public static class CategorizedMenuItemActionCheckDelegate extends CategorizedMenuItemActionDelegate {

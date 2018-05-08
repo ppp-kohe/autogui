@@ -118,7 +118,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public void initValue() {
             GuiMappingContext.SourceUpdateListener l = (GuiMappingContext.SourceUpdateListener) pane;
-            l.update(context, context.getSource());
+            l.update(context, context.getSource().getValue());
         }
 
         public void initSize() {

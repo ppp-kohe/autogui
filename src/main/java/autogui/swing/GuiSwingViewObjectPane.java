@@ -312,7 +312,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         @Override
         public Object getSwingViewValue() {
-            return context.getSource();
+            return context.getSource().getValue();
         }
 
         /** special case: update the source */

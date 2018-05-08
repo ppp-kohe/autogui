@@ -55,8 +55,9 @@ public class GuiReprCollectionTableTest {
                 new TestReprColObj("hello"),
                 new TestReprColObj("world")));
         obj.valueListList = new ArrayList<>(Arrays.asList(
-                new ArrayList<>(Arrays.asList("hello", "world")),
-                new ArrayList<>(Arrays.asList("foo", "bar"))));
+                new ArrayList<>(Arrays.asList("hello", "world", "!!!")),
+                new ArrayList<>(Arrays.asList("foo", "bar", "buzz")),
+                new ArrayList<>(Arrays.asList("aaa", "bbb", "ccc"))));
 
         contextObj = new GuiMappingContext(typeObject, obj);
         GuiRepresentation.getDefaultSet().match(contextObj);
@@ -288,8 +289,9 @@ public class GuiReprCollectionTableTest {
     public void testCollectionTableGetUpdatedValueListList() throws Throwable {
         Assert.assertEquals("getUpdatedValue collection table returns list list",
                 GuiUpdatedValue.of(Arrays.asList(
-                        Arrays.asList("hello", "world"),
-                        Arrays.asList("foo", "bar"))),
+                        Arrays.asList("hello", "world", "!!!"),
+                        Arrays.asList("foo", "bar", "buzz"),
+                        Arrays.asList("aaa", "bbb", "ccc"))),
                 contextValListListProp.getReprValue()
                         .getUpdatedValue(contextValListListProp, GuiReprValue.NONE));
     }
@@ -297,7 +299,7 @@ public class GuiReprCollectionTableTest {
     @Test
     public void testCollectionElementGetUpdatedValueListList() throws Throwable {
         Assert.assertEquals("getUpdatedValue collection element with index spec returns list list element",
-                GuiUpdatedValue.of(Arrays.asList("foo", "bar")),
+                GuiUpdatedValue.of(Arrays.asList("foo", "bar", "buzz")),
                 contextValListListElement.getReprValue()
                         .getUpdatedValue(contextValListListElement, GuiReprValue.NONE.childIndex(1)));
     }
@@ -306,12 +308,12 @@ public class GuiReprCollectionTableTest {
     @Test
     public void testCollectionElementGetUpdatedValueListListElement() throws Throwable {
         Assert.assertEquals("getUpdatedValue collection element with index2 spec returns list list element",
-                GuiUpdatedValue.of("bar"),
+                GuiUpdatedValue.of("buzz"),
                 contextValListListChildElement.getReprValue()
                         .getUpdatedValue(contextValListListChildElement, GuiReprValue.NONE
                                 .childIndex(1) //element
                                 .child(false)  //table
-                                .childIndex(1))); //element in table
+                                .childIndex(2))); //element in table
     }
 
 
@@ -321,14 +323,14 @@ public class GuiReprCollectionTableTest {
                 "HELLO", GuiReprValue.NONE
                 .childIndex(1)
                 .child(false)
-                .childIndex(1));
+                .childIndex(2));
         Assert.assertEquals("getUpdatedValue collection element with index2 spec returns list list element",
                 GuiUpdatedValue.of("HELLO"),
                 contextValListListChildElement.getReprValue()
                         .getUpdatedValue(contextValListListChildElement, GuiReprValue.NONE
                                 .childIndex(1)
                                 .child(false)
-                                .childIndex(1)));
+                                .childIndex(2)));
     }
 
     @Test
@@ -337,11 +339,12 @@ public class GuiReprCollectionTableTest {
                 "HELLO", GuiReprValue.NONE
                         .childIndex(1)
                         .child(false)
-                        .childIndex(1));
+                        .childIndex(2));
         Assert.assertEquals("updateFromGui collection table updates element in list of list",
                 Arrays.asList(
-                        Arrays.asList("hello", "world"),
-                        Arrays.asList("foo", "HELLO")),
+                        Arrays.asList("hello", "world", "!!!"),
+                        Arrays.asList("foo", "bar", "HELLO"),
+                        Arrays.asList("aaa", "bbb", "ccc")),
                 obj.valueListList);
     }
 }
