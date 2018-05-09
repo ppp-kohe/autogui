@@ -60,9 +60,8 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
     public GuiSwingViewBooleanCheckBox.PropertyCheckBox create() {
         JComponent c = box.createView(contextProp, () -> GuiReprValue.NONE);
         frame = createFrame(c);
-        return GuiSwingViewBooleanCheckBox.PropertyCheckBox.class.cast(
-                GuiSwingView.findChild(c,
-                        GuiSwingViewBooleanCheckBox.PropertyCheckBox.class::isInstance));
+        return GuiSwingView.findChildByType(c,
+                        GuiSwingViewBooleanCheckBox.PropertyCheckBox.class);
     }
 
     @Test

@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
@@ -24,8 +25,12 @@ public class GuiSwingTestCase {
     }
 
     public void runWait() {
+        runWait(100);
+    }
+
+    public void runWait(long ms) {
         try {
-            Thread.sleep(100);
+            Thread.sleep(ms);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -138,5 +143,11 @@ public class GuiSwingTestCase {
         } else {
             throw new RuntimeException("no string");
         }
+    }
+
+    public void setClipboardText(String str) {
+        Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
+        StringSelection se = new StringSelection(str);
+        board.setContents(se, se);
     }
 }

@@ -232,9 +232,10 @@ public class SearchTextField extends JComponent {
     public void setTransferHandlerWithSettingExportingDragSource(TransferHandler handler) {
         setTransferHandler(handler);
         getField().setTransferHandler(handler);
-        DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(getField(), DnDConstants.ACTION_COPY, e -> {
-            getTransferHandler().exportAsDrag(getField(), e.getTriggerEvent(), TransferHandler.COPY);
-        });
+//        DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(getField(), DnDConstants.ACTION_COPY, e -> {
+//            getTransferHandler().exportAsDrag(getField(), e.getTriggerEvent(), TransferHandler.COPY);
+//        });
+        getField().setDragEnabled(true);
 
         getIcon().setTransferHandler(handler);
         DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(getIcon(), DnDConstants.ACTION_COPY, e -> {
@@ -271,6 +272,7 @@ public class SearchTextField extends JComponent {
         popup = new PopupExtensionText(field, PopupExtensionText.getDefaultKeyMatcher(), categorized);
         popupButton = new JButton(popup.getAction());
         popupButton.setContentAreaFilled(false);
+        popupButton.setFocusable(false);
         addSearchItemsListener(getPopupUpdateListener(popup, categorized));
     }
 

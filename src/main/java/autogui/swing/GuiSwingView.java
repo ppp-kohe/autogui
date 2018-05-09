@@ -325,6 +325,10 @@ public interface GuiSwingView extends GuiSwingElement {
         });
     }
 
+    static <PaneType extends ValuePane<?>> PaneType findChildByType(Component component, Class<PaneType> paneType) {
+        return paneType.cast(findChild(component, paneType::isInstance));
+    }
+
     @SuppressWarnings("unchecked")
     static ValuePane<Object> findChild(Component component, Predicate<ValuePane<Object>> predicate) {
         return findNonNullByFunction(component, p -> predicate.test(p) ? p : null);

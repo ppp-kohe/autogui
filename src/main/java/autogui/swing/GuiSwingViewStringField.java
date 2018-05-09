@@ -230,7 +230,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         public boolean importString(String str) {
             if (str != null) {
-                pane.setSwingViewValueWithUpdate(str);
+                pane.getField().replaceSelection(str);
                 return true;
             } else {
                 return false;
@@ -239,13 +239,20 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         @Override
         public int getSourceActions(JComponent c) {
-            return COPY;
+            return COPY | MOVE;
         }
 
         @Override
         protected Transferable createTransferable(JComponent c) {
-            String text = pane.getSwingViewValue();
+            String text = pane.getField().getSelectedText();
             return new StringSelection(text);
+        }
+
+        @Override
+        protected void exportDone(JComponent source, Transferable data, int action) {
+            if (action == MOVE) {
+                pane.getField().replaceSelection("");
+            }
         }
     }
 }
