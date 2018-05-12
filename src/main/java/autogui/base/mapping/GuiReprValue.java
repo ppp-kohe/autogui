@@ -6,6 +6,7 @@ import autogui.base.type.GuiUpdatedValue;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
@@ -457,6 +458,21 @@ public class GuiReprValue implements GuiRepresentation {
 
         public void putTo(Map<String, Object> m) {
             m.put(name, value);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            NamedValue that = (NamedValue) o;
+            return Objects.equals(name, that.name) &&
+                    Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode() {
+
+            return Objects.hash(name, value);
         }
     }
 

@@ -5,6 +5,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.type.GuiTypeBuilder;
 import autogui.base.type.GuiTypeObject;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,6 +49,10 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
 
     }
 
+    @After
+    public void tearDown() {
+        frame.dispose();
+    }
 
     @GuiIncluded
     public static class TestObj {
@@ -132,11 +137,17 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
     public void testViewBooleanValueTransferHandlerImport() {
         GuiSwingViewBooleanCheckBox.PropertyCheckBox propBox = runGet(this::create);
 
+        TransferHandler.TransferSupport h = new TransferHandler.TransferSupport(propBox,
+                new StringSelection("true"));
+
+        Assert.assertTrue("importable",
+                runGet(() -> propBox.getTransferHandler()
+                    .canImport(h)));
+
         Assert.assertTrue("importData",
                 runGet(() ->
                 propBox.getTransferHandler()
-                        .importData(new TransferHandler.TransferSupport(propBox,
-                                new StringSelection("true")))));
+                        .importData(h)));
 
         Assert.assertTrue("paste by transferHandler",
                 runGet(() -> obj.value));
@@ -156,6 +167,6 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
                                 TransferHandler.COPY));
         Assert.assertEquals("exportData",
                 "false",
-                getClipboardText());
+                runGet(this::getClipboardText));
     }
 }

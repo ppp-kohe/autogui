@@ -374,6 +374,10 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return specifierManager.getSpecifier();
         }
+
+        public PopupExtension getPopup() {
+            return popup;
+        }
     }
 
     public static class ToStringTransferHandler extends TransferHandler {

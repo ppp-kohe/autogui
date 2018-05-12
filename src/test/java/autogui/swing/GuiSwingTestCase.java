@@ -7,10 +7,10 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 public class GuiSwingTestCase {
     public JFrame createFrame(JComponent pane) {
@@ -86,8 +86,9 @@ public class GuiSwingTestCase {
     //////////////////// popup-menu specific methods
 
     public <ItemType extends PopupCategorized.CategorizedMenuItem> ItemType findMenuItem(
-            List<? extends PopupCategorized.CategorizedMenuItem> items,
-            Class<ItemType> type, String category, String subCategory, String name) {
+            Iterable<? extends PopupCategorized.CategorizedMenuItem> items,
+            Class<ItemType> type, String category, String subCategory, String name,
+            Predicate<ItemType> cond) {
         for (PopupCategorized.CategorizedMenuItem i : items) {
             if (type.isInstance(i)) {
                 if (category != null && !i.getCategory().equals(category)) {
@@ -101,7 +102,11 @@ public class GuiSwingTestCase {
                 if (name != null && !i.getName().equals(name)) {
                     continue;
                 }
-                return type.cast(i);
+                ItemType ret = type.cast(i);
+                if (cond != null && !cond.test(ret)) {
+                    continue;
+                }
+                return ret;
             }
         }
         return null;
@@ -109,16 +114,16 @@ public class GuiSwingTestCase {
 
     @SuppressWarnings("unchecked")
     public <ActionType extends Action> ActionType findMenuItemAction(
-            List<? extends PopupCategorized.CategorizedMenuItem> items,
+            Iterable<? extends PopupCategorized.CategorizedMenuItem> items,
             Class<ActionType> type, String category, String subCategory, String name) {
         PopupCategorized.CategorizedMenuItemActionDelegate d = findMenuItem(items,
                 PopupCategorized.CategorizedMenuItemActionDelegate.class,
-                category, subCategory, name);
-        if (d != null && type.isInstance(d.getAction())) {
+                category, subCategory, name, i -> type.isInstance(i.getAction()));
+        if (d != null) {
             return type.cast(d.getAction());
         } else if (PopupCategorized.CategorizedMenuItemAction.class.isAssignableFrom(type)) {
             return type.cast(findMenuItem(items,
-                    (Class<PopupCategorized.CategorizedMenuItemAction>) type, category, subCategory, name));
+                    (Class<PopupCategorized.CategorizedMenuItemAction>) type, category, subCategory, name, null));
         } else {
             return null;
         }
@@ -126,7 +131,7 @@ public class GuiSwingTestCase {
 
 
     public <ActionType extends Action> ActionType findMenuItemAction(
-            List<? extends PopupCategorized.CategorizedMenuItem> items,
+            Iterable<? extends PopupCategorized.CategorizedMenuItem> items,
             Class<ActionType> type) {
         return findMenuItemAction(items, type, null, null, null);
     }

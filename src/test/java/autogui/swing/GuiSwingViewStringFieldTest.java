@@ -6,6 +6,7 @@ import autogui.base.mapping.GuiReprValue;
 import autogui.base.type.GuiTypeBuilder;
 import autogui.base.type.GuiTypeObject;
 import autogui.swing.util.PopupExtensionText;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,6 +44,11 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
         contextProp = context.getChildByName("value");
 
         field = new GuiSwingViewStringField();
+    }
+    
+    @After
+    public void tearDown() {
+        frame.dispose();
     }
 
     @GuiIncluded

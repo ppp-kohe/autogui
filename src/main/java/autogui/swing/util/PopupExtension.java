@@ -432,6 +432,8 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         }
     }
 
+
+
     ////////////////
 
     public void show(Component comp) {
