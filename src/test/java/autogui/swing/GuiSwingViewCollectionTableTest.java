@@ -17,7 +17,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
     public static void main(String[] args) {
         GuiSwingViewCollectionTableTest test = new GuiSwingViewCollectionTableTest();
         test.setUp();
-        test.testViewCollectionUpdate();
+        test.testViewCollectionUpdateMatrix();
     }
 
     GuiTypeBuilder builder;

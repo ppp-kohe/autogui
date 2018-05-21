@@ -167,11 +167,11 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         }
 
         public void initRowIndex() {
-            getObjectTableModel().addColumnRowIndex();
+            getObjectTableModel().getColumns().addColumnRowIndex();
         }
 
         public LambdaCollectionTable addColumn(ObjectTableColumn column) {
-            getObjectTableModel().addColumnStatic(column);
+            getObjectTableModel().getColumns().addColumnStatic(column);
             getObjectTableModel().initTableWithoutScrollPane(this);;
             return this;
         }

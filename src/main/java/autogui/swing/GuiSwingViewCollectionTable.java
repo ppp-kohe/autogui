@@ -66,7 +66,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (subView instanceof GuiSwingTableColumnSet) {
                 GuiSwingTableColumnSet columnSet = (GuiSwingTableColumnSet) subView;
 
-                columnSet.createColumns(elementContext, table.getObjectTableModel(), rowSpecifier, rowSpecifier);
+                columnSet.createColumns(elementContext, table.getObjectTableModel().getColumns(), rowSpecifier, rowSpecifier);
 
                 actions.addAll(columnSet.createColumnActions(elementContext, table));
             }
@@ -256,9 +256,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initTableScrollPane(JScrollPane scrollPane) {
-            int width = getObjectTableModel().getColumns().stream()
-                    .mapToInt(e -> e.getTableColumn().getWidth())
-                    .sum();
+            int width = getObjectTableModel().getColumns().getTotalWidth();
             scrollPane.setPreferredSize(new Dimension(width, Math.max(scrollPane.getPreferredSize().height, 100)));
             scrollPane.getVerticalScrollBar().setUnitIncrement(16);
             scrollPane.getHorizontalScrollBar().setUnitIncrement(10);
@@ -345,7 +343,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setSwingViewValue(List<?> value) {
             GuiReprCollectionTable repr = (GuiReprCollectionTable) context.getRepresentation();
             source = repr.toUpdateValue(context, value);
-            getObjectTableModel().getColumnCountUpdated();
+            getObjectTableModel().refreshColumns();
             getObjectTableModel().refreshData();
             resizeAndRepaint();
         }
@@ -366,7 +364,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void shutdownSwingView() {
-            getObjectTableModel().getColumns()
+            getObjectTableModel().getColumns().getColumns()
                     .forEach(ObjectTableColumn::shutdown);
             selectionRunner.shutdown();
         }
@@ -960,7 +958,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public ObjectTableColumn getTargetColumn() {
             if (targetColumnIndex >= 0 &&
                     targetColumnIndex < table.getObjectTableModel().getColumnCount()) {
-                return table.getObjectTableModel().getColumns().get(targetColumnIndex);
+                return table.getObjectTableModel().getColumns().getColumns().get(targetColumnIndex);
             } else {
                 return null;
             }
@@ -970,7 +968,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             ObjectTableModel model = table.getObjectTableModel();
             return IntStream.of(table.getSelectedColumns())
                     .map(table::convertColumnIndexToModel)
-                    .mapToObj(model.getColumns()::get)
+                    .mapToObj(model.getColumns().getColumns()::get)
                     .collect(Collectors.toList());
         }
     }
@@ -1054,7 +1052,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             filter = new ObjectTableModel.CollectionRowsAndCellsActionBuilder(table, filter);
 
-            List<ObjectTableColumn> allCols = table.getObjectTableModel().getColumns();
+            List<ObjectTableColumn> allCols = table.getObjectTableModel().getColumns().getColumns();
             table.getObjectTableModel().getBuilderForRowsOrCells(table, allCols, true)
                     .build(new MenuSeparator(filter), menu);
 
