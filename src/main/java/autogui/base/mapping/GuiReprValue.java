@@ -539,4 +539,8 @@ public class GuiReprValue implements GuiRepresentation {
             this.parent = this;
         }
     }
+
+    public static Supplier<ObjectSpecifier> getNoneSupplier() {
+        return () -> NONE;
+    }
 }

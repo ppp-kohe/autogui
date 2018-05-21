@@ -66,7 +66,7 @@ public class GuiSwingViewPropertyPaneTest extends GuiSwingTestCase {
     }
 
     public GuiSwingViewPropertyPane.PropertyPane create() {
-        JComponent c = prop.createView(contextProp, () -> GuiReprValue.NONE);
+        JComponent c = prop.createView(contextProp, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
         return GuiSwingView.findChildByType(c,
                 GuiSwingViewPropertyPane.PropertyPane.class);

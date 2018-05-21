@@ -85,7 +85,7 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
     }
 
     public GuiSwingViewObjectPane.ObjectPane create() {
-        JComponent c = objPane.createView(context, () -> GuiReprValue.NONE);
+        JComponent c = objPane.createView(context, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
         return GuiSwingView.findChildByType(c, GuiSwingViewObjectPane.ObjectPane.class);
     }

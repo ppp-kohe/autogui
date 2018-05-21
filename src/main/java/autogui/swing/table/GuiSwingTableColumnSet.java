@@ -13,9 +13,15 @@ import java.util.function.Supplier;
  * an interface of a set of {@link GuiSwingTableColumn}.
  */
 public interface GuiSwingTableColumnSet extends GuiSwingElement {
-    void createColumns(GuiMappingContext context, ObjectTableModel model,
+    void createColumns(GuiMappingContext context, TableColumnHost model,
                        GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
                        GuiSwingView.SpecifierManager specifierManager);
+
+    interface TableColumnHost {
+        void addColumnRowIndex();
+        void addColumnStatic(ObjectTableColumn column);
+        void addColumnDynamic(ObjectTableColumnDynamicFactory columnFactory);
+    }
 
     /**
      * create actions for sub-contexts associated to {@link autogui.base.mapping.GuiReprAction}.

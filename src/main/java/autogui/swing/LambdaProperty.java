@@ -171,7 +171,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         }
 
         public LambdaCollectionTable addColumn(ObjectTableColumn column) {
-            getObjectTableModel().addColumn(column);
+            getObjectTableModel().addColumnStatic(column);
             getObjectTableModel().initTableWithoutScrollPane(this);;
             return this;
         }

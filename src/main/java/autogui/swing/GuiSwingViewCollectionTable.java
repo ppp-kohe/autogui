@@ -62,7 +62,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         List<Action> actions = new ArrayList<>();
 
         for (GuiMappingContext elementContext : context.getChildren()) {
-            GuiSwingElement subView = columnMapperSet.view(elementContext);
+            GuiSwingElement subView = columnMapperSet.viewTableColumn(elementContext);
             if (subView instanceof GuiSwingTableColumnSet) {
                 GuiSwingTableColumnSet columnSet = (GuiSwingTableColumnSet) subView;
 
@@ -118,6 +118,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected List<Integer> lastSelectionActionIndexes = Collections.emptyList();
         protected TableSelectionSourceForIndexes selectionSourceForRowIndexes;
         protected TableSelectionSourceForIndexes selectionSourceForRowAndColumnIndexes;
+
+        protected JToolBar actionToolBar;
 
         public CollectionTable(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -263,7 +265,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public JToolBar initActionToolBar(List<Action> actions) {
-            JToolBar actionToolBar = new JToolBar();
+            actionToolBar = new JToolBar();
             actionToolBar.setFloatable(false);
             actionToolBar.setOpaque(false);
 
@@ -343,6 +345,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setSwingViewValue(List<?> value) {
             GuiReprCollectionTable repr = (GuiReprCollectionTable) context.getRepresentation();
             source = repr.toUpdateValue(context, value);
+            getObjectTableModel().getColumnCountUpdated();
+            getObjectTableModel().refreshData();
+            resizeAndRepaint();
         }
 
         @Override
@@ -367,6 +372,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         /////////////////
+
+
+        public JToolBar getActionToolBar() {
+            return actionToolBar;
+        }
 
         @Override
         public boolean isSelectionEmpty() {
@@ -532,7 +542,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         @Override
-        public int getRowCount() {
+        public int getRowCountUpdated() {
             Object collection = getCollectionFromSource();
             try {
                 return elementContext.getReprValue()

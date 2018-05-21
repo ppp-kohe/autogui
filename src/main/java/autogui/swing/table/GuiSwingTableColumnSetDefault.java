@@ -22,17 +22,17 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     }
 
     @Override
-    public void createColumns(GuiMappingContext context, ObjectTableModel model,
+    public void createColumns(GuiMappingContext context, TableColumnHost model,
                               GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
                               GuiSwingView.SpecifierManager specifierManager) {
-        if (context.isReprCollectionElement()) {
+        if (context.isReprCollectionElement() && context.isParentCollectionTable()) {
             model.addColumnRowIndex();
         }
         GuiSwingView.SpecifierManager subManager = new GuiSwingView.SpecifierManagerDefault(specifierManager::getSpecifier);
         for (GuiMappingContext subContext : context.getChildren()) {
             //context: GuiReprCollectionElement(...) { subContext: GuiReprObjectPane { ... }  }
             //context: GuiReprCollectionElement(...) { subContext: GuiReprCollectionTable { subSubContext: GuiReprCollectionElement(...) }  }
-            GuiSwingElement subView = columnMappingSet.view(subContext);
+            GuiSwingElement subView = columnMappingSet.viewTableColumn(subContext);
             if (subView instanceof GuiSwingTableColumn) {
                 GuiSwingTableColumn column = (GuiSwingTableColumn) subView;
                 ObjectTableColumn columnStatic = column.createColumn(subContext, rowSpecifier, subManager);
@@ -56,7 +56,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     public List<Action> createColumnActions(GuiMappingContext context, TableSelectionSource source) {
         List<Action> actions = new ArrayList<>();
         for (GuiMappingContext subContext : context.getChildren()) {
-            GuiSwingElement subView = columnMappingSet.view(subContext);
+            GuiSwingElement subView = columnMappingSet.viewTableColumn(subContext);
             if (subView instanceof GuiSwingAction) {
                 actions.add(new TableSelectionAction(subContext, source));
             } else if (subView instanceof GuiSwingTableColumnSet) {

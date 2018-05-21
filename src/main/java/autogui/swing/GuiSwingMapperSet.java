@@ -14,17 +14,17 @@ public class GuiSwingMapperSet {
     protected List<Mapper> mappers = new ArrayList<>();
 
     public interface Mapper {
-        boolean match(GuiMappingContext context);
+        boolean match(GuiMappingContext context, MapperMatchType matchType);
         GuiSwingElement view(GuiMappingContext context);
     }
 
     public GuiSwingMapperSet addReprClass(Class<? extends GuiRepresentation> reprClass, GuiSwingElement view) {
-        mappers.add(new MapperReprClass(reprClass, view));
+        mappers.add(new MapperReprClass(reprClass, view, MapperMatchTypeDefault.View));
         return this;
     }
 
     public GuiSwingMapperSet addReprClassTableColumn(Class<? extends GuiRepresentation> reprClass, GuiSwingElement view) {
-        mappers.add(new MapperReprClassTableColumn(reprClass, view));
+        mappers.add(new MapperReprClass(reprClass, view, MapperMatchTypeDefault.TableColumn));
         return this;
     }
 
@@ -37,27 +37,58 @@ public class GuiSwingMapperSet {
         return mappers;
     }
 
+    /**
+     * @param context the target context
+     * @return view as a regular component factory
+     */
     public GuiSwingElement view(GuiMappingContext context) {
+        return view(context, MapperMatchTypeDefault.View);
+    }
+
+    /**
+     * @param context the target context
+     * @return a {@link GuiSwingTableColumn}, a {@link GuiSwingTableColumnSet} or a {@link GuiSwingAction}
+     */
+    public GuiSwingElement viewTableColumn(GuiMappingContext context) {
+        return view(context, MapperMatchTypeDefault.TableColumn);
+    }
+
+    public GuiSwingElement view(GuiMappingContext context, MapperMatchType matchType) {
         for (Mapper m : mappers) {
-            if (m.match(context)) {
+            if (m.match(context, matchType)) {
                 return m.view(context);
             }
         }
         return null;
     }
 
+    public interface MapperMatchType {
+        default boolean match(MapperMatchType type) {
+            return type.equals(this);
+        }
+    }
+
+    public enum MapperMatchTypeDefault implements MapperMatchType {
+        View,
+        TableColumn
+    }
+
     public static class MapperReprClass implements Mapper {
         protected Class<? extends GuiRepresentation> reprClass;
         protected GuiSwingElement view;
+        protected MapperMatchType matchType;
 
-        public MapperReprClass(Class<? extends GuiRepresentation> reprClass, GuiSwingElement view) {
+        public MapperReprClass(Class<? extends GuiRepresentation> reprClass, GuiSwingElement view,
+                               MapperMatchType matchType) {
             this.reprClass = reprClass;
             this.view = view;
+            this.matchType = matchType;
         }
 
         @Override
-        public boolean match(GuiMappingContext context) {
-            return reprClass.isAssignableFrom(context.getRepresentation().getClass());
+        public boolean match(GuiMappingContext context, MapperMatchType matchType) {
+            return this.matchType.match(matchType) &&
+                    reprClass.isAssignableFrom(context.getRepresentation().getClass());
         }
 
         @Override
@@ -75,18 +106,7 @@ public class GuiSwingMapperSet {
 
         @Override
         public String toString() {
-            return getClass().getSimpleName() + "(" + getReprClass().getName() + "->" + getView()  +")";
-        }
-    }
-
-    public static class MapperReprClassTableColumn extends MapperReprClass {
-        public MapperReprClassTableColumn(Class<? extends GuiRepresentation> reprClass, GuiSwingElement view) {
-            super(reprClass, view);
-        }
-
-        @Override
-        public boolean match(GuiMappingContext context) {
-            return context.isParentCollectionElement() && super.match(context);
+            return getClass().getSimpleName() + "(" + getReprClass().getName() + "," + matchType + "->" + getView()  +")";
         }
     }
 
@@ -147,10 +167,12 @@ public class GuiSwingMapperSet {
                 .addReprClassTableColumn(GuiReprValueFilePathField.class, new GuiSwingTableColumnFilePath())
                 .addReprClassTableColumn(GuiReprValueNumberSpinner.class, new GuiSwingTableColumnNumber())
                 .addReprClassTableColumn(GuiReprValueImagePane.class, new GuiSwingTableColumnImage())
-                .addReprClassTableColumn(GuiReprValue.class, new GuiSwingTableColumnLabel())
                 .addReprClassTableColumn(GuiReprObjectPane.class, new GuiSwingTableColumnSetDefault(viewSet))
-                .addReprClass(GuiReprCollectionElement.class, new GuiSwingTableColumnSetDefault(viewSet))
-                .addReprClass(GuiReprActionList.class, null); //nothing: handled by a sibling GuiSwingViewCollectionTable
+                .addReprClassTableColumn(GuiReprCollectionElement.class, new GuiSwingTableColumnSetDefault(viewSet))
+                .addReprClassTableColumn(GuiReprCollectionTable.class, new GuiSwingTableColumnCollection(viewSet))
+                .addReprClassTableColumn(GuiReprValue.class, new GuiSwingTableColumnLabel())
+                .addReprClass(GuiReprActionList.class, null) //nothing: handled by a sibling GuiSwingViewCollectionTable
+                .addReprClassTableColumn(GuiReprAction.class, new GuiSwingActionDefault());
 
         viewSet.addReprClass(GuiReprValueBooleanCheckBox.class, new GuiSwingViewBooleanCheckBox())
                 .addReprClass(GuiReprValueDocumentEditor.class, new GuiSwingViewDocumentEditor())

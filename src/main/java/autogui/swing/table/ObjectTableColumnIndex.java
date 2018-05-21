@@ -1,35 +1,35 @@
 package autogui.swing.table;
 
-public class ObjectColumnIndex implements Cloneable {
-    protected ObjectColumnIndex parent;
+public class ObjectTableColumnIndex implements Cloneable {
+    protected ObjectTableColumnIndex parent;
     protected int totalIndex;
     protected int index;
 
-    public ObjectColumnIndex(ObjectColumnIndex parent, int totalIndex, int index) {
+    public ObjectTableColumnIndex(ObjectTableColumnIndex parent, int totalIndex, int index) {
         this.parent = parent;
         this.totalIndex = totalIndex;
         this.index = index;
     }
 
-    public ObjectColumnIndex next(int flattenSizeForThisColumn) {
-        ObjectColumnIndex n = copy();
+    public ObjectTableColumnIndex next(int flattenSizeForThisColumn) {
+        ObjectTableColumnIndex n = copy();
         n.increment(flattenSizeForThisColumn);
         return n;
     }
 
-    public ObjectColumnIndex child() {
-        return new ObjectColumnIndex(this, totalIndex, 0);
+    public ObjectTableColumnIndex child() {
+        return new ObjectTableColumnIndex(this, totalIndex, 0);
     }
 
-    public ObjectColumnIndex copy() {
+    public ObjectTableColumnIndex copy() {
         try {
-            return (ObjectColumnIndex) super.clone();
+            return (ObjectTableColumnIndex) super.clone();
         } catch (CloneNotSupportedException ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    public ObjectColumnIndex getParent() {
+    public ObjectTableColumnIndex getParent() {
         return parent;
     }
 

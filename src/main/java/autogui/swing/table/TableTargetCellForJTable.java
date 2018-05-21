@@ -67,11 +67,12 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
         int[] rows = table.getSelectedRows();
         return IntStream.of(rows)
                 .boxed()
-                .flatMap(r -> IntStream.range(0, table.getRowCount())
-                    .mapToObj(c -> new int[] {
-                            table.convertRowIndexToModel(r),
-                            table.convertColumnIndexToModel(c)
-                    }));
+                .flatMap(r ->
+                        IntStream.range(0, table.getColumnCount())
+                            .mapToObj(c -> new int[] {
+                                    table.convertRowIndexToModel(r),
+                                    table.convertColumnIndexToModel(c)
+                            }));
     }
 
     @Override

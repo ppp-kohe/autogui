@@ -6,10 +6,11 @@ import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableColumnModelListener;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
@@ -19,15 +20,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * a table-model based on a list of row objects
  */
-public class ObjectTableModel extends AbstractTableModel {
+public class ObjectTableModel extends AbstractTableModel implements GuiSwingTableColumnSet.TableColumnHost {
     protected List<ObjectTableColumn> columns = new ArrayList<>();
     protected List<ObjectTableColumn> staticColumns = new ArrayList<>();
-    protected List<ObjectTableColumnDynamicFactory> dynamicColumns = new ArrayList<>();
-    protected List<int[]> dynamicColumnSize = new ArrayList<>(); //{start,endExclusive}
+    protected List<ObjectTableColumnDynamic> dynamicColumns = new ArrayList<>();
+    protected boolean dynamicColumnSizeNeedsUpdate;
     protected JTable table;
     protected Supplier<Object> source;
 
@@ -57,28 +59,63 @@ public class ObjectTableModel extends AbstractTableModel {
     }
 
     public DefaultTableColumnModel getColumnModel() {
+        if (columnModel == null) {
+            columnModel = new DefaultTableColumnModel();
+            //TODO debug
+            columnModel.addColumnModelListener(new TableColumnModelListener() {
+                @Override
+                public void columnAdded(TableColumnModelEvent e) {
+                    System.err.println("columnAdded " + e.getToIndex());
+                }
+
+                @Override
+                public void columnRemoved(TableColumnModelEvent e) {
+                    System.err.println("columnAdded " + e.getFromIndex());
+                }
+
+                @Override
+                public void columnMoved(TableColumnModelEvent e) {
+                    System.err.println("columnAdded " + e.getFromIndex() + "->" + e.getToIndex());
+                }
+
+                @Override
+                public void columnMarginChanged(ChangeEvent e) {
+                }
+
+                @Override
+                public void columnSelectionChanged(ListSelectionEvent e) {
+                }
+            });
+        }
         return columnModel;
     }
 
+    @Override
     public void addColumnRowIndex() {
-        addColumn(new ObjectTableColumn.ObjectTableColumnRowIndex());
+        addColumnStatic(new ObjectTableColumn.ObjectTableColumnRowIndex());
     }
 
-    public void addColumn(ObjectTableColumn column) {
+    @Override
+    public void addColumnStatic(ObjectTableColumn column) {
         int index = columns.size();
         columns.add(column);
-        columnModel.addColumn(column.getTableColumn());
         column.getTableColumn().setModelIndex(index);
-    }
-
-    public void addColumnStatic(ObjectTableColumn column) {
-        addColumn(column);
+        getColumnModel().addColumn(column.getTableColumn());
         staticColumns.add(column);
     }
 
+    @Override
     public void addColumnDynamic(ObjectTableColumnDynamicFactory columnFactory) {
-        dynamicColumns.add(columnFactory);
-        dynamicColumnSize.add(new int[] {0, 0});
+        dynamicColumns.add(new ObjectTableColumnDynamic(columnFactory));
+        dynamicColumnSizeNeedsUpdate = true;
+    }
+
+    public void addColumnFromDynamic(int index, ObjectTableColumn column) {
+        columns.add(index, column);
+    }
+
+    public void removeColumnFromDynamic(ObjectTableColumn column) {
+        columns.remove(column);
     }
 
     public List<ObjectTableColumn> getColumns() {
@@ -86,76 +123,46 @@ public class ObjectTableModel extends AbstractTableModel {
     }
 
     public ObjectTableColumn getColumnAt(int columnIndex) {
-        if (columnIndex >= columns.size()) {
-            int idx = getColumnDynamicIndex(columnIndex);
-            int current = getColumnDynamicIndex(columns.size() - 1);
-            while (current <= idx) {
-                ObjectTableColumnDynamicFactory column = dynamicColumns.get(current);
-                int[] range = dynamicColumnSize.get(current);
-                ObjectColumnIndex totalIndex = new ObjectColumnIndex(null, columns.size(), columns.size() - range[0]);
-                int creating = range[1] - columns.size();
+        if (columnIndex < staticColumns.size()) {
+            return staticColumns.get(columnIndex);
+        } else {
+            return getColumnDynamic(columnIndex)
+                    .getColumnAt(columnIndex);
+        }
+    }
 
-                for (int i = 0; i < creating; ++i) {
-                    columns.add(column.createColumn(totalIndex));
-                    totalIndex.increment(1);
-                }
-                ++current;
+    public ObjectTableColumnDynamic getColumnDynamic(int columnIndex) {
+        for (ObjectTableColumnDynamic d : dynamicColumns) {
+            if (d.containsIndex(columnIndex)) {
+                return d;
             }
         }
-        return columns.get(columnIndex);
+        return null;
     }
-
-    public int getColumnDynamicIndex(int columnIndex) {
-        int idx = Collections.binarySearch(dynamicColumnSize, columnIndex, (a,b) -> {
-            if (b instanceof Integer && a instanceof int[]) {
-                return -compare((Integer) b, (int[]) a);
-            } else if (b instanceof int[] && a instanceof Integer) {
-                return compare((Integer) a, (int[]) b);
-            } else {
-                return 0;
-            }
-        });
-        if (idx < 0 || idx >= dynamicColumns.size()) {
-            return -1;
-        } else {
-            return idx;
-        }
-    }
-
-    public ObjectTableColumnDynamicFactory getColumnDynamic(int columnIndex) {
-        int idx = getColumnDynamicIndex(columnIndex);
-        if (idx == -1) {
-            return null;
-        } else {
-            return dynamicColumns.get(idx);
-        }
-    }
-
-    private int compare(int n, int[] r) {
-        if (r[0] <= n && n < r[1]) {
-            return 0;
-        } else if (n < r[0]) {
-            return -1;
-        } else {
-            return 1;
-        }
-    }
-
 
     @Override
     public int getColumnCount() {
-        int i = 0;
-        int sum = staticColumns.size();
-        Object list = getCollectionFromSource();
-        for (ObjectTableColumnDynamicFactory columnFactory : dynamicColumns) {
-            int n = columnFactory.getColumnCount(list);
-            int[] r = dynamicColumnSize.get(i);
-            r[0] = sum;
-            sum += n;
-            r[1] = sum;
-            ++i;
+        if (dynamicColumns.isEmpty()) {
+            System.err.println("getColumnCount: " + staticColumns.size());
+            return staticColumns.size();
+        } else {
+            ObjectTableColumnDynamic d = dynamicColumns.get(dynamicColumns.size() - 1);
+            System.err.println("getColumnCount !: " + d.getEndIndexExclusive());
+            return d.getEndIndexExclusive();
         }
-        return sum;
+    }
+
+    public int getColumnCountUpdated() {
+        dynamicColumnSizeNeedsUpdate = false;
+        int i = staticColumns.size();
+        Object list = getCollectionFromSource();
+        for (ObjectTableColumnDynamic d : dynamicColumns) {
+            ObjectTableColumnDynamicDiff diff = d.update(i, list);
+            diff.applyTo(this);
+            i = diff.endIndexExclusive;
+        }
+        System.err.println("getColumnUpdated: " + i);
+        return i;
     }
 
     //////////// table initialization
@@ -183,6 +190,7 @@ public class ObjectTableModel extends AbstractTableModel {
     }
 
     public void initTableRowSorter(JTable table) {
+        /* TODO dynamically updates sorter
         RowSorter<? extends TableModel> sorter = table.getRowSorter();
         if (sorter instanceof TableRowSorter<?>) {
             TableRowSorter<? extends TableModel> tableSorter = (TableRowSorter<? extends TableModel>) sorter;
@@ -194,7 +202,7 @@ public class ObjectTableModel extends AbstractTableModel {
                     tableSorter.setComparator(i, comp);
                 }
             }
-        }
+        }*/
     }
 
     public void initTableRowHeight(JTable table) {
@@ -226,6 +234,13 @@ public class ObjectTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
+        if (data == null) {
+            buildDataArray();
+        }
+        return data.length;
+    }
+
+    public int getRowCountUpdated() {
         Object list = getCollectionFromSource();
         if (list instanceof List<?>) {
             return ((List) list).size();
@@ -237,7 +252,12 @@ public class ObjectTableModel extends AbstractTableModel {
     public Object getRowAtIndex(int row) {
         Object list = getCollectionFromSource();
         if (list instanceof List<?>) {
-            return ((List<?>) list).get(row);
+            List<?> l = (List<?>) list;
+            if (row < l.size()) {
+                return l.get(row);
+            } else {
+                return null;
+            }
         } else {
             return null;
         }
@@ -252,8 +272,8 @@ public class ObjectTableModel extends AbstractTableModel {
 
 
     public boolean buildDataArray() {
-        int rows = getRowCount();
-        int cols = getColumnCount();
+        int rows = getRowCountUpdated();
+        int cols = getColumnCountUpdated();
 
         if (data == null ||
                 data.length != rows ||
@@ -604,4 +624,123 @@ public class ObjectTableModel extends AbstractTableModel {
             return action.getSubCategory();
         }
     }
+
+    public static class ObjectTableColumnDynamic {
+        protected ObjectTableColumnDynamicFactory factory;
+        protected int startIndex;
+        protected ObjectTableColumnIndex index;
+        protected List<ObjectTableColumn> columns;
+
+        public ObjectTableColumnDynamic(ObjectTableColumnDynamicFactory factory) {
+            this.factory = factory;
+            this.columns = new ArrayList<>();
+            this.index = new ObjectTableColumnIndex(null, 0, 0);
+        }
+
+        public void setStartIndex(int startIndex) {
+            this.startIndex = startIndex;
+        }
+
+        public int getStartIndex() {
+            return startIndex;
+        }
+
+        public int getEndIndexExclusive() {
+            return index.getTotalIndex();
+        }
+
+        public boolean containsIndex(int index) {
+            return getStartIndex() <= index && index < getEndIndexExclusive();
+        }
+
+        public ObjectTableColumnDynamicDiff update(int startIndex, Object list) {
+            this.startIndex = startIndex;
+            int newSize = factory.getColumnCount(list);
+            int preSize = columns.size();
+
+            if (preSize < newSize) {
+                this.index = new ObjectTableColumnIndex(null, startIndex, preSize);
+                int added = newSize - preSize;
+                List<ObjectTableColumn> newCols = new ArrayList<>(added);
+                for (int i = 0; i < added; ++i) {
+                    newCols.add(factory.createColumn(index));
+                    index.increment(1);
+                }
+                columns.addAll(newCols);
+                return new ObjectTableColumnDynamicDiff(false,
+                        startIndex + preSize, startIndex + newSize, newCols);
+
+            } else if (preSize > newSize) {
+                this.index = new ObjectTableColumnIndex(null, startIndex + newSize, newSize);
+                List<ObjectTableColumn> remCols = columns.subList(newSize, columns.size());
+                columns.removeAll(remCols);
+                return new ObjectTableColumnDynamicDiff(true, startIndex + newSize,
+                        startIndex + newSize, remCols);
+
+            } else {
+                this.index = new ObjectTableColumnIndex(null, startIndex + newSize, newSize);
+                return new ObjectTableColumnDynamicDiff(false,
+                        startIndex + newSize,startIndex + newSize,
+                        Collections.emptyList());
+            }
+        }
+
+        public ObjectTableColumn getColumnAt(int columnIndex) {
+            return columns.get(columnIndex - startIndex);
+        }
+    }
+
+    public static class ObjectTableColumnDynamicDiff {
+        /**
+         * false means adding and columns are added columns, and
+         *  true means removing and columns are removed columns
+         */
+        public boolean remove;
+        /**
+         * the start index of columns
+         */
+        public int startIndex;
+        public int endIndexExclusive;
+        public List<ObjectTableColumn> columns;
+
+        public ObjectTableColumnDynamicDiff(boolean remove, int startIndex, int endIndexExclusive,
+                                            List<ObjectTableColumn> columns) {
+            this.remove = remove;
+            this.startIndex = startIndex;
+            this.endIndexExclusive = endIndexExclusive;
+            this.columns = columns;
+        }
+
+        public void applyTo(ObjectTableModel model) {
+            if (remove) {
+                columns.forEach(model::removeColumnFromDynamic);
+            } else {
+                int i = startIndex;
+                for (ObjectTableColumn col : columns) {
+                    model.addColumnFromDynamic(i, col);
+                    ++i;
+                }
+            }
+            applyTo(model.getColumnModel());
+        }
+
+        public void applyTo(DefaultTableColumnModel model) {
+            if (remove) {
+                for (ObjectTableColumn col : columns) {
+                    model.removeColumn(col.getTableColumn());
+                }
+            } else {
+                int to = startIndex;
+                for (ObjectTableColumn col : columns) {
+                    int from = model.getColumnCount();
+                    TableColumn tableColumn = col.getTableColumn();
+                    tableColumn.setModelIndex(model.getColumnCount()); //TODO shift model columnIndex?
+                    model.addColumn(tableColumn);
+                    model.moveColumn(from, to);
+                    ++to;
+                }
+            }
+        }
+    }
+
 }
