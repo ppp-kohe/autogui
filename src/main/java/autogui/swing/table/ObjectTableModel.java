@@ -241,13 +241,19 @@ public class ObjectTableModel extends AbstractTableModel  {
      * @return the cell value, nullable
      */
     public Object takeValueFromSource(Object[] rowData, int rowIndex, int columnIndex) {
-        Object rowObject = getRowAtIndex(rowIndex);
-        Object cellObject = getColumnAt(columnIndex)
-                .getCellValue(rowObject, rowIndex, columnIndex);
-
+        Object cellObject;
+        try {
+            Object rowObject = getRowAtIndex(rowIndex);
+            cellObject = getColumnAt(columnIndex)
+                    .getCellValue(rowObject, rowIndex, columnIndex);
+        } catch (Exception ex) {
+            //TODO error reporting
+            cellObject = null;
+        }
         if (cellObject instanceof Future<?>) {
             rowData[columnIndex] = NULL_CELL;
-            futureWaiter.accept(() -> takeValueFromSourceFuture(rowData, rowIndex, columnIndex, (Future<?>) cellObject));
+            Object v = cellObject;
+            futureWaiter.accept(() -> takeValueFromSourceFuture(rowData, rowIndex, columnIndex, (Future<?>) v));
             return rowData[columnIndex];
         } else if (cellObject == null) {
             rowData[columnIndex] = NULL_CELL;

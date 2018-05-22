@@ -70,6 +70,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         GuiReprValue value = context.getReprValue();
         setTableColumn(new TableColumn(0, 64, renderer,
                 value.isEditable(context) ? editor : null));
+        getTableColumn().setMinWidth(64);
         getTableColumn().setHeaderValue(context.getDisplayName());
 
         if (renderer instanceof ObjectTableCellRenderer) {

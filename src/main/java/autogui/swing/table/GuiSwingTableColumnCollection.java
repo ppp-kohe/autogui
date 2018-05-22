@@ -90,7 +90,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
             columnSpecifierIndex.setIndex(elemIndex);
             ContextAndColumn cc = columnStatic.get(col);
             return new ObjectTableColumnCollectionWrapper(cc.column.createColumn(
-                    cc.context, columnSpecifierIndex, columnSpecifierIndex), //TODO the specifier would be changed for Object
+                    cc.context, null, columnSpecifierIndex), //TODO the specifier would be changed for Object
                     context.getChildren().get(0), //elementContext
                     elemIndex,
                     columnSpecifierIndex);
