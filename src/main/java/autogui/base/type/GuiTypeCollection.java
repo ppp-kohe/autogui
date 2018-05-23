@@ -141,6 +141,16 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public List<Object> executeAddElements(Object list, List<Object> newValues) {
+        if (list != null) {
+            ((List<Object>) list).addAll(newValues);
+            return newValues;
+        } else {
+            return null;
+        }
+    }
+
     public int getSize(Object list) {
         return ((List<?>) list).size();
     }

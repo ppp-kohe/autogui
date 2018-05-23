@@ -399,7 +399,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
         for (int i = 0; i < 100; ++i) {
             List<String> row = new ArrayList<>();
             for (int j = 0; j < i; ++j) {
-                row.add("hello" + i + "-" + j);
+                row.add("x" + i + "-" + j);
             }
             matrix.value.add(row);
         }
@@ -415,7 +415,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
                 30, runGet(() -> colTable.getValueAt(30, 0)));
 
         Assert.assertEquals("prop world 30",
-                "hello30-14", runGet(() -> colTable.getValueAt(30, 15)));
+                "x30-14", runGet(() -> colTable.getValueAt(30, 15)));
     }
 
 

@@ -15,8 +15,9 @@ public class GuiSwingTableColumnLabel implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           GuiSwingView.SpecifierManager parentSpecifier) {
-        GuiSwingViewLabel.PropertyLabel view = new GuiSwingViewLabel.PropertyLabel(context, parentSpecifier);
+        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+        GuiSwingViewLabel.PropertyLabel view = new GuiSwingViewLabel.PropertyLabel(context, valueSpecifier);
         view.setOpaque(true);
-        return new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier, view);
+        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, view);
     }
 }

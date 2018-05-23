@@ -83,6 +83,14 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
         return columns;
     }
 
+    public List<ObjectTableColumn> getStaticColumns() {
+        return staticColumns;
+    }
+
+    public List<ObjectTableColumnDynamic> getDynamicColumns() {
+        return dynamicColumns;
+    }
+
     public void update(Object list) {
         int startIndex = staticColumns.size();
         for (ObjectTableColumnDynamic d : dynamicColumns) {

@@ -1,6 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewStringField;
 
@@ -17,9 +18,10 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           GuiSwingView.SpecifierManager parentSpecifier) {
-        return new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier,
-                new ColumnEditTextPane(context, parentSpecifier, false),
-                new ColumnEditTextPane(context, parentSpecifier, true))
+        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
+                new ColumnEditTextPane(context, valueSpecifier, false),
+                new ColumnEditTextPane(context, valueSpecifier, true))
                     .withComparator(Comparator.comparing(String.class::cast));
     }
 

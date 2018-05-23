@@ -257,9 +257,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public void initTableScrollPane(JScrollPane scrollPane) {
             int width = getObjectTableModel().getColumns().getTotalWidth();
+            if (isAutoResizeOff()) {
+                setAutoResizeMode(AUTO_RESIZE_OFF);
+            }
             scrollPane.setPreferredSize(new Dimension(width, Math.max(scrollPane.getPreferredSize().height, 100)));
             scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-            scrollPane.getHorizontalScrollBar().setUnitIncrement(10);
+            scrollPane.getHorizontalScrollBar().setUnitIncrement(16);
+        }
+
+        protected boolean isAutoResizeOff() {
+            return !getObjectTableModel().getColumns().getDynamicColumns().isEmpty();
         }
 
         public JToolBar initActionToolBar(List<Action> actions) {

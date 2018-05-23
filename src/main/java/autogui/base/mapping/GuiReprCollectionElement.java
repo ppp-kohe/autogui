@@ -52,6 +52,14 @@ public class GuiReprCollectionElement extends GuiReprValue {
     }
 
     /**
+     * @param context the target context
+     * @return the child context whose repr is the wrapped representation of the element
+     */
+    public GuiMappingContext getElementChild(GuiMappingContext context) {
+        return context.getChildren().get(0);
+    }
+
+    /**
      * nothing happen
      * @param context the context of the repr.
      * @return always false

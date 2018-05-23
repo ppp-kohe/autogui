@@ -36,6 +36,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
                 BigDecimal.class.isAssignableFrom(retType);
     }
 
+    @Override
+    public Object toUpdateValue(GuiMappingContext context, Object value) {
+        NumberType numType = getType(getValueType(context));
+        if (value == null) {
+            return numType.getZero();
+        } else {
+            return numType.convert(value);
+        }
+    }
+
     /**
      *
      * @param context a context holds the representation

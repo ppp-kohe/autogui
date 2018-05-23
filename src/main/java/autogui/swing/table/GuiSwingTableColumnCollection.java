@@ -28,8 +28,22 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumnDynamicFactory createColumnDynamic(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                                                GuiSwingView.SpecifierManager parentSpecifier) {
-        ObjectTableColumnDynamicCollection col = new ObjectTableColumnDynamicCollection(context, rowSpecifier,
-                new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier));
+        /*
+        tableContext: GuiReprCollectionTable  -> GuiSwingTableCollection
+             //rowSpecifier = table.getRowSpecifier(); ... columnSet.createColumns(elementContext, rowSpecifier, rowSpecifier)
+            elementContext: GuiReprCollectionElement(GuiReprCollectionTable) -> GuiSwingTableColumnSetDefault
+                 //subManager = new SpecifierManagerDefault(rowSpecifier...); ... column.createColumnDynamic(subContext, rowSpecifier, subManager)
+                  //so, subManager is the specifier for the collection element wrapping a table
+                context: GuiReprCollectionTable   -> GuiSwingTableColumnCollection
+                     //tableSpecifier = ...Default(subManager...)
+                      //so the tableSpecifier is the specifier for the table
+                    elementContext: GuiReprCollectionElement(GuiReprValueStringField)
+                        //ObjectTableColumnDynamicCollection: columnSpecifierIndex = ...Index(tableSpecifier...)
+                       subContext : GuiReprValueStringField
+                         //cc.column.createColumn(cc.context, ..., rowSpecifier:null, parentSpecifier:columnSpecifierIndex)
+         */
+        GuiSwingView.SpecifierManagerDefault tableSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+        ObjectTableColumnDynamicCollection col = new ObjectTableColumnDynamicCollection(context, rowSpecifier, tableSpecifier);
         for (GuiMappingContext elementCollection : context.getChildren()) {
             for (GuiMappingContext subContext : elementCollection.getChildren()) {
                 GuiSwingElement subView = columnMapperSet.viewTableColumn(subContext);
@@ -46,18 +60,18 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
     public static class ObjectTableColumnDynamicCollection implements ObjectTableColumnDynamicFactory {
         protected GuiMappingContext context;
         protected SpecifierManagerIndex rowSpecifierIndex;
+        protected GuiSwingView.SpecifierManager tableSpecifier;
         protected SpecifierManagerIndex columnSpecifierIndex;
-        protected GuiSwingView.SpecifierManager elementSpecifier;
 
         protected List<ContextAndColumn> columnStatic = new ArrayList<>();
 
         public ObjectTableColumnDynamicCollection(GuiMappingContext context,
                                                   SpecifierManagerIndex rowSpecifierIndex,
-                                                  GuiSwingView.SpecifierManager elementSpecifier) {
+                                                  GuiSwingView.SpecifierManager tableSpecifier) {
             this.context = context;
             this.rowSpecifierIndex = rowSpecifierIndex;
-            this.columnSpecifierIndex = new SpecifierManagerIndex(elementSpecifier::getSpecifier);
-            this.elementSpecifier = elementSpecifier;
+            this.tableSpecifier = tableSpecifier;
+            this.columnSpecifierIndex = new SpecifierManagerIndex(tableSpecifier::getSpecifier);
         }
 
         public SpecifierManagerIndex getColumnSpecifierIndex() {
@@ -89,8 +103,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
             int elemIndex = columnIndex.getIndex() / columnStatic.size(); //TODO OK?
             columnSpecifierIndex.setIndex(elemIndex);
             ContextAndColumn cc = columnStatic.get(col);
-            return new ObjectTableColumnCollectionWrapper(cc.column.createColumn(
-                    cc.context, null, columnSpecifierIndex), //TODO the specifier would be changed for Object
+            return new ObjectTableColumnCollectionWrapper(
+                    cc.column.createColumn(cc.context, null, columnSpecifierIndex), //TODO the specifier would be changed for Object
                     context.getChildren().get(0), //elementContext
                     elemIndex,
                     columnSpecifierIndex);
@@ -112,7 +126,6 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
         protected GuiMappingContext elementContext;
         protected int elementIndex;
         protected SpecifierManagerIndex elementSpecifier;
-        //TODO convert the returned column to a wrapper that can extract column value from a column list and supply to the returned wrapped column
 
         public ObjectTableColumnCollectionWrapper(ObjectTableColumn column,
                                                   GuiMappingContext elementContext, int elementIndex,
@@ -121,6 +134,9 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
             this.elementContext = elementContext;
             this.elementIndex = elementIndex;
             this.elementSpecifier = elementSpecifier;
+            if (column != null) {
+                column.withHeaderValue(column.getTableColumn().getHeaderValue() + " [" + elementIndex + "]");
+            }
         }
 
         @Override
@@ -137,8 +153,16 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
 
         @Override
         public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
-            //TODO how to set?
-            return column.setCellValue(rowObject, rowIndex, columnIndex, newColumnValue);
+            try {
+                GuiReprValue.ObjectSpecifier specifier = elementSpecifier.getSpecifierWithSettingIndex(elementIndex);
+                Object colValue = elementContext.getReprValue()
+                        .getValueWithoutNoUpdate(elementContext, GuiMappingContext.GuiSourceValue.of(rowObject), specifier);
+                column.setCellValue(colValue, rowIndex, columnIndex, newColumnValue);
+
+                return null;
+            } catch (Throwable ex) {
+                throw new RuntimeException(ex);
+            }
         }
 
         @Override

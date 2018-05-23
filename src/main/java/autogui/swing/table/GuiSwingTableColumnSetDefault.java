@@ -28,7 +28,11 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         if (context.isReprCollectionElement() && context.isParentCollectionTable()) {
             model.addColumnRowIndex();
         }
-        GuiSwingView.SpecifierManager subManager = new GuiSwingView.SpecifierManagerDefault(specifierManager::getSpecifier);
+
+        GuiSwingView.SpecifierManager subManager = context.isReprCollectionElement() ?
+                specifierManager : //specifier for collection-element is an index, which will be specifierManager (usually rowSpecifier) created in the parent table
+                new GuiSwingView.SpecifierManagerDefault(specifierManager::getSpecifier);  //specifier for object-pane is a sub-spec of a parent
+
         for (GuiMappingContext subContext : context.getChildren()) {
             //context: GuiReprCollectionElement(...) { subContext: GuiReprObjectPane { ... }  }
             //context: GuiReprCollectionElement(...) { subContext: GuiReprCollectionTable { subSubContext: GuiReprCollectionElement(...) }  }

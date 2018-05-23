@@ -24,9 +24,10 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           GuiSwingView.SpecifierManager parentSpecifier) {
-        return new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier,
-                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, parentSpecifier,false), rowSpecifier),
-                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, parentSpecifier, true), false, rowSpecifier))
+        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
+                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, valueSpecifier,false), rowSpecifier),
+                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, valueSpecifier, true), false, rowSpecifier))
                 .withComparator(Comparator.comparing(Path.class::cast));
     }
 

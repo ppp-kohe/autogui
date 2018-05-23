@@ -21,18 +21,19 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           GuiSwingView.SpecifierManager parentSpecifier) {
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox view = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, parentSpecifier);
+        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox view = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, valueSpecifier);
         view.setHorizontalAlignment(SwingConstants.CENTER);
         view.setBorderPainted(true);
         view.setOpaque(true);
 
 
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox editor = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, parentSpecifier);
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox editor = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, valueSpecifier);
         editor.setHorizontalAlignment(SwingConstants.CENTER);
         editor.setBorderPainted(true);
         editor.setOpaque(true);
 
-        ObjectTableColumnValue column = new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier,
+        ObjectTableColumnValue column = new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(view, rowSpecifier),
                 new CheckBoxEditor(editor, view == editor, rowSpecifier));
         column.withComparator(Comparator.comparing(Boolean.class::cast));

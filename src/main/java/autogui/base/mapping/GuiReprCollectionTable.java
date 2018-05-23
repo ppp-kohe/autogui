@@ -184,18 +184,48 @@ public class GuiReprCollectionTable extends GuiReprValue {
     public GuiUpdatedValue getValueCollectionElement(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection,
                                                      ObjectSpecifier elementSpecifier, GuiMappingContext.GuiSourceValue prev) throws Throwable {
         GuiTypeCollection collType = context.getTypeElementCollection();
-        return context.execute(() ->
-                prev.isNone() ?
-                        collType.executeGetElement(collection.getValue(), elementSpecifier.getIndex()) :
-                        collType.executeGetElement(collection.getValue(), elementSpecifier.getIndex(), prev));
+
+        try {
+            return context.execute(() ->
+                    prev.isNone() ?
+                            collType.executeGetElement(collection.getValue(), elementSpecifier.getIndex()) :
+                            collType.executeGetElement(collection.getValue(), elementSpecifier.getIndex(), prev));
+        } catch (Throwable ex) {
+            if (!(ex instanceof IndexOutOfBoundsException)) {
+                context.errorWhileUpdateSource(ex);
+            }
+            //empty value
+            GuiMappingContext elemContext = getElementContext(context);
+            GuiMappingContext elemValueContext = elemContext.getReprCollectionElement().getElementChild(elemContext);
+            return GuiUpdatedValue.of(elemValueContext.getReprValue().toUpdateValue(elemValueContext, null));
+        }
     }
 
     @Override
     public Object updateCollectionElement(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection,
                                           Object newValue, ObjectSpecifier elementSpecifier) throws Throwable {
         GuiTypeCollection collType = context.getTypeElementCollection();
-        return context.execute(() ->
-                collType.executeSetElement(collection.getValue(), elementSpecifier.getIndex(), newValue));
+        try {
+            return context.execute(() ->
+                    collType.executeSetElement(collection.getValue(), elementSpecifier.getIndex(), newValue));
+        } catch (Throwable ex) {
+            if (!(ex instanceof IndexOutOfBoundsException)) {
+                context.errorWhileUpdateSource(ex);
+            }
+            GuiMappingContext elemContext = getElementContext(context);
+            GuiMappingContext elemValueContext = elemContext.getReprCollectionElement().getElementChild(elemContext);
+            Object emptyValue = elemValueContext.getReprValue().toUpdateValue(elemValueContext, null);
+
+            //fill with the empty value and add newValue
+            List<Object> values = new ArrayList<>();
+            for (int i = getValueCollectionSize(context, collection, elementSpecifier.getParent()), l = elementSpecifier.getIndex();
+                 i < l; ++i) {
+                values.add(emptyValue);
+            }
+            values.add(newValue);
+            return context.execute(() ->
+                    collType.executeAddElements(collection.getValue(), values));
+        }
     }
 
     /**

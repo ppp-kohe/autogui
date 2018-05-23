@@ -17,9 +17,10 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           GuiSwingView.SpecifierManager parentSpecifier) {
-        ColumnEditImagePane img = new ColumnEditImagePane(context, parentSpecifier);
-        ColumnEditImagePane edit = new ColumnEditImagePane(context, parentSpecifier);
-        return new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier, img, edit).withRowHeight(64);
+        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+        ColumnEditImagePane img = new ColumnEditImagePane(context, valueSpecifier);
+        ColumnEditImagePane edit = new ColumnEditImagePane(context, valueSpecifier);
+        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, img, edit).withRowHeight(64);
     }
 
     /**

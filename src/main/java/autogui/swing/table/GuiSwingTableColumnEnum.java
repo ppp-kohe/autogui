@@ -19,17 +19,18 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           GuiSwingView.SpecifierManager parentSpecifier) {
-        GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context, parentSpecifier);
+        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+        GuiSwingViewLabel.PropertyLabel label = new GuiSwingViewLabel.PropertyLabel(context, valueSpecifier);
         label.setOpaque(true);
 
-        GuiSwingViewEnumComboBox.PropertyEnumComboBox comboBox = new GuiSwingViewEnumComboBox.PropertyEnumComboBox(context, parentSpecifier);
+        GuiSwingViewEnumComboBox.PropertyEnumComboBox comboBox = new GuiSwingViewEnumComboBox.PropertyEnumComboBox(context, valueSpecifier);
         comboBox.setBorder(BorderFactory.createEmptyBorder());
         comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         ObjectTableColumnValue.ObjectTableCellEditor editor = new ObjectTableColumnValue.ObjectTableCellEditor(
                 comboBox, false, rowSpecifier);
         editor.setClickCount(2);
 
-        return new ObjectTableColumnValue(context, rowSpecifier, parentSpecifier,
+        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(label, rowSpecifier),
                 editor)
                 .withComparator(Comparator.naturalOrder());
