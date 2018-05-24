@@ -31,6 +31,7 @@ public class ObjectTableColumn {
     protected TableColumn tableColumn;
     protected int rowHeight;
     protected Comparator<?> comparator;
+    protected Class<?> valueType = String.class;
 
     public TableColumn getTableColumn() {
         return tableColumn;
@@ -60,6 +61,14 @@ public class ObjectTableColumn {
 
     }
 
+    public Class<?> getValueType() {
+        return valueType;
+    }
+
+    public void setValueType(Class<?> valueType) {
+        this.valueType = valueType;
+    }
+
     /**
      *
      * @param rowObject the row object at rowIndex
@@ -86,6 +95,11 @@ public class ObjectTableColumn {
     }
 
     //////////////// setter for table column
+
+    public ObjectTableColumn withValueType(Class<?> valueType) {
+        setValueType(valueType);
+        return this;
+    }
 
     public ObjectTableColumn withTableColumn(TableColumn column) {
         setTableColumn(column);
@@ -220,6 +234,7 @@ public class ObjectTableColumn {
         public ObjectTableColumnRowIndex() {
             tableColumn = new TableColumn(0, 64, new NumberRenderer(this), null);
             tableColumn.setHeaderValue("#");
+            setValueType(Number.class);
             withComparator(new GuiSwingTableColumnNumber.NumberComparator());
         }
 

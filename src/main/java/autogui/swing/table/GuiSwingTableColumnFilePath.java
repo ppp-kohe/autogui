@@ -28,7 +28,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, valueSpecifier,false), rowSpecifier),
                 new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, valueSpecifier, true), false, rowSpecifier))
-                .withComparator(Comparator.comparing(Path.class::cast));
+                .withComparator(Comparator.comparing(Path.class::cast))
+                .withValueType(Path.class);
     }
 
     /**

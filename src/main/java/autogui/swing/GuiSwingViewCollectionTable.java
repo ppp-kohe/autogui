@@ -266,7 +266,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         protected boolean isAutoResizeOff() {
-            return !getObjectTableModel().getColumns().getDynamicColumns().isEmpty();
+            return getObjectTableModel().getColumns().hasDynamicColumns();
         }
 
         public JToolBar initActionToolBar(List<Action> actions) {

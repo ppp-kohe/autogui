@@ -6,7 +6,11 @@ import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /** column managing part of {@link ObjectTableModel} */
@@ -89,6 +93,10 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
 
     public List<ObjectTableColumnDynamic> getDynamicColumns() {
         return dynamicColumns;
+    }
+
+    public boolean hasDynamicColumns() {
+        return !dynamicColumns.isEmpty();
     }
 
     public void update(Object list) {
@@ -222,4 +230,38 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
         }
     }
 
+    public static class TableRowSorterDynamic extends TableRowSorter<ObjectTableModel> {
+        public TableRowSorterDynamic(ObjectTableModel model) {
+            super(model);
+            setSortsOnUpdates(true);
+        }
+
+        @Override
+        public Comparator<?> getComparator(int column) {
+            Comparator<?> c = getModel().getColumns().getColumnAt(column).getComparator();
+            if (c == null) {
+                return Collator.getInstance();
+            } else {
+                return c;
+            }
+        }
+
+        @Override
+        public void setComparator(int column, Comparator<?> comparator) {
+            //nothing
+        }
+
+        @Override
+        protected boolean useToString(int column) {
+            if (getComparator(column) != null) {
+                return false;
+            }
+            Class<?> cls = getModel().getColumns().getColumnAt(column).getValueType();
+            if (cls != null) {
+                return cls.equals(String.class) || (!Comparable.class.isAssignableFrom(cls));
+            } else {
+                return true;
+            }
+        }
+    }
 }

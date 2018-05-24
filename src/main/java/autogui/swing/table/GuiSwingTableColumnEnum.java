@@ -33,6 +33,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(label, rowSpecifier),
                 editor)
-                .withComparator(Comparator.naturalOrder());
+                .withComparator(Comparator.naturalOrder())
+                .withValueType(Enum.class);
     }
 }

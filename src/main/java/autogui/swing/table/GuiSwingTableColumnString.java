@@ -22,7 +22,8 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ColumnEditTextPane(context, valueSpecifier, false),
                 new ColumnEditTextPane(context, valueSpecifier, true))
-                    .withComparator(Comparator.comparing(String.class::cast));
+                    .withComparator(Comparator.comparing(String.class::cast))
+                    .withValueType(String.class);
     }
 
     /** a component for editor and renderer */

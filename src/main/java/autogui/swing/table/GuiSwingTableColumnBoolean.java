@@ -37,6 +37,7 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
                 new ObjectTableColumnValue.ObjectTableCellRenderer(view, rowSpecifier),
                 new CheckBoxEditor(editor, view == editor, rowSpecifier));
         column.withComparator(Comparator.comparing(Boolean.class::cast));
+        column.setValueType(Boolean.class);
 
         return column;
     }

@@ -69,6 +69,13 @@ public class ObjectTableModel extends AbstractTableModel  {
         return columns.getColumnAt(index);
     }
 
+    @Override
+    public Class<?> getColumnClass(int columnIndex) {
+        Class<?> c = columns.getColumnAt(columnIndex).getValueType();
+        System.err.println(columnIndex + ": " + c);
+        return c;
+    }
+
     public ObjectTableModelColumns getColumns() {
         return columns;
     }
@@ -81,6 +88,8 @@ public class ObjectTableModel extends AbstractTableModel  {
     public void refreshColumns() {
         columns.update(getCollectionFromSource());
     }
+
+
 
     //////////// table initialization
 
@@ -101,25 +110,13 @@ public class ObjectTableModel extends AbstractTableModel  {
         if (table.getColumnModel() != this.getColumnModel()) {
             table.setColumnModel(getColumnModel());
         }
-        table.setAutoCreateRowSorter(true);
         initTableRowSorter(table);
         initTableRowHeight(table);
     }
 
     public void initTableRowSorter(JTable table) {
-        /* TODO dynamically updates sorter
-        RowSorter<? extends TableModel> sorter = table.getRowSorter();
-        if (sorter instanceof TableRowSorter<?>) {
-            TableRowSorter<? extends TableModel> tableSorter = (TableRowSorter<? extends TableModel>) sorter;
-            tableSorter.setSortsOnUpdates(true);
-
-            for (int i = 0, l = getColumns().size(); i < l; ++i) {
-                Comparator<?> comp = getColumns().get(i).getComparator();
-                if (comp != null) {
-                    tableSorter.setComparator(i, comp);
-                }
-            }
-        }*/
+        table.setAutoCreateRowSorter(false);
+        table.setRowSorter(new ObjectTableModelColumns.TableRowSorterDynamic(this));
     }
 
     public void initTableRowHeight(JTable table) {

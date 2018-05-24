@@ -30,7 +30,8 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
                 label,
                 spinner)
                 .withRowHeight(spinner.getPreferredSize().height)
-                .withComparator(new NumberComparator());
+                .withComparator(new NumberComparator())
+                .withValueType(Number.class);
     }
 
     /**
