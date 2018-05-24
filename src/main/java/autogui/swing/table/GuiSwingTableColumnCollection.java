@@ -44,14 +44,21 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
          */
         GuiSwingView.SpecifierManagerDefault tableSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
         ObjectTableColumnDynamicCollection col = new ObjectTableColumnDynamicCollection(context, rowSpecifier, tableSpecifier);
+        SpecifierManagerIndex elementSpecifier = col.getColumnSpecifierIndex();
+
         for (GuiMappingContext elementCollection : context.getChildren()) {
-            for (GuiMappingContext subContext : elementCollection.getChildren()) {
-                GuiSwingElement subView = columnMapperSet.viewTableColumn(subContext);
-                if (subView instanceof GuiSwingTableColumn) {
-                    GuiSwingTableColumn column = (GuiSwingTableColumn) subView;
-                    col.addColumn(subContext, column);
+            GuiSwingElement elemView = columnMapperSet.viewTableColumn(elementCollection);
+            if (elemView instanceof GuiSwingTableColumnSet) {
+                ((GuiSwingTableColumnSet) elemView).createColumnsForDynamicCollection(elementCollection,
+                        col, elementSpecifier);
+            } else {
+                for (GuiMappingContext subContext : elementCollection.getChildren()) {
+                    GuiSwingElement subView = columnMapperSet.viewTableColumn(subContext);
+                    if (subView instanceof GuiSwingTableColumn) {
+                        GuiSwingTableColumn column = (GuiSwingTableColumn) subView;
+                        col.addColumn(subContext, column, elementSpecifier);
+                    }
                 }
-                //TODO Object -> GuiSwingTableColumnSet
             }
         }
         return col;
@@ -74,12 +81,17 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
             this.columnSpecifierIndex = new SpecifierManagerIndex(tableSpecifier::getSpecifier);
         }
 
+        public GuiSwingView.SpecifierManager getTableSpecifier() {
+            return tableSpecifier;
+        }
+
         public SpecifierManagerIndex getColumnSpecifierIndex() {
             return columnSpecifierIndex;
         }
 
-        public void addColumn(GuiMappingContext context, GuiSwingTableColumn column) {
-            columnStatic.add(new ContextAndColumn(context, column));
+        public void addColumn(GuiMappingContext context, GuiSwingTableColumn column,
+                              GuiSwingView.SpecifierManager parentSpecifier) {
+            columnStatic.add(new ContextAndColumn(context, column, parentSpecifier));
         }
 
         @Override
@@ -91,7 +103,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
                         columns = Math.max(columns, ((List<?>) e).size());
                     }
                 }
-                return columns * columnStatic.size(); //TODO currently no dynamic
+                return columns * columnStatic.size();
             } else {
                 return 0;
             }
@@ -104,7 +116,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
             columnSpecifierIndex.setIndex(elemIndex);
             ContextAndColumn cc = columnStatic.get(col);
             return new ObjectTableColumnCollectionWrapper(
-                    cc.column.createColumn(cc.context, null, columnSpecifierIndex), //TODO the specifier would be changed for Object
+                    cc.column.createColumn(cc.context, null, cc.parentSpecifier),
                     context.getChildren().get(0), //elementContext
                     elemIndex,
                     columnSpecifierIndex);
@@ -114,10 +126,13 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
     public static class ContextAndColumn {
         public GuiMappingContext context;
         public GuiSwingTableColumn column;
+        public GuiSwingView.SpecifierManager parentSpecifier;
 
-        public ContextAndColumn(GuiMappingContext context, GuiSwingTableColumn column) {
+        public ContextAndColumn(GuiMappingContext context, GuiSwingTableColumn column,
+                                GuiSwingView.SpecifierManager parentSpecifier) {
             this.context = context;
             this.column = column;
+            this.parentSpecifier = parentSpecifier;
         }
     }
 

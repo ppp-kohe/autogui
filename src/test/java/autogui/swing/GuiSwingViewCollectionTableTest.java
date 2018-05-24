@@ -17,7 +17,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
     public static void main(String[] args) {
         GuiSwingViewCollectionTableTest test = new GuiSwingViewCollectionTableTest();
         test.setUp();
-        test.testViewCollectionUpdateMatrix();
+        test.testViewCollectionUpdateObjMatrix();
     }
 
     GuiTypeBuilder builder;
@@ -40,6 +40,13 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
     TestMatrix matrix;
     GuiMappingContext matrixContext;
     GuiMappingContext matrixPropContext;
+
+    //////////
+
+    GuiTypeObject typeObjMatrix;
+    TestObjMatrix objMatrix;
+    GuiMappingContext objMatrixContext;
+    GuiMappingContext objMatrixPropContext;
 
     //////////
 
@@ -77,6 +84,17 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
         matrixContext = new GuiMappingContext(typeMatrix, matrix);
         GuiSwingMapperSet.getReprDefaultSet().match(matrixContext);
         matrixPropContext = matrixContext.getChildByName("value").getChildByName("List");
+
+        ////////
+
+        typeObjMatrix = (GuiTypeObject) builder.get(TestObjMatrix.class);
+
+        objMatrix = new TestObjMatrix();
+        objMatrixContext = new GuiMappingContext(typeObjMatrix, objMatrix);
+        GuiSwingMapperSet.getReprDefaultSet().match(objMatrixContext);
+        objMatrixPropContext = objMatrixContext.getChildByName("value").getChildByName("List");
+
+
     }
 
     @GuiIncluded
@@ -135,6 +153,15 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
         public List<List<String>> value = new ArrayList<>();
     }
 
+
+    ////////////////////////
+
+    @GuiIncluded
+    public static class TestObjMatrix {
+        @GuiIncluded
+        public List<List<TestRow>> value = new ArrayList<>();
+    }
+
     ////////////////////////
 
 
@@ -160,6 +187,16 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
 
     public GuiSwingViewCollectionTable.CollectionTable createMatrix() {
         JComponent comp = table.createView(matrixPropContext, GuiReprValue.getNoneSupplier());
+        GuiSwingViewCollectionTable.CollectionTable view =
+                GuiSwingView.findChildByType(comp,
+                        GuiSwingViewCollectionTable.CollectionTable.class);
+        frame = createFrame(comp);
+        frame.setSize(300, 500);
+        return view;
+    }
+
+    public GuiSwingViewCollectionTable.CollectionTable createObjMatrix() {
+        JComponent comp = table.createView(objMatrixPropContext, GuiReprValue.getNoneSupplier());
         GuiSwingViewCollectionTable.CollectionTable view =
                 GuiSwingView.findChildByType(comp,
                         GuiSwingViewCollectionTable.CollectionTable.class);
@@ -418,5 +455,32 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
                 "x30-14", runGet(() -> colTable.getValueAt(30, 15)));
     }
 
+
+    //////////////////////////
+
+    @Test
+    public void testViewCollectionUpdateObjMatrix() {
+        GuiSwingViewCollectionTable.CollectionTable colTable = runGet(this::createObjMatrix);
+        for (int i = 0; i < 100; ++i) {
+            List<TestRow> row = new ArrayList<>();
+            for (int j = 0; j < i; ++j) {
+                row.add(new TestRow("x" + i + "-" + j, "v" + i + "-" + j));
+            }
+            objMatrix.value.add(row);
+        }
+        objMatrixContext.updateSourceFromRoot();
+        runWait();
+        Assert.assertEquals("column size from row-index and dynamic values",
+                199, runGet(colTable::getColumnCount).intValue());
+
+        Assert.assertEquals("row size",
+                100, runGet(colTable::getRowCount).intValue());
+
+        Assert.assertEquals("row-index 30",
+                30, runGet(() -> colTable.getValueAt(30, 0)));
+
+        Assert.assertEquals("prop world 30",
+                "x30-7", runGet(() -> colTable.getValueAt(30, 15)));
+    }
 
 }

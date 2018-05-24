@@ -47,4 +47,8 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
          */
         void selectionActionFinished(boolean autoSelection);
     }
+
+    void createColumnsForDynamicCollection(GuiMappingContext context,
+                                           GuiSwingTableColumnCollection.ObjectTableColumnDynamicCollection collection,
+                                           GuiSwingView.SpecifierManager parentSpecifier);
 }

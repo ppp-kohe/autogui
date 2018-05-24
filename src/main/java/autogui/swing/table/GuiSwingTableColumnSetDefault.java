@@ -70,6 +70,25 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         return actions;
     }
 
+    @Override
+    public void createColumnsForDynamicCollection(GuiMappingContext context,
+                                        GuiSwingTableColumnCollection.ObjectTableColumnDynamicCollection collection,
+                                        GuiSwingView.SpecifierManager parentSpecifier) {
+        GuiSwingView.SpecifierManager subSpecifier = context.isReprCollectionElement() ?
+                parentSpecifier :
+                new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+        for (GuiMappingContext subContext : context.getChildren()) {
+            GuiSwingElement view = columnMappingSet.viewTableColumn(subContext);
+            if (view instanceof GuiSwingTableColumn) {
+                GuiSwingTableColumn column = (GuiSwingTableColumn) view;
+                collection.addColumn(subContext, column, subSpecifier);
+            } else if (view instanceof GuiSwingTableColumnSet) {
+                ((GuiSwingTableColumnSet) view).createColumnsForDynamicCollection(subContext,
+                        collection, subSpecifier);
+            }
+        }
+    }
+
     /**
      * an action for executing an {@link GuiReprActionList} with selected targets.
      *  instances of the class is created by a collection-table instead of the column-set,
