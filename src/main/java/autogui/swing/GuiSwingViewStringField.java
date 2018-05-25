@@ -194,6 +194,11 @@ public class GuiSwingViewStringField implements GuiSwingView {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return specifierManager.getSpecifier();
         }
+
+        @Override
+        public void requestSwingViewFocus() {
+            getField().requestFocusInWindow();
+        }
     }
 
     /** handle entire text */

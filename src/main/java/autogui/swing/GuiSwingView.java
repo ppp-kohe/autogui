@@ -194,6 +194,10 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         GuiReprValue.ObjectSpecifier getSpecifier();
+
+        default void requestSwingViewFocus() {
+            asSwingViewComponent().requestFocusInWindow();
+        }
     }
 
     /**

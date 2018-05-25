@@ -398,6 +398,11 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return specifierManager.getSpecifier();
         }
+
+        @Override
+        public void requestSwingViewFocus() {
+            getEditorField().requestFocusInWindow();
+        }
     }
 
     public static class NumberMaximumAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
@@ -638,6 +643,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 return fmt;
             }
         }
+
     }
 
     public static class TypedSpinnerNumberModelPreferencesUpdater implements ChangeListener {

@@ -313,7 +313,7 @@ public class GuiSwingKeyBinding {
 
         public void process() {
             show(pane.asSwingViewComponent());
-            pane.asSwingViewComponent().requestFocusInWindow();
+            pane.requestSwingViewFocus();
             if (action != null && action.isEnabled()) {
                 action.actionPerformed(null);
                 System.err.println("Executed by Key: " + getDescription());

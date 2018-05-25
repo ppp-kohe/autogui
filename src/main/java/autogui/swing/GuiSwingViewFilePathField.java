@@ -206,5 +206,10 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return specifierManager.getSpecifier();
         }
+
+        @Override
+        public void requestSwingViewFocus() {
+            getField().requestFocusInWindow();
+        }
     }
 }
