@@ -1,6 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueFilePathField;
 import autogui.swing.util.PopupCategorized;
@@ -130,7 +131,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
                 actions.add(new ContextRefreshAction(context));
 
                 actions.addAll(GuiSwingJsonTransfer.getActions(this, context));
-                actions.add(new HistoryMenu<>(this, context));
+                actions.add(new HistoryMenuFilePath(this, context));
                 menuItemsSource = actions;
             }
             return menuItemsSource;
@@ -174,10 +175,14 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(Object value) {
+            FileItem item = getFileItemFromValue(value);
+            selectSearchedItemWithoutUpdateContext(item);
+        }
+
+        public FileItem getFileItemFromValue(Object value) {
             Path path = ((GuiReprValueFilePathField) context.getRepresentation())
                     .toUpdateValue(context, value);
-            FileItem item = getFileItem(path);
-            selectSearchedItemWithoutUpdateContext(item);
+            return getFileItem(path);
         }
 
         @Override
@@ -210,6 +215,23 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         @Override
         public void requestSwingViewFocus() {
             getField().requestFocusInWindow();
+        }
+    }
+
+    public static class HistoryMenuFilePath extends HistoryMenu<Object, PropertyFilePathPane> {
+        public HistoryMenuFilePath(PropertyFilePathPane component, GuiMappingContext context) {
+            super(component, context);
+        }
+
+        @Override
+        public Action createAction(GuiPreferences.HistoryValueEntry e) {
+            Action a = super.createAction(e);
+            SearchTextFieldFilePath.FileItem item = component.getFileItemFromValue(e.getValue());
+            if (item != null) {
+                Icon icon = item.getIcon();
+                a.putValue(Action.SMALL_ICON, icon);
+            }
+            return a;
         }
     }
 }
