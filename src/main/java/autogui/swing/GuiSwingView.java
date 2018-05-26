@@ -723,10 +723,15 @@ public interface GuiSwingView extends GuiSwingElement {
 
         public String getActionName(GuiPreferences.HistoryValueEntry e) {
             String name = context.getRepresentation().toHumanReadableString(context, e.getValue());
-            if (name.length() > 30) {
-                name = name.substring(0, 30) + "...";
+            int max = getMaxNameLength();
+            if (name.length() > max) {
+                name = name.substring(0, max) + "...";
             }
             return name;
+        }
+
+        public int getMaxNameLength() {
+            return 30;
         }
 
         @Override

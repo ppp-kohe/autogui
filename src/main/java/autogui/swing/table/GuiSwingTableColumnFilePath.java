@@ -8,7 +8,10 @@ import autogui.swing.util.SearchTextField;
 import autogui.swing.util.SearchTextFieldFilePath;
 
 import javax.swing.*;
+import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.font.TextLayout;
+import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -25,11 +28,16 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           GuiSwingView.SpecifierManager parentSpecifier) {
         GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
-        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
-                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEditFilePath(context, valueSpecifier,false), rowSpecifier),
+
+        ColumnEditFilePath renderPane = new ColumnEditFilePath(context, valueSpecifier,false);
+        ObjectTableColumn column = new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
+                new ObjectTableColumnValue.ObjectTableCellRenderer(renderPane, rowSpecifier),
                 new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, valueSpecifier, true), false, rowSpecifier))
                 .withComparator(Comparator.comparing(Path.class::cast))
-                .withValueType(Path.class);
+                .withValueType(Path.class)
+                .withRowHeight(28);
+        renderPane.setTableColumn(column.getTableColumn());
+        return column;
     }
 
     /**
@@ -37,6 +45,9 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
      */
     public static class ColumnEditFilePath extends GuiSwingViewFilePathField.PropertyFilePathPane {
         protected boolean editor;
+        protected Graphics tester;
+        protected TableColumn tableColumn;
+
         public ColumnEditFilePath(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, boolean editor) {
             super(context, specifierManager, editor ?
                     new SearchTextFieldModelFilePath() :
@@ -84,6 +95,42 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         @Override
         public void selectSearchedItemFromModel(PopupCategorized.CategorizedMenuItem item) {
             super.selectSearchedItemFromModel(item);
+        }
+
+        @Override
+        public void setSwingViewValue(Object value) {
+            super.setSwingViewValue(value);
+            updateTextWithColumnWidth();
+        }
+
+        public void setTableColumn(TableColumn tableColumn) {
+            this.tableColumn = tableColumn;
+        }
+
+        public void updateTextWithColumnWidth() {
+            if (tableColumn != null && !editor) {
+                PopupCategorized.CategorizedMenuItem item = getModel().getSelection();
+                if (item instanceof FileItem && isOver(((FileItem) item).getPath().toString(), tableColumn.getWidth())) {
+                    String fileName = ((FileItem) item).getPath().getFileName().toString();
+                    setTextWithoutUpdateField(fileName);
+                }
+            }
+        }
+
+        public boolean isOver(String text, int width) {
+            if (getIcon().getIcon() != null) {
+                width -= getIcon().getIcon().getIconWidth();
+            }
+            if (tester == null) {
+                tester = new BufferedImage(10, 10, BufferedImage.TYPE_3BYTE_BGR).createGraphics();
+            }
+            if (!text.isEmpty()) {
+                TextLayout l = new TextLayout(text, getField().getFont(), tester.getFontMetrics().getFontRenderContext());
+                float adv = l.getAdvance() * 1.1f;
+                return width <= adv;
+            } else {
+                return width <= 0;
+            }
         }
     }
 

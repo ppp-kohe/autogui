@@ -201,8 +201,9 @@ public class GuiTypeBuilder {
     }
 
     /** if the definitions has a field, a getter or a setter, create a property.
-     *   otherwise create an action.
-     *
+     *   otherwise create actions.
+     *  Note: any methods starting with "get", "set" or "is" are collected as a {@link MemberDefinitions}.
+     *      So,  getM() and setM() are MemberDefinitions("m") and here create actions "Get M" and "Set M".
      *   @param objType the owner object
      *   @param definitions  the members
      *   */
@@ -214,14 +215,12 @@ public class GuiTypeBuilder {
             //property
             createMemberProperty(objType, definitions.name, fld, getter, setter);
         } else {
-            Method method = definitions.getLast(this::isActionMethod);
-            boolean isList = false;
-            if (method == null) {
-                method = definitions.getLast(this::isActionListMethod);
-                isList = true;
-            }
-            if (method != null) {
-                createMemberAction(objType, definitions.name, method, isList);
+            for (Method method : definitions.methods) {
+                if (isActionMethod(method)) {
+                    createMemberAction(objType, getMemberNameFromMethodForAction(method), method, false);
+                } else if (isActionListMethod(method)) {
+                    createMemberAction(objType, getMemberNameFromMethodForAction(method), method, true);
+                }
             }
         }
     }
@@ -324,6 +323,19 @@ public class GuiTypeBuilder {
         GuiIncluded included = m.getAnnotation(GuiIncluded.class);
         if (included == null || included.name().isEmpty()) {
             return getMemberNameFromMethodName(m.getName());
+        } else {
+            return included.name();
+        }
+    }
+
+    /**
+     * @param m a method
+     * @return the name of the method or attached {@link GuiIncluded#name()}
+     */
+    public String getMemberNameFromMethodForAction(Method m) {
+        GuiIncluded included = m.getAnnotation(GuiIncluded.class);
+        if (included == null || included.name().isEmpty()) {
+            return m.getName();
         } else {
             return included.name();
         }

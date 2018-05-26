@@ -233,5 +233,10 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
             }
             return a;
         }
+
+        @Override
+        public int getMaxNameLength() {
+            return 256;
+        }
     }
 }
