@@ -238,6 +238,7 @@ public class GuiSwingIcons {
     public Icon getBindIcon() { return getIcon("bind"); }
     public Icon getBuildIcon() { return getIcon("build"); }
     public Icon getCalculateIcon() { return getIcon("calculate"); }
+    public Icon getCallIcon() { return getIcon("call"); }
     public Icon getChangeIcon() { return getIcon("change"); }
     public Icon getCheckIcon() { return getIcon("check"); }
     public Icon getClearIcon() { return getIcon("clear"); }
@@ -251,6 +252,7 @@ public class GuiSwingIcons {
     public Icon getConnectIcon() { return getIcon("connect"); }
     public Icon getConvertIcon() { return getIcon("convert"); }
     public Icon getCopyIcon() { return getIcon("copy"); }
+    public Icon getCountIcon() { return getIcon("count"); }
     public Icon getCreateIcon() { return getIcon("create"); }
     public Icon getDeactivateIcon() { return getIcon("deactivate"); }
     public Icon getDecodeIcon() { return getIcon("decode"); }
@@ -258,6 +260,7 @@ public class GuiSwingIcons {
     public Icon getDeleteIcon() { return getIcon("delete"); }
     public Icon getDeriveIcon() { return getIcon("derive"); }
     public Icon getDivideIcon() { return getIcon("divide"); }
+    public Icon getDownIcon() { return getIcon("down"); }
     public Icon getDrawIcon() { return getIcon("draw"); }
     public Icon getEncodeIcon() { return getIcon("encode"); }
     public Icon getEnsureIcon() { return getIcon("ensure"); }
@@ -268,6 +271,7 @@ public class GuiSwingIcons {
     public Icon getFocusIcon() { return getIcon("focus"); }
     public Icon getGetIcon() { return getIcon("get"); }
     public Icon getHandleIcon() { return getIcon("handle"); }
+    public Icon getHelpIcon() { return getIcon("help"); }
     public Icon getHideIcon() { return getIcon("hide"); }
     public Icon getListIcon() { return getIcon("list"); }
     public Icon getLoadIcon() { return getIcon("load"); }
@@ -279,11 +283,13 @@ public class GuiSwingIcons {
     public Icon getMoveIcon() { return getIcon("move"); }
     public Icon getMultiplyIcon() { return getIcon("multiply"); }
     public Icon getNegateIcon() { return getIcon("negate"); }
+    public Icon getNextIcon() { return getIcon("next"); }
     public Icon getNormalizeIcon() { return getIcon("normalize"); }
     public Icon getNotifyIcon() { return getIcon("notify"); }
     public Icon getPaintIcon() { return getIcon("paint"); }
     public Icon getPeekIcon() { return getIcon("peek"); }
     public Icon getPlusIcon() { return getIcon("plus"); }
+    public Icon getPreviousIcon() { return getIcon("previous"); }
     public Icon getPrintIcon() { return getIcon("print"); }
     public Icon getProvideIcon() { return getIcon("provide"); }
     public Icon getPublishIcon() { return getIcon("publish"); }
@@ -322,6 +328,7 @@ public class GuiSwingIcons {
     public Icon getUnlockIcon() { return getIcon("unlock"); }
     public Icon getUnregisterIcon() { return getIcon("unregister"); }
     public Icon getUnwrapIcon() { return getIcon("unwrap"); }
+    public Icon getUpIcon() { return getIcon("up"); }
     public Icon getUpdateIcon() { return getIcon("update"); }
     public Icon getUseIcon() { return getIcon("use"); }
     public Icon getWaitIcon() { return getIcon("wait"); }
@@ -330,16 +337,16 @@ public class GuiSwingIcons {
 
     public void initSynonyms() {
         addIconWords(
-                "accept","add","adjust","apply","bind","build","calculate","change","check","clear"
-                ,"close","collect","commit","compare","complete","compose","configure","connect","convert","copy"
-                ,"create","deactivate","decode","define","delete","derive","divide","draw","encode","ensure"
-                ,"export","extract","fill","find","focus","get","handle","hide","list","load"
-                ,"lock","map","mark","merge","minus","move","multiply","negate","normalize","notify"
-                ,"paint","peek","plus","print","provide","publish","put","read","receive","reduce"
+                "accept","add","adjust","apply","bind","build","calculate","call","change","check","clear"
+                ,"close","collect","commit","compare","complete","compose","configure","connect","convert","copy","count"
+                ,"create","deactivate","decode","define","delete","derive","divide","down","draw","encode","ensure"
+                ,"export","extract","fill","find","focus","get","handle","help","hide","list","load"
+                ,"lock","map","mark","merge","minus","move","multiply","negate","next","normalize","notify"
+                ,"paint","peek","plus","previous","print","provide","publish","put","read","receive","reduce"
                 ,"register","release","remove","rename","replace","request","resize","resolve","retain","reverse"
                 ,"rotate","save","schedule","scroll","select","set","shift","show","skip","slice"
                 ,"sort","split","start","stop","sync","trim","try","undo","unlock","unregister"
-                ,"unwrap","update","use","wait","wrap","write");
+                ,"unwrap","up","update","use","wait","wrap","write");
         addSynonym("add", "insert", "append", "install", "join");
         addSynonym("apply", "compute");
         addSynonym("bind", "rebind");
@@ -358,12 +365,15 @@ public class GuiSwingIcons {
         addSynonym("minus", "decrement", "subtract");
         addSynonym("paint", "repaint");
         addSynonym("plus", "sum", "accumulate", "increment");
+        addSynonym("previous", "back");
         addSynonym("provide", "offer");
         addSynonym("put", "send", "dispatch", "post", "push", "redirect", "store", "submit", "transfer");
         addSynonym("remove", "uninstall", "deinstall", "dispose", "pop");
+        addSynonym("resolve", "solve");
         addSynonym("reverse", "rewind", "rollback");
+        addSynonym("save", "report");
         addSynonym("set", "enable", "activate");
-        addSynonym("start", "fire", "begin", "exec", "execute", "invoke", "process", "run", "starts");
+        addSynonym("start", "fire", "begin", "exec", "execute", "invoke", "process", "run", "starts", "play");
         addSynonym("stop", "pause", "abort", "cancel", "destroy", "end", "ends", "finish", "invalidate", "shutdown");
         addSynonym("trim", "truncate");
         addSynonym("unregister", "unbind");
