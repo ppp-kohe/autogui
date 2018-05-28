@@ -30,5 +30,13 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface GuiListSelectionCallback {
+    /**
+     * determines the type of parameter list.
+     * @return if true, the target method must take
+     *   a list of row-indexes (List&lt;Integer&gt;) or
+     *   a list of  a list of row-and-column-indexes (List&lt;int[]&gt;).
+     *   if false, the target method must take a list of table elements
+     *     (List&lt;E&gt; and E will be used for matching the table property).
+     */
     boolean index() default false;
 }

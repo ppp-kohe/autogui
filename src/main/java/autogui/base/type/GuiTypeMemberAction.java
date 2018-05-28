@@ -38,8 +38,9 @@ public class GuiTypeMemberAction extends GuiTypeMember {
     }
 
     /**
+     * executes the action method with a target by reflection
      * @param target the target of the action
-     * @return execute the action method
+     * @return the return value of the execution
      * @throws Exception the exception from the method
      * */
     public Object execute(Object target) throws Exception {

@@ -130,6 +130,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     @Override
     public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
         try {
+            if (specifierIndex != null) {
+                specifierIndex.setIndex(rowIndex);
+            }
             context.getReprValue().update(context, GuiMappingContext.GuiSourceValue.of(rowObject), newColumnValue, specifierManager.getSpecifier());
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);

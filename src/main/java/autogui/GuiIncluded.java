@@ -34,14 +34,26 @@ public @interface GuiIncluded {
     String description() default "";
 
     /**
-     * @return accelerator key stroke: passed to KeyStroke.getStroke(String) or "".
+     * @return accelerator key stroke.
+     *  For example,
+     *  <pre>
+     *      &#64;GuiIncluded(keyStroke="K") public String prop;
+     *  </pre>
+     *  then, users can focus to the field "prop" by typing Cmd or Ctrl +K.
+     *  For an action method, users can invoke the method by typing the specified key.
+     *  <p>
+     *  The string will be passed to KeyStroke.getStroke(String) or "".
      *    <pre>
      *        control* key
      *
      *        control ::= "shift" | "meta" | "control" | "alt"        //lower cases
      *        key  ::= "0" | "1" | ... | "9" | "A" | "B" | ... | "Z"  //upper cases
      *    </pre>
-     *
+     *    examples:
+     *    <pre>
+     *        "shift K"
+     *        "shift alt F"
+     *    </pre>
      *    for properties, selects one of field(high-precedence), getter or setter.
      *    if the stroke is empty (default), then the first character of the name will be used.
      */

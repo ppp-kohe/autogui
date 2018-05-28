@@ -1,5 +1,6 @@
 package autogui.base.type;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -47,7 +48,6 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
     }
 
     /**
-     *
      * @return a single list with {@link #elementType}
      */
     @Override
@@ -117,6 +117,13 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
         }
     }
 
+    /**
+     * use {@link GuiTypeValue#equals(Object, Object)} if the element type is a {@link GuiTypeValue},
+     * or {@link Objects#equals(Object, Object)}
+     * @param prevValue an element value
+     * @param newValue a new element value
+     * @return NO_UPDATE if two values are equivalent, or newValue
+     */
     public GuiUpdatedValue compareGetElement(Object prevValue, Object newValue) {
         boolean eq;
         if (elementType instanceof GuiTypeValue) {
@@ -131,6 +138,13 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
         }
     }
 
+    /**
+     * call {@link List#set(int, Object)}
+     * @param list the target list, must be a {@link List}
+     * @param index the updated index
+     * @param newValue the element value
+     * @return newValue if succeeded, or null if list is null
+     */
     @SuppressWarnings("unchecked")
     public Object executeSetElement(Object list, int index, Object newValue) {
         if (list != null) {
@@ -141,6 +155,12 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
         }
     }
 
+    /**
+     * call {@link List#addAll(Collection)}
+     * @param list the target list, must be a {@link List}
+     * @param newValues added elements
+     * @return newValues or null if list is null
+     */
     @SuppressWarnings("unchecked")
     public List<Object> executeAddElements(Object list, List<Object> newValues) {
         if (list != null) {
@@ -151,6 +171,10 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
         }
     }
 
+    /**
+     * @param list the target list must be a {@link List}
+     * @return {@link List#size()}
+     */
     public int getSize(Object list) {
         return ((List<?>) list).size();
     }

@@ -47,12 +47,14 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
-     * * the class supposes the parent is a {@link GuiReprPropertyPane}: [propName: [objectPane]].
+     * the class supposes that the parent is a {@link GuiReprPropertyPane}: [propName: [objectPane]].
      *  then, the parent of source and this source are a same value;
      *       and the parent is already checkAndUpdateSource and a new value is supplied.
-     *   the method uses {@link #getUpdatedValue(GuiMappingContext, ObjectSpecifier)} with the NONE specifier.
+     *   the method uses {@link #getUpdatedValue(GuiMappingContext, ObjectSpecifier)} with the {@link #NONE} specifier.
      *   <p>
      *   As additional side-effect, the updated value will be added to the value-history if supported
+     *    by {@link #addHistoryValue(GuiMappingContext, Object)},
+     *    and the value will also be set as a new source value by {@link #setSource(GuiMappingContext, Object)}
      *  @param context the source context
      *  @return the source context is updated or not
      */
@@ -269,14 +271,15 @@ public class GuiReprValue implements GuiRepresentation {
     /**
      * call the setter by editing on GUI, and {@link GuiMappingContext#updateSourceFromGui(Object)}.
      * <ul>
-     *   <li>add <code>newValue</code> to the history. </li>
-     *   <li>obtain parent source by {@link #getParentSource(GuiMappingContext, ObjectSpecifier)}</li>
-     *   <li>call {@link #update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)} </li>
-     *   <li> {@link GuiMappingContext#updateSourceFromGui(Object)}: update the source and notify to listeners</li>
+     *   <li>add <code>newValue</code> to the history by {@link #addHistoryValue(GuiMappingContext, Object)} </li>
+     *   <li>obtain parent source and update {@link #updateWithParentSource(GuiMappingContext, Object, ObjectSpecifier)}</li>
+     *   <li>check {@link #isUpdateContextSourceByUpdateFromGui(GuiMappingContext)} and
+     *         {@link GuiMappingContext#updateSourceFromGui(Object)}: update the source and notify to listeners</li>
      * </ul>
      *
      * @param context the context of this repr.
      * @param newValue the updated property value
+     * @param specifier the specifier of the value
      */
     public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) {
         addHistoryValue(context, newValue);
@@ -294,6 +297,15 @@ public class GuiReprValue implements GuiRepresentation {
         return true;
     }
 
+    /**
+     * obtain the parent source by {@link #getUpdatedSource(GuiMappingContext, ObjectSpecifier)} and
+     *   call {@link #update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)}
+     * @param context the target context
+     * @param newValue a new value to be set to the property
+     * @param specifier the specifier of the value
+     * @return the returned value by updating
+     * @throws Throwable an error while getParentSource or udpate
+     */
     public Object updateWithParentSource(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) throws Throwable {
         GuiMappingContext.GuiSourceValue src = getParentSource(context, specifier.getParent());
         if (src.isNone()) {
@@ -310,12 +322,14 @@ public class GuiReprValue implements GuiRepresentation {
      *         update the property by {@link GuiTypeMemberProperty#executeSet(Object, Object)}</li>
      *      <li> if parent is a property {@link GuiReprPropertyPane}
      *            or a collection element {@link GuiReprCollectionElement},
-     *             obtain the parent source of the parent, and update the parent with the source and newValue</li>
-     *      <li> otherwise call {@link GuiTypeValue#writeValue(Object, Object)}</li>
+     *             obtain the parent source of the parent, and update the parent with the source and newValue.
+     *             This will be done by parent's {@link #updateWithParentSource(GuiMappingContext, Object, ObjectSpecifier)}</li>
+     *      <li> otherwise call {@link GuiTypeValue#writeValue(Object, Object)} or a similar method</li>
      *  </ul>
      * @param context the target context
      * @param parentSource the property owner
      * @param newValue a new value to be set to the property
+     * @param specifier the specifier of the value
      * @return newValue which will need to be passed to {@link GuiMappingContext#updateSourceFromGui(Object)},  or null if error
      * @throws Throwable an error while updating
      */
@@ -476,6 +490,24 @@ public class GuiReprValue implements GuiRepresentation {
         }
     }
 
+    /**
+     * an auxiliary information for specifying an property value.
+     *  An typical example is an index of a list.
+     *  <p>
+     *  For regular properties, {@link GuiReprValue#NONE} is sufficient.
+     *  <p>
+     *   However, consider a list property, like
+     *   <pre>
+     *       class A { List&lt;B&gt; prop1; }
+     *       class B { List&lt;C&gt; prop2; }
+     *       class C { String prop3; }
+     *   </pre>
+     *   To specify a value of <code>prop3</code> from the top <code>A</code>,
+     *     we can write <code>a.prop1.get(i).prop2.get(j).prop3</code>.
+     *    <p>
+     *      This class represents the expression of the property chain with indexes:
+     *       <code>NONE.childIndex(i).child(false).childIndex(j).child(false)</code>
+     */
     public static class ObjectSpecifier {
         protected ObjectSpecifier parent;
         protected boolean usingCache;
@@ -485,6 +517,9 @@ public class GuiReprValue implements GuiRepresentation {
             this.usingCache = usingCache;
         }
 
+        /**
+         * @return true if the obtained property value can be a cached value
+         */
         public boolean isUsingCache() {
             return usingCache;
         }
@@ -493,23 +528,40 @@ public class GuiReprValue implements GuiRepresentation {
             return parent;
         }
 
+        /**
+         * @return index of an element, default is 0
+         */
         public int getIndex() {
             return 0;
         }
 
+        /**
+         * @return true if the specifier is an index. default is false
+         */
         public boolean isIndex() {
             return false;
         }
 
+        /**
+         * @param index the next index
+         * @return created index specifier as a child of this specifier.
+         */
         public ObjectSpecifierIndex childIndex(int index) {
             return new ObjectSpecifierIndex(this, index);
         }
 
+        /**
+         * @param usingCache specifying using cache values
+         * @return created (non-index) specifier as a child of this specifier
+         */
         public ObjectSpecifier child(boolean usingCache) {
             return new ObjectSpecifier(this, usingCache);
         }
     }
 
+    /**
+     * the indexed specifier for specifying an element in a list
+     */
     public static class ObjectSpecifierIndex extends ObjectSpecifier {
         protected int index;
 
@@ -529,10 +581,17 @@ public class GuiReprValue implements GuiRepresentation {
         }
     }
 
+    /**
+     * special specifier for non-indexed property values without caching.
+     * the parent of the specifier always this instance (cyclic).
+     */
     public static ObjectSpecifierNothing NONE = new ObjectSpecifierNothing(false);
 
     public static ObjectSpecifierNothing NONE_WITH_CACHE = new ObjectSpecifierNothing(true);
 
+    /**
+     * special specifier, can be obtained by {@link #NONE}
+     */
     public static class ObjectSpecifierNothing extends ObjectSpecifier {
         public ObjectSpecifierNothing(boolean usingCache) {
             super(null, usingCache);
@@ -540,6 +599,9 @@ public class GuiReprValue implements GuiRepresentation {
         }
     }
 
+    /**
+     * @return a lambda for returning {@link #NONE}
+     */
     public static Supplier<ObjectSpecifier> getNoneSupplier() {
         return () -> NONE;
     }

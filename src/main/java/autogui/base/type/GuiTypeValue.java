@@ -131,6 +131,7 @@ public class GuiTypeValue implements GuiTypeElement {
     }
 
     /**
+     * nothing to do in the class.
      * @param newValue used as the returned value
      * @return newValue
      */

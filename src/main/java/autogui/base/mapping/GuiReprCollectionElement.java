@@ -5,7 +5,24 @@ import autogui.base.type.GuiUpdatedValue;
 import java.util.ArrayList;
 
 /**
- * elements in a collection table {@link GuiReprCollectionTable}
+ * elements in a collection table {@link GuiReprCollectionTable}.
+ *
+ * <p>
+ *    value obtaining and updating in this class are intended to operate an element in a collection.
+ *    <ul>
+ *     <li>the class overrides {@link #getValue(GuiMappingContext, GuiMappingContext.GuiSourceValue, ObjectSpecifier, GuiMappingContext.GuiSourceValue)}
+ *     and {@link #update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)}.
+ *     </li>
+ *
+ *     <li>Those methods delegate to the parent {@link GuiReprCollectionTable}'s collection methods
+ *       (i.e. {@link #getValueCollectionElement(GuiMappingContext, GuiMappingContext.GuiSourceValue, ObjectSpecifier, GuiMappingContext.GuiSourceValue)},
+ *          and {@link #updateCollectionElement(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)}).
+ *     </li>
+ *      <li>Those methods takes an indexed specifier ({@link autogui.base.mapping.GuiReprValue.ObjectSpecifierIndex})
+ *          for specifying an element in a collection.
+ *        </li>
+ *     </ul>
+ *
  */
 public class GuiReprCollectionElement extends GuiReprValue {
     protected GuiRepresentation representation;
@@ -131,10 +148,16 @@ public class GuiReprCollectionElement extends GuiReprValue {
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
         //there are several cases of wrapped repr:
-        //   regular object element: element(object) { property,... }
-        //   value object element: element(String) { String } //child-repr == wrapped-repr
-        // In both cases, the wrapped repr. can properly handle an element as its source
-        return getRepresentation().toJsonWithNamed(context, source);
+        //   regular object element: element(object) { Object {property,...} }
+        //   value object element: element(String) { String }
+        // In both cases, the wrapped repr. == child-repr
+        for (GuiMappingContext valueContext : context.getChildren()) { //element has a single-child
+            Object v = valueContext.getRepresentation().toJson(valueContext, source);
+            if (v != null) {
+                return v;
+            }
+        }
+        return null;
     }
 
     @SuppressWarnings("unchecked")

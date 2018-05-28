@@ -45,7 +45,7 @@ import java.util.stream.Stream;
  *      </pre>
  *       For cases of a list of a list, {@link GuiReprCollectionElement} wraps {@link GuiReprCollectionTable}.
  *        {@link GuiReprCollectionTable} -&gt;
- *          {@link GuiReprCollectionElement} (wrapping {@link GuiReprCollectionTable})
+ *          {@link GuiReprCollectionElement} (wrapping {@link GuiReprCollectionTable}) -&gt;
  *           {@link GuiReprCollectionTable} -&gt;
  *             {@link GuiReprCollectionElement} (wrapping ...) -&gt; ...
  *      <pre>
@@ -103,7 +103,7 @@ import java.util.stream.Stream;
  *           (Prop(list,Coll(List&lt;E&gt;)), {@link GuiReprPropertyPane}(subRepr={@link GuiReprCollectionTable}), GuiSwingViewPropertyPane) {
  *               (Coll(List&lt;E&gt;), {@link GuiReprCollectionTable}(subRepr={@link GuiReprCollectionElement}), GuiSwingViewCollectionTable) {
  *                    (Obj(E), {@link GuiReprCollectionElement}({@link GuiReprObjectPane}), GuiSwingTableColumnSetDefault) {
- *                         (Obj(E), {@link GuiReprObjectPane}, ???) { //TODO
+ *                         (Obj(E), {@link GuiReprObjectPane}, GuiSwingTableColumnSetDefault) {
  *                              (Prop(prop,String), {@link GuiReprValueStringField}, GuiSwingTableColumnString) {}
  *                         }
  *                    }
@@ -120,28 +120,57 @@ import java.util.stream.Stream;
  *                         registered to the context.</li>
  *                   <li><code>GuiSwingCollectionTable</code>
  *                         constructs columns by <code>GuiSwingTableColumnSet#createColumns(...)</code></li>
- *                   <li><code>GuiSwingTableColumnSet</code> calls <code>createColumn(subContext)</code> to sub-contexts GuiSwingTableColumn
+ *                   <li><code>GuiSwingTableColumnSet</code> calls <code>createColumn(subContext,...)</code> to sub-contexts GuiSwingTableColumn
  *                      and adds the returned TableColumn to the model.</li>
  *
  *               </ul>
  *       </li>
- *       <li><code>update</code>
+ *       <li><code>getValue and update</code>
  *              <ul>
  *                  <li><code>ObjectTableModel</code> first obtains row list via
  *                        <code>CollectionTable#getSource()</code> :
  *                         it returns <code>source</code> previously set by <code>setSwingViewValue(Object)</code>,
  *                            with calling {@link #toUpdateValue(GuiMappingContext, Object)}.
  *                          </li>
- *                  <li><code>ObjectTableModel#getValueAt(int,int)</code> builds a table array and
- *                        sets the value obtained by
- *                              <code>ObjectTableColumnValue#getCellValue(...)</code> with a row object,
- *                              which causes {@link GuiReprCollectionElement#getUpdatedValue(GuiMappingContext, ObjectSpecifier)}
- *                                 from the column repr. {@link GuiReprValue} //TODO ????
- *                                  and parent repr. {@link GuiReprCollectionElement},
- *                            to the specified cell value.</li>
+ *
+ *                  <li><code>ObjectTableModel#getValueAt(int,int)</code> obtains a row object from the obtained source list</li>
+ *                  <li>and call  <code>ObjectTableColumnValue#getCellValue(rowObject,ri,ci)</code>,
+ *                              which causes {@link GuiReprValue#getValueWithoutNoUpdate(GuiMappingContext, GuiMappingContext.GuiSourceValue, ObjectSpecifier)}
+ *                                  with the rowObject and a row-indexed specifier.
  *              </ul>
  *       </li>
  *   </ul>
+ *
+ *   For SL,
+ *   <pre>
+ *      (Obj(SL), GuiReprObjectPane, GUiSwingViewObjectPane) {
+ *          (Prop(list,Coll(List&lt;String&gt;)), GuiReprPropertyPane(subRepr=GuiReprCollectionTable), GuiSwingViewPropertyPane) {
+ *              (Coll(List&lt;String&gt;), GuiReprCollectionTable(subRepr=GuiReprCollectionElement), GuiSwingViewCollectionTable) {
+ *                  (Obj(String), GuiReprCollectionElement(GuiReprValueStringField), GuiSwingTableColumnSetDefault) {
+ *                      (Obj(String), GuiReprValueStringField, GuiSwingTableColumnString) {}
+ *                  }
+ *              }
+ *          }
+ *      }
+ *    </pre>
+ *    <ul>
+ *        <li><code>update</code>: For updating the String element value.
+ *          <ul>
+ *            <li><code>ObjectTableModel#setValueAt(v,ri,ci)</code> causes
+ *             <code>ObjectTableColumnValue#setCellValue(rowObj,ri,ci,v)</code></li>
+ *            <li>the repr's update is {@link GuiReprValue#update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)}
+ *              and it matches the case of the parent context is a collection-element,
+ *                then it calls parent's {@link GuiReprValue#updateWithParentSource(GuiMappingContext, Object, ObjectSpecifier)}</li>
+ *            <li>the method of the parent obtains the source of the parent of the parent, which is a list, and
+ *                 call {@link GuiReprCollectionElement#update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)}
+ *                 as the parent update.
+ *                 the method delegates {@link GuiReprCollectionTable#updateCollectionElement(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)}</li>
+ *
+ *          </ul>
+ *        </li>
+ *
+ *    </ul>
+ *
  * */
 public class GuiReprCollectionTable extends GuiReprValue {
     protected GuiRepresentation subRepresentation;

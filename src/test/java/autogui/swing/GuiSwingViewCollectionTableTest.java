@@ -416,6 +416,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
 
         runWait();
         run(() -> colTable.setValueAt("hello", 1, 1));
+        run(() -> colTable.setValueAt("world", 3, 1));
 
         runWait();
         Assert.assertEquals("no update",
@@ -424,6 +425,9 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
         Assert.assertEquals("update column value",
                 "hello",
                 rs.get(1));
+        Assert.assertEquals("update column value",
+                "world",
+                rs.get(3));
     }
 
 
