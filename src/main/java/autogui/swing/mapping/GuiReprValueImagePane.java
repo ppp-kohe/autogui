@@ -13,6 +13,8 @@ import java.io.ByteArrayOutputStream;
 import java.util.Base64;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** a GUI representation for a property holding an {@link Image}.
  * the representation depends on some AWT classes (java.desktop module) */
@@ -117,7 +119,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             try {
                 ImageIO.write(img, "png", bytes);
-                return Base64.getEncoder().encodeToString(bytes.toByteArray());
+                return "data:image/png;base64," + Base64.getEncoder().encodeToString(bytes.toByteArray());
             } catch (Exception ex) {
                 return null;
             }
@@ -125,10 +127,17 @@ public class GuiReprValueImagePane extends GuiReprValue {
         return null;
     }
 
+    static Pattern dataPattern = Pattern.compile("data:(image/.+?)?(;.+?)?,(.*+)");
+
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         if (json instanceof String) {
             String jsonStr = (String) json;
+            Matcher m = dataPattern.matcher(jsonStr);
+            if (m.find()) {
+                jsonStr = m.group(3);
+            }
+
             byte[] bs = Base64.getDecoder().decode(jsonStr);
             ByteArrayInputStream bin = new ByteArrayInputStream(bs);
             try {

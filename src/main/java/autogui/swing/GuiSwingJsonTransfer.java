@@ -109,10 +109,11 @@ public class GuiSwingJsonTransfer {
         @Override
         public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
             //suppose the map preserves order of values, and skip null element
-            copy(target.getSelectedCellValues().stream()
+            List<Object> json = target.getSelectedCellValues().stream()
                     .map(this::toCopiedJson)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList()));
+                    .collect(Collectors.toList());
+            copy(json.size() == 1 ? json.get(0) : json); //if singleton, unwrap the list
         }
 
         @Override

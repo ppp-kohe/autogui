@@ -118,7 +118,7 @@ import java.util.stream.IntStream;
 public class GuiSwingPreferences {
     protected JPanel mainPane;
     protected GuiMappingContext rootContext;
-    protected GuiSwingWindow rootWindow;
+    protected RootView rootPane;
     protected JComponent rootComponent;
     protected JTable list;
     protected PreferencesListModel listModel;
@@ -128,10 +128,16 @@ public class GuiSwingPreferences {
 
     protected SettingsWindow settingsWindow;
 
-    public GuiSwingPreferences(GuiSwingWindow rootWindow) {
-        this.rootContext = rootWindow.getContext();
-        this.rootComponent = rootWindow.getViewComponent();
-        this.rootWindow = rootWindow;
+    public interface RootView {
+        GuiMappingContext getContext();
+        JComponent getViewComponent();
+        void loadPreferences(GuiPreferences prefs);
+        void savePreferences(GuiPreferences prefs);
+
+    }
+
+    public GuiSwingPreferences(RootView rootPane) {
+        setRootView(rootPane);
         init();
         initRunner();
     }
@@ -141,6 +147,12 @@ public class GuiSwingPreferences {
         this.rootComponent = rootComponent;
         init();
         initRunner();
+    }
+
+    public void setRootView(RootView rootPane) {
+        this.rootContext = rootPane.getContext();
+        this.rootComponent = rootPane.getViewComponent();
+        this.rootPane = rootPane;
     }
 
     protected void init() {
@@ -243,8 +255,8 @@ public class GuiSwingPreferences {
     }
 
     public void applyPreferences() {
-        if (rootWindow != null) {
-            rootWindow.loadPreferences(rootContext.getPreferences());
+        if (rootPane != null) {
+            rootPane.loadPreferences(rootContext.getPreferences());
         } else {
             if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
                 ((GuiSwingView.ValuePane) rootComponent).loadSwingPreferences(
@@ -255,8 +267,8 @@ public class GuiSwingPreferences {
     }
 
     public void savePreferences(GuiPreferences prefs) {
-        if (rootWindow != null) {
-            rootWindow.savePreferences(prefs);
+        if (rootPane != null) {
+            rootPane.savePreferences(prefs);
         } else {
             if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
                 ((GuiSwingView.ValuePane) rootComponent).saveSwingPreferences(

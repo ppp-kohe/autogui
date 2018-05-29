@@ -1,12 +1,11 @@
 package autogui.swing.util;
 
-import autogui.base.mapping.GuiMappingContext;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +31,7 @@ public class ApplicationIconGenerator {
             JPanel mainPane = new JPanel(new BorderLayout());
             JTextField nameField = new JTextField(30);
             nameField.addActionListener(e -> {
-                this.name = nameField.getText();
+                this.names = Arrays.asList(nameField.getText().split("\\s+"));
                 pane.repaint();
             });
             mainPane.add(nameField, BorderLayout.NORTH);
@@ -47,15 +46,15 @@ public class ApplicationIconGenerator {
     protected float width = 128;
     protected float height = 128;
 
-    protected String name;
+    protected List<String> names;
 
     public ApplicationIconGenerator() {
     }
 
-    public ApplicationIconGenerator(float width, float height, String name) {
+    public ApplicationIconGenerator(float width, float height, List<String> names) {
         this.width = width;
         this.height = height;
-        this.name = name;
+        this.names = names;
     }
 
     public void setAppIcon(JFrame frame) {
@@ -95,8 +94,8 @@ public class ApplicationIconGenerator {
         Rectangle2D.Float iconFrame = new Rectangle2D.Float(0, 0, width, height);
 
         float hue = 0.57f;
-        if (name != null) {
-            hue = getNameColorHue(name);
+        if (names != null) {
+            hue = getNameColorHue(String.join(" ", names));
         }
 
         Rectangle2D.Float outerRect = buildRectSmaller(iconFrame, iconFrame.width * 0.1f, iconFrame.height * 0.1f);
@@ -148,8 +147,8 @@ public class ApplicationIconGenerator {
 
         Rectangle2D.Float nameRect = buildRectSmaller(fillRect2, fillRect2.width * 0.05f, fillRect2.width * 0.01f);
         {
-            if (name != null) {
-                NameWordBounds words = new NameWordBounds(g, GuiMappingContext.nameSplit(name, true));
+            if (names != null) {
+                NameWordBounds words = new NameWordBounds(g, names);
 
                 NameLinePattern pattern = layout(words.w, words.h, nameRect.width / nameRect.height);
 

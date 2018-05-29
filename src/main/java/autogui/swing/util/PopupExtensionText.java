@@ -1,7 +1,5 @@
 package autogui.swing.util;
 
-import autogui.base.log.GuiLogManager;
-
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -13,7 +11,6 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
-import java.awt.geom.Point2D;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -298,6 +295,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                     text = comp.getText();
                 }
             }
+            open(text);
+        }
+
+        public void open(String text) {
             if (text != null) {
                 try {
                     if (!text.contains("://")) {
@@ -306,7 +307,16 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                     text = text.trim();
                     Desktop.getDesktop().browse(URI.create(text));
                 } catch (Exception ex) {
-                    GuiLogManager.get().logFormat("Open URL Error:%s", ex);
+                    System.err.printf("Open URL Error:%s", ex);
+                    ex.printStackTrace();
+                }
+            }
+        }
+
+        public void openList(List<Object> values) {
+            for (Object o : values) {
+                if (o instanceof String) {
+                    open((String) o);
                 }
             }
         }

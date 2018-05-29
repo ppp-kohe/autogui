@@ -428,7 +428,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
-    public static class ImageScaleSwitchFitAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemActionCheck {
+    public static class ImageScaleSwitchFitAction extends AbstractAction
+            implements PopupCategorized.CategorizedMenuItemActionCheck, TableTargetColumnAction {
         protected PropertyImagePane pane;
 
         public ImageScaleSwitchFitAction(PropertyImagePane pane) {
@@ -447,6 +448,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             updateSelected();
         }
 
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            actionPerformed(null);
+        }
+
         public boolean isSelected() {
             return pane.getImageScale() == pane.getImageScaleFit();
         }
@@ -461,7 +467,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
-    public static class ImageScaleOriginalSizeAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+    public static class ImageScaleOriginalSizeAction extends AbstractAction
+            implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
         protected PropertyImagePane pane;
 
         public ImageScaleOriginalSizeAction(PropertyImagePane pane) {
@@ -474,6 +481,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             pane.setImageScale(pane.getImageScaleMouseWheel());
             pane.getImageScaleMouseWheel().setCurrentZoom(1.0f);
             pane.updateScale();
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            actionPerformed(null);
         }
 
         @Override

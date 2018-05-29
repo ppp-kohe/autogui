@@ -10,14 +10,19 @@ public class AutoGuiShell {
     }
 
     public void showWindow(Object o) {
-        SwingUtilities.invokeLater(() -> {
+        showWindow(o, () -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 //UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+        });
+    }
 
+    public void showWindow(Object o, Runnable beforeActionInEvent) {
+        SwingUtilities.invokeLater(() -> {
+            beforeActionInEvent.run();
             createWindow(o, true).setVisible(true);
         });
     }

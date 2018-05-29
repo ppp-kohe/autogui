@@ -73,7 +73,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         return context;
     }
 
-    public static SpecifierManagerNone NONE;
+    public static SpecifierManagerNone NONE = new SpecifierManagerNone();
 
     public static class SpecifierManagerNone implements GuiSwingView.SpecifierManager {
         @Override

@@ -71,6 +71,10 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
     public interface CategorizedMenuItemComponent extends CategorizedMenuItem {
         JComponent getMenuItem();
 
+        default JComponent getMenuItemWithAction(Action a) {
+            return getMenuItem();
+        }
+
         @Override
         default String getName() {
             return "";
@@ -98,7 +102,12 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
     public interface CategorizedMenuItemAction extends CategorizedMenuItemComponent, Action {
         @Override
         default JComponent getMenuItem() {
-            return new JMenuItem(this);
+            return getMenuItemWithAction(this);
+        }
+
+        @Override
+        default JComponent getMenuItemWithAction(Action a) {
+            return new JMenuItem(a);
         }
 
         @Override
@@ -112,8 +121,8 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
      */
     public interface CategorizedMenuItemActionCheck extends CategorizedMenuItemAction {
         @Override
-        default JComponent getMenuItem() {
-            return new JCheckBoxMenuItem(this);
+        default JComponent getMenuItemWithAction(Action a) {
+            return new JCheckBoxMenuItem(a);
         }
 
         @Override
@@ -632,6 +641,11 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
 
         @Override
         public JComponent getMenuItem() {
+            return getMenuItemWithAction(action);
+        }
+
+        @Override
+        public JComponent getMenuItemWithAction(Action a) {
             return new JCheckBoxMenuItem(action);
         }
 

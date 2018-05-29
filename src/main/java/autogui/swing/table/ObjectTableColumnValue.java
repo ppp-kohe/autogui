@@ -16,6 +16,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
@@ -436,6 +438,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
                         (e, t) -> ((PopupExtensionText.TextPasteAllAction) a)
                                 .pasteLines(t::setSelectedCellValuesLoop));
 
+            } else if (a instanceof PopupExtensionText.TextOpenBrowserAction) {
+                return new TableTargetInvocationAction(a, target,
+                        (e, t) -> ((PopupExtensionText.TextOpenBrowserAction) a)
+                                .openList(t.getSelectedCellValues()));
+
             } else if (a instanceof SearchTextFieldFilePath.FileListEditAction) {
                 return new TableTargetInvocationAction(a, target,
                         (e, t) -> ((SearchTextFieldFilePath.FileListEditAction) a)
@@ -472,7 +479,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     }
 
     /**
-     * a wrapper class for {@link TableTargetCellAction}
+     * a wrapper class for {@link TableTargetColumnAction}
      */
     public static class TableTargetExecutionAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected TableTargetColumnAction action;
@@ -481,6 +488,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         public TableTargetExecutionAction(TableTargetColumnAction action, GuiReprCollectionTable.TableTargetColumn target) {
             this.action = action;
             this.target = target;
+        }
+
+        @Override
+        public JComponent getMenuItem() {
+            return action.getMenuItemWithAction(this);
         }
 
         @Override
