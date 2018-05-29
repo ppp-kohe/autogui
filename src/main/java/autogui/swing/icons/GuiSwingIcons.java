@@ -126,6 +126,9 @@ public class GuiSwingIcons {
         return iconWords;
     }
 
+    /**
+     * @return loaded icon entries. initially, empty
+     */
     public Map<String, Icon> getIconMap() {
         return iconMap;
     }
