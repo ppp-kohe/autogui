@@ -78,6 +78,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
+        protected ImageScaleAutoSwitchByMouseWheel autoSwitchByMouseWheel;
+        protected ImageScaleSwitchFitAction switchFitAction;
+
         public PropertyImagePane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
             this.specifierManager = specifierManager;
@@ -189,13 +192,16 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 scaleMenu.add(new ImageScaleSizeAction(this, 4f));
                 scaleMenu.add(new ImageScaleSizeAction(this, 8f));
 
+                autoSwitchByMouseWheel = new ImageScaleAutoSwitchByMouseWheel(this);
+                switchFitAction = new ImageScaleSwitchFitAction(this);
+
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
                                 GuiSwingContextInfo.get().getInfoLabel(context),
                                 new ContextRefreshAction(context),
-                                new ImageScaleSwitchFitAction(this),
+                                switchFitAction,
                                 new ImageScaleOriginalSizeAction(this),
-                                new ImageScaleAutoSwitchByMouseWheel(this),
+                                autoSwitchByMouseWheel,
                                 new PopupCategorized.CategorizedMenuItemComponentDefault(scaleMenu,
                                         PopupExtension.MENU_CATEGORY_VIEW, ""),
                                 new ImageCopyAction(this::getImage),
@@ -324,6 +330,13 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public void updateScale() {
             Dimension paneSize = getViewSize();
             Dimension size = (imageScale == null ? imageSize : imageScale.getScaledImageSize(imageSize, paneSize));
+
+            if (autoSwitchByMouseWheel != null) {
+                autoSwitchByMouseWheel.updateSelected();
+            }
+            if (switchFitAction != null) {
+                switchFitAction.updateSelected();
+            }
 
             setPreferredSize(size);
             revalidate();

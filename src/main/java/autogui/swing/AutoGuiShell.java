@@ -5,19 +5,33 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public class AutoGuiShell {
+    public boolean forceSystemLAF = false;
+
     public static AutoGuiShell get() {
         return new AutoGuiShell();
     }
 
     public void showWindow(Object o) {
-        showWindow(o, () -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                //UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-            } catch (Exception ex) {
-                ex.printStackTrace();
+        showWindow(o, this::setLookAndFeel);
+    }
+
+    public void setLookAndFeel() {
+        try {
+            LookAndFeel laf = UIManager.getLookAndFeel();
+            boolean sysLaf = false;
+            boolean sysLafIsGtk = false;
+            if (laf != null && laf.getClass().getName().endsWith(UIManager.getSystemLookAndFeelClassName())) {
+                sysLaf = true;
             }
-        });
+            if (UIManager.getSystemLookAndFeelClassName().contains("GTKLookAndFeel")) {
+                sysLafIsGtk = true;
+            }
+            if (!sysLaf && (!sysLafIsGtk || forceSystemLAF)) {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     public void showWindow(Object o, Runnable beforeActionInEvent) {
