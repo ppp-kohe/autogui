@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueEnumComboBox;
+import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
@@ -57,6 +58,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         protected boolean listenerEnabled = true;
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
+        protected MenuBuilder.MenuLabel infoLabel;
 
         public PropertyEnumComboBox(GuiMappingContext context, SpecifierManager specifierManager) {
             super(getEnumConstants(context));
@@ -78,6 +80,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         public void initName() {
             setName(context.getName());
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
             GuiSwingView.setDescriptionToolTipText(context, this);
         }
 
@@ -121,7 +124,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             if (menuItems == null) {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
-                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                infoLabel,
                                 new ContextRefreshAction(context),
                                 new HistoryMenu<>(this, context)),
                         GuiSwingJsonTransfer.getActions(this, context));
@@ -195,6 +198,11 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         public PopupExtension getPopup() {
             return popup;
+        }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
         }
     }
 

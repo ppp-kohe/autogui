@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueBooleanCheckBox;
+import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 
@@ -52,6 +53,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected PopupExtension popup;
+        protected MenuBuilder.MenuLabel infoLabel;
 
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
@@ -76,6 +78,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
             if (context.isTypeElementProperty()) {
                 setText(context.getDisplayName());
             }
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
             GuiSwingView.setDescriptionToolTipText(context, this);
             setOpaque(false);
         }
@@ -111,7 +114,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
             if (menuItems == null) {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
-                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                infoLabel,
                                 new ContextRefreshAction(context),
                                 new ToStringCopyAction(this, context),
                                 new HistoryMenu<>(this, getSwingViewContext()),
@@ -174,6 +177,11 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         public PopupExtension getPopup() {
             return popup;
+        }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
         }
     }
 

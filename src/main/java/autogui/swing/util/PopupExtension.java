@@ -270,7 +270,30 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     public static Predicate<KeyEvent> getDefaultKeyMatcher() {
         return PopupExtensionText.getKeyCode(KeyEvent.VK_SPACE, KeyEvent.CTRL_DOWN_MASK)
+                .or(PopupExtensionText.getKeyCode(KeyEvent.VK_ENTER, KeyEvent.CTRL_DOWN_MASK))
+                .or(PopupExtensionText.getKeyCode(KeyEvent.VK_ENTER, getMenuShortcutKeyMask()))
                 .or(PopupExtensionText.getKeyCode(KeyEvent.VK_F5, 0));
+    }
+
+    @SuppressWarnings("deprecation")
+    public static int getMenuShortcutKeyMask() {
+        int menuMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        int menuDownMask = menuMask;
+        switch (menuMask) {
+            case InputEvent.SHIFT_MASK:
+                menuDownMask = InputEvent.SHIFT_DOWN_MASK;
+                break;
+            case InputEvent.CTRL_MASK:
+                menuDownMask = InputEvent.CTRL_DOWN_MASK;
+                break;
+            case InputEvent.ALT_MASK:
+                menuDownMask = InputEvent.ALT_DOWN_MASK;
+                break;
+            case InputEvent.META_MASK:
+                menuDownMask = InputEvent.META_DOWN_MASK;
+                break;
+        }
+        return menuDownMask;
     }
 
     /**

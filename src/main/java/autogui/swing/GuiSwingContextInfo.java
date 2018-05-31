@@ -14,7 +14,7 @@ public class GuiSwingContextInfo {
         return instance;
     }
 
-    public JComponent getInfoLabel(GuiMappingContext context) {
+    public MenuBuilder.MenuLabel getInfoLabel(GuiMappingContext context) {
         return MenuBuilder.get().createLabel(getInfo(context), PopupCategorized.SUB_CATEGORY_LABEL_TYPE);
     }
 

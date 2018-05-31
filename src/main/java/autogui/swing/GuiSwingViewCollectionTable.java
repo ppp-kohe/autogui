@@ -119,6 +119,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected TableSelectionSourceForIndexes selectionSourceForRowIndexes;
         protected TableSelectionSourceForIndexes selectionSourceForRowAndColumnIndexes;
 
+        protected MenuBuilder.MenuLabel infoLabel;
+
         protected JToolBar actionToolBar;
 
         public CollectionTable(GuiMappingContext context, SpecifierManager specifierManager) {
@@ -144,6 +146,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public void initName() {
             setName(context.getName());
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
             GuiSwingView.setDescriptionToolTipText(context, this);
         }
 
@@ -212,7 +215,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (menuItems == null) {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
-                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                infoLabel,
                                 new ContextRefreshAction(context),
                                 new SelectAllAction(this),
                                 new UnSelectAction(this)),
@@ -512,6 +515,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public GuiSwingTableColumn.SpecifierManagerIndex getRowSpecifier() {
             return getObjectTableModel().getRowSpecifierManager();
+        }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
         }
     }
 

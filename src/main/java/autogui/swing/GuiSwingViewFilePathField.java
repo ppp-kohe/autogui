@@ -4,6 +4,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueFilePathField;
+import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.SearchTextFieldFilePath;
@@ -53,6 +54,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
+        protected MenuBuilder.MenuLabel infoLabel;
 
         public PropertyFilePathPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this(context, specifierManager, new SearchTextFieldModelFilePath());
@@ -86,6 +88,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
 
         public void initName() {
             setName(context.getName());
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
             GuiSwingView.setDescriptionToolTipText(context, this);
             GuiSwingView.setDescriptionToolTipText(context, getField());
         }
@@ -127,7 +130,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         public List<Object> getMenuItemsSource() {
             if (menuItemsSource == null) {
                 List<Object> actions = super.getMenuItemsSource();
-                actions.add(GuiSwingContextInfo.get().getInfoLabel(context));
+                actions.add(infoLabel);
                 actions.add(new ContextRefreshAction(context));
 
                 actions.addAll(GuiSwingJsonTransfer.getActions(this, context));
@@ -215,6 +218,11 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         @Override
         public void requestSwingViewFocus() {
             getField().requestFocusInWindow();
+        }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
         }
     }
 

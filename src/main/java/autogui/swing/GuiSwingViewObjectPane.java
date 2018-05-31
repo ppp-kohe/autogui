@@ -119,6 +119,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         protected PopupExtension popup;
         protected List<Action> actions = new ArrayList<>();
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
+        protected MenuBuilder.MenuLabel infoLabel;
 
         protected List<JSplitPane> splitPanes = new ArrayList<>();
         protected SplitPreferencesUpdater preferencesUpdater;
@@ -145,6 +146,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         public void initName() {
             setName(context.getName());
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
             GuiSwingView.setDescriptionToolTipText(context, this);
         }
 
@@ -196,7 +198,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             if (menuItems == null) {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
-                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                infoLabel,
                                 new ContextRefreshAction(context),
                                 new ToStringCopyAction(this, context)),
                         GuiSwingJsonTransfer.getActions(this, context),
@@ -377,6 +379,11 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         public PopupExtension getPopup() {
             return popup;
+        }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
         }
     }
 

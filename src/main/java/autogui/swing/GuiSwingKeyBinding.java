@@ -5,6 +5,7 @@ import autogui.swing.util.PopupCategorized;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
@@ -12,7 +13,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class GuiSwingKeyBinding {
-
     protected Map<KeyStroke, Map<KeyPrecedenceSet,List<KeyStrokeAction>>> keyToPrecToActions = new HashMap<>();
     protected List<KeyStrokeAction> assigned = new ArrayList<>();
     protected Set<KeyStroke> assignedKeys = new HashSet<>();
@@ -51,22 +51,40 @@ public class GuiSwingKeyBinding {
 
     public void traverseKeyBinding(Component c, int depth) {
         if (c instanceof GuiSwingView.ValuePane<?>) {
-            GuiSwingView.ValuePane<?> pane = (GuiSwingView.ValuePane<?>) c;
-            List<PopupCategorized.CategorizedMenuItem> items = pane.getSwingStaticMenuItems();
-            for (PopupCategorized.CategorizedMenuItem item : items) {
-                if (item instanceof RecommendedKeyStroke) {
-                    putItemRecommended(pane, depth, (RecommendedKeyStroke) item);
-                }
-            }
-
-            KeyStroke paneStroke = pane.getSwingFocusKeyStroke();
-            if (paneStroke != null) {
-                putKeyStrokeFocus((GuiSwingView.ValuePane<?>) c, depth, paneStroke);
-            }
+            putForValuePane((GuiSwingView.ValuePane<?>) c, depth);
+        }
+        if (c instanceof JComponent) {
+            putForComponent((JComponent) c, depth);
         }
         if (c instanceof Container) {
             for (Component sub : ((Container) c).getComponents()) {
                 traverseKeyBinding(sub, depth + 1);
+            }
+        }
+    }
+
+    public void putForValuePane(GuiSwingView.ValuePane<?> pane, int depth) {
+        List<PopupCategorized.CategorizedMenuItem> items = pane.getSwingStaticMenuItems();
+        for (PopupCategorized.CategorizedMenuItem item : items) {
+            if (item instanceof RecommendedKeyStroke) {
+                putItemRecommended(pane, depth, (RecommendedKeyStroke) item);
+            }
+        }
+
+        KeyStroke paneStroke = pane.getSwingFocusKeyStroke();
+        if (paneStroke != null) {
+            putKeyStrokeFocus(pane, depth, paneStroke);
+        }
+    }
+
+    public void putForComponent(JComponent c, int depth) {
+        InputMap map = c.getInputMap();
+        if (map != null) {
+            KeyStroke[] keys = map.allKeys();
+            if (keys != null) {
+                for (KeyStroke k : keys) {
+                    putKeyStroke(new KeyStrokeActionForInputMap(c, PRECEDENCE_SET_INPUT_MAP, k));
+                }
             }
         }
     }
@@ -78,7 +96,7 @@ public class GuiSwingKeyBinding {
                     Integer.bitCount(k.getKey().getModifiers()))); //a smaller number of modifiers precedes
             if (next.stream()
                     .noneMatch(e -> bind(e.getKey(), e.getValue()))) {
-                break;
+                break; //no new assignments: give up
             }
         }
     }
@@ -111,7 +129,7 @@ public class GuiSwingKeyBinding {
     public boolean putItemRecommended(GuiSwingView.ValuePane<?> pane, int depth, RecommendedKeyStroke item) {
         KeyStroke stroke = item.getRecommendedKeyStroke();
         if (stroke != null) {
-            putKeyStroke(new KeyStrokeAction(pane, (PopupCategorized.CategorizedMenuItem) item,
+            putKeyStroke(new KeyStrokeActionForValuePane(pane, (PopupCategorized.CategorizedMenuItem) item,
                     (item instanceof Action ? (Action) item : null),
                     new KeyPrecedenceSet(item.getRecommendedKeyPrecedence(), new KeyPrecedenceDepth(depth)),
                     stroke));
@@ -127,7 +145,7 @@ public class GuiSwingKeyBinding {
         KeyStroke stroke = (item == null ? null : (KeyStroke) item.getValue(Action.ACCELERATOR_KEY));
         if (stroke != null) {
             KeyPrecedenceSet prec = new KeyPrecedenceSet(PRECEDENCE_FLAG_LIB_SPECIFIED, new KeyPrecedenceDepth(depth));
-            putKeyStroke(new KeyStrokeAction(pane, i, item, prec, stroke));
+            putKeyStroke(new KeyStrokeActionForValuePane(pane, i, item, prec, stroke));
             return true;
         } else {
             return false;
@@ -142,7 +160,7 @@ public class GuiSwingKeyBinding {
             } else {
                 prec = new KeyPrecedenceSet(new KeyPrecedenceDepth(depth));
             }
-            putKeyStroke(new KeyStrokeAction(pane, null, null, prec, stroke));
+            putKeyStroke(new KeyStrokeActionForValuePane(pane, null, null, prec, stroke));
             return true;
         } else {
             return false;
@@ -155,27 +173,102 @@ public class GuiSwingKeyBinding {
                 .add(item);
     }
 
+    public abstract static class KeyStrokeAction {
+        public KeyPrecedenceSet precedence;
+        public KeyStroke stroke;
 
-    public static class KeyStrokeAction {
+        public abstract boolean isAssigned();
+        public abstract boolean isDispatcherRequired();
+        public abstract void process();
+
+        public void assigned() { }
+
+        public Set<KeyStrokeAction> derive() {
+            return Collections.emptySet();
+        }
+
+        public void updateInfo() { }
+    }
+
+    /** a predefined key-binding by the component UI */
+    public static class KeyStrokeActionForInputMap extends KeyStrokeAction {
+        protected JComponent component;
+
+        public KeyStrokeActionForInputMap(JComponent component, KeyPrecedenceSet precedence, KeyStroke stroke) {
+            this.component = component;
+            this.precedence = precedence;
+            this.stroke = stroke;
+        }
+
+        @Override
+        public boolean isAssigned() {
+            return true;
+        }
+
+        @Override
+        public boolean isDispatcherRequired() {
+            return false;
+        }
+
+        @Override
+        public void process() {
+            component.getActionForKeyStroke(this.stroke)
+                    .actionPerformed(new ActionEvent(component, -1,
+                            "" + component.getInputMap().get(stroke)));
+        }
+    }
+
+    public static class KeyStrokeActionForValuePane extends KeyStrokeAction {
         public GuiSwingView.ValuePane<?> pane;
         public PopupCategorized.CategorizedMenuItem item;
         public Action action;
-        public KeyPrecedenceSet precedence;
-        public KeyStroke stroke;
         protected boolean assigned;
 
-        protected KeyStrokeAction base;
-        protected List<KeyStrokeAction> derived;
+        protected KeyStrokeActionForValuePane base;
+        protected List<KeyStrokeActionForValuePane> derived;
 
         protected String description;
 
-        public KeyStrokeAction(GuiSwingView.ValuePane<?> pane, PopupCategorized.CategorizedMenuItem item,
+        public KeyStrokeActionForValuePane(GuiSwingView.ValuePane<?> pane, PopupCategorized.CategorizedMenuItem item,
                                Action action, KeyPrecedenceSet precedence, KeyStroke originalStroke) {
             this.pane = pane;
             this.item = item;
             this.action = action;
             this.precedence = precedence;
             this.stroke = originalStroke;
+        }
+
+        public Action getAction() {
+            return action;
+        }
+
+        public PopupCategorized.CategorizedMenuItem getItem() {
+            return item;
+        }
+
+        public KeyStroke getStroke() {
+            return stroke;
+        }
+
+        public KeyPrecedenceSet getPrecedence() {
+            return precedence;
+        }
+
+        public GuiSwingView.ValuePane<?> getPane() {
+            return pane;
+        }
+
+        public void updateInfo() {
+            updateActionKey();
+            updateToolTip();
+        }
+
+        public void updateActionKey() {
+            if (action != null) {
+                action.putValue(Action.ACCELERATOR_KEY, stroke);
+            } else if (pane != null) {
+                pane.setKeyStrokeString(getKeyStrokeString());
+            }
         }
 
         public void updateToolTip() {
@@ -311,6 +404,11 @@ public class GuiSwingKeyBinding {
             }
         }
 
+        @Override
+        public boolean isDispatcherRequired() {
+            return true;
+        }
+
         public void process() {
             show(pane.asSwingViewComponent());
             pane.requestSwingViewFocus();
@@ -334,16 +432,19 @@ public class GuiSwingKeyBinding {
             }
         }
 
+        @Override
         public boolean isAssigned() {
             return assigned;
         }
 
-        public void setAssigned(boolean assigned) {
+        @Override
+        public void assigned() {
+            this.assigned = true;
             getBase().setAssignedToChild(assigned);
         }
 
-        public KeyStrokeAction getBase() {
-            KeyStrokeAction b = this;
+        public KeyStrokeActionForValuePane getBase() {
+            KeyStrokeActionForValuePane b = this;
             while (b.base != null) {
                 b = b.base;
             }
@@ -357,6 +458,7 @@ public class GuiSwingKeyBinding {
             }
         }
 
+        @Override
         public Set<KeyStrokeAction> derive() {
             int mods = stroke.getModifiers();
             List<Integer> used = getModifiers().stream()
@@ -369,7 +471,7 @@ public class GuiSwingKeyBinding {
             return available.stream()
                     .map(s -> toModifiers(mods, s))
                     .map(mod -> copyWithModifiers(stroke, mod))
-                    .map(k -> connectToChild(new KeyStrokeAction(pane, item, action, precedence, k)))
+                    .map(k -> connectToChild(new KeyStrokeActionForValuePane(pane, item, action, precedence, k)))
                     .collect(Collectors.toSet());
         }
 
@@ -378,7 +480,7 @@ public class GuiSwingKeyBinding {
                     .reduce(baseMod, (pre,next) -> pre | next);
         }
 
-        public KeyStrokeAction connectToChild(KeyStrokeAction child) {
+        public KeyStrokeActionForValuePane connectToChild(KeyStrokeActionForValuePane child) {
             child.base = this;
             if (derived == null) {
                 derived = new ArrayList<>();
@@ -488,10 +590,10 @@ public class GuiSwingKeyBinding {
             KeyStrokeAction assignedAction = actions.remove(0);
 
             assigned.add(assignedAction);
+            assignedAction.assigned();
             assignedKeys.add(key);
-            assignedAction.setAssigned(true);
 
-            putDerived(precToActions);
+            putDerived(precToActions); //derive other possible key-strokes for rest of actions
             keyToPrecToActions.remove(key);
             cleanEmptyActions();
             return true;
@@ -526,8 +628,10 @@ public class GuiSwingKeyBinding {
     public void bindTo(JComponent component) {
         Map<KeyStroke, KeyStrokeAction> inputMap = new HashMap<>();
         for (KeyStrokeAction action : assigned) {
-            action.updateToolTip();
-            inputMap.put(action.stroke, action);
+            action.updateInfo();
+            if (action.isDispatcherRequired()) {
+                inputMap.put(action.stroke, action);
+            }
         }
         if (dispatcher != null) {
             KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(dispatcher);
@@ -574,9 +678,20 @@ public class GuiSwingKeyBinding {
     public static int PRECEDENCE_TYPE_FLAG_LIB_SPECIFIED = 10000;
 
     public static KeyPrecedenceFlag PRECEDENCE_FLAG_HIGH = new KeyPrecedenceFlag(PRECEDENCE_TYPE_FLAG_HIGH);
+    /**
+     * user specified a key-stroke by the GuiIncluded(keyStroke=...) annotation
+     */
     public static KeyPrecedenceFlag PRECEDENCE_FLAG_USER_SPECIFIED = new KeyPrecedenceFlag(PRECEDENCE_TYPE_FLAG_USER_SPECIFIED);
     public static KeyPrecedenceFlag PRECEDENCE_FLAG_LIB_SPECIFIED = new KeyPrecedenceFlag(PRECEDENCE_TYPE_FLAG_LIB_SPECIFIED);
 
+    public static KeyPrecedenceSet PRECEDENCE_SET_INPUT_MAP = new KeyPrecedenceSet(PRECEDENCE_FLAG_HIGH);
+
+    /**
+     * a set of key-precedence information:
+     *   a key-precedence becomes a flag value ({@link KeyPrecedenceFlag}
+     *      which indicates the type of action, or
+     *    a view-depth ({@link KeyPrecedenceDepth}).
+     */
     public static class KeyPrecedenceSet implements Comparable<KeyPrecedenceSet> {
         protected List<KeyPrecedence> set;
 

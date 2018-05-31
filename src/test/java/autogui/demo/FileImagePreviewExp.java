@@ -1,6 +1,7 @@
 package autogui.demo;
 
 import autogui.GuiIncluded;
+import autogui.GuiListSelectionCallback;
 import autogui.swing.AutoGuiShell;
 
 import javax.imageio.ImageIO;
@@ -13,9 +14,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @GuiIncluded
-public class FileListExp {
+public class FileImagePreviewExp {
     public static void main(String[] args) {
-        AutoGuiShell.get().showWindow(new FileListExp());
+        AutoGuiShell.get().showWindow(new FileImagePreviewExp());
     }
 
     protected Path dir;
@@ -50,9 +51,13 @@ public class FileListExp {
 
         public void update(Path dir) {
             try {
-                items = Files.list(dir)
-                        .map(FileItem::new)
-                        .collect(Collectors.toList());
+                if (dir == null || dir.toString().isEmpty() || !Files.isDirectory(dir)) {
+                    items = new ArrayList<>();
+                } else {
+                    items = Files.list(dir)
+                            .map(FileItem::new)
+                            .collect(Collectors.toList());
+                }
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
@@ -63,6 +68,7 @@ public class FileListExp {
             return items;
         }
 
+        @GuiListSelectionCallback
         @GuiIncluded
         public void preview(List<FileItem> item) {
             preview.setImage(item.get(0).getThumb());
@@ -86,7 +92,7 @@ public class FileListExp {
     static Image empty = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
 
     @GuiIncluded
-    public static class FileItem {
+    public class FileItem {
         protected Path path;
         protected Image thumb;
 
@@ -128,6 +134,13 @@ public class FileListExp {
                 }
             } else {
                 return 0;
+            }
+        }
+
+        @GuiIncluded
+        public void openDirectory() {
+            if (Files.isDirectory(path)) {
+                setDir(path);
             }
         }
     }

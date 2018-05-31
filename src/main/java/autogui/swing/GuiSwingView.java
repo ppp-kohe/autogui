@@ -198,6 +198,8 @@ public interface GuiSwingView extends GuiSwingElement {
         default void requestSwingViewFocus() {
             asSwingViewComponent().requestFocusInWindow();
         }
+
+        default void setKeyStrokeString(String keyStrokeString) { }
     }
 
     /**

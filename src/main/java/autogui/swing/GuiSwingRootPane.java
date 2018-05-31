@@ -16,6 +16,7 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -40,6 +41,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
     protected String title;
     protected JMenuBar menuBar;
+
+    protected WindowCloseAction closeAction;
 
 
     public static GuiSwingRootPane createForObject(Object o) {
@@ -102,6 +105,12 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
 
     protected void initKeyBinding() {
+        closeAction = new WindowCloseAction(this);
+        getInputMap().put(
+                closeAction.getKeyStroke(),
+                closeAction);
+        getActionMap().put(closeAction, closeAction);
+
         keyBinding = new GuiSwingKeyBinding();
         keyBinding.bind(viewComponent);
     }
@@ -148,7 +157,9 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
             ((GuiSwingView.ValuePane) viewComponent).getSwingMenuBuilder()
                     .build(PopupExtension.MENU_FILTER_IDENTITY,
                             new MenuBuilder.MenuAppender(objectMenu));
+            objectMenu.addSeparator();
         }
+        objectMenu.add(closeAction);
     }
 
 
@@ -262,7 +273,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     public boolean isApplicationRoot() {
-        return true;
+        return applicationRoot;
     }
 
     public void setApplicationRoot(boolean applicationRoot) {
@@ -560,6 +571,33 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         @Override
         public String getSubCategory() {
             return PopupExtension.MENU_SUB_CATEGORY_WINDOW_SELECT;
+        }
+    }
+
+    public static class WindowCloseAction extends AbstractAction {
+        protected JComponent pane;
+        protected KeyStroke keyStroke;
+
+        public WindowCloseAction(JComponent pane) {
+            this.pane = pane;
+            putValue(NAME, "Close Window");
+            keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+            putValue(ACCELERATOR_KEY, keyStroke);
+        }
+
+        public KeyStroke getKeyStroke() {
+            return keyStroke;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Window w = SwingUtilities.windowForComponent(pane);
+            if (w instanceof GuiSwingWindow) {
+                ((GuiSwingWindow) w).close();
+            } else {
+                w.setVisible(false);
+                w.dispose();
+            }
         }
     }
 }

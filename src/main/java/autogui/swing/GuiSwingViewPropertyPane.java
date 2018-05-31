@@ -87,6 +87,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         protected boolean showName;
 
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
+        protected MenuBuilder.MenuLabel infoLabel;
 
         public PropertyPane(GuiMappingContext context, boolean showName, SpecifierManager specifierManager) {
             super(context.getDisplayName(), context.getName());
@@ -118,6 +119,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
 
         public void initName() {
             setName(context.getName());
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
             GuiSwingView.setDescriptionToolTipText(context, this);
             if (showName) {
                 initNameLabel();
@@ -179,7 +181,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             if (menuItems == null) {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
-                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                infoLabel,
                                 new ContextRefreshAction(context),
                                 new ToStringCopyAction(this, context)),
                         GuiSwingJsonTransfer.getActions(this, context)).stream()
@@ -206,6 +208,11 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
 
         public PopupExtension getPopup() {
             return popup;
+        }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
         }
     }
 

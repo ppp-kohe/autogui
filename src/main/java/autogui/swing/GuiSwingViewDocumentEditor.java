@@ -156,7 +156,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
     }
 
-    public static List<PopupCategorized.CategorizedMenuItem> getTextMenuItems(ValuePane<?> pane) {
+    public static List<PopupCategorized.CategorizedMenuItem> getTextMenuItems(ValuePane<?> pane,
+                                                                              MenuBuilder.MenuLabel infoLabel) {
         GuiMappingContext context = pane.getSwingViewContext();
         List<Action> settingActions = Collections.emptyList();
         if (pane instanceof PropertyDocumentTextPane) {
@@ -168,7 +169,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
         return PopupCategorized.getMenuItems(
                 Arrays.asList(
-                        GuiSwingContextInfo.get().getInfoLabel(context),
+                        infoLabel,
                         new ContextRefreshAction(context)),
                 PopupExtensionText.getEditActions((JTextComponent) pane),
                 GuiSwingJsonTransfer.getActions(pane, context),
@@ -272,16 +273,18 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected PopupExtension popup;
         protected boolean wrapLine = true;
         protected SettingsWindow settingsWindow;
+        protected MenuBuilder.MenuLabel infoLabel;
 
         public PropertyDocumentEditorPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
             this.specifierManager = specifierManager;
             popup = new TextPaneInitializer(this, context).getPopup();
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
         }
 
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
-            return getTextMenuItems(this);
+            return getTextMenuItems(this, infoLabel);
         }
 
         @Override
@@ -346,6 +349,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return specifierManager.getSpecifier();
         }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
+        }
     }
 
     public static class PropertyDocumentTextPane extends JTextPane
@@ -357,17 +365,19 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected boolean wrapLine = true;
         protected DocumentSettingPane settingPane;
         protected SettingsWindow settingsWindow;
+        protected MenuBuilder.MenuLabel infoLabel;
 
         public PropertyDocumentTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
             this.specifierManager = specifierManager;
             settingPane = new DocumentSettingPane(this);
             popup = new TextPaneInitializer(this, context).getPopup();
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
         }
 
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
-            return getTextMenuItems(this);
+            return getTextMenuItems(this, infoLabel);
         }
 
         @Override
@@ -467,6 +477,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return specifierManager.getSpecifier();
+        }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
         }
     }
 

@@ -175,8 +175,10 @@ public class MenuBuilder {
     public static class MenuLabel extends JPanel implements PopupCategorized.CategorizedMenuItemComponent {
         protected String subCategory = "";
         protected JLabel label;
+        protected String name;
         public MenuLabel(String name, String subCategory) {
             super(new FlowLayout(FlowLayout.LEADING, 3, 3));
+            this.name = name;
             label = new JLabel(name);
             if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_VALUE)) {
                 label.setBorder(BorderFactory.createEmptyBorder(1, 15, 1, 10));
@@ -198,6 +200,10 @@ public class MenuBuilder {
 
         public JLabel getLabel() {
             return label;
+        }
+
+        public void setAdditionalInfo(String info) {
+            label.setText(name + " "  +info);
         }
 
         @Override

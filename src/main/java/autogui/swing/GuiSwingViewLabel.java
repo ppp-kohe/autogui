@@ -2,10 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
-import autogui.swing.util.PopupCategorized;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.PopupExtensionText;
-import autogui.swing.util.SearchTextField;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -52,6 +49,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
         protected Object value;
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
+        protected MenuBuilder.MenuLabel infoLabel;
 
         public PropertyLabel(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -72,6 +70,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         public void initName() {
             setName(context.getName());
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
             GuiSwingView.setDescriptionToolTipText(context, this);
         }
 
@@ -111,7 +110,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
             if (menuItems == null) {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
-                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                infoLabel,
                                 new ContextRefreshAction(context),
                                 new LabelJsonCopyAction(this, context),
                                 new ToStringCopyAction(this, context),
@@ -162,6 +161,11 @@ public class GuiSwingViewLabel implements GuiSwingView {
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return specifierManager.getSpecifier();
+        }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
         }
     }
 

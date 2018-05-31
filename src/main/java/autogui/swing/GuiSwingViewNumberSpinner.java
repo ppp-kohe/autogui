@@ -184,6 +184,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected NumberSettingAction settingAction;
+        protected MenuBuilder.MenuLabel infoLabel;
 
         public PropertyNumberSpinner(GuiMappingContext context, SpecifierManager specifierManager) {
             super(createModel(context));
@@ -206,6 +207,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public void initName() {
             setName(context.getName());
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
             GuiSwingView.setDescriptionToolTipText(context, this);
         }
 
@@ -268,7 +270,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                                              !(e instanceof PopupExtensionText.TextLoadAction))
                                 .collect(Collectors.toList()),
                         Arrays.asList(
-                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                infoLabel,
                                 new ContextRefreshAction(context),
                                 new NumberMaximumAction(false, getModelTyped()),
                                 new NumberMaximumAction(true, getModelTyped()),
@@ -402,6 +404,11 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         @Override
         public void requestSwingViewFocus() {
             getEditorField().requestFocusInWindow();
+        }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
         }
     }
 

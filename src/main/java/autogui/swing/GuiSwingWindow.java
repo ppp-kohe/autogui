@@ -7,6 +7,8 @@ import autogui.swing.util.ApplicationIconGenerator;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.function.Predicate;
@@ -92,11 +94,15 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                if (contextRootPane.isApplicationRoot()) {
-                    cleanUp();
-                }
+                close();
             }
         });
+    }
+
+    public void close() {
+        if (contextRootPane.isApplicationRoot()) {
+            cleanUp();
+        }
     }
 
     public boolean isApplicationRoot() {

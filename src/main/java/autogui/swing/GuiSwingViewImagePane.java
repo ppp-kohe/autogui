@@ -77,6 +77,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
+        protected MenuBuilder.MenuLabel infoLabel;
 
         protected ImageScaleAutoSwitchByMouseWheel autoSwitchByMouseWheel;
         protected ImageScaleSwitchFitAction switchFitAction;
@@ -100,6 +101,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public void initName() {
             setName(context.getName());
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
             GuiSwingView.setDescriptionToolTipText(context, this);
         }
 
@@ -197,7 +199,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
-                                GuiSwingContextInfo.get().getInfoLabel(context),
+                                infoLabel,
                                 new ContextRefreshAction(context),
                                 switchFitAction,
                                 new ImageScaleOriginalSizeAction(this),
@@ -370,6 +372,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return specifierManager.getSpecifier();
+        }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
         }
     }
 

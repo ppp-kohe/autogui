@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueStringField;
+import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.SearchTextField;
@@ -55,6 +56,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
+        protected MenuBuilder.MenuLabel infoLabel;
 
         public PropertyStringPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -83,6 +85,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         public void initName() {
             setName(context.getName());
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
             getIcon().setVisible(false);
             GuiSwingView.setDescriptionToolTipText(context, this);
             GuiSwingView.setDescriptionToolTipText(context, getField());
@@ -135,7 +138,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         public List<Object> getMenuItemsSource() {
             if (menuItemsSource == null) {
                 menuItemsSource = super.getMenuItemsSource();
-                menuItemsSource.add(GuiSwingContextInfo.get().getInfoLabel(context));
+                menuItemsSource.add(infoLabel);
                 menuItemsSource.add(new ContextRefreshAction(context));
                 menuItemsSource.add(new HistoryMenu<>(this, getSwingViewContext()));
                 menuItemsSource.addAll(GuiSwingJsonTransfer.getActions(this, context));
@@ -198,6 +201,11 @@ public class GuiSwingViewStringField implements GuiSwingView {
         @Override
         public void requestSwingViewFocus() {
             getField().requestFocusInWindow();
+        }
+
+        @Override
+        public void setKeyStrokeString(String keyStrokeString) {
+            infoLabel.setAdditionalInfo(keyStrokeString);
         }
     }
 
