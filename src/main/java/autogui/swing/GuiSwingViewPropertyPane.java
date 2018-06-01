@@ -1,9 +1,6 @@
 package autogui.swing;
 
-import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiPreferences;
-import autogui.base.mapping.GuiReprPropertyPane;
-import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.*;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupCategorized;
@@ -229,6 +226,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
 
     public static class NamedPropertyPane extends NamedPane implements ValuePaneWrapper<Object> {
         protected PopupExtension popup;
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
         public NamedPropertyPane() { }
 
@@ -282,6 +280,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
                 if (isProperty() && value instanceof GuiReprValue.NamedValue) {
                     value = ((GuiReprValue.NamedValue) value).value;
                 }
+                viewClock.increment();
                 getContentPaneAsValuePane().setSwingViewValue(value);
             }
         }
@@ -292,7 +291,32 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
                 if (isProperty() && value instanceof GuiReprValue.NamedValue) {
                     value = ((GuiReprValue.NamedValue) value).value;
                 }
+                viewClock.increment();
                 getContentPaneAsValuePane().setSwingViewValueWithUpdate(value);
+            }
+        }
+
+        @Override
+        public void setSwingViewValue(Object value, GuiTaskClock clock) {
+            if (hasContentValuePane() && value != null) {
+                if (isProperty() && value instanceof GuiReprValue.NamedValue) {
+                    value = ((GuiReprValue.NamedValue) value).value;
+                }
+                if (viewClock.isOlderWithSet(clock)) {
+                    getContentPaneAsValuePane().setSwingViewValue(value);
+                }
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value, GuiTaskClock clock) {
+            if (hasContentValuePane() && value != null) {
+                if (isProperty() && value instanceof GuiReprValue.NamedValue) {
+                    value = ((GuiReprValue.NamedValue) value).value;
+                }
+                if (viewClock.isOlderWithSet(clock)) {
+                    getContentPaneAsValuePane().setSwingViewValueWithUpdate(value);
+                }
             }
         }
 

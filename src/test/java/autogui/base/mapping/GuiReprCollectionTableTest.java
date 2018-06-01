@@ -42,8 +42,11 @@ public class GuiReprCollectionTableTest {
 
     TestReprCol obj;
 
+    GuiTaskClock viewClock;
+
     @Before
     public void setUp() {
+        viewClock = new GuiTaskClock(true);
         builder = new GuiTypeBuilder();
         typeObject = (GuiTypeObject) builder.get(TestReprCol.class);
 
@@ -59,7 +62,7 @@ public class GuiReprCollectionTableTest {
                 new ArrayList<>(Arrays.asList("foo", "bar", "buzz")),
                 new ArrayList<>(Arrays.asList("aaa", "bbb", "ccc"))));
 
-        contextObj = new GuiMappingContext(typeObject, obj);
+        contextObj = new GuiReprObjectPaneTest.GuiMappingContextForDebug(typeObject, obj);
         GuiRepresentation.getDefaultSet().match(contextObj);
 
         contextValListProp = contextObj.getChildByName("valueList");
@@ -166,7 +169,7 @@ public class GuiReprCollectionTableTest {
     @Test
     public void testCollectionElementGetUpdatedValueAfterUpdate() throws Throwable {
         contextValElement.getReprValue()
-                .updateFromGui(contextValElement, "HELLO", GuiReprValue.NONE.childIndex(1));
+                .updateFromGui(contextValElement, "HELLO", GuiReprValue.NONE.childIndex(1), viewClock.increment().copy());
 
         Assert.assertEquals("getUpdatedValue collection element with index spec  returns element after update",
                 GuiUpdatedValue.of("hello"),
@@ -177,7 +180,7 @@ public class GuiReprCollectionTableTest {
     @Test
     public void testCollectionElementUpdateFromGui() {
         contextValElement.getReprValue()
-                .updateFromGui(contextValElement, "HELLO", GuiReprValue.NONE.childIndex(1));
+                .updateFromGui(contextValElement, "HELLO", GuiReprValue.NONE.childIndex(1), viewClock.increment().copy());
         Assert.assertEquals("updateFromGui collection element with index spec updates an element",
             "HELLO",
                 obj.valueList.get(1));
@@ -224,7 +227,7 @@ public class GuiReprCollectionTableTest {
     @Test
     public void testCollectionElementGetUpdatedValueAfterUpdateObj() throws Throwable {
         contextObjElement.getReprValue()
-                .updateFromGui(contextObjElement, new TestReprColObj("HELLO"), GuiReprValue.NONE.childIndex(1));
+                .updateFromGui(contextObjElement, new TestReprColObj("HELLO"), GuiReprValue.NONE.childIndex(1), viewClock.increment().copy());
 
         Assert.assertEquals("getUpdatedValue collection element with index spec returns obj element after update",
                 GuiUpdatedValue.of(new TestReprColObj("hello")),
@@ -243,7 +246,7 @@ public class GuiReprCollectionTableTest {
     @Test
     public void testCollectionElementPropGetUpdatedValueAfterUpdate() throws Throwable {
         contextObjChildProp.getReprValue()
-                .updateFromGui(contextObjChildProp, "HELLO", GuiReprValue.NONE.childIndex(0).child(false).child(false));
+                .updateFromGui(contextObjChildProp, "HELLO", GuiReprValue.NONE.childIndex(0).child(false).child(false), viewClock.increment().copy());
 
         Assert.assertEquals("getUpdatedValue prop of collection element with index spec returns prop value after update",
                 GuiUpdatedValue.of("world"),
@@ -254,7 +257,7 @@ public class GuiReprCollectionTableTest {
     @Test
     public void testCollectionElementPropUpdateFromGuiObj() {
         contextObjChildProp.getReprValue()
-                .updateFromGui(contextObjChildProp, "HELLO", GuiReprValue.NONE.childIndex(1).child(false).child(false));
+                .updateFromGui(contextObjChildProp, "HELLO", GuiReprValue.NONE.childIndex(1).child(false).child(false), viewClock.increment().copy());
         Assert.assertEquals("updateFromGui collection element prop with index spec updates an element prop",
                 "HELLO",
                 obj.objList.get(1).prop);
@@ -323,7 +326,7 @@ public class GuiReprCollectionTableTest {
                 "HELLO", GuiReprValue.NONE
                 .childIndex(1)
                 .child(false)
-                .childIndex(2));
+                .childIndex(2), viewClock.increment().copy());
         Assert.assertEquals("getUpdatedValue collection element with index2 spec returns list list element",
                 GuiUpdatedValue.of("HELLO"),
                 contextValListListChildElement.getReprValue()
@@ -339,7 +342,7 @@ public class GuiReprCollectionTableTest {
                 "HELLO", GuiReprValue.NONE
                         .childIndex(1)
                         .child(false)
-                        .childIndex(2));
+                        .childIndex(2), viewClock.increment().copy());
         Assert.assertEquals("updateFromGui collection table updates element in list of list",
                 Arrays.asList(
                         Arrays.asList("hello", "world", "!!!"),

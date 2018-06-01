@@ -121,6 +121,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         protected JToolBar actionToolBar;
 
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
+
         public CollectionTable(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
             this.specifierManager = specifierManager;
@@ -191,7 +193,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initValue() {
-            update(context, context.getSource().getValue());
+            update(context, context.getSource().getValue(), context.getContextClock().copy());
         }
 
         public void initPreferencesUpdater() {
@@ -338,8 +340,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue((List<?>) newValue));
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue((List<?>) newValue, contextClock));
         }
 
         @Override
@@ -349,6 +351,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(List<?> value) {
+            viewClock.increment();
+            setSwingViewValueWithoutIncrementClock(value);
+        }
+
+        private void setSwingViewValueWithoutIncrementClock(List<?> value) {
             GuiReprCollectionTable repr = (GuiReprCollectionTable) context.getRepresentation();
             source = repr.toUpdateValue(context, value);
             getObjectTableModel().refreshColumns();
@@ -359,9 +366,21 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(List<?> value) {
             setSwingViewValue(value);
-            GuiReprCollectionTable table = (GuiReprCollectionTable) getSwingViewContext().getRepresentation();
-            if (table.isEditable(context)) {
-                table.updateFromGui(getSwingViewContext(), value, getSpecifier());
+            GuiSwingView.updateFromGui(this, value, viewClock);
+        }
+
+        @Override
+        public void setSwingViewValue(List<?> value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                setSwingViewValueWithoutIncrementClock(value);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(List<?> value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                setSwingViewValueWithoutIncrementClock(value);
+                GuiSwingView.updateFromGui(this, value, viewClock);
             }
         }
 

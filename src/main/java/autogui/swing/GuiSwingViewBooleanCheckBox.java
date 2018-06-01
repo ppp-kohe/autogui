@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueBooleanCheckBox;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
@@ -55,7 +56,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         protected PopupExtension popup;
         protected MenuBuilder.MenuLabel infoLabel;
 
-        protected GuiMappingContext.TaskClock viewClock = new GuiMappingContext.TaskClock(true);
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
@@ -95,7 +96,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         }
 
         public void initValue() {
-            update(context, context.getSource().getValue());
+            update(context, context.getSource().getValue(), context.getContextClock().copy());
         }
 
         public void initListener() {
@@ -132,12 +133,11 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
-            repr.updateFromGui(context, isSelected(), getSpecifier(), viewClock.increment().copy());
+            GuiSwingView.updateFromGui(this, isSelected(), viewClock.increment());
         }
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue, GuiMappingContext.TaskClock contextClock) {
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
             SwingUtilities.invokeLater(() -> setSwingViewValue((Boolean) newValue, contextClock));
         }
 
@@ -165,22 +165,19 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         }
 
         private void setSwingViewValueWithUpdateWithoutClock(Boolean value) {
-            GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
-            if (repr.isEditable(context)) {
-                repr.updateFromGui(context, value, getSpecifier(), viewClock.copy());
-            }
+            GuiSwingView.updateFromGui(this, value, viewClock);
             setSwingViewValueWithoutClock(value);
         }
 
         @Override
-        public void setSwingViewValue(Boolean value, GuiMappingContext.TaskClock clock) {
+        public void setSwingViewValue(Boolean value, GuiTaskClock clock) {
             if (viewClock.isOlderWithSet(clock)) {
                 setSwingViewValueWithoutClock(value);
             }
         }
 
         @Override
-        public void setSwingViewValueWithUpdate(Boolean value, GuiMappingContext.TaskClock clock) {
+        public void setSwingViewValueWithUpdate(Boolean value, GuiTaskClock clock) {
             if (viewClock.isOlderWithSet(clock)) {
                 setSwingViewValueWithUpdateWithoutClock(value);
             }

@@ -1,10 +1,7 @@
 package autogui.swing;
 
 import autogui.base.log.GuiLogManager;
-import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiPreferences;
-import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.*;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.table.TableTargetMenu;
 import autogui.swing.util.MenuBuilder;
@@ -58,14 +55,14 @@ public interface GuiSwingView extends GuiSwingElement {
          * @param value the new value
          * @param clock the clock of the value: if the clock is newer than the current clock of the pane, it can update
          */
-        void setSwingViewValue(ValueType value, GuiMappingContext.TaskClock clock);
+        void setSwingViewValue(ValueType value, GuiTaskClock clock);
 
         /** update the GUI display and the model. processed under the event thread
          * @param value the new value
          * */
         void setSwingViewValueWithUpdate(ValueType value);
 
-        void setSwingViewValueWithUpdate(ValueType value, GuiMappingContext.TaskClock clock);
+        void setSwingViewValueWithUpdate(ValueType value, GuiTaskClock clock);
 
         default void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) { }
 
@@ -254,6 +251,14 @@ public interface GuiSwingView extends GuiSwingElement {
 
 
     ///////////////////////////////
+
+    static void updateFromGui(ValuePane<?> pane, Object value, GuiTaskClock viewClock) {
+        GuiMappingContext context = pane.getSwingViewContext();
+        GuiReprValue repr = context.getReprValue();
+        if (repr.isEditable(context)) {
+            repr.updateFromGui(context, value, pane.getSpecifier(), viewClock.copy());
+        }
+    }
 
     static void setDescriptionToolTipText(GuiMappingContext context, JComponent comp) {
         String d = context.getDescription();
@@ -463,6 +468,20 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         @Override
+        public void setSwingViewValue(ValueType value, GuiTaskClock clock) {
+            if (pane != null) {
+                pane.setSwingViewValue(value, clock);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(ValueType value, GuiTaskClock clock) {
+            if (pane != null) {
+                pane.setSwingViewValueWithUpdate(value, clock);
+            }
+        }
+
+        @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
             return Collections.emptyList();
         }
@@ -543,6 +562,20 @@ public interface GuiSwingView extends GuiSwingElement {
         public void setSwingViewValueWithUpdate(ValueType value) {
             if (pane != null) {
                 pane.setSwingViewValueWithUpdate(value);
+            }
+        }
+
+        @Override
+        public void setSwingViewValue(ValueType value, GuiTaskClock clock) {
+            if (pane != null) {
+                pane.setSwingViewValue(value, clock);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(ValueType value, GuiTaskClock clock) {
+            if (pane != null) {
+                pane.setSwingViewValueWithUpdate(value, clock);
             }
         }
 

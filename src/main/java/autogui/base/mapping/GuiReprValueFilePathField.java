@@ -24,11 +24,11 @@ public class GuiReprValueFilePathField extends GuiReprValue {
     }
 
     @Override
-    public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) {
+    public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier, GuiTaskClock viewClock) {
         if (newValue instanceof Path) {
             newValue = toValueFromPath(context, (Path) newValue);
         }
-        super.updateFromGui(context, newValue, specifier);
+        super.updateFromGui(context, newValue, specifier, viewClock);
     }
 
     public Path toUpdateValue(GuiMappingContext context, Object value) {

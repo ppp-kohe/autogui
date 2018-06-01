@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueEnumComboBox;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
@@ -59,6 +60,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected MenuBuilder.MenuLabel infoLabel;
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
         public PropertyEnumComboBox(GuiMappingContext context, SpecifierManager specifierManager) {
             super(getEnumConstants(context));
@@ -99,7 +101,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         }
 
         public void initValue() {
-            update(context, context.getSource().getValue());
+            update(context, context.getSource().getValue(), context.getContextClock().copy());
         }
 
         public void initListener() {
@@ -138,18 +140,14 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         }
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
         }
 
         @Override
         public void itemStateChanged(ItemEvent e) {
             if (listenerEnabled) {
-                Object item = getSelectedItem();
-                GuiReprValueEnumComboBox box = (GuiReprValueEnumComboBox) context.getRepresentation();
-                if (box.isEditable(context)) {
-                    box.updateFromGui(context, item, getSpecifier());
-                }
+                GuiSwingView.updateFromGui(this, getSelectedItem(), viewClock.increment());
             }
         }
 
@@ -160,6 +158,11 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(Object value) {
+            viewClock.increment();
+            setSelectedItemWithoutListener(value);
+        }
+
+        private void setSelectedItemWithoutListener(Object value) {
             listenerEnabled = false;
             try {
                 setSelectedItem(value);
@@ -170,7 +173,29 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            setSelectedItem(value);
+            viewClock.increment();
+            setSelectedItemWithoutListener(value);
+            GuiSwingView.updateFromGui(this, value, viewClock);
+        }
+
+        @Override
+        public void setSwingViewValue(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                setSelectedItemWithoutListener(value);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                setSelectedItemWithoutListener(value);
+                GuiSwingView.updateFromGui(this, value, viewClock);
+            }
+        }
+
+        @Override
+        public void setToolTipText(String text) {
+            super.setToolTipText(text);
         }
 
         @Override

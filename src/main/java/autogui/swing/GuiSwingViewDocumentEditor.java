@@ -6,6 +6,7 @@ import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.*;
 
@@ -118,7 +119,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public void initValue() {
             GuiMappingContext.SourceUpdateListener l = (GuiMappingContext.SourceUpdateListener) pane;
-            l.update(context, context.getSource().getValue());
+            l.update(context, context.getSource().getValue(), context.getContextClock().copy());
         }
 
         public void initSize() {
@@ -219,15 +220,17 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
     }
 
-    public static void setSwingViewValue(JEditorPane pane, SpecifierManager specifierManager, GuiMappingContext context, Object newValue, boolean contextUpdate) {
+    public static void setSwingViewValue(JEditorPane pane, SpecifierManager specifierManager, GuiMappingContext context,
+                                         Object newValue, boolean contextUpdate, GuiTaskClock viewClock) {
         GuiReprValueDocumentEditor docEditor = (GuiReprValueDocumentEditor) context.getRepresentation();
         Document doc = docEditor.toUpdateValue(context, newValue, delayedDoc -> {
-            setSwingViewValueDocument(pane, specifierManager, context, delayedDoc, delayedDoc, contextUpdate);
+            setSwingViewValueDocument(pane, specifierManager, context, delayedDoc, delayedDoc, contextUpdate, viewClock);
         });
-        setSwingViewValueDocument(pane, specifierManager, context, newValue, doc, contextUpdate);
+        setSwingViewValueDocument(pane, specifierManager, context, newValue, doc, contextUpdate, viewClock);
     }
 
-    public static void setSwingViewValueDocument(JEditorPane pane, SpecifierManager specifierManager, GuiMappingContext context, Object newValue, Document doc, boolean contextUpdate) {
+    public static void setSwingViewValueDocument(JEditorPane pane, SpecifierManager specifierManager, GuiMappingContext context,
+                                                 Object newValue, Document doc, boolean contextUpdate, GuiTaskClock viewClock) {
         GuiReprValueDocumentEditor docEditor = (GuiReprValueDocumentEditor) context.getRepresentation();
         if (pane.getDocument() != doc && doc != null) {
             pane.setDocument(doc);
@@ -241,7 +244,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             if (newValue instanceof Document) {
                 newValue = docEditor.toSourceValue(context, (Document) newValue);
             }
-            docEditor.updateFromGui(context, newValue, specifierManager.getSpecifier());
+            docEditor.updateFromGui(context, newValue, specifierManager.getSpecifier(), viewClock.copy());
         }
     }
 
@@ -274,6 +277,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected boolean wrapLine = true;
         protected SettingsWindow settingsWindow;
         protected MenuBuilder.MenuLabel infoLabel;
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
         public PropertyDocumentEditorPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -293,8 +297,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
         }
 
         @Override
@@ -304,12 +308,28 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(Object value) {
-            GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, false);
+            viewClock.increment();
+            GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, false, viewClock);
         }
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, true);
+            viewClock.increment();
+            GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, true, viewClock);
+        }
+
+        @Override
+        public void setSwingViewValue(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, false, viewClock);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, true, viewClock);
+            }
         }
 
         @Override
@@ -366,6 +386,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected DocumentSettingPane settingPane;
         protected SettingsWindow settingsWindow;
         protected MenuBuilder.MenuLabel infoLabel;
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
         public PropertyDocumentTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -386,8 +407,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
         }
 
         @Override
@@ -397,13 +418,30 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(Object value) {
-            GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, false);
+            viewClock.increment();
+            GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, false, viewClock);
         }
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, true);
+            viewClock.increment();
+            GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, true, viewClock);
         }
+
+        @Override
+        public void setSwingViewValue(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, false, viewClock);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, true, viewClock);
+            }
+        }
+
 
         @Override
         public boolean getScrollableTracksViewportWidth() {

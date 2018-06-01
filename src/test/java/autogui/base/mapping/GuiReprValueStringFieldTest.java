@@ -42,8 +42,8 @@ public class GuiReprValueStringFieldTest {
         obj = new TestObjRepr();
         obj.value = "hello";
 
-        contextValue = new GuiMappingContext(type, fld);
-        contextProp = new GuiMappingContext(property, fld);
+        contextValue = new GuiReprObjectPaneTest.GuiMappingContextForDebug(type, fld);
+        contextProp = new GuiReprObjectPaneTest.GuiMappingContextForDebug(property, fld);
 
         contextReadOnly = new GuiMappingContext(propertyReadOnly, fld);
     }

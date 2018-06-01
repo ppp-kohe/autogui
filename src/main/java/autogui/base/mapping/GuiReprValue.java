@@ -86,6 +86,7 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     public void setSource(GuiMappingContext context, Object value) {
+        context.getContextClock().increment();
         context.setSource(GuiMappingContext.GuiSourceValue.of(value));
     }
 
@@ -282,7 +283,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @param specifier the specifier of the value
      */
     public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier,
-                              GuiMappingContext.TaskClock viewClock) {
+                              GuiTaskClock viewClock) {
         try {
             if (context.getContextClock().isOlderWithSet(viewClock)) {
                 addHistoryValue(context, newValue);
@@ -392,7 +393,7 @@ public class GuiReprValue implements GuiRepresentation {
         } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
             return context.getTypeElementValue().isWritable(context.getSource());
         } else {
-            return false;
+            return true;
         }
     }
 

@@ -275,6 +275,10 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
                 .or(PopupExtensionText.getKeyCode(KeyEvent.VK_F5, 0));
     }
 
+    public static KeyStroke getDefaultKeyStroke() {
+        return KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK);
+    }
+
     @SuppressWarnings("deprecation")
     public static int getMenuShortcutKeyMask() {
         int menuMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();

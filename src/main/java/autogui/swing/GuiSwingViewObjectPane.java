@@ -1,10 +1,7 @@
 package autogui.swing;
 
 import autogui.base.log.GuiLogManager;
-import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiPreferences;
-import autogui.base.mapping.GuiReprObjectPane;
-import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.*;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.util.*;
 
@@ -125,6 +122,8 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         protected SplitPreferencesUpdater preferencesUpdater;
         protected SettingsWindow.LabelGroup labelGroup;
 
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
+
         public ObjectPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
             this.specifierManager = specifierManager;
@@ -224,8 +223,9 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         }
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue) {
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock clock) {
             //nothing to do?
+            viewClock.isOlderWithSet(clock);
         }
 
 
@@ -320,21 +320,34 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         /** special case: update the source */
         @Override
         public void setSwingViewValue(Object value) {
-            context.updateSourceFromGui(value);
+            GuiSwingView.updateFromGui(this, value, viewClock.increment());
             revalidate();
             repaint();
         }
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            GuiReprObjectPane objectPane = (GuiReprObjectPane) getSwingViewContext().getRepresentation();
-            if (objectPane.isEditable(getSwingViewContext())) {
-                objectPane.updateFromGui(getSwingViewContext(), value, getSpecifier());
-            } else {
-                context.updateSourceFromGui(value);
-            }
+            GuiSwingView.updateFromGui(this, value, viewClock.increment());
             revalidate();
             repaint();
+        }
+
+        @Override
+        public void setSwingViewValue(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                //nothing to do
+                revalidate();
+                repaint();
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                //nothing to do
+                revalidate();
+                repaint();
+            }
         }
 
         @Override

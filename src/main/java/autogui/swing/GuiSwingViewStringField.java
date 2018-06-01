@@ -3,6 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValueStringField;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
@@ -57,6 +58,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         protected SpecifierManager specifierManager;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected MenuBuilder.MenuLabel infoLabel;
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
         public PropertyStringPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -101,7 +103,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         }
 
         public void initValue() {
-            update(context, context.getSource().getValue());
+            update(context, context.getSource().getValue(), context.getContextClock().copy());
         }
 
         public void initDragDrop() {
@@ -150,16 +152,13 @@ public class GuiSwingViewStringField implements GuiSwingView {
         public void updateFieldInEvent(boolean modified) {
             super.updateFieldInEvent(modified);
             if (modified) {
-                GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
-                if (str.isEditable(context)) {
-                    str.updateFromGui(context, getField().getText(), getSpecifier());
-                }
+                GuiSwingView.updateFromGui(this, getField().getText(), viewClock.increment());
             }
         }
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue((String) newValue));
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue((String) newValue, contextClock));
         }
 
         @Override
@@ -169,13 +168,34 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(String value) {
+            viewClock.increment();
+            setValueWithoutUpdateField(value);
+        }
+
+        private String setValueWithoutUpdateField(String value) {
             GuiReprValueStringField str = (GuiReprValueStringField) context.getRepresentation();
             setTextWithoutUpdateField(str.toUpdateValue(context, value));
+            return value;
         }
 
         @Override
         public void setSwingViewValueWithUpdate(String value) {
-            getField().setText(value);
+            viewClock.increment();
+            GuiSwingView.updateFromGui(this, setValueWithoutUpdateField(value), viewClock);
+        }
+
+        @Override
+        public void setSwingViewValue(String value, GuiTaskClock contextClock) {
+            if (viewClock.isOlderWithSet(contextClock)) {
+                setValueWithoutUpdateField(value);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(String value, GuiTaskClock contextClock) {
+            if (viewClock.isOlderWithSet(contextClock)) {
+                GuiSwingView.updateFromGui(this, setValueWithoutUpdateField(value), viewClock);
+            }
         }
 
         @Override

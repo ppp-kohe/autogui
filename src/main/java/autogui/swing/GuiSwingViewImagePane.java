@@ -1,9 +1,6 @@
 package autogui.swing;
 
-import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiPreferences;
-import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.*;
 import autogui.swing.mapping.GuiReprValueImagePane;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.MenuBuilder;
@@ -82,6 +79,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         protected ImageScaleAutoSwitchByMouseWheel autoSwitchByMouseWheel;
         protected ImageScaleSwitchFitAction switchFitAction;
 
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
+
         public PropertyImagePane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
             this.specifierManager = specifierManager;
@@ -150,7 +149,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         public void initValue() {
-            update(context, context.getSource().getValue());
+            update(context, context.getSource().getValue(), context.getContextClock().copy());
         }
 
         public void initPopup() {
@@ -236,8 +235,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue((Image) newValue));
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue((Image) newValue, contextClock));
         }
 
         public Image getImage() {
@@ -258,11 +257,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         public void setImage(Image image) {
-            setImageWithoutContextUpdate(image);
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
-            if (img.isEditable(context)) {
-                img.updateFromGui(context, image, getSpecifier());
-            }
+            Image v = (Image) img.toUpdateValue(context, image);
+            setImageWithoutContextUpdate(v);
+            GuiSwingView.updateFromGui(this, v, viewClock.increment());
         }
 
         public Dimension getImageSize() {
@@ -360,6 +358,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(Image value) {
+            viewClock.increment();
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
             setImageWithoutContextUpdate(img.updateValue(context, value));
         }
@@ -368,6 +367,26 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public void setSwingViewValueWithUpdate(Image value) {
             setImage(value);
         }
+
+        @Override
+        public void setSwingViewValue(Image value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
+                setImageWithoutContextUpdate(img.updateValue(context, value));
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Image value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
+                Image v = img.updateValue(context, value);
+                setImageWithoutContextUpdate(v);
+                GuiSwingView.updateFromGui(this, v, viewClock);
+            }
+        }
+
+
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {

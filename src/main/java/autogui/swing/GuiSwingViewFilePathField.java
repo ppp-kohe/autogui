@@ -1,9 +1,6 @@
 package autogui.swing;
 
-import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiPreferences;
-import autogui.base.mapping.GuiReprValue;
-import autogui.base.mapping.GuiReprValueFilePathField;
+import autogui.base.mapping.*;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
@@ -55,6 +52,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         protected SpecifierManager specifierManager;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected MenuBuilder.MenuLabel infoLabel;
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
         public PropertyFilePathPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this(context, specifierManager, new SearchTextFieldModelFilePath());
@@ -103,7 +101,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         }
 
         public void initValue() {
-            update(context, context.getSource().getValue());
+            update(context, context.getSource().getValue(), context.getContextClock().copy());
         }
 
         @Override
@@ -144,18 +142,14 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         @Override
         public void selectSearchedItemFromGui(PopupCategorized.CategorizedMenuItem item) {
             super.selectSearchedItemFromGui(item);
-            GuiReprValueFilePathField path = (GuiReprValueFilePathField) context.getRepresentation();
-            path.updateFromGui(context, getFile(), getSpecifier());
+            GuiSwingView.updateFromGui(this, getFile(), viewClock.increment());
         }
 
         /** update property: search done, and then the matched item will be set to the target property*/
         @Override
         public void selectSearchedItemFromModel(PopupCategorized.CategorizedMenuItem item) {
             super.selectSearchedItemFromModel(item);
-            GuiReprValueFilePathField path = (GuiReprValueFilePathField) context.getRepresentation();
-            if (path.isEditable(context)) {
-                path.updateFromGui(context, getFile(), getSpecifier());
-            }
+            GuiSwingView.updateFromGui(this, getFile(), viewClock.increment());
         }
 
         /** no property update
@@ -167,8 +161,8 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         }
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
         }
 
         @Override
@@ -178,6 +172,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(Object value) {
+            viewClock.increment();
             FileItem item = getFileItemFromValue(value);
             selectSearchedItemWithoutUpdateContext(item);
         }
@@ -190,9 +185,28 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            Path path = ((GuiReprValueFilePathField) context.getRepresentation())
-                    .toUpdateValue(context, value);
-            setFile(path);
+            viewClock.increment();
+            FileItem item = getFileItemFromValue(value);
+            selectSearchedItemWithoutUpdateContext(item);
+            GuiSwingView.updateFromGui(this, item.getPath(), viewClock);
+
+        }
+
+        @Override
+        public void setSwingViewValue(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                FileItem item = getFileItemFromValue(value);
+                selectSearchedItemWithoutUpdateContext(item);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                FileItem item = getFileItemFromValue(value);
+                selectSearchedItemWithoutUpdateContext(item);
+                GuiSwingView.updateFromGui(this, item.getPath(), viewClock);
+            }
         }
 
         @Override

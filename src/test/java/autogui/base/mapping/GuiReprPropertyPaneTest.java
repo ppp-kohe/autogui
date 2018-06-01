@@ -24,9 +24,12 @@ public class GuiReprPropertyPaneTest {
     GuiMappingContext contextReadOnly;
 
     TestObjReprProp obj;
+    GuiTaskClock viewClock;
 
     @Before
     public void setUp() {
+        viewClock = new GuiTaskClock(true);
+
         builder = new GuiTypeBuilder();
 
         typeObject = (GuiTypeObject) builder.get(TestObjReprProp.class);
@@ -91,7 +94,7 @@ public class GuiReprPropertyPaneTest {
     @Test
     public void testValueUpdate() throws Throwable {
         contextValue.getReprValue()
-                .updateFromGui(contextValue, "world", GuiReprValue.NONE);
+                .updateFromGui(contextValue, "world", GuiReprValue.NONE, viewClock.increment().copy());
 
         Assert.assertEquals("prop child value updates parent prop",
                 "world",

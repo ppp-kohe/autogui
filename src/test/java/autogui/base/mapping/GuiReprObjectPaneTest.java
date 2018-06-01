@@ -24,8 +24,11 @@ public class GuiReprObjectPaneTest {
     GuiMappingContext contextX;
     TestUpdater testUpdater;
 
+    GuiTaskClock viewClock;
+
     @Before
     public void setUp() {
+        viewClock = new GuiTaskClock(true);;
         objPane = new GuiReprObjectPane(GuiRepresentation.getDefaultSet());
 
         builder = new GuiTypeBuilder();
@@ -60,16 +63,29 @@ public class GuiReprObjectPaneTest {
         public List<Object> newValues = new ArrayList<>();
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue) {
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock clock) {
             newValues.add(newValue);
         }
     }
 
     static class GuiMappingContextForDebug extends GuiMappingContext {
 
+        public GuiMappingContextForDebug(GuiTypeElement typeElement, Object source) {
+            super(typeElement, source);
+        }
+
+        public GuiMappingContextForDebug(GuiTypeElement typeElement, GuiRepresentation representation) {
+            super(typeElement, representation);
+        }
+
         public GuiMappingContextForDebug(GuiTypeElement typeElement, GuiRepresentation representation,
                                          GuiMappingContext parent, GuiSourceValue source) {
             super(typeElement, representation, parent, source);
+        }
+
+        @Override
+        public void updateSourceFromGuiByThisDelayed() {
+            updateSourceFromRoot(this); //immediate
         }
 
         @Override
@@ -145,7 +161,7 @@ public class GuiReprObjectPaneTest {
     @Test
     public void testValueUpdateFromGui() {
         contextStr.getReprValue()
-                .updateFromGui(contextStr, "world", GuiReprValue.NONE);
+                .updateFromGui(contextStr, "world", GuiReprValue.NONE, viewClock.increment().copy());
 
         Assert.assertEquals("after updateFromGui, updated fields (from NO_SOURCE) are notified",
                 Collections.singletonList(123),
@@ -158,7 +174,7 @@ public class GuiReprObjectPaneTest {
         contextX.setSource(GuiMappingContext.GuiSourceValue.of(123));
 
         contextStr.getReprValue()
-                .updateFromGui(contextStr, "world", GuiReprValue.NONE);
+                .updateFromGui(contextStr, "world", GuiReprValue.NONE, viewClock.increment().copy());
 
         Assert.assertEquals("after updateFromGui, no changed values notify nothing",
                 Collections.emptyList(),

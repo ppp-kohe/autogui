@@ -2,6 +2,7 @@ package autogui.swing.mapping;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.GuiTaskClock;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -192,7 +193,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
     }
 
     @Override
-    public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) {
+    public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier, GuiTaskClock clock) {
         Class<?> valueType = getValueType(context);
         //image conversion
         if (valueType != null) {
@@ -202,6 +203,6 @@ public class GuiReprValueImagePane extends GuiReprValue {
                 newValue = getBufferedImage(context, newValue);
             }
         }
-        super.updateFromGui(context, newValue, specifier);
+        super.updateFromGui(context, newValue, specifier, clock);
     }
 }

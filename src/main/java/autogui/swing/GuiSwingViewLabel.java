@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.util.*;
 
 import javax.swing.*;
@@ -50,6 +51,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
         protected PopupExtension popup;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected MenuBuilder.MenuLabel infoLabel;
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
         public PropertyLabel(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -93,7 +95,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
 
         public void initValue() {
-            update(context, context.getSource().getValue());
+            update(context, context.getSource().getValue(), context.getContextClock().copy());
         }
 
         public void initPopup() {
@@ -126,8 +128,8 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
         }
 
         @Override
@@ -137,6 +139,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(Object value) {
+            viewClock.increment();
             GuiReprValue label = (GuiReprValue) context.getRepresentation();
             this.value = value;
             setText("" + label.toUpdateValue(context, value));
@@ -146,6 +149,21 @@ public class GuiSwingViewLabel implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
             setSwingViewValue(value);
+        }
+
+        @Override
+        public void setSwingViewValue(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                GuiReprValue label = (GuiReprValue) context.getRepresentation();
+                this.value = value;
+                setText("" + label.toUpdateValue(context, value));
+                revalidate();
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value, GuiTaskClock clock) {
+            setSwingViewValue(value, clock);
         }
 
         public String getValueAsString() {

@@ -1,10 +1,7 @@
 package autogui.swing;
 
 import autogui.base.log.GuiLogManager;
-import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiPreferences;
-import autogui.base.mapping.GuiReprValue;
-import autogui.base.mapping.GuiReprValueNumberSpinner;
+import autogui.base.mapping.*;
 import autogui.swing.util.*;
 
 import javax.swing.*;
@@ -186,6 +183,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected NumberSettingAction settingAction;
         protected MenuBuilder.MenuLabel infoLabel;
 
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
+
         public PropertyNumberSpinner(GuiMappingContext context, SpecifierManager specifierManager) {
             super(createModel(context));
             this.context = context;
@@ -228,7 +227,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         public void initValue() {
-            update(context, context.getSource().getValue());
+            update(context, context.getSource().getValue(), context.getContextClock().copy());
         }
 
         public void initListener() {
@@ -296,17 +295,13 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         public void updateNumber(List<Object> events) {
-            SwingUtilities.invokeLater(() -> {
-                GuiReprValueNumberSpinner field = (GuiReprValueNumberSpinner) context.getRepresentation();
-                if (field.isEditable(context)) {
-                    field.updateFromGui(context, getValue(), getSpecifier());
-                }
-            });
+            SwingUtilities.invokeLater(() ->
+                GuiSwingView.updateFromGui(this, getValue(), viewClock.increment()));
         }
 
         @Override
-        public void update(GuiMappingContext cause, Object newValue) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue));
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
         }
 
         @Override
@@ -316,6 +311,11 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void setSwingViewValue(Object value) {
+            viewClock.increment();
+            setValueWithoutUpdate(value);
+        }
+
+        private void setValueWithoutUpdate(Object value) {
             editingRunner.setEnabled(false);
             try {
                 setValue(value);
@@ -326,7 +326,24 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            setValue(value);
+            viewClock.increment();
+            setValueWithoutUpdate(value);
+            GuiSwingView.updateFromGui(this, value, viewClock);
+        }
+
+        @Override
+        public void setSwingViewValue(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                setValueWithoutUpdate(value);
+            }
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(Object value, GuiTaskClock clock) {
+            if (viewClock.isOlderWithSet(clock)) {
+                setValueWithoutUpdate(value);
+                GuiSwingView.updateFromGui(this, value, viewClock);
+            }
         }
 
         @Override

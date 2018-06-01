@@ -5,6 +5,7 @@ import autogui.base.type.*;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
  *            <li>
  *               {@link GuiRepresentation#checkAndUpdateSource(GuiMappingContext)} do the actual computation of checking the update.
  *            <li>
- *                After that, {@link SourceUpdateListener#update(GuiMappingContext, Object)} of each updated context will be called.
+ *                After that, {@link SourceUpdateListener#update(GuiMappingContext, Object, GuiTaskClock)} of each updated context will be called.
  *        </ol>
  *
  *    <p>
@@ -58,12 +59,12 @@ public class GuiMappingContext {
 
     protected ScheduledExecutorService taskRunner;
     protected GuiPreferences preferences;
-    protected ScheduledTaskRunner<DelayedTask> scheduledRunner;
+    protected ScheduledTaskRunner<DelayedTask> delayedTaskRunner;
 
     protected String displayName;
     protected String iconName;
 
-    protected TaskClock contextClock = new TaskClock( false);
+    protected GuiTaskClock contextClock = new GuiTaskClock( false);
 
     public static class GuiSourceValue {
         public boolean isNone() {
@@ -128,73 +129,28 @@ public class GuiMappingContext {
         }
     }
 
-    public static class TaskClock implements Comparable<TaskClock>, Cloneable {
-        protected long count;
-        protected boolean view;
+    public static class DelayedTask {
+        protected GuiTaskClock taskClock;
+        protected Object taskType;
+        protected Consumer<List<DelayedTask>> task;
 
-        public TaskClock(boolean view) {
-            this(0, view);
+        public DelayedTask(GuiTaskClock taskClock, Object taskType, Consumer<List<DelayedTask>> task) {
+            this.taskClock = taskClock;
+            this.taskType = taskType;
+            this.task = task;
         }
 
-        public TaskClock(long count, boolean view) {
-            this.count = count;
-            this.view = view;
+        public GuiTaskClock getTaskClock() {
+            return taskClock;
         }
 
-        public boolean isNewer(TaskClock o) {
-            return compareTo(o) > 0;
+        public Object getTaskType() {
+            return taskType;
         }
 
-        public boolean isOlderWithSet(TaskClock o) {
-            if (o.isNewer(this)) {
-                this.count = o.count;
-                return true;
-            } else {
-                return false;
-            }
+        public void run(List<DelayedTask> accumulatedTasks) {
+            task.accept(accumulatedTasks);
         }
-
-        public TaskClock increment() {
-            ++count;
-            return this;
-        }
-
-        public TaskClock copy() {
-            try {
-                return (TaskClock) super.clone();
-            } catch (CloneNotSupportedException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-
-        @Override
-        public int compareTo(TaskClock o) {
-            int n = Long.compare(count, o.count);
-            if (n == 0) {
-                return Boolean.compare(view, o.view);
-            } else {
-                return n;
-            }
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            TaskClock taskClock = (TaskClock) o;
-            return count == taskClock.count;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(count);
-        }
-    }
-
-    public interface DelayedTask {
-        TaskClock getTaskClock();
-        Object getTaskType();
-        void run(List<DelayedTask> accumulatedTasks);
     }
 
     ////////////////////
@@ -226,7 +182,7 @@ public class GuiMappingContext {
         this.source = source;
     }
 
-    public TaskClock getContextClock() {
+    public GuiTaskClock getContextClock() {
         return contextClock;
     }
 
@@ -410,7 +366,7 @@ public class GuiMappingContext {
     /** called from {@link #updateSourceFromRoot(GuiMappingContext)} and {@link #updateSourceSubTree()}.
      *  used for updating GUI components, setSwingViewValue(v) */
     public interface SourceUpdateListener {
-        void update(GuiMappingContext cause, Object newValue, TaskClock contextClock);
+        void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock);
     }
 
     public void addSourceUpdateListener(SourceUpdateListener listener) {
@@ -448,7 +404,14 @@ public class GuiMappingContext {
      */
     public void updateSourceFromGui(Object newValue) {
         setSource(GuiSourceValue.of(newValue));
-        getScheduledRunner().schedule(updateSourceFromRoot(this)); //TODO we might need custom root selection, e.g. a table element as a root from the property of the element
+        updateSourceFromGuiByThisDelayed();
+    }
+
+    public void updateSourceFromGuiByThisDelayed() {
+        getDelayedTaskRunner().schedule(
+                new DelayedTask(getContextClock().copy(), // the clock is used only for sorting the accumulated tasks
+                        "updateSourceFromRoot",
+                        tasks -> updateSourceFromRoot(this)));
     }
 
     /** {@link #updateSourceFromGui(Object)} with the null cause */
@@ -470,12 +433,14 @@ public class GuiMappingContext {
     }
 
     public void sendUpdateToListeners(GuiMappingContext cause) {
+        GuiTaskClock c = getContextClock().copy(); //the sending value is obtained here, thus its clock is the current instant.
         getListeners().forEach(l ->
-                l.update(cause, getSource().getValue(), getContextClock().copy()));
+                l.update(cause, getSource().getValue(), c));
     }
 
     public void clearSourceSubTree() {
         if (hasParent()) {
+            getContextClock().increment();
             setSource(NO_SOURCE);
         }
         getChildren()
@@ -722,8 +687,9 @@ public class GuiMappingContext {
             taskRunner.shutdown();
             taskRunner = null;
         }
-        if (scheduledRunner != null) {
-            scheduledRunner.shutdown();
+        if (delayedTaskRunner != null) {
+            delayedTaskRunner.shutdown();
+            delayedTaskRunner = null;
         }
         for (GuiMappingContext child : getChildren()) {
             child.shutdownTaskRunnerSubTree();
@@ -750,16 +716,16 @@ public class GuiMappingContext {
         }
     }
 
-    public ScheduledTaskRunner<DelayedTask> getScheduledRunner() {
-        if (scheduledRunner == null) {
+    public ScheduledTaskRunner<DelayedTask> getDelayedTaskRunner() {
+        if (delayedTaskRunner == null) {
             GuiMappingContext parent = getParent();
             if (parent != null) {
-                scheduledRunner = parent.getScheduledRunner();
+                delayedTaskRunner = parent.getDelayedTaskRunner();
             } else {
-                scheduledRunner = new ScheduledTaskRunner<>(100, this::executeAccumulated);
+                delayedTaskRunner = new ScheduledTaskRunner<>(200, this::executeAccumulated);
             }
         }
-        return scheduledRunner;
+        return delayedTaskRunner;
     }
 
     public void executeAccumulated(List<DelayedTask> list) {
