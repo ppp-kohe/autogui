@@ -9,7 +9,7 @@ import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
-import autogui.swing.util.ScheduledTaskRunner;
+import autogui.base.mapping.ScheduledTaskRunner;
 import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;

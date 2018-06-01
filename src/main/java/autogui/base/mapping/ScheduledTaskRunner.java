@@ -1,10 +1,5 @@
-package autogui.swing.util;
+package autogui.base.mapping;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -17,6 +12,8 @@ public class ScheduledTaskRunner<EventType> {
     protected long delay;
     protected ScheduledExecutorService executor;
     protected Consumer<List<EventType>> consumer;
+
+    protected boolean shutdown;
 
     protected List<EventType> accumulatedEvents = new ArrayList<>();
     protected ScheduledFuture<?> scheduledTask;
@@ -143,8 +140,9 @@ public class ScheduledTaskRunner<EventType> {
 
     public void shutdown() {
         if (executor == sharedExecutor) {
-            if (sharedCount.decrementAndGet() <= 0) {
+            if (!shutdown && sharedCount.decrementAndGet() <= 0) {
                 executor.shutdown();
+                shutdown = true;
             }
             debugShutdown();
         } else {
@@ -167,73 +165,4 @@ public class ScheduledTaskRunner<EventType> {
         }
     }
 
-    /** the sub-class of the executor with implementing various listeners */
-    public static class EditingRunner extends ScheduledTaskRunner<Object>
-            implements DocumentListener, KeyListener, ActionListener, FocusListener, ChangeListener, InputMethodListener {
-        public EditingRunner(long delay, Consumer<List<Object>> consumer) {
-            super(delay, consumer);
-        }
-
-        @Override
-        public void insertUpdate(DocumentEvent e) {
-            schedule(e);
-        }
-
-        @Override
-        public void removeUpdate(DocumentEvent e) {
-            schedule(e);
-        }
-
-        @Override
-        public void changedUpdate(DocumentEvent e) {
-            schedule(e);
-        }
-
-        @Override
-        public void keyTyped(KeyEvent e) {
-            schedule(e);
-        }
-
-        @Override
-        public void keyPressed(KeyEvent e) {
-            schedule(e);
-        }
-
-        @Override
-        public void keyReleased(KeyEvent e) {
-            schedule(e);
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            //enter the key
-            runImmediately(e);
-        }
-
-        @Override
-        public void focusGained(FocusEvent e) {
-            //nothing happen
-        }
-
-        @Override
-        public void focusLost(FocusEvent e) {
-            //leave the editing target
-            runImmediately(e);
-        }
-
-        @Override
-        public void stateChanged(ChangeEvent e) {
-            schedule(e);
-        }
-
-        @Override
-        public void inputMethodTextChanged(InputMethodEvent event) {
-            schedule(event);
-        }
-
-        @Override
-        public void caretPositionChanged(InputMethodEvent event) {
-            schedule(event);
-        }
-    }
 }

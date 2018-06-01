@@ -281,12 +281,15 @@ public class GuiReprValue implements GuiRepresentation {
      * @param newValue the updated property value
      * @param specifier the specifier of the value
      */
-    public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) {
-        addHistoryValue(context, newValue);
+    public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier,
+                              GuiMappingContext.TaskClock viewClock) {
         try {
-            Object ret = updateWithParentSource(context, newValue, specifier);
-            if (isUpdateContextSourceByUpdateFromGui(context)) {
-                context.updateSourceFromGui(ret);
+            if (context.getContextClock().isOlderWithSet(viewClock)) {
+                addHistoryValue(context, newValue);
+                Object ret = updateWithParentSource(context, newValue, specifier);
+                if (isUpdateContextSourceByUpdateFromGui(context)) {
+                    context.updateSourceFromGui(ret);
+                }
             }
         } catch (Throwable e) {
             context.errorWhileUpdateSource(e);

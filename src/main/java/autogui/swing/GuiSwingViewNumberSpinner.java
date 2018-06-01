@@ -175,7 +175,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             GuiSwingPreferences.PreferencesUpdateSupport {
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
-        protected ScheduledTaskRunner.EditingRunner editingRunner;
+        protected EditingRunner editingRunner;
         protected PopupExtensionText popup;
         protected KeyUndoManager undoManager = new KeyUndoManager();
         protected SettingsWindow settingsWindow;
@@ -232,7 +232,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         public void initListener() {
-            editingRunner = new ScheduledTaskRunner.EditingRunner(500, this::updateNumber);
+            editingRunner = new EditingRunner(500, this::updateNumber);
             addChangeListener(editingRunner);
             getEditorField().addActionListener(editingRunner);
         }

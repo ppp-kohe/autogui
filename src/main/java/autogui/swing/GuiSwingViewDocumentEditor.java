@@ -607,7 +607,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected SettingsWindow.ColorButton backgroundColor;
         protected SettingsWindow.ColorButton foregroundColor;
 
-        protected ScheduledTaskRunner.EditingRunner updater;
+        protected EditingRunner updater;
         protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> preferencesUpdater;
 
         protected int defaultFontSize = 14;
@@ -666,7 +666,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                     Short.MIN_VALUE, Short.MAX_VALUE, 0.1));
             lineSpacing.addChangeListener(this);
 
-            updater = new ScheduledTaskRunner.EditingRunner(500, l -> updateStyle());
+            updater = new EditingRunner(500, l -> updateStyle());
 
             //color
             backgroundColor = new SettingsWindow.ColorButton(Color.white, updater::schedule);

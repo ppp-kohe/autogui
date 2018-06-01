@@ -46,14 +46,14 @@ import java.util.function.Supplier;
  *  <p>
  *     If the user edits texts, then it needs to dynamically update the popup.
  *      To do this, {@link #initField()} sets up
- *        {@link autogui.swing.util.ScheduledTaskRunner.EditingRunner} with {@link #updateField(List)}
+ *        {@link EditingRunner} with {@link #updateField(List)}
  *         and registers it to the field as document listener, action listener and focus listener .
  */
 public class SearchTextField extends JComponent {
     protected SearchTextFieldModel model;
     protected JButton icon;
     protected JTextField field;
-    protected ScheduledTaskRunner.EditingRunner editingRunner;
+    protected EditingRunner editingRunner;
 
     protected PopupExtensionText popup;
     protected JButton popupButton;
@@ -201,7 +201,7 @@ public class SearchTextField extends JComponent {
     }
 
     public void initField() {
-        editingRunner = new ScheduledTaskRunner.EditingRunner(getEditingRunnerDelay(), this::updateField);
+        editingRunner = new EditingRunner(getEditingRunnerDelay(), this::updateField);
         field = new JTextField() {
             @Override
             public Dimension getPreferredSize() {
@@ -371,7 +371,7 @@ public class SearchTextField extends JComponent {
         return popupButton;
     }
 
-    public ScheduledTaskRunner.EditingRunner getEditingRunner() {
+    public EditingRunner getEditingRunner() {
         return editingRunner;
     }
 

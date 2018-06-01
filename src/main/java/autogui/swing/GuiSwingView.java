@@ -52,10 +52,20 @@ public interface GuiSwingView extends GuiSwingElement {
          * */
         void setSwingViewValue(ValueType value);
 
+        /**
+         *  update if the clock is newer than the current clock of the pane.
+         *  Note: instead, {@link #setSwingViewValue(Object)} increments the current clock
+         * @param value the new value
+         * @param clock the clock of the value: if the clock is newer than the current clock of the pane, it can update
+         */
+        void setSwingViewValue(ValueType value, GuiMappingContext.TaskClock clock);
+
         /** update the GUI display and the model. processed under the event thread
          * @param value the new value
          * */
         void setSwingViewValueWithUpdate(ValueType value);
+
+        void setSwingViewValueWithUpdate(ValueType value, GuiMappingContext.TaskClock clock);
 
         default void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) { }
 

@@ -3,10 +3,7 @@ package autogui.base.mapping;
 import autogui.base.log.GuiLogManager;
 import autogui.base.type.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -61,9 +58,12 @@ public class GuiMappingContext {
 
     protected ScheduledExecutorService taskRunner;
     protected GuiPreferences preferences;
+    protected ScheduledTaskRunner<DelayedTask> scheduledRunner;
 
     protected String displayName;
     protected String iconName;
+
+    protected TaskClock contextClock = new TaskClock( false);
 
     public static class GuiSourceValue {
         public boolean isNone() {
@@ -128,6 +128,77 @@ public class GuiMappingContext {
         }
     }
 
+    public static class TaskClock implements Comparable<TaskClock>, Cloneable {
+        protected long count;
+        protected boolean view;
+
+        public TaskClock(boolean view) {
+            this(0, view);
+        }
+
+        public TaskClock(long count, boolean view) {
+            this.count = count;
+            this.view = view;
+        }
+
+        public boolean isNewer(TaskClock o) {
+            return compareTo(o) > 0;
+        }
+
+        public boolean isOlderWithSet(TaskClock o) {
+            if (o.isNewer(this)) {
+                this.count = o.count;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        public TaskClock increment() {
+            ++count;
+            return this;
+        }
+
+        public TaskClock copy() {
+            try {
+                return (TaskClock) super.clone();
+            } catch (CloneNotSupportedException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        @Override
+        public int compareTo(TaskClock o) {
+            int n = Long.compare(count, o.count);
+            if (n == 0) {
+                return Boolean.compare(view, o.view);
+            } else {
+                return n;
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TaskClock taskClock = (TaskClock) o;
+            return count == taskClock.count;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(count);
+        }
+    }
+
+    public interface DelayedTask {
+        TaskClock getTaskClock();
+        Object getTaskType();
+        void run(List<DelayedTask> accumulatedTasks);
+    }
+
+    ////////////////////
+
     public GuiMappingContext(GuiTypeElement typeElement) {
         this(typeElement, null, null, NO_SOURCE);
     }
@@ -153,6 +224,10 @@ public class GuiMappingContext {
         this.representation = representation;
         this.parent = parent;
         this.source = source;
+    }
+
+    public TaskClock getContextClock() {
+        return contextClock;
     }
 
     public void setRepresentation(GuiRepresentation representation) {
@@ -335,7 +410,7 @@ public class GuiMappingContext {
     /** called from {@link #updateSourceFromRoot(GuiMappingContext)} and {@link #updateSourceSubTree()}.
      *  used for updating GUI components, setSwingViewValue(v) */
     public interface SourceUpdateListener {
-        void update(GuiMappingContext cause, Object newValue);
+        void update(GuiMappingContext cause, Object newValue, TaskClock contextClock);
     }
 
     public void addSourceUpdateListener(SourceUpdateListener listener) {
@@ -368,11 +443,12 @@ public class GuiMappingContext {
 
     /** set the source to newValue, call {@link #updateSourceFromRoot(GuiMappingContext)} starting with this.
      * Note: the method does not update any properties of parent or other source objects
+     * The clock is already set.
      * @param newValue the new source value to be set
      */
     public void updateSourceFromGui(Object newValue) {
         setSource(GuiSourceValue.of(newValue));
-        updateSourceFromRoot(this); //TODO we might need custom root selection, e.g. a table element as a root from the property of the element
+        getScheduledRunner().schedule(updateSourceFromRoot(this)); //TODO we might need custom root selection, e.g. a table element as a root from the property of the element
     }
 
     /** {@link #updateSourceFromGui(Object)} with the null cause */
@@ -395,7 +471,7 @@ public class GuiMappingContext {
 
     public void sendUpdateToListeners(GuiMappingContext cause) {
         getListeners().forEach(l ->
-                l.update(cause, getSource().getValue()));
+                l.update(cause, getSource().getValue(), getContextClock().copy()));
     }
 
     public void clearSourceSubTree() {
@@ -646,6 +722,9 @@ public class GuiMappingContext {
             taskRunner.shutdown();
             taskRunner = null;
         }
+        if (scheduledRunner != null) {
+            scheduledRunner.shutdown();
+        }
         for (GuiMappingContext child : getChildren()) {
             child.shutdownTaskRunnerSubTree();
         }
@@ -669,6 +748,29 @@ public class GuiMappingContext {
         } catch (ExecutionException e) {
             throw e.getCause();
         }
+    }
+
+    public ScheduledTaskRunner<DelayedTask> getScheduledRunner() {
+        if (scheduledRunner == null) {
+            GuiMappingContext parent = getParent();
+            if (parent != null) {
+                scheduledRunner = parent.getScheduledRunner();
+            } else {
+                scheduledRunner = new ScheduledTaskRunner<>(100, this::executeAccumulated);
+            }
+        }
+        return scheduledRunner;
+    }
+
+    public void executeAccumulated(List<DelayedTask> list) {
+        Map<Object, List<DelayedTask>> tasks = new HashMap<>();
+        list.forEach(e ->
+            tasks.computeIfAbsent(e.getTaskType(), k -> new ArrayList<>())
+                .add(e));
+        tasks.forEach((k, v) -> {
+            v.sort(Comparator.comparing(DelayedTask::getTaskClock));
+            v.get(v.size() - 1).run(v);
+        });
     }
 
     /** @return obtains from the parent.
@@ -724,23 +826,6 @@ public class GuiMappingContext {
             } catch (Throwable ex) {
                 throw new RuntimeException("" + getRepresentation(), ex);
             }
-        } else {
-            throw new UnsupportedOperationException("" + getRepresentation());
-        }
-    }
-
-    /**
-     * update the value of the associated property
-     *   through {@link GuiReprValue} (can be checked by {@link #isReprValue()}).
-     *    the method causes same effects by GUI operation,
-     *      i.e. updating history values, updating other components ...
-     *     Also, the listeners of the context will be updated.
-     * @param value the updated value
-     */
-    public void setValue(Object value, GuiReprValue.ObjectSpecifier specifier) {
-        if (isReprValue()) {
-            getReprValue().updateFromGui(this, value, specifier);
-            sendUpdateToListeners(getRoot());
         } else {
             throw new UnsupportedOperationException("" + getRepresentation());
         }

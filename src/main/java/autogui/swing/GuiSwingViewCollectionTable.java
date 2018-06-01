@@ -2,8 +2,6 @@ package autogui.swing;
 
 import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.*;
-import autogui.base.type.GuiTypeValue;
-import autogui.base.type.GuiUpdatedValue;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.table.*;
 import autogui.swing.util.*;
@@ -112,7 +110,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected List<Action> actions = new ArrayList<>();
         protected List<GuiSwingTableColumnSetDefault.TableSelectionListAction> autoSelectionActions = new ArrayList<>();
         protected int autoSelectionDepth;
-        protected ScheduledTaskRunner.EditingRunner selectionRunner;
+        protected EditingRunner selectionRunner;
 
         protected TablePreferencesUpdater preferencesUpdater;
         protected List<Integer> lastSelectionActionIndexes = Collections.emptyList();
@@ -176,7 +174,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initSelection() {
-            selectionRunner = new ScheduledTaskRunner.EditingRunner(200, this::runAutoSelectionActions);
+            selectionRunner = new EditingRunner(200, this::runAutoSelectionActions);
             setCellSelectionEnabled(true);
             setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         }
