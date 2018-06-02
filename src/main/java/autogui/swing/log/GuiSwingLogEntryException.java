@@ -23,7 +23,7 @@ import java.util.stream.Stream;
  * a log-entry for an exception with supporting GUI rendering
  */
 public class GuiSwingLogEntryException extends GuiLogEntryException implements GuiSwingLogEntry {
-    protected Map<TextCellRenderer, int[]> selectionMap = new HashMap<>(2);
+    protected Map<TextCellRenderer<?>, int[]> selectionMap = new HashMap<>(2);
     protected boolean expanded;
     protected boolean selected;
 
@@ -43,7 +43,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         return new GuiSwingLogExceptionRenderer(manager, type);
     }
 
-    public Map<TextCellRenderer, int[]> getSelections() {
+    public Map<TextCellRenderer<?>, int[]> getSelections() {
         return selectionMap;
     }
 
@@ -225,9 +225,9 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         @Override
         public void mousePressed(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            ex.getSelections().clear();
-            mouseUpdate(ex, message, point, true);
-            mouseUpdate(ex, stackTrace, point, true);
+
+            TextCellRenderer.mouseUpdateForComposition((GuiLogEntryException) entry, ex.getSelections(),
+                    true, point, message, stackTrace);
 
             Point expandPoint = SwingUtilities.convertPoint(this, point, expandButton);
             expandPressedValue = expandButton.contains(expandPoint) ? ex : null;
@@ -236,32 +236,18 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         @Override
         public void mouseDragged(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            mouseUpdate(ex, message, point, false);
-            mouseUpdate(ex, stackTrace, point, false);
+            TextCellRenderer.mouseUpdateForComposition((GuiLogEntryException) entry, ex.getSelections(),
+                    false, point, message, stackTrace);
         }
 
         @Override
         public void mouseReleased(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            mouseUpdate(ex, message, point, false);
-            mouseUpdate(ex, stackTrace, point, false);
-
+            TextCellRenderer.mouseUpdateForComposition((GuiLogEntryException) entry, ex.getSelections(),
+                    false, point, message, stackTrace);
             if (expandPressedValue != null) {
                 expandButton.doClick();
             }
-        }
-
-        public void mouseUpdate(GuiSwingLogEntryException ex, TextCellRenderer<? super GuiSwingLogEntryException> r, Point point, boolean fromAndTo) {
-            r.setValue(ex, true);
-            int idx = r.getIndex(new Point(point.x - r.getX(), point.y - r.getY()));
-            int[] range = ex.getSelections().computeIfAbsent(r, v -> new int[2]);
-            if (fromAndTo) {
-                range[0] = idx;
-                range[1] = idx;
-            } else {
-                range[1] = idx;
-            }
-            r.setSelectionRange(range[0], range[1]);
         }
 
         ///////////////////
@@ -269,21 +255,13 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
         @Override
         public boolean updateFindPattern(String findKeyword) {
-            boolean r = message.updateFindPattern(findKeyword);
-            boolean l = stackTrace.updateFindPattern(findKeyword);
-            return r || l; //Note: both have same state, thus if one is not updated, the other also has no update
+            return TextCellRenderer.updateFindPatternForComposition(findKeyword, message, stackTrace);
         }
 
         @Override
         public int findText(GuiSwingLogEntry entry, String findKeyword) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            message.setValue(ex, false);
-            stackTrace.setValue(ex, false);
-            updateFindPattern(findKeyword);
-
-            int l = message.setFindHighlights();
-            int r = stackTrace.setFindHighlights();
-            return l + r;
+            return TextCellRenderer.findTextForComposition(ex, findKeyword, message, stackTrace);
         }
 
         @SuppressWarnings("unchecked")
@@ -292,37 +270,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
             boolean expanded = ex.isExpanded();
             try {
-                if (prevIndex instanceof TextCellRenderer.LineInfoMatch) {
-                    TextCellRenderer.LineInfoMatch prevMatch = (TextCellRenderer.LineInfoMatch) prevIndex;
-                    prevIndex = ((TextCellRenderer<GuiLogEntryException>) prevMatch.renderer).getFocusNextFound(ex, prevIndex, forward);
-                    if (prevIndex == null) {
-                        if (forward && prevMatch.renderer == message) { //has next
-                            return stackTrace.getFocusNextFound(ex, null, true);
-                        } else if (!forward && prevMatch.renderer == stackTrace) { //has prev
-                            return message.getFocusNextFound(ex, null, false);
-                        } else {
-                            return null;
-                        }
-                    } else {
-                        return prevIndex;
-                    }
-                } else {
-                    if (forward) {
-                        prevIndex = message.getFocusNextFound(ex, null, true);
-                        if (prevIndex == null) {
-                            return stackTrace.getFocusNextFound(ex, null, true);
-                        } else {
-                            return prevIndex;
-                        }
-                    } else {
-                        prevIndex = stackTrace.getFocusNextFound(ex, null, false);
-                        if (prevIndex == null) {
-                            return message.getFocusNextFound(ex, null, false);
-                        } else {
-                            return prevIndex;
-                        }
-                    }
-                }
+                return TextCellRenderer.getFocusNextFoundForComposition(ex, prevIndex, forward, message, stackTrace);
             } finally {
                 if (ex.isExpanded() != expanded) {
                     expansionChanged();
@@ -333,18 +281,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         @Override
         public String getSelectedText(GuiSwingLogEntry entry, boolean entireText) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            setValue(ex, false);
-            if (entireText) {
-                return String.join("\n",
-                        message.getText(),
-                        stackTrace.getText());
-            } else {
-                return Stream.of(
-                        message.getTextSelection(),
-                        stackTrace.getTextSelection())
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.joining("\n"));
-            }
+            return TextCellRenderer.getSelectedTextForComposition(ex, true, ex.getSelections(), message, stackTrace);
         }
     }
 

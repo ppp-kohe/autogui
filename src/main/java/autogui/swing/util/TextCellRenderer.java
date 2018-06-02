@@ -14,6 +14,7 @@ import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class TextCellRenderer<ValueType> extends JComponent
     implements TableCellRenderer, ListCellRenderer<ValueType> {
@@ -268,6 +269,107 @@ public class TextCellRenderer<ValueType> extends JComponent
             LineInfoMatch m = (LineInfoMatch) prevIndex;
             lastMatch = forward ? m.next(lines) : m.previous(lines);
             return lastMatch;
+        }
+    }
+
+    @SafeVarargs
+    public static <V> void mouseUpdateForComposition(V value, Map<TextCellRenderer<?>,int[]> ranges, boolean pressInit, Point point, TextCellRenderer<V>... rs) {
+        if (pressInit) {
+            ranges.clear();
+        }
+        for (TextCellRenderer<V> r : rs) {
+            r.setValue(value, true);
+            int idx = r.getIndex(new Point(point.x - r.getX(), point.y - r.getY()));
+            int[] range = ranges.computeIfAbsent(r, v -> new int[2]);
+            if (pressInit) {
+                range[0] = idx;
+                range[1] = idx;
+            } else {
+                range[1] = idx;
+            }
+            r.setSelectionRange(range[0], range[1]);
+        }
+    }
+
+    @SafeVarargs
+    public static <V> boolean updateFindPatternForComposition(String findKeyword, TextCellRenderer<V>... rs) {
+        List<Boolean> bs = Arrays.stream(rs)
+            .map(r -> r.updateFindPattern(findKeyword))
+            .collect(Collectors.toList());
+
+        for (boolean b : bs) {
+            if (b) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @SafeVarargs
+    public static <V> int findTextForComposition(V value, String findKeyword, TextCellRenderer<V>... rs) {
+        for (TextCellRenderer<V> r : rs) {
+            r.setValue(value, false);
+        }
+        updateFindPatternForComposition(findKeyword, rs);
+        return Arrays.stream(rs)
+                .mapToInt(TextCellRenderer::setFindHighlights)
+                .sum();
+    }
+
+    @SafeVarargs
+    @SuppressWarnings("unchecked")
+    public static <V> Object getFocusNextFoundForComposition(V value, Object prevIndex, boolean forward, TextCellRenderer<V>... rs) {
+        List<TextCellRenderer<V>> list = Arrays.asList(rs);
+        int idx;
+        if (prevIndex instanceof LineInfoMatch) {
+            TextCellRenderer.LineInfoMatch prevMatch = (TextCellRenderer.LineInfoMatch) prevIndex;
+            prevIndex = ((TextCellRenderer<V>) prevMatch.renderer).getFocusNextFound(value, prevIndex, forward);
+            idx = list.indexOf(prevMatch.renderer);
+        } else {
+            idx = (forward ? -1 : list.size());
+        }
+        while (prevIndex == null) {
+            idx += (forward ? 1 : -1);
+            if (0 <= idx && idx < list.size()) {
+                prevIndex = list.get(idx).getFocusNextFound(value, null, forward);
+            } else {
+                break;
+            }
+        }
+        return prevIndex;
+    }
+
+    @SafeVarargs
+    public static <V> void setValueForComposition(V value, Map<TextCellRenderer<?>,int[]> rangesOpt,
+                                                  boolean forMouseEvents,
+                                                  TextCellRenderer<V>... rs) {
+        for (TextCellRenderer<V> r : rs) {
+            r.setValue(value, forMouseEvents);
+            int[] range = (rangesOpt == null ? null : rangesOpt.get(r));
+            if (rangesOpt != null) {
+                r.clearSelectionRange();
+            }
+            if (range != null) {
+                r.setSelectionRange(range[0], range[1]);
+            }
+        }
+    }
+
+    @SafeVarargs
+    public static <V> String getSelectedTextForComposition(V value, boolean entireText,
+                                                           Map<TextCellRenderer<?>,int[]> rangesOpt,
+                                                           TextCellRenderer<V>... rs) {
+        setValueForComposition(value, rangesOpt, false, rs);
+
+        if (entireText) {
+            return Arrays.stream(rs)
+                    .map(TextCellRenderer::getText)
+                    .collect(Collectors.joining("\n"));
+        } else {
+            return Arrays.stream(rs)
+                    .map(TextCellRenderer::getTextSelection)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.joining("\n"));
         }
     }
 

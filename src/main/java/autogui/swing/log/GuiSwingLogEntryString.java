@@ -3,19 +3,13 @@ package autogui.swing.log;
 import autogui.base.log.GuiLogEntry;
 import autogui.base.log.GuiLogEntryString;
 import autogui.base.log.GuiLogManager;
-import autogui.swing.util.PopupExtensionText;
 import autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyleContext;
-import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
-import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.time.Instant;
@@ -74,53 +68,6 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
     @Override
     public boolean isSelected() {
         return selected;
-    }
-
-    @Deprecated
-    public static void drawSelection(Dimension size, Graphics g) {
-        RoundRectangle2D.Float r = new RoundRectangle2D.Float(2, 2, size.width - 5, size.height - 5, 3, 3);
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(UIManager.getColor("TextPane.selectionBackground"));
-        g2.draw(r);
-    }
-
-    @Deprecated
-    public static Style getTimeStyle(StyledDocument doc) {
-        return getTimeStyle(doc, doc.getStyle(StyleContext.DEFAULT_STYLE));
-    }
-
-    @Deprecated
-    public static Style getTimeStyle(StyledDocument doc, Style defaultStyle) {
-        Style timeStyle = doc.addStyle("time", defaultStyle);
-        StyleConstants.setForeground(timeStyle, new Color(48, 144, 20));
-        return timeStyle;
-    }
-
-    /**
-     * @param pane the target text pane
-     * @param headerEnd a sub-string within the pane
-     * @param style set to the target position
-     * @return the X position of headerEnd or &lt;0 value
-     */
-    @Deprecated
-    public static float setHeaderStyle(JTextPane pane, String headerEnd, Style style) {
-        pane.setSize(pane.getPreferredSize()); //this makes modelToView(i) return non-null rect
-
-        StyledDocument doc = pane.getStyledDocument();
-
-        int headerEndIndex = pane.getText().indexOf(headerEnd);
-        if (headerEndIndex >= 0) {
-            headerEndIndex += headerEnd.length() - 1;
-            doc.setCharacterAttributes(0, headerEndIndex, style, true);
-            try {
-                Rectangle rect = PopupExtensionText.textComponentModelToView(pane, headerEndIndex);
-                return (float) rect.getMaxX();
-            } catch (Exception ex) {
-                //
-            }
-        }
-        return -1;
     }
 
     public static Map<AttributedCharacterIterator.Attribute, Object> getTimeStyle() {
@@ -240,7 +187,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
             if (lineIndex == 0) {
                 return createLineHead(start, line, "]", timeStyle, followingLineStyle);
             } else {
-                return GuiSwingLogEntryString.createLineFollowing(prevLine, lineIndex, start, line, followingLineStyle);
+                return createLineFollowing(prevLine, lineIndex, start, line, followingLineStyle);
             }
         }
 
