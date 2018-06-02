@@ -3,17 +3,24 @@ package autogui.swing.log;
 import autogui.base.log.GuiLogEntry;
 import autogui.base.log.GuiLogEntryString;
 import autogui.base.log.GuiLogManager;
-import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
+import autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.text.*;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextAttribute;
+import java.awt.font.TextLayout;
 import java.awt.geom.RoundRectangle2D;
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedString;
 import java.time.Instant;
-import java.util.*;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * a log-entry of a string message with supporting GUI rendering
@@ -69,17 +76,19 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
     }
 
     public static void drawSelection(Dimension size, Graphics g) {
-        RoundRectangle2D.Float r = new RoundRectangle2D.Float(2, 2, size.width - 4, size.height - 4, 3, 3);
+        RoundRectangle2D.Float r = new RoundRectangle2D.Float(2, 2, size.width - 5, size.height - 5, 3, 3);
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setColor(UIManager.getColor("TextPane.selectionBackground"));
         g2.draw(r);
     }
 
+    @Deprecated
     public static Style getTimeStyle(StyledDocument doc) {
         return getTimeStyle(doc, doc.getStyle(StyleContext.DEFAULT_STYLE));
     }
 
+    @Deprecated
     public static Style getTimeStyle(StyledDocument doc, Style defaultStyle) {
         Style timeStyle = doc.addStyle("time", defaultStyle);
         StyleConstants.setForeground(timeStyle, new Color(48, 144, 20));
@@ -92,6 +101,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
      * @param style set to the target position
      * @return the X position of headerEnd or &lt;0 value
      */
+    @Deprecated
     public static float setHeaderStyle(JTextPane pane, String headerEnd, Style style) {
         pane.setSize(pane.getPreferredSize()); //this makes modelToView(i) return non-null rect
 
@@ -111,39 +121,49 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         return -1;
     }
 
+    public static Map<AttributedCharacterIterator.Attribute, Object> getTimeStyle() {
+        Map<AttributedCharacterIterator.Attribute, Object> m = new HashMap<>();
+        m.put(TextAttribute.FOREGROUND, new Color(48, 144,20));
+        m.put(TextAttribute.FONT, GuiSwingLogManager.getFont());
+        return m;
+    }
+
+    public static Map<AttributedCharacterIterator.Attribute, Object> getBodyStyle() {
+        Map<AttributedCharacterIterator.Attribute, Object> m = new HashMap<>();
+        m.put(TextAttribute.FONT, GuiSwingLogManager.getFont());
+        return m;
+    }
+
+
+    public static int setHeaderStyle(AttributedString str, String line, String headerEnd, Map<AttributedCharacterIterator.Attribute, Object> style) {
+        int headerEndIndex = line.indexOf(headerEnd);
+        if (headerEndIndex >= 0) {
+            headerEndIndex += headerEnd.length();
+            str.addAttributes(style, 0, headerEndIndex);
+        }
+        return headerEndIndex;
+    }
+
     /**
      * a string log-entry renderer
      */
-    public static class GuiSwingLogStringRenderer extends JTextPane
-            implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
+    public static class GuiSwingLogStringRenderer extends TextCellRenderer<GuiLogEntry>
+            implements LogEntryRenderer {
         protected GuiLogManager manager;
-        protected boolean selected;
+
         protected ContainerType containerType;
 
-        protected TextPaneCellSupport support;
-
-        protected Style defaultStyle;
-        protected Style timeStyle;
-        protected Style followingLinesStyle;
+        protected Map<AttributedCharacterIterator.Attribute, Object> timeStyle;
+        protected Map<AttributedCharacterIterator.Attribute, Object> followingLineStyle;
 
         public GuiSwingLogStringRenderer(GuiLogManager manager, ContainerType type) {
-            this.containerType = type;
-            setBorder(BorderFactory.createEmptyBorder(7, 10, 3, 10));
-            setFont(GuiSwingLogManager.getFont());
             this.manager = manager;
-            //setEditable(false);
+            this.containerType = type;
 
-            setOpaque(false);
+            timeStyle = getTimeStyle();
+            followingLineStyle = getBodyStyle();
 
-            support = new TextPaneCellSupport(this);
-
-            StyledDocument doc = getStyledDocument();
-            defaultStyle = doc.getStyle(StyleContext.DEFAULT_STYLE);
-
-            timeStyle = getTimeStyle(doc, defaultStyle);
-
-            followingLinesStyle = doc.addStyle("followingLines", defaultStyle);
-            StyleConstants.setLeftIndent(followingLinesStyle, 200);
+            setFont(GuiSwingLogManager.getFont());
         }
 
         @Override
@@ -152,117 +172,104 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         }
 
         @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            if (selected && containerType.equals(ContainerType.List)) {
-                drawSelection(getSize(), g);
+        public boolean setValue(GuiLogEntry value, boolean forMouseEvents) {
+            if (super.setValue(value, forMouseEvents)) {
+                if (value instanceof GuiSwingLogEntryString) {
+                    selected = ((GuiSwingLogEntryString) value).isSelected();
+                }
+                return true;
+            } else {
+                return false;
             }
         }
 
         @Override
-        public Component getListCellRendererComponent(JList<? extends GuiLogEntry> list, GuiLogEntry value, int index, boolean isSelected, boolean cellHasFocus) {
-            return getTableCellRendererComponent(null, value, isSelected, cellHasFocus, index, 0);
+        public void setSelectionFromValue(GuiLogEntry value) {
+            if (value instanceof GuiSwingLogEntryString) {
+                GuiSwingLogEntryString sStr = (GuiSwingLogEntryString) value;
+                setSelectionRange(sStr);
+            }
+            super.setSelectionFromValue(value);
+        }
+
+        public void setSelectionRange(GuiSwingLogEntryString sStr) {
+            selectionStart = sStr.getSelectionFrom();
+            selectionEnd = sStr.getSelectionTo();
         }
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                                                       boolean isSelected, boolean hasFocus, int row, int column) {
-            if (row > -1) {
-                selected = isSelected;
-                support.setSelectionHighlightClear();
+        public LineInfo createLine(LineInfo prevLine, int lineIndex, int start, String line) {
+            AttributedString a = new AttributedString(line);
+            if (lineIndex == 0) {
+                LineInfoHead head = new LineInfoHead(a, start, line.length() + start);
+                head.headerEnd = setHeaderStyle(a, line, "]", timeStyle);
+                if (head.headerEnd > 0) {
+                    a.addAttributes(followingLineStyle, head.headerEnd, line.length());
+                }
+                return head;
+            } else {
+                LineInfo info = new LineInfo(a, start, line.length() + start);
+                a.addAttributes(followingLineStyle, 0, line.length());
+                int indent = 0;
+                if (prevLine instanceof LineInfoHead) {
+                    indent += Math.max(0, ((LineInfoHead) prevLine).headerEnd);
+                }
+                if (prevLine != null) {
+                    indent += prevLine.getIndent();
+                }
+                info.setIndent(indent);
+                return info;
             }
+        }
+
+        @Override
+        public String format(GuiLogEntry value) {
             if (value instanceof GuiLogEntryString) {
                 GuiLogEntryString str = (GuiLogEntryString) value;
-                String text = formatString(str);
-                setText(text);
-                invalidate(); //important call for JTextPane: refresh layout
-
-                updateStyle(text);
-
-                if (value instanceof GuiSwingLogEntryString) {
-                    GuiSwingLogEntryString sStr = (GuiSwingLogEntryString) value;
-                    selected = sStr.isSelected();
-                    if (row > -1) { //row==-1: for mouse events
-                        support.setSelectionHighlight(selected, sStr.getSelectionFrom(), sStr.getSelectionTo());
-                        support.setFindHighlights();
-                    }
-                }
+                return String.format("%s %s",
+                        manager.formatTime(str.getTime()),
+                        str.getData());
+            } else {
+                return super.format(value);
             }
-            return this;
-        }
-
-        public void updateStyle(String text) {
-            setSize(getPreferredSize()); //this makes modelToView(i) return non-null rect
-
-            StyledDocument doc = getStyledDocument();
-
-            float timeEnd = setHeaderStyle(this, "] ", timeStyle);
-            if (timeEnd > 0) {
-                StyleConstants.setLeftIndent(followingLinesStyle, timeEnd);
-            }
-
-            char prev = ' ';
-            for (int i = 0, l = text.length(); i < l; ++i) {
-                char c = text.charAt(i);
-                if (prev == '\n') {
-                    doc.setLogicalStyle(i, followingLinesStyle);
-                }
-                prev = c;
-            }
-        }
-
-        public String formatString(GuiLogEntryString str) {
-            return String.format("%s %s",
-                    manager.formatTime(str.getTime()),
-                    str.getData());
         }
 
         @Override
-        public boolean isShowing() {
-            return true;
+        public float paintStartX(int lineIndex, LineInfo prev, float prevX, LineInfo line, TextLayout l,
+                                 FontRenderContext frc) {
+            if (prev instanceof LineInfoHead) {
+                int h = ((LineInfoHead) prev).headerEnd;
+                return prev.getX(prev.getLayout(frc), h);
+            } else {
+                return prevX;
+            }
         }
 
         @Override
         public void mousePressed(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
-            str.setSelectionTo(-1);
-            str.setSelectionFrom(PopupExtensionText.textComponentViewToModel(this, point));
+            setValue(str, true);
+            int idx = getIndex(point);
+            str.setSelectionFrom(idx);
+            str.setSelectionTo(idx);
+            setSelectionRange(str);
         }
 
         @Override
         public void mouseDragged(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
-            str.setSelectionTo(PopupExtensionText.textComponentViewToModel(this, point));
+
+            setValue(str, true);
+            str.setSelectionTo(getIndex(point));
+            setSelectionRange(str);
         }
 
         @Override
         public void mouseReleased(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
-            str.setSelectionTo(PopupExtensionText.textComponentViewToModel(this, point));
-        }
-
-        @Override
-        public boolean updateFindPattern(String findKeyword) {
-            return support.updateFindPattern(findKeyword);
-        }
-
-        @Override
-        public int findText(GuiSwingLogEntry entry, String findKeyword) {
-            GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
-            String text = formatString(str);
-            return support.findText(findKeyword, text).size();
-        }
-
-        @Override
-        public Object focusNextFound(GuiSwingLogEntry entry, Object prevIndex, boolean forward) {
-            GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
-            TextPaneCellSupport.TextPaneCellMatch m = support.nextFindMatched(prevIndex, forward, entry);
-            int[] range = support.getFindMatchedRange(m);
-            if (range[1] > 0) {
-                str.setSelectionFrom(range[0]);
-                str.setSelectionTo(range[1]);
-            }
-            return m;
+            setValue(str, true);
+            str.setSelectionTo(getIndex(point));
+            setSelectionRange(str);
         }
 
         @Override
@@ -270,8 +277,8 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
             GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
             int from = str.getSelectionFrom();
             int to = str.getSelectionTo();
-            String text = formatString(str);
-            if (entireText || from == to || !range(from, text) || !range(to, text)) {
+            String text = format(str);
+            if (entireText || from == to || outOfRange(from, text) || outOfRange(to, text)) {
                 return text;
             } else {
                 if (from > to) {
@@ -283,8 +290,29 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
             }
         }
 
-        private boolean range(int i, String s) {
-            return 0 <= i && i <= s.length();
+        private boolean outOfRange(int i, String s) {
+            return i < 0 || s.length() < i;
+        }
+
+        @Override
+        public int findText(GuiSwingLogEntry entry, String findKeyword) {
+            GuiSwingLogEntryString str = (GuiSwingLogEntryString) entry;
+            setValue(str, false);
+            updateFindPattern(findKeyword);
+            return setFindHighlights();
+        }
+
+        @Override
+        public Object focusNextFound(GuiSwingLogEntry entry, Object prevIndex, boolean forward) {
+            return getFocusNextFound(entry, prevIndex, forward);
+        }
+    }
+
+    public static class LineInfoHead extends TextCellRenderer.LineInfo  {
+        public int headerEnd;
+
+        public LineInfoHead(AttributedString attributedString, int start, int end) {
+            super(attributedString, start, end);
         }
     }
 

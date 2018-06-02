@@ -366,7 +366,7 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /***
-     * @return if true, {@link #updateFromGui(GuiMappingContext, Object, ObjectSpecifier)} automatically add the value to the preferences.
+     * @return if true, {@link #updateFromGui(GuiMappingContext, Object, ObjectSpecifier, GuiTaskClock)} automatically add the value to the preferences.
      *    the default impl. returns true.
      */
     public boolean isHistoryValueSupported() {

@@ -10,6 +10,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.font.TextAttribute;
+import java.text.AttributedCharacterIterator;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
@@ -62,8 +64,25 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
     public void setSelected(boolean selected) {
         this.selected = selected;
     }
+    /*
+    public static class GuiSwingLogExceptionRenderer2 extends JComponent
+            implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
+        protected ContainerType containerType;
+        protected GuiSwingLogManager manager;
+
+        public GuiSwingLogExceptionRenderer2(GuiSwingLogManager manager, ContainerType type) {
+            this.containerType = type;
+            this.manager = manager;
+            setBorder(BorderFactory.createEmptyBorder(7, 10, 3, 10));
+            setLayout(new BorderLayout(0, 0));
+
+            //TODO message
+
+        }
+    }*/
 
     /** a renderer for a log-entry */
+    @Deprecated
     public static class GuiSwingLogExceptionRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
         protected ContainerType containerType;
@@ -530,6 +549,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
     /**
      * a set of {@link Style}s for describing stack-trace info.
      */
+    @Deprecated
     public static class StackTraceStyleSet {
         public Style timeStyle;
         public Style messageStyle;
@@ -567,6 +587,41 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
             fileNameStyle = doc.addStyle("fileNameStyle", parent);
             StyleConstants.setForeground(fileNameStyle, fileName);
+        }
+    }
+
+    /**
+     * a set of attributes for stack traces
+     */
+    public static class StackTraceAttributeSet {
+        public Map<AttributedCharacterIterator.Attribute, Object> timeStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> messageStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> moduleStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> packageStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> classNameStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> innerClassNameStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> methodStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> fileNameStyle;
+
+        public void set(Map<AttributedCharacterIterator.Attribute, Object> base,
+                        Color time, Color message, Color module, Color pack,
+                        Color className, Color innerClass, Color method, Color fileName) {
+            timeStyle = new HashMap<>(base);
+            timeStyle.put(TextAttribute.FOREGROUND, time);
+            messageStyle = new HashMap<>(base);
+            messageStyle.put(TextAttribute.FOREGROUND, message);
+            moduleStyle = new HashMap<>(base);
+            moduleStyle.put(TextAttribute.FOREGROUND, module);
+            packageStyle = new HashMap<>(base);
+            packageStyle.put(TextAttribute.FOREGROUND, pack);
+            classNameStyle = new HashMap<>(base);
+            classNameStyle.put(TextAttribute.FOREGROUND, className);
+            innerClassNameStyle = new HashMap<>(base);
+            innerClassNameStyle.put(TextAttribute.FOREGROUND, innerClass);
+            methodStyle = new HashMap<>(base);
+            methodStyle.put(TextAttribute.FOREGROUND, method);
+            fileNameStyle = new HashMap<>(base);
+            fileNameStyle.put(TextAttribute.FOREGROUND, fileName);
         }
     }
 

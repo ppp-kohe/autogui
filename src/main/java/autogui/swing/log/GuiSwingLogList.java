@@ -18,7 +18,6 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -156,9 +155,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             return;
         }
         index = model.addLogEntry(entry, lowPriority);
-        Rectangle rect = getVisibleRect();
-        int first = rowAtPoint(rect.getLocation());
-        int last = rowAtPoint(new Point(rect.x, rect.y + rect.height));
+        int first = getFirstVisibleIndex(); //TODO the operation is slow?
+        int last = getLastVisibleIndex();
 
         if (isRowSelected(index)) {
             removeRowSelectionInterval(index, index);
@@ -530,7 +528,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             GuiSwingLogEntry entry = getEntry(point);
 
             if (pressPoint != null && !pressPoint.equals(point)) {
-                table.getSelectionModel().addSelectionInterval(pressIndex, row);
+                updateSelectionRange(pressIndex, row);
                 drag(pressPoint, point);
             }
             runEntry(row, entry, r -> {
@@ -547,7 +545,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             Rectangle cellRect = table.getCellRect(row);
             GuiSwingLogEntry entry = getEntry(dragPoint);
             if (pressPoint != null) {
-                table.getSelectionModel().addSelectionInterval(pressIndex, row);
+                updateSelectionRange(pressIndex, row);
                 drag(pressPoint, dragPoint);
             } else {
                 runEntry(row, entry, r -> {
@@ -555,6 +553,10 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                 });
                 pressPoint = dragPoint;
             }
+        }
+
+        public void updateSelectionRange(int from, int to) {
+            table.getSelectionModel().setSelectionInterval(from, to);
         }
 
         public void drag(Point from, Point to) {
