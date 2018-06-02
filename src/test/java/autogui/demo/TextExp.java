@@ -1,9 +1,11 @@
 package autogui.demo;
 
 import autogui.base.log.GuiLogEntry;
+import autogui.base.log.GuiLogEntryException;
 import autogui.base.log.GuiLogEntryString;
 import autogui.base.log.GuiLogManager;
 import autogui.swing.log.GuiSwingLogEntry;
+import autogui.swing.log.GuiSwingLogEntryException;
 import autogui.swing.log.GuiSwingLogEntryString;
 import autogui.swing.log.GuiSwingLogManager;
 
@@ -34,7 +36,10 @@ public class TextExp {
         w.setVisible(true);
 
         for (int i = 0; i < 20; ++i) {
-            m.show(new GuiSwingLogEntryString(i + " hello\nworld"));
+            //m.show(new GuiSwingLogEntryString(i + " hello\nworld"));
+            m.show(new GuiSwingLogEntryException(
+                    new RuntimeException("wrapper message",
+                            new RuntimeException(i + "hello\nworld"))));
         }
 
         JFrame f = new JFrame("hello");

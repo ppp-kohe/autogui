@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 /**
  * a support class for displaying JTextPane as a list cell
  */
+@Deprecated
 public class TextPaneCellSupport {
     protected JTextPane pane;
     protected Object selectionHighlight;

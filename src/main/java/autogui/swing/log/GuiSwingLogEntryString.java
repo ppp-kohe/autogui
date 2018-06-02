@@ -21,6 +21,7 @@ import java.text.AttributedString;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * a log-entry of a string message with supporting GUI rendering
@@ -75,6 +76,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         return selected;
     }
 
+    @Deprecated
     public static void drawSelection(Dimension size, Graphics g) {
         RoundRectangle2D.Float r = new RoundRectangle2D.Float(2, 2, size.width - 5, size.height - 5, 3, 3);
         Graphics2D g2 = (Graphics2D) g;
@@ -144,6 +146,41 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         return headerEndIndex;
     }
 
+    public static LineInfoHead createLineHead(int start, String line, Object idxIntOrDelimStr,
+                                              Map<AttributedCharacterIterator.Attribute, Object> headAttrs,
+                                              Map<AttributedCharacterIterator.Attribute, Object> attrs) {
+        AttributedString a = new AttributedString(line);
+        LineInfoHead head = new LineInfoHead(a, start, line.length() + start);
+        if (idxIntOrDelimStr instanceof Integer) {
+            head.headerEnd = (Integer) idxIntOrDelimStr;
+            if (head.headerEnd > 0) {
+                a.addAttributes(headAttrs, 0, head.headerEnd);
+            }
+        } else {
+            head.headerEnd = setHeaderStyle(a, line, Objects.toString(idxIntOrDelimStr), headAttrs);
+        }
+        a.addAttributes(attrs, Math.max(0, head.headerEnd), line.length());
+        return head;
+    }
+
+    public static TextCellRenderer.LineInfo createLineFollowing(TextCellRenderer.LineInfo prevLine, int lineIndex,
+                                                       int start, String line,
+                                                       Map<AttributedCharacterIterator.Attribute, Object> attrs) {
+        AttributedString a = new AttributedString(line);
+
+        TextCellRenderer.LineInfo info = new TextCellRenderer.LineInfo(a, start, line.length() + start);
+        a.addAttributes(attrs, 0, line.length());
+        int indent = 0;
+        if (prevLine instanceof LineInfoHead) {
+            indent += Math.max(0, ((LineInfoHead) prevLine).headerEnd);
+        }
+        if (prevLine != null) {
+            indent += prevLine.getIndent();
+        }
+        info.setIndent(indent);
+        return info;
+    }
+
     /**
      * a string log-entry renderer
      */
@@ -201,24 +238,9 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         public LineInfo createLine(LineInfo prevLine, int lineIndex, int start, String line) {
             AttributedString a = new AttributedString(line);
             if (lineIndex == 0) {
-                LineInfoHead head = new LineInfoHead(a, start, line.length() + start);
-                head.headerEnd = setHeaderStyle(a, line, "]", timeStyle);
-                if (head.headerEnd > 0) {
-                    a.addAttributes(followingLineStyle, head.headerEnd, line.length());
-                }
-                return head;
+                return createLineHead(start, line, "]", timeStyle, followingLineStyle);
             } else {
-                LineInfo info = new LineInfo(a, start, line.length() + start);
-                a.addAttributes(followingLineStyle, 0, line.length());
-                int indent = 0;
-                if (prevLine instanceof LineInfoHead) {
-                    indent += Math.max(0, ((LineInfoHead) prevLine).headerEnd);
-                }
-                if (prevLine != null) {
-                    indent += prevLine.getIndent();
-                }
-                info.setIndent(indent);
-                return info;
+                return GuiSwingLogEntryString.createLineFollowing(prevLine, lineIndex, start, line, followingLineStyle);
             }
         }
 

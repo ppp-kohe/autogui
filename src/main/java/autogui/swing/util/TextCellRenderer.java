@@ -32,11 +32,42 @@ public class TextCellRenderer<ValueType> extends JComponent
     protected String text = "";
     protected String findText;
     protected Pattern findPattern;
+    protected int maxWidth;
+    protected LineInfoMatch lastMatch;
 
     public TextCellRenderer() {
         lines = new ArrayList<>();
-        setBorder(BorderFactory.createEmptyBorder(7, 10, 3, 10));
         setOpaque(false);
+        initBorder();
+    }
+
+    protected void initBorder() {
+        setBorder(BorderFactory.createEmptyBorder(7, 10, 3, 10));
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public String getTextSelection() {
+        int s = selectionStart;
+        int e = selectionEnd;
+        if (s > e) {
+            int t = e;
+            e = s;
+            s = t;
+        }
+
+        if (e == -1 && s == -1) {
+            return "";
+        } else {
+            if (e == -1) {
+                e = text.length();
+            }
+            e = Math.max(0, Math.min(e, text.length()));
+            s = Math.max(s, Math.min(s, e));
+            return text.substring(s, e);
+        }
     }
 
     @Override
@@ -50,8 +81,7 @@ public class TextCellRenderer<ValueType> extends JComponent
         boolean forMouseEvents = row <= -1;
         if (!forMouseEvents) {
             this.selected = isSelected;
-            this.selectionStart = -1;
-            this.selectionEnd = -1;
+            clearSelectionRange();
         }
 
         setValue((ValueType) value, forMouseEvents);
@@ -59,21 +89,19 @@ public class TextCellRenderer<ValueType> extends JComponent
     }
 
     public boolean setValue(ValueType value, boolean forMouseEvents) {
-        if (this.value != null && this.value.equals(value) && this.forMouseEvents == forMouseEvents) {
+        if (isValueSame(value, forMouseEvents)) {
             return false;
         }
         this.value = value;
         this.text = format(value);
         this.forMouseEvents = forMouseEvents;
-
-        int maxWidth = buildLines(text, lines);
-        float[] size = buildSize(maxWidth);
-        setPreferredSize(new Dimension((int) size[0], (int) size[1]));
-
-        if (!forMouseEvents) {
-            setSelectionFromValue(value);
-        }
+        buildFromValue();
         return true;
+    }
+
+    public boolean isValueSame(ValueType value, boolean forMouseEvents) {
+        return this.value != null && this.value.equals(value) &&
+                (this.forMouseEvents == forMouseEvents || !this.forMouseEvents); //non-mouseEvents includes mouseEvents
     }
 
     public String format(ValueType value) {
@@ -81,6 +109,16 @@ public class TextCellRenderer<ValueType> extends JComponent
             return "";
         } else {
             return Objects.toString(value);
+        }
+    }
+
+    public void buildFromValue() {
+        maxWidth = buildLines(text, lines);
+        float[] size = buildSize();
+        setPreferredSize(new Dimension((int) size[0], (int) size[1]));
+
+        if (!forMouseEvents) {
+            setSelectionFromValue(value);
         }
     }
 
@@ -112,10 +150,10 @@ public class TextCellRenderer<ValueType> extends JComponent
     }
 
     /**
-     * @param maxWidth max size of line width
+     * use maxWidth set by {@link #buildFromValue()}
      * @return {width, height}
      */
-    public float[] buildSize(int maxWidth) {
+    public float[] buildSize() {
         int[] bs = getBorderSize();
         float[] baseSize = getBaseSize();
         return new float[] {
@@ -127,6 +165,16 @@ public class TextCellRenderer<ValueType> extends JComponent
 
     public void setSelectionFromValue(ValueType value) {
         setFindHighlights();
+    }
+
+    public void clearSelectionRange() {
+        this.selectionStart = -1;
+        this.selectionEnd = -1;
+    }
+
+    public void setSelectionRange(int from, int to) {
+        this.selectionStart = from;
+        this.selectionEnd = to;
     }
 
     /**
@@ -192,28 +240,34 @@ public class TextCellRenderer<ValueType> extends JComponent
     public Object getFocusNextFound(ValueType value, Object prevIndex, boolean forward) {
         setValue(value, false);
         if (!(prevIndex instanceof LineInfoMatch) || //null
-                !((LineInfoMatch) prevIndex).entry.equals(value)) {
+                !((LineInfoMatch) prevIndex).sameKeys(this, value)) {
             if (forward) {
                 int i = 0;
                 for (LineInfo line : lines) {
                     if (!line.getFindRanges().isEmpty()) {
-                        return new LineInfoMatch(value, i, 0);
+                        lastMatch = new LineInfoMatch(i, 0, this, value);
+                        return lastMatch;
                     }
                     ++i;
                 }
-                return null;
+                lastMatch = null;
+                return lastMatch;
             } else {
                 for (int i = lines.size() - 1; i >= 0; --i) {
                     LineInfo line = lines.get(i);
                     if (!line.getFindRanges().isEmpty()) {
-                        return new LineInfoMatch(value, i, line.getFindRanges().size() - 1);
+                        lastMatch = new LineInfoMatch(i, line.getFindRanges().size() - 1,
+                                this, value);
+                        return lastMatch;
                     }
                 }
-                return null;
+                lastMatch = null;
+                return lastMatch;
             }
         } else {
             LineInfoMatch m = (LineInfoMatch) prevIndex;
-            return forward ? m.next(lines) : m.previous(lines);
+            lastMatch = forward ? m.next(lines) : m.previous(lines);
+            return lastMatch;
         }
     }
 
@@ -250,6 +304,10 @@ public class TextCellRenderer<ValueType> extends JComponent
 
     /////////////////
 
+    public static Color getSelectionColor() {
+        return UIManager.getColor("TextPane.selectionBackground");
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         getBorder().paintBorder(this, g, 0, 0, getWidth(), getHeight());
@@ -260,8 +318,9 @@ public class TextCellRenderer<ValueType> extends JComponent
         FontRenderContext frc = g2.getFontRenderContext();
         float x = insets.left;
         float y = insets.top;
-        Color selectionColor = UIManager.getColor("TextPane.selectionBackground");
+        Color selectionColor = getSelectionColor();
         Color findColor = Color.orange;
+        Color findMatchColor = Color.yellow;
 
         int lineIndex = 0;
         LineInfo prev = null;
@@ -277,7 +336,7 @@ public class TextCellRenderer<ValueType> extends JComponent
             lineX = paintStartX(lineIndex, prev, lineX, line, l, frc);
 
             paintLineSelection(g2, line, l, selectionColor, lineX);
-            paintLineFinds(g2, line, l, findColor, lineX);
+            paintLineFinds(g2, line, l, lineIndex, findColor, findMatchColor, lineX);
 
             g2.setPaint(Color.black);
 
@@ -315,16 +374,31 @@ public class TextCellRenderer<ValueType> extends JComponent
         }
     }
 
-    public void paintLineFinds(Graphics2D g2, LineInfo line, TextLayout l, Color findColor, float lineX) {
-        g2.setPaint(findColor);
+    public void paintLineFinds(Graphics2D g2, LineInfo line, TextLayout l, int lineIndex, Color findColor, Color findMatchColor, float lineX) {
+
         g2.translate(lineX, 0);
+        int i = 0;
         for (int[] range : line.getFindRanges()) {
             Shape find = line.getSelectionShape(l, range[0], range[1]);
+            if (isLastMatch(lineIndex, i)) {
+                g2.setPaint(findMatchColor);
+            } else {
+                g2.setPaint(findColor);
+            }
             if (find != null) {
                 g2.fill(find);
             }
+            ++i;
         }
         g2.translate(-lineX, 0);
+    }
+
+    public boolean isLastMatch(int lineIndex, int rangeIndex) {
+        if (lastMatch != null) {
+            return lastMatch.value == this.value && lastMatch.line == lineIndex && lastMatch.range == rangeIndex;
+        } else {
+            return false;
+        }
     }
 
     public float paintStartX(int lineIndex, LineInfo prev, float prevX, LineInfo line, TextLayout l,
@@ -504,26 +578,32 @@ public class TextCellRenderer<ValueType> extends JComponent
     }
 
     public static class LineInfoMatch {
-        public Object entry;
+        public TextCellRenderer<?> renderer;
+        public Object value;
         public int line;
         public int range;
 
-        public LineInfoMatch(Object entry, int line, int range) {
-            this.entry = entry;
+        public LineInfoMatch(int line, int range, TextCellRenderer r, Object v) {
+            this.renderer = r;
+            this.value = v;
             this.line = line;
             this.range = range;
+        }
+
+        public boolean sameKeys(TextCellRenderer<?> r, Object v) {
+            return Arrays.equals(new Object[] {renderer, value}, new Object[] {r, v});
         }
 
         public LineInfoMatch next(List<LineInfo> lines) {
             if (line < lines.size()) {
                 LineInfo info = lines.get(line);
                 if (range + 1 < info.getFindRanges().size()) {
-                    return new LineInfoMatch(entry, line, range + 1);
+                    return new LineInfoMatch(line, range + 1, renderer, value);
                 } else {
                     for (int nextLine = line + 1; nextLine < lines.size(); ++nextLine) {
                         info = lines.get(nextLine);
                         if (!info.getFindRanges().isEmpty()) {
-                            return new LineInfoMatch(entry, nextLine, 0);
+                            return new LineInfoMatch(nextLine, 0, renderer, value);
                         }
                     }
                     return null;
@@ -536,12 +616,12 @@ public class TextCellRenderer<ValueType> extends JComponent
         public LineInfoMatch previous(List<LineInfo> lines) {
             if (line < lines.size()) {
                 if (range - 1 >= 0) {
-                    return new LineInfoMatch(entry, line, range - 1);
+                    return new LineInfoMatch(line, range - 1, renderer, value);
                 } else {
                     for (int prevLine = line - 1; prevLine >= 0; --prevLine) {
                         LineInfo info = lines.get(prevLine);
                         if (!info.getFindRanges().isEmpty()) {
-                            return new LineInfoMatch(entry, prevLine, info.getFindRanges().size() - 1);
+                            return new LineInfoMatch(prevLine, info.getFindRanges().size() - 1, renderer, value);
                         }
                     }
                     return null;
@@ -549,6 +629,17 @@ public class TextCellRenderer<ValueType> extends JComponent
             } else {
                 return null;
             }
+        }
+
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "{" +
+                    "renderer=" + renderer +
+                    ", value=" + value +
+                    ", line=" + line +
+                    ", range=" + range +
+                    '}';
         }
     }
 

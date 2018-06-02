@@ -3,27 +3,32 @@ package autogui.swing.log;
 import autogui.base.log.GuiLogEntry;
 import autogui.base.log.GuiLogEntryException;
 import autogui.swing.icons.GuiSwingIcons;
-import autogui.swing.util.PopupExtensionText;
+import autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.font.TextAttribute;
+import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator;
+import java.text.AttributedString;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * a log-entry for an exception with supporting GUI rendering
  */
 public class GuiSwingLogEntryException extends GuiLogEntryException implements GuiSwingLogEntry {
-    protected Map<JTextComponent, int[]> selectionMap = new HashMap<>(2);
+    protected Map<TextCellRenderer, int[]> selectionMap = new HashMap<>(2);
     protected boolean expanded;
     protected boolean selected;
+
+    protected String lines;
+    protected Map<Integer, List<StackTraceAttributesForLine>> lineToAttrs;
 
     public GuiSwingLogEntryException(Throwable exception) {
         super(exception);
@@ -38,7 +43,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         return new GuiSwingLogExceptionRenderer(manager, type);
     }
 
-    public Map<JTextComponent, int[]> getSelections() {
+    public Map<TextCellRenderer, int[]> getSelections() {
         return selectionMap;
     }
 
@@ -48,6 +53,22 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
     public boolean isExpanded() {
         return expanded;
+    }
+
+    public void setLines(String lines) {
+        this.lines = lines;
+    }
+
+    public String getLines() {
+        return lines;
+    }
+
+    public Map<Integer, List<StackTraceAttributesForLine>> getLineToAttrs() {
+        return lineToAttrs;
+    }
+
+    public void setLineToAttrs(Map<Integer, List<StackTraceAttributesForLine>> lineToAttrs) {
+        this.lineToAttrs = lineToAttrs;
     }
 
     @Override
@@ -64,134 +85,56 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
     public void setSelected(boolean selected) {
         this.selected = selected;
     }
-    /*
-    public static class GuiSwingLogExceptionRenderer2 extends JComponent
-            implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
-        protected ContainerType containerType;
-        protected GuiSwingLogManager manager;
 
-        public GuiSwingLogExceptionRenderer2(GuiSwingLogManager manager, ContainerType type) {
-            this.containerType = type;
-            this.manager = manager;
-            setBorder(BorderFactory.createEmptyBorder(7, 10, 3, 10));
-            setLayout(new BorderLayout(0, 0));
-
-            //TODO message
-
-        }
-    }*/
-
-    /** a renderer for a log-entry */
-    @Deprecated
     public static class GuiSwingLogExceptionRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
         protected ContainerType containerType;
-        protected JPanel messageLinePane;
-        protected JTextPane message;
-        protected JTextPane stackTrace;
-        protected JViewport stackViewport;
-        protected TextPaneCellSupport.TextPaneCellSupportList supports;
+        protected GuiSwingLogManager manager;
+        protected TextCellRenderer<GuiLogEntryException> message;
+        protected ExceptionStackTraceRenderer stackTrace;
 
         protected ExceptionExpandAction expandAction;
         protected JButton expandButton;
-
-        protected GuiSwingLogManager manager;
-
-        protected Style messageTimeStyle;
-        protected Style messageStyle;
-
-        protected StackTraceStyleSet topSet;
-        protected StackTraceStyleSet middleSet;
-        protected StackTraceStyleSet lastSet;
+        protected JPanel messageLinePane;
+        protected JList lastList;
 
         protected boolean selected;
-
         protected GuiLogEntryException lastValue;
-        protected GuiSwingLogEntryException expandPressed;
-
-        protected Map<StyledDocument, List<Integer>> lineIndexes = new HashMap<>(2);
-
-        protected JList lastList;
+        protected GuiSwingLogEntryException expandPressedValue = null;
 
         public GuiSwingLogExceptionRenderer(GuiSwingLogManager manager, ContainerType type) {
             this.containerType = type;
-            setBorder(BorderFactory.createEmptyBorder(7, 10, 3, 10));
             this.manager = manager;
+            setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
             setLayout(new BorderLayout(0, 0));
-            message = new JTextPane();
-            message.setOpaque(false);
-            message.setFont(GuiSwingLogManager.getFont());
 
-            stackTrace = new JTextPane();
-            stackTrace.setFont(GuiSwingLogManager.getFont());
+            message = new ExceptionMessageRenderer(manager);
 
-            stackViewport = new JViewport();
-            stackViewport.setView(stackTrace);
+            stackTrace = new ExceptionStackTraceRenderer();
+            if (type.equals(ContainerType.List)) {
+                add(stackTrace, BorderLayout.CENTER);
+            }
 
             expandAction = new ExceptionExpandAction(this);
-            expandButton = new GuiSwingIcons.ActionButton(expandAction);
-            expandButton.setHideActionText(true);
-            expandButton.setPreferredSize(new Dimension(32, 28));
+            {
+                expandButton = new GuiSwingIcons.ActionButton(expandAction);
+                expandButton.setHideActionText(true);
+                expandButton.setPreferredSize(new Dimension(32, 28));
+            }
 
             messageLinePane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-            messageLinePane.getInsets().set(0, 0, 0, 0);
-            messageLinePane.setBorder(BorderFactory.createEmptyBorder());
-            messageLinePane.setOpaque(false);
-            messageLinePane.add(message);
-            if (type.equals(ContainerType.List)) {
-                messageLinePane.add(expandButton);
+            {
+                messageLinePane.getInsets().set(0, 0, 0, 0);
+                messageLinePane.setBorder(BorderFactory.createEmptyBorder());
+                messageLinePane.setOpaque(false);
+                messageLinePane.add(message);
+                if (type.equals(ContainerType.List)) {
+                    messageLinePane.add(expandButton);
+                }
+                add(messageLinePane, BorderLayout.NORTH);
             }
-
-            add(messageLinePane, BorderLayout.NORTH);
-            add(stackViewport, BorderLayout.CENTER);
-
-            if (type.equals(ContainerType.List)) {
-                supports = new TextPaneCellSupport.TextPaneCellSupportList(message, stackTrace);
-            } else {
-                stackViewport.setVisible(false);
-            }
-
-            //styles
-            messageTimeStyle = GuiSwingLogEntryString.getTimeStyle(message.getStyledDocument());
-            messageStyle = message.getStyledDocument().addStyle("message", message.getStyle(StyleContext.DEFAULT_STYLE));
-            StyleConstants.setForeground(messageStyle, new Color(142, 73, 60));
-
-            Style defaultStyle = stackTrace.getStyle(StyleContext.DEFAULT_STYLE);
-            StyleConstants.setLineSpacing(defaultStyle, 0.1f);
-
-            topSet = new StackTraceStyleSet();
-            topSet.set(stackTrace.getStyledDocument(), defaultStyle,
-                    new Color(48, 144, 20),
-                    new Color(142,73,60),
-                    new Color(133, 120, 197),
-                    new Color(89, 184, 196),
-                    new Color(2, 129, 18),
-                    new Color(147, 159, 43),
-                    new Color(57, 104, 173),
-                    new Color(159, 65, 141));
-
-            middleSet = new StackTraceStyleSet();
-            middleSet.set(stackTrace.getStyledDocument(), defaultStyle,
-                    new Color(48, 144, 20),
-                    new Color(154,128,126),
-                    new Color(168, 156, 213),
-                    new Color(111, 127, 146),
-                    new Color(135, 174, 129),
-                    new Color(127, 145, 0),
-                    new Color(96, 119, 146),
-                    new Color(153, 108, 143));
-
-            lastSet = new StackTraceStyleSet();
-            lastSet.set(stackTrace.getStyledDocument(), defaultStyle,
-                    new Color(48, 144, 20),
-                    new Color(53,129,142),
-                    new Color(133, 120, 197),
-                    new Color(89, 184, 196),
-                    new Color(2, 129, 18),
-                    new Color(147, 159, 43),
-                    new Color(57, 104, 173),
-                    new Color(159, 65, 141));
         }
+
 
         @Override
         public ListCellRenderer<GuiLogEntry> getTableCellRenderer() {
@@ -210,24 +153,35 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             this.selected = isSelected;
             if (value instanceof GuiLogEntryException) {
-                GuiLogEntryException ex = (GuiLogEntryException) value;
-                lastValue = ex;
-                setDocument(ex);
-
-                if (supports != null) {
-                    supports.setFindHighlights();
-                }
-                setSelectionHighlights(ex);
+                setValue((GuiLogEntryException) value, row <= -1);
             }
             return this;
         }
 
-        public void setDocument(GuiLogEntryException ex) {
-            formatMessage(ex.getTime(), ex.getException());
-            formatStackTrace(ex.getException());
-            stackViewport.setViewSize(stackTrace.getPreferredSize()); //it seems import call
-            expansionChanged();
+        public void setValue(GuiLogEntryException value, boolean forMouseEvents) {
+            if (lastValue == null || !lastValue.equals(value)) {
+                lastValue = value;
+                message.setValue(value, forMouseEvents);
+                stackTrace.setValue(value, forMouseEvents);
+                expansionChanged();
+                setSelection();
+            }
         }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            if (selected) {
+                Dimension size = getSize();
+                RoundRectangle2D.Float r = new RoundRectangle2D.Float(2, 2, size.width - 5, size.height - 5, 3, 3);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setColor(TextCellRenderer.getSelectionColor());
+                g2.draw(r);
+            }
+        }
+
+        //////////////////
 
         public void expansionChanged() {
             if (lastValue instanceof GuiSwingLogEntryException) {
@@ -236,166 +190,447 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
                 expandButton.setIcon(expandAction.getIcon(expanded));
                 expandButton.setPressedIcon(expandAction.getPressedIcon(expanded));
 
-                int i = getExpansionTextStartIndex();
-                if (!expanded && i >= 0) {
-                    try {
-                        int sizeY = PopupExtensionText.textComponentModelToView(stackTrace, i).y;
-                        stackViewport.setPreferredSize(new Dimension(stackTrace.getPreferredSize().width, sizeY));
-                        stackViewport.setViewPosition(new Point(0, 0));
-                    } catch (Exception dex) {
-                        throw new RuntimeException(dex);
-                    }
-                } else {
-                    stackViewport.setPreferredSize(stackTrace.getPreferredSize());
-                }
+                stackTrace.setExpanded(expanded);
+            }
+            if (lastList != null && lastList.getModel() instanceof GuiSwingLogList.GuiSwingLogListModel) {
+                GuiSwingLogList.GuiSwingLogListModel model = (GuiSwingLogList.GuiSwingLogListModel) lastList.getModel();
+                model.fireRowChanged(lastValue);
             }
         }
 
-        /** a valid result will be returned only after {@link #setDocument(GuiLogEntryException)}
-         * @return an index
-         */
-        public int getExpansionTextStartIndex() {
+        public void flipExpansion() {
             if (lastValue instanceof GuiSwingLogEntryException) {
-                List<Integer> lines = getLinesForDocument(stackTrace.getStyledDocument());
-                if (lines.size() >= 2) {
-                    int n = lines.get(1);
-                    if (n <= stackTrace.getStyledDocument().getLength()) {
-                        return n;
-                    }
-                }
+                GuiSwingLogEntryException ex = (GuiSwingLogEntryException) lastValue;
+                ex.setExpanded(!ex.isExpanded());
+                expansionChanged();
+
             }
-            return -1;
         }
 
-        public void setSelectionHighlights(GuiLogEntryException ex) {
-            if (ex instanceof GuiSwingLogEntryException && supports != null) {
-                GuiSwingLogEntryException swingEx = (GuiSwingLogEntryException) ex;
-                selected = swingEx.isSelected();
+        //////////////////
+
+        public void setSelection() {
+            if (lastValue instanceof GuiSwingLogEntryException) {
+                GuiSwingLogEntryException ex = (GuiSwingLogEntryException) lastValue;
+                selected = ex.isSelected();
+                message.clearSelectionRange();
+                stackTrace.clearSelectionRange();
                 if (selected) {
-                    supports.setSelectionHighlights(swingEx.getSelections());
-                } else {
-                    supports.setSelectionHighlightsClear();
+                    ex.getSelections().forEach((view,range) ->
+                        view.setSelectionRange(range[0], range[1]));
                 }
             }
         }
 
         @Override
-        public boolean isShowing() {
-            return true;
+        public void mousePressed(GuiSwingLogEntry entry, Point point) {
+            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
+            ex.getSelections().clear();
+            mouseUpdate(ex, message, point, true);
+            mouseUpdate(ex, stackTrace, point, true);
+
+            Point expandPoint = SwingUtilities.convertPoint(this, point, expandButton);
+            expandPressedValue = expandButton.contains(expandPoint) ? ex : null;
         }
 
-        //// formatting
+        @Override
+        public void mouseDragged(GuiSwingLogEntry entry, Point point) {
+            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
+            mouseUpdate(ex, message, point, false);
+            mouseUpdate(ex, stackTrace, point, false);
+        }
 
-        public void formatMessage(Instant time, Throwable ex) {
-            String msg = ex.toString();
-            StyledDocument doc = message.getStyledDocument();
+        @Override
+        public void mouseReleased(GuiSwingLogEntry entry, Point point) {
+            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
+            mouseUpdate(ex, message, point, false);
+            mouseUpdate(ex, stackTrace, point, false);
 
-            //clear
-            clearLinesForDocument(doc);
-            try {
-                doc.remove(0, doc.getLength());
-            } catch (Exception dex) {
-                throw new RuntimeException(dex);
+            if (expandPressedValue != null) {
+                expandButton.doClick();
             }
-
-            // [time] !!! message
-            append(doc, manager.formatTime(time), messageTimeStyle);
-            append(doc, " !!! " + (msg == null ? "" : msg), messageStyle);
-            message.invalidate();
         }
 
-        public void formatStackTrace(Throwable ex)  {
-            StyledDocument doc = stackTrace.getStyledDocument();
-            clearLinesForDocument(doc);
+        public void mouseUpdate(GuiSwingLogEntryException ex, TextCellRenderer<? super GuiSwingLogEntryException> r, Point point, boolean fromAndTo) {
+            r.setValue(ex, true);
+            int idx = r.getIndex(new Point(point.x - r.getX(), point.y - r.getY()));
+            int[] range = ex.getSelections().computeIfAbsent(r, v -> new int[2]);
+            if (fromAndTo) {
+                range[0] = idx;
+                range[1] = idx;
+            } else {
+                range[1] = idx;
+            }
+            r.setSelectionRange(range[0], range[1]);
+        }
+
+        ///////////////////
+
+
+        @Override
+        public boolean updateFindPattern(String findKeyword) {
+            boolean r = message.updateFindPattern(findKeyword);
+            boolean l = stackTrace.updateFindPattern(findKeyword);
+            return r || l; //Note: both have same state, thus if one is not updated, the other also has no update
+        }
+
+        @Override
+        public int findText(GuiSwingLogEntry entry, String findKeyword) {
+            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
+            message.setValue(ex, false);
+            stackTrace.setValue(ex, false);
+            updateFindPattern(findKeyword);
+
+            int l = message.setFindHighlights();
+            int r = stackTrace.setFindHighlights();
+            return l + r;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public Object focusNextFound(GuiSwingLogEntry entry, Object prevIndex, boolean forward) {
+            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
+            boolean expanded = ex.isExpanded();
             try {
-                doc.remove(0, doc.getLength());
-
-                Set<Throwable> history = Collections.newSetFromMap(new IdentityHashMap<>());
-                formatStackTrace(ex, doc, history, "", topSet, Collections.emptyList());
-
-                int len = doc.getLength();
-                if (len > 0 && doc.getText(len - 1, 1).equals("\n")) { //remove last newline
-                    doc.remove(len - 1, 1);
+                if (prevIndex instanceof TextCellRenderer.LineInfoMatch) {
+                    TextCellRenderer.LineInfoMatch prevMatch = (TextCellRenderer.LineInfoMatch) prevIndex;
+                    prevIndex = ((TextCellRenderer<GuiLogEntryException>) prevMatch.renderer).getFocusNextFound(ex, prevIndex, forward);
+                    if (prevIndex == null) {
+                        if (forward && prevMatch.renderer == message) { //has next
+                            return stackTrace.getFocusNextFound(ex, null, true);
+                        } else if (!forward && prevMatch.renderer == stackTrace) { //has prev
+                            return message.getFocusNextFound(ex, null, false);
+                        } else {
+                            return null;
+                        }
+                    } else {
+                        return prevIndex;
+                    }
+                } else {
+                    if (forward) {
+                        prevIndex = message.getFocusNextFound(ex, null, true);
+                        if (prevIndex == null) {
+                            return stackTrace.getFocusNextFound(ex, null, true);
+                        } else {
+                            return prevIndex;
+                        }
+                    } else {
+                        prevIndex = stackTrace.getFocusNextFound(ex, null, false);
+                        if (prevIndex == null) {
+                            return message.getFocusNextFound(ex, null, false);
+                        } else {
+                            return prevIndex;
+                        }
+                    }
                 }
-            } catch (Exception dex) {
-                throw new RuntimeException(dex);
+            } finally {
+                if (ex.isExpanded() != expanded) {
+                    expansionChanged();
+                }
             }
-            stackTrace.invalidate();
-            stackTrace.setSize(stackTrace.getPreferredSize());
         }
 
-        public List<Integer> getLinesForDocument(StyledDocument doc) {
-            return lineIndexes.computeIfAbsent(doc, k -> {
-                List<Integer> is = new ArrayList<>();
-                is.add(0);
-                return is;
-            });
+        @Override
+        public String getSelectedText(GuiSwingLogEntry entry, boolean entireText) {
+            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
+            setValue(ex, false);
+            if (entireText) {
+                return String.join("\n",
+                        message.getText(),
+                        stackTrace.getText());
+            } else {
+                return Stream.of(
+                        message.getTextSelection(),
+                        stackTrace.getTextSelection())
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining("\n"));
+            }
+        }
+    }
+
+    public static class ExceptionMessageRenderer extends TextCellRenderer<GuiLogEntryException> {
+        protected GuiSwingLogManager manager;
+        protected Map<AttributedCharacterIterator.Attribute, Object> messageTimeAttributes;
+        protected Map<AttributedCharacterIterator.Attribute, Object> messageAttributes;
+
+        protected int timeEnd;
+
+        public ExceptionMessageRenderer(GuiSwingLogManager manager) {
+            this.manager = manager;
+
+            messageTimeAttributes = GuiSwingLogEntryString.getTimeStyle();
+
+            messageAttributes = GuiSwingLogEntryString.getBodyStyle();
+            {
+                messageAttributes.put(TextAttribute.FOREGROUND, new Color(142, 73, 60));
+            }
+            setFont(GuiSwingLogManager.getFont());
         }
 
-        public void clearLinesForDocument(StyledDocument doc) {
-            List<Integer> lines = lineIndexes.computeIfAbsent(doc, k -> new ArrayList<>());
+        @Override
+        protected void initBorder() {
+            setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        }
+
+        @Override
+        public String format(GuiLogEntryException value) {
+            if (value != null) {
+                String msg = value.getException().toString();
+
+                String time = manager.formatTime(value.getTime());
+                timeEnd = time.length();
+                return time + " !!! " + (msg == null ? "" : msg);
+            } else {
+                timeEnd = 0;
+                return super.format(null);
+            }
+        }
+
+        @Override
+        public LineInfo createLine(LineInfo prevLine, int lineIndex, int start, String line) {
+            AttributedString a = new AttributedString(line);
+            if (lineIndex == 0) {
+                int pos = 0;
+                if (start <= timeEnd && timeEnd < start + line.length()) {
+                    pos = timeEnd - start;
+                }
+                return GuiSwingLogEntryString.createLineHead(start, line, pos, messageTimeAttributes, messageAttributes);
+            } else {
+                return GuiSwingLogEntryString.createLineFollowing(prevLine, lineIndex, start, line, messageAttributes);
+            }
+        }
+    }
+
+    public static class StackTraceAttributesForLine {
+        public int line;
+        public int start;
+        public int end;
+        public Map<AttributedCharacterIterator.Attribute,Object> attributes;
+
+        public StackTraceAttributesForLine(int line, int start, int end, Map<AttributedCharacterIterator.Attribute, Object> attributes) {
+            this.line = line;
+            this.start = start;
+            this.end = end;
+            this.attributes = attributes;
+        }
+    }
+
+    public static class ExceptionStackTraceRenderer extends TextCellRenderer<GuiLogEntryException> {
+        protected StackTraceAttributeSet topSet;
+        protected StackTraceAttributeSet middleSet;
+        protected StackTraceAttributeSet lastSet;
+
+        protected float[] expandedStackSize = new float[] {0,0};
+        protected float[] collapsedStackSize = new float[] {0,0};
+        protected boolean expanded;
+
+        public ExceptionStackTraceRenderer() {
+            initAttributes();
+        }
+
+        @Override
+        protected void initBorder() {
+            setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        }
+
+        protected void initAttributes() {
+            Map<AttributedCharacterIterator.Attribute,Object> defaultSet = new HashMap<>();
+            defaultSet.put(TextAttribute.FONT, GuiSwingLogManager.getFont());
+            setFont(GuiSwingLogManager.getFont());
+
+            topSet = new StackTraceAttributeSet();
+            topSet.set(defaultSet,
+                    new Color(48, 144, 20),
+                    new Color(142,73,60),
+                    new Color(133, 120, 197),
+                    new Color(89, 184, 196),
+                    new Color(2, 129, 18),
+                    new Color(147, 159, 43),
+                    new Color(57, 104, 173),
+                    new Color(159, 65, 141));
+
+            middleSet = new StackTraceAttributeSet();
+            middleSet.set(defaultSet,
+                    new Color(48, 144, 20),
+                    new Color(154,128,126),
+                    new Color(168, 156, 213),
+                    new Color(111, 127, 146),
+                    new Color(135, 174, 129),
+                    new Color(127, 145, 0),
+                    new Color(96, 119, 146),
+                    new Color(153, 108, 143));
+
+            lastSet = new StackTraceAttributeSet();
+            lastSet.set(defaultSet,
+                    new Color(48, 144, 20),
+                    new Color(53,129,142),
+                    new Color(133, 120, 197),
+                    new Color(89, 184, 196),
+                    new Color(2, 129, 18),
+                    new Color(147, 159, 43),
+                    new Color(57, 104, 173),
+                    new Color(159, 65, 141));
+        }
+
+        @Override
+        public boolean setValue(GuiLogEntryException value, boolean forMouseEvents) {
+            if (value instanceof GuiSwingLogEntryException) {
+                GuiSwingLogEntryException ex = (GuiSwingLogEntryException) value;
+                if (isValueSame(value, forMouseEvents)) {
+                    return false;
+                } else {
+                    if (ex.getLines() != null && ex.getLineToAttrs() != null) {
+                        //cached
+                        this.value = value;
+                        this.text = ex.getLines();
+                        this.lineAttrs = ex.getLineToAttrs();
+                        this.forMouseEvents = forMouseEvents;
+                        buildFromValue();
+                        return true;
+                    } else {
+                        boolean r = super.setValue(value, forMouseEvents);
+                        ex.setLines(text);
+                        ex.setLineToAttrs(lineAttrs);
+                        return r;
+                    }
+                }
+            } else {
+                return super.setValue(value, forMouseEvents);
+            }
+        }
+
+        @Override
+        public void buildFromValue() {
+            super.buildFromValue();
+            expandedStackSize = buildSize();
+            collapsedStackSize = getCollapsedSize();
+        }
+
+        @Override
+        public LineInfo createLine(LineInfo prevLine, int lineIndex, int start, String line) {
+            LineInfo info = super.createLine(prevLine, lineIndex, start, line);
+            info.setIndent(4);
+            for (StackTraceAttributesForLine a : lineAttrs.get(lineIndex)) {
+                if (a.attributes != null && a.start < a.end) {
+                    int e = Math.min(line.length(), a.end);
+                    info.attributedString.addAttributes(a.attributes,
+                            Math.min(Math.max(a.start, 0), e), e);
+                }
+            }
+            return info;
+        }
+
+        @Override
+        public String format(GuiLogEntryException value) {
+            Throwable ex = value.getException();
             lines.clear();
-            lines.add(0);
+            lineAttrs.clear();
+            line = new StringBuilder();
+
+            Set<Throwable> history = Collections.newSetFromMap(new IdentityHashMap<>());
+            formatStackTrace(ex, history, "", topSet, Collections.emptyList());
+
+            if (!lines.isEmpty() && lines.get(lines.size() - 1).isEmpty()) { //cut empty tail
+                lines.remove(lines.size() - 1);
+            }
+            return String.join("\n", lines);
         }
 
-        public void formatStackTrace(Throwable ex, StyledDocument doc, Set<Throwable> history,
-                                     String lineHead,
-                                     StackTraceStyleSet set,
-                                      List<StackTraceElement> prevStackTrace) {
+        protected List<String> lines = new ArrayList<>();
+        protected Map<Integer, List<StackTraceAttributesForLine>> lineAttrs = new HashMap<>();
+        protected StringBuilder line = new StringBuilder();
+
+        public void append(String str, Map<AttributedCharacterIterator.Attribute,Object> attrs) {
+            int start = line.length();
+            for (char c : str.toCharArray()) {
+                if (c == '\n') {
+                    if (line.length() > 0) {
+                        int lineNum = lines.size();
+                        lineAttrs.computeIfAbsent(lineNum, l -> new ArrayList<>())
+                            .add(new StackTraceAttributesForLine(lineNum, start, line.length(), attrs));
+                    }
+                    lines.add(line.toString());
+                    line = new StringBuilder();
+                    start = 0;
+                } else {
+                    line.append(c);
+                }
+            }
+            if (line.length() > 0) {
+                int lineNum = lines.size();
+                lineAttrs.computeIfAbsent(lineNum, l -> new ArrayList<>())
+                        .add(new StackTraceAttributesForLine(lineNum, start, line.length(), attrs));
+            }
+        }
+
+        public void formatStackTrace(Throwable ex, Set<Throwable> history,
+                           String lineHead,
+                           StackTraceAttributeSet attrSet,
+                           List<StackTraceElement> prevStackTrace) {
             if (history.contains(ex)) {
-                append(doc, "[CIRCULAR REFERENCE: " + ex + "]\n", set.messageStyle);
+                append("[CIRCULAR REFERENCE: " + ex + "]\n", attrSet.messageStyle);
                 return;
             }
             history.add(ex);
-
             List<StackTraceElement> nextStackTrace = Arrays.asList(ex.getStackTrace());
 
-            int commons = 0;
-            int nextIdx = nextStackTrace.size() - 1,
-                    prevIdx = prevStackTrace.size() - 1;
-            for (; nextIdx >= 0 && prevIdx >= 0 &&
-                         nextStackTrace.get(nextIdx).equals(prevStackTrace.get(prevIdx));
-                 --nextIdx, --prevIdx) {
-                commons++;
+            int commons = getCommons(nextStackTrace, prevStackTrace);
+            nextStackTrace.subList(0, nextStackTrace.size() - commons)
+                .forEach(e -> formatStackTraceElement(e, lineHead, attrSet));
+
+            if (commons > 0) {
+                append(lineHead + "\t... " + commons + " more\n", attrSet.defaultStyle);
             }
 
-            nextStackTrace.subList(0, nextIdx + 1)
-                    .forEach(e -> formatStackTraceElement(e, lineHead, doc, set));
-            if (commons > 0) {
-                append(doc, lineHead + "\t... " + commons + " more\n", null);
+            if (ex.getCause() != null) {
+                formatStackTraceEnclosing(ex.getCause(), history, "Caused by: ", lineHead, nextStackTrace);
             }
 
             Throwable[] ss = ex.getSuppressed();
             if (ss != null) {
                 Arrays.stream(ss)
-                        .forEach(s -> formatStackTraceEnclosing(s, doc, history,
+                        .forEach(s -> formatStackTraceEnclosing(s, history,
                                 "Suppressed: ", lineHead + "\t", prevStackTrace));
             }
 
             if (ex.getCause() != null) {
-                formatStackTraceEnclosing(ex.getCause(), doc, history, "Caused by: ", lineHead, nextStackTrace);
+                formatStackTraceEnclosing(ex.getCause(), history, "Caused by: ", lineHead, nextStackTrace);
             }
         }
 
-        public void formatStackTraceEnclosing(Throwable ex, StyledDocument doc, Set<Throwable> history,
+        public void formatStackTraceEnclosing(Throwable ex, Set<Throwable> history,
                                               String head,
                                               String lineHead,
                                               List<StackTraceElement> stackTrace) {
-            StackTraceStyleSet set;
-            if (ex.getCause() == null ) {
-                set = lastSet;
+            StackTraceAttributeSet attrSet;
+            if (ex.getCause() == null) {
+                attrSet = lastSet;
             } else {
-                set = middleSet;
+                attrSet = middleSet;
             }
-            append(doc, lineHead + head, null);
-            append(doc, ex.toString() + "\n", set.messageStyle);
+            append(lineHead + head, attrSet.defaultStyle);
+            append(ex.toString() + "\n", attrSet.messageStyle);
 
-            formatStackTrace(ex, doc, history, lineHead, set, stackTrace);
+            formatStackTrace(ex, history, lineHead, attrSet, stackTrace);
         }
 
-        public void formatStackTraceElement(StackTraceElement e, String lineHead, StyledDocument doc, StackTraceStyleSet styleSet) {
-            append(doc, lineHead + "\tat ", null);
+        public int getCommons(List<StackTraceElement> nextStackTrace, List<StackTraceElement> prevStackTrace) {
+            int commons = 0;
+            int nextIdx = nextStackTrace.size() - 1;
+            int prevIdx = prevStackTrace.size() - 1;
+            for (; nextIdx >= 0 && prevIdx >= 0 &&
+                    nextStackTrace.get(nextIdx).equals(prevStackTrace.get(prevIdx));
+                 --nextIdx, --prevIdx) {  //from bottom to top, check commons
+                ++commons;
+            }
+            return commons;
+        }
+
+        public void formatStackTraceElement(StackTraceElement e, String lineHead,
+                                            StackTraceAttributeSet attrSet) {
+            append(lineHead + "\t  at ", attrSet.defaultStyle);
             //classLoaderName/moduleName@moduleVersion/declCls.methodName(fileName:lineNum)
+
             String str = e.toString();
             int methodEnd = str.indexOf('('); //it suppose a class loader name does not contain "("
             int methodStart = str.lastIndexOf('.', methodEnd - 1);
@@ -408,220 +643,56 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             if (enclosingStart < 0) {
                 enclosingStart = classPart.length() - 1;
             }
+
             if (moduleEnd > 0) {
-                append(doc, typePart.substring(0, moduleEnd + 1), styleSet.moduleStyle);
+                append(typePart.substring(0, moduleEnd + 1), attrSet.moduleStyle);
             }
+
             if (packEnd > 0) {
-                append(doc, classPart.substring(0, packEnd + 1), styleSet.packageStyle);
+                append(classPart.substring(0, packEnd + 1), attrSet.packageStyle);
             }
-            append(doc, classPart.substring(packEnd + 1, enclosingStart + 1), styleSet.classNameStyle);
+
+            append(classPart.substring(packEnd + 1, enclosingStart + 1), attrSet.classNameStyle);
+
             if (enclosingStart < classPart.length()) {
-                append(doc, classPart.substring(enclosingStart + 1), styleSet.innerClassNameStyle);
+                append(classPart.substring(enclosingStart + 1), attrSet.innerClassNameStyle);
             }
-            append(doc, str.substring(methodStart, methodEnd), styleSet.methodStyle);
-            append(doc, str.substring(methodEnd), styleSet.fileNameStyle);
 
-            append(doc, "\n", null);
+            append(str.substring(methodStart, methodEnd), attrSet.moduleStyle);
+            append(str.substring(methodEnd), attrSet.fileNameStyle);
+            append("\n", attrSet.defaultStyle);
         }
 
-        public void append(StyledDocument doc, String str, AttributeSet attributeSet) {
-            try {
+        //////////////
 
-                List<Integer> indexes = getLinesForDocument(doc);
-                int len = doc.getLength();
-                for (int i = 0, l = str.length(); i < l; ++i) {
-                    char c = str.charAt(i);
-                    if (c == '\n') {
-                        indexes.add(len + i + 1);
-                    }
-                }
-
-                doc.insertString(len, str, attributeSet);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
+        public float[] getCollapsedSize() {
+            int[] bs = getBorderSize();
+            float[] baseSize = getBaseSize();
+            return new float[] {
+                    Math.max(1, maxWidth) * baseSize[0] + bs[0],
+                    baseSize[1] + bs[1] };
         }
 
-        @Override
-        protected void paintComponent(Graphics g) {
-            setSelectionHighlights(lastValue);
-            super.paintComponent(g);
-            if (selected && containerType.equals(ContainerType.List)) {
-                GuiSwingLogEntryString.drawSelection(getSize(), g);
-            }
-        }
-
-        @Override
-        public void mousePressed(GuiSwingLogEntry entry, Point point) {
-            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            ex.getSelections().clear();
-
-            TextPaneCellSupport.click(ex.getSelections(), true, point, this);
-
-            Point expandPoint = SwingUtilities.convertPoint(this, point, expandButton);
-            expandPressed = expandButton.contains(expandPoint) ? ex : null;
-        }
-
-        @Override
-        public void mouseDragged(GuiSwingLogEntry entry, Point point) {
-            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            TextPaneCellSupport.click(ex.getSelections(), false, point, this);
-        }
-
-        @Override
-        public void mouseReleased(GuiSwingLogEntry entry, Point point) {
-            if (expandPressed != null) {
-                expandButton.doClick();
-            }
-        }
-
-        @Override
-        public boolean updateFindPattern(String findKeyword) {
-            return supports != null &&
-                    supports.updateFindPattern(findKeyword);
-        }
-
-        @Override
-        public int findText(GuiSwingLogEntry entry, String findKeyword) {
-            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            if (supports != null) {
-                if (lastValue != ex) {
-                    setDocument(ex);
-                }
-                List<List<Integer>> is = supports.findTexts(findKeyword,
-                        message.getText(), stackTrace.getText());
-                return is.stream()
-                        .mapToInt(List::size)
-                        .sum();
-            }
-            return 0;
-        }
-
-        @Override
-        public Object focusNextFound(GuiSwingLogEntry entry, Object prevIndex, boolean forward) {
-            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            if (supports != null) {
-                TextPaneCellSupport.TextPaneCellMatchList m = supports.nextFindMatchedList(prevIndex, forward, entry);
-                if (m != null) {
-                    TextPaneCellSupport support = supports.getSupport(m.getSupportIndex());
-                    int[] range = support.updateSelectionMap(ex.getSelections(), m);
-                    int exIndex = getExpansionTextStartIndex();
-
-                    if (range != null && m.getSupportIndex() == 1 && //stackTrace
-                            (exIndex <= range[0] || exIndex <= range[1])
-                            && !ex.isExpanded()) { //lastValue == ex
-                        flipExpansion();
-                    }
-                }
-                return m;
-            }
-            return null;
-        }
-
-        public void flipExpansion() {
-            if (lastValue != null && lastValue instanceof GuiSwingLogEntryException) {
-                GuiSwingLogEntryException ex = (GuiSwingLogEntryException) lastValue;
-                ex.setExpanded(!ex.isExpanded());
-                expansionChanged();
-                if (lastList != null && lastList.getModel() instanceof GuiSwingLogList.GuiSwingLogListModel) {
-                    GuiSwingLogList.GuiSwingLogListModel model = (GuiSwingLogList.GuiSwingLogListModel) lastList.getModel();
-                    model.fireRowChanged(lastValue);
-                }
-            }
-        }
-
-        @Override
-        public String getSelectedText(GuiSwingLogEntry entry, boolean entireText) {
-            GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            if (lastValue != ex) {
-                setDocument(ex);
-            }
-            if (supports != null) {
-                return supports.getSelectedTexts(entireText ? null : ex.getSelections()).stream()
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.joining("\n"));
+        public void setExpanded(boolean expanded) {
+            this.expanded = expanded;
+            if (expanded) {
+                setPreferredSize(new Dimension((int) expandedStackSize[0], (int) expandedStackSize[1]));
             } else {
-                return message.getText();
+                setPreferredSize(new Dimension((int) collapsedStackSize[0], (int) collapsedStackSize[1]));
             }
         }
-    }
 
-    /**
-     * a set of {@link Style}s for describing stack-trace info.
-     */
-    @Deprecated
-    public static class StackTraceStyleSet {
-        public Style timeStyle;
-        public Style messageStyle;
-        public Style moduleStyle;
-        public Style packageStyle;
-        public Style classNameStyle;
-        public Style innerClassNameStyle;
-        public Style methodStyle;
-        public Style fileNameStyle;
-
-
-        public void set(StyledDocument doc, Style parent,
-                        Color time, Color message, Color module, Color pack,
-                        Color className, Color innerClass, Color method, Color fileName) {
-            timeStyle = doc.addStyle("timeStyle", parent);
-            StyleConstants.setForeground(timeStyle, time);
-
-            messageStyle = doc.addStyle("messageStyle", parent);
-            StyleConstants.setForeground(messageStyle, message);
-
-            moduleStyle = doc.addStyle("moduleStyle", parent);
-            StyleConstants.setForeground(moduleStyle, module);
-
-            packageStyle = doc.addStyle("packageStyle", parent);
-            StyleConstants.setForeground(packageStyle, pack);
-
-            classNameStyle = doc.addStyle("classNameStyle", parent);
-            StyleConstants.setForeground(classNameStyle, className);
-
-            innerClassNameStyle = doc.addStyle("innerClassNameStyle", parent);
-            StyleConstants.setForeground(innerClassNameStyle, innerClass);
-
-            methodStyle = doc.addStyle("methodStyle", parent);
-            StyleConstants.setForeground(methodStyle, method);
-
-            fileNameStyle = doc.addStyle("fileNameStyle", parent);
-            StyleConstants.setForeground(fileNameStyle, fileName);
-        }
-    }
-
-    /**
-     * a set of attributes for stack traces
-     */
-    public static class StackTraceAttributeSet {
-        public Map<AttributedCharacterIterator.Attribute, Object> timeStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> messageStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> moduleStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> packageStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> classNameStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> innerClassNameStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> methodStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> fileNameStyle;
-
-        public void set(Map<AttributedCharacterIterator.Attribute, Object> base,
-                        Color time, Color message, Color module, Color pack,
-                        Color className, Color innerClass, Color method, Color fileName) {
-            timeStyle = new HashMap<>(base);
-            timeStyle.put(TextAttribute.FOREGROUND, time);
-            messageStyle = new HashMap<>(base);
-            messageStyle.put(TextAttribute.FOREGROUND, message);
-            moduleStyle = new HashMap<>(base);
-            moduleStyle.put(TextAttribute.FOREGROUND, module);
-            packageStyle = new HashMap<>(base);
-            packageStyle.put(TextAttribute.FOREGROUND, pack);
-            classNameStyle = new HashMap<>(base);
-            classNameStyle.put(TextAttribute.FOREGROUND, className);
-            innerClassNameStyle = new HashMap<>(base);
-            innerClassNameStyle.put(TextAttribute.FOREGROUND, innerClass);
-            methodStyle = new HashMap<>(base);
-            methodStyle.put(TextAttribute.FOREGROUND, method);
-            fileNameStyle = new HashMap<>(base);
-            fileNameStyle.put(TextAttribute.FOREGROUND, fileName);
+        @Override
+        public Object getFocusNextFound(GuiLogEntryException value, Object prevIndex, boolean forward) {
+            Object v = super.getFocusNextFound(value, prevIndex, forward);
+            if (v instanceof LineInfoMatch && ((LineInfoMatch) v).line >= 2 && !expanded) {
+                //found
+                if (value instanceof GuiSwingLogEntryException) {
+                    ((GuiSwingLogEntryException) value).setExpanded(true);
+                }
+                setExpanded(true);
+            }
+            return v;
         }
     }
 
@@ -630,6 +701,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
      */
     public static class ExceptionExpandAction extends AbstractAction {
         protected GuiSwingLogExceptionRenderer renderer;
+
         public ExceptionExpandAction(GuiSwingLogExceptionRenderer renderer) {
             super("Expand");
             this.renderer = renderer;
@@ -648,6 +720,43 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         @Override
         public void actionPerformed(ActionEvent e) {
             renderer.flipExpansion();
+        }
+    }
+
+    /**
+     * a set of attributes for stack traces
+     */
+    public static class StackTraceAttributeSet {
+        public Map<AttributedCharacterIterator.Attribute, Object> defaultStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> timeStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> messageStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> moduleStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> packageStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> classNameStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> innerClassNameStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> methodStyle;
+        public Map<AttributedCharacterIterator.Attribute, Object> fileNameStyle;
+
+        public void set(Map<AttributedCharacterIterator.Attribute, Object> base,
+                        Color time, Color message, Color module, Color pack,
+                        Color className, Color innerClass, Color method, Color fileName) {
+            defaultStyle = new HashMap<>(base);
+            timeStyle = new HashMap<>(base);
+            timeStyle.put(TextAttribute.FOREGROUND, time);
+            messageStyle = new HashMap<>(base);
+            messageStyle.put(TextAttribute.FOREGROUND, message);
+            moduleStyle = new HashMap<>(base);
+            moduleStyle.put(TextAttribute.FOREGROUND, module);
+            packageStyle = new HashMap<>(base);
+            packageStyle.put(TextAttribute.FOREGROUND, pack);
+            classNameStyle = new HashMap<>(base);
+            classNameStyle.put(TextAttribute.FOREGROUND, className);
+            innerClassNameStyle = new HashMap<>(base);
+            innerClassNameStyle.put(TextAttribute.FOREGROUND, innerClass);
+            methodStyle = new HashMap<>(base);
+            methodStyle.put(TextAttribute.FOREGROUND, method);
+            fileNameStyle = new HashMap<>(base);
+            fileNameStyle.put(TextAttribute.FOREGROUND, fileName);
         }
     }
 }
