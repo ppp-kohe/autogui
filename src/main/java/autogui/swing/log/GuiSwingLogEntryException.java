@@ -199,8 +199,8 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         }
 
         public void flipExpansion() {
-            if (lastValue instanceof GuiSwingLogEntryException) {
-                GuiSwingLogEntryException ex = (GuiSwingLogEntryException) lastValue;
+            if (expandPressedValue != null) {
+                GuiSwingLogEntryException ex = expandPressedValue;
                 ex.setExpanded(!ex.isExpanded());
                 expansionChanged();
 
@@ -227,7 +227,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
 
             TextCellRenderer.mouseUpdateForComposition((GuiLogEntryException) entry, ex.getSelections(),
-                    true, point, message, stackTrace);
+                    true, this, point, message, stackTrace);
 
             Point expandPoint = SwingUtilities.convertPoint(this, point, expandButton);
             expandPressedValue = expandButton.contains(expandPoint) ? ex : null;
@@ -237,14 +237,14 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         public void mouseDragged(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
             TextCellRenderer.mouseUpdateForComposition((GuiLogEntryException) entry, ex.getSelections(),
-                    false, point, message, stackTrace);
+                    false, this, point, message, stackTrace);
         }
 
         @Override
         public void mouseReleased(GuiSwingLogEntry entry, Point point) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
             TextCellRenderer.mouseUpdateForComposition((GuiLogEntryException) entry, ex.getSelections(),
-                    false, point, message, stackTrace);
+                    false, this, point, message, stackTrace);
             if (expandPressedValue != null) {
                 expandButton.doClick();
             }
@@ -281,7 +281,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         @Override
         public String getSelectedText(GuiSwingLogEntry entry, boolean entireText) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
-            return TextCellRenderer.getSelectedTextForComposition(ex, true, ex.getSelections(), message, stackTrace);
+            return TextCellRenderer.getSelectedTextForComposition(ex, entireText, ex.getSelections(), message, stackTrace);
         }
     }
 

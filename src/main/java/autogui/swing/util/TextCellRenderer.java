@@ -16,10 +16,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * multi-line text cell renderer for JList and JTable
+ * @param <ValueType> the type of cell values
+ */
 public class TextCellRenderer<ValueType> extends JComponent
     implements TableCellRenderer, ListCellRenderer<ValueType> {
-    protected boolean selected;
-    protected int selectionStart;
+    protected boolean selected;   //cell selection
+    protected int selectionStart; //text selection range
     protected int selectionEnd;
 
     protected List<LineInfo> lines;
@@ -71,6 +75,18 @@ public class TextCellRenderer<ValueType> extends JComponent
         }
     }
 
+    public ValueType getValue() {
+        return value;
+    }
+
+    public List<LineInfo> getLines() {
+        return lines;
+    }
+
+    public Pattern getFindPattern() {
+        return findPattern;
+    }
+
     @Override
     public Component getListCellRendererComponent(JList<? extends ValueType> list, ValueType value, int index, boolean isSelected, boolean cellHasFocus) {
         return getTableCellRendererComponent(null, value, isSelected, cellHasFocus, index, 0);
@@ -89,6 +105,22 @@ public class TextCellRenderer<ValueType> extends JComponent
         return this;
     }
 
+    /**
+     * called from {@link #getTableCellRendererComponent(JTable, Object, boolean, boolean, int, int)}
+     *    (also {@link #getListCellRendererComponent(JList, Object, int, boolean, boolean)})
+     * <ol>
+     *     <li>check the value by {@link #isValueSame(Object, boolean)}. if the value is same, returns false </li>
+     *     <li>updates value and text with {@link #format(Object)}</li>
+     *     <li>{@link #buildFromValue()}: constructs {@link LineInfo}s
+     *       ({@link #buildLines(String, List)} and {@link #createLine(LineInfo, int, int, String)}), and
+     *         update preferredSize with {@link #buildSize()}.
+     *         Also, if forMouseEvents is false, {@link #setSelectionFromValue(Object)}</li>
+     *
+     * </ol>
+     * @param value a new value
+     * @param forMouseEvents {@link #setSelectionFromValue(Object)} will be skipped
+     * @return true if updated
+     */
     public boolean setValue(ValueType value, boolean forMouseEvents) {
         if (isValueSame(value, forMouseEvents)) {
             return false;
@@ -117,6 +149,7 @@ public class TextCellRenderer<ValueType> extends JComponent
         maxWidth = buildLines(text, lines);
         float[] size = buildSize();
         setPreferredSize(new Dimension((int) size[0], (int) size[1]));
+        invalidate();
 
         if (!forMouseEvents) {
             setSelectionFromValue(value);
@@ -145,13 +178,22 @@ public class TextCellRenderer<ValueType> extends JComponent
         return maxWidth;
     }
 
+    /**
+     * create a line-info
+     * @param prevLine a previous line-info or null for first line
+     * @param lineIndex the line number index
+     * @param start the start position of the line
+     * @param line the line string without new-line
+     * @return a created line info for the line
+     */
     public LineInfo createLine(LineInfo prevLine, int lineIndex, int start, String line) {
         AttributedString a = new AttributedString(line);
         return new LineInfo(a, start, line.length() + start);
     }
 
     /**
-     * use maxWidth set by {@link #buildFromValue()}
+     * multiply maxWidth set by {@link #buildFromValue()} and size of lines
+     *    by base char size ({@link #getBaseSize()}) , and border size by {@link #getBorderSize()}
      * @return {width, height}
      */
     public float[] buildSize() {
@@ -164,6 +206,10 @@ public class TextCellRenderer<ValueType> extends JComponent
 
     //////////////////
 
+    /**
+     * in the class, just call {@link #setFindHighlights()}
+     * @param value the new value
+     */
     public void setSelectionFromValue(ValueType value) {
         setFindHighlights();
     }
@@ -179,6 +225,8 @@ public class TextCellRenderer<ValueType> extends JComponent
     }
 
     /**
+     * constructs find-ranges for each lines matched by findPattern.
+     *  thus, {@link #updateFindPattern(String)} or {@link #updateFindPattern(Pattern)} needs to be called before.
      * @return number of matched portions
      */
     public int setFindHighlights() {
@@ -213,6 +261,26 @@ public class TextCellRenderer<ValueType> extends JComponent
     }
 
     /**
+     * update findPattern. findText becomes null
+     * @param newPattern a new pattern
+     * @return true if updated.
+     */
+    public boolean updateFindPattern(Pattern newPattern) {
+        if (newPattern == null) {
+            boolean prevIsNull = (findPattern != null);
+            findText = null;
+            findPattern = null;
+            return prevIsNull;
+        } else if (findPattern == null || !findPattern.equals(newPattern)) {
+            findText = null;
+            findPattern = newPattern;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * update findText and findPattern
      * @param findKeyword a new string, nullable
      * @return true if the string is updated. if true, it needs to be called {@link #setFindHighlights()}
@@ -233,8 +301,15 @@ public class TextCellRenderer<ValueType> extends JComponent
     }
 
     /**
+     * focus next matched range and return it.
+     *   <pre>
+     *       m = null;
+     *       m = getFocusNextFound(v, m, true);
+     *       m = getFocusNextFound(v, m, true);
+     *       ...
+     *   </pre>
      * @param value the value to be set
-     * @param prevIndex the previous focus object or null
+     * @param prevIndex the previous focus object or initially null
      * @param forward true for forward or false for backward
      * @return a focus object {@link LineInfoMatch} or null
      */
@@ -252,7 +327,7 @@ public class TextCellRenderer<ValueType> extends JComponent
                     ++i;
                 }
                 lastMatch = null;
-                return lastMatch;
+                return null;
             } else {
                 for (int i = lines.size() - 1; i >= 0; --i) {
                     LineInfo line = lines.get(i);
@@ -263,7 +338,7 @@ public class TextCellRenderer<ValueType> extends JComponent
                     }
                 }
                 lastMatch = null;
-                return lastMatch;
+                return null;
             }
         } else {
             LineInfoMatch m = (LineInfoMatch) prevIndex;
@@ -272,14 +347,30 @@ public class TextCellRenderer<ValueType> extends JComponent
         }
     }
 
+    //////////////////
+
+    /**
+     * change selection range by mouse pressing, dragging or releasing.
+     *  each rs values will be updated by {@link #setValue(Object, boolean)} with forMouseEvents=true.
+     *  update map entries of range and selection-range of rs by {@link #setSelectionRange(int, int)}
+     * @param value the value to be set for each rs
+     * @param ranges updated ranges
+     * @param pressInit if true, it means first pressing and clear ranges and updates both "from" and "to".
+     *                    otherwise just updates "to"
+     * @param pointComponent the coordinate base of point
+     * @param point a point in pointComponent
+     * @param rs components within pointComponent
+     * @param <V> the type of cell values
+     */
     @SafeVarargs
-    public static <V> void mouseUpdateForComposition(V value, Map<TextCellRenderer<?>,int[]> ranges, boolean pressInit, Point point, TextCellRenderer<V>... rs) {
+    public static <V> void mouseUpdateForComposition(V value, Map<TextCellRenderer<?>,int[]> ranges, boolean pressInit,
+                                                     Component pointComponent, Point point, TextCellRenderer<V>... rs) {
         if (pressInit) {
             ranges.clear();
         }
         for (TextCellRenderer<V> r : rs) {
             r.setValue(value, true);
-            int idx = r.getIndex(new Point(point.x - r.getX(), point.y - r.getY()));
+            int idx = r.getIndex(SwingUtilities.convertPoint(pointComponent, point, r));
             int[] range = ranges.computeIfAbsent(r, v -> new int[2]);
             if (pressInit) {
                 range[0] = idx;
@@ -386,6 +477,7 @@ public class TextCellRenderer<ValueType> extends JComponent
             TextLayout l = new TextLayout(a.getIterator(), g.getFontRenderContext());
             baseWidth = l.getAdvance();
             baseHeight = l.getAscent() + l.getDescent() + l.getLeading();
+            g.dispose();
         }
         return new float[] {baseWidth, baseHeight};
     }
@@ -410,6 +502,18 @@ public class TextCellRenderer<ValueType> extends JComponent
         return UIManager.getColor("TextPane.selectionBackground");
     }
 
+    public Color getLineSelectionColor() {
+        return getSelectionColor();
+    }
+
+    public Color getLineFindColor() {
+        return Color.orange;
+    }
+
+    public Color getLineFindMatchColor() {
+        return Color.yellow;
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         getBorder().paintBorder(this, g, 0, 0, getWidth(), getHeight());
@@ -420,9 +524,9 @@ public class TextCellRenderer<ValueType> extends JComponent
         FontRenderContext frc = g2.getFontRenderContext();
         float x = insets.left;
         float y = insets.top;
-        Color selectionColor = getSelectionColor();
-        Color findColor = Color.orange;
-        Color findMatchColor = Color.yellow;
+        Color selectionColor = getLineSelectionColor();
+        Color findColor = getLineFindColor();
+        Color findMatchColor = getLineFindMatchColor();
 
         int lineIndex = 0;
         LineInfo prev = null;
@@ -579,6 +683,9 @@ public class TextCellRenderer<ValueType> extends JComponent
         return end;
     }
 
+    /**
+     * a line holding {@link AttributedString}
+     */
     public static class LineInfo {
         public AttributedString attributedString;
         public int start;
@@ -603,6 +710,9 @@ public class TextCellRenderer<ValueType> extends JComponent
             return indent + (end - start);
         }
 
+        /**
+         * @param indent number of indent characters
+         */
         public void setIndent(int indent) {
             this.indent = indent;
         }
@@ -611,6 +721,10 @@ public class TextCellRenderer<ValueType> extends JComponent
             return indent;
         }
 
+        /**
+         * @param frc the font-rendering-context used when creating a new text-layout
+         * @return a new or cached text-layout
+         */
         public TextLayout getLayout(FontRenderContext frc) {
             if (layout == null) {
                 layout = new TextLayout(attributedString.getIterator(), frc);
@@ -622,6 +736,11 @@ public class TextCellRenderer<ValueType> extends JComponent
             layout = null;
         }
 
+        /**
+         * @param l text-layout of the line
+         * @param i a character index (0 means the line-top)
+         * @return X position of the right-hit of the character i
+         */
         public float getX(TextLayout l, int i) {
             if (i > 0) {
                 TextHitInfo hit = l.getNextRightHit(i);
@@ -633,6 +752,12 @@ public class TextCellRenderer<ValueType> extends JComponent
             return 0;
         }
 
+        /**
+         * @param l created text-layout of this line
+         * @param start same origin as this.start
+         * @param end same origin as this.start
+         * @return a logical highlight shape for the range
+         */
         public Shape getSelectionShape(TextLayout l, int start, int end) {
             if (end < start) {
                 int tmp = end;
@@ -656,6 +781,11 @@ public class TextCellRenderer<ValueType> extends JComponent
             }
         }
 
+        /**
+         * add a new range
+         * @param start same origin as this.start
+         * @param end same origin as this.start
+         */
         public void addFindRange(int start, int end) {
             start = Math.max(this.start, start);
             end = Math.min(this.end, end);
@@ -667,6 +797,9 @@ public class TextCellRenderer<ValueType> extends JComponent
             }
         }
 
+        /**
+         * @return never null
+         */
         public List<int[]> getFindRanges() {
             if (findRanges == null) {
                 return Collections.emptyList();
@@ -679,10 +812,19 @@ public class TextCellRenderer<ValueType> extends JComponent
         }
     }
 
+    /**
+     * focusing information for a matched  pattern position
+     */
     public static class LineInfoMatch {
         public TextCellRenderer<?> renderer;
         public Object value;
+        /**
+         * a line number index
+         */
         public int line;
+        /**
+         * an index of ranges, returned by {@link LineInfo#getFindRanges()}
+         */
         public int range;
 
         public LineInfoMatch(int line, int range, TextCellRenderer r, Object v) {

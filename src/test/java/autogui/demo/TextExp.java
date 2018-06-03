@@ -1,9 +1,6 @@
 package autogui.demo;
 
-import autogui.base.log.GuiLogEntry;
-import autogui.base.log.GuiLogEntryException;
-import autogui.base.log.GuiLogEntryString;
-import autogui.base.log.GuiLogManager;
+import autogui.base.log.*;
 import autogui.swing.log.GuiSwingLogEntry;
 import autogui.swing.log.GuiSwingLogEntryException;
 import autogui.swing.log.GuiSwingLogEntryString;
@@ -35,13 +32,6 @@ public class TextExp {
         GuiSwingLogManager.GuiSwingLogWindow w = new GuiSwingLogManager.GuiSwingLogWindow(m);
         w.setVisible(true);
 
-        for (int i = 0; i < 20; ++i) {
-            //m.show(new GuiSwingLogEntryString(i + " hello\nworld"));
-            m.show(new GuiSwingLogEntryException(
-                    new RuntimeException("wrapper message",
-                            new RuntimeException(i + "hello\nworld"))));
-        }
-
         JFrame f = new JFrame("hello");
         {
             JPanel pane = new JPanel(new BorderLayout());
@@ -61,19 +51,72 @@ public class TextExp {
 //                                .getTableCellRenderer());
 //                pane.add(new JScrollPane(list));
 
-                JButton btn = new JButton("Add");
-                btn.addActionListener(e -> {
-                    for (int i = 0; i < 1000; ++i) {
-                        //logs.addElement(new GuiLogEntryString("hello " + i + "\n world" + + i));
-                        m.show(new GuiSwingLogEntryString("hello " + i + "\n world" + + i));
+                JToolBar bar = new JToolBar();
+                {
+                    JButton btn = new JButton("Message 1000");
+                    {
+                        btn.addActionListener(e -> {
+                            for (int i = 0; i < 1000; ++i) {
+                                //logs.addElement(new GuiLogEntryString("hello " + i + "\n world" + + i));
+                                m.show(new GuiSwingLogEntryString("hello " + i + "\n world" + +i));
+                            }
+                        });
+                        bar.add(btn);
                     }
-                });
 
-                pane.add(btn, BorderLayout.NORTH);
+                    JButton exc = new JButton("Exception");
+                    {
+                        exc.addActionListener(e -> {
+                                    for (int i = 0; i < 20; ++i) {
+                                        //m.show(new GuiSwingLogEntryString(i + " hello\nworld"));
+                                        GuiLogManager.get().logError(
+                                                new RuntimeException(i + " wrapper message",
+                                                        new RuntimeException(i + "hello\nworld")));
+                                    }
+                                });
+                        bar.add(exc);
+                    }
+
+                    JButton msg = new JButton("Message");
+                    {
+                        msg.addActionListener(e -> {
+                            GuiLogManager.get().logString("hello, world");
+                        });
+                        bar.add(msg);
+                    }
+
+                    JButton prg = new JButton("Progress");
+                    {
+                        prg.addActionListener(e -> {
+                            new Thread(() -> {
+                                int stopCount = 0;
+                                try (GuiLogEntryProgress p = GuiSwingLogManager.get().logProgress()) {
+                                    for (int i = 0; i < 100; ++i) {
+                                        p.addValueP(0.01f).setMessage("loop \n <" + i + ">");
+                                        try {
+                                            Thread.sleep(500);
+                                        } catch (InterruptedException ie) {
+                                            ++stopCount;
+                                            if (stopCount > 3) {
+                                                throw ie;
+                                            }
+                                        }
+                                    }
+                                } catch (Exception ex) {
+                                    ex.printStackTrace();
+                                }
+                            }).start();
+                        });
+                        bar.add(prg);
+                    }
+
+                    pane.add(bar, BorderLayout.NORTH);
+                }
             }
             f.setContentPane(pane);
         }
-        f.setSize(200, 100);
+        f.setSize(400, 100);
+        f.setLocation(500, 200);
         f.setVisible(true);
 
     }
@@ -123,7 +166,6 @@ public class TextExp {
 
                 Rectangle2D bs = tl.getBounds();
                 g2.draw(new Rectangle2D.Double(10, y, tl.getAdvance(), bs.getHeight()));
-                System.err.println(bs);
 
                 y += tl.getAscent();
                 g2.setPaint(Color.black);

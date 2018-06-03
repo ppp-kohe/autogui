@@ -281,28 +281,28 @@ public class GuiLogManager {
             long years = period.getYears();
 
             if (years > 0) {
-                parts.add(String.format("%,dy", years));
+                parts.add(String.format("%,4dy", years));
             }
             if (!parts.isEmpty() || months > 0) {
-                parts.add(months + "mo");
+                parts.add(String.format("%2dmo", months));
             }
             if (!parts.isEmpty() || days > 0) {
-                parts.add(days + "d,");
+                parts.add(String.format("%3dd,", days));
             }
         }
 
         if (!parts.isEmpty() || hourPart > 0) {
-            parts.add(hourPart + "h");
+            parts.add(String.format("%2dh", hourPart));
         }
         if (!parts.isEmpty() || minPart > 0) {
-            parts.add(minPart + "m");
+            parts.add(String.format("%2dm", minPart));
         }
         if (!parts.isEmpty() || secPart > 0) {
-            parts.add(secPart + "s");
+            parts.add(String.format("%2ds", secPart));
         }
 
         if (msPart > 0) {
-            parts.add(msPart + "ms");
+            parts.add(String.format("%3dms", msPart));
         } else if (parts.isEmpty()) {
             parts.add(String.format("%,dns", nsPart));
         }
