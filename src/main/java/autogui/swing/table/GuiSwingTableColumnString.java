@@ -7,9 +7,14 @@ import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.GuiSwingViewStringField;
 import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -43,10 +48,32 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                 menuItems = PopupCategorized.getMenuItems(Arrays.asList(
                         infoLabel,
                         new GuiSwingView.ContextRefreshAction(getSwingViewContext()),
-                        new GuiSwingView.HistoryMenu<>(this, getSwingViewContext())
-                ), GuiSwingJsonTransfer.getActionMenuItems(this, getSwingViewContext()));
+                        new GuiSwingView.HistoryMenu<>(this, getSwingViewContext()),
+                        new GuiSwingView.ToStringCopyAction(this, context),
+                        new LabelTextPasteAllAction(this),
+                        new PopupExtensionText.TextOpenBrowserAction(this)
+                ), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
             }
             return menuItems;
+        }
+    }
+
+    public static class LabelTextPasteAllAction extends PopupExtensionText.TextPasteAllAction {
+        protected GuiSwingViewLabel.PropertyLabel label;
+
+        public LabelTextPasteAllAction(GuiSwingViewLabel.PropertyLabel label) {
+            super(null);
+            this.label = label;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return label.isSwingEditable();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            paste(label::setSwingViewValue);
         }
     }
 
@@ -54,7 +81,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyStringPane {
         public ColumnEditTextPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
             super(context, specifierManager);
-            getField().setEditable(false);
+            //getField().setEditable(false);
         }
 
         @Override
