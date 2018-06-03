@@ -148,6 +148,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
             followingLineStyle = getBodyStyle();
 
             setFont(GuiSwingLogManager.getFont());
+            setOpaque(false);
         }
 
         @Override
@@ -212,6 +213,22 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
             } else {
                 return prevX;
             }
+        }
+
+        @Override
+        public void paintLineSelection(Graphics2D g2, LineInfo line, TextLayout l, Color selectionColor, float lineX) {
+            if (containerType.equals(ContainerType.StatusBar)) {
+                return;
+            }
+            super.paintLineSelection(g2, line, l, selectionColor, lineX);
+        }
+
+        @Override
+        public void paintCellSelection(Graphics g, Color selectionColor) {
+            if (containerType.equals(ContainerType.StatusBar)) {
+                return;
+            }
+            super.paintCellSelection(g, selectionColor);
         }
 
         @Override

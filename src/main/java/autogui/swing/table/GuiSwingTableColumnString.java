@@ -2,12 +2,17 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
+import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.GuiSwingViewStringField;
+import autogui.swing.util.PopupCategorized;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * a column factory for {@link String}.
@@ -20,21 +25,36 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                                           GuiSwingView.SpecifierManager parentSpecifier) {
         GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
-                new ColumnEditTextPane(context, valueSpecifier, false),
-                new ColumnEditTextPane(context, valueSpecifier, true))
+                new ColumnTextPane(context, valueSpecifier),
+                new ColumnEditTextPane(context, valueSpecifier))
                     .withComparator(Comparator.comparing(String.class::cast))
                     .withValueType(String.class);
     }
 
+    public static class ColumnTextPane extends GuiSwingViewLabel.PropertyLabel {
+        public ColumnTextPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+            super(context, specifierManager);
+            setOpaque(true);
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(Arrays.asList(
+                        infoLabel,
+                        new GuiSwingView.ContextRefreshAction(getSwingViewContext()),
+                        new GuiSwingView.HistoryMenu<>(this, getSwingViewContext())
+                ), GuiSwingJsonTransfer.getActionMenuItems(this, getSwingViewContext()));
+            }
+            return menuItems;
+        }
+    }
+
     /** a component for editor and renderer */
     public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyStringPane {
-        protected boolean editor;
-        public ColumnEditTextPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, boolean editor) {
+        public ColumnEditTextPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
             super(context, specifierManager);
-            this.editor = editor;
-            if (!editor) {
-                getField().setEditable(false);
-            }
+            getField().setEditable(false);
         }
 
         @Override
@@ -43,11 +63,9 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             setOpaque(true);
             setLayout(new BorderLayout());
             add(field, BorderLayout.CENTER);
-            if (!editor) {
-                getField().setBorder(BorderFactory.createEmptyBorder());
-                getField().setOpaque(true);
-                setBorder(BorderFactory.createEmptyBorder());
-            }
+            getField().setBorder(BorderFactory.createEmptyBorder());
+            getField().setOpaque(true);
+            setBorder(BorderFactory.createEmptyBorder());
         }
 
         @Override

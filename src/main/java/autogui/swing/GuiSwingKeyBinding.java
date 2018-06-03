@@ -43,11 +43,34 @@ public class GuiSwingKeyBinding {
     }
 
     public void bind(JComponent component) {
+        addDefaultExcluded();
         traverseKeyBinding(component, 0);
         assign();
         bindTo(component);
     }
 
+    public void addDefaultExcluded() {
+        int mod = getMenuShortcutKeyMask();
+        int[] vk = {
+                KeyEvent.VK_Q, //quit
+                KeyEvent.VK_W, //close
+                KeyEvent.VK_A, //select-all
+                KeyEvent.VK_H, //hide
+                KeyEvent.VK_Z, //undo
+                KeyEvent.VK_X, //cut
+                KeyEvent.VK_C, //copy
+                KeyEvent.VK_V, //paste
+        };
+        for (int k : vk) {
+            addDefaultExcludedKey(k, mod);
+        }
+        addDefaultExcludedKey(KeyEvent.VK_H, KeyEvent.ALT_DOWN_MASK | mod);
+    }
+
+    public void addDefaultExcludedKey(int k, int mod) {
+        putKeyStroke(new KeyStrokeActionForInputMap(null, PRECEDENCE_SET_INPUT_MAP,
+                KeyStroke.getKeyStroke(k, mod)));
+    }
 
     public void traverseKeyBinding(Component c, int depth) {
         if (c instanceof GuiSwingView.ValuePane<?>) {
@@ -176,12 +199,18 @@ public class GuiSwingKeyBinding {
     public abstract static class KeyStrokeAction {
         public KeyPrecedenceSet precedence;
         public KeyStroke stroke;
+        protected boolean assigned;
 
-        public abstract boolean isAssigned();
+        public boolean isAssigned() {
+            return assigned;
+        }
+
         public abstract boolean isDispatcherRequired();
         public abstract void process();
 
-        public void assigned() { }
+        public void assigned() {
+            assigned = true;
+        }
 
         public Set<KeyStrokeAction> derive() {
             return Collections.emptySet();
@@ -201,17 +230,15 @@ public class GuiSwingKeyBinding {
         }
 
         @Override
-        public boolean isAssigned() {
-            return true;
-        }
-
-        @Override
         public boolean isDispatcherRequired() {
             return false;
         }
 
         @Override
         public void process() {
+            if (component == null) {
+                return;
+            }
             component.getActionForKeyStroke(this.stroke)
                     .actionPerformed(new ActionEvent(component, -1,
                             "" + component.getInputMap().get(stroke)));
@@ -222,7 +249,6 @@ public class GuiSwingKeyBinding {
         public GuiSwingView.ValuePane<?> pane;
         public PopupCategorized.CategorizedMenuItem item;
         public Action action;
-        protected boolean assigned;
 
         protected KeyStrokeActionForValuePane base;
         protected List<KeyStrokeActionForValuePane> derived;
@@ -430,11 +456,6 @@ public class GuiSwingKeyBinding {
                     ((JTabbedPane) parent).setSelectedComponent(c);
                 }
             }
-        }
-
-        @Override
-        public boolean isAssigned() {
-            return assigned;
         }
 
         @Override
@@ -825,7 +846,7 @@ public class GuiSwingKeyBinding {
             if (o instanceof KeyPrecedenceDepth) {
                 return Integer.compare(depth, ((KeyPrecedenceDepth) o).depth);
             }
-            return 0;
+            return Integer.compare(getPrecedenceType(), o.getPrecedenceType());
         }
 
         @Override
@@ -877,7 +898,7 @@ public class GuiSwingKeyBinding {
                     return p;
                 }
             } else {
-                return 0;
+                return Integer.compare(getPrecedenceType(), o.getPrecedenceType());
             }
         }
 

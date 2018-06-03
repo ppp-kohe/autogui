@@ -9,6 +9,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.font.TextLayout;
 import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
@@ -123,13 +124,13 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 stopButton.setPreferredSize(new Dimension(24, 24));
             }
 
-            message = new ProgressMessageRenderer(manager);
+            message = new ProgressMessageRenderer(manager, containerType);
             {
                 message.setBorder(BorderFactory.createEmptyBorder());
                 message.setFont(font);
             }
 
-            message2 = new ProgressStatusRenderer(manager);
+            message2 = new ProgressStatusRenderer(manager, containerType);
             {
                 message2.setBorder(BorderFactory.createEmptyBorder());
                 message2.setFont(font);
@@ -267,7 +268,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            if (selected) {
+            if (selected && !containerType.equals(ContainerType.StatusBar)) {
                 Dimension size = getSize();
                 RoundRectangle2D.Float r = new RoundRectangle2D.Float(2, 2, size.width - 5, size.height - 5, 3, 3);
                 Graphics2D g2 = (Graphics2D) g;
@@ -360,12 +361,14 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
     public static class ProgressMessageRenderer extends TextCellRenderer<GuiLogEntryProgress> {
         protected GuiSwingLogManager manager;
+        protected ContainerType containerType;
 
         protected Map<AttributedCharacterIterator.Attribute, Object> timeStyle;
         protected Map<AttributedCharacterIterator.Attribute, Object> followingLineStyle;
 
-        public ProgressMessageRenderer(GuiSwingLogManager manager) {
+        public ProgressMessageRenderer(GuiSwingLogManager manager, ContainerType containerType) {
             this.manager = manager;
+            this.containerType = containerType;
             timeStyle = GuiSwingLogEntryString.getTimeStyle();
             followingLineStyle = GuiSwingLogEntryString.getBodyStyle();
 
@@ -392,17 +395,35 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 return GuiSwingLogEntryString.createLineFollowing(prevLine, lineIndex, start, line, followingLineStyle);
             }
         }
+
+        @Override
+        public void paintLineSelection(Graphics2D g2, LineInfo line, TextLayout l, Color selectionColor, float lineX) {
+            if (containerType.equals(ContainerType.StatusBar)) {
+                return;
+            }
+            super.paintLineSelection(g2, line, l, selectionColor, lineX);
+        }
+
+        @Override
+        public void paintCellSelection(Graphics g, Color selectionColor) {
+            if (containerType.equals(ContainerType.StatusBar)) {
+                return;
+            }
+            super.paintCellSelection(g, selectionColor);
+        }
     }
 
     public static class ProgressStatusRenderer extends TextCellRenderer<GuiLogEntryProgress> {
         protected GuiSwingLogManager manager;
+        protected ContainerType containerType;
         protected boolean finish = false;
 
         protected Map<AttributedCharacterIterator.Attribute, Object> timeStyle;
         protected Map<AttributedCharacterIterator.Attribute, Object> followingLineStyle;
 
-        public ProgressStatusRenderer(GuiSwingLogManager manager) {
+        public ProgressStatusRenderer(GuiSwingLogManager manager, ContainerType containerType) {
             this.manager = manager;
+            this.containerType = containerType;
             timeStyle = GuiSwingLogEntryString.getTimeStyle();
             followingLineStyle = GuiSwingLogEntryString.getBodyStyle();
 
@@ -457,6 +478,23 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         @Override
         public void buildFromValue() {
             super.buildFromValue();
+        }
+
+
+        @Override
+        public void paintLineSelection(Graphics2D g2, LineInfo line, TextLayout l, Color selectionColor, float lineX) {
+            if (containerType.equals(ContainerType.StatusBar)) {
+                return;
+            }
+            super.paintLineSelection(g2, line, l, selectionColor, lineX);
+        }
+
+        @Override
+        public void paintCellSelection(Graphics g, Color selectionColor) {
+            if (containerType.equals(ContainerType.StatusBar)) {
+                return;
+            }
+            super.paintCellSelection(g, selectionColor);
         }
     }
 }

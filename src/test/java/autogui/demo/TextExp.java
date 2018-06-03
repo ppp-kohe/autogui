@@ -1,10 +1,7 @@
 package autogui.demo;
 
 import autogui.base.log.*;
-import autogui.swing.log.GuiSwingLogEntry;
-import autogui.swing.log.GuiSwingLogEntryException;
-import autogui.swing.log.GuiSwingLogEntryString;
-import autogui.swing.log.GuiSwingLogManager;
+import autogui.swing.log.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -112,6 +109,8 @@ public class TextExp {
 
                     pane.add(bar, BorderLayout.NORTH);
                 }
+
+                pane.add(new GuiSwingLogStatusBar(m), BorderLayout.SOUTH);
             }
             f.setContentPane(pane);
         }

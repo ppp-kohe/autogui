@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * multi-line text cell renderer for JList and JTable
  * @param <ValueType> the type of cell values
  */
-public class TextCellRenderer<ValueType> extends JComponent
+public class TextCellRenderer<ValueType> extends JPanel
     implements TableCellRenderer, ListCellRenderer<ValueType> {
     protected boolean selected;   //cell selection
     protected int selectionStart; //text selection range
@@ -43,6 +43,7 @@ public class TextCellRenderer<ValueType> extends JComponent
     public TextCellRenderer() {
         lines = new ArrayList<>();
         setOpaque(false);
+        setBackground(new Color(255, 255, 255, 255));
         initBorder();
     }
 
@@ -565,8 +566,6 @@ public class TextCellRenderer<ValueType> extends JComponent
     public void paintSetUpGraphics(Graphics2D g2) {
         g2.setFont(getFont());
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setPaint(Color.white);
-        g2.fillRect(0, 0, getWidth(), getHeight());
         g2.setPaint(Color.black);
     }
 

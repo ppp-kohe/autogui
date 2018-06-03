@@ -10,6 +10,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.font.TextAttribute;
+import java.awt.font.TextLayout;
 import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
@@ -107,8 +108,9 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             this.manager = manager;
             setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
             setLayout(new BorderLayout(0, 0));
+            setOpaque(false);
 
-            message = new ExceptionMessageRenderer(manager);
+            message = new ExceptionMessageRenderer(manager, containerType);
 
             stackTrace = new ExceptionStackTraceRenderer();
             if (type.equals(ContainerType.List)) {
@@ -172,7 +174,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            if (selected) {
+            if (selected && !containerType.equals(ContainerType.StatusBar)) {
                 Dimension size = getSize();
                 RoundRectangle2D.Float r = new RoundRectangle2D.Float(2, 2, size.width - 5, size.height - 5, 3, 3);
                 Graphics2D g2 = (Graphics2D) g;
@@ -287,13 +289,15 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
     public static class ExceptionMessageRenderer extends TextCellRenderer<GuiLogEntryException> {
         protected GuiSwingLogManager manager;
+        protected ContainerType containerType;
         protected Map<AttributedCharacterIterator.Attribute, Object> messageTimeAttributes;
         protected Map<AttributedCharacterIterator.Attribute, Object> messageAttributes;
 
         protected int timeEnd;
 
-        public ExceptionMessageRenderer(GuiSwingLogManager manager) {
+        public ExceptionMessageRenderer(GuiSwingLogManager manager, ContainerType containerType) {
             this.manager = manager;
+            this.containerType = containerType;
 
             messageTimeAttributes = GuiSwingLogEntryString.getTimeStyle();
 
@@ -335,6 +339,23 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             } else {
                 return GuiSwingLogEntryString.createLineFollowing(prevLine, lineIndex, start, line, messageAttributes);
             }
+        }
+
+
+        @Override
+        public void paintLineSelection(Graphics2D g2, LineInfo line, TextLayout l, Color selectionColor, float lineX) {
+            if (containerType.equals(ContainerType.StatusBar)) {
+                return;
+            }
+            super.paintLineSelection(g2, line, l, selectionColor, lineX);
+        }
+
+        @Override
+        public void paintCellSelection(Graphics g, Color selectionColor) {
+            if (containerType.equals(ContainerType.StatusBar)) {
+                return;
+            }
+            super.paintCellSelection(g, selectionColor);
         }
     }
 
