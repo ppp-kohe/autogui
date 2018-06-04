@@ -72,28 +72,28 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
                             new GuiSwingTableColumnString.LabelTextPasteAllAction(this),
                             new GuiSwingTableColumnString.LabelTextLoadAction(this),
                             new GuiSwingTableColumnString.LabelTextSaveAction(this),
-                            new ListEnumSetMenu(this)
+                            new ColumnEnumSetMenu(this)
                     ), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
             }
             return menuItems;
         }
     }
 
-    public static class ListEnumSetMenu extends GuiSwingViewEnumComboBox.EnumSetMenu implements TableTargetMenu {
-        public ListEnumSetMenu(GuiSwingView.ValuePane<Object> pane) {
+    public static class ColumnEnumSetMenu extends GuiSwingViewEnumComboBox.EnumSetMenu implements TableTargetMenu {
+        public ColumnEnumSetMenu(GuiSwingView.ValuePane<Object> pane) {
             super(pane);
         }
 
         @Override
         public JMenu convert(GuiReprCollectionTable.TableTargetColumn target) {
-            return new ListEnumSetMenuForTableColumn(pane, target);
+            return new ColumnEnumSetMenuForTableColumn(pane, target);
         }
     }
 
-    public static class ListEnumSetMenuForTableColumn extends GuiSwingViewEnumComboBox.EnumSetMenu {
+    public static class ColumnEnumSetMenuForTableColumn extends GuiSwingViewEnumComboBox.EnumSetMenu {
         protected GuiReprCollectionTable.TableTargetColumn target;
 
-        public ListEnumSetMenuForTableColumn(GuiSwingView.ValuePane<Object> pane, GuiReprCollectionTable.TableTargetColumn target) {
+        public ColumnEnumSetMenuForTableColumn(GuiSwingView.ValuePane<Object> pane, GuiReprCollectionTable.TableTargetColumn target) {
             super(pane);
             this.target = target;
             setItemsWithTarget();
@@ -109,14 +109,14 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
 
         @Override
         public Action createItem(Object e) {
-            return new ListEnumSetAction(pane, e, target);
+            return new ColumnEnumSetAction(pane, e, target);
         }
     }
 
-    public static class ListEnumSetAction extends GuiSwingViewEnumComboBox.EnumSetAction {
+    public static class ColumnEnumSetAction extends GuiSwingViewEnumComboBox.EnumSetAction {
         protected GuiReprCollectionTable.TableTargetColumn target;
 
-        public ListEnumSetAction(GuiSwingView.ValuePane<Object> pane, Object value, GuiReprCollectionTable.TableTargetColumn target) {
+        public ColumnEnumSetAction(GuiSwingView.ValuePane<Object> pane, Object value, GuiReprCollectionTable.TableTargetColumn target) {
             super(pane, value);
             this.target = target;
         }

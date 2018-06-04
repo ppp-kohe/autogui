@@ -1,13 +1,11 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingView;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * an interface of a set of {@link GuiSwingTableColumn}.

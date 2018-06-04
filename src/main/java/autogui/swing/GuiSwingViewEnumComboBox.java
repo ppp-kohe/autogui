@@ -2,7 +2,6 @@ package autogui.swing;
 
 import autogui.base.mapping.*;
 import autogui.swing.table.TableTargetColumnAction;
-import autogui.swing.table.TableTargetMenu;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
@@ -366,6 +365,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             setItems();
         }
 
+        //it does not override isEnabled(): always true
+
         public void setItems() {
             removeAll();
             Arrays.stream(getEnumConstants(pane.getSwingViewContext()))
@@ -398,6 +399,11 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             this.pane = pane;
 
             putValue(NAME, getValueAsString(value));
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return pane.isSwingEditable();
         }
 
         public String getValueAsString(Object v) {

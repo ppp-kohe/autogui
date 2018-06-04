@@ -2,7 +2,6 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.util.PopupCategorized;
-import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

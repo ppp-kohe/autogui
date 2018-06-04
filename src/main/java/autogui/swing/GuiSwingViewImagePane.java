@@ -17,7 +17,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -594,11 +593,33 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public Action createAction(GuiPreferences.HistoryValueEntry e) {
-            Action a = super.createAction(e);
+            Action a = createActionBase(e);
             Image img = (Image) e.getValue();
             Image icon = img.getScaledInstance(16, 16, Image.SCALE_DEFAULT);
             a.putValue(Action.SMALL_ICON, new ImageIcon(icon));
             return a;
+        }
+
+        public Action createActionBase(GuiPreferences.HistoryValueEntry e) {
+            return super.createAction(e);
+        }
+
+        @Override
+        public JMenu convert(GuiReprCollectionTable.TableTargetColumn target) {
+            return new HistoryMenuItemForTableColumn(component, context, target);
+        }
+    }
+
+    public static class HistoryMenuItemForTableColumn extends HistoryMenuImage {
+        protected GuiReprCollectionTable.TableTargetColumn target;
+        public HistoryMenuItemForTableColumn(PropertyImagePane component, GuiMappingContext context, GuiReprCollectionTable.TableTargetColumn target) {
+            super(component, context);
+            this.target = target;
+        }
+
+        @Override
+        public Action createActionBase(GuiPreferences.HistoryValueEntry e) {
+            return new HistorySetForColumnAction<>(getActionName(e), e.getValue(), target);
         }
     }
 

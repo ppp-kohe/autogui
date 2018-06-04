@@ -245,15 +245,25 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
             super(component, context);
         }
 
+        public Icon getIcon(Object v) {
+            SearchTextFieldFilePath.FileItem item = component.getFileItemFromValue(v);
+            if (item != null) {
+                return item.getIcon();
+            } else {
+                return null;
+            }
+        }
+
         @Override
         public Action createAction(GuiPreferences.HistoryValueEntry e) {
-            Action a = super.createAction(e);
-            SearchTextFieldFilePath.FileItem item = component.getFileItemFromValue(e.getValue());
-            if (item != null) {
-                Icon icon = item.getIcon();
-                a.putValue(Action.SMALL_ICON, icon);
-            }
+            Action a = createActionBase(e);
+            Icon icon = getIcon(e.getValue());
+            a.putValue(Action.SMALL_ICON, icon);
             return a;
+        }
+
+        public Action createActionBase(GuiPreferences.HistoryValueEntry e) {
+            return super.createAction(e);
         }
 
         @Override

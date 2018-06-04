@@ -17,8 +17,6 @@ import java.text.AttributedString;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * a log-entry for an exception with supporting GUI rendering

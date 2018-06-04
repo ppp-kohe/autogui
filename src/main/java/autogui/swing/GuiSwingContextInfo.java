@@ -5,8 +5,6 @@ import autogui.base.type.*;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 
-import javax.swing.*;
-
 public class GuiSwingContextInfo {
     protected static GuiSwingContextInfo instance = new GuiSwingContextInfo();
 

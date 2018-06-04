@@ -7,7 +7,6 @@ import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.GuiSwingViewNumberSpinner;
 import autogui.swing.util.PopupCategorized;
-import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;

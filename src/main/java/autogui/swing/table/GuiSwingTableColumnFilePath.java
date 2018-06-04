@@ -1,6 +1,9 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
+import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewFilePathField;
 import autogui.swing.GuiSwingViewLabel;
@@ -11,11 +14,12 @@ import autogui.swing.util.SearchTextFieldFilePath;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -61,15 +65,26 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         }
 
         @Override
-        public void setTextWithFormatting(Object value) {
-            if (value instanceof Path) {
-                SearchTextFieldFilePath.FileItem item = filePathModel.getFileItem((Path) value, null, false);
+        public Object getValueFromString(String s) {
+            return Paths.get(s);
+        }
+
+        public Icon getValueIcon(Object v) {
+            if (v instanceof Path) {
+                SearchTextFieldFilePath.FileItem item = filePathModel.getFileItem((Path) v, null, false);
                 if (item != null) {
-                    setIcon(item.getIcon());
+                    return item.getIcon();
+                } else {
+                    return null;
                 }
             } else {
-                setIcon(null);
+                return null;
             }
+        }
+
+        @Override
+        public void setTextWithFormatting(Object value) {
+            setIcon(getValueIcon(value));
             super.setTextWithFormatting(value);
             if (tableColumn != null && isOver(getText(), tableColumn.getWidth())) {
                 if (value instanceof Path) {
@@ -93,6 +108,115 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             } else {
                 return width <= 0;
             }
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(Arrays.asList(
+                        infoLabel,
+                        new GuiSwingView.ContextRefreshAction(getSwingViewContext()),
+                        new ColumnHistoryMenuFilePath(this),
+                        new GuiSwingViewLabel.LabelToStringCopyAction(this),
+                        new ColumnFileCopyAction(this),
+                        new GuiSwingTableColumnString.LabelTextPasteAllAction(this),
+                        new GuiSwingTableColumnString.LabelTextLoadAction(this),
+                        new GuiSwingTableColumnString.LabelTextSaveAction(this),
+                        new ColumnDesktopOpenAction(this),
+                        new ColumnDesktopRevealAction(this)
+                ), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
+            }
+            return menuItems;
+        }
+    }
+
+    public static class ColumnFileCopyAction extends SearchTextFieldFilePath.FileCopyAllAction {
+        protected GuiSwingViewLabel.PropertyLabel view;
+        public ColumnFileCopyAction(GuiSwingViewLabel.PropertyLabel view) {
+            super(null);
+            this.view = view;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Object v = view.getSwingViewValue();
+            if (v instanceof Path) {
+                run(Collections.singletonList((Path) v));
+            }
+        }
+    }
+
+    public static class ColumnDesktopOpenAction extends SearchTextFieldFilePath.DesktopOpenAction {
+        protected GuiSwingViewLabel.PropertyLabel view;
+        public ColumnDesktopOpenAction(GuiSwingViewLabel.PropertyLabel view) {
+            super(null);
+            this.view = view;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Object v = view.getSwingViewValue();
+            if (v instanceof Path) {
+                run(Collections.singletonList((Path) v));
+            }
+        }
+    }
+
+    public static class ColumnDesktopRevealAction extends SearchTextFieldFilePath.DesktopRevealAction {
+        protected GuiSwingViewLabel.PropertyLabel view;
+        public ColumnDesktopRevealAction(GuiSwingViewLabel.PropertyLabel view) {
+            super(null);
+            this.view = view;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Object v = view.getSwingViewValue();
+            if (v instanceof Path) {
+                run(Collections.singletonList((Path) v));
+            }
+        }
+    }
+
+    public static class ColumnHistoryMenuFilePath extends GuiSwingViewFilePathField.HistoryMenu<Object, ColumnFilePathPane> {
+
+        public ColumnHistoryMenuFilePath(ColumnFilePathPane view) {
+            super(view, view.getSwingViewContext());
+        }
+
+        public Icon getIcon(Object v) {
+            return component.getValueIcon(v);
+        }
+
+        @Override
+        public JMenu convert(GuiReprCollectionTable.TableTargetColumn target) {
+            return new ColumnHistoryMenuFilePathForTableColumn(component, target);
+        }
+
+        @Override
+        public Action createAction(GuiPreferences.HistoryValueEntry e) {
+            Action a = createActionBase(e);
+            Icon icon = getIcon(e.getValue());
+            a.putValue(Action.SMALL_ICON, icon);
+            return a;
+        }
+
+        public Action createActionBase(GuiPreferences.HistoryValueEntry e) {
+            return new GuiSwingView.HistorySetAction<>(getActionName(e), e.getValue(), component);
+        }
+    }
+
+    public static class ColumnHistoryMenuFilePathForTableColumn extends ColumnHistoryMenuFilePath {
+        protected GuiReprCollectionTable.TableTargetColumn target;
+
+        public ColumnHistoryMenuFilePathForTableColumn(ColumnFilePathPane view, GuiReprCollectionTable.TableTargetColumn target) {
+            super(view);
+            this.target = target;
+        }
+
+        @Override
+        public Action createActionBase(GuiPreferences.HistoryValueEntry e) {
+            return new GuiSwingView.HistorySetForColumnAction<>(getActionName(e), e.getValue(), target);
         }
     }
 

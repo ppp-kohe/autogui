@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  *        {@link PropertyPane#setSwingViewValueWithUpdate(Object)}) delete to the contentPane.
  *  <p>
  *     Note the setting of the property will be treated by the value's contentPane.
- *        {@link GuiReprValue#updateFromGui(GuiMappingContext, Object, autogui.base.mapping.GuiReprValue.ObjectSpecifier)}
+ *        {@link GuiReprValue#updateFromGui(GuiMappingContext, Object, autogui.base.mapping.GuiReprValue.ObjectSpecifier, GuiTaskClock)}
  *        by the value's contentPane
  *         supports the case of the parent is a property.
  *

@@ -3,7 +3,6 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewBooleanCheckBox;
-import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import java.awt.*;

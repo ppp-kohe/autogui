@@ -360,10 +360,12 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 throws UnsupportedFlavorException, IOException {
             if (DataFlavor.stringFlavor.equals(flavor)) {
                 return files.stream()
+                        .filter(Objects::nonNull)
                         .map(Object::toString)
                         .collect(Collectors.joining("\n"));
             } else if (DataFlavor.javaFileListFlavor.equals(flavor)) {
                 return files.stream()
+                        .filter(Objects::nonNull)
                         .map(Path::toFile)
                         .collect(Collectors.toList());
             }

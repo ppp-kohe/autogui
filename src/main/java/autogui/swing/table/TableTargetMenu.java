@@ -1,7 +1,6 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.swing.util.MenuBuilder;
 
 import javax.swing.*;
 

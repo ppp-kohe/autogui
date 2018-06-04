@@ -326,6 +326,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         public BooleanTextLoadAction(PropertyCheckBox checkBox) {
             super(null);
+            putValue(NAME, "Load Text...");
             this.checkBox = checkBox;
         }
 
@@ -365,12 +366,8 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         public BooleanTextSaveAction(PropertyCheckBox checkBox) {
             super(null);
+            putValue(NAME, "Save Text...");
             this.checkBox = checkBox;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return checkBox.isSwingEditable();
         }
 
         @Override

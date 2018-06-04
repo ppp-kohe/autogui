@@ -1,7 +1,5 @@
 package autogui.base.mapping;
 
-import autogui.base.type.GuiTypeValue;
-
 import java.util.List;
 import java.util.concurrent.Callable;
 

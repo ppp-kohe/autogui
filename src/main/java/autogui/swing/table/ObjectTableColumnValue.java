@@ -17,8 +17,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
@@ -136,7 +134,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             if (specifierIndex != null) {
                 specifierIndex.setIndex(rowIndex);
             }
-            context.getReprValue().update(context, GuiMappingContext.GuiSourceValue.of(rowObject), newColumnValue, specifierManager.getSpecifier());
+            GuiReprValue reprValue = context.getReprValue();
+            reprValue.addHistoryValue(context, newColumnValue);
+            reprValue.update(context, GuiMappingContext.GuiSourceValue.of(rowObject), newColumnValue, specifierManager.getSpecifier());
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
         }

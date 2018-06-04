@@ -1,7 +1,6 @@
 package autogui.base.log;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;

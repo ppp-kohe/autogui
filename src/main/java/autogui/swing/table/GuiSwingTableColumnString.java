@@ -97,6 +97,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
         public LabelTextLoadAction(GuiSwingViewLabel.PropertyLabel label) {
             super(null);
+            putValue(NAME, "Load Text...");
             this.label = label;
         }
 
@@ -136,12 +137,8 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
         public LabelTextSaveAction(GuiSwingViewLabel.PropertyLabel label) {
             super(null);
+            putValue(NAME, "Save Text...");
             this.label = label;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return label.isSwingEditable();
         }
 
         @Override
