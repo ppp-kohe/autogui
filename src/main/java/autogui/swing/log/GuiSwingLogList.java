@@ -476,6 +476,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         @Override
         public void mousePressed(MouseEvent e) {
             if (e.isPopupTrigger()) {
+                e.consume();
                 table.showPopup(e.getPoint());
                 return;
             }
@@ -492,7 +493,11 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             if (entry != null) {
                 ListSelectionModel sel = table.getSelectionModel();
                 //sel.addSelectionInterval(row, row);
-                sel.setSelectionInterval(row, row);
+                if (e.isShiftDown()) {
+                    sel.setSelectionInterval(sel.getAnchorSelectionIndex(), row);
+                } else {
+                    sel.setSelectionInterval(row, row);
+                }
                 runEntry(row, entry, r -> {
                     r.mousePressed(entry, convert(cellRect, pressPoint));
                 });
@@ -519,6 +524,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         @Override
         public void mouseReleased(MouseEvent e) {
             if (e.isPopupTrigger()) {
+                e.consume();
                 table.showPopup(e.getPoint());
                 return;
             }
