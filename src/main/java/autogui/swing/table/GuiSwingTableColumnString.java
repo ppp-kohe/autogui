@@ -1,7 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewLabel;
@@ -11,13 +11,15 @@ import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * a column factory for {@link String}.
@@ -49,8 +51,10 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                         infoLabel,
                         new GuiSwingView.ContextRefreshAction(getSwingViewContext()),
                         new GuiSwingView.HistoryMenu<>(this, getSwingViewContext()),
-                        new GuiSwingView.ToStringCopyAction(this, context),
+                        new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new LabelTextPasteAllAction(this),
+                        new LabelTextLoadAction(this),
+                        new LabelTextSaveAction(this),
                         new PopupExtensionText.TextOpenBrowserAction(this)
                 ), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
             }
@@ -58,7 +62,8 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
     }
 
-    public static class LabelTextPasteAllAction extends PopupExtensionText.TextPasteAllAction {
+    public static class LabelTextPasteAllAction extends PopupExtensionText.TextPasteAllAction
+        implements TableTargetColumnAction {
         protected GuiSwingViewLabel.PropertyLabel label;
 
         public LabelTextPasteAllAction(GuiSwingViewLabel.PropertyLabel label) {
@@ -73,9 +78,93 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            paste(label::setSwingViewValue);
+            paste(label::setSwingViewValueWithUpdateFromString);
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            pasteLines(lines ->
+                    target.setSelectedCellValuesLoop(
+                            lines.stream()
+                                .map(label::getValueFromString)
+                                .collect(Collectors.toList())));
         }
     }
+
+    public static class LabelTextLoadAction extends PopupExtensionText.TextLoadAction
+            implements TableTargetColumnAction {
+        protected GuiSwingViewLabel.PropertyLabel label;
+
+        public LabelTextLoadAction(GuiSwingViewLabel.PropertyLabel label) {
+            super(null);
+            this.label = label;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return label.isSwingEditable();
+        }
+
+        @Override
+        protected JComponent getComponent() {
+            return label;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String str = load();
+            Matcher m = Pattern.compile("\\n").matcher(str);
+            if (m.find()) {
+                str = str.substring(0, m.start());
+            }
+            label.setSwingViewValueWithUpdateFromString(str);
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            String str = load();
+            target.setSelectedCellValuesLoop(
+                    Arrays.stream(str.split("\\n"))
+                        .map(label::getValueFromString)
+                        .collect(Collectors.toList()));
+        }
+    }
+
+    public static class LabelTextSaveAction extends PopupExtensionText.TextSaveAction
+        implements TableTargetColumnAction {
+        protected GuiSwingViewLabel.PropertyLabel label;
+
+        public LabelTextSaveAction(GuiSwingViewLabel.PropertyLabel label) {
+            super(null);
+            this.label = label;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return label.isSwingEditable();
+        }
+
+        @Override
+        protected JComponent getComponent() {
+            return label;
+        }
+
+        @Override
+        public void save(Path path) {
+            saveLines(path, Collections.singletonList(label.getValueAsString()));
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            Path path = getPath();
+            if (path != null) {
+                saveLines(path, target.getSelectedCellValues().stream()
+                        .map(label::getValueAsString)
+                        .collect(Collectors.toList()));
+            }
+        }
+    }
+
 
     /** a component for editor and renderer */
     public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyStringPane {

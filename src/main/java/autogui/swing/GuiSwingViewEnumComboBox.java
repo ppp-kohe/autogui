@@ -1,18 +1,19 @@
 package autogui.swing;
 
-import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
-import autogui.base.mapping.GuiReprValueEnumComboBox;
-import autogui.base.mapping.GuiTaskClock;
+import autogui.base.mapping.*;
+import autogui.swing.table.TableTargetColumnAction;
+import autogui.swing.table.TableTargetMenu;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * a swing view for {@link GuiReprValueEnumComboBox}
@@ -128,7 +130,10 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                         Arrays.asList(
                                 infoLabel,
                                 new ContextRefreshAction(context),
-                                new HistoryMenu<>(this, context)),
+                                new HistoryMenu<>(this, context),
+                                new EnumSetMenu(this),
+                                new ToStringCopyAction(this, getSwingViewContext()),
+                                new EnumPasteAction(this)),
                         GuiSwingJsonTransfer.getActions(this, context));
             }
             return menuItems;
@@ -229,6 +234,18 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         public void setKeyStrokeString(String keyStrokeString) {
             infoLabel.setAdditionalInfo(keyStrokeString);
         }
+
+        public String getValueAsString(Object v) {
+            if (v == null) {
+                return "null";
+            } else {
+                return ((GuiReprValueEnumComboBox) context.getRepresentation()).getDisplayName(context, (Enum<?>) v);
+            }
+        }
+
+        public Object getValueFromString(String str) {
+            return ((GuiReprValueEnumComboBox) getSwingViewContext().getRepresentation()).getEnumValue(getSwingViewContext(), str);
+        }
     }
 
     public static Object[] getEnumConstants(GuiMappingContext context) {
@@ -246,8 +263,12 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 10));
+
             if (value instanceof Enum<?>) {
                 setText(((GuiReprValueEnumComboBox) context.getRepresentation()).getDisplayName(context, (Enum<?>) value));
+            } else if (value == null) {
+                setText("null");
+                setForeground(Color.gray);
             }
             return this;
         }
@@ -271,8 +292,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 try {
                     String str = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-                    Object enumValue = ((GuiReprValueEnumComboBox) pane.getSwingViewContext().getRepresentation()).getEnumValue(
-                            pane.getSwingViewContext(), str);
+                    Object enumValue = pane.getValueFromString(str);
                     if (enumValue != null) {
                         pane.setSwingViewValueWithUpdate(enumValue);
                         return true;
@@ -296,12 +316,101 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         protected Transferable createTransferable(JComponent c) {
             Enum e= (Enum) pane.getSwingViewValue();
             if (e != null) {
-                String name = pane.getSwingViewContext().getRepresentation()
-                                .toHumanReadableString(pane.getSwingViewContext(), e);
+                String name = pane.getValueAsString(e);
                 return new StringSelection(name);
             } else {
                 return null;
             }
+        }
+    }
+
+    public static class EnumPasteAction extends PopupExtensionText.TextPasteAllAction
+            implements TableTargetColumnAction {
+        protected PropertyEnumComboBox view;
+
+        public EnumPasteAction(PropertyEnumComboBox view) {
+            super(null);
+            this.view = view;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return view.isSwingEditable();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            paste(v -> view.setSwingViewValueWithUpdate(getEnumValue(v)));
+        }
+
+        public Object getEnumValue(String s) {
+            return view.getValueFromString(s);
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            pasteLines(lines ->
+                    target.setSelectedCellValuesLoop(
+                            lines.stream()
+                                    .map(this::getEnumValue)
+                                    .collect(Collectors.toList())));
+        }
+    }
+
+    public static class EnumSetMenu extends JMenu implements PopupCategorized.CategorizedMenuItemComponent {
+        protected ValuePane<Object> pane;
+
+        public EnumSetMenu(ValuePane<Object> pane) {
+            super("Set");
+            this.pane = pane;
+            setItems();
+        }
+
+        public void setItems() {
+            removeAll();
+            Arrays.stream(getEnumConstants(pane.getSwingViewContext()))
+                    .map(this::createItem)
+                    .forEach(this::add);
+        }
+
+        public Action createItem(Object e) {
+            return new EnumSetAction(pane, e);
+        }
+
+        @Override
+        public JComponent getMenuItem() {
+            return this;
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_SET;
+        }
+    }
+
+    public static class EnumSetAction extends AbstractAction implements
+            PopupCategorized.CategorizedMenuItemAction {
+        protected Object value;
+        protected ValuePane<Object> pane;
+
+        public EnumSetAction(ValuePane<Object> pane, Object value) {
+            this.value = value;
+            this.pane = pane;
+
+            putValue(NAME, getValueAsString(value));
+        }
+
+        public String getValueAsString(Object v) {
+            if (pane instanceof GuiSwingViewLabel.PropertyLabel) {
+                return ((GuiSwingViewLabel.PropertyLabel) pane).getValueAsString(v);
+            } else {
+                return ((PropertyEnumComboBox) pane).getValueAsString(v);
+            }
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            pane.setSwingViewValueWithUpdate(value);
         }
     }
 }

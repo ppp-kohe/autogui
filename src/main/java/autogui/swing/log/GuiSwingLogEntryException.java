@@ -471,8 +471,11 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             for (StackTraceAttributesForLine a : lineAttrs.get(lineIndex)) {
                 if (a.attributes != null && a.start < a.end) {
                     int e = Math.min(line.length(), a.end);
-                    info.attributedString.addAttributes(a.attributes,
-                            Math.min(Math.max(a.start, 0), e), e);
+                    int s = Math.min(Math.max(a.start, 0), e);
+                    if (s < e) {
+                        info.attributedString.addAttributes(a.attributes,
+                                s, e);
+                    }
                 }
             }
             return info;

@@ -88,7 +88,9 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         int headerEndIndex = line.indexOf(headerEnd);
         if (headerEndIndex >= 0) {
             headerEndIndex += headerEnd.length();
-            str.addAttributes(style, 0, headerEndIndex);
+            if (headerEndIndex > 0) {
+                str.addAttributes(style, 0, headerEndIndex);
+            }
         }
         return headerEndIndex;
     }
@@ -106,7 +108,11 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         } else {
             head.headerEnd = setHeaderStyle(a, line, Objects.toString(idxIntOrDelimStr), headAttrs);
         }
-        a.addAttributes(attrs, Math.max(0, head.headerEnd), line.length());
+        int s = Math.max(0, head.headerEnd);
+        int e = line.length();
+        if (s < e) {
+            a.addAttributes(attrs, s, e);
+        }
         return head;
     }
 
@@ -116,7 +122,9 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         AttributedString a = new AttributedString(line);
 
         TextCellRenderer.LineInfo info = new TextCellRenderer.LineInfo(a, start, line.length() + start);
-        a.addAttributes(attrs, 0, line.length());
+        if (!line.isEmpty()) {
+            a.addAttributes(attrs, 0, line.length());
+        }
         int indent = 0;
         if (prevLine instanceof LineInfoHead) {
             indent += Math.max(0, ((LineInfoHead) prevLine).headerEnd);

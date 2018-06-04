@@ -4,6 +4,7 @@ import autogui.base.mapping.*;
 import autogui.swing.GuiSwingActionDefault;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.util.*;
 
 import javax.swing.*;
@@ -182,6 +183,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
                 valuePane.setSwingViewValue(value);
             }
             ObjectTableColumn.setCellBorder(table, component, row, column);
+
+
             return component;
         }
 
@@ -226,6 +229,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         } else {
             component.setForeground(table.getForeground());
             component.setBackground(table.getBackground());
+        }
+        if (component instanceof GuiSwingViewLabel.PropertyLabel) {
+            ((GuiSwingViewLabel.PropertyLabel) component).setSelected(isSelected);
         }
     }
 

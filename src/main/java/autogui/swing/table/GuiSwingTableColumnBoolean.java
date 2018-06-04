@@ -3,6 +3,7 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewBooleanCheckBox;
+import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,12 +27,13 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
         view.setHorizontalAlignment(SwingConstants.CENTER);
         view.setBorderPainted(true);
         view.setOpaque(true);
-
+        view.setText("");
 
         GuiSwingViewBooleanCheckBox.PropertyCheckBox editor = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, valueSpecifier);
         editor.setHorizontalAlignment(SwingConstants.CENTER);
         editor.setBorderPainted(true);
         editor.setOpaque(true);
+        editor.setText("");
 
         ObjectTableColumnValue column = new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(view, rowSpecifier),
@@ -83,6 +85,7 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
             }
             return super.isCellEditable(e);
         }
-
     }
+
+
 }

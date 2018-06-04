@@ -52,6 +52,9 @@ public class GuiSwingViewLabel implements GuiSwingView {
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected MenuBuilder.MenuLabel infoLabel;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
+        protected boolean selected;
+        protected Color currentBackground;
+        protected Color currentForeground;
 
         public PropertyLabel(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -79,6 +82,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
         public void initVisualProperty() {
             putClientProperty("html.disable", Boolean.TRUE);
             setText(" "); //initialize preferred size
+            setSelected(false);
         }
 
         public void initFocus() {
@@ -107,6 +111,21 @@ public class GuiSwingViewLabel implements GuiSwingView {
             GuiSwingView.setupTransferHandler(this, new LabelTransferHandler(this));
         }
 
+        /**
+         * a table renderer call the method after changing it's color and before updating the value.
+         *  the foreground and the background will be saved
+         * @param selected the label is selected or not
+         */
+        public void setSelected(boolean selected) {
+            this.selected = selected;
+            this.currentBackground = getBackground();
+            this.currentForeground = getForeground();
+        }
+
+        public boolean isSelected() {
+            return selected;
+        }
+
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
             if (menuItems == null) {
@@ -115,7 +134,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
                                 infoLabel,
                                 new ContextRefreshAction(context),
                                 new LabelJsonCopyAction(this, context),
-                                new ToStringCopyAction(this, context),
+                                new LabelToStringCopyAction(this),
                                 new PopupExtensionText.TextOpenBrowserAction(this))
                 );
             }
@@ -142,8 +161,21 @@ public class GuiSwingViewLabel implements GuiSwingView {
             viewClock.increment();
             GuiReprValue label = (GuiReprValue) context.getRepresentation();
             this.value = value;
-            setText("" + label.toUpdateValue(context, value));
+            setTextWithFormatting(label.toUpdateValue(context, value));
             revalidate();
+        }
+
+        public String format(Object value) {
+            return "" + value;
+        }
+
+        public void setTextWithFormatting(Object value) {
+            if (value == null) {
+                setForeground(Color.gray);
+            } else {
+                setForeground(currentForeground);
+            }
+            setText(format(value));
         }
 
         @Override
@@ -156,7 +188,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
             if (viewClock.isOlderWithSet(clock)) {
                 GuiReprValue label = (GuiReprValue) context.getRepresentation();
                 this.value = value;
-                setText("" + label.toUpdateValue(context, value));
+                setTextWithFormatting(label.toUpdateValue(context, value));
                 revalidate();
             }
         }
@@ -167,8 +199,21 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
 
         public String getValueAsString() {
-            GuiReprValue label = (GuiReprValue) context.getRepresentation();
-            return "" + label.toHumanReadableString(context, getSwingViewValue());
+            return getValueAsString(getSwingViewValue());
+        }
+
+        public String getValueAsString(Object v) {
+            GuiReprValue repr = getSwingViewContext().getReprValue();
+            return repr.toHumanReadableString(getSwingViewContext(), v);
+        }
+
+        public Object getValueFromString(String s) {
+            GuiReprValue repr = getSwingViewContext().getReprValue();
+            return repr.toUpdateValue(getSwingViewContext(), s);
+        }
+
+        public void setSwingViewValueWithUpdateFromString(String s) {
+            setSwingViewValueWithUpdate(getValueAsString(s));
         }
 
         @Override
@@ -250,6 +295,19 @@ public class GuiSwingViewLabel implements GuiSwingView {
         @Override
         public boolean isBorderOpaque() {
             return false;
+        }
+    }
+
+    public static class LabelToStringCopyAction extends ToStringCopyAction {
+        protected PropertyLabel label;
+        public LabelToStringCopyAction(PropertyLabel label) {
+            super(label, label.getSwingViewContext());
+            this.label = label;
+        }
+
+        @Override
+        public String toString(Object v) {
+            return label.getValueAsString(v);
         }
     }
 

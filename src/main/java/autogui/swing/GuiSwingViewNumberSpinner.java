@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.*;
+import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.*;
 
 import javax.swing.*;
@@ -22,6 +23,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
@@ -258,6 +260,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             undoManager.putListenersAndActionsTo(getEditorField());
         }
 
+        public NumberSettingAction getSettingAction() {
+            return settingAction;
+        }
+
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
             if (menuItems == null) {
@@ -271,8 +277,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                         Arrays.asList(
                                 infoLabel,
                                 new ContextRefreshAction(context),
-                                new NumberMaximumAction(false, getModelTyped()),
-                                new NumberMaximumAction(true, getModelTyped()),
+                                new NumberMaximumAction(false, this),
+                                new NumberMaximumAction(true, this),
+                                new NumberIncrementAction(true, this),
+                                new NumberIncrementAction(false, this),
                                 new HistoryMenu<>(this, context),
                                 settingAction),
                         GuiSwingJsonTransfer.getActions(this, context));
@@ -429,26 +437,86 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
     }
 
-    public static class NumberMaximumAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+    public static abstract class NumberSetAction extends AbstractAction
+            implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
+        protected PropertyNumberSpinner spinner;
         protected TypedSpinnerNumberModel model;
-        protected boolean max;
 
-        public NumberMaximumAction(boolean max, TypedSpinnerNumberModel model) {
+        public NumberSetAction(PropertyNumberSpinner spinner) {
+            this(spinner, spinner.getModelTyped());
+        }
+
+        public NumberSetAction(PropertyNumberSpinner spinner, TypedSpinnerNumberModel model) {
+            this.spinner = spinner;
             this.model = model;
-            this.max = max;
-            putValue(NAME, max ? "Set to Maximum" : "Set to Minimum");
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return spinner.isSwingEditable();
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            model.setValue(max ? model.getNumberMaximum() : model.getNumberMinimum());
+            setValue(getNumber(spinner.getValue()));
+        }
+
+        public void setValue(Object n) {
+            spinner.setValue(n);
+        }
+
+        public abstract Object getNumber(Object current);
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            target.setSelectedCellValuesLoop(target.getSelectedCellValues()
+                    .stream()
+                    .map(this::getNumber)
+                    .collect(Collectors.toList()));
         }
 
         @Override
         public String getCategory() {
             return PopupExtension.MENU_CATEGORY_SET;
         }
+    }
 
+    public static class NumberMaximumAction extends NumberSetAction {
+        protected boolean max;
+
+        public NumberMaximumAction(boolean max, PropertyNumberSpinner spinner) {
+            this(max, spinner, spinner.getModelTyped());
+        }
+
+        public NumberMaximumAction(boolean max, PropertyNumberSpinner spinner, TypedSpinnerNumberModel model) {
+            super(spinner, model);
+            this.max = max;
+            putValue(NAME, max ? "Set Maximum" : "Set Minimum");
+        }
+
+        @Override
+        public Object getNumber(Object current) {
+            return max ? model.getNumberMaximum() : model.getNumberMinimum();
+        }
+    }
+
+    public static class NumberIncrementAction extends NumberSetAction {
+        protected boolean inc;
+
+        public NumberIncrementAction(boolean inc, PropertyNumberSpinner spinner) {
+            this(inc, spinner, spinner.getModelTyped());
+        }
+
+        public NumberIncrementAction(boolean inc, PropertyNumberSpinner spinner, TypedSpinnerNumberModel model) {
+            super(spinner, model);
+            this.inc = inc;
+            putValue(NAME, inc ? "Increment" : "Decrement");
+        }
+
+        @Override
+        public Object getNumber(Object current) {
+            return inc ? model.getNextValue(current) : model.getPreviousValue(current);
+        }
     }
 
     public static class TypedSpinnerNumberModel extends SpinnerNumberModel implements GuiSwingPreferences.Preferences {
@@ -488,9 +556,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @SuppressWarnings("unchecked")
-        @Override
-        public Object getNextValue() {
-            Object next = numberType.next(getValue(), getStepSize(), 1);
+        public Object getNextValue(Object prev) {
+            Object next = numberType.next(prev, getStepSize(), 1);
             int r = getMaximum().compareTo(next);
             if (r <= 0) {
                 return null;
@@ -499,17 +566,25 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             }
         }
 
-
         @SuppressWarnings("unchecked")
-        @Override
-        public Object getPreviousValue() {
-            Object next = numberType.next(getValue(), getStepSize(), -1);
-            int r = getMinimum().compareTo(next);
+        public Object getPreviousValue(Object prev) {
+            Object next = numberType.next(prev, getStepSize(), -1);
+            int r = getMaximum().compareTo(next);
             if (r > 0) {
                 return null;
             } else {
                 return next;
             }
+        }
+
+        @Override
+        public Object getNextValue() {
+            return getNextValue(getValue());
+        }
+
+        @Override
+        public Object getPreviousValue() {
+            return getPreviousValue(getValue());
         }
 
 
@@ -741,7 +816,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
     ///////////////////
 
-    public static class NumberSettingAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+    public static class NumberSettingAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction,
+        TableTargetColumnAction {
         protected NumberSettingPane pane;
         protected JPanel contentPane;
         protected SettingsWindowClient client;
@@ -764,6 +840,11 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         @Override
         public void actionPerformed(ActionEvent e) {
             client.getSettingsWindow().show("Number Settings", pane, contentPane, preferencesUpdater);
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            actionPerformed(e);
         }
 
         public GuiSwingPreferences.WindowPreferencesUpdater getPreferencesUpdater() {

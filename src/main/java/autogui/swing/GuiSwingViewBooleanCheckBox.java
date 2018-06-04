@@ -1,12 +1,11 @@
 package autogui.swing;
 
-import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
-import autogui.base.mapping.GuiReprValueBooleanCheckBox;
-import autogui.base.mapping.GuiTaskClock;
+import autogui.base.mapping.*;
+import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,11 +14,16 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * a swing view for
@@ -120,7 +124,13 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
                                 infoLabel,
                                 new ContextRefreshAction(context),
                                 new ToStringCopyAction(this, context),
+                                new BooleanPasteAction(this),
                                 new HistoryMenu<>(this, getSwingViewContext()),
+                                new BooleanFlipAction(this),
+                                new BooleanSetValueAction(this, true),
+                                new BooleanSetValueAction(this, false),
+                                new BooleanTextLoadAction(this),
+                                new BooleanTextSaveAction(this),
                         GuiSwingJsonTransfer.getActions(this, context)));
             }
             return menuItems;
@@ -206,6 +216,183 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         public void setKeyStrokeString(String keyStrokeString) {
             infoLabel.setAdditionalInfo(keyStrokeString);
         }
+
+        public Boolean getValueFromString(String str) {
+            return ((GuiReprValueBooleanCheckBox) getSwingViewContext().getRepresentation()).getBooleanValue(str);
+        }
+
+        public String getValueAsString(Object v) {
+            return getSwingViewContext().getRepresentation()
+                    .toHumanReadableString(getSwingViewContext(), v);
+        }
+    }
+
+    public abstract static class BooleanSetAction extends AbstractAction implements
+            PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
+        protected PropertyCheckBox pane;
+
+        public BooleanSetAction(PropertyCheckBox pane) {
+            this.pane = pane;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return pane.isSwingEditable();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            pane.setSwingViewValueWithUpdate(getValue(pane.getSwingViewValue()));
+        }
+
+        public abstract Boolean getValue(Object exValue);
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            target.setSelectedCellValuesLoop(
+                    target.getSelectedCellValues().stream()
+                        .map(this::getValue)
+                        .collect(Collectors.toList()));
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_SET;
+        }
+    }
+
+    public static class BooleanFlipAction extends BooleanSetAction {
+        public BooleanFlipAction(PropertyCheckBox pane) {
+            super(pane);
+            putValue(NAME, "Flip");
+        }
+
+        @Override
+        public Boolean getValue(Object exValue) {
+            return !(Boolean) exValue;
+        }
+    }
+
+    public static class BooleanSetValueAction extends BooleanSetAction {
+        protected boolean value;
+        public BooleanSetValueAction(PropertyCheckBox pane, boolean v) {
+            super(pane);
+            this.value = v;
+            putValue(NAME, "Set " + (v ? "True" : "False"));
+        }
+
+        @Override
+        public Boolean getValue(Object exValue) {
+            return value;
+        }
+    }
+
+    public static class BooleanPasteAction extends PopupExtensionText.TextPasteAllAction
+            implements TableTargetColumnAction {
+        protected PropertyCheckBox checkBox;
+
+        public BooleanPasteAction(PropertyCheckBox checkBox) {
+            super(null);
+            this.checkBox = checkBox;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return checkBox.isSwingEditable();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            paste(v -> checkBox.setSwingViewValueWithUpdate(getBoolean(v)));
+        }
+
+        public Boolean getBoolean(String str) {
+            return checkBox.getValueFromString(str);
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            pasteLines(lines ->
+                    target.setSelectedCellValuesLoop(
+                            lines.stream()
+                                    .map(this::getBoolean)
+                                    .collect(Collectors.toList())));
+        }
+    }
+
+    public static class BooleanTextLoadAction extends PopupExtensionText.TextLoadAction
+            implements TableTargetColumnAction {
+        protected PropertyCheckBox checkBox;
+
+        public BooleanTextLoadAction(PropertyCheckBox checkBox) {
+            super(null);
+            this.checkBox = checkBox;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return checkBox.isSwingEditable();
+        }
+
+        @Override
+        protected JComponent getComponent() {
+            return checkBox;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String str = load();
+            Matcher m = Pattern.compile("\\n").matcher(str);
+            if (m.find()) {
+                str = str.substring(0, m.start());
+            }
+            checkBox.setSwingViewValueWithUpdate(checkBox.getValueFromString(str));
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            String str = load();
+            target.setSelectedCellValuesLoop(
+                    Arrays.stream(str.split("\\n"))
+                            .map(checkBox::getValueFromString)
+                            .collect(Collectors.toList()));
+        }
+    }
+
+    public static class BooleanTextSaveAction extends PopupExtensionText.TextSaveAction
+            implements TableTargetColumnAction {
+        protected PropertyCheckBox checkBox;
+
+        public BooleanTextSaveAction(PropertyCheckBox checkBox) {
+            super(null);
+            this.checkBox = checkBox;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return checkBox.isSwingEditable();
+        }
+
+        @Override
+        protected JComponent getComponent() {
+            return checkBox;
+        }
+
+        @Override
+        public void save(Path path) {
+            saveLines(path, Collections.singletonList(
+                    checkBox.getValueAsString(checkBox.getSwingViewValue())));
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            Path path = getPath();
+            if (path != null) {
+                saveLines(path, target.getSelectedCellValues().stream()
+                        .map(checkBox::getValueAsString)
+                        .collect(Collectors.toList()));
+            }
+        }
     }
 
     public static class BooleanTransferHandler extends TransferHandler {
@@ -227,7 +414,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
             if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 try {
                     String data = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-                    Boolean value = ((GuiReprValueBooleanCheckBox) pane.getSwingViewContext().getRepresentation()).getBooleanValue(data);
+                    Boolean value = pane.getValueFromString(data);
                     if (value != null) {
                         pane.setSwingViewValueWithUpdate(value);
                         return true;
@@ -249,8 +436,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         @Override
         protected Transferable createTransferable(JComponent c) {
             return new StringSelection(
-                    pane.getSwingViewContext().getRepresentation()
-                            .toHumanReadableString(pane.getSwingViewContext(), pane.getSwingViewValue()));
+                    pane.getValueAsString(pane.getSwingViewValue()));
         }
     }
 }

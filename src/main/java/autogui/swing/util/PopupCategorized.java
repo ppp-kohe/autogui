@@ -35,8 +35,15 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
     public interface CategorizedMenuItem {
         String getName();
         Icon getIcon();
+
+        /**
+         * @return a category name, typically PopupExtension.MENU_CATEGORY_... or PopupCategorized.CATEGORY_...
+         */
         String getCategory();
 
+        /**
+         * @return a sub-category name, typically PopupExtension.MENU_SUB_CATEGORY_... PopupCategorized.SUB_CATEGORY_...
+         */
         default String getSubCategory() {
             return "";
         }

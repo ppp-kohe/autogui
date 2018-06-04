@@ -3,6 +3,7 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewFilePathField;
+import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.SearchTextField;
 import autogui.swing.util.SearchTextFieldFilePath;
@@ -29,10 +30,10 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
                                           GuiSwingView.SpecifierManager parentSpecifier) {
         GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
 
-        ColumnEditFilePath renderPane = new ColumnEditFilePath(context, valueSpecifier,false);
+        ColumnFilePathPane renderPane = new ColumnFilePathPane(context, valueSpecifier);
         ObjectTableColumn column = new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(renderPane, rowSpecifier),
-                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePath(context, valueSpecifier, true), false, rowSpecifier))
+                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePathPane(context, valueSpecifier), false, rowSpecifier))
                 .withComparator(Comparator.comparing(Path.class::cast))
                 .withValueType(Path.class)
                 .withRowHeight(28);
@@ -40,22 +41,67 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         return column;
     }
 
+    public static class ColumnFilePathPane extends GuiSwingViewLabel.PropertyLabel {
+        protected Graphics tester;
+        protected TableColumn tableColumn;
+        protected SearchTextFieldModelFilePathEmpty filePathModel;
+        public ColumnFilePathPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+            super(context, specifierManager);
+            filePathModel = new SearchTextFieldModelFilePathEmpty();
+            setOpaque(true);
+        }
+
+        public void setTableColumn(TableColumn tableColumn) {
+            this.tableColumn = tableColumn;
+        }
+
+        @Override
+        public String format(Object value) {
+            return getValueAsString(value);
+        }
+
+        @Override
+        public void setTextWithFormatting(Object value) {
+            if (value instanceof Path) {
+                SearchTextFieldFilePath.FileItem item = filePathModel.getFileItem((Path) value, null, false);
+                if (item != null) {
+                    setIcon(item.getIcon());
+                }
+            } else {
+                setIcon(null);
+            }
+            super.setTextWithFormatting(value);
+            if (tableColumn != null && isOver(getText(), tableColumn.getWidth())) {
+                if (value instanceof Path) {
+                    String name = ((Path) value).getFileName().toString();
+                    setText(name);
+                }
+            }
+        }
+
+        public boolean isOver(String text, int width) {
+            if (getIcon() != null) {
+                width -= getIcon().getIconWidth();
+            }
+            if (tester == null) {
+                tester = new BufferedImage(10, 10, BufferedImage.TYPE_3BYTE_BGR).createGraphics();
+            }
+            if (!text.isEmpty()) {
+                TextLayout l = new TextLayout(text, getFont(), tester.getFontMetrics().getFontRenderContext());
+                float adv = l.getAdvance() * 1.1f;
+                return width <= adv;
+            } else {
+                return width <= 0;
+            }
+        }
+    }
+
     /**
      * an editor for a file-path
      */
-    public static class ColumnEditFilePath extends GuiSwingViewFilePathField.PropertyFilePathPane {
-        protected boolean editor;
-        protected Graphics tester;
-        protected TableColumn tableColumn;
-
-        public ColumnEditFilePath(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, boolean editor) {
-            super(context, specifierManager, editor ?
-                    new SearchTextFieldModelFilePath() :
-                    new SearchTextFieldModelFilePathEmpty());
-            this.editor = editor;
-            if (!editor) {
-                getField().setEditable(false);
-            }
+    public static class ColumnEditFilePathPane extends GuiSwingViewFilePathField.PropertyFilePathPane {
+        public ColumnEditFilePathPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+            super(context, specifierManager, new SearchTextFieldModelFilePath());
         }
 
         @Override
@@ -65,12 +111,6 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             add(icon, BorderLayout.WEST);
             add(field, BorderLayout.CENTER);
             setOpaque(true);
-            if (!editor) {
-                getField().setBorder(BorderFactory.createEmptyBorder());
-                getField().setOpaque(true);
-                getIcon().setOpaque(true);
-                setBorder(BorderFactory.createEmptyBorder());
-            }
         }
 
         @Override
@@ -100,37 +140,6 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         @Override
         public void setSwingViewValue(Object value) {
             super.setSwingViewValue(value);
-            updateTextWithColumnWidth();
-        }
-
-        public void setTableColumn(TableColumn tableColumn) {
-            this.tableColumn = tableColumn;
-        }
-
-        public void updateTextWithColumnWidth() {
-            if (tableColumn != null && !editor) {
-                PopupCategorized.CategorizedMenuItem item = getModel().getSelection();
-                if (item instanceof FileItem && isOver(((FileItem) item).getPath().toString(), tableColumn.getWidth())) {
-                    String fileName = ((FileItem) item).getPath().getFileName().toString();
-                    setTextWithoutUpdateField(fileName);
-                }
-            }
-        }
-
-        public boolean isOver(String text, int width) {
-            if (getIcon().getIcon() != null) {
-                width -= getIcon().getIcon().getIconWidth();
-            }
-            if (tester == null) {
-                tester = new BufferedImage(10, 10, BufferedImage.TYPE_3BYTE_BGR).createGraphics();
-            }
-            if (!text.isEmpty()) {
-                TextLayout l = new TextLayout(text, getField().getFont(), tester.getFontMetrics().getFontRenderContext());
-                float adv = l.getAdvance() * 1.1f;
-                return width <= adv;
-            } else {
-                return width <= 0;
-            }
         }
     }
 

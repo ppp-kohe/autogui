@@ -845,6 +845,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             this.field = field;
         }
 
+        protected JComponent getComponent() {
+            return field;
+        }
+
         @Override
         public boolean isEnabled() {
             return field.isEnabled() && field.isEditable();
@@ -859,7 +863,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
 
         public String load() {
-            Path path = SettingsWindow.getFileDialogManager().showOpenDialog(field, getEncodingPane());
+            Path path = SettingsWindow.getFileDialogManager().showOpenDialog(getComponent(), getEncodingPane());
             if (path != null) {
                 try {
                     return new String(Files.readAllBytes(path), selectedCharset);
@@ -891,18 +895,26 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
-            Path path = fd.showConfirmDialogIfOverwriting(field,
-                    fd.showSaveDialog(field, getEncodingPane(), null));
+            Path path = getPath();
             if (path != null) {
                 save(path);
             }
         }
 
+        public Path getPath() {
+            SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
+            return fd.showConfirmDialogIfOverwriting(getComponent(),
+                    fd.showSaveDialog(getComponent(), getEncodingPane(), null));
+        }
+
         public void save(Path path) {
             String text = field.getText();
+            saveLines(path, Collections.singletonList(text));
+        }
+
+        public void saveLines(Path path, List<String> lines) {
             try {
-                Files.write(path, Collections.singletonList(text), selectedCharset);
+                Files.write(path, lines, selectedCharset);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
