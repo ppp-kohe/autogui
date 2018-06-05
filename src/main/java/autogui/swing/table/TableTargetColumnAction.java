@@ -31,4 +31,8 @@ import java.util.function.Consumer;
 public interface TableTargetColumnAction extends PopupCategorized.CategorizedMenuItemAction {
 
     void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target);
+
+    default boolean isEnabled(GuiReprCollectionTable.TableTargetColumn target) {
+        return !target.isSelectionEmpty() && isEnabled();
+    }
 }

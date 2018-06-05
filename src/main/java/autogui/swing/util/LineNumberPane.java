@@ -42,7 +42,14 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         this.field = field;
         setOpaque(true);
         setBackground(new Color(240, 240, 240));
-        setFont(new Font(Font.MONOSPACED, Font.PLAIN, 10));
+        Font font = UIManager.getFont("EditorPane.font");
+        if (font != null) {
+            font = font.deriveFont(font.getSize2D() * 0.84f);
+        }
+        if (font == null) {
+            font = new Font(Font.MONOSPACED, Font.PLAIN, 10);
+        }
+        setFont(font);
         build();
     }
 

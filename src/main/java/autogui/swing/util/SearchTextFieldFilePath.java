@@ -488,13 +488,21 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            SettingsWindow.getFileDialogManager().setCurrentPath(component.getFile());
+            SettingsWindow.getFileDialogManager().setCurrentPath(getComponentFile());
             super.actionPerformed(e);
+        }
+
+        public Path getComponentFile() {
+            return component.getFile();
+        }
+
+        public JComponent getDialogComponent() {
+            return component;
         }
 
         @Override
         public void run(Consumer<List<Path>> setter) {
-            Path path = SettingsWindow.getFileDialogManager().showOpenDialog(component, null);
+            Path path = SettingsWindow.getFileDialogManager().showOpenDialog(getDialogComponent(), null);
             if (path != null) {
                 setter.accept(Collections.singletonList(path));
             }

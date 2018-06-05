@@ -657,6 +657,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             Style s = getTargetStyle();
             if (s != null) {
                 defaultFontSize = StyleConstants.getFontSize(s);
+            } else {
+                Font font = UIManager.getFont("EditorPane.font");
+                if (font != null) {
+                    defaultFontSize = font.getSize();
+                }
             }
             //font name
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();

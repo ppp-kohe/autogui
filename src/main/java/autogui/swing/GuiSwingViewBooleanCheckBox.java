@@ -332,7 +332,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         @Override
         public boolean isEnabled() {
-            return checkBox.isSwingEditable();
+            return checkBox != null && checkBox.isSwingEditable();
         }
 
         @Override
@@ -343,6 +343,9 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         @Override
         public void actionPerformed(ActionEvent e) {
             String str = load();
+            if (str == null) {
+                return;
+            }
             Matcher m = Pattern.compile("\\n").matcher(str);
             if (m.find()) {
                 str = str.substring(0, m.start());
@@ -353,10 +356,12 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         @Override
         public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
             String str = load();
-            target.setSelectedCellValuesLoop(
-                    Arrays.stream(str.split("\\n"))
-                            .map(checkBox::getValueFromString)
-                            .collect(Collectors.toList()));
+            if (str != null) {
+                target.setSelectedCellValuesLoop(
+                        Arrays.stream(str.split("\\n"))
+                                .map(checkBox::getValueFromString)
+                                .collect(Collectors.toList()));
+            }
         }
     }
 

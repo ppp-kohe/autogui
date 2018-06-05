@@ -334,7 +334,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         @Override
         public boolean isEnabled() {
-            return view.isSwingEditable();
+            return view != null && view.isSwingEditable();
         }
 
         @Override

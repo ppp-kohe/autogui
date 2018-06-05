@@ -475,7 +475,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
             if (f instanceof SettingsWindow.SettingsFrame) {
                 return ((SettingsWindow.SettingsFrame) f).isShown();
             } else {
-                return true;
+                return f.isDisplayable(); //dialogs are discarded
             }
         }
     }

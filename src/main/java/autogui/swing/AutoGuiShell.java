@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public class AutoGuiShell {
-    public boolean forceSystemLAF = false;
+    public String lookAndFeelClass = "#system";
 
     public static AutoGuiShell get() {
         return new AutoGuiShell();
@@ -15,19 +15,23 @@ public class AutoGuiShell {
         showWindow(o, this::setLookAndFeel);
     }
 
+    public AutoGuiShell withCrossPlatformLookAndFeel() {
+        lookAndFeelClass = UIManager.getCrossPlatformLookAndFeelClassName();
+        return this;
+    }
+
     public void setLookAndFeel() {
         try {
-            LookAndFeel laf = UIManager.getLookAndFeel();
-            boolean sysLaf = false;
-            boolean sysLafIsGtk = false;
-            if (laf != null && laf.getClass().getName().endsWith(UIManager.getSystemLookAndFeelClassName())) {
-                sysLaf = true;
+//            boolean sysLafIsGtk = false;
+//            if (UIManager.getSystemLookAndFeelClassName().contains("GTKLookAndFeel")) {
+//                sysLafIsGtk = true;
+//            }
+            String laf = lookAndFeelClass;
+            if (laf != null && laf.equals("#system")) {
+                laf = UIManager.getSystemLookAndFeelClassName();
             }
-            if (UIManager.getSystemLookAndFeelClassName().contains("GTKLookAndFeel")) {
-                sysLafIsGtk = true;
-            }
-            if (!sysLaf && (!sysLafIsGtk || forceSystemLAF)) {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            if (laf != null) {
+                UIManager.setLookAndFeel(laf);
             }
         } catch (Exception ex) {
             ex.printStackTrace();

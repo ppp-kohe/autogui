@@ -503,7 +503,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
         @Override
         public boolean isEnabled() {
-            return !target.isSelectionEmpty();
+            return action.isEnabled(target);
         }
 
         @Override

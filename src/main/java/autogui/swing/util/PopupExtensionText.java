@@ -851,7 +851,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
         @Override
         public boolean isEnabled() {
-            return field.isEnabled() && field.isEditable();
+            return field == null || field.isEnabled() && field.isEditable();
         }
 
         @Override

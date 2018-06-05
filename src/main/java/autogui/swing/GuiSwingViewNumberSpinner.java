@@ -453,7 +453,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public boolean isEnabled() {
-            return spinner.isSwingEditable();
+            return spinner != null && spinner.isSwingEditable();
         }
 
         @Override

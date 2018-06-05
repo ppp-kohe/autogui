@@ -109,11 +109,23 @@ public class GuiSwingLogManager extends GuiLogManager {
 
     public static Font getFont() {
         String os = System.getProperty("os.name", "").toLowerCase();
+        Font base = UIManager.getFont("List.font");
+        int size = (base == null ? 12 : base.getSize());
+
+        Font f = null;
+
         if (os.contains("mac")) {
-            return new Font("Menlo", Font.PLAIN, 14);
-        } else {
-            return new Font(Font.MONOSPACED, Font.PLAIN, 12);
+            f = new Font("Menlo", Font.PLAIN, size);
+        } else if (os.contains("windows")) {
+            f = new Font("Consolas", Font.PLAIN, size);
         }
+        if (f == null || f.getFamily().equals(Font.DIALOG)) {
+            f = new Font("DejaVu Sans Mono", Font.PLAIN, size);
+        }
+        if (f.getFamily().equals(Font.DIALOG)) {
+            f = new Font(Font.MONOSPACED, Font.PLAIN, size);
+        }
+        return f;
     }
 
     /**

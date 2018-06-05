@@ -678,7 +678,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public boolean isEnabled() {
-            return pane.isSwingEditable();
+            return pane != null && pane.isSwingEditable();
         }
 
         @Override

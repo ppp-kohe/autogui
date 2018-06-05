@@ -123,7 +123,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
                         new GuiSwingTableColumnString.LabelTextLoadAction(this),
                         new GuiSwingTableColumnString.LabelTextSaveAction(this),
                         new ColumnDesktopOpenAction(this),
-                        new ColumnDesktopRevealAction(this)
+                        new ColumnDesktopRevealAction(this),
+                        new ColumnOpenDialogAction(this)
                 ), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
             }
             return menuItems;
@@ -175,6 +176,24 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             if (v instanceof Path) {
                 run(Collections.singletonList((Path) v));
             }
+        }
+    }
+
+    public static class ColumnOpenDialogAction extends SearchTextFieldFilePath.OpenDialogAction {
+        protected GuiSwingViewLabel.PropertyLabel view;
+        public ColumnOpenDialogAction(GuiSwingViewLabel.PropertyLabel view) {
+            super(null);
+            this.view = view;
+        }
+
+        @Override
+        public Path getComponentFile() {
+            return (Path) view.getSwingViewContext();
+        }
+
+        @Override
+        public JComponent getDialogComponent() {
+            return component;
         }
     }
 
