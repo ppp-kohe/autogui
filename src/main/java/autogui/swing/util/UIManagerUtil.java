@@ -28,14 +28,14 @@ public class UIManagerUtil {
             Font f = null;
 
             if (os.contains("mac")) {
-                f = new Font("Menlo", Font.PLAIN, size);
+                f = new Font("Menlo", Font.PLAIN, size); //macOS Sierra introduced "SF Mono" font but it seems not available
             } else if (os.contains("windows")) {
-                f = new Font("Consolas", Font.PLAIN, size);
+                f = new Font("Consolas", Font.PLAIN, size); //from Vista
             }
-            if (f == null || f.getFamily().equals(Font.DIALOG)) {
+            if (f == null || f.getFamily().equals(Font.DIALOG)) { //free font
                 f = new Font("DejaVu Sans Mono", Font.PLAIN, size);
             }
-            if (f.getFamily().equals(Font.DIALOG)) {
+            if (f.getFamily().equals(Font.DIALOG)) { //if the font didn't find, the family becomes "Dialog"
                 f = new Font(Font.MONOSPACED, Font.PLAIN, size);
             }
             consoleFont = f;
@@ -104,6 +104,9 @@ public class UIManagerUtil {
     }
 
     public int getScaledSizeInt(int n) {
+        //macOS Retina env automatically scales the size:
+        //    e.g. with x2 PPI, texts with size 14 Font will be rendered as size 28. border size 5 will be handled as 10.
+        // however GTK (and Windows too?) physically increases UI resource sizes, and we need to supply x2 sizes for x2 PPI.
         return (int) getScaledSizeFloat(n);
     }
 

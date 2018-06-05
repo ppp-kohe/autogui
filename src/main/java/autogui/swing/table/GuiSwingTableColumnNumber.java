@@ -11,10 +11,8 @@ import autogui.swing.util.PopupCategorized;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * a column factory for a {@link Number}.
@@ -51,10 +49,12 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         }
     }
 
-    public static class ColumnNumberPane extends GuiSwingViewLabel.PropertyLabel {
+    public static class ColumnNumberPane extends GuiSwingViewLabel.PropertyLabel implements ObjectTableColumnValue.ColumnViewUpdateSource {
         protected GuiSwingViewNumberSpinner.PropertyNumberSpinner editor;
         protected String currentFormatPattern;
         protected NumberFormat currentFormat;
+
+        protected Runnable updater;
 
         public ColumnNumberPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager,
                                 GuiSwingViewNumberSpinner.PropertyNumberSpinner editor) {
@@ -69,11 +69,21 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
             }
         }
 
+        @Override
+        public void setColumnViewUpdater(Runnable updater) {
+            this.updater = updater;
+        }
+
         public void modelUpdated(ChangeEvent e) {
-            String fmtPat = editor.getModelTyped().getFormatPattern();
-            if (!Objects.equals(fmtPat, currentFormatPattern)) {
-                currentFormatPattern = fmtPat;
-                currentFormat = editor.getModelTyped().getFormat();
+            if (editor != null) {
+                String fmtPat = editor.getModelTyped().getFormatPattern();
+                if (!Objects.equals(fmtPat, currentFormatPattern)) {
+                    currentFormatPattern = fmtPat;
+                    currentFormat = editor.getModelTyped().getFormat();
+                    if (updater != null) {
+                        updater.run();
+                    }
+                }
             }
         }
 
@@ -109,15 +119,19 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new GuiSwingTableColumnString.LabelTextPasteAllAction(this),
                         new GuiSwingTableColumnString.LabelTextLoadAction(this),
-                        new GuiSwingTableColumnString.LabelTextSaveAction(this),
-                        new GuiSwingViewNumberSpinner.NumberMaximumAction(false, editor),
-                        new GuiSwingViewNumberSpinner.NumberMaximumAction(true, editor),
-                        new GuiSwingViewNumberSpinner.NumberIncrementAction(true, editor),
-                        new GuiSwingViewNumberSpinner.NumberIncrementAction(false, editor),
-                        editor.getSettingAction()
-                    ), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
+                        new GuiSwingTableColumnString.LabelTextSaveAction(this)
+                    ), getEditorActions(), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
             }
             return menuItems;
+        }
+
+        public List<Action> getEditorActions() {
+            return editor == null ? Collections.emptyList() : Arrays.asList(
+                    new GuiSwingViewNumberSpinner.NumberMaximumAction(false, editor),
+                    new GuiSwingViewNumberSpinner.NumberMaximumAction(true, editor),
+                    new GuiSwingViewNumberSpinner.NumberIncrementAction(true, editor),
+                    new GuiSwingViewNumberSpinner.NumberIncrementAction(false, editor),
+                    editor.getSettingAction());
         }
     }
 }

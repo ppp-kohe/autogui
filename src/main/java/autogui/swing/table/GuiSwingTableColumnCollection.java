@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
     protected GuiSwingMapperSet columnMapperSet;
@@ -152,6 +153,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
             if (column != null) {
                 column.withHeaderValue(column.getTableColumn().getHeaderValue() + " [" + elementIndex + "]");
             }
+        }
+
+        @Override
+        public void setColumnViewUpdater(Consumer<ObjectTableColumn> updater) {
+            column.setColumnViewUpdater(o -> updater.accept(this)); //convert column to this wrapper
         }
 
         @Override

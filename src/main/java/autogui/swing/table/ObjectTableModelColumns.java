@@ -11,6 +11,7 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 
 /** column managing part of {@link ObjectTableModel} */
 public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColumnHost {
@@ -19,7 +20,10 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
     protected List<ObjectTableColumn> staticColumns = new ArrayList<>();
     protected List<ObjectTableColumnDynamic> dynamicColumns = new ArrayList<>();
 
-    public ObjectTableModelColumns() {
+    protected Consumer<ObjectTableColumn> updater;
+
+    public ObjectTableModelColumns(Consumer<ObjectTableColumn> updater) {
+        this.updater = updater;
         columnModel = new DefaultTableColumnModel();
 
         //TODO debug
@@ -57,11 +61,16 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
     public void addColumnStatic(ObjectTableColumn column) {
         int modelIndex = columns.size();
         columns.add(column);
+        columnAdded(column);
         staticColumns.add(column);
 
         TableColumn tableColumn = column.getTableColumn();
         tableColumn.setModelIndex(modelIndex);
         columnModel.addColumn(tableColumn);
+    }
+
+    protected void columnAdded(ObjectTableColumn column) {
+        column.setColumnViewUpdater(updater);
     }
 
     @Override
@@ -114,6 +123,7 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
     public void addColumnsDynamic(List<ObjectTableColumn> columns) {
         for (ObjectTableColumn c : columns) {
             this.columns.add(c.getTableColumn().getModelIndex(), c);
+            columnAdded(c);
             int idx = columnModel.getColumnCount();
             columnModel.addColumn(c.getTableColumn());
             int newIndex = c.getTableColumn().getModelIndex();

@@ -26,7 +26,7 @@ public class ObjectTableModel extends AbstractTableModel  {
     protected JTable table;
     protected Supplier<Object> source;
 
-    protected ObjectTableModelColumns columns = new ObjectTableModelColumns();
+    protected ObjectTableModelColumns columns = new ObjectTableModelColumns(this::refreshColumnView);
     /** cached computed values */
     protected Object[][] data;
 
@@ -85,7 +85,6 @@ public class ObjectTableModel extends AbstractTableModel  {
     public void refreshColumns() {
         columns.update(getCollectionFromSource());
     }
-
 
 
     //////////// table initialization
@@ -394,6 +393,10 @@ public class ObjectTableModel extends AbstractTableModel  {
             }
         }
         fireTableRowsUpdatedAll();
+    }
+
+    public void refreshColumnView(ObjectTableColumn column) {
+        fireTableRowsUpdatedAll(); //no data change
     }
 
     /** update existing rows without changing selection */

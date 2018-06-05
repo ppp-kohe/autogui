@@ -91,6 +91,20 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
     }
 
+    @Override
+    public void setColumnViewUpdater(Consumer<ObjectTableColumn> updater) {
+        if (renderer instanceof ObjectTableCellRenderer) {
+            JComponent c = ((ObjectTableCellRenderer) renderer).getComponent();
+            if (c instanceof ColumnViewUpdateSource) {
+                ((ColumnViewUpdateSource) c).setColumnViewUpdater(() -> updater.accept(this));
+            }
+        }
+    }
+
+    public interface ColumnViewUpdateSource {
+        void setColumnViewUpdater(Runnable updater);
+    }
+
     public GuiMappingContext getContext() {
         return context;
     }
@@ -153,7 +167,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         protected GuiSwingTableColumn.SpecifierManagerIndex specifierIndex;
 
         /**
-         * @param component the renderer component, must be a {@link GuiSwingView.ValuePane}
+         * @param component the renderer component, must be a {@link GuiSwingView.ValuePane},
+         *                   also may be a {@link ColumnViewUpdateSource}
+         * @param specifierIndex specifier for the row, nullable
          */
         public ObjectTableCellRenderer(JComponent component, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex) {
             this.component = component;

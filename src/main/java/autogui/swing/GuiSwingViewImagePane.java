@@ -397,7 +397,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     public interface ImageScale {
         Dimension getScaledImageSize(Dimension srcSize, Dimension dstSize);
+        String getInfo();
         String getInfo(Dimension srcSize, Dimension dstSize);
+        ImageScale copyFor(PropertyImagePane pane);
     }
 
     public static class ImageScaleFit implements ImageScale {
@@ -420,9 +422,19 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
+        public String getInfo() {
+            return "Fit";
+        }
+
+        @Override
         public String getInfo(Dimension srcSize, Dimension dstSize) {
             Dimension size = getScaledImageSize(srcSize, dstSize);
             return String.format("Fit: %d%%, %,d x %,d", (int) (getScale(srcSize, dstSize) * 100f), size.width, size.height);
+        }
+
+        @Override
+        public ImageScale copyFor(PropertyImagePane pane) {
+            return new ImageScaleFit(maxImageScale);
         }
     }
 
@@ -457,9 +469,21 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
+        public String getInfo() {
+            return String.format("Zoom: %d%%", (int) (getCurrentZoom() * 100f));
+        }
+
+        @Override
         public String getInfo(Dimension srcSize, Dimension dstSize) {
             Dimension size = getScaledImageSize(srcSize, dstSize);
             return String.format("Zoom: %d%%, %,d x %,d", (int) (getCurrentZoom() * 100f), size.width, size.height);
+        }
+
+        @Override
+        public ImageScale copyFor(PropertyImagePane pane) {
+            ImageScaleMouseWheel w = new ImageScaleMouseWheel(pane);
+            w.currentZoom = currentZoom;
+            return w;
         }
     }
 
