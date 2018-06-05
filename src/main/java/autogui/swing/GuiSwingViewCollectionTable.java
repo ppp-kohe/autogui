@@ -263,9 +263,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (isAutoResizeOff()) {
                 setAutoResizeMode(AUTO_RESIZE_OFF);
             }
-            scrollPane.setPreferredSize(new Dimension(width, Math.max(scrollPane.getPreferredSize().height, 100)));
-            scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-            scrollPane.getHorizontalScrollBar().setUnitIncrement(16);
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            scrollPane.setPreferredSize(new Dimension(width, Math.max(scrollPane.getPreferredSize().height, ui.getScaledSizeInt(100))));
+            scrollPane.getVerticalScrollBar().setUnitIncrement(ui.getScaledSizeInt(16));
+            scrollPane.getHorizontalScrollBar().setUnitIncrement(ui.getScaledSizeInt(16));
         }
 
         protected boolean isAutoResizeOff() {
@@ -502,8 +503,13 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 end = getRowCount() - 1;
             }
 
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int unitSize = Math.max(1, ui.getScaledSizeInt(1));
+            int size = ui.getScaledSizeInt(3);
+            int arc = ui.getScaledSizeInt(5);
+
             g2.setColor(getSelectionBackground());
-            g2.setStroke(new BasicStroke(1));
+            g2.setStroke(new BasicStroke(unitSize));
 
             ListSelectionModel sel = getSelectionModel();
             int cols = getColumnCount();
@@ -519,7 +525,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                         }
                     }
                     if (row != null) {
-                        g2.draw(new RoundRectangle2D.Float(row.x + 1, row.y + 1, row.width - 3, row.height - 3, 5, 5));
+                        g2.draw(new RoundRectangle2D.Float(row.x + unitSize, row.y + unitSize, row.width - size, row.height - size, arc, arc));
                     }
                 }
             }

@@ -90,7 +90,8 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
 
         public void initBorder() {
-            setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10),
+            int hr = UIManagerUtil.getInstance().getScaledSizeInt(10);
+            setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, hr, 0, hr),
                     new FocusBorder(this)));
         }
 
@@ -261,6 +262,10 @@ public class GuiSwingViewLabel implements GuiSwingView {
             }
         }
 
+        public float getStrokeSize() {
+            return UIManagerUtil.getInstance().getScaledSizeFloat(3f);
+        }
+
         @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
             ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -277,7 +282,8 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
 
         public void paintStrokes(Graphics g, int x, int y, int width, int height) {
-            RoundRectangle2D rr = new RoundRectangle2D.Float(x + 1.5f, y + 1.5f, width - 3f, height - 3f, 4, 4);
+            float ss = getStrokeSize();
+            RoundRectangle2D rr = new RoundRectangle2D.Float(x + ss / 2f, y + ss / 2f, width - ss, height - ss, ss * 1.3f, ss * 1.3f);
             Graphics2D g2 = (Graphics2D) g;
             Color color2 = new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 150);
             g2.setColor(color2);
@@ -289,7 +295,8 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         @Override
         public Insets getBorderInsets(Component c) {
-            return new Insets(3, 3, 3, 3);
+            int s = (int) getStrokeSize();
+            return new Insets(s, s, s, s);
         }
 
         @Override

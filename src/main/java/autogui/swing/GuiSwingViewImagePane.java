@@ -3,10 +3,7 @@ package autogui.swing;
 import autogui.base.mapping.*;
 import autogui.swing.mapping.GuiReprValueImagePane;
 import autogui.swing.table.TableTargetColumnAction;
-import autogui.swing.util.MenuBuilder;
-import autogui.swing.util.PopupCategorized;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.SettingsWindow;
+import autogui.swing.util.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -595,7 +592,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public Action createAction(GuiPreferences.HistoryValueEntry e) {
             Action a = createActionBase(e);
             Image img = (Image) e.getValue();
-            Image icon = img.getScaledInstance(16, 16, Image.SCALE_DEFAULT);
+            int size = UIManagerUtil.getInstance().getScaledSizeInt(16);
+            Image icon = img.getScaledInstance(size, size, Image.SCALE_DEFAULT);
             a.putValue(Action.SMALL_ICON, new ImageIcon(icon));
             return a;
         }
@@ -898,7 +896,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         @Override
         protected Transferable createTransferable(JComponent c) {
             Image img = imagePane.getImage();
-            Dimension size = imagePane.getImageScaleDefault().getScaledImageSize(imagePane.getImageSize(), new Dimension(100, 100));
+            int s = UIManagerUtil.getInstance().getScaledSizeInt(100);
+            Dimension size = imagePane.getImageScaleDefault().getScaledImageSize(imagePane.getImageSize(), new Dimension(s, s));
             setDragImage(img.getScaledInstance(size.width , size.height, Image.SCALE_DEFAULT));
             return new ImageSelection(img);
         }

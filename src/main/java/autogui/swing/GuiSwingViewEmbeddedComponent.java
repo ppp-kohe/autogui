@@ -6,6 +6,7 @@ import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.mapping.GuiReprEmbeddedComponent;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,7 +87,8 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         }
 
         public void initSize() {
-            setPreferredSize(new Dimension(300, 200));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            setPreferredSize(new Dimension(ui.getScaledSizeInt(300), ui.getScaledSizeInt(200)));
         }
 
         @Override

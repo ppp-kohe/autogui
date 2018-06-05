@@ -4,6 +4,7 @@ import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -116,14 +117,15 @@ public class ObjectTableModel extends AbstractTableModel  {
     }
 
     public void initTableRowHeight(JTable table) {
-        int height = Math.max(table.getRowHeight() + 3,
+        int height = Math.max(table.getRowHeight() + UIManagerUtil.getInstance().getScaledSizeInt(3),
                 getColumns().getRowHeight());
         table.setRowHeight(height);
     }
 
     public JScrollPane initTableScrollPane(JComponent table) {
         JScrollPane scrollPane = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setPreferredSize(new Dimension(getColumns().getTotalWidth(), Math.max(scrollPane.getPreferredSize().height, 100)));
+        scrollPane.setPreferredSize(new Dimension(getColumns().getTotalWidth(),
+                Math.max(scrollPane.getPreferredSize().height, UIManagerUtil.getInstance().getScaledSizeInt(100))));
         return scrollPane;
     }
 
@@ -460,7 +462,8 @@ public class ObjectTableModel extends AbstractTableModel  {
 
         public JComponent createSeparator() {
             JComponent sep = new JPanel();
-            sep.setPreferredSize(new Dimension(10, 6));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            sep.setPreferredSize(new Dimension(ui.getScaledSizeInt(10), ui.getScaledSizeInt(6)));
             sep.setOpaque(false);
             sep.setBorder(BorderFactory.createEmptyBorder());
             return sep;

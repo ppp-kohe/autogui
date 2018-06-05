@@ -5,6 +5,7 @@ import autogui.base.type.*;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.mapping.GuiReprValueImagePane;
 import autogui.swing.table.*;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.text.Document;
@@ -87,7 +88,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     public static class LambdaTextPane extends GuiSwingViewStringField.PropertyStringPane {
         public LambdaTextPane(Supplier<String> getter, Consumer<String> setter) {
             super(create(String.class, getter, setter, new GuiReprValueStringField()), NONE);
-            setPreferredSize(new Dimension(100, getPreferredSize().height ));
+            setPreferredSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(100), getPreferredSize().height ));
         }
     }
 
@@ -127,7 +128,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     public static class LambdaFilePathPane extends GuiSwingViewFilePathField.PropertyFilePathPane {
         public LambdaFilePathPane(Supplier<Path> getter, Consumer<Path> setter) {
             super(create(Path.class, getter, setter, new GuiReprValueFilePathField()), NONE);
-            setPreferredSize(new Dimension(200, getPreferredSize().height ));
+            setPreferredSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(200), getPreferredSize().height ));
         }
     }
 

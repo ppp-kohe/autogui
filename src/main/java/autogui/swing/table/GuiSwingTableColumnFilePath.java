@@ -10,6 +10,7 @@ import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.SearchTextField;
 import autogui.swing.util.SearchTextFieldFilePath;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -40,7 +41,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
                 new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePathPane(context, valueSpecifier), false, rowSpecifier))
                 .withComparator(Comparator.comparing(Path.class::cast))
                 .withValueType(Path.class)
-                .withRowHeight(28);
+                .withRowHeight(UIManagerUtil.getInstance().getScaledSizeInt(28));
         renderPane.setTableColumn(column.getTableColumn());
         return column;
     }

@@ -11,6 +11,7 @@ import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.base.mapping.ScheduledTaskRunner;
 import autogui.swing.util.SettingsWindow;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -171,8 +172,10 @@ public class GuiSwingPreferences {
             }
             addSelectionListener(this::showSelectedPrefs);
 
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+
             JScrollPane listScroll = new JScrollPane(list);
-            listScroll.setPreferredSize(new Dimension(300, 300));
+            listScroll.setPreferredSize(new Dimension(ui.getScaledSizeInt(300), ui.getScaledSizeInt(300)));
 
             JPanel viewPane = new JPanel(new BorderLayout());
             {

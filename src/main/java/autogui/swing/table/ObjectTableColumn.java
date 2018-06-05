@@ -6,6 +6,7 @@ import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -232,7 +233,7 @@ public class ObjectTableColumn {
      */
     public static class ObjectTableColumnRowIndex extends ObjectTableColumn {
         public ObjectTableColumnRowIndex() {
-            tableColumn = new TableColumn(0, 64, new NumberRenderer(this), null);
+            tableColumn = new TableColumn(0, UIManagerUtil.getInstance().getScaledSizeInt(64), new NumberRenderer(this), null);
             tableColumn.setHeaderValue("#");
             setValueType(Number.class);
             withComparator(new GuiSwingTableColumnNumber.NumberComparator());
@@ -265,10 +266,14 @@ public class ObjectTableColumn {
     public static void setCellBorder(JTable table, JComponent cell, int row, int column) {
         boolean leftEnd = (column == 0);
         boolean rightEnd = (table.getColumnCount() == column + 1);
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        int h = Math.max(1, ui.getScaledSizeInt(1));
+        int w = Math.max(1, ui.getScaledSizeInt(2));
 
+        int iw = ui.getScaledSizeInt(5);
         cell.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, leftEnd ? 2 : 0, 2, rightEnd ? 2 : 0, table.getBackground()),
-                BorderFactory.createMatteBorder(1, 10, 1, 5, cell.getBackground())));
+                BorderFactory.createMatteBorder(h, leftEnd ? w : 0, h * 2, rightEnd ? w : 0, table.getBackground()),
+                BorderFactory.createMatteBorder(h, iw * 2, h, iw, cell.getBackground())));
 
     }
 

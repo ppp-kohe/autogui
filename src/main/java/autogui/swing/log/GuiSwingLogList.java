@@ -6,6 +6,7 @@ import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.util.ResizableFlowLayout;
 import autogui.swing.util.SearchTextField;
 import autogui.swing.util.SettingsWindow;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -240,16 +241,17 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
     public Rectangle getTargetEntryRectForScroll(int target) {
         Rectangle cellRect = getCellRect(target);
         Rectangle visibleRect = getVisibleRect();
+        int unit = Math.max(1, UIManagerUtil.getInstance().getScaledSizeInt(1));
         if (cellRect == null) {
             if (target == 0) {
-                return new Rectangle(visibleRect.x, 0, visibleRect.width, 1);
+                return new Rectangle(visibleRect.x, 0, visibleRect.width, unit);
             } else if (target == getRowCount() - 1) {
-                return new Rectangle(visibleRect.x, getHeight() - 1, visibleRect.width, 1);
+                return new Rectangle(visibleRect.x, getHeight() - unit, visibleRect.width, unit);
             } else {
                 return visibleRect;
             }
         } else {
-            return new Rectangle(visibleRect.x, (int) cellRect.getMaxY() - 1, visibleRect.width, 1);
+            return new Rectangle(visibleRect.x, (int) cellRect.getMaxY() - unit, visibleRect.width, unit);
         }
     }
 
@@ -798,7 +800,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         };
 
         JButton icon = new JButton();
-        icon.setIcon(GuiSwingIcons.getInstance().getPressedIcon("log-", "find", 16, 16));
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        int size = ui.getScaledSizeInt(16);
+        icon.setIcon(GuiSwingIcons.getInstance().getPressedIcon("log-", "find", size, size));
         icon.setBorderPainted(false);
         icon.setContentAreaFilled(false);
         findPane.add(icon, BorderLayout.WEST);
@@ -808,8 +812,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         field.addKeyListener(new LogTextFindAdapter(this, field));
         findPane.add(field);
 
+        int bSize = ui.getScaledSizeInt(5);
         bar.add(ResizableFlowLayout.create(true)
-                .withBorder(5, 5)
+                .withBorder(bSize, bSize)
                 .add(findPane, true).getContainer());
         return bar;
     }

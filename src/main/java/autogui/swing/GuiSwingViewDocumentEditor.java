@@ -179,7 +179,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
     public static class SelectionHighlightPainter extends DefaultHighlighter.DefaultHighlightPainter {
         public SelectionHighlightPainter() {
-            super(UIManager.getColor("TextPane.selectionBackground"));
+            super(UIManagerUtil.getInstance().getTextPaneSelectionBackground());
         }
 
         @Override
@@ -651,17 +651,18 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected int defaultFontSize = 14;
 
         public DocumentSettingPane(JEditorPane pane) {
-            setBorder(BorderFactory.createEmptyBorder(3, 10, 10, 10));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int top = ui.getScaledSizeInt(3);
+            int size = ui.getScaledSizeInt(10);
+            setBorder(BorderFactory.createEmptyBorder(top, size, size, size));
             this.pane = pane;
 
             Style s = getTargetStyle();
             if (s != null) {
                 defaultFontSize = StyleConstants.getFontSize(s);
             } else {
-                Font font = UIManager.getFont("EditorPane.font");
-                if (font != null) {
-                    defaultFontSize = font.getSize();
-                }
+                Font font = ui.getEditorPaneFont();
+                defaultFontSize = font.getSize();
             }
             //font name
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();

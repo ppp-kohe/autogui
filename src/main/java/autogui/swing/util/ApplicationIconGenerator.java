@@ -152,10 +152,8 @@ public class ApplicationIconGenerator {
 
                 NameLinePattern pattern = layout(words.w, words.h, nameRect.width / nameRect.height);
 
-                Font font = UIManager.getFont("Label.font");
-                if (font != null) {
-                    g.setFont(font);
-                }
+                Font font = UIManagerUtil.getInstance().getLabelFont();
+                g.setFont(font);
 
                 float fontSizeP = Math.min(nameRect.width / pattern.getWidth(), nameRect.height / pattern.getHeight()) * 0.9f;
                 g.setFont(words.metrics.getFont().deriveFont(fontSizeP * words.metrics.getFont().getSize2D()));

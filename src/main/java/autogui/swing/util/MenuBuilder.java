@@ -180,17 +180,21 @@ public class MenuBuilder {
             super(new FlowLayout(FlowLayout.LEADING, 3, 3));
             this.name = name;
             label = new JLabel(name);
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int h = ui.getScaledSizeInt(1);
+            int l = ui.getScaledSizeInt(15);
+            int r = ui.getScaledSizeInt(10);
             if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_VALUE)) {
-                label.setBorder(BorderFactory.createEmptyBorder(1, 15, 1, 10));
+                label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
                 label.setForeground(new Color(80, 100, 64));
             } else if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_TYPE)) {
-                label.setBorder(BorderFactory.createEmptyBorder(1, 15, 1, 10));
+                label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
                 label.setForeground(new Color(64, 80, 100));
             } else if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_MISC)) {
-                label.setBorder(BorderFactory.createEmptyBorder(1, 15, 1, 10));
+                label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
                 label.setForeground(new Color(100, 80, 64));
             } else {
-                label.setBorder(BorderFactory.createEmptyBorder(1, 10, 1, 10));
+                label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
                 label.setForeground(Color.darkGray);
             }
             add(label);

@@ -4,6 +4,7 @@ import autogui.base.log.GuiLogEntry;
 import autogui.base.log.GuiLogEntryException;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.util.TextCellRenderer;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -104,7 +105,10 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         public GuiSwingLogExceptionRenderer(GuiSwingLogManager manager, ContainerType type) {
             this.containerType = type;
             this.manager = manager;
-            setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int h = ui.getScaledSizeInt(5);
+            int w = ui.getScaledSizeInt(10);
+            setBorder(BorderFactory.createEmptyBorder(h, w, h, w));
             setLayout(new BorderLayout(0, 0));
             setOpaque(false);
 
@@ -119,7 +123,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             {
                 expandButton = new GuiSwingIcons.ActionButton(expandAction);
                 expandButton.setHideActionText(true);
-                expandButton.setPreferredSize(new Dimension(32, 28));
+                expandButton.setPreferredSize(new Dimension(ui.getScaledSizeInt(32), ui.getScaledSizeInt(28)));
             }
 
             messageLinePane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -174,7 +178,12 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
             if (selected && !containerType.equals(ContainerType.StatusBar)) {
                 Dimension size = getSize();
-                RoundRectangle2D.Float r = new RoundRectangle2D.Float(2, 2, size.width - 5, size.height - 5, 3, 3);
+
+                UIManagerUtil ui = UIManagerUtil.getInstance();
+                int xy = ui.getScaledSizeInt(2);
+                int hw = ui.getScaledSizeInt(5);
+                int arc = ui.getScaledSizeInt(3);
+                RoundRectangle2D.Float r = new RoundRectangle2D.Float(xy, xy, size.width - hw, size.height - hw, arc, arc);
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setColor(TextCellRenderer.getSelectionColor());
                 g2.draw(r);
@@ -669,11 +678,17 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         }
 
         public Icon getIcon(boolean expand) {
-            return GuiSwingIcons.getInstance().getIcon("log-", expand ? "expand" : "collapse", 16, 14);
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int w = ui.getScaledSizeInt(16);
+            int h = ui.getScaledSizeInt(14);
+            return GuiSwingIcons.getInstance().getIcon("log-", expand ? "expand" : "collapse", w, h);
         }
 
         public Icon getPressedIcon(boolean expand) {
-            return GuiSwingIcons.getInstance().getPressedIcon("log-", expand ? "expand" : "collapse", 16, 14);
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int w = ui.getScaledSizeInt(16);
+            int h = ui.getScaledSizeInt(14);
+            return GuiSwingIcons.getInstance().getPressedIcon("log-", expand ? "expand" : "collapse", w, h);
         }
 
         @Override

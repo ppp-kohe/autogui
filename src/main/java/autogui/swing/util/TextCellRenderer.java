@@ -48,7 +48,9 @@ public class TextCellRenderer<ValueType> extends JPanel
     }
 
     protected void initBorder() {
-        setBorder(BorderFactory.createEmptyBorder(7, 10, 3, 10));
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        setBorder(BorderFactory.createEmptyBorder(
+                ui.getScaledSizeInt(7), ui.getScaledSizeInt(10), ui.getScaledSizeInt(3), ui.getScaledSizeInt(10)));
     }
 
     public String getText() {
@@ -469,7 +471,7 @@ public class TextCellRenderer<ValueType> extends JPanel
 
     public float[] getBaseSize() {
         if (testImage == null) {
-            testImage = new BufferedImage(100, 100, BufferedImage.TYPE_3BYTE_BGR);
+            testImage = new BufferedImage(32, 32, BufferedImage.TYPE_3BYTE_BGR);
             Graphics2D g = testImage.createGraphics();
 
             AttributedString a = new AttributedString("M");
@@ -500,7 +502,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     /////////////////
 
     public static Color getSelectionColor() {
-        return UIManager.getColor("TextPane.selectionBackground");
+        return UIManagerUtil.getInstance().getTextPaneSelectionBackground();
     }
 
     public Color getLineSelectionColor() {
@@ -617,7 +619,11 @@ public class TextCellRenderer<ValueType> extends JPanel
 
     public void paintCellSelection(Graphics g, Color selectionColor) {
         Dimension size = getSize();
-        RoundRectangle2D.Float r = new RoundRectangle2D.Float(2, 2, size.width - 5, size.height - 5, 3, 3);
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        int xy = ui.getScaledSizeInt(2);
+        int wh = ui.getScaledSizeInt(5);
+        int arc = ui.getScaledSizeInt(3);
+        RoundRectangle2D.Float r = new RoundRectangle2D.Float(xy, xy, size.width - wh, size.height - wh, arc, arc);
         Graphics2D g2 = (Graphics2D) g;
         g2.setColor(selectionColor);
         g2.draw(r);

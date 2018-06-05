@@ -4,6 +4,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.type.GuiTypeBuilder;
 import autogui.swing.util.ApplicationIconGenerator;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -73,7 +74,8 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     }
 
     protected void initIcon() {
-        new ApplicationIconGenerator(256, 256, GuiMappingContext.nameSplit(contextRootPane.getContext().getName(), true))
+        int wh = UIManagerUtil.getInstance().getScaledSizeInt(256);
+        new ApplicationIconGenerator(wh, wh, GuiMappingContext.nameSplit(contextRootPane.getContext().getName(), true))
                 .setAppIcon(this);
     }
 

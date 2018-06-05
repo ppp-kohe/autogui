@@ -266,7 +266,8 @@ public class SettingsWindow {
         public ColorButton(Color color, Consumer<Color> callback) {
             this.color = color;
             this.callback = callback;
-            setPreferredSize(new Dimension(32, 18));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            setPreferredSize(new Dimension(ui.getScaledSizeInt(32), ui.getScaledSizeInt(18)));
             addActionListener(this);
         }
 
@@ -304,7 +305,10 @@ public class SettingsWindow {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g;
             g2.setColor(color);
-            Dimension size = new Dimension(Math.min(32, getWidth() - 8), Math.min(14, getHeight() - 8));
+            int margin = UIManagerUtil.getInstance().getScaledSizeInt(8);
+            int minW = UIManagerUtil.getInstance().getScaledSizeInt(32);
+            int minH = UIManagerUtil.getInstance().getScaledSizeInt(14);
+            Dimension size = new Dimension(Math.min(minW, getWidth() - margin), Math.min(minH, getHeight() - margin));
             Rectangle2D.Float rect = new Rectangle2D.Float(getWidth() / 2 - size.width / 2, getHeight() / 2 - size.height / 2,
                     size.width, size.height);
 
@@ -471,10 +475,11 @@ public class SettingsWindow {
         public void initAccessory() {
             accessory = new JPanel(new BorderLayout());
             {
+                int size = UIManagerUtil.getInstance().getScaledSizeInt(5);
                 backAction = new FileBackAction(fileChooser);
                 JButton back = new JButton(backAction);
                 back.setHorizontalAlignment(SwingConstants.LEADING);
-                back.setMargin(new Insets(5, 5, 5, 5));
+                back.setMargin(new Insets(size, size, size, size));
                 accessory.add(back, BorderLayout.NORTH);
 
                 JScrollPane scrollPane = new JScrollPane(historyList);
@@ -482,7 +487,7 @@ public class SettingsWindow {
                 accessory.add(scrollPane, BorderLayout.CENTER);
 
                 extraAccessory = new JPanel(new BorderLayout());
-                extraAccessory.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+                extraAccessory.setBorder(BorderFactory.createEmptyBorder(size, size, size, size));
                 accessory.add(extraAccessory, BorderLayout.SOUTH);
             }
             fileChooser.setAccessory(accessory);
@@ -687,7 +692,8 @@ public class SettingsWindow {
             }
             if (icon == null) {
                 if (dummy == null) {
-                    BufferedImage img = new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR);
+                    int size = UIManagerUtil.getInstance().getScaledSizeInt(16);
+                    BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_4BYTE_ABGR);
                     Graphics2D g = img.createGraphics();
                     {
                         g.setColor(new Color(255, 255, 255, 0));
@@ -703,15 +709,20 @@ public class SettingsWindow {
 
         public void setLayout() {
             Dimension s = getPreferredSize();
-            if (s.width < 150) {
-                s.width = 150;
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int w = ui.getScaledSizeInt(150);
+            int h = ui.getScaledSizeInt(30);
+            if (s.width < w) {
+                s.width = w;
             }
-            if (s.height < 30) {
-                s.height = 30;
+            if (s.height < h) {
+                s.height = h;
             }
             setPreferredSize(s);
-            setMinimumSize(new Dimension(150, 30));
-            setBorder(BorderFactory.createEmptyBorder(7, 5, 7, 5));
+            setMinimumSize(new Dimension(w, h));
+            int bh = ui.getScaledSizeInt(7);
+            int bw = ui.getScaledSizeInt(5);
+            setBorder(BorderFactory.createEmptyBorder(bh, bw, bh, bw));
         }
     }
 

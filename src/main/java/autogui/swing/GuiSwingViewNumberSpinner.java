@@ -79,7 +79,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     public static class InfinityNumberSpinner extends JSpinner {
         public InfinityNumberSpinner(TypedSpinnerNumberModel model) {
             super(model);
-            setMinimumSize(new Dimension(32, getMinimumSize().height));
+            setMinimumSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(32), getMinimumSize().height));
         }
 
         @Override
@@ -139,7 +139,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 JFormattedTextField.AbstractFormatter formatter = formatterFactory.getDefaultFormatter();
                 String max = formatter.valueToString(model.getMaximum());
                 String min = formatter.valueToString(model.getMinimum());
-                field.setColumns(Math.min(20, Math.max(min.length(), max.length())));
+                field.setColumns(Math.min(UIManagerUtil.getInstance().getScaledSizeInt(20), Math.max(min.length(), max.length())));
             } catch (ParseException ex) {
                 System.err.println("ex: " + ex);
                 //nothing
@@ -894,7 +894,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected int disableChange;
 
         public NumberSettingPane(TypedSpinnerNumberModel model) {
-            setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int h = ui.getScaledSizeInt(3);
+            int w = ui.getScaledSizeInt(10);
+            setBorder(BorderFactory.createEmptyBorder(h, w, h, w));
             setOpaque(false);
             this.model = model;
 
@@ -911,14 +914,16 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             stepSpinner.addChangeListener(this::updateFromGui);
             model.addChangeListener(this::updateFromModel);
 
-            Dimension spinnerSize = new Dimension(150, 28);
+            Dimension spinnerSize = new Dimension(ui.getScaledSizeInt(150), ui.getScaledSizeInt(28));
             minSpinner.setPreferredSize(spinnerSize);
             maxSpinner.setPreferredSize(spinnerSize);
             stepSpinner.setPreferredSize(spinnerSize);
 
-            minSpinner.setMinimumSize(new Dimension(100, minSpinner.getMinimumSize().height));
-            maxSpinner.setMinimumSize(new Dimension(100, maxSpinner.getMinimumSize().height));
-            stepSpinner.setMinimumSize(new Dimension(100, stepSpinner.getMinimumSize().height));
+            int minWidth = ui.getScaledSizeInt(100);
+
+            minSpinner.setMinimumSize(new Dimension(minWidth, minSpinner.getMinimumSize().height));
+            maxSpinner.setMinimumSize(new Dimension(minWidth, maxSpinner.getMinimumSize().height));
+            stepSpinner.setMinimumSize(new Dimension(minWidth, stepSpinner.getMinimumSize().height));
 
             formatCheckBox = new JCheckBox("Format:");
             formatCheckBox.addChangeListener(this::updateFromGui);

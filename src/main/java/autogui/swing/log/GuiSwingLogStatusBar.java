@@ -1,6 +1,7 @@
 package autogui.swing.log;
 
 import autogui.base.log.GuiLogEntry;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,8 +31,11 @@ public class GuiSwingLogStatusBar extends JComponent {
     }
 
     public GuiSwingLogStatusBar(GuiSwingLogManager manager, boolean addManagerAsView) {
-        setPreferredSize(new Dimension(100, 28));
-        setMinimumSize(new Dimension(100, 28));
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        int w = ui.getScaledSizeInt(100);
+        int h = ui.getScaledSizeInt(28);
+        setPreferredSize(new Dimension(w, h));
+        setMinimumSize(new Dimension(w, h));
         setLayout(new BorderLayout());
         renderer = new GuiSwingLogManager.GuiSwingLogRenderer(manager, GuiSwingLogEntry.ContainerType.StatusBar);
         cellRendererPane = new CellRendererPane();

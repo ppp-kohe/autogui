@@ -160,7 +160,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         public void initContentPane() {
             contentPane = new JPanel();
             contentPane.setOpaque(false);
-            ResizableFlowLayout layout = new ResizableFlowLayout(false, 10);
+            ResizableFlowLayout layout = new ResizableFlowLayout(false, UIManagerUtil.getInstance().getScaledSizeInt(10));
             layout.setFitHeight(true);
             contentPane.setLayout(layout);
             setOpaque(false);

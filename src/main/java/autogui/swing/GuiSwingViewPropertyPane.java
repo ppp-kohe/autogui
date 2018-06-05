@@ -1,10 +1,7 @@
 package autogui.swing;
 
 import autogui.base.mapping.*;
-import autogui.swing.util.MenuBuilder;
-import autogui.swing.util.NamedPane;
-import autogui.swing.util.PopupCategorized;
-import autogui.swing.util.PopupExtension;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -127,7 +124,10 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             label = new JLabel(displayName);
 
             label.setName(context.getName() + ".label");
-            label.setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 10));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int h = ui.getScaledSizeInt(3);
+            int w = ui.getScaledSizeInt(10);
+            label.setBorder(BorderFactory.createEmptyBorder(h, w, h, w));
 
             add(label, BorderLayout.NORTH);
         }

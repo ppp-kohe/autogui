@@ -52,7 +52,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
                                   GuiSwingView.SpecifierManager specifierManager, JComponent view, JComponent editorView) {
         this(context, specifierIndex, specifierManager, new ObjectTableCellRenderer(view, specifierIndex),
                 editorView == null ? null : new ObjectTableCellEditor(editorView, view == editorView, specifierIndex));
-        setRowHeight(view.getPreferredSize().height + 4);
+        setRowHeight(view.getPreferredSize().height + UIManagerUtil.getInstance().getScaledSizeInt(4));
     }
 
     public ObjectTableColumnValue(GuiMappingContext context, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex,
@@ -69,9 +69,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
 
         GuiReprValue value = context.getReprValue();
-        setTableColumn(new TableColumn(0, 64, renderer,
+        int size = UIManagerUtil.getInstance().getScaledSizeInt(64);
+        setTableColumn(new TableColumn(0, size, renderer,
                 value.isEditable(context) ? editor : null));
-        getTableColumn().setMinWidth(64);
+        getTableColumn().setMinWidth(size);
         getTableColumn().setHeaderValue(context.getDisplayName());
 
         if (renderer instanceof ObjectTableCellRenderer) {
@@ -288,11 +289,12 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 //                    }
 //                }
             }
+            UIManagerUtil ui = UIManagerUtil.getInstance();
             component.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createEmptyBorder(0, 5, 0, 3),
+                    BorderFactory.createEmptyBorder(0, ui.getScaledSizeInt(5), 0, ui.getScaledSizeInt(3)),
                     BorderFactory.createCompoundBorder(
                             getTableFocusBorder(),
-                            BorderFactory.createEmptyBorder(1, 5, 1, 2))));
+                            BorderFactory.createEmptyBorder(ui.getScaledSizeInt(1), ui.getScaledSizeInt(5), ui.getScaledSizeInt(1), ui.getScaledSizeInt(2)))));
             return component;
         }
 
@@ -330,7 +332,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
 
     public static Border getTableFocusBorder() {
-        return UIManager.getBorder("Table.focusCellHighlightBorder");
+        return UIManagerUtil.getInstance().getTableFocusCellHighlightBorder();
     }
 
     /**

@@ -3,6 +3,7 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewImagePane;
+import autogui.swing.util.UIManagerUtil;
 
 import java.awt.*;
 
@@ -21,7 +22,8 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         ColumnEditImagePane img = new ColumnEditImagePane(context, valueSpecifier);
         ColumnEditImagePane edit = new ColumnEditImagePane(context, valueSpecifier);
         edit.setScaleTarget(img); //TODO bidirectional
-        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, img, edit).withRowHeight(64);
+        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, img, edit)
+                .withRowHeight(UIManagerUtil.getInstance().getScaledSizeInt(64));
     }
 
     /**
@@ -32,7 +34,8 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         public ColumnEditImagePane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
             super(context, specifierManager);
             setOpaque(true);
-            setPreferredSize(new Dimension(64, 64));
+            int size = UIManagerUtil.getInstance().getScaledSizeInt(64);
+            setPreferredSize(new Dimension(size, size));
         }
 
         public void setScaleTarget(GuiSwingViewImagePane.PropertyImagePane scaleTarget) {
@@ -49,7 +52,8 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
 
         @Override
         public void setPreferredSizeFromImageSize() {
-            setPreferredSize(new Dimension(64, 64));
+            int size = UIManagerUtil.getInstance().getScaledSizeInt(64);
+            setPreferredSize(new Dimension(size, size));
         }
     }
 }

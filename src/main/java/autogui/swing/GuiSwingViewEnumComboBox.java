@@ -2,10 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.*;
 import autogui.swing.table.TableTargetColumnAction;
-import autogui.swing.util.MenuBuilder;
-import autogui.swing.util.PopupCategorized;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.PopupExtensionText;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -261,7 +258,10 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 10));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int h = ui.getScaledSizeInt(3);
+            int w = ui.getScaledSizeInt(5);
+            setBorder(BorderFactory.createEmptyBorder(h, w, h, w * 2));
 
             if (value instanceof Enum<?>) {
                 setText(((GuiReprValueEnumComboBox) context.getRepresentation()).getDisplayName(context, (Enum<?>) value));

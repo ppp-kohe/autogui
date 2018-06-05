@@ -4,6 +4,7 @@ import autogui.base.log.GuiLogEntry;
 import autogui.base.log.GuiLogEntryProgress;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.util.TextCellRenderer;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -108,8 +109,10 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         public GuiSwingLogProgressRenderer(GuiSwingLogManager manager, ContainerType containerType) {
             this.manager = manager;
             this.containerType = containerType;
-
-            setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 20));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int w = ui.getScaledSizeInt(10);
+            int h = ui.getScaledSizeInt(5);
+            setBorder(BorderFactory.createEmptyBorder(h, w, h, w * 2));
             setLayout(new BorderLayout());
             setOpaque(false);
 
@@ -121,7 +124,8 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             {
                 stopButton.setBorderPainted(false);
                 stopButton.setHideActionText(true);
-                stopButton.setPreferredSize(new Dimension(24, 24));
+                int btnSize = ui.getScaledSizeInt(24);
+                stopButton.setPreferredSize(new Dimension(btnSize, btnSize));
             }
 
             message = new ProgressMessageRenderer(manager, containerType);
@@ -158,7 +162,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             if (leftToRight) {
                 setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
                 add(progressContainer);
-                add(Box.createHorizontalStrut(10));
+                add(Box.createHorizontalStrut(UIManagerUtil.getInstance().getScaledSizeInt(10)));
                 add(messageContainer);
             } else {
                 setLayout(new BorderLayout());
@@ -177,7 +181,9 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
             progressBar.setEnabled(true);
             message2Layout = false;
-            message2.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int r = ui.getScaledSizeInt(10);
+            message2.setBorder(BorderFactory.createEmptyBorder(0, r, 0, 0));
         }
 
         public void setLayoutWithFinish() {
@@ -270,7 +276,11 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
             if (selected && !containerType.equals(ContainerType.StatusBar)) {
                 Dimension size = getSize();
-                RoundRectangle2D.Float r = new RoundRectangle2D.Float(2, 2, size.width - 5, size.height - 5, 3, 3);
+                UIManagerUtil ui = UIManagerUtil.getInstance();
+                int xy = ui.getScaledSizeInt(2);
+                int wh = ui.getScaledSizeInt(5);
+                int arc = ui.getScaledSizeInt(3);
+                RoundRectangle2D.Float r = new RoundRectangle2D.Float(xy, xy, size.width - wh, size.height - wh, arc, arc);
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setColor(TextCellRenderer.getSelectionColor());
                 g2.draw(r);
@@ -348,8 +358,9 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         public ProgressStopAction(GuiSwingLogProgressRenderer renderer) {
             putValue(NAME, "Stop");
             GuiSwingIcons icons = GuiSwingIcons.getInstance();
-            putValue(LARGE_ICON_KEY, icons.getIcon("log-", "stop", 16, 16));
-            putValue(GuiSwingIcons.PRESSED_ICON_KEY, icons.getPressedIcon("log-", "stop", 16, 16));
+            int size = UIManagerUtil.getInstance().getScaledSizeInt(16);
+            putValue(LARGE_ICON_KEY, icons.getIcon("log-", "stop", size, size));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, icons.getPressedIcon("log-", "stop", size, size));
             this.renderer = renderer;
         }
         @Override

@@ -451,7 +451,9 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
         public PopupExtensionDisplayAction(PopupExtension extension) {
             this.extension = extension;
-            putValue(Action.LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("search-", "pulldown", 16, 10));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            putValue(Action.LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("search-", "pulldown",
+                    ui.getScaledSizeInt(16), ui.getScaledSizeInt(10)));
         }
 
         @Override
@@ -466,7 +468,8 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     public void show(Component comp) {
         int x = comp.getWidth() / 2;
-        int y = Math.min(64, comp.getHeight());
+
+        int y = Math.min(UIManagerUtil.getInstance().getScaledSizeInt(64), comp.getHeight());
         show(comp, x, y);
     }
 

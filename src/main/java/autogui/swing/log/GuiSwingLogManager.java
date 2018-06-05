@@ -2,6 +2,7 @@ package autogui.swing.log;
 
 import autogui.base.log.*;
 import autogui.swing.icons.GuiSwingIcons;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -108,24 +109,7 @@ public class GuiSwingLogManager extends GuiLogManager {
     }
 
     public static Font getFont() {
-        String os = System.getProperty("os.name", "").toLowerCase();
-        Font base = UIManager.getFont("List.font");
-        int size = (base == null ? 12 : base.getSize());
-
-        Font f = null;
-
-        if (os.contains("mac")) {
-            f = new Font("Menlo", Font.PLAIN, size);
-        } else if (os.contains("windows")) {
-            f = new Font("Consolas", Font.PLAIN, size);
-        }
-        if (f == null || f.getFamily().equals(Font.DIALOG)) {
-            f = new Font("DejaVu Sans Mono", Font.PLAIN, size);
-        }
-        if (f.getFamily().equals(Font.DIALOG)) {
-            f = new Font(Font.MONOSPACED, Font.PLAIN, size);
-        }
-        return f;
+        return UIManagerUtil.getInstance().getConsoleFont();
     }
 
     /**
@@ -206,7 +190,8 @@ public class GuiSwingLogManager extends GuiLogManager {
             list.setEntryLimit(10000);
             JScrollPane scrollPane = new JScrollPane(list,
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            scrollPane.getVerticalScrollBar().setUnitIncrement(ui.getScaledSizeInt(16));
             pane.add(scrollPane, BorderLayout.CENTER);
 
             //tool bar
@@ -221,7 +206,7 @@ public class GuiSwingLogManager extends GuiLogManager {
             statusBar.add(showButton, BorderLayout.WEST);
             setContentPane(pane);
             pack();
-            setSize(400, 600);
+            setSize(ui.getScaledSizeInt(400), ui.getScaledSizeInt(600));
         }
 
         @Override
@@ -264,8 +249,10 @@ public class GuiSwingLogManager extends GuiLogManager {
                             KeyEvent.SHIFT_DOWN_MASK |
                                     Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             GuiSwingIcons icons = GuiSwingIcons.getInstance();
-            putValue(LARGE_ICON_KEY, icons.getIcon("log-", "show", 25, 25));
-            putValue(GuiSwingIcons.PRESSED_ICON_KEY, icons.getPressedIcon("log-", "show", 25, 25));
+
+            int size = UIManagerUtil.getInstance().getScaledSizeInt(25);
+            putValue(LARGE_ICON_KEY, icons.getIcon("log-", "show", size, size));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, icons.getPressedIcon("log-", "show", size, size));
             this.frame = frame;
         }
 

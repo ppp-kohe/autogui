@@ -4,6 +4,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.type.GuiUpdatedValue;
 import autogui.swing.util.SwingDeferredRunner;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -11,6 +12,7 @@ import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
+import java.awt.*;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -219,8 +221,9 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
 
     public static TabSet getTabSet() {
         if (tabSet == null) {
+            int pos = UIManagerUtil.getInstance().getScaledSizeInt(32);
             tabSet = new TabSet(IntStream.range(0, 100)
-                    .mapToObj(i -> new TabStop(i * 32))
+                    .mapToObj(i -> new TabStop(i * pos))
                     .toArray(TabStop[]::new));
         }
         return tabSet;
@@ -232,16 +235,14 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
             StyleConstants.setTabSet(style, getTabSet());
             set = true;
         }
+        Font consoleFont = UIManagerUtil.getInstance().getConsoleFont();
         if (style.getAttribute(StyleConstants.FontSize) == null) {
-            StyleConstants.setFontSize(style, 14);
+            StyleConstants.setFontSize(style, consoleFont.getSize());
             set = true;
         }
         if (style.getAttribute(StyleConstants.FontFamily) == null) {
-            String os = System.getProperty("os.name", "?").toLowerCase();
-            if (os.contains("mac")) {
-                StyleConstants.setFontFamily(style, "Menlo");
-                set = true;
-            }
+            StyleConstants.setFontFamily(style, consoleFont.getFamily());
+            set = true;
         }
         return set;
     }

@@ -1,6 +1,7 @@
 package autogui.swing.icons;
 
 import autogui.swing.GuiSwingViewLabel;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -50,8 +51,9 @@ public class GuiSwingIcons {
     }
 
     public Icon loadIcon(String name) {
+        int s = UIManagerUtil.getInstance().getIconSize();
         return loadIcon("action-",
-                synonyms.getOrDefault(name, name), suffix, 32, 32);
+                synonyms.getOrDefault(name, name), suffix, s, s);
     }
 
     public Icon loadIcon(String prefix, String name, String suffix, int width, int height) {
@@ -70,10 +72,11 @@ public class GuiSwingIcons {
 
     public Icon getDefaultIcon(String name) {
         if (defaultIcon == null) {
+            int size = UIManagerUtil.getInstance().getIconSize();
             URL url = getClass().getResource("action" + suffix);
             if (url != null) {
                 try {
-                    defaultIcon = new ResourceIcon(ImageIO.read(url), 32, 32);
+                    defaultIcon = new ResourceIcon(ImageIO.read(url), size, size);
                 } catch (Exception ex) {
                     //
                 }
@@ -99,7 +102,7 @@ public class GuiSwingIcons {
                     g.draw(rr);
                 }
                 g.dispose();
-                defaultIcon = new ResourceIcon(image, 32, 32);
+                defaultIcon = new ResourceIcon(image, size, size);
             }
         }
         return defaultIcon;
@@ -219,9 +222,14 @@ public class GuiSwingIcons {
             setFocusable(true);
             //setBorderPainted(false);
             setContentAreaFilled(false);
+
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int h = ui.getScaledSizeInt(2);
+            int w = ui.getScaledSizeInt(5);
+
             setBorder(BorderFactory.createCompoundBorder(
                     new GuiSwingViewLabel.FocusBorder(this),
-                    BorderFactory.createEmptyBorder(2, 5, 2, 5)));
+                    BorderFactory.createEmptyBorder(h, w, h, w)));
             setFocusPainted(false);
 
             Object o = a.getValue(PRESSED_ICON_KEY);

@@ -180,7 +180,8 @@ public class SearchTextField extends JComponent {
 
     public void initIcon() {
         icon = new JButton(getEmptyIcon());
-        icon.setPreferredSize(new Dimension(16, 16));
+        int size = UIManagerUtil.getInstance().getScaledSizeInt(16);
+        icon.setPreferredSize(new Dimension(size, size));
         icon.setBorderPainted(false);
         icon.setOpaque(false);
         icon.setFocusable(false);
@@ -190,7 +191,8 @@ public class SearchTextField extends JComponent {
 
     public Icon getEmptyIcon() {
         if (emptyIcon == null) {
-            BufferedImage img = new BufferedImage(16,16, BufferedImage.TYPE_4BYTE_ABGR);
+            int size = UIManagerUtil.getInstance().getScaledSizeInt(16);
+            BufferedImage img = new BufferedImage(size,size, BufferedImage.TYPE_4BYTE_ABGR);
             Graphics g = img.createGraphics();
             g.setColor(new Color(255, 255, 255, 0));
             g.fillRect(0, 0, img.getWidth(), img.getHeight());
@@ -206,8 +208,9 @@ public class SearchTextField extends JComponent {
             @Override
             public Dimension getPreferredSize() {
                 Dimension dim = super.getPreferredSize();
-                if (dim.width < 100) {
-                    dim.width = 100;
+                int w = UIManagerUtil.getInstance().getScaledSizeInt(100);
+                if (dim.width < w) {
+                    dim.width = w;
                 }
                 return dim;
             }
@@ -622,14 +625,10 @@ public class SearchTextField extends JComponent {
     }
 
     public static Color getFocusColor() {
-        Color focusColor = UIManager.getColor("Focus.color");
-        if (focusColor == null) {
-            focusColor = new Color(150, 150, 150);
-        } else {
-            float[] hsb = new float[3];
-            hsb = Color.RGBtoHSB(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), hsb);
-            focusColor = Color.getHSBColor(hsb[0] * 0.97f, hsb[1] * 0.53f, hsb[2]);
-        }
+        Color focusColor = UIManagerUtil.getInstance().getFocusColor();
+        float[] hsb = new float[3];
+        hsb = Color.RGBtoHSB(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), hsb);
+        focusColor = Color.getHSBColor(hsb[0] * 0.97f, hsb[1] * 0.53f, hsb[2]);
         return focusColor;
     }
 
@@ -647,7 +646,10 @@ public class SearchTextField extends JComponent {
 
         protected void setToComponent() {
             component.setLayout(new BorderLayout());
-            component.setBorder(BorderFactory.createEmptyBorder(7, 5, 7, 5));
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int h = ui.getScaledSizeInt(7);
+            int w = ui.getScaledSizeInt(5);
+            component.setBorder(BorderFactory.createEmptyBorder(h, w, h, w));
         }
 
         public void init() {
@@ -729,14 +731,15 @@ public class SearchTextField extends JComponent {
             if (gradientColors == null) {
                 init();
             }
-            int x = 2;
-            int y = 2;
-            int width = component.getWidth() - 4;
-            int height = component.getHeight() - 4;
-            float arc = 4;
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            int x = ui.getScaledSizeInt(2);
+            int y = ui.getScaledSizeInt(2);
+            int width = component.getWidth() - (x * 2);
+            int height = component.getHeight() - (y * 2);
+            float arc = ui.getScaledSizeInt(4);
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            RoundRectangle2D rr = new RoundRectangle2D.Float(x, y, width - 1, height - 1, arc, arc);
+            RoundRectangle2D rr = new RoundRectangle2D.Float(x, y, width - (x/2), height - (y/2), arc, arc);
 
             paintGradientColors(g2, rr);
 
@@ -748,8 +751,9 @@ public class SearchTextField extends JComponent {
         public void paintGradientColors(Graphics2D g2, RoundRectangle2D rr) {
             int x = (int) rr.getX();
             int y = (int) rr.getY();
-            int width = (int) rr.getWidth() + 1;
-            int height = (int) rr.getHeight() + 1;
+            int size = Math.max(1, UIManagerUtil.getInstance().getScaledSizeInt(1));
+            int width = (int) rr.getWidth() + size;
+            int height = (int) rr.getHeight() + size;
             float arcW = (float) rr.getArcWidth();
             float arcH = (float) rr.getArcHeight();
             //g2.setPaint(Color.white);
@@ -761,7 +765,7 @@ public class SearchTextField extends JComponent {
                 g2.fill(rp);
             }
             g2.setColor(new Color(180, 180, 180));
-            g2.setStroke(new BasicStroke(0.7f));
+            g2.setStroke(new BasicStroke(UIManagerUtil.getInstance().getScaledSizeFloat(0.7f)));
             g2.draw(rr);
         }
 

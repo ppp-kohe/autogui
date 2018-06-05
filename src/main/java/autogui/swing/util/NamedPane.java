@@ -46,9 +46,12 @@ public class NamedPane extends JComponent {
 
     public void init() {
         setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        int h = ui.getScaledSizeInt(5);
+        int w = ui.getScaledSizeInt(10);
+        setBorder(BorderFactory.createEmptyBorder(h, w, h, w));
 
-        ResizableFlowLayout layout = new ResizableFlowLayout(true, 5);
+        ResizableFlowLayout layout = new ResizableFlowLayout(true, h);
         setLayout(layout);
         initNameLabel();
     }
