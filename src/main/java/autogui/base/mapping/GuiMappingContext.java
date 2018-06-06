@@ -647,9 +647,9 @@ public class GuiMappingContext {
                 && getReprValue().isHistoryValueSupported();
     }
 
-    public boolean isHistoryValueStored() {
+    public boolean isHistoryValueStored(Object value) {
         return isReprValue()
-                && getReprValue().isHistoryValueStored();
+                && getReprValue().isHistoryValueStored(value);
     }
 
     //////////////////////

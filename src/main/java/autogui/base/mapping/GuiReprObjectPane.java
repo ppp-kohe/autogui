@@ -45,7 +45,7 @@ public class GuiReprObjectPane extends GuiReprValue {
     }
 
     @Override
-    public boolean isHistoryValueStored() {
+    public boolean isHistoryValueStored(Object value) {
         return false;
     }
 

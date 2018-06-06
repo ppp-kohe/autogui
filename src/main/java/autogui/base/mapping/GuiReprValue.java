@@ -374,9 +374,10 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
+     * @param value the tested value, or null at loading
      * @return if true, actually the value is stored to the preferences store
      */
-    public boolean isHistoryValueStored() {
+    public boolean isHistoryValueStored(Object value) {
         return isHistoryValueSupported();
     }
 

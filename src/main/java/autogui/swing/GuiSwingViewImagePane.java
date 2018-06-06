@@ -393,6 +393,26 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public void setKeyStrokeString(String keyStrokeString) {
             infoLabel.setAdditionalInfo(keyStrokeString);
         }
+
+        /**
+         * an imported image from a file always be called this method with the file.
+         *  then the value of {@link autogui.base.mapping.GuiPreferences.HistoryValueEntry} becomes
+         *  {@link autogui.swing.mapping.GuiReprValueImagePane.ImageHistoryEntry}.
+         * @param image a loaded image. if null, ignored
+         * @param path source path of the image
+         */
+        public void setImagePath(Image image, Path path) {
+            ((GuiReprValueImagePane) getSwingViewContext().getRepresentation()).setImagePath(image, path);
+        }
+
+        @Override
+        public void setSwingViewHistoryValue(Object value) {
+            if (value instanceof GuiReprValueImagePane.ImageHistoryEntry) {
+                setSwingViewValueWithUpdate(((GuiReprValueImagePane.ImageHistoryEntry) value).getImage());
+            } else {
+                setSwingViewValueWithUpdate((Image) value);
+            }
+        }
     }
 
     public interface ImageScale {
@@ -614,16 +634,27 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public Action createAction(GuiPreferences.HistoryValueEntry e) {
-            Action a = createActionBase(e);
-            Image img = (Image) e.getValue();
+            Object value = e.getValue();
+            String name;
+            Image img;
+            if (value instanceof GuiReprValueImagePane.ImageHistoryEntry) {
+                GuiReprValueImagePane.ImageHistoryEntry he = (GuiReprValueImagePane.ImageHistoryEntry) value;
+                img = he.getImage();
+                name = getActionNameFromString(he.getPath().toString());
+            } else {
+                img = (Image) value;
+                name = getActionName(e);
+            }
+            Action a = createActionBase(name, img);
+
             int size = UIManagerUtil.getInstance().getScaledSizeInt(16);
             Image icon = img.getScaledInstance(size, size, Image.SCALE_DEFAULT);
             a.putValue(Action.SMALL_ICON, new ImageIcon(icon));
             return a;
         }
 
-        public Action createActionBase(GuiPreferences.HistoryValueEntry e) {
-            return super.createAction(e);
+        public Action createActionBase(String name, Image value) {
+            return new HistorySetAction<>(name, value, component);
         }
 
         @Override
@@ -640,8 +671,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         @Override
-        public Action createActionBase(GuiPreferences.HistoryValueEntry e) {
-            return new HistorySetForColumnAction<>(getActionName(e), e.getValue(), target);
+        public Action createActionBase(String name, Image value) {
+            return new HistorySetForColumnAction<>(name, value, target);
         }
     }
 
@@ -713,8 +744,20 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             try {
                 Image img = (Image) clip.getData(DataFlavor.imageFlavor);
                 c.accept(img);
+
+                setFile(img, clip);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
+            }
+        }
+
+        @SuppressWarnings("all")
+        private void setFile(Image img, Clipboard clip) throws Exception {
+            if (clip.isDataFlavorAvailable(DataFlavor.javaFileListFlavor)) {
+                List<File> fs = (List<File>) clip.getData(DataFlavor.javaFileListFlavor);
+                if (fs != null && !fs.isEmpty()) {
+                    pane.setImagePath(img, fs.get(0).toPath());
+                }
             }
         }
 
@@ -788,7 +831,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             Path path = SettingsWindow.getFileDialogManager().showOpenDialog(pane, null);
             if (path != null) {
                 try {
-                    c.accept(ImageIO.read(path.toFile()));
+                    Image img = ImageIO.read(path.toFile());
+                    pane.setImagePath(img, path);
+                    c.accept(img);
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
@@ -873,26 +918,44 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             }
         }
 
-
+        @SuppressWarnings("unchecked")
         public Image getTransferableAsImage(TransferSupport support, DataFlavor flavor) {
             try {
-                return (Image) support.getTransferable().getTransferData(flavor);
+                Image image = (Image) support.getTransferable().getTransferData(flavor);
+                if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                    File file = getTransferableFile(support, DataFlavor.javaFileListFlavor);
+                    if (file != null) {
+                        imagePane.setImagePath(image, file.toPath());
+                    }
+                }
+                return image;
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
+            }
+        }
+
+        @SuppressWarnings("all")
+        private File getTransferableFile(TransferSupport support, DataFlavor flavor) throws Exception {
+            List<File> fs = (List<File>) support.getTransferable().getTransferData(flavor);
+            if (fs != null && !fs.isEmpty()) {
+                return fs.get(0);
+            } else {
+                return null;
             }
         }
 
         @SuppressWarnings("unchecked")
         public Image loadTransferableFilesAsImage(TransferSupport support, DataFlavor flavor) {
             try {
-                List<File> fs = (List<File>) support.getTransferable().getTransferData(flavor);
-                if (fs != null && !fs.isEmpty()) {
-                    try {
-                        return ImageIO.read(fs.get(0));
-                    } catch (Exception ex) {
+                try {
+                    File file = getTransferableFile(support, flavor);
+                    if (file == null) {
                         return null;
                     }
-                } else {
+                    Image img = ImageIO.read(file);
+                    imagePane.setImagePath(img, file.toPath());
+                    return img;
+                } catch (Exception ex) {
                     return null;
                 }
             } catch (Exception ex) {

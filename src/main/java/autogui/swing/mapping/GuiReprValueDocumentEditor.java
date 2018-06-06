@@ -60,7 +60,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     @Override
-    public boolean isHistoryValueStored() {
+    public boolean isHistoryValueStored(Object value) {
         return false;
     }
 

@@ -11,15 +11,25 @@ import java.awt.image.ImageObserver;
 import java.awt.image.RenderedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.Map;
+import java.util.Objects;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** a GUI representation for a property holding an {@link Image}.
  * the representation depends on some AWT classes (java.desktop module) */
 public class GuiReprValueImagePane extends GuiReprValue {
+    protected Map<Image,Path> imageToReference = new WeakHashMap<>();
+
     @Override
     public boolean matchValueType(Class<?> cls) {
         return Image.class.isAssignableFrom(cls);
@@ -28,6 +38,8 @@ public class GuiReprValueImagePane extends GuiReprValue {
     public Image updateValue(GuiMappingContext context, Object value) {
         if (value instanceof Image) {
             return (Image) value;
+        } else if (value instanceof ImageHistoryEntry) {
+            return ((ImageHistoryEntry) value).getImage();
         } else {
             return null;
         }
@@ -44,9 +56,16 @@ public class GuiReprValueImagePane extends GuiReprValue {
         }
     }
 
+    /**
+     * only images which have been {@link #setImagePath(Image, Path)}
+     *  will be stored as its path through {@link ImageHistoryEntry}.
+     *  Currently, {@link ImageHistoryEntry} will not appear to non-history related arguments (like update(...newValue...)
+     * @param value {@link ImageHistoryEntry} or {@link Image}
+     * @return true only if {@link ImageHistoryEntry} or null (loading)
+     */
     @Override
-    public boolean isHistoryValueStored() {
-        return false;
+    public boolean isHistoryValueStored(Object value) {
+        return value == null || value instanceof ImageHistoryEntry;
     }
 
     /**
@@ -109,23 +128,27 @@ public class GuiReprValueImagePane extends GuiReprValue {
     /**
      *
      * @param context a context holds the representation
-     * @param source  the converted object
+     * @param source  the converted object {@link Image} or {@link ImageHistoryEntry}
      * @return image bytes encoded as PNG base64 String.
      *   For non-RenderedImage, it temporally creates a BufferedImage and renders the source to the image.
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
-        RenderedImage img = getRenderedImage(context, source);
-        if (img != null) {
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-            try {
-                ImageIO.write(img, "png", bytes);
-                return "data:image/png;base64," + Base64.getEncoder().encodeToString(bytes.toByteArray());
-            } catch (Exception ex) {
-                return null;
+        if (source instanceof ImageHistoryEntry) { //preferences convert an entry to a stored value
+            return ((ImageHistoryEntry) source).getPath().toUri().toString();
+        } else {
+            RenderedImage img = getRenderedImage(context, source);
+            if (img != null) {
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                try {
+                    ImageIO.write(img, "png", bytes);
+                    return "data:image/png;base64," + Base64.getEncoder().encodeToString(bytes.toByteArray());
+                } catch (Exception ex) {
+                    return null;
+                }
             }
+            return null;
         }
-        return null;
     }
 
     static Pattern dataPattern = Pattern.compile("data:(image/.+?)?(;.+?)?,(.*+)");
@@ -134,6 +157,11 @@ public class GuiReprValueImagePane extends GuiReprValue {
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         if (json instanceof String) {
             String jsonStr = (String) json;
+
+            if (jsonStr.startsWith("file://")) {
+                return new ImageHistoryEntry(Paths.get(URI.create(jsonStr)), this::setImagePath);
+            }
+
             Matcher m = dataPattern.matcher(jsonStr);
             if (m.find()) {
                 jsonStr = m.group(3);
@@ -155,6 +183,12 @@ public class GuiReprValueImagePane extends GuiReprValue {
         return false;
     }
 
+    public void setImagePath(Image image, Path path) {
+        if (image != null) {
+            imageToReference.put(image, path);
+        }
+    }
+
     public RenderedImage getRenderedImage(GuiMappingContext context, Object source) {
         if (source instanceof RenderedImage) { //including BufferedImage
             return (RenderedImage) source;
@@ -172,6 +206,12 @@ public class GuiReprValueImagePane extends GuiReprValue {
             Image image = (Image) source;
             Dimension size = getSize(context, image);
             BufferedImage tmp = new BufferedImage(size.width, size.height, BufferedImage.TYPE_4BYTE_ABGR);
+
+            Path exPath = imageToReference.get(image);
+            if (exPath != null) {
+                imageToReference.put(tmp, exPath);
+            }
+
             Graphics2D g = tmp.createGraphics();
             {
                 int count = 0;
@@ -204,5 +244,74 @@ public class GuiReprValueImagePane extends GuiReprValue {
             }
         }
         super.updateFromGui(context, newValue, specifier, clock);
+    }
+
+    @Override
+    public void addHistoryValue(GuiMappingContext context, Object value) {
+        if (value instanceof Image) {
+            Path p = imageToReference.get(value);
+            if (p != null) {
+                super.addHistoryValue(context, new ImageHistoryEntry(p, (Image) value));
+            } else {
+                super.addHistoryValue(context, value);
+            }
+        }
+
+    }
+
+
+    public static class ImageHistoryEntry {
+        protected Path path;
+        protected Image image;
+        protected BiConsumer<Image,Path> imagePathSetter;
+
+        public ImageHistoryEntry(Path path, Image image) {
+            this.path = path;
+            this.image = image;
+        }
+
+        public ImageHistoryEntry(Path path, BiConsumer<Image,Path> imagePathSetter) {
+            this.path = path;
+            this.imagePathSetter = imagePathSetter;
+        }
+
+        /**
+         * @return non-null
+         */
+        public Path getPath() {
+            return path;
+        }
+
+        public Image getImage() {
+            if (image == null && Files.exists(path)) {
+                try {
+                    image = ImageIO.read(path.toFile());
+                    if (imagePathSetter != null) {
+                        imagePathSetter.accept(image, path);
+                    }
+                } catch (Exception ex) {
+                    //
+                }
+            }
+            return image;
+        }
+
+        @Override
+        public String toString() {
+            return path.toString();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ImageHistoryEntry that = (ImageHistoryEntry) o;
+            return Objects.equals(path, that.path);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(path);
+        }
     }
 }

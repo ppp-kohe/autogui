@@ -368,7 +368,7 @@ public class GuiPreferences {
     }
 
     public HistoryValueEntry createHistoryValueEntry(Object value) {
-        if (context.isHistoryValueStored()) {
+        if (context.isHistoryValueStored(value)) {
             return new HistoryValueEntry(this, value);
         } else {
             return new HistoryValueEntryOnMemory(this, value);

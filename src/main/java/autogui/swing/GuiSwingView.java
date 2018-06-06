@@ -207,6 +207,11 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         default void setKeyStrokeString(String keyStrokeString) { }
+
+        @SuppressWarnings("unchecked")
+        default void setSwingViewHistoryValue(Object value) {
+            setSwingViewValueWithUpdate((ValueType) value);
+        }
     }
 
     /**
@@ -291,7 +296,7 @@ public interface GuiSwingView extends GuiSwingElement {
         es.sort(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime));
         if (!es.isEmpty()) {
             Object value = es.get(es.size() - 1).getValue();
-            pane.setSwingViewValueWithUpdate(value);
+            pane.setSwingViewHistoryValue(value);
         }
 
     }
@@ -768,6 +773,10 @@ public interface GuiSwingView extends GuiSwingElement {
 
         public String getActionName(GuiPreferences.HistoryValueEntry e) {
             String name = context.getRepresentation().toHumanReadableString(context, e.getValue());
+            return getActionNameFromString(name);
+        }
+
+        public String getActionNameFromString(String name) {
             int max = getMaxNameLength();
             if (name.length() > max) {
                 name = name.substring(0, max) + "...";
