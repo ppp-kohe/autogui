@@ -681,7 +681,13 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 if (path == null) {
                     return null;
                 } else {
-                    return iconSource.getSystemIcon(p.toFile());
+                    Icon icon = iconSource.getSystemIcon(p.toFile());
+                    if (icon != null) {
+                        return new IconWrapper(icon,
+                            UIManagerUtil.getInstance().getScaledSizeInt(16));
+                    } else {
+                        return null;
+                    }
                 }
             }, category, "", nameOnly);
         }
@@ -694,6 +700,46 @@ public class SearchTextFieldFilePath extends SearchTextField {
         @Override
         public PopupCategorized.CategorizedMenuItem getSelection() {
             return selection;
+        }
+    }
+
+    public static class IconWrapper implements Icon {
+        protected Icon icon;
+        protected float width;
+        protected float height;
+        protected float scale;
+
+        public IconWrapper(Icon icon, int width) {
+            this.icon = icon;
+            this.width = width;
+            if (icon != null) {
+                scale = width / (float) icon.getIconWidth();
+                this.height = icon.getIconHeight() * scale;
+            } else {
+                scale = 1.0f;
+                height = width;
+            }
+        }
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.scale(scale, scale);
+            try {
+                icon.paintIcon(c, g2, x, y);
+            } finally {
+                g2.dispose();
+            }
+        }
+
+        @Override
+        public int getIconWidth() {
+            return (int) width;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return (int) height;
         }
     }
 
