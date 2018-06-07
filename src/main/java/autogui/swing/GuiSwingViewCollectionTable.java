@@ -919,7 +919,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             super(pane, keyMatcher, null);
             this.table = pane;
 
-            PopupCategorized tableActions = new PopupCategorized(items, null, new ObjectTableModel.MenuBuilderWithEmptySeparator());
+            PopupCategorized tableActions = new PopupCategorized(items, null,
+                                        new ObjectTableModel.MenuBuilderWithEmptySeparator());
             PopupMenuBuilder columnBuilder = new CollectionColumnMenuSupplier(this);
             PopupMenuBuilder cellBuilder = new CollectionCellMenuSupplier(this);
 
@@ -1090,13 +1091,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             filter = new ObjectTableModel.CollectionRowsAndCellsActionBuilder(table, filter);
 
+            List<ObjectTableColumn> targetCols = popup.getTargetColumns();
+            table.getObjectTableModel().getBuilderForRowsOrCells(table, targetCols, false)
+                    .build(new MenuSeparator(filter), menu);
+
             List<ObjectTableColumn> allCols = table.getObjectTableModel().getColumns().getColumns();
             table.getObjectTableModel().getBuilderForRowsOrCells(table, allCols, true)
                     .build(new MenuSeparator(filter), menu);
 
-            List<ObjectTableColumn> targetCols = popup.getTargetColumns();
-            table.getObjectTableModel().getBuilderForRowsOrCells(table, targetCols, false)
-                    .build(new MenuSeparator(filter), menu);
         }
     }
 

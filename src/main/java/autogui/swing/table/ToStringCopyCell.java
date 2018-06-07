@@ -2,17 +2,24 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtensionText;
+import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -62,10 +69,13 @@ public class ToStringCopyCell {
     public static class TableMenuCompositeSharedToStringValue implements ObjectTableColumn.TableMenuCompositeShared {
         @Override
         public List<PopupCategorized.CategorizedMenuItem> composite(JTable table, List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
-            return Collections.singletonList(
-                    new ToStringCopyForCellsAction(columns.stream()
-                        .map(TableMenuCompositeToStringValue.class::cast)
-                        .collect(Collectors.toList()), !row));
+            List<TableMenuCompositeToStringValue> cs = columns.stream()
+                    .map(TableMenuCompositeToStringValue.class::cast)
+                    .filter(e -> e.getIndex() != -1)
+                    .collect(Collectors.toList());
+            return Arrays.asList(
+                    new ToStringCopyForCellsAction(cs, !row),
+                    new ToStringSaveForCellsAction(cs, !row, table));
         }
     }
 
@@ -77,7 +87,7 @@ public class ToStringCopyCell {
         protected boolean onlyApplyingSelectedColumns;
 
         public ToStringCopyForCellsAction(List<TableMenuCompositeToStringValue> activatedColumns, boolean onlyApplyingSelectedColumns) {
-            putValue(NAME, onlyApplyingSelectedColumns ? "Copy Selected Cells As String" : "Copy Selected Row Cells As String");
+            putValue(NAME, onlyApplyingSelectedColumns ? "Copy Cells As String" : "Copy Row Cells As String");
             this.activatedColumns = activatedColumns;
             this.onlyApplyingSelectedColumns = onlyApplyingSelectedColumns;
         }
@@ -142,6 +152,44 @@ public class ToStringCopyCell {
         @Override
         public String getSubCategory() {
             return PopupExtension.MENU_SUB_CATEGORY_COPY;
+        }
+    }
+
+    public static void save(Supplier<String> data, JComponent component, String name) {
+        SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
+        Path p = fd.showConfirmDialogIfOverwriting(component,
+                fd.showSaveDialog(component, PopupExtensionText.getEncodingPane(), name + ".txt"));
+        if (p != null) {
+            try {
+                Files.write(p, Collections.singletonList(data.get()), PopupExtensionText.selectedCharset);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
+    public static class ToStringSaveForCellsAction extends ToStringCopyForCellsAction {
+        protected JComponent table;
+
+        public ToStringSaveForCellsAction(List<TableMenuCompositeToStringValue> activatedColumns, boolean onlyApplyingSelectedColumns,
+                                          JComponent table) {
+            super(activatedColumns, onlyApplyingSelectedColumns);
+            putValue(NAME, onlyApplyingSelectedColumns ? "Save Cells As String..." : "Save Row Cells As String...");
+            this.table = table;
+        }
+
+        @Override
+        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+            String name = "selection";
+            if (table instanceof GuiSwingView.ValuePane<?>) {
+                name = ((GuiSwingView.ValuePane) table).getSwingViewContext().getName();
+            }
+            save(() -> getString(target), table, name);
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_EXPORT;
         }
     }
 }

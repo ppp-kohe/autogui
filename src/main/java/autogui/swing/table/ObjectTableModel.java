@@ -421,8 +421,44 @@ public class ObjectTableModel extends AbstractTableModel  {
     ///////////
 
     public PopupExtension.PopupMenuBuilder getBuilderForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
-        return new PopupCategorized(() -> getBuildersForRowsOrCells(table, cols, row), null,
-                new MenuBuilderWithEmptySeparator());
+        return new PopupCategorizedForRowsOrCells(() ->
+                getBuildersForRowsOrCells(table, cols, row));
+    }
+
+    public static class PopupCategorizedForRowsOrCells extends PopupCategorized {
+        public PopupCategorizedForRowsOrCells(Supplier<? extends Collection<CategorizedMenuItem>> itemSupplier) {
+            super(itemSupplier, null, new MenuBuilderForRowsOrCells());
+        }
+
+        @Override
+        protected void buildMergeSubCategories(Map<String, Map<String, List<JComponent>>> subCategorizedMenuItems,
+                                               Map<String, List<JComponent>> categorizedMenuItems) {
+            subCategorizedMenuItems.forEach((k,map) -> {
+                buildCategoryLabel(categorizedMenuItems, k, map);
+                map.forEach((sk, v) ->
+                        categorizedMenuItems.computeIfAbsent(MenuBuilder.getCategoryImplicit(k + ": " + sk),
+                                (c) -> new ArrayList<>())
+                                .addAll(v));
+            });
+        }
+
+        protected void buildCategoryLabel(Map<String, List<JComponent>> categorizedMenuItems,
+                                          String k,
+                                          Map<String, List<JComponent>> map) {
+            if (map.values().stream()
+                    .mapToInt(List::size)
+                    .sum() > 0) {
+                //build category for entire label "Selected Cells" or "Selected Rows"
+                categorizedMenuItems.put(k, Collections.singletonList(menuBuilder.createLabel(k)));
+            }
+        }
+    }
+
+    public static class MenuBuilderForRowsOrCells extends MenuBuilderWithEmptySeparator {
+        @Override
+        public boolean addMenuTitle(AddingProcess process, String title) {
+            return false; //the title are explicitly added by buildCategoryLabel
+        }
     }
 
     /**
@@ -432,14 +468,23 @@ public class ObjectTableModel extends AbstractTableModel  {
         void build(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu);
     }
 
-    public List<PopupCategorized.CategorizedMenuItem> getBuildersForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
+    public List<PopupCategorized.CategorizedMenuItem> getBuildersForRowsOrCells(JTable table,
+                                                                                List<ObjectTableColumn> cols, boolean row) {
         Map<ObjectTableColumn.TableMenuCompositeShared, List<ObjectTableColumn.TableMenuComposite>> rows
                 = new LinkedHashMap<>();
+
+        Consumer<ObjectTableColumn.TableMenuComposite> rowsAdder = (cmp) ->
+            rows.computeIfAbsent(cmp.getShared(), key -> new ArrayList<>())
+                    .add(cmp);
+
         cols.forEach(c ->
                 (row ? c.getCompositesForRows() :
-                        c.getCompositesForCells()).forEach(cmp ->
-                        rows.computeIfAbsent(cmp.getShared(), key -> new ArrayList<>())
-                                .add(cmp)));
+                        c.getCompositesForCells()).forEach(rowsAdder));
+
+        if (row) {
+            getColumns().getMenuRowComposites()
+                    .forEach(rowsAdder);
+        }
 
         return rows.entrySet().stream()
                 .flatMap(e ->
@@ -489,6 +534,8 @@ public class ObjectTableModel extends AbstractTableModel  {
         public Object convert(Object item) {
             if (item instanceof TableTargetCellAction) {
                 return filter.convert(new TableTargetCellExecutionAction((TableTargetCellAction) item, target));
+            } else if (item instanceof JPopupMenu.Separator) {
+                return item;
             } else {
                 return null; //disabled
             }

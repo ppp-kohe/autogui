@@ -19,6 +19,7 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
         void addColumnRowIndex();
         void addColumnStatic(ObjectTableColumn column);
         void addColumnDynamic(ObjectTableColumnDynamicFactory columnFactory);
+        void addMenuRowComposite(ObjectTableColumn.TableMenuComposite rowComposite);
     }
 
     /**

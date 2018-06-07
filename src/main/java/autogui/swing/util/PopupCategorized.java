@@ -211,41 +211,58 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
 
     @Override
     public void build(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu) {
-        PopupCategorizedBuildingItems items = new PopupCategorizedBuildingItems(filter, itemSupplier.get());
+        PopupCategorizedBuildingItems items = createPopupCategorizedBuildingItems(filter);
 
         //category -> subCategory -> list item:
         Map<String,Map<String,List<JComponent>>> subCategorizedMenuItems = createNewCategoryToSubCategoryToItems();
 
-        int size = 0;
-        for (CategorizedMenuItem item : items.categorizedItems) {
-            String category = item.getCategory();
-            subCategorizedMenuItems.computeIfAbsent(category, (c) -> createNewSubCategoryToItems())
-                    .computeIfAbsent(item.getSubCategory(), (sc) -> new ArrayList<>())
-                    .add(createMenuItem(item));
-            ++size;
-        }
+        int size = buildSubCategories(items.categorizedItems, subCategorizedMenuItems);
 
         Map<String,List<JComponent>> categorizedMenuItems = new LinkedHashMap<>();
-
-        //flatten sub-category maps to lists
-        subCategorizedMenuItems.forEach((k,map) ->
-                map.values().stream()
-                            .flatMap(List::stream)
-                            .forEach(categorizedMenuItems.computeIfAbsent(k, (c) -> new ArrayList<>())::add));
-
-        //remove empty categories
-        new ArrayList<>(categorizedMenuItems.keySet())
-                .forEach(k -> categorizedMenuItems.computeIfPresent(k, (ek,v) -> v.isEmpty() ? null : v));
+        buildMergeSubCategories(subCategorizedMenuItems, categorizedMenuItems);
+        buildCleanEmptyCategories(categorizedMenuItems);
 
         getMenuBuilder().addMenuItems(menu, createMenuItems(items.beforeItems));
         buildCategories(menu, categorizedMenuItems, size);
         getMenuBuilder().addMenuItems(menu, createMenuItems(items.afterItems));
 
         if (size == 0) {
-            Object none = filter.convert(getMenuBuilder().createLabel("Nothing"));
-            if (none != null) {
-                menu.accept(none);
-            }
+            buildNothing(filter, menu);
+        }
+    }
+
+    protected PopupCategorizedBuildingItems createPopupCategorizedBuildingItems(PopupExtension.PopupMenuFilter filter) {
+        return new PopupCategorizedBuildingItems(filter, itemSupplier.get());
+    }
+
+    protected int buildSubCategories(List<CategorizedMenuItem> items, Map<String,Map<String,List<JComponent>>> subCategorizedMenuItems) {
+        for (CategorizedMenuItem item : items) {
+            String category = item.getCategory();
+            subCategorizedMenuItems.computeIfAbsent(category, (c) -> createNewSubCategoryToItems())
+                    .computeIfAbsent(item.getSubCategory(), (sc) -> new ArrayList<>())
+                    .add(createMenuItem(item));
+        }
+        return items.size();
+    }
+
+    protected void buildMergeSubCategories(Map<String,Map<String,List<JComponent>>> subCategorizedMenuItems,
+                                           Map<String,List<JComponent>> categorizedMenuItems) {
+        //flatten sub-category maps to lists
+        subCategorizedMenuItems.forEach((k,map) ->
+                map.values().stream()
+                        .flatMap(List::stream)
+                        .forEach(categorizedMenuItems.computeIfAbsent(k, (c) -> new ArrayList<>())::add));
+    }
+
+    protected void buildCleanEmptyCategories(Map<String,List<JComponent>> categorizedMenuItems) {
+        new ArrayList<>(categorizedMenuItems.keySet())
+                .forEach(k -> categorizedMenuItems.computeIfPresent(k, (ek,v) -> v.isEmpty() ? null : v));
+    }
+
+    protected void buildNothing(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu) {
+        Object none = filter.convert(getMenuBuilder().createLabel("Nothing"));
+        if (none != null) {
+            menu.accept(none);
         }
     }
 
@@ -423,7 +440,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
 
         @Override
         public MenuBuilder getMenuBuilder() {
-            return new MenuBuilder(15, 50);
+            return new MenuBuilder(30, 50);
         }
     }
 

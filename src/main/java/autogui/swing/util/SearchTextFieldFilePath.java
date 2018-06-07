@@ -548,15 +548,15 @@ public class SearchTextFieldFilePath extends SearchTextField {
                     if (publisher.isSearchCancelled()) {
                         return items;
                     }
-                    items.addAll(getChildItems(path));
-                    if (publisher.isSearchCancelled()) {
-                        return items;
-                    }
                     items.addAll(getParentItems(path));
                     if (publisher.isSearchCancelled()) {
                         return items;
                     }
                     items.addAll(getDefaultItems());
+                    if (publisher.isSearchCancelled()) {
+                        return items;
+                    }
+                    items.addAll(getChildItems(path));
                 }
 
                 return items;

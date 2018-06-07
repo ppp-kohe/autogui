@@ -45,8 +45,8 @@ import java.util.List;
  */
 public interface TableTargetCellAction extends PopupCategorized.CategorizedMenuItemAction {
 
-    String MENU_CATEGORY_ROW = "Rows";
-    String MENU_CATEGORY_CELL = "Cells";
+    String MENU_CATEGORY_ROW = "Selected Rows";
+    String MENU_CATEGORY_CELL = "Selected Cells";
 
     void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target);
 

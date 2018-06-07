@@ -19,6 +19,7 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
     protected List<ObjectTableColumn> columns = new ArrayList<>();
     protected List<ObjectTableColumn> staticColumns = new ArrayList<>();
     protected List<ObjectTableColumnDynamic> dynamicColumns = new ArrayList<>();
+    protected List<ObjectTableColumn.TableMenuComposite> menuRowComposites = new ArrayList<>();
 
     protected Consumer<ObjectTableColumn> updater;
 
@@ -81,6 +82,15 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
     @Override
     public void addColumnRowIndex() {
         addColumnStatic(new ObjectTableColumn.ObjectTableColumnRowIndex());
+    }
+
+    @Override
+    public void addMenuRowComposite(ObjectTableColumn.TableMenuComposite rowComposite) {
+        menuRowComposites.add(rowComposite);
+    }
+
+    public List<ObjectTableColumn.TableMenuComposite> getMenuRowComposites() {
+        return menuRowComposites;
     }
 
     public int getColumnCount() {

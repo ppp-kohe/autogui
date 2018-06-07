@@ -52,6 +52,16 @@ public class GuiSwingJsonTransfer {
         }
     }
 
+    public static void save(Supplier<Object> json, JComponent owner, String name) {
+        Path path = SettingsWindow.getFileDialogManager().showSaveDialog(
+                owner, null,
+                name + ".json");
+        if (path != null) {
+            JsonWriter.write(json.get(), path.toFile());
+        }
+    }
+
+
     public static Object readJson() {
         String json = readJsonSource();
         if (json != null) {
@@ -80,6 +90,15 @@ public class GuiSwingJsonTransfer {
             return null;
         } catch (Exception ex) {
             throw new RuntimeException(ex);
+        }
+    }
+
+    public static Object load(JComponent component) {
+        Path path = SettingsWindow.getFileDialogManager().showOpenDialog(component, null);
+        if (path != null) {
+            return JsonReader.read(path.toFile());
+        } else {
+            return null;
         }
     }
 
@@ -166,7 +185,7 @@ public class GuiSwingJsonTransfer {
 
         @Override
         public String getSubCategory() {
-            return PopupExtension.MENU_SUB_CATEGORY_COPY;
+            return PopupExtension.MENU_SUB_CATEGORY_PASTE;
         }
     }
 
@@ -178,16 +197,8 @@ public class GuiSwingJsonTransfer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            save(() -> toCopiedJson(component.getSwingViewValue()));
-        }
-
-        public void save(Supplier<Object> json) {
-            Path path = SettingsWindow.getFileDialogManager().showSaveDialog(
-                    component.asSwingViewComponent(), null,
-                    context.getName() + ".json");
-            if (path != null) {
-                JsonWriter.write(json.get(), path.toFile());
-            }
+            save(() -> toCopiedJson(component.getSwingViewValue()), component.asSwingViewComponent(),
+                    context.getName());
         }
 
         @Override
@@ -195,7 +206,7 @@ public class GuiSwingJsonTransfer {
             save(() -> target.getSelectedCellValues().stream()
                     .map(this::toCopiedJson)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList()));
+                    .collect(Collectors.toList()), component.asSwingViewComponent(), context.getName());
         }
 
         @Override
@@ -217,9 +228,9 @@ public class GuiSwingJsonTransfer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            Path path = SettingsWindow.getFileDialogManager().showOpenDialog(component.asSwingViewComponent(), null);
-            if (path != null) {
-                set(JsonReader.read(path.toFile()));
+            Object json = load(component.asSwingViewComponent());
+            if (json != null) {
+                set(json);
             }
         }
 
@@ -324,19 +335,32 @@ public class GuiSwingJsonTransfer {
         @Override
         public List<PopupCategorized.CategorizedMenuItem> composite(JTable table,
                                                                    List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
+            List<ObjectTableColumn.TableMenuComposite> cs = columns.stream()
+                    .filter(this::isNonRowComposite)
+                    .collect(Collectors.toList());
             List<PopupCategorized.CategorizedMenuItem> actions = new ArrayList<>();
             if (row) {
                 if (table instanceof GuiSwingViewCollectionTable.CollectionTable) {
-                    actions.add(new JsonCopyRowAction(
-                            ((GuiSwingViewCollectionTable.CollectionTable) table).getSwingViewContext()));
+                    GuiSwingViewCollectionTable.CollectionTable colTable = (GuiSwingViewCollectionTable.CollectionTable) table;
+                    actions.add(new JsonCopyRowsAction(colTable.getSwingViewContext()));
+                    actions.add(new JsonSaveRowsAction(colTable));
                 } else {
-                    actions.add(new JsonCopyCellsAction(toJsonCopies(columns)));
+                    actions.add(new JsonCopyCellsAction(toJsonCopies(cs)));
+                    actions.add(new JsonSaveCellsAction(toJsonCopies(cs), table));
                 }
             } else {
-                actions.add(new JsonCopyCellsAction(toJsonCopies(columns)));
+                actions.add(new JsonCopyCellsAction(toJsonCopies(cs)));
+                actions.add(new JsonSaveCellsAction(toJsonCopies(cs), table));
             }
             return actions;
+        }
 
+        private boolean isNonRowComposite(ObjectTableColumn.TableMenuComposite c) {
+            if (c instanceof TableMenuCompositeJsonCopy) {
+                return ((TableMenuCompositeJsonCopy) c).getIndex() != -1;
+            } else {
+                return false;
+            }
         }
 
         private List<TableMenuCompositeJsonCopy> toJsonCopies(List<ObjectTableColumn.TableMenuComposite> cols) {
@@ -347,11 +371,11 @@ public class GuiSwingJsonTransfer {
         }
     }
 
-    public static class JsonCopyRowAction extends AbstractAction implements TableTargetCellAction {
+    public static class JsonCopyRowsAction extends AbstractAction implements TableTargetCellAction {
         protected GuiMappingContext context;
 
-        public JsonCopyRowAction(GuiMappingContext context) {
-            putValue(NAME, "Copy Selected Rows As JSON");
+        public JsonCopyRowsAction(GuiMappingContext context) {
+            putValue(NAME, "Copy Rows As JSON");
             this.context = context;
         }
 
@@ -362,8 +386,12 @@ public class GuiSwingJsonTransfer {
 
         @Override
         public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
-            copy(context.getRepresentation()
-                    .toJson(context, target.getSelectedRowValues()));
+            copy(getJson(target));
+        }
+
+        public Object getJson(GuiReprCollectionTable.TableTargetCell target) {
+            return context.getRepresentation()
+                    .toJson(context, target.getSelectedRowValues());
         }
 
         @Override
@@ -377,11 +405,30 @@ public class GuiSwingJsonTransfer {
         }
     }
 
+    public static class JsonSaveRowsAction extends JsonCopyRowsAction {
+        protected GuiSwingView.ValuePane<?> table;
+        public JsonSaveRowsAction(GuiSwingView.ValuePane<?> table) {
+            super(table.getSwingViewContext());
+            this.table = table;
+            putValue(NAME, "Export Rows As JSON...");
+        }
+
+        @Override
+        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+            save(() -> getJson(target), table.asSwingViewComponent(), table.getSwingViewContext().getName());
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_EXPORT;
+        }
+    }
+
     public static class JsonCopyCellsAction extends AbstractAction implements TableTargetCellAction {
         protected List<TableMenuCompositeJsonCopy> activatedColumns;
 
         public JsonCopyCellsAction(List<TableMenuCompositeJsonCopy> activatedColumns) {
-            putValue(NAME, "Copy Selected Cells As JSON");
+            putValue(NAME, "Copy Cells As JSON");
             this.activatedColumns = activatedColumns;
         }
 
@@ -392,6 +439,10 @@ public class GuiSwingJsonTransfer {
 
         @Override
         public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+            copy(getJson(target));
+        }
+
+        public List<Object> getJson(GuiReprCollectionTable.TableTargetCell target) {
             int prevLine = -1;
             List<Object> lines = new ArrayList<>();
             Map<String,Object> cols = new LinkedHashMap<>(activatedColumns.size());
@@ -417,7 +468,7 @@ public class GuiSwingJsonTransfer {
             if (!cols.isEmpty()) {
                 lines.add(cols);
             }
-            copy(lines);
+            return lines;
         }
 
         public TableMenuCompositeJsonCopy getMenuCompositeForCell(GuiReprCollectionTable.CellValue cell) {
@@ -435,6 +486,29 @@ public class GuiSwingJsonTransfer {
         @Override
         public String getSubCategory() {
             return PopupExtension.MENU_SUB_CATEGORY_COPY;
+        }
+    }
+
+    public static class JsonSaveCellsAction extends JsonCopyCellsAction {
+        JComponent table;
+        public JsonSaveCellsAction(List<TableMenuCompositeJsonCopy> activatedColumns, JComponent table) {
+            super(activatedColumns);
+            putValue(NAME, "Export Cells As JSON...");
+            this.table = table;
+        }
+
+        @Override
+        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+            String name = "selection";
+            if (table instanceof GuiSwingView.ValuePane<?>) {
+                name = ((GuiSwingView.ValuePane) table).getSwingViewContext().getName();
+            }
+            save(() -> getJson(target), table, name);
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_EXPORT;
         }
     }
 
@@ -493,8 +567,20 @@ public class GuiSwingJsonTransfer {
         @Override
         public List<PopupCategorized.CategorizedMenuItem> composite(JTable table,
                                                                    List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
+            List<ObjectTableColumn.TableMenuComposite> cs = columns.stream()
+                    .filter(this::isNonRowComposite)
+                    .collect(Collectors.toList());
+            return Arrays.asList(
+                    new JsonPasteCellsAction(toJsonPaste(cs), row),
+                    new JsonLoadCellsAction(toJsonPaste(cs), row, table));
+        }
 
-            return Collections.singletonList(new JsonPasteCellAction(toJsonPaste(columns), row));
+        private boolean isNonRowComposite(ObjectTableColumn.TableMenuComposite c) {
+            if (c instanceof TableMenuCompositeJsonPaste) {
+                return ((TableMenuCompositeJsonPaste) c).getIndex() != -1;
+            } else {
+                return false;
+            }
         }
 
         private List<TableMenuCompositeJsonPaste> toJsonPaste(List<ObjectTableColumn.TableMenuComposite> columns) {
@@ -514,14 +600,14 @@ public class GuiSwingJsonTransfer {
         }
     }
 
-    public static class JsonPasteCellAction extends AbstractAction implements TableTargetCellAction {
+    public static class JsonPasteCellsAction extends AbstractAction implements TableTargetCellAction {
         protected List<TableMenuCompositeJsonPaste> activeComposite;
         protected boolean rows;
 
-        public JsonPasteCellAction(List<TableMenuCompositeJsonPaste> activeComposite, boolean allCells) {
+        public JsonPasteCellsAction(List<TableMenuCompositeJsonPaste> activeComposite, boolean allCells) {
             putValue(NAME, allCells
-                    ? "Paste JSON To Selected Rows"
-                    : "Paste JSON To Selected Cells");
+                    ? "Paste JSON To Rows"
+                    : "Paste JSON To Cells");
             rows = allCells;
             this.activeComposite = activeComposite;
         }
@@ -531,9 +617,13 @@ public class GuiSwingJsonTransfer {
             throw new UnsupportedOperationException();
         }
 
+        public Object getJson() {
+            return readJson();
+        }
+
         @Override
         public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
-            Object json = readJson();
+            Object json = getJson();
 
             /* separate entries to 2 types: free-rows and specified-rows
              *
@@ -685,4 +775,25 @@ public class GuiSwingJsonTransfer {
         }
     }
 
+
+    public static class JsonLoadCellsAction extends JsonPasteCellsAction {
+        protected JComponent table;
+        public JsonLoadCellsAction(List<TableMenuCompositeJsonPaste> activeComposite, boolean allCells, JComponent table) {
+            super(activeComposite, allCells);
+            this.table = table;
+            putValue(NAME, allCells
+                    ? "Import JSON To Rows..."
+                    : "Import JSON To Cells...");
+        }
+
+        @Override
+        public Object getJson() {
+            return load(table);
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_IMPORT;
+        }
+    }
 }

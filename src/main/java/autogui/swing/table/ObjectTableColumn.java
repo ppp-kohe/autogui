@@ -220,12 +220,11 @@ public class ObjectTableColumn {
          *    and their actionPerformed(ActionEvent) will never be called.
          *    So you can just throw an exception in the method.
          * @param table the target table
-         * @param columns the selected target columns
+         * @param columns the selected target columns: also if row is true, row-fixed composites are included
          * @param row true if the target are all columns of a row, or false if the target are only selected columns
          * @return menu items for composite items
          */
-        List<PopupCategorized.CategorizedMenuItem> composite(JTable table,
-                                                             List<TableMenuComposite> columns, boolean row);
+        List<PopupCategorized.CategorizedMenuItem> composite(JTable table, List<TableMenuComposite> columns, boolean row);
     }
 
 
