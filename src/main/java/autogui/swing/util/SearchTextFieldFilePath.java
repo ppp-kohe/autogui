@@ -724,9 +724,10 @@ public class SearchTextFieldFilePath extends SearchTextField {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g.create();
+            g2.translate(x, y);
             g2.scale(scale, scale);
             try {
-                icon.paintIcon(c, g2, x, y);
+                icon.paintIcon(c, g2, 0, 0);
             } finally {
                 g2.dispose();
             }
