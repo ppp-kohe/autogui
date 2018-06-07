@@ -7,15 +7,14 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
-import autogui.swing.util.PopupCategorized;
-import autogui.swing.util.PopupExtension;
+import autogui.swing.table.ObjectTableColumnValue;
+import autogui.swing.util.*;
 import autogui.base.mapping.ScheduledTaskRunner;
-import autogui.swing.util.SettingsWindow;
-import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.text.Document;
 import javax.swing.text.StyledDocument;
@@ -164,11 +163,18 @@ public class GuiSwingPreferences {
                 this.showSelectedPrefs();
             });
             list = new JTable(listModel);
-            list.setDefaultRenderer(Object.class, new PreferencesRenderer());
             TableColumn column = list.getColumnModel().getColumn(0);
             {
                 column.setHeaderValue("Saved Prefs");
-                column.setCellEditor(new PreferencesNameEditor());
+                column.setCellRenderer(new PreferencesNameRenderer(listModel));
+                column.setCellEditor(new PreferencesNameEditor(listModel));
+            }
+
+            TableColumn columnSelect = list.getColumnModel().getColumn(1);
+            {
+                columnSelect.setHeaderValue("Launch Apply");
+                columnSelect.setCellRenderer(new PreferencesLaunchApplyRenderer(listModel));
+                columnSelect.setCellEditor(new PreferencesLaunchApplyEditor(listModel));
             }
             addSelectionListener(this::showSelectedPrefs);
 
@@ -176,6 +182,8 @@ public class GuiSwingPreferences {
 
             JScrollPane listScroll = new JScrollPane(list);
             listScroll.setPreferredSize(new Dimension(ui.getScaledSizeInt(300), ui.getScaledSizeInt(300)));
+
+            list.setRowHeight(ui.getScaledSizeInt(20));
 
             JPanel viewPane = new JPanel(new BorderLayout());
             {
@@ -316,9 +324,21 @@ public class GuiSwingPreferences {
         }
     }
 
+    /////////////
+
+    public GuiPreferences getLaunchPreferences() {
+        return listModel.getLaunchPrefs();
+    }
+
+
+    /////////////
+
     public static class PreferencesListModel extends AbstractTableModel {
         protected Supplier<GuiMappingContext> context;
         protected List<GuiPreferences> list;
+        protected GuiPreferences launchPrefs;
+        protected GuiPreferences targetDefault;
+
         public PreferencesListModel(Supplier<GuiMappingContext> context) {
             this.context = context;
             reload();
@@ -331,7 +351,7 @@ public class GuiSwingPreferences {
 
         @Override
         public int getColumnCount() {
-            return 1;
+            return 2;
         }
 
         @Override
@@ -346,15 +366,44 @@ public class GuiSwingPreferences {
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 0;
+            return columnIndex == 0 || columnIndex == 1;
+        }
+
+        public GuiPreferences getLaunchPrefs() {
+            if (launchPrefs == null) {
+                return context.get().getPreferences();
+            }
+            return launchPrefs;
         }
 
         public void reload() {
             int oldSize = 0;
+            int launchPrefsIndex = 0;
+
+            GuiMappingContext context = this.context.get();
             if (list != null) {
                 oldSize = list.size();
+                if (launchPrefs != null) {
+                    launchPrefsIndex = list.indexOf(launchPrefs);
+                }
+            } else {
+                //init
+                GuiPreferences.GuiValueStore store = context.getPreferences().getValueStore();
+                launchPrefsIndex = store.getInt("$launchPrefs", 0);
             }
-            list = context.get().getPreferences().getSavedStoreListAsRoot();
+            targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
+            targetDefault.getValueStore().putString("$name", "Target Code Values");
+
+            list = new ArrayList<>();
+            list.add(context.getPreferences()); //0
+            list.add(targetDefault); //1
+            list.addAll(context.getPreferences().getSavedStoreListAsRoot());
+
+            if (launchPrefsIndex < 0 || launchPrefsIndex >= list.size()) {
+                launchPrefsIndex = 0;
+            }
+            launchPrefs = list.get(launchPrefsIndex);
+
             fireTableDataChanged();
             /*
             int diff = oldSize - list.size();
@@ -370,14 +419,39 @@ public class GuiSwingPreferences {
         public List<GuiPreferences> getList() {
             return list;
         }
+
+        public boolean isNameEditable(GuiPreferences prefs) {
+            return prefs != targetDefault &&
+                    prefs != context.get().getPreferences();
+        }
+
+        public String getName(GuiPreferences prefs) {
+            if (prefs == context.get().getPreferences()) {
+                return "Defaults";
+            } else {
+                return prefs.getValueStore().getString("$name", "Preferences " + list.indexOf(prefs));
+            }
+        }
+
+        public void setLaunchPrefs(GuiPreferences launchPrefs) {
+            this.launchPrefs = launchPrefs;
+            context.get().getPreferences().getValueStore().putInt("$launchPrefs", list.indexOf(launchPrefs));
+            fireTableDataChanged();
+        }
     }
 
-    public static class PreferencesRenderer extends DefaultTableCellRenderer {
+    public static class PreferencesNameRenderer extends DefaultTableCellRenderer {
+        protected PreferencesListModel listModel;
+
+        public PreferencesNameRenderer(PreferencesListModel listModel) {
+            this.listModel = listModel;
+        }
+
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             if (value instanceof GuiPreferences) {
                 GuiPreferences prefs = (GuiPreferences) value;
-                value = prefs.getValueStore().getString("$name", "Preferences " + row);
+                value = listModel.getName(prefs);
             }
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             return this;
@@ -386,16 +460,26 @@ public class GuiSwingPreferences {
 
     public static class PreferencesNameEditor extends DefaultCellEditor {
         protected GuiPreferences currentPrefs;
-        public PreferencesNameEditor() {
+        protected PreferencesListModel listModel;
+
+        public PreferencesNameEditor(PreferencesListModel listModel) {
             super(new JTextField());
+            this.listModel = listModel;
         }
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             currentPrefs = null;
             if (value instanceof GuiPreferences) {
-                currentPrefs = (GuiPreferences) value;
-                value = ((GuiPreferences) value).getValueStore().getString("$name", "");
+                GuiPreferences prefs = (GuiPreferences) value;
+                if (listModel.isNameEditable(prefs)) {
+                    currentPrefs = prefs;
+                } else {
+                    currentPrefs = null;
+
+                }
+                ((JTextField) getComponent()).setEditable(currentPrefs != null);
+                value = listModel.getName(prefs);
             }
             return super.getTableCellEditorComponent(table, value, isSelected, row, column);
         }
@@ -405,11 +489,64 @@ public class GuiSwingPreferences {
             Object name = super.getCellEditorValue();
             if (currentPrefs != null) {
                 currentPrefs.getValueStore().putString("$name", name.toString());
-
             }
             return currentPrefs;
         }
     }
+
+    public static class PreferencesLaunchApplyRenderer extends JCheckBox implements TableCellRenderer {
+        protected PreferencesListModel listModel;
+
+        public PreferencesLaunchApplyRenderer(PreferencesListModel listModel) {
+            this.listModel = listModel;
+            setupCheckBox(this);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setSelected(listModel.getLaunchPrefs() == value);
+            ObjectTableColumnValue.setTableColor(table, this, isSelected);
+            return this;
+        }
+    }
+
+    public static void setupCheckBox(JCheckBox box) {
+        box.setHorizontalAlignment(SwingConstants.CENTER);
+        box.setOpaque(true);
+        box.setText("");
+    }
+
+    public static class PreferencesLaunchApplyEditor extends DefaultCellEditor {
+        protected PreferencesListModel listModel;
+        protected GuiPreferences currentPrefs;
+
+        public PreferencesLaunchApplyEditor(PreferencesListModel listModel) {
+            super(new JCheckBox());
+            this.listModel = listModel;
+            setupCheckBox((JCheckBox) getComponent());
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            if (value instanceof GuiPreferences) {
+                currentPrefs = (GuiPreferences) value;
+            }
+            Boolean v = (listModel.getLaunchPrefs() == value);
+            return super.getTableCellEditorComponent(table, v, isSelected, row, column);
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            if (super.getCellEditorValue().equals(Boolean.TRUE)) {
+                if (currentPrefs != null) {
+                    listModel.setLaunchPrefs(currentPrefs);
+                }
+            }
+            return currentPrefs;
+        }
+    }
+
+    ///////////////////
 
     public static class NewPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiSwingPreferences owner;

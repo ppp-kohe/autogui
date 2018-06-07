@@ -199,7 +199,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     protected void initPrefsLoad() {
-        loadPreferences(context.getPreferences());
+        loadPreferences(preferences.getLaunchPreferences());
     }
 
     protected void initSettingWindow() {

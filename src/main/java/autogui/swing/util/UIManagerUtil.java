@@ -83,6 +83,9 @@ public class UIManagerUtil {
         return color;
     }
 
+    /**
+     * @return 32 or label font height x2.1
+     */
     public int getIconSize() {
         if (iconSize < 0) {
             try {
