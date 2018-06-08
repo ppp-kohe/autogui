@@ -177,6 +177,11 @@ public class GuiReprCollectionElement extends GuiReprValue {
         return getRepresentation().toHumanReadableString(context, source);
     }
 
+    @Override
+    public Object fromHumanReadableString(GuiMappingContext context, String str) {
+        return getRepresentation().toHumanReadableString(context, str);
+    }
+
     /**
      * @param context the context of the repr.
      * @return the size of columns which is equivalent to the size of the children,

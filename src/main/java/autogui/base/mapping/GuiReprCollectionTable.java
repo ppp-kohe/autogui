@@ -324,6 +324,17 @@ public class GuiReprCollectionTable extends GuiReprValue {
     }
 
     @Override
+    public Object fromHumanReadableString(GuiMappingContext context, String str) {
+        String[] lines = str.split("\\n");
+        GuiMappingContext elementContext = getElementContext(context);
+        List<Object> res = new ArrayList<>(lines.length);
+        for (String line : lines) {
+            res.add(elementContext.getRepresentation().fromHumanReadableString(elementContext, line));
+        }
+        return res;
+    }
+
+    @Override
     public boolean isHistoryValueSupported() {
         return false;
     }

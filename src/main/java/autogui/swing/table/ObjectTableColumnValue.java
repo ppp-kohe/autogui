@@ -675,11 +675,12 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     @Override
     public List<TableMenuComposite> getCompositesForRows() {
         int index = getTableColumn().getModelIndex();
-        List<TableMenuComposite> comps = new ArrayList<>(3);
-        comps.add(new ToStringCopyCell.TableMenuCompositeToStringValue(context, index));
+        List<TableMenuComposite> comps = new ArrayList<>(4);
+        comps.add(new ToStringCopyCell.TableMenuCompositeToStringCopy(context, index));
         comps.add(new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(context, index));
         if (context.isReprValue() && context.getReprValue().isEditable(context)) {
             comps.add(new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(context, index));
+            comps.add(new ToStringCopyCell.TableMenuCompositeToStringPaste(context, index));
         }
         return comps;
     }
@@ -688,11 +689,12 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     @Override
     public List<TableMenuComposite> getCompositesForCells() {
         int index = getTableColumn().getModelIndex();
-        List<TableMenuComposite> comps = new ArrayList<>(3);
-        comps.add(new ToStringCopyCell.TableMenuCompositeToStringValue(context, index));
+        List<TableMenuComposite> comps = new ArrayList<>(4);
+        comps.add(new ToStringCopyCell.TableMenuCompositeToStringCopy(context, index));
         comps.add(new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(context, index));
         if (context.isReprValue() && context.getReprValue().isEditable(context)) {
             comps.add(new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(context, index));
+            comps.add(new ToStringCopyCell.TableMenuCompositeToStringPaste(context, index));
         }
         return comps;
     }

@@ -174,6 +174,11 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     @Override
+    public Object fromHumanReadableString(GuiMappingContext context, String str) {
+        return fromJson(context, null, str);
+    }
+
+    @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         Class<?> cls = getValueType(context);
         if (json instanceof String) {

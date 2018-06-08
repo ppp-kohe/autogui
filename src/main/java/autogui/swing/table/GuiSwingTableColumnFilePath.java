@@ -65,11 +65,6 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             return getValueAsString(value);
         }
 
-        @Override
-        public Object getValueFromString(String s) {
-            return Paths.get(s);
-        }
-
         public Icon getValueIcon(Object v) {
             if (v instanceof Path) {
                 SearchTextFieldFilePath.FileItem item = filePathModel.getFileItem((Path) v, null, false);

@@ -153,6 +153,22 @@ public class GuiReprPropertyPane extends GuiReprValue {
         return String.join("\t", list);
     }
 
+    @Override
+    public Object fromHumanReadableString(GuiMappingContext context, String str) {
+        String[] cols = str.split("\\t");
+        int i = 0;
+        Object result = null;
+        List<GuiMappingContext> cs = context.getChildren();
+        for (String s : cols) {
+            if (i < cs.size()) {
+                GuiMappingContext sub = cs.get(i);
+                result = sub.getRepresentation().fromHumanReadableString(sub, s); //last one
+            }
+            ++i;
+        }
+        return result;
+    }
+
     /**
      * @return false: a property does not support history values, but the content repr. might support it.
      */

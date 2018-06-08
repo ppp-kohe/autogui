@@ -250,18 +250,20 @@ public class ObjectTableColumn {
         public List<TableMenuComposite> getCompositesForRows() {
             int index = getTableColumn().getModelIndex();
             return Arrays.asList(
-                    new ToStringCopyCell.TableMenuCompositeToStringValue(index),
-                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index));
-                    //,new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(index));
+                    new ToStringCopyCell.TableMenuCompositeToStringCopy(index),
+                    new ToStringCopyCell.TableMenuCompositeToStringPaste(index),
+                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index),
+                    new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(index));
         }
 
         @Override
         public List<TableMenuComposite> getCompositesForCells() {
             int index = getTableColumn().getModelIndex();
             return Arrays.asList(
-                    new ToStringCopyCell.TableMenuCompositeToStringValue(index),
-                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index));
-                    //,new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(index));
+                    new ToStringCopyCell.TableMenuCompositeToStringCopy(index),
+                    new ToStringCopyCell.TableMenuCompositeToStringPaste(index),
+                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index),
+                    new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(index));
         }
     }
 

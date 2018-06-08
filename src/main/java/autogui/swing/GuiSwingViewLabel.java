@@ -210,7 +210,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         public Object getValueFromString(String s) {
             GuiReprValue repr = getSwingViewContext().getReprValue();
-            return repr.toUpdateValue(getSwingViewContext(), s);
+            return repr.fromHumanReadableString(getSwingViewContext(), s);
         }
 
         public void setSwingViewValueWithUpdateFromString(String s) {

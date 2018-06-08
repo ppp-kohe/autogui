@@ -1,5 +1,6 @@
 package autogui.base.mapping;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /** an abstract checkbox component for a {@link Boolean} or primitive boolean property */
@@ -40,6 +41,16 @@ public class GuiReprValueBooleanCheckBox extends GuiReprValue {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public String toHumanReadableString(GuiMappingContext context, Object source) {
+        return Objects.toString(source);
+    }
+
+    @Override
+    public Object fromHumanReadableString(GuiMappingContext context, String str) {
+        return getBooleanValue(str);
     }
 
     @Override

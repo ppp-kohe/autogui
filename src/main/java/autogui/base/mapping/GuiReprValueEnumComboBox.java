@@ -2,6 +2,7 @@ package autogui.base.mapping;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -51,6 +52,16 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
         } else{
             return null;
         }
+    }
+
+    @Override
+    public String toHumanReadableString(GuiMappingContext context, Object source) {
+        return Objects.toString(toJson(context, source));
+    }
+
+    @Override
+    public Object fromHumanReadableString(GuiMappingContext context, String str) {
+        return fromJson(context, null, str);
     }
 
     @Override

@@ -102,10 +102,10 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
                 try {
                     return currentFormat.parseObject(s);
                 } catch (Exception ex) {
-                    throw new RuntimeException("fail to convert <" + s + ">", ex);
+                    return super.getValueFromString(s);
                 }
             } else {
-                return Double.parseDouble(s);
+                return super.getValueFromString(s);
             }
         }
 

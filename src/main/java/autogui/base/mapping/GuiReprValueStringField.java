@@ -17,6 +17,11 @@ public class GuiReprValueStringField extends GuiReprValue {
         }
     }
 
+    @Override
+    public Object fromHumanReadableString(GuiMappingContext context, String str) {
+        return str;
+    }
+
     /**
      *
      * @param context a context holds the representation

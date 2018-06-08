@@ -20,6 +20,7 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -652,7 +653,7 @@ public interface GuiSwingView extends GuiSwingElement {
         protected GuiMappingContext context;
 
         public ToStringCopyAction(ValuePane<?> pane, GuiMappingContext context) {
-            putValue(NAME, "Copy as String");
+            putValue(NAME, "Copy as Text");
             this.pane = pane;
             this.context = context;
         }

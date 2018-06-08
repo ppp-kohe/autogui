@@ -218,7 +218,8 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         }
 
         public Boolean getValueFromString(String str) {
-            return ((GuiReprValueBooleanCheckBox) getSwingViewContext().getRepresentation()).getBooleanValue(str);
+            return (Boolean) getSwingViewContext().getRepresentation()
+                    .fromHumanReadableString(getSwingViewContext(), str);
         }
 
         public String getValueAsString(Object v) {

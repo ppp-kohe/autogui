@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Comparator;
 
 /**
  * a spinner text-field component for a {@link Number} or primitive number property
@@ -84,6 +85,20 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
     @Override
     public boolean isJsonSetter() {
         return false;
+    }
+
+    @Override
+    public Object fromHumanReadableString(GuiMappingContext context, String str) {
+        return getType(getValueType(context)).fromString(str);
+    }
+
+    @Override
+    public String toHumanReadableString(GuiMappingContext context, Object source) {
+        if (source instanceof Comparable<?>) {
+            return getType(getValueType(context)).toString((Comparable<?>) source);
+        } else {
+            return "" + source;
+        }
     }
 
     /**

@@ -1128,10 +1128,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 return new StringSelection(data);
             } else {
                 //manual composition of to-string action for columns of selected cells.
-                List<ToStringCopyCell.TableMenuCompositeToStringValue> composites = pane.getPopup().getTargetColumns().stream()
+                List<ToStringCopyCell.TableMenuCompositeToStringCopy> composites = pane.getPopup().getTargetColumns().stream()
                             .flatMap(col -> col.getCompositesForCells().stream()
-                                    .filter(ToStringCopyCell.TableMenuCompositeToStringValue.class::isInstance)
-                                    .map(ToStringCopyCell.TableMenuCompositeToStringValue.class::cast))
+                                    .filter(ToStringCopyCell.TableMenuCompositeToStringCopy.class::isInstance)
+                                    .map(ToStringCopyCell.TableMenuCompositeToStringCopy.class::cast))
                             .collect(Collectors.toList());
                 String data = new ToStringCopyCell.ToStringCopyForCellsAction(composites, true)
                     .getString(new TableTargetCellForJTable(pane));

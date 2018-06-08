@@ -3,6 +3,7 @@ package autogui.base.mapping;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * a text-field component for a {@link File} or {@link Path} property.
@@ -77,5 +78,15 @@ public class GuiReprValueFilePathField extends GuiReprValue {
     @Override
     public boolean isJsonSetter() {
         return false;
+    }
+
+    @Override
+    public String toHumanReadableString(GuiMappingContext context, Object source) {
+        return Objects.toString(toJson(context, source));
+    }
+
+    @Override
+    public Object fromHumanReadableString(GuiMappingContext context, String str) {
+        return fromJson(context, null, str);
     }
 }

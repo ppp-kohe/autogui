@@ -12,10 +12,13 @@ import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -201,7 +204,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                                 autoSwitchByMouseWheel,
                                 new PopupCategorized.CategorizedMenuItemComponentDefault(scaleMenu,
                                         PopupExtension.MENU_CATEGORY_VIEW, ""),
-                                new ImageCopyAction(this::getImage),
+                                new ImageCopyAction(this::getImage, context),
                                 new ImagePasteAction(this),
                                 new ImageSaveAction(this),
                                 new ImageLoadAction(this),
@@ -653,6 +656,22 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             return a;
         }
 
+        @Override
+        public String getActionName(GuiPreferences.HistoryValueEntry e) {
+            Object v = e.getValue();
+            StringBuilder buf = new StringBuilder();
+            if (v == null) {
+                buf.append("null");
+            } else {
+                buf.append(v.getClass().getSimpleName());
+                if (v instanceof BufferedImage) {
+                    BufferedImage img = (BufferedImage) v;
+                    buf.append(": ").append(img.getWidth()).append(" x ").append(img.getHeight());
+                }
+            }
+            return buf.toString();
+        }
+
         public Action createActionBase(String name, Image value) {
             return new HistorySetAction<>(name, value, component);
         }
@@ -678,10 +697,12 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     public static class ImageCopyAction extends AbstractAction implements TableTargetColumnAction {
         protected Supplier<Image> image;
+        protected GuiMappingContext context;
 
-        public ImageCopyAction(Supplier<Image> image) {
+        public ImageCopyAction(Supplier<Image> image, GuiMappingContext contextOpt) {
             putValue(NAME, "Copy");
             this.image = image;
+            this.context = contextOpt;
         }
 
         @Override
@@ -697,7 +718,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public void copy(Image image) {
             if (image != null) {
                 Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
-                ImageSelection selection = new ImageSelection(image);
+                ImageSelection selection = (context == null ?
+                        new ImageSelection(image) :
+                        new ImageSelection(image, context));
                 board.setContents(selection, selection);
             }
         }
@@ -781,7 +804,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     public static class ImageSaveAction extends ImageCopyAction {
         protected PropertyImagePane pane;
         public ImageSaveAction(PropertyImagePane pane) {
-            super(pane::getImage);
+            super(pane::getImage, pane.getSwingViewContext());
             putValue(NAME, "Export...");
             this.pane = pane;
         }
@@ -853,13 +876,27 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     public static class ImageSelection implements Transferable, ClipboardOwner {
         protected Image image;
+        protected GuiMappingContext context;
 
-        protected static DataFlavor[] flavors = {
-                DataFlavor.imageFlavor,
-        };
+        protected List<DataFlavor> flavors;
 
         public ImageSelection(Image image) {
             this.image = image;
+            flavors = Collections.singletonList(DataFlavor.imageFlavor);
+        }
+
+        public ImageSelection(Image image, GuiMappingContext context) {
+            this.image = image;
+            this.context = context;
+            flavors = new ArrayList<>(3);
+            flavors.add(DataFlavor.imageFlavor);
+
+            Path p = ((GuiReprValueImagePane) context.getReprValue()).getImagePath(image);
+            if (p != null) {
+                flavors.add(DataFlavor.javaFileListFlavor);
+            }
+
+            flavors.add(DataFlavor.stringFlavor);
         }
 
         public Image getImage() {
@@ -868,13 +905,12 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public DataFlavor[] getTransferDataFlavors() {
-            return flavors;
+            return flavors.toArray(new DataFlavor[flavors.size()]);
         }
 
         @Override
         public boolean isDataFlavorSupported(DataFlavor flavor) {
-            System.err.println("isDataFlavorSupported: " + flavor);
-            return Arrays.stream(flavors)
+            return flavors.stream()
                     .anyMatch(flavor::equals);
         }
 
@@ -883,6 +919,13 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 throws UnsupportedFlavorException, IOException {
             if (DataFlavor.imageFlavor.equals(flavor)) {
                 return image;
+            } else if (context != null && DataFlavor.javaFileListFlavor.equals(flavor)) {
+                Path p = ((GuiReprValueImagePane) context.getReprValue()).getImagePath(image);
+                if (p != null) {
+                    return Collections.singletonList(p.toFile());
+                }
+            } else if (context != null && DataFlavor.stringFlavor.equals(flavor)) {
+                return context.getReprValue().toHumanReadableString(context, image);
             }
             throw new UnsupportedFlavorException(flavor);
         }
@@ -904,7 +947,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public boolean canImport(TransferSupport support) {
             return imagePane.isSwingEditable() &&
                     (support.isDataFlavorSupported(DataFlavor.imageFlavor) ||
-                        support.isDataFlavorSupported(DataFlavor.javaFileListFlavor));
+                        support.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
+                        support.isDataFlavorSupported(DataFlavor.stringFlavor));
         }
 
         @Override
@@ -913,6 +957,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 return select(getTransferableAsImage(support, DataFlavor.imageFlavor));
             } else if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 return select(loadTransferableFilesAsImage(support, DataFlavor.javaFileListFlavor));
+            } else if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                return select(getTransferableStringAsImage(support, DataFlavor.stringFlavor));
             } else {
                 return false;
             }
@@ -963,6 +1009,16 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             }
         }
 
+        public Image getTransferableStringAsImage(TransferSupport support, DataFlavor flavor) {
+            try {
+                String data = (String) support.getTransferable().getTransferData(flavor);
+                GuiMappingContext context = imagePane.getSwingViewContext();
+                return (Image) context.getReprValue().fromHumanReadableString(context, data);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
         public boolean select(Image image) {
             if (image != null) {
                 imagePane.setImage(image);
@@ -986,7 +1042,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             int s = UIManagerUtil.getInstance().getScaledSizeInt(100);
             Dimension size = imagePane.getImageScaleDefault().getScaledImageSize(imagePane.getImageSize(), new Dimension(s, s));
             setDragImage(img.getScaledInstance(size.width , size.height, Image.SCALE_DEFAULT));
-            return new ImageSelection(img);
+            return new ImageSelection(img, imagePane.getSwingViewContext());
         }
 
     }

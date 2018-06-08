@@ -111,6 +111,10 @@ public interface GuiRepresentation {
         return "" + source;
     }
 
+    default Object fromHumanReadableString(GuiMappingContext context, String str) {
+        throw new UnsupportedOperationException("unsupported fromHumanReadableString: " + context.getName() + " : \"" + str + "\"");
+    }
+
     /** the empty definition of representation */
     GuiReprNone NONE = new GuiReprNone();
 

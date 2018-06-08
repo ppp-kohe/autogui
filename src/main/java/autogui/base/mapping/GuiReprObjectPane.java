@@ -245,6 +245,48 @@ public class GuiReprObjectPane extends GuiReprValue {
     }
 
     @Override
+    public Object fromHumanReadableString(GuiMappingContext context, String str) {
+        return fromHumanReadableStringToObject(context, str);
+    }
+
+    public static Object fromHumanReadableStringToObject(GuiMappingContext context, String str) { //the current implementation is so add-hoc
+        Object target;
+        try {
+            GuiReprValue repr = getReprValue(context.getRepresentation());
+            if (repr != null) {
+                target = repr.createNewValue(context);
+            } else {
+                throw new RuntimeException("cannot create new instance: " + context);
+            }
+        } catch (Throwable ex) {
+            throw new RuntimeException(ex);
+        }
+
+        String[] cols = str.split("\\t");
+
+        List<GuiMappingContext> subs = context.getChildren();
+        int i = 0;
+        for (String col : cols) {
+            if (i < subs.size()) {
+                GuiMappingContext subContext = subs.get(i);
+                if (subContext.isReprValue()) {
+                    try {
+                        GuiReprValue reprValue = subContext.getReprValue();
+                        Object subNewValue = reprValue.fromHumanReadableString(subContext, col);
+                        reprValue.update(subContext, GuiMappingContext.GuiSourceValue.of(target),
+                                subNewValue, GuiReprValue.NONE.child(false));
+                    } catch (Throwable ex) {
+                        subContext.errorWhileJson(ex);
+                    }
+                }
+            }
+            ++i;
+        }
+        return target;
+    }
+
+
+    @Override
     public String toString() {
         return toStringHeader() + "(" + subRepresentation + ")";
     }

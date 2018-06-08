@@ -8,7 +8,6 @@ import autogui.swing.*;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -61,11 +60,12 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     }
 
     public List<ObjectTableColumn.TableMenuComposite> getMenuRowComposites(GuiMappingContext context) {
-        List<ObjectTableColumn.TableMenuComposite> comps = new ArrayList<>(3);
-        comps.add(new ToStringCopyCell.TableMenuCompositeToStringValue(context, -1));
+        List<ObjectTableColumn.TableMenuComposite> comps = new ArrayList<>(4);
+        comps.add(new ToStringCopyCell.TableMenuCompositeToStringCopy(context, -1));
         comps.add(new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(context, -1));
         if (context.isReprValue() && context.getReprValue().isEditable(context)) {
             comps.add(new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(context, -1));
+            comps.add(new ToStringCopyCell.TableMenuCompositeToStringPaste(-1));
         }
         return comps;
     }

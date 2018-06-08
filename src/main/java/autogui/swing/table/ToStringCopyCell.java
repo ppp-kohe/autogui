@@ -31,15 +31,15 @@ public class ToStringCopyCell {
      * a composite for to-string relying on
      * {@link autogui.base.mapping.GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}
      */
-    public static class TableMenuCompositeToStringValue implements ObjectTableColumn.TableMenuComposite {
+    public static class TableMenuCompositeToStringCopy implements ObjectTableColumn.TableMenuComposite {
         protected GuiMappingContext context;
         protected int index;
 
-        public TableMenuCompositeToStringValue(int index) {
+        public TableMenuCompositeToStringCopy(int index) {
             this.index = index;
         }
 
-        public TableMenuCompositeToStringValue(GuiMappingContext context, int index) {
+        public TableMenuCompositeToStringCopy(GuiMappingContext context, int index) {
             this.context = context;
             this.index = index;
         }
@@ -62,16 +62,16 @@ public class ToStringCopyCell {
         }
     }
 
-    public static TableMenuCompositeSharedToStringValue shared = new TableMenuCompositeSharedToStringValue();
+    public static TableMenuCompositeSharedToStringCopy shared = new TableMenuCompositeSharedToStringCopy();
 
     /**
-     * the key of {@link TableMenuCompositeToStringValue}
+     * the key of {@link TableMenuCompositeToStringCopy}
      */
-    public static class TableMenuCompositeSharedToStringValue implements ObjectTableColumn.TableMenuCompositeShared {
+    public static class TableMenuCompositeSharedToStringCopy implements ObjectTableColumn.TableMenuCompositeShared {
         @Override
         public List<PopupCategorized.CategorizedMenuItem> composite(JTable table, List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
-            List<TableMenuCompositeToStringValue> cs = columns.stream()
-                    .map(TableMenuCompositeToStringValue.class::cast)
+            List<TableMenuCompositeToStringCopy> cs = columns.stream()
+                    .map(TableMenuCompositeToStringCopy.class::cast)
                     .filter(e -> e.getIndex() != -1)
                     .collect(Collectors.toList());
             return Arrays.asList(
@@ -84,11 +84,11 @@ public class ToStringCopyCell {
      * the action defined by composition of selected columns; it joins cell strings by new-lines (for row) and tabs (for columns).
      */
     public static class ToStringCopyForCellsAction extends AbstractAction implements TableTargetCellAction {
-        protected List<TableMenuCompositeToStringValue> activatedColumns;
+        protected List<TableMenuCompositeToStringCopy> activatedColumns;
         protected boolean onlyApplyingSelectedColumns;
 
-        public ToStringCopyForCellsAction(List<TableMenuCompositeToStringValue> activatedColumns, boolean onlyApplyingSelectedColumns) {
-            putValue(NAME, onlyApplyingSelectedColumns ? "Copy Cells as String" : "Copy Row Cells as String");
+        public ToStringCopyForCellsAction(List<TableMenuCompositeToStringCopy> activatedColumns, boolean onlyApplyingSelectedColumns) {
+            putValue(NAME, onlyApplyingSelectedColumns ? "Copy Cells as Text" : "Copy Row Cells as Text");
             this.activatedColumns = activatedColumns;
             this.onlyApplyingSelectedColumns = onlyApplyingSelectedColumns;
         }
@@ -112,7 +112,7 @@ public class ToStringCopyCell {
                     ? target.getSelectedCells()
                     : target.getSelectedRowAllCells());
             for (GuiReprCollectionTable.CellValue cell : cells) {
-                TableMenuCompositeToStringValue col = getMenuCompositeForCell(cell);
+                TableMenuCompositeToStringCopy col = getMenuCompositeForCell(cell);
                 if (col != null) {
                     if (prevLine != cell.getRow() && prevLine != -1) {
                         lines.add(String.join("\t", cols));
@@ -132,7 +132,7 @@ public class ToStringCopyCell {
             return String.join("\n", lines);
         }
 
-        public TableMenuCompositeToStringValue getMenuCompositeForCell(GuiReprCollectionTable.CellValue cell) {
+        public TableMenuCompositeToStringCopy getMenuCompositeForCell(GuiReprCollectionTable.CellValue cell) {
             return activatedColumns.stream()
                     .filter(cmp -> cmp.getIndex() == cell.getColumn())
                     .findFirst()
@@ -172,10 +172,10 @@ public class ToStringCopyCell {
     public static class ToStringSaveForCellsAction extends ToStringCopyForCellsAction {
         protected JComponent table;
 
-        public ToStringSaveForCellsAction(List<TableMenuCompositeToStringValue> activatedColumns, boolean onlyApplyingSelectedColumns,
+        public ToStringSaveForCellsAction(List<TableMenuCompositeToStringCopy> activatedColumns, boolean onlyApplyingSelectedColumns,
                                           JComponent table) {
             super(activatedColumns, onlyApplyingSelectedColumns);
-            putValue(NAME, onlyApplyingSelectedColumns ? "Save Cells as String..." : "Save Row Cells as String...");
+            putValue(NAME, onlyApplyingSelectedColumns ? "Save Cells as Text..." : "Save Row Cells as Text...");
             this.table = table;
         }
 
@@ -196,14 +196,14 @@ public class ToStringCopyCell {
 
     ///////////////
 
-    public static TableCompositeToStringPasteShared pasteShared = new TableCompositeToStringPasteShared();
+    public static TableMenuCompositeSharedToStringPaste pasteShared = new TableMenuCompositeSharedToStringPaste();
 
-    public static class TableCompositeToStringPaste extends TableMenuCompositeToStringValue {
-        public TableCompositeToStringPaste(int index) {
+    public static class TableMenuCompositeToStringPaste extends TableMenuCompositeToStringCopy {
+        public TableMenuCompositeToStringPaste(int index) {
             super(index);
         }
 
-        public TableCompositeToStringPaste(GuiMappingContext context, int index) {
+        public TableMenuCompositeToStringPaste(GuiMappingContext context, int index) {
             super(context, index);
         }
 
@@ -212,7 +212,7 @@ public class ToStringCopyCell {
         }
 
         public Object toValueFromString(String s) {
-            return null; //TODO
+            return context.getRepresentation().fromHumanReadableString(context, s);
         }
 
         @Override
@@ -221,18 +221,49 @@ public class ToStringCopyCell {
         }
     }
 
-    public static class TableCompositeToStringPasteShared implements ObjectTableColumn.TableMenuCompositeShared  { //TODO
+    public static class TableMenuCompositeSharedToStringPaste implements ObjectTableColumn.TableMenuCompositeShared  { //TODO
 
         @Override
         public List<PopupCategorized.CategorizedMenuItem> composite(JTable table, List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
-            return null; //TODO
+            List<TableMenuCompositeToStringPaste> cs = columns.stream()
+                    .map(TableMenuCompositeToStringPaste.class::cast)
+                    .filter(e -> e.getIndex() != -1)
+                    .collect(Collectors.toList());
+            return Arrays.asList(
+                    new ToStringPasteForCellsAction(cs, !row),
+                    new ToStringLoadForCellsAction(cs, !row, table));
         }
     }
 
-    public static class ToStringPasteForCellsAction {
-        protected List<TableCompositeToStringPaste> activeComposites;
+    public static class ToStringPasteForCellsAction extends PopupExtensionText.TextPasteAllAction implements TableTargetCellAction {
+        protected List<TableMenuCompositeToStringPaste> activeComposites;
         protected String lineSeparator = "\\n"; //regex
         protected String columnSeparator = "\\t"; //regex
+        protected boolean onlyApplyingSelectedColumns;
+
+        public ToStringPasteForCellsAction(List<TableMenuCompositeToStringPaste> activeComposites, boolean onlyApplyingSelectedColumns) {
+            super(null);
+            putValue(NAME, onlyApplyingSelectedColumns ? "Paste Text to Cells" : "Paste Text to Row Cells");
+            putValue(ACCELERATOR_KEY, null);
+            this.activeComposites = activeComposites;
+            this.onlyApplyingSelectedColumns = onlyApplyingSelectedColumns;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            throw new UnsupportedOperationException();
+        }
+
+
+        @Override
+        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+            paste(s -> run(s, target));
+        }
 
         public void run(String str, GuiReprCollectionTable.TableTargetCell target) {
             int rowIndex = 0;
@@ -251,7 +282,7 @@ public class ToStringCopyCell {
             int rowIndex = targetRow;
             int c = 0;
             for (String col : line.split(columnSeparator)) {
-                TableCompositeToStringPaste composite = activeComposites.get(c % activeComposites.size());
+                TableMenuCompositeToStringPaste composite = activeComposites.get(c % activeComposites.size());
                 if (composite.isIndexColumn()) { //specify the row index
                     targetRow = Integer.valueOf(col);
                     rowSpecified = true;
@@ -274,6 +305,42 @@ public class ToStringCopyCell {
             } else {
                 return updatedRow;
             }
+        }
+
+        @Override
+        public String getCategory() {
+            return onlyApplyingSelectedColumns ? MENU_CATEGORY_CELL : MENU_CATEGORY_ROW;
+        }
+    }
+
+    public static class ToStringLoadForCellsAction extends ToStringPasteForCellsAction {
+        protected JComponent table;
+        protected PopupExtensionText.TextLoadAction loader;
+
+        public ToStringLoadForCellsAction(List<TableMenuCompositeToStringPaste> activeComposites, boolean onlyApplyingSelectedColumns, JComponent table) {
+            super(activeComposites, onlyApplyingSelectedColumns);
+            putValue(NAME, onlyApplyingSelectedColumns ? "Load Text to Cells..." : "Load Text to Row Cells...");
+            putValue(ACCELERATOR_KEY, null);
+            this.table = table;
+            loader = new PopupExtensionText.TextLoadAction(null) {
+                @Override
+                protected JComponent getComponent() {
+                    return table;
+                }
+            };
+        }
+
+        @Override
+        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+            String line = loader.load();
+            if (line != null) {
+                run(line, target);
+            }
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_IMPORT;
         }
     }
 }

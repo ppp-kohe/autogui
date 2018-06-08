@@ -48,20 +48,6 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
         }
 
         @Override
-        public Object getValueFromString(String str) {
-            return ((GuiReprValueEnumComboBox) getSwingViewContext().getRepresentation()).getEnumValue(getSwingViewContext(), str);
-        }
-
-        @Override
-        public String getValueAsString(Object v) {
-            if (v == null) {
-                return "null";
-            } else {
-                return ((GuiReprValueEnumComboBox) context.getRepresentation()).getDisplayName(context, (Enum<?>) v);
-            }
-        }
-
-        @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
             if (menuItems == null) {
                     menuItems = PopupCategorized.getMenuItems(Arrays.asList(

@@ -179,6 +179,16 @@ public class GuiReprValueImagePane extends GuiReprValue {
     }
 
     @Override
+    public String toHumanReadableString(GuiMappingContext context, Object source) {
+        return (String) toJson(context, source);
+    }
+
+    @Override
+    public Object fromHumanReadableString(GuiMappingContext context, String str) {
+        return fromJson(context, null, str);
+    }
+
+    @Override
     public boolean isJsonSetter() {
         return false;
     }
@@ -187,6 +197,10 @@ public class GuiReprValueImagePane extends GuiReprValue {
         if (image != null) {
             imageToReference.put(image, path);
         }
+    }
+
+    public Path getImagePath(Image image) {
+        return imageToReference.get(image);
     }
 
     public RenderedImage getRenderedImage(GuiMappingContext context, Object source) {
