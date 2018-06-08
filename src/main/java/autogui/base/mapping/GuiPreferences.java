@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
@@ -143,10 +144,11 @@ public class GuiPreferences {
     }
 
     public GuiValueStore getValueStoreRootFromRepresentation() {
-        return new GuiValueStoreDefault(this, getPreferencesNodeAsRoot(), "$default");
+        GuiValueStore root = getPreferencesNodeAsRoot();
+        return root.getChild("$default");
     }
 
-    public Preferences getPreferencesNodeAsRoot() {
+    public GuiValueStore getPreferencesNodeAsRoot() {
         GuiRepresentation repr = context.getRepresentation();
         Preferences node;
         if (repr instanceof GuiReprObjectPane) {
@@ -156,13 +158,14 @@ public class GuiPreferences {
             node = Preferences.userNodeForPackage(GuiPreferences.class)
                     .node(toStoreKey(context.getName().replace('.', '_')));
         }
-        return node;
+        return new GuiValueStoreDefault(this, node);
     }
 
     /**
      * <pre>
      *            "$default/"
      *               ...
+     *            "$launchPrefs" = 0
      *            "$saved/"
      *               "$0/"
      *                  "$name" = "prefs yyyy/mm/dd hh:mm"
@@ -173,17 +176,19 @@ public class GuiPreferences {
      * @return saved preferences
      */
     public List<GuiPreferences> getSavedStoreListAsRoot() {
-        Preferences prefs = getPreferencesNodeAsRoot();
+        GuiValueStore root = getPreferencesNodeAsRoot();
         try {
             List<GuiPreferences> savedList = new ArrayList<>();
-            if (prefs.nodeExists("$saved")) {
-                Preferences savedNode = prefs.node("$saved");
-                List<String> stores = Arrays.asList(savedNode.childrenNames());
+            if (root.hasNodeKey("$saved")) {
+                GuiValueStore saved = root.getChild("$saved");
+                List<String> stores = saved.getKeys();
 
                 for (String key : stores) {
-                    GuiPreferences savedPrefs = new GuiPreferences(context);
-                    savedPrefs.valueStore = new GuiValueStoreDefault(savedPrefs, savedNode, key);
-                    savedList.add(savedPrefs);
+                    if (saved.hasNodeKey(key)) {
+                        GuiPreferences savedPrefs = new GuiPreferences(context);
+                        savedPrefs.valueStore = saved.getChild(savedPrefs, key);
+                        savedList.add(savedPrefs);
+                    }
                 }
             }
             return savedList;
@@ -192,13 +197,28 @@ public class GuiPreferences {
         }
     }
 
+    /**
+     * @return 0: using "$default", 1: no application, 2,3,4...: "$saved"-2
+     */
+    public int getLaunchPrefsAsRoot() {
+        GuiValueStore root = getPreferencesNodeAsRoot();
+        return root.getInt("$launchPrefs", 0);
+    }
+
+    public void setLaunchPrefsAsRoot(int n) {
+        GuiValueStore root = getPreferencesNodeAsRoot();
+        root.putInt("$launchPrefs", n);
+    }
+
     static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
 
     public GuiPreferences addNewSavedStoreAsRoot() {
-        Preferences prefs = getPreferencesNodeAsRoot();
-        Preferences savedNode = prefs.node("$saved");
+        GuiValueStore root = getPreferencesNodeAsRoot();
+        GuiValueStore saved = root.getChild("$saved");
         try {
-            List<String> stores = Arrays.asList(savedNode.childrenNames());
+            List<String> stores = saved.getKeys().stream()
+                    .filter(saved::hasNodeKey)
+                    .collect(Collectors.toList());
             int n = stores.size();
             String key = "$" + Integer.toString(n);
             while (stores.contains(key)) {
@@ -206,7 +226,7 @@ public class GuiPreferences {
                 key = "$" + Integer.toString(n);
             }
             GuiPreferences newPrefs = new GuiPreferences(context);
-            newPrefs.valueStore = new GuiValueStoreDefault(newPrefs, savedNode, key);
+            newPrefs.valueStore = saved.getChild(newPrefs, key);
 
             String name = context.getName();
 
@@ -431,8 +451,15 @@ public class GuiPreferences {
         public abstract void putInt(String key, int val);
         public abstract int getInt(String key, int def);
 
-        public abstract GuiValueStore getChild(GuiPreferences preferences);
-        public abstract GuiValueStore getChild(String key);
+        public GuiValueStore getChild(GuiPreferences preferences) {
+            return getChild(preferences, preferences.getName());
+        }
+
+        public GuiValueStore getChild(String key) {
+            return getChild(preferences, key);
+        }
+
+        public abstract GuiValueStore getChild(GuiPreferences preferences, String key);
 
         public abstract boolean hasEntryKey(String key);
         public abstract boolean hasNodeKey(String key);
@@ -459,7 +486,7 @@ public class GuiPreferences {
         /* note: in macOS, ~/Library/Preferences/com.apple.java.util.prefs.plist ? */
         protected Preferences store;
 
-        protected Preferences parentStore;
+        protected Supplier<Preferences> parentStore;
         protected String storeName;
         protected String storeNameActual;
 
@@ -468,14 +495,15 @@ public class GuiPreferences {
             this.store = store;
         }
 
-        public GuiValueStoreDefault(GuiPreferences preferences, Preferences parentStore, String storeName) {
+        public GuiValueStoreDefault(GuiPreferences preferences, Supplier<Preferences> parentStore, String storeName) {
             super(preferences);
             this.parentStore = parentStore;
             this.storeName = storeName;
             this.storeNameActual = toStoreKey(storeName);
             try {
-                if (parentStore.nodeExists(storeNameActual)) {
-                    store = parentStore.node(storeNameActual);
+                Preferences parent = parentStore.get();
+                if (parent.nodeExists(storeNameActual)) {
+                    store = parent.node(storeNameActual);
                 }
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -488,7 +516,7 @@ public class GuiPreferences {
 
         public Preferences getOrCreateStore() {
             if (store == null) {
-                store = parentStore.node(storeNameActual);
+                store = parentStore.get().node(storeNameActual);
             }
             return store;
         }
@@ -514,13 +542,8 @@ public class GuiPreferences {
         }
 
         @Override
-        public GuiValueStore getChild(GuiPreferences preferences) {
-            return new GuiValueStoreDefault(preferences, getOrCreateStore(), preferences.getName());
-        }
-
-        @Override
-        public GuiValueStore getChild(String name) {
-            return new GuiValueStoreDefault(preferences, getOrCreateStore(), name);
+        public GuiValueStore getChild(GuiPreferences preferences, String key) {
+            return new GuiValueStoreDefault(preferences, this::getOrCreateStore, key);
         }
 
         @Override
@@ -570,6 +593,7 @@ public class GuiPreferences {
         public void removeThisNode() {
             try {
                 getOrCreateStore().removeNode();
+                store = null;
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
@@ -745,7 +769,7 @@ public class GuiPreferences {
     }
 
     /**
-     * an on-memory impl. of value history entry, created when the repr. is {@link GuiReprValue#isHistoryValueStored()}.
+     * an on-memory impl. of value history entry, created when the repr. is {@link GuiReprValue#isHistoryValueStored(Object)}.
      */
     public static class HistoryValueEntryOnMemory extends HistoryValueEntry {
         public HistoryValueEntryOnMemory(GuiPreferences preferences, Object value) {
@@ -903,14 +927,8 @@ public class GuiPreferences {
         }
 
         @Override
-        public GuiValueStore getChild(GuiPreferences preferences) {
-            return (GuiValueStore) values.computeIfAbsent(preferences.getName(),
-                    k -> new GuiValueStoreOnMemory(preferences));
-        }
-
-        @Override
-        public GuiValueStore getChild(String name) {
-            return (GuiValueStore) values.computeIfAbsent(name,
+        public GuiValueStore getChild(GuiPreferences preferences, String key) {
+            return (GuiValueStore) values.computeIfAbsent(key,
                     k -> new GuiValueStoreOnMemory(preferences));
         }
 

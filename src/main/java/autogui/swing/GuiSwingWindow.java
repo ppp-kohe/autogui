@@ -87,7 +87,7 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     }
 
     protected void initPrefsLoad() {
-        loadPreferences(contextRootPane.getContext().getPreferences());
+        loadPreferences(contextRootPane.getPreferences().getLaunchPreferences());
     }
 
     protected void initClosing() {

@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -343,14 +344,14 @@ public class GuiSwingPreferences {
     /////////////
 
     public static class PreferencesListModel extends AbstractTableModel {
-        protected Supplier<GuiMappingContext> context;
+        protected Supplier<GuiMappingContext> rootContext;
         protected List<GuiPreferences> list;
         protected List<GuiPreferences> savedPrefsList;
         protected GuiPreferences launchPrefs;
         protected GuiPreferences targetDefault;
 
-        public PreferencesListModel(Supplier<GuiMappingContext> context) {
-            this.context = context;
+        public PreferencesListModel(Supplier<GuiMappingContext> rootContext) {
+            this.rootContext = rootContext;
             reload();
         }
 
@@ -381,7 +382,7 @@ public class GuiSwingPreferences {
 
         public GuiPreferences getLaunchPrefs() {
             if (launchPrefs == null) {
-                return context.get().getPreferences();
+                return rootContext.get().getPreferences();
             }
             return launchPrefs;
         }
@@ -390,7 +391,7 @@ public class GuiSwingPreferences {
             int oldSize = 0;
             int launchPrefsIndex = 0;
 
-            GuiMappingContext context = this.context.get();
+            GuiMappingContext context = this.rootContext.get();
             if (list != null) {
                 oldSize = list.size();
                 if (launchPrefs != null) {
@@ -398,8 +399,7 @@ public class GuiSwingPreferences {
                 }
             } else {
                 //init
-                GuiPreferences.GuiValueStore store = context.getPreferences().getValueStore();
-                launchPrefsIndex = store.getInt("$launchPrefs", 0);
+                launchPrefsIndex = context.getPreferences().getLaunchPrefsAsRoot();
             }
             targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
             targetDefault.getValueStore().putString("$name", "Target Code Values");
@@ -437,11 +437,11 @@ public class GuiSwingPreferences {
 
         public boolean isNameEditable(GuiPreferences prefs) {
             return prefs != targetDefault &&
-                    prefs != context.get().getPreferences();
+                    prefs != rootContext.get().getPreferences();
         }
 
         public String getName(GuiPreferences prefs) {
-            if (prefs == context.get().getPreferences()) {
+            if (prefs == rootContext.get().getPreferences()) {
                 return "Defaults";
             } else {
                 return prefs.getValueStore().getString("$name", "Preferences " + list.indexOf(prefs));
@@ -450,7 +450,7 @@ public class GuiSwingPreferences {
 
         public void setLaunchPrefs(GuiPreferences launchPrefs) {
             this.launchPrefs = launchPrefs;
-            context.get().getPreferences().getValueStore().putInt("$launchPrefs", list.indexOf(launchPrefs));
+            rootContext.get().getPreferences().setLaunchPrefsAsRoot(list.indexOf(launchPrefs));
             fireTableDataChanged();
         }
     }
@@ -1218,8 +1218,14 @@ public class GuiSwingPreferences {
 
         public void loadItems() {
             removeAll();
-            for (GuiPreferences p : preferences.getSavedPreferencesList()) {
-                add(new ApplySpecifiedPrefsAction(preferences, p));
+            MenuBuilder builder = MenuBuilder.get();
+            builder.addMenuItems(builder.createAppender(this),
+                preferences.getSavedPreferencesList().stream()
+                    .map(p -> new ApplySpecifiedPrefsAction(preferences, p))
+                    .map(JMenuItem::new)
+                    .collect(Collectors.toList()));
+            if (getItemCount() == 0) {
+                add(builder.createLabel("Nothing"));
             }
         }
     }
