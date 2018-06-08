@@ -12,6 +12,8 @@ import autogui.swing.util.*;
 import autogui.base.mapping.ScheduledTaskRunner;
 
 import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
@@ -330,12 +332,20 @@ public class GuiSwingPreferences {
         return listModel.getLaunchPrefs();
     }
 
+    public List<GuiPreferences> getSavedPreferencesList() {
+        return listModel.getSavedPrefsList();
+    }
+
+    public String getName(GuiPreferences prefs) {
+        return listModel.getName(prefs);
+    }
 
     /////////////
 
     public static class PreferencesListModel extends AbstractTableModel {
         protected Supplier<GuiMappingContext> context;
         protected List<GuiPreferences> list;
+        protected List<GuiPreferences> savedPrefsList;
         protected GuiPreferences launchPrefs;
         protected GuiPreferences targetDefault;
 
@@ -397,7 +407,8 @@ public class GuiSwingPreferences {
             list = new ArrayList<>();
             list.add(context.getPreferences()); //0
             list.add(targetDefault); //1
-            list.addAll(context.getPreferences().getSavedStoreListAsRoot());
+            savedPrefsList = context.getPreferences().getSavedStoreListAsRoot();
+            list.addAll(savedPrefsList);
 
             if (launchPrefsIndex < 0 || launchPrefsIndex >= list.size()) {
                 launchPrefsIndex = 0;
@@ -418,6 +429,10 @@ public class GuiSwingPreferences {
 
         public List<GuiPreferences> getList() {
             return list;
+        }
+
+        public List<GuiPreferences> getSavedPrefsList() {
+            return savedPrefsList;
         }
 
         public boolean isNameEditable(GuiPreferences prefs) {
@@ -694,17 +709,26 @@ public class GuiSwingPreferences {
 
     public static class ApplyPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction  {
         protected GuiSwingPreferences owner;
+
         public ApplyPrefsAction(GuiSwingPreferences owner) {
+            this.owner = owner;
+            init();
+        }
+
+        protected void init() {
             putValue(NAME, "Apply");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("apply"));
             putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("apply"));
-            this.owner = owner;
             owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
             GuiPreferences preferences = owner.getSelectedSavedPreferences();
+            apply(preferences);
+        }
+
+        public void apply(GuiPreferences preferences) {
             if (preferences != null) {
                 owner.getRootContext().getPreferences().clearAll();
                 owner.getRootContext().getPreferences().fromJson(preferences.toJson());
@@ -1167,6 +1191,58 @@ public class GuiSwingPreferences {
 
         public PreferencesForFileDialog getPrefs() {
             return prefs;
+        }
+    }
+
+    public static class PrefsApplyMenu extends JMenu {
+        protected GuiSwingPreferences preferences;
+
+        public PrefsApplyMenu(GuiSwingPreferences preferences) {
+            super("Apply Prefs");
+            this.preferences = preferences;
+            buildMenus();
+        }
+
+        public void buildMenus() {
+            addMenuListener(new MenuListener() {
+                @Override
+                public void menuSelected(MenuEvent e) { loadItems(); }
+
+                @Override
+                public void menuDeselected(MenuEvent e) { }
+
+                @Override
+                public void menuCanceled(MenuEvent e) { }
+            });
+        }
+
+        public void loadItems() {
+            removeAll();
+            for (GuiPreferences p : preferences.getSavedPreferencesList()) {
+                add(new ApplySpecifiedPrefsAction(preferences, p));
+            }
+        }
+    }
+
+    public static class ApplySpecifiedPrefsAction extends ApplyPrefsAction {
+        protected GuiPreferences targetPrefs;
+
+        public ApplySpecifiedPrefsAction(GuiSwingPreferences owner, GuiPreferences targetPrefs) {
+            super(owner);
+            this.targetPrefs = targetPrefs;
+            initLazy();
+        }
+
+        @Override
+        protected void init() { }
+
+        protected void initLazy() {
+            putValue(NAME, owner.getName(targetPrefs));
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            apply(targetPrefs);
         }
     }
 }

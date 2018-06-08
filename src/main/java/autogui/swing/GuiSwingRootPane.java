@@ -42,6 +42,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     protected String title;
     protected JMenuBar menuBar;
 
+    protected ShowPreferencesAction showPreferencesAction;
+    protected GuiSwingPreferences.PrefsApplyMenu prefsApplyMenu;
     protected WindowCloseAction closeAction;
 
 
@@ -106,6 +108,9 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
     protected void initKeyBinding() {
         closeAction = new WindowCloseAction(this);
+        showPreferencesAction = new ShowPreferencesAction(GuiSwingRootPane.this::getPreferences, viewComponent);
+        prefsApplyMenu = new GuiSwingPreferences.PrefsApplyMenu(preferences);
+
         getInputMap().put(
                 closeAction.getKeyStroke(),
                 closeAction);
@@ -151,7 +156,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
     public void setupObjectMenu() {
         objectMenu.removeAll();
-        objectMenu.add(new ShowPreferencesAction(GuiSwingRootPane.this::getPreferences, viewComponent));
+        objectMenu.add(showPreferencesAction);
+        objectMenu.add(prefsApplyMenu);
         objectMenu.addSeparator();
         if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
             ((GuiSwingView.ValuePane) viewComponent).getSwingMenuBuilder()
@@ -600,4 +606,5 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
             }
         }
     }
+
 }
