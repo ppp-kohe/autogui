@@ -652,7 +652,7 @@ public interface GuiSwingView extends GuiSwingElement {
         protected GuiMappingContext context;
 
         public ToStringCopyAction(ValuePane<?> pane, GuiMappingContext context) {
-            putValue(NAME, "Copy As String");
+            putValue(NAME, "Copy as String");
             this.pane = pane;
             this.context = context;
         }

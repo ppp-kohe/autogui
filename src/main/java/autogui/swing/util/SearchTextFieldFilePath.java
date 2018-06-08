@@ -380,7 +380,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
     public static class DesktopOpenAction extends FileListAction implements PopupCategorized.CategorizedMenuItemAction {
 
         public DesktopOpenAction(SearchTextFieldFilePath component) {
-            super("Open In Desktop", component);
+            super("Open in Desktop", component);
         }
 
         @Override
@@ -418,7 +418,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
 
         public DesktopRevealAction(SearchTextFieldFilePath component) {
-            super("Reveal In Desktop", component);
+            super("Reveal in Desktop", component);
             initCommand();
         }
 

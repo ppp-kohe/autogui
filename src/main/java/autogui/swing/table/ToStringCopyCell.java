@@ -2,6 +2,7 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
@@ -87,7 +88,7 @@ public class ToStringCopyCell {
         protected boolean onlyApplyingSelectedColumns;
 
         public ToStringCopyForCellsAction(List<TableMenuCompositeToStringValue> activatedColumns, boolean onlyApplyingSelectedColumns) {
-            putValue(NAME, onlyApplyingSelectedColumns ? "Copy Cells As String" : "Copy Row Cells As String");
+            putValue(NAME, onlyApplyingSelectedColumns ? "Copy Cells as String" : "Copy Row Cells as String");
             this.activatedColumns = activatedColumns;
             this.onlyApplyingSelectedColumns = onlyApplyingSelectedColumns;
         }
@@ -174,7 +175,7 @@ public class ToStringCopyCell {
         public ToStringSaveForCellsAction(List<TableMenuCompositeToStringValue> activatedColumns, boolean onlyApplyingSelectedColumns,
                                           JComponent table) {
             super(activatedColumns, onlyApplyingSelectedColumns);
-            putValue(NAME, onlyApplyingSelectedColumns ? "Save Cells As String..." : "Save Row Cells As String...");
+            putValue(NAME, onlyApplyingSelectedColumns ? "Save Cells as String..." : "Save Row Cells as String...");
             this.table = table;
         }
 
@@ -190,6 +191,89 @@ public class ToStringCopyCell {
         @Override
         public String getSubCategory() {
             return PopupExtension.MENU_SUB_CATEGORY_EXPORT;
+        }
+    }
+
+    ///////////////
+
+    public static TableCompositeToStringPasteShared pasteShared = new TableCompositeToStringPasteShared();
+
+    public static class TableCompositeToStringPaste extends TableMenuCompositeToStringValue {
+        public TableCompositeToStringPaste(int index) {
+            super(index);
+        }
+
+        public TableCompositeToStringPaste(GuiMappingContext context, int index) {
+            super(context, index);
+        }
+
+        public boolean isIndexColumn() {
+            return context == null;
+        }
+
+        public Object toValueFromString(String s) {
+            return null; //TODO
+        }
+
+        @Override
+        public ObjectTableColumn.TableMenuCompositeShared getShared() {
+            return pasteShared;
+        }
+    }
+
+    public static class TableCompositeToStringPasteShared implements ObjectTableColumn.TableMenuCompositeShared  { //TODO
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> composite(JTable table, List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
+            return null; //TODO
+        }
+    }
+
+    public static class ToStringPasteForCellsAction {
+        protected List<TableCompositeToStringPaste> activeComposites;
+        protected String lineSeparator = "\\n"; //regex
+        protected String columnSeparator = "\\t"; //regex
+
+        public void run(String str, GuiReprCollectionTable.TableTargetCell target) {
+            int rowIndex = 0;
+            GuiSwingJsonTransfer.JsonFillLoop fillLoop = new GuiSwingJsonTransfer.JsonFillLoop();
+            for (String line :str.split(lineSeparator)) {
+                if (fillLoop.addRow(runLine(line, rowIndex))) {
+                    ++rowIndex;
+                }
+            }
+            target.setCellValues(target.getSelectedRowAllCellIndexesStream(), fillLoop);
+        }
+
+        public List<GuiReprCollectionTable.CellValue> runLine(String line, int targetRow) {
+            List<GuiReprCollectionTable.CellValue> updatedRow = new ArrayList<>();
+            boolean rowSpecified = false;
+            int rowIndex = targetRow;
+            int c = 0;
+            for (String col : line.split(columnSeparator)) {
+                TableCompositeToStringPaste composite = activeComposites.get(c % activeComposites.size());
+                if (composite.isIndexColumn()) { //specify the row index
+                    targetRow = Integer.valueOf(col);
+                    rowSpecified = true;
+                } else {
+                    updatedRow.add(new GuiReprCollectionTable.CellValue(targetRow, composite.getIndex(),
+                            composite.toValueFromString(col)));
+                }
+
+                ++c;
+            }
+            if (targetRow != rowIndex) {
+                for (GuiReprCollectionTable.CellValue cell : updatedRow) {
+                    cell.row = targetRow;
+                }
+            }
+            if (rowSpecified) {
+                return updatedRow.stream()
+                        .map(e -> new GuiSwingJsonTransfer.CellValueRowSpecified(e.row, e.column, e.value))
+                        .collect(Collectors.toList());
+            } else {
+                return updatedRow;
+            }
         }
     }
 }

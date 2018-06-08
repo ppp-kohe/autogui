@@ -168,14 +168,14 @@ public class GuiSwingPreferences {
             list = new JTable(listModel);
             TableColumn column = list.getColumnModel().getColumn(0);
             {
-                column.setHeaderValue("Saved Prefs");
+                column.setHeaderValue("Saved Preferences");
                 column.setCellRenderer(new PreferencesNameRenderer(listModel));
                 column.setCellEditor(new PreferencesNameEditor(listModel));
             }
 
             TableColumn columnSelect = list.getColumnModel().getColumn(1);
             {
-                columnSelect.setHeaderValue("Launch Apply");
+                columnSelect.setHeaderValue("Apply at Launch");
                 columnSelect.setCellRenderer(new PreferencesLaunchApplyRenderer(listModel));
                 columnSelect.setCellEditor(new PreferencesLaunchApplyEditor(listModel));
             }
@@ -1198,7 +1198,7 @@ public class GuiSwingPreferences {
         protected GuiSwingPreferences preferences;
 
         public PrefsApplyMenu(GuiSwingPreferences preferences) {
-            super("Apply Prefs");
+            super("Apply Preferences");
             this.preferences = preferences;
             buildMenus();
         }

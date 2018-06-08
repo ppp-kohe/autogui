@@ -110,7 +110,7 @@ public class GuiSwingJsonTransfer {
         public JsonCopyAction(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
             this.component = component;
             this.context = context;
-            putValue(NAME, "Copy As JSON");
+            putValue(NAME, "Copy as JSON");
         }
 
         @Override
@@ -375,7 +375,7 @@ public class GuiSwingJsonTransfer {
         protected GuiMappingContext context;
 
         public JsonCopyRowsAction(GuiMappingContext context) {
-            putValue(NAME, "Copy Rows As JSON");
+            putValue(NAME, "Copy Rows as JSON");
             this.context = context;
         }
 
@@ -410,7 +410,7 @@ public class GuiSwingJsonTransfer {
         public JsonSaveRowsAction(GuiSwingView.ValuePane<?> table) {
             super(table.getSwingViewContext());
             this.table = table;
-            putValue(NAME, "Export Rows As JSON...");
+            putValue(NAME, "Export Rows as JSON...");
         }
 
         @Override
@@ -428,7 +428,7 @@ public class GuiSwingJsonTransfer {
         protected List<TableMenuCompositeJsonCopy> activatedColumns;
 
         public JsonCopyCellsAction(List<TableMenuCompositeJsonCopy> activatedColumns) {
-            putValue(NAME, "Copy Cells As JSON");
+            putValue(NAME, "Copy Cells as JSON");
             this.activatedColumns = activatedColumns;
         }
 
@@ -493,7 +493,7 @@ public class GuiSwingJsonTransfer {
         JComponent table;
         public JsonSaveCellsAction(List<TableMenuCompositeJsonCopy> activatedColumns, JComponent table) {
             super(activatedColumns);
-            putValue(NAME, "Export Cells As JSON...");
+            putValue(NAME, "Export Cells as JSON...");
             this.table = table;
         }
 
@@ -606,8 +606,8 @@ public class GuiSwingJsonTransfer {
 
         public JsonPasteCellsAction(List<TableMenuCompositeJsonPaste> activeComposite, boolean allCells) {
             putValue(NAME, allCells
-                    ? "Paste JSON To Rows"
-                    : "Paste JSON To Cells");
+                    ? "Paste JSON to Rows"
+                    : "Paste JSON to Cells");
             rows = allCells;
             this.activeComposite = activeComposite;
         }
@@ -782,8 +782,8 @@ public class GuiSwingJsonTransfer {
             super(activeComposite, allCells);
             this.table = table;
             putValue(NAME, allCells
-                    ? "Import JSON To Rows..."
-                    : "Import JSON To Cells...");
+                    ? "Import JSON to Rows..."
+                    : "Import JSON to Cells...");
         }
 
         @Override
