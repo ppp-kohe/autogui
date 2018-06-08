@@ -449,9 +449,12 @@ public class GuiSwingPreferences {
         }
 
         public void setLaunchPrefs(GuiPreferences launchPrefs) {
+            int current = list.indexOf(getLaunchPrefs());
             this.launchPrefs = launchPrefs;
-            rootContext.get().getPreferences().setLaunchPrefsAsRoot(list.indexOf(launchPrefs));
-            fireTableDataChanged();
+            int newValue = list.indexOf(launchPrefs);
+            rootContext.get().getPreferences().setLaunchPrefsAsRoot(newValue);
+            fireTableCellUpdated(current, 1);
+            fireTableCellUpdated(newValue, 1);
         }
     }
 
