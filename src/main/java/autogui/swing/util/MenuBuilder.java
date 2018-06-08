@@ -192,33 +192,42 @@ public class MenuBuilder {
                 label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
                 label.setForeground(convertColor(color, fs -> {
                     fs[0] = 0.4f; //set hue
-                    fs[1] = Math.min(1.0f, fs[1] + 0.3f); //up saturation
+                    changeSaturation(fs);
+                    changeBrightness(fs);
                 }));
             } else if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_TYPE)) {
                 label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
                 label.setForeground(convertColor(color, fs -> {
                     fs[0] = 0.55f; //set hue
-                    fs[1] = Math.min(1.0f, fs[1] + 0.3f); //up saturation
+                    changeSaturation(fs);
+                    changeBrightness(fs);
                 }));
             } else if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_MISC)) {
                 label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
                 label.setForeground(convertColor(color, fs -> {
                     fs[0] = 0.1f; //set hue
-                    fs[1] = Math.min(1.0f, fs[1] + 0.3f); //up saturation
+                    changeSaturation(fs);
+                    changeBrightness(fs);
                 }));
             } else {
                 label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
-                label.setForeground(convertColor(color, fs -> {
-                    if (fs[2] < 0.5f) { //check brightness
-                        fs[2] = Math.min(1.0f, fs[2] + 0.2f); //brighter
-                    } else {
-                        fs[2] = Math.min(1.0f, fs[2] - 0.2f); //darker
-                    }
-                }));
+                label.setForeground(convertColor(color, this::changeBrightness));
             }
             add(label);
             setOpaque(false);
             this.subCategory = subCategory;
+        }
+
+        private void changeSaturation(float[] fs) {
+            fs[1] = Math.min(1.0f, fs[1] + 0.3f); //up saturation
+        }
+
+        private void changeBrightness(float[] fs) {
+            if (fs[2] < 0.5f) { //check brightness
+                fs[2] = Math.min(1.0f, fs[2] + 0.2f); //brighter
+            } else {
+                fs[2] = Math.min(1.0f, fs[2] - 0.2f); //darker
+            }
         }
 
         public Color convertColor(Color base, Consumer<float[]> conv) {
