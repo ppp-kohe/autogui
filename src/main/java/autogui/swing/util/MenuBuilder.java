@@ -2,6 +2,7 @@ package autogui.swing.util;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.color.ColorSpace;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -184,22 +185,46 @@ public class MenuBuilder {
             int h = ui.getScaledSizeInt(1);
             int l = ui.getScaledSizeInt(15);
             int r = ui.getScaledSizeInt(10);
+
+            Color color = ui.getMenuDisabledForeground();
+
             if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_VALUE)) {
                 label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
-                label.setForeground(new Color(80, 100, 64));
+                label.setForeground(convertColor(color, fs -> {
+                    fs[0] = 0.4f; //set hue
+                    fs[1] = Math.min(1.0f, fs[1] + 0.3f); //up saturation
+                }));
             } else if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_TYPE)) {
                 label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
-                label.setForeground(new Color(64, 80, 100));
+                label.setForeground(convertColor(color, fs -> {
+                    fs[0] = 0.55f; //set hue
+                    fs[1] = Math.min(1.0f, fs[1] + 0.3f); //up saturation
+                }));
             } else if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_MISC)) {
                 label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
-                label.setForeground(new Color(100, 80, 64));
+                label.setForeground(convertColor(color, fs -> {
+                    fs[0] = 0.1f; //set hue
+                    fs[1] = Math.min(1.0f, fs[1] + 0.3f); //up saturation
+                }));
             } else {
                 label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
-                label.setForeground(Color.darkGray);
+                label.setForeground(convertColor(color, fs -> {
+                    if (fs[2] < 0.5f) { //check brightness
+                        fs[2] = Math.min(1.0f, fs[2] + 0.2f); //brighter
+                    } else {
+                        fs[2] = Math.min(1.0f, fs[2] - 0.2f); //darker
+                    }
+                }));
             }
             add(label);
             setOpaque(false);
             this.subCategory = subCategory;
+        }
+
+        public Color convertColor(Color base, Consumer<float[]> conv) {
+            float[] fs = Color.RGBtoHSB(base.getRed(), base.getGreen(), base.getBlue(), null);
+            conv.accept(fs);
+            return Color.getHSBColor(fs[0], fs[1], fs[2]);
         }
 
         public JLabel getLabel() {

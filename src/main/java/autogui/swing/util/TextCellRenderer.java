@@ -43,7 +43,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     public TextCellRenderer() {
         lines = new ArrayList<>();
         setOpaque(false);
-        setBackground(new Color(255, 255, 255, 255));
+        setBackground(new Color(255, 255, 255, 0));
         initBorder();
     }
 
@@ -547,7 +547,7 @@ public class TextCellRenderer<ValueType> extends JPanel
             paintLineSelection(g2, line, l, selectionColor, lineX);
             paintLineFinds(g2, line, l, lineIndex, findColor, findMatchColor, lineX);
 
-            g2.setPaint(Color.black);
+            g2.setPaint(getForeground());
 
             l.draw(g2, lineX, 0);
 
@@ -568,7 +568,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     public void paintSetUpGraphics(Graphics2D g2) {
         g2.setFont(getFont());
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setPaint(Color.black);
+        g2.setPaint(getForeground());
     }
 
     public void paintLineSelection(Graphics2D g2, LineInfo line, TextLayout l, Color selectionColor, float lineX) {

@@ -26,6 +26,8 @@ public class LineNumberPane extends JComponent implements DocumentListener {
 
     protected static boolean debug = false;
 
+    protected Color noOverlappingColor;
+
     public static JScrollPane scroll(Container c) {
         if (c == null) {
             return null;
@@ -41,11 +43,29 @@ public class LineNumberPane extends JComponent implements DocumentListener {
     public LineNumberPane(JTextComponent field) {
         this.field = field;
         setOpaque(true);
-        setBackground(new Color(240, 240, 240));
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        setBackground(ui.getLabelBackground());
+        setForeground(ui.getLabelForeground());
+        Color fc = getForeground();
+        Color bc = getBackground();
+
+        noOverlappingColor = new Color(getCenter(fc.getRed(), bc.getRed()),
+                    getCenter(fc.getBlue(), bc.getGreen()),
+                    getCenter(fc.getBlue(), bc.getBlue()),
+                    fc.getAlpha());
+
         Font font = UIManagerUtil.getInstance().getEditorPaneFont();
         font = font.deriveFont(font.getSize2D() * 0.84f);
         setFont(font);
         build();
+    }
+
+    private int getCenter(int l, int r) {
+        if (l > r) {
+            return r + (l - r) / 2;
+        } else {
+            return l + (r - l) / 2;
+        }
     }
 
     public void install() {
@@ -272,9 +292,9 @@ public class LineNumberPane extends JComponent implements DocumentListener {
 
     public void paintLine(Graphics2D g, int i, int lineStart, boolean overlap, int selfOffsetY) throws Exception {
         if (overlap) {
-            g.setColor(Color.black);
+            g.setColor(getForeground());
         } else {
-            g.setColor(Color.gray);
+            g.setColor(noOverlappingColor);
         }
         Rectangle lineRect = PopupExtensionText.textComponentModelToView(field, lineStart);
         int y = lineRect.y + selfOffsetY;

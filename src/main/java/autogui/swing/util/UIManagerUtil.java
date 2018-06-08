@@ -59,12 +59,38 @@ public class UIManagerUtil {
         return font;
     }
 
+
     public Border getTableFocusCellHighlightBorder() {
         Border b = UIManager.getBorder("Table.focusCellHighlightBorder");
         if (b == null) {
             b = BorderFactory.createEmptyBorder();
         }
         return b;
+    }
+
+    public Color getLabelForeground() {
+        Color color = UIManager.getColor("Label.foreground");
+        if (color == null) {
+            color = Color.black;
+        }
+        return color;
+    }
+
+    public Color getLabelBackground() {
+        Color color = UIManager.getColor("Label.background");
+        if (color == null) {
+            color = new Color(238, 238, 238);
+        }
+        return color;
+    }
+
+
+    public Color getLabelDisabledForeground() {
+        Color color = UIManager.getColor("Label.disabledForeground");
+        if (color == null) {
+            color = new Color(128, 128, 128);
+        }
+        return color;
     }
 
     public Color getTextPaneSelectionBackground() {
@@ -79,6 +105,14 @@ public class UIManagerUtil {
         Color color = UIManager.getColor("Focus.color");
         if (color == null) {
             color = new Color(150, 150, 150);
+        }
+        return color;
+    }
+
+    public Color getMenuDisabledForeground() {
+        Color color = UIManager.getColor("MenuItem.disabledForeground");
+        if (color == null) {
+            color = Color.darkGray;
         }
         return color;
     }

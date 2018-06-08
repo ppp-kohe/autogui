@@ -250,9 +250,11 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
     public static class PropertyEnumListRenderer extends DefaultListCellRenderer {
         protected GuiMappingContext context;
+        protected Color disabledForeground;
 
         public PropertyEnumListRenderer(GuiMappingContext context) {
             this.context = context;
+            disabledForeground = UIManagerUtil.getInstance().getLabelDisabledForeground();
         }
 
         @Override
@@ -267,7 +269,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                 setText(((GuiReprValueEnumComboBox) context.getRepresentation()).getDisplayName(context, (Enum<?>) value));
             } else if (value == null) {
                 setText("null");
-                setForeground(Color.gray);
+                setForeground(disabledForeground);
             }
             return this;
         }
