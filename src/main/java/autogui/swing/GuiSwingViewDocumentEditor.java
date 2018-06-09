@@ -232,11 +232,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static void setSwingViewValueDocument(JEditorPane pane, SpecifierManager specifierManager, GuiMappingContext context,
                                                  Object newValue, Document doc, boolean contextUpdate, GuiTaskClock viewClock) {
         GuiReprValueDocumentEditor docEditor = (GuiReprValueDocumentEditor) context.getRepresentation();
-        if (pane.getDocument() != doc && doc != null) {
+        if (!Objects.equals(pane.getDocument(), doc)) {
             pane.setDocument(doc);
-
-            //line numbering
-            new LineNumberPane(pane).install();
             pane.repaint();
         }
         if (contextUpdate && docEditor.isEditable(context)) {
@@ -278,12 +275,31 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected SettingsWindow settingsWindow;
         protected MenuBuilder.MenuLabel infoLabel;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
+        protected LineNumberPane lineNumberPane;
 
         public PropertyDocumentEditorPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
             this.specifierManager = specifierManager;
             popup = new TextPaneInitializer(this, context).getPopup();
             infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
+        }
+
+        @Override
+        public void setDocument(Document doc) {
+            if (lineNumberPane != null) {
+                lineNumberPane.uninstall();
+            }
+            super.setDocument(doc);
+            installLineNumberPane();
+        }
+
+        protected void installLineNumberPane() {
+            if (getDocument() != null) {
+                //TODO
+//                lineNumberPane = new LineNumberPane(this);
+//                lineNumberPane.install();
+                revalidate();
+            }
         }
 
         @Override
@@ -387,6 +403,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected SettingsWindow settingsWindow;
         protected MenuBuilder.MenuLabel infoLabel;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
+        protected LineNumberPane lineNumberPane;
 
         public PropertyDocumentTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -395,6 +412,25 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             popup = new TextPaneInitializer(this, context).getPopup();
             infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
         }
+
+        @Override
+        public void setDocument(Document doc) {
+            if (lineNumberPane != null) {
+                lineNumberPane.uninstall();
+            }
+            super.setDocument(doc);
+            installLineNumberPane();
+        }
+
+        protected void installLineNumberPane() {
+            if (getDocument() != null) {
+                //TODO
+//                lineNumberPane = new LineNumberPane(this);
+//                lineNumberPane.install();
+                revalidate();
+            }
+        }
+
 
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
@@ -658,8 +694,14 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             this.pane = pane;
 
             Style s = getTargetStyle();
+            boolean defaultBold = false;
+            boolean defaultItalic = false;
+            double defaultLineSpace = 1.0;
             if (s != null) {
                 defaultFontSize = StyleConstants.getFontSize(s);
+                defaultBold = StyleConstants.isBold(s);
+                defaultItalic = StyleConstants.isItalic(s);
+                defaultLineSpace = (double) StyleConstants.getLineSpacing(s);
             } else {
                 Font font = ui.getEditorPaneFont();
                 defaultFontSize = font.getSize();
@@ -687,8 +729,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             fontSize.addChangeListener(this);
 
             //font style
-            styleBold = new StyleSetAction("Bold", StyleConstants.isBold(getTargetStyle()), a -> updateStyle());
-            styleItalic = new StyleSetAction("Italic", StyleConstants.isBold(getTargetStyle()), a -> updateStyle());
+            styleBold = new StyleSetAction("Bold", defaultBold, a -> updateStyle());
+            styleItalic = new StyleSetAction("Italic", defaultItalic, a -> updateStyle());
             fontStyleMenu = new JPopupMenu();
             fontStyleMenu.add(new JCheckBoxMenuItem(styleBold));
             fontStyleMenu.add(new JCheckBoxMenuItem(styleItalic));
@@ -706,7 +748,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             fontStyleMenu.addPopupMenuListener(buttonListener);
 
             //line spacing: the model support double instead of float
-            lineSpacing = new JSpinner(new SpinnerNumberModel((double) StyleConstants.getLineSpacing(getTargetStyle()),
+            lineSpacing = new JSpinner(new SpinnerNumberModel(defaultLineSpace,
                     Short.MIN_VALUE, Short.MAX_VALUE, 0.1));
             lineSpacing.addChangeListener(this);
 

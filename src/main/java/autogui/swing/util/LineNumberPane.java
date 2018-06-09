@@ -1,12 +1,10 @@
 package autogui.swing.util;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.event.*;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +25,10 @@ public class LineNumberPane extends JComponent implements DocumentListener {
     protected static boolean debug = false;
 
     protected Color noOverlappingColor;
+
+    protected CaretListener caretRepaintListener;
+    protected ChangeListener viewportRepaintListener;
+    protected AncestorListener fieldInstallListener;
 
     public static JScrollPane scroll(Container c) {
         if (c == null) {
@@ -57,6 +59,24 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         Font font = UIManagerUtil.getInstance().getEditorPaneFont();
         font = font.deriveFont(font.getSize2D() * 0.84f);
         setFont(font);
+
+        caretRepaintListener = e -> repaint();
+        viewportRepaintListener = e -> repaint();
+        fieldInstallListener = new AncestorListener() {
+            @Override
+            public void ancestorAdded(AncestorEvent event) {
+                installToScrollPane(scroll(field.getParent()));
+                field.repaint();
+            }
+            @Override
+            public void ancestorRemoved(AncestorEvent event) {
+                uninstallFromScrollPane(scroll(event.getAncestorParent()));
+            }
+
+            @Override
+            public void ancestorMoved(AncestorEvent event) { }
+        };
+
         build();
     }
 
@@ -70,22 +90,42 @@ public class LineNumberPane extends JComponent implements DocumentListener {
 
     public void install() {
         field.getDocument().addDocumentListener(this);
-        field.addCaretListener(e -> repaint());
+        field.addCaretListener(caretRepaintListener);
+        field.addAncestorListener(fieldInstallListener);
         installToScrollPane(scroll(field.getParent()));
     }
 
     public void installToScrollPane(JScrollPane scrollPane) {
         if (scrollPane != null) {
             scrollPane.setRowHeaderView(this);
-            scrollPane.getViewport().addChangeListener(e -> repaint());
+            scrollPane.getViewport().addChangeListener(viewportRepaintListener);
+        }
+    }
+
+    public void uninstall() {
+        field.getDocument().removeDocumentListener(this);
+        field.removeCaretListener(caretRepaintListener);
+        field.removeAncestorListener(fieldInstallListener);
+        uninstallFromScrollPane(scroll(field.getParent()));
+    }
+
+    public void uninstallFromScrollPane(JScrollPane scrollPane) {
+        if (scrollPane != null) {
+            scrollPane.setRowHeaderView(null);
+            scrollPane.getViewport().removeChangeListener(viewportRepaintListener);
         }
     }
 
     public void build() {
         Document doc = field.getDocument();
         try {
-            String text = doc.getText(0, doc.getLength());
-            linePosition = linePositions(text, 0);
+            if (doc != null) {
+                String text = doc.getText(0, doc.getLength());
+                linePosition = linePositions(text, 0);
+            } else {
+                linePosition = new ArrayList<>();
+                linePosition.add(0);
+            }
             updatePreferredSize();
         } catch (Exception ex) {
             throw new RuntimeException(ex);

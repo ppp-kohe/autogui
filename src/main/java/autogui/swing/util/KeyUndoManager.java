@@ -38,6 +38,9 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
         this.undoManager = undoManager;
         this.undoAction = new UndoAction(undoManager, true);
         this.redoAction = new UndoAction(undoManager, false);
+
+        undoAction.setKeyUndoManager(this);
+        redoAction.setKeyUndoManager(this);
     }
 
     public UndoManager getUndoManager() {
@@ -61,16 +64,28 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
         c.addKeyListener(this);
         c.addFocusListener(this);
         c.getDocument().addUndoableEditListener(this);
+        c.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                endEdits();
+                whileKeyTyping = false;
+            }
+        });
         c.addPropertyChangeListener("document", this::updateDocument);
     }
 
-    public void updateDocument(PropertyChangeEvent e) {
+    public synchronized void updateDocument(PropertyChangeEvent e) {
+        undoManager.discardAllEdits();
+        whileKeyTyping = false;
+        edits = null;
+        checkEnabled();
+
         Document doc = (Document) e.getNewValue();
         Document oldDoc = (Document) e.getOldValue();
+        if (oldDoc != null) {
+            oldDoc.removeUndoableEditListener(this);
+        }
         if (doc != oldDoc) {
-            if (oldDoc != null) {
-                oldDoc.removeUndoableEditListener(this);
-            }
             doc.addUndoableEditListener(this);
         }
     }
@@ -89,12 +104,8 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
     public void keyTyped(KeyEvent e) { }
 
     @Override
-    public void keyPressed(KeyEvent e) {
-        if (isRegularKeyType(e)) {
-            if (edits == null) {
-                edits = new DynamicCompoundEdit();
-            }
-        } else {
+    public synchronized void keyPressed(KeyEvent e) {
+        if (!isRegularKeyType(e)) {
             endEdits();
         }
         whileKeyTyping = true;
@@ -111,6 +122,7 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
         //subsequent keyPressed events continues to add to the same edits
     }
 
+
     private void endEdits() {
         if (edits != null) {
             edits.end();
@@ -120,21 +132,29 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
 
 
     @Override
-    public void undoableEditHappened(UndoableEditEvent e) {
-        if (edits != null) {
-            if (whileKeyTyping) {
-                boolean init = edits.isEmpty();
-                edits.addEdit(e.getEdit());
-                if (init) {
+    public synchronized void undoableEditHappened(UndoableEditEvent e) {
+        if (whileKeyTyping) {
+            if (edits == null) {
+                edits = new DynamicCompoundEdit(e.getEdit());
+                undoManager.addEdit(edits);
+            } else {
+                boolean added = edits.addEdit(e.getEdit());
+                if (!added) {
+                    endEdits();
+                    edits = new DynamicCompoundEdit(e.getEdit());
                     undoManager.addEdit(edits);
                 }
-            } else {
-                endEdits();
-                undoManager.addEdit(e.getEdit());
             }
         } else {
+            endEdits();
             undoManager.addEdit(e.getEdit());
         }
+        checkEnabled();
+    }
+
+    public void checkEnabled() {
+        undoAction.checkEnabled();
+        redoAction.checkEnabled();
     }
 
     @Override
@@ -149,6 +169,8 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
         implements PopupCategorized.CategorizedMenuItemAction {
         protected UndoManager manager;
         protected boolean undo;
+        protected boolean lastEnabled;
+        protected KeyUndoManager keyUndoManager;
 
         public UndoAction(UndoManager manager, boolean undo) {
             this.manager = manager;
@@ -162,6 +184,19 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
                 putValue(NAME, "Redo");
                 putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z,
                         mask | KeyEvent.SHIFT_DOWN_MASK));
+            }
+            lastEnabled = isEnabled();
+        }
+
+        public void setKeyUndoManager(KeyUndoManager keyUndoManager) {
+            this.keyUndoManager = keyUndoManager;
+        }
+
+        public void checkEnabled() {
+            boolean e = isEnabled();
+            if (lastEnabled != e) {
+                firePropertyChange("enabled", lastEnabled, e);
+                lastEnabled = e;
             }
         }
 
@@ -180,6 +215,9 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
                 if (manager.canRedo()) {
                     manager.redo();
                 }
+            }
+            if (keyUndoManager != null) {
+                keyUndoManager.checkEnabled();
             }
         }
 
@@ -200,6 +238,17 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
 
         protected boolean fixed = false;
 
+        protected String name;
+        protected String undoName;
+        protected String redoName;
+
+        public DynamicCompoundEdit(UndoableEdit edit) {
+            edits.add(edit);
+            name = edit.getPresentationName();
+            undoName = edit.getUndoPresentationName();
+            redoName = edit.getRedoPresentationName();
+        }
+
         public boolean isEmpty() {
             return edits.isEmpty();
         }
@@ -210,7 +259,9 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
 
         @Override
         public void die() {
-            edits.forEach(UndoableEdit::die);
+            for (int i = edits.size() - 1; i > 0; --i) {
+                edits.get(i).die();
+            }
             super.die();
         }
 
@@ -219,8 +270,13 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
             if (fixed) {
                 return false;
             } else {
-                edits.add(anEdit);
-                return true;
+                if (edits.isEmpty() ||
+                        edits.get(edits.size() - 1).getPresentationName().equals(anEdit.getPresentationName())) {
+                    edits.add(anEdit);
+                    return true;
+                } else {
+                    return false;
+                }
             }
         }
 
@@ -240,9 +296,25 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
             if (!canRedo()) {
                 throw new CannotRedoException();
             }
-
-            edits.forEach(UndoableEdit::redo);
+            for (UndoableEdit e : edits) {
+                e.redo();
+            }
             super.redo();
+        }
+
+        @Override
+        public String getPresentationName() {
+            return name;
+        }
+
+        @Override
+        public String getUndoPresentationName() {
+            return undoName;
+        }
+
+        @Override
+        public String getRedoPresentationName() {
+            return redoName;
         }
     }
 }

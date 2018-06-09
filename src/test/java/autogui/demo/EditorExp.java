@@ -3,10 +3,7 @@ package autogui.demo;
 import autogui.GuiIncluded;
 import autogui.swing.AutoGuiShell;
 
-import javax.swing.text.DefaultStyledDocument;
-import javax.swing.text.Document;
-import javax.swing.text.PlainDocument;
-import javax.swing.text.StyledDocument;
+import javax.swing.text.*;
 
 @GuiIncluded
 public class EditorExp {
@@ -15,21 +12,27 @@ public class EditorExp {
     }
 
 
-    StyledPane styledPane = new StyledPane();
     PlainPane plainPane = new PlainPane();
+    StyledPane styledPane = new StyledPane();
+    ContentPane contentPane = new ContentPane();
     StringBuilderPane builderPane = new StringBuilderPane();
 
-    @GuiIncluded
-    public StyledPane getStyledPane() {
-        return styledPane;
-    }
-
-    @GuiIncluded
+    @GuiIncluded(index = 0)
     public PlainPane getPlainPane() {
         return plainPane;
     }
 
-    @GuiIncluded
+    @GuiIncluded(index = 1)
+    public StyledPane getStyledPane() {
+        return styledPane;
+    }
+
+    @GuiIncluded(index = 2)
+    public ContentPane getContentPane() {
+        return contentPane;
+    }
+
+    @GuiIncluded(index = 3)
     public StringBuilderPane getBuilderPane() {
         return builderPane;
     }
@@ -45,6 +48,8 @@ public class EditorExp {
             }
             return doc;
         }
+
+
     }
 
     @GuiIncluded
@@ -61,6 +66,19 @@ public class EditorExp {
     }
 
     @GuiIncluded
+    public static class ContentPane {
+        AbstractDocument.Content content;
+
+        @GuiIncluded
+        public AbstractDocument.Content getContent() {
+            if (content == null) {
+                content = new StringContent();
+            }
+            return content;
+        }
+    }
+
+    @GuiIncluded
     public static class StringBuilderPane {
         StringBuilder builder = new StringBuilder();
 
@@ -68,5 +86,11 @@ public class EditorExp {
         public StringBuilder getBuilder() {
             return builder;
         }
+
+        @GuiIncluded
+        public void clear() {
+            builder = new StringBuilder();
+        }
+
     }
 }
