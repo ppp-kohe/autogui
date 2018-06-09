@@ -295,9 +295,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         protected void installLineNumberPane() {
             if (getDocument() != null) {
-                //TODO
-//                lineNumberPane = new LineNumberPane(this);
-//                lineNumberPane.install();
+                lineNumberPane = new LineNumberPane(this);
+                lineNumberPane.install();
                 revalidate();
             }
         }
@@ -424,9 +423,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         protected void installLineNumberPane() {
             if (getDocument() != null) {
-                //TODO
-//                lineNumberPane = new LineNumberPane(this);
-//                lineNumberPane.install();
+                lineNumberPane = new LineNumberPane(this);
+                lineNumberPane.install();
                 revalidate();
             }
         }

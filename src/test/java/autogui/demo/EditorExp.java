@@ -72,7 +72,7 @@ public class EditorExp {
         @GuiIncluded
         public AbstractDocument.Content getContent() {
             if (content == null) {
-                content = new StringContent();
+                content = new StringContent(); //the content becomes read-only. changes from non-GUI code will break the undo-manager of the view
             }
             return content;
         }
@@ -84,12 +84,12 @@ public class EditorExp {
 
         @GuiIncluded
         public StringBuilder getBuilder() {
-            return builder;
+            return builder; //the builder becomes read-only. changes from non-GUI code will break the text-view
         }
 
         @GuiIncluded
         public void clear() {
-            builder = new StringBuilder();
+            builder = new StringBuilder(); //we can change the builder instance itself.
         }
 
     }

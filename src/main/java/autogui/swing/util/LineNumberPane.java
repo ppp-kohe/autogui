@@ -280,7 +280,7 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         } else {
             width = 10 * len + 8;
         }
-        setPreferredSize(new Dimension(width, field.getPreferredSize().height));
+        setPreferredSize(new Dimension(width, 1));
     }
 
     @Override
