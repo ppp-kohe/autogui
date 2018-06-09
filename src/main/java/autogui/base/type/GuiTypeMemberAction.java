@@ -2,6 +2,7 @@ package autogui.base.type;
 
 import autogui.GuiIncluded;
 import autogui.GuiListSelectionCallback;
+import autogui.GuiListSelectionChanger;
 
 import java.lang.reflect.Method;
 
@@ -15,13 +16,16 @@ import java.lang.reflect.Method;
 public class GuiTypeMemberAction extends GuiTypeMember {
     protected String methodName;
     protected Method method;
-    public GuiTypeMemberAction(String name, String methodName) {
+    protected GuiTypeElement returnType;
+
+    public GuiTypeMemberAction(String name, GuiTypeElement returnType, String methodName) {
         super(name);
+        this.returnType = returnType;
         this.methodName = methodName;
     }
 
-    public GuiTypeMemberAction(String name, Method method) {
-        this(name, method.getName());
+    public GuiTypeMemberAction(String name, GuiTypeElement returnType, Method method) {
+        this(name, returnType, method.getName());
         this.method = method;
     }
 
@@ -31,6 +35,10 @@ public class GuiTypeMemberAction extends GuiTypeMember {
             method = findOwnerMethod(methodName, b::isActionMethod);
         }
         return method;
+    }
+
+    public GuiTypeElement getReturnType() {
+        return returnType;
     }
 
     public String getMethodName() {
@@ -71,9 +79,28 @@ public class GuiTypeMemberAction extends GuiTypeMember {
         }
     }
 
+    public boolean isSelectionChangeAction() {
+        Method method = getMethod();
+        if (method != null) {
+            return method.isAnnotationPresent(GuiListSelectionChanger.class);
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isSelectionChangeIndexAction() {
+        Method method = getMethod();
+        if (method != null) {
+            return method.isAnnotationPresent(GuiListSelectionChanger.class) &&
+                    method.getAnnotation(GuiListSelectionChanger.class).index();
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public String toString() {
-        return "action(" + name  +")";
+        return "action(" + name + "," + returnType  +")";
     }
 
     @Override

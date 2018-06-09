@@ -53,18 +53,50 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         ObjectPane pane = createObjectPane(context, parentSpecifier);
+
+        Map<GuiMappingContext,GuiSwingAction> actions = new LinkedHashMap<>();
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement e = mapperSet.view(subContext);
             if (e != null) {
                 if (e instanceof GuiSwingView) {
                     createSubView(subContext, pane, (GuiSwingView) e);
                 } else if (e instanceof GuiSwingAction) {
-                    createSubAction(subContext, pane, (GuiSwingAction) e);
+                    actions.put(subContext, (GuiSwingAction) e); //delay creation
                 }
             }
         }
+
+        //collect sub-tables for selection-change actions
+        List<GuiSwingViewCollectionTable.CollectionTable> tables = collectTables(context, pane);
+
+        actions.forEach((sc, a) ->
+            createSubAction(sc, pane, a, tables));
+
         pane.fit();
         return pane;
+    }
+
+    public List<GuiSwingViewCollectionTable.CollectionTable> collectTables(GuiMappingContext context, ObjectPane pane) {
+        List<GuiMappingContext> tableContexts = new ArrayList<>();
+        findCollectionTables(context, tableContexts);
+        return GuiSwingView.collectNonNullByFunction(pane, p -> {
+            if (((ValuePane<?>) p) instanceof GuiSwingViewCollectionTable.CollectionTable &&
+                    tableContexts.contains(p.getSwingViewContext())) {
+                return (GuiSwingViewCollectionTable.CollectionTable) ((ValuePane<?>) p);
+            } else {
+                return null;
+            }
+        });
+    }
+
+    public void findCollectionTables(GuiMappingContext context, List<GuiMappingContext> tables) {
+        for (GuiMappingContext sub : context.getChildren()) {
+            if (sub.getRepresentation() instanceof GuiReprPropertyPane) {
+                findCollectionTables(sub, tables);
+            } else if (sub.isReprCollectionTable()) {
+                tables.add(sub);
+            }
+        }
     }
 
     protected ObjectPane createObjectPane(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
@@ -78,8 +110,9 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         }
     }
 
-    public void createSubAction(GuiMappingContext subContext, ObjectPane pane, GuiSwingAction action) {
-        Action act = action.createAction(subContext);
+    public void createSubAction(GuiMappingContext subContext, ObjectPane pane, GuiSwingAction action,
+                                List<GuiSwingViewCollectionTable.CollectionTable> tables) {
+        Action act = action.createAction(subContext, pane, tables);
         if (act != null) {
             pane.addAction(act);
         }

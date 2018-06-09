@@ -1,5 +1,6 @@
 package autogui.base.mapping;
 
+import autogui.base.type.GuiTypeCollection;
 import autogui.base.type.GuiTypeElement;
 import autogui.base.type.GuiTypeValue;
 
@@ -29,15 +30,18 @@ public class GuiReprActionList implements GuiRepresentation {
      * the action executor relying on {@link GuiMappingContext#execute(Callable)}.
      * @param context the context
      * @param selection the parameter
+     * @return result of execution or null
      */
-    public void executeActionForList(GuiMappingContext context, List<?> selection) {
+    public Object executeActionForList(GuiMappingContext context, List<?> selection) {
+        Object result = null;
         try {
             Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), GuiReprValue.NONE_WITH_CACHE);
-            context.execute(() -> context.getTypeElementAsActionList().execute(target, selection));
+            result = context.execute(() -> context.getTypeElementAsActionList().execute(target, selection));
             context.updateSourceFromRoot(context);
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
         }
+        return result;
     }
 
     @Override
@@ -95,6 +99,58 @@ public class GuiReprActionList implements GuiRepresentation {
             return false;
         }
     }
+
+    public boolean isSelectionChangeAction(GuiMappingContext context, GuiMappingContext tableContext) {
+        return isSelectionChangeActionForActions(context, tableContext);
+    }
+
+    public boolean isSelectionChangeRowIndexesAction(GuiMappingContext context) {
+        return isSelectionChangeRowIndexesActionForActions(context);
+    }
+
+    public boolean isSelectionChangeRowAndColumnIndexesAction(GuiMappingContext context) {
+        return isSelectionChangeRowAndColumnIndexesActionForActions(context);
+    }
+
+    /**
+     * <pre>
+     *     &#64;GuiListSelectionChanger
+     *     public Collection&lt;E&gt; select(...) { ... }
+     * </pre>
+     * @param context context of the action
+     * @param tableContext table context
+     * @return true if matched
+     */
+    public static boolean isSelectionChangeActionForActions(GuiMappingContext context, GuiMappingContext tableContext) {
+        return (context.isTypeElementAction() || context.isTypeElementActionList()) &&
+                context.getTypeElementAsAction().isSelectionChangeAction() &&
+                isCollectionType(context.getTypeElementAsAction().getReturnType(),
+                    tableContext.getTypeElementCollection().getElementType());
+    }
+
+    public static boolean isCollectionType(GuiTypeElement testedCollectionType, GuiTypeElement elementType) {
+        if (testedCollectionType instanceof GuiTypeCollection) {
+            return ((GuiTypeCollection) testedCollectionType).getElementType().equals(elementType);
+        } else {
+            return false;
+        }
+    }
+
+    public static boolean isSelectionChangeRowIndexesActionForActions(GuiMappingContext context) {
+        return (context.isTypeElementAction() || context.isTypeElementActionList()) &&
+                context.getTypeElementAsAction().isSelectionChangeIndexAction() &&
+                isCollectionType(context.getTypeElementAsAction().getReturnType(),
+                        new GuiTypeValue(Integer.class));
+    }
+
+
+    public static boolean isSelectionChangeRowAndColumnIndexesActionForActions(GuiMappingContext context) {
+        return (context.isTypeElementAction() || context.isTypeElementActionList()) &&
+                context.getTypeElementAsAction().isSelectionChangeIndexAction() &&
+                isCollectionType(context.getTypeElementAsAction().getReturnType(),
+                        new GuiTypeValue(int[].class));
+    }
+
 
     @Override
     public String toString() {

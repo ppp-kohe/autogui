@@ -361,6 +361,10 @@ public interface GuiSwingView extends GuiSwingElement {
         return findNonNullByFunction(component, p -> predicate.test(p) ? p : null);
     }
 
+    static List<ValuePane<Object>> collectChildren(Component component, Predicate<ValuePane<Object>> predicate) {
+        return collectNonNullByFunction(component, p -> predicate.test(p) ? p : null);
+    }
+
     static GuiSwingView.ValuePane<Object> getChild(Component component, Predicate<ValuePane<Object>> predicate) {
         if (component instanceof Container) {
             for (Component child : ((Container) component).getComponents()) {
@@ -401,6 +405,20 @@ public interface GuiSwingView extends GuiSwingElement {
             }
         }
         return null;
+    }
+
+    static <T> List<T> collectNonNullByFunction(Component component, Function<ValuePane<Object>, T> f) {
+        T r = checkNonNull(component, f);
+        if (r != null) {
+            return Collections.singletonList(r);
+        }
+        if (component instanceof Container) {
+            return Arrays.stream(((Container) component).getComponents())
+                    .flatMap(c -> collectNonNullByFunction(c, f).stream())
+                    .collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     @SuppressWarnings("unchecked")

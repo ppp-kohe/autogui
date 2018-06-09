@@ -290,11 +290,12 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
 
         public <E> LambdaCollectionTable addAction(String name, Consumer<List<E>> action) {
             GuiMappingContext context = getSwingViewContext().createChildCandidate(new GuiTypeMemberActionList(name,
+                    new GuiTypeValue(void.class),
                     ((GuiTypeCollection) getSwingViewContext().getTypeElementAsProperty().getType()).getElementType(), (String) null));
             context.setRepresentation(new GuiReprActionList());
             context.addToParent();
 
-            Action a = new GuiSwingTableColumnSetDefault.TableSelectionListAction(context, this) {
+            GuiSwingTableColumnSetDefault.TableSelectionListAction a = new GuiSwingTableColumnSetDefault.TableSelectionListAction(context, this) {
                 @SuppressWarnings("unchecked")
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -306,6 +307,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
                     }
                 }
             };
+
             actions.add(a);
             return this;
         }

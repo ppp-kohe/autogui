@@ -1,5 +1,8 @@
 package autogui.base.mapping;
 
+import autogui.base.type.GuiTypeValue;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -24,29 +27,37 @@ public class GuiReprAction implements GuiRepresentation {
 
     /** the action executor relying on {@link GuiMappingContext#execute(Callable)}. the target is obtained from the parent context
      * @param context  the context
+     * @return result of method execution or null
      * */
-    public void executeAction(GuiMappingContext context) {
+    public Object executeAction(GuiMappingContext context) {
+        Object result = null;
         try {
             Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), GuiReprValue.NONE_WITH_CACHE);
-            context.execute(() -> context.getTypeElementAsAction().execute(target));
+            result = context.execute(() -> context.getTypeElementAsAction().execute(target));
             context.updateSourceFromRoot();
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
         }
+        return result;
     }
 
     /** the action executor relying on {@link GuiMappingContext#execute(Callable)}.
      * @param context the context
      * @param targets  the targets
+     * @return results of each executions, might include null elements.
+     * if some of executions cause an exception, partially constructed results will be returned
      * */
-    public void executeActionForTargets(GuiMappingContext context, List<?> targets) {
+    public List<Object> executeActionForTargets(GuiMappingContext context, List<?> targets) {
+        List<Object> results = new ArrayList<>(targets.size());
         try {
             for (Object target : targets) {
-                context.execute(() -> context.getTypeElementAsAction().execute(target));
+                results.add(context.execute(() -> context.getTypeElementAsAction().execute(target)));
             }
             context.updateSourceFromRoot();
+            return results;
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
+            return results;
         }
     }
 
@@ -68,4 +79,19 @@ public class GuiReprAction implements GuiRepresentation {
     public String toString() {
         return toStringHeader();
     }
+
+
+    public boolean isSelectionChangeAction(GuiMappingContext context, GuiMappingContext tableContext) {
+        return GuiReprActionList.isSelectionChangeActionForActions(context, tableContext);
+    }
+
+    public boolean isSelectionChangeRowIndexesAction(GuiMappingContext context) {
+        return GuiReprActionList.isSelectionChangeRowIndexesActionForActions(context);
+    }
+
+
+    public boolean isSelectionChangeRowAndColumnIndexesAction(GuiMappingContext context) {
+        return GuiReprActionList.isSelectionChangeRowAndColumnIndexesActionForActions(context);
+    }
+
 }

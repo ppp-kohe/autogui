@@ -278,11 +278,12 @@ public class GuiTypeBuilder {
 
     public void createMemberAction(GuiTypeObject objType, String name, Method method, boolean isList) {
         GuiTypeMemberAction action;
+        GuiTypeElement retType = get(method.getGenericReturnType());
         if (isList) {
             ParameterizedType pType = (ParameterizedType) method.getGenericParameterTypes()[0];
-            action = new GuiTypeMemberActionList(name, get(pType.getActualTypeArguments()[0]), method);
+            action = new GuiTypeMemberActionList(name, retType, get(pType.getActualTypeArguments()[0]), method);
         } else {
-            action = new GuiTypeMemberAction(name, method);
+            action = new GuiTypeMemberAction(name, retType, method);
         }
         action.setOwner(objType);
         objType.getActions().add(action);

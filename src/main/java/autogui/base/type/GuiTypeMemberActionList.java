@@ -15,13 +15,13 @@ import java.util.List;
 public class GuiTypeMemberActionList extends GuiTypeMemberAction {
     protected GuiTypeElement elementType;
 
-    public GuiTypeMemberActionList(String name, GuiTypeElement elementType, String methodName) {
-        super(name, methodName);
+    public GuiTypeMemberActionList(String name, GuiTypeElement returnType, GuiTypeElement elementType, String methodName) {
+        super(name, returnType, methodName);
         this.elementType = elementType;
     }
 
-    public GuiTypeMemberActionList(String name, GuiTypeElement elementType, Method method) {
-        super(name, method);
+    public GuiTypeMemberActionList(String name, GuiTypeElement returnType, GuiTypeElement elementType, Method method) {
+        super(name, returnType, method);
         this.elementType = elementType;
     }
 
@@ -56,6 +56,6 @@ public class GuiTypeMemberActionList extends GuiTypeMemberAction {
 
     @Override
     public String toString() {
-        return "actionList(" + name + ", " + elementType + ")";
+        return "actionList(" + name + ", " + returnType + "," + elementType + ")";
     }
 }

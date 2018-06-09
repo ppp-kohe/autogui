@@ -2,6 +2,7 @@ package autogui.demo;
 
 import autogui.GuiIncluded;
 import autogui.GuiListSelectionCallback;
+import autogui.GuiListSelectionChanger;
 import autogui.swing.AutoGuiShell;
 
 import javax.imageio.ImageIO;
@@ -73,6 +74,17 @@ public class FileImagePreviewExp {
         public void preview(List<FileItem> item) {
             preview.setImage(item.get(0).getThumb());
         }
+
+        @GuiListSelectionChanger
+        @GuiIncluded
+        public List<FileItem> up() {
+            Path old = dir;
+            dir = dir.getParent();
+            update(dir);
+            return items.stream()
+                    .filter(p -> p.getPath().equals(old))
+                    .collect(Collectors.toList());
+        }
     }
 
     @GuiIncluded
@@ -142,6 +154,11 @@ public class FileImagePreviewExp {
             if (Files.isDirectory(path)) {
                 setDir(path);
             }
+        }
+
+        @Override
+        public String toString() {
+            return "" + path;
         }
     }
 }

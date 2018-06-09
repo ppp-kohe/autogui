@@ -3,12 +3,17 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprAction;
 import autogui.base.mapping.GuiReprActionList;
+import autogui.base.type.GuiTypeCollection;
+import autogui.base.type.GuiTypeElement;
+import autogui.base.type.GuiTypeValue;
 import autogui.swing.*;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * the default implementation of table-column-set associated with {@link autogui.base.mapping.GuiReprCollectionElement}.
@@ -76,12 +81,27 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement subView = columnMappingSet.viewTableColumn(subContext);
             if (subView instanceof GuiSwingAction) {
-                actions.add(new TableSelectionAction(subContext, source));
+                TableSelectionAction a = new TableSelectionAction(subContext, source);
+                actions.add(a);
+
+                GuiMappingContext tableContext = getTableContext(context);
+                if (tableContext != null) { //table context
+                    a.setSelectionChangeFactoryFromContext(tableContext);
+                }
+
             } else if (subView instanceof GuiSwingTableColumnSet) {
                 actions.addAll(((GuiSwingTableColumnSet) subView).createColumnActions(subContext, source));
             }
         }
         return actions;
+    }
+
+    private GuiMappingContext getTableContext(GuiMappingContext context) {
+        GuiMappingContext tableContext = context.getParent();
+        while (tableContext != null && !tableContext.isReprCollectionTable()) {
+            tableContext = tableContext.getParent();
+        }
+        return tableContext;
     }
 
     @Override
@@ -113,13 +133,23 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      *         public void action(List&lt;E&gt; selected) { ... } //a sibling member of the collection
      *     }
      * </pre>
+     * <p>
+     *     also, the action can return newly selected items
+     * <pre>
+     *         public Collection&lt;Integer&gt; action(&lt;E&gt; selected) {...}  //selected row indexes
+     *         public Collection&lt;E&gt;       action(&lt;E&gt; selected) {...}  //selected row values
+     *         public Collection&lt;int[]&gt;   action(&lt;E&gt; selected) {...} //{row, column}
+     * </pre>
      */
     public static class TableSelectionListAction extends GuiSwingActionDefault.ExecutionAction {
         protected TableSelectionSource source;
+        protected Function<Object, TableSelectionChange> selectionChangeFactory;
+        protected boolean selectionChange;
 
         public TableSelectionListAction(GuiMappingContext context, TableSelectionSource source) {
             super(context);
             this.source = source;
+            selectionChangeFactory = GuiSwingTableColumnSet::getNoChange;
             if (isAutomaticSelectionAction()) {
                 putValue(NAME, "*" + getValue(NAME));
                 String desc = (String) getValue(Action.SHORT_DESCRIPTION);
@@ -144,22 +174,24 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         }
 
         @Override
-        public void executeAction() {
-            actionPerformedAround(false);
+        public Object executeAction() {
+            return actionPerformedAround(false);
         }
 
-        protected void actionPerformedAround(boolean autoSelection) {
+        protected Object actionPerformedAround(boolean autoSelection) {
             setEnabled(false);
+            Object ret = null;
             try {
-                actionPerformedBody();
+                ret = actionPerformedBody();
+                return ret;
             } finally {
-                source.selectionActionFinished(autoSelection);
+                source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret));
                 setEnabled(true);
             }
         }
 
-        protected void actionPerformedBody() {
-            ((GuiReprActionList) context.getRepresentation())
+        protected Object actionPerformedBody() {
+            return ((GuiReprActionList) context.getRepresentation())
                     .executeActionForList(context, source.getSelectedItems());
         }
 
@@ -169,6 +201,38 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         public boolean isAutomaticSelectionAction() {
             return ((GuiReprActionList) context.getRepresentation())
                     .isAutomaticSelectionAction(context);
+        }
+
+        public void setSelectionChangeFactory(Function<Object, TableSelectionChange> selectionChangeFactory) {
+            this.selectionChangeFactory = selectionChangeFactory;
+        }
+
+        public void setSelectionChangeFactoryFromContext(GuiMappingContext tableContext) {
+            if (context.isReprActionList()) {
+                GuiReprActionList listAction = context.getReprActionList();
+                if (listAction.isSelectionChangeAction(context, tableContext)) {
+                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeValues);
+                    selectionChange = true;
+                } else if (listAction.isSelectionChangeRowIndexesAction(context)) {
+                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndexes);
+                    selectionChange = true;
+                } else if (listAction.isSelectionChangeRowAndColumnIndexesAction(context)) {
+                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndexesRowAndColumn);
+                    selectionChange = true;
+                }
+            } else if (context.isReprAction()) {
+                GuiReprAction listAction = context.getReprAction();
+                if (listAction.isSelectionChangeAction(context, tableContext)) {
+                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeValues);
+                    selectionChange = true;
+                } else if (listAction.isSelectionChangeRowIndexesAction(context)) {
+                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndexes);
+                    selectionChange = true;
+                } else if (listAction.isSelectionChangeRowAndColumnIndexesAction(context)) {
+                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndexesRowAndColumn);
+                    selectionChange = true;
+                }
+            }
         }
     }
 
@@ -183,6 +247,11 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      *         public void action() { ... }
      *     }
      * </pre>
+     * <pre>
+     *     public Collection&gt;Integer&gt; action() { ... }
+     *     public Collection&gt;E&gt;       action() { ... }
+     *     public Collection&gt;int[]&gt;   action() { ... }
+     * </pre>
      * */
     public static class TableSelectionAction extends TableSelectionListAction {
         public TableSelectionAction(GuiMappingContext context, TableSelectionSource source) {
@@ -190,9 +259,21 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         }
 
         @Override
-        protected void actionPerformedBody() {
-            ((GuiReprAction) context.getRepresentation())
+        protected Object actionPerformedBody() {
+            List<Object> os = ((GuiReprAction) context.getRepresentation())
                     .executeActionForTargets(context, source.getSelectedItems());
+
+            if (selectionChange) {
+                List<Object> flat = new ArrayList<>();
+                for (Object o : os) {
+                    if (o instanceof List<?>) {
+                        flat.addAll((List<?>) o);
+                    }
+                }
+                return flat;
+            } else {
+                return os;
+            }
         }
 
         @Override

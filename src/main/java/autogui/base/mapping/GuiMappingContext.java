@@ -614,8 +614,16 @@ public class GuiMappingContext {
         return getRepresentation() != null && getRepresentation() instanceof GuiReprAction;
     }
 
+    public boolean isReprActionList() {
+        return getRepresentation() != null && getRepresentation() instanceof GuiReprActionList;
+    }
+
     public GuiReprAction getReprAction() {
         return (GuiReprAction) getRepresentation();
+    }
+
+    public GuiReprActionList getReprActionList() {
+        return (GuiReprActionList) getRepresentation();
     }
 
     public boolean isParentCollectionTable() {
@@ -802,10 +810,11 @@ public class GuiMappingContext {
      *   otherwise throw an exception.
      *   the method causes same effects by GUI operation,
      *     i.e. updating other components.
+     * @return result of execution
      */
-    public void executeAction() {
+    public Object executeAction() {
         if (isReprAction()) {
-            getReprAction().executeAction(this);
+            return getReprAction().executeAction(this);
         } else {
             throw new UnsupportedOperationException("" + getRepresentation());
         }
