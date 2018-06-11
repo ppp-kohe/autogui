@@ -82,6 +82,8 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         public void initPopup() {
             super.initPopup();
             GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this, getField(), a -> false);
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this, getIcon(), a -> false);
             setInheritsPopupMenu(true);
         }
 

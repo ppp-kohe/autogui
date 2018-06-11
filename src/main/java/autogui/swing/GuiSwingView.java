@@ -453,46 +453,69 @@ public interface GuiSwingView extends GuiSwingElement {
                 .orElse(null);
     }
 
+    /////////////////////////
+
     static void setupKeyBindingsForStaticMenuItems(ValuePane<?> pane) {
+        setupKeyBindingsForStaticMenuItems(pane, pane.asSwingViewComponent(), a -> {
+            a.putValue(Action.ACCELERATOR_KEY, null);
+            return false;
+        });
+    }
+
+    static void setupKeyBindingsForStaticMenuItems(ValuePane<?> pane, Predicate<Action> overwrite) {
+        setupKeyBindingsForStaticMenuItems(pane, pane.asSwingViewComponent(), overwrite);
+    }
+
+    static void setupKeyBindingsForStaticMenuItems(ValuePane<?> pane, JComponent targetPane, Predicate<Action> overwrite) {
         pane.getSwingStaticMenuItems().stream()
                 .map(PopupCategorized::getMenuItemAction)
                 .filter(Objects::nonNull)
-                .forEach(a -> setupKeyBindingsForStaticMenuItemAction(pane, a));
+                .forEach(a -> setupKeyBindingsForStaticMenuItemAction(targetPane, a, overwrite));
 
         pane.getSwingStaticMenuItems().stream()
                 .map(PopupCategorized::getJMenuItem)
                 .filter(Objects::nonNull)
-                .forEach(i -> setupKeyBindingsForStaticJMenuSubItems(pane, i));
+                .forEach(i -> setupKeyBindingsForStaticJMenuSubItems(targetPane, i, overwrite));
     }
 
-    static void setupKeyBindingsForStaticMenuItemAction(ValuePane<?> pane, Action a) {
+    static void setupKeyBindingsForStaticMenuItemAction(JComponent pane, Action a, Predicate<Action> overwrite) {
         KeyStroke s = (KeyStroke) a.getValue(Action.ACCELERATOR_KEY);
-        InputMap inputs = pane.asSwingViewComponent().getInputMap();
-        ActionMap actions = pane.asSwingViewComponent().getActionMap();
-        Object ks = inputs.get(s);
-        if (ks != null && Arrays.stream(inputs.keys())
+        if (s != null) {
+            InputMap inputs = pane.getInputMap();
+            ActionMap actions = pane.getActionMap();
+            Object ks = inputs.get(s);
+
+            boolean put;
+            if (ks != null && Arrays.stream(inputs.keys())
                     .anyMatch(s::equals)) { //actually defined in the inputs
-            if (!Objects.equals(actions.get(inputs.get(s)), a)) {
-                //unregister
-                a.putValue(Action.ACCELERATOR_KEY, null);
+                if (!Objects.equals(actions.get(inputs.get(s)), a)) {
+                    put = overwrite.test(a);
+                } else {
+                    put = true;
+                }
+            } else {
+                put = true;
             }
-        } else {
-            String name = (String) a.getValue(Action.NAME);
-            inputs.put(s, name);
-            actions.put(name, a);
+
+            if (put) {
+                String name = (String) a.getValue(Action.NAME);
+                inputs.put(s, name);
+                actions.put(name, a);
+            }
         }
     }
-    static void setupKeyBindingsForStaticJMenuSubItems(ValuePane<?> pane, JMenuItem i) {
+
+    static void setupKeyBindingsForStaticJMenuSubItems(JComponent pane, JMenuItem i, Predicate<Action> overwrite) {
         Arrays.stream(i.getComponents())
                 .filter(AbstractButton.class::isInstance)
                 .map(AbstractButton.class::cast)
                 .map(AbstractButton::getAction)
                 .filter(Objects::nonNull)
-                .forEach(a -> setupKeyBindingsForStaticMenuItemAction(pane, a));
+                .forEach(a -> setupKeyBindingsForStaticMenuItemAction(pane, a, overwrite));
         Arrays.stream(i.getComponents())
                 .filter(JMenuItem.class::isInstance)
                 .map(JMenuItem.class::cast)
-                .forEach(si -> setupKeyBindingsForStaticJMenuSubItems(pane, si));
+                .forEach(si -> setupKeyBindingsForStaticJMenuSubItems(pane, si, overwrite));
     }
 
     class ValueScrollPane<ValueType> extends JScrollPane implements ValuePaneWrapper<ValueType> {

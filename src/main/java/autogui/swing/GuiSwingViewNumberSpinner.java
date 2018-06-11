@@ -249,6 +249,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             popup = new PopupExtensionText(field, PopupExtension.getDefaultKeyMatcher(),
                         new PopupCategorized(this::getSwingStaticMenuItems));
             GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this, field, a -> false);
             setInheritsPopupMenu(true);
         }
 
@@ -575,7 +576,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         @SuppressWarnings("unchecked")
         public Object getPreviousValue(Object prev) {
             Object next = numberType.next(prev, getStepSize(), -1);
-            int r = getMaximum().compareTo(next);
+            int r = getMinimum().compareTo(next);
             if (r > 0) {
                 return null;
             } else {
