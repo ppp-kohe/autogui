@@ -414,6 +414,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
         public ShowPreferencesAction(Supplier<GuiSwingPreferences> preferences, JComponent sender) {
             putValue(NAME, "Preferences...");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_COMMA,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.preferences = preferences;
             this.sender = sender;
         }

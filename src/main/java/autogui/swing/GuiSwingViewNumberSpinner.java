@@ -17,6 +17,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
@@ -247,6 +248,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             PopupExtensionText.putUnregisteredEditActions(field);
             popup = new PopupExtensionText(field, PopupExtension.getDefaultKeyMatcher(),
                         new PopupCategorized(this::getSwingStaticMenuItems));
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
             setInheritsPopupMenu(true);
         }
 
@@ -505,6 +507,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public NumberIncrementAction(boolean inc, PropertyNumberSpinner spinner) {
             this(inc, spinner, spinner.getModelTyped());
+
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(inc ? KeyEvent.VK_I : KeyEvent.VK_D,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
         }
 
         public NumberIncrementAction(boolean inc, PropertyNumberSpinner spinner, TypedSpinnerNumberModel model) {
@@ -825,6 +831,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public NumberSettingAction(GuiMappingContext context, SettingsWindowClient client, JComponent label, TypedSpinnerNumberModel model) {
             putValue(NAME, "Settings...");
+
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_COMMA,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
             this.client = client;
             pane = new NumberSettingPane(model);
             contentPane = new JPanel(new BorderLayout());

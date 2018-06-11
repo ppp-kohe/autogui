@@ -14,6 +14,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -109,6 +110,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         public void initPopup() {
             popup = new PopupExtension(this, new PopupCategorized(this::getSwingStaticMenuItems));
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
             setInheritsPopupMenu(true);
         }
 
@@ -294,6 +296,10 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         public BooleanPasteAction(PropertyCheckBox checkBox) {
             super(null);
+
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.checkBox = checkBox;
         }
 

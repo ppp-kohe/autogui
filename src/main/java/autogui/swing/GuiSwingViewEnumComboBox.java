@@ -9,9 +9,7 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
@@ -108,6 +106,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         public void initPopup() {
             popup = new PopupExtension(this, new PopupCategorized(this::getSwingStaticMenuItems));
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
             setInheritsPopupMenu(true);
             //it supposes that the combo-box has a button that describes popup selection
             Arrays.stream(getComponents())
@@ -331,6 +330,10 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         public EnumPasteAction(PropertyEnumComboBox view) {
             super(null);
+
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.view = view;
         }
 

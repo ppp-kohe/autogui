@@ -5,6 +5,7 @@ import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -227,6 +228,9 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         public FilePasteAction(SearchTextFieldFilePath component) {
             super("Paste Value", component);
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
         }
 
         @Override
@@ -309,6 +313,10 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         public FileCopyAllAction(SearchTextFieldFilePath component) {
             super("Copy Value", component);
+
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
         }
 
         @Override
@@ -381,6 +389,10 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         public DesktopOpenAction(SearchTextFieldFilePath component) {
             super("Open in Desktop", component);
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_B,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+
         }
 
         @Override
@@ -419,6 +431,9 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         public DesktopRevealAction(SearchTextFieldFilePath component) {
             super("Reveal in Desktop", component);
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_D,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
             initCommand();
         }
 
@@ -484,6 +499,9 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         public OpenDialogAction(SearchTextFieldFilePath component) {
             super("Select...", component);
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_O,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
         }
 
         @Override

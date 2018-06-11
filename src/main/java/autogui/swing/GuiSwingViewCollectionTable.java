@@ -13,10 +13,7 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.util.*;
 import java.util.List;
@@ -173,8 +170,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             Arrays.stream(listeners).forEach(this::removeMouseListener);
             popup = new PopupExtensionCollection(this, PopupExtension.getDefaultKeyMatcher(),
                     this::getSwingStaticMenuItems);
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
             Arrays.stream(listeners).forEach(this::addMouseListener);
             //improve precedence of the popup listener
+
         }
 
         public void initGrid() {
@@ -288,6 +287,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             getSelectionModel().addListSelectionListener(this::runListSelection);
             actions.forEach(a -> initAction(actionToolBar, a));
 
+            if (popup != null) {
+                popup.addListenersTo(actionToolBar);
+            }
             return actionToolBar;
         }
 
@@ -961,6 +963,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public SelectAllAction(JTable table) {
             putValue(NAME, "Select All");
+
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_A,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.table = table;
         }
 
@@ -1224,6 +1230,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public UnSelectAction(JTable table) {
             super("Clear Selection");
+
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_A,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() |
+                                    InputEvent.SHIFT_DOWN_MASK));
             this.table = table;
         }
 

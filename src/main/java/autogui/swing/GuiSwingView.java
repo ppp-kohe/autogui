@@ -453,6 +453,48 @@ public interface GuiSwingView extends GuiSwingElement {
                 .orElse(null);
     }
 
+    static void setupKeyBindingsForStaticMenuItems(ValuePane<?> pane) {
+        pane.getSwingStaticMenuItems().stream()
+                .map(PopupCategorized::getMenuItemAction)
+                .filter(Objects::nonNull)
+                .forEach(a -> setupKeyBindingsForStaticMenuItemAction(pane, a));
+
+        pane.getSwingStaticMenuItems().stream()
+                .map(PopupCategorized::getJMenuItem)
+                .filter(Objects::nonNull)
+                .forEach(i -> setupKeyBindingsForStaticJMenuSubItems(pane, i));
+    }
+
+    static void setupKeyBindingsForStaticMenuItemAction(ValuePane<?> pane, Action a) {
+        KeyStroke s = (KeyStroke) a.getValue(Action.ACCELERATOR_KEY);
+        InputMap inputs = pane.asSwingViewComponent().getInputMap();
+        ActionMap actions = pane.asSwingViewComponent().getActionMap();
+        Object ks = inputs.get(s);
+        if (ks != null && Arrays.stream(inputs.keys())
+                    .anyMatch(s::equals)) { //actually defined in the inputs
+            if (!Objects.equals(actions.get(inputs.get(s)), a)) {
+                //unregister
+                a.putValue(Action.ACCELERATOR_KEY, null);
+            }
+        } else {
+            String name = (String) a.getValue(Action.NAME);
+            inputs.put(s, name);
+            actions.put(name, a);
+        }
+    }
+    static void setupKeyBindingsForStaticJMenuSubItems(ValuePane<?> pane, JMenuItem i) {
+        Arrays.stream(i.getComponents())
+                .filter(AbstractButton.class::isInstance)
+                .map(AbstractButton.class::cast)
+                .map(AbstractButton::getAction)
+                .filter(Objects::nonNull)
+                .forEach(a -> setupKeyBindingsForStaticMenuItemAction(pane, a));
+        Arrays.stream(i.getComponents())
+                .filter(JMenuItem.class::isInstance)
+                .map(JMenuItem.class::cast)
+                .forEach(si -> setupKeyBindingsForStaticJMenuSubItems(pane, si));
+    }
+
     class ValueScrollPane<ValueType> extends JScrollPane implements ValuePaneWrapper<ValueType> {
         protected ValuePane<ValueType> pane;
 
@@ -646,6 +688,8 @@ public interface GuiSwingView extends GuiSwingElement {
 
         public ContextRefreshAction(GuiMappingContext context) {
             putValue(NAME, "Refresh");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_R,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
             this.context = context;
         }
 
@@ -672,6 +716,8 @@ public interface GuiSwingView extends GuiSwingElement {
 
         public ToStringCopyAction(ValuePane<?> pane, GuiMappingContext context) {
             putValue(NAME, "Copy as Text");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.pane = pane;
             this.context = context;
         }

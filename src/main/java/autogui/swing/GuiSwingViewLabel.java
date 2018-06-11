@@ -105,6 +105,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         public void initPopup() {
             popup = new PopupExtension(this, new PopupCategorized(this::getSwingStaticMenuItems));
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
             setInheritsPopupMenu(true);
         }
 

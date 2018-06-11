@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
@@ -154,6 +155,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public void initPopup() {
             popup = new PopupExtension(this, new PopupCategorized(
                     PopupCategorized.getMenuItemsSupplier(this::getSwingStaticMenuItems, this::getDynamicMenuItems)));
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
             setInheritsPopupMenu(true);
         }
 
@@ -517,6 +519,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public ImageScaleSwitchFitAction(PropertyImagePane pane) {
             this.pane = pane;
             putValue(NAME, "Fit to View Size");
+
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_I,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
             updateSelected();
         }
 
@@ -556,6 +562,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public ImageScaleOriginalSizeAction(PropertyImagePane pane) {
             this.pane = pane;
             putValue(NAME, "Zoom to Original Size");
+
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_O,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
         }
 
         @Override
@@ -701,6 +711,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public ImageCopyAction(Supplier<Image> image, GuiMappingContext contextOpt) {
             putValue(NAME, "Copy");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.image = image;
             this.context = contextOpt;
         }
@@ -749,6 +761,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public ImagePasteAction(PropertyImagePane pane) {
             putValue(NAME, "Paste");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.pane = pane;
         }
 
@@ -806,6 +820,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public ImageSaveAction(PropertyImagePane pane) {
             super(pane::getImage, pane.getSwingViewContext());
             putValue(NAME, "Export...");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.pane = pane;
         }
 
@@ -847,6 +863,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public ImageLoadAction(PropertyImagePane pane) {
             super(pane);
             putValue(NAME, "Import...");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
         }
 
         @Override

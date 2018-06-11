@@ -16,6 +16,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -111,6 +112,9 @@ public class GuiSwingJsonTransfer {
             this.component = component;
             this.context = context;
             putValue(NAME, "Copy as JSON");
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
         }
 
         @Override
@@ -155,6 +159,9 @@ public class GuiSwingJsonTransfer {
             this.component = component;
             this.context = context;
             putValue(NAME, "Paste JSON");
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
         }
 
         @Override
@@ -193,6 +200,9 @@ public class GuiSwingJsonTransfer {
         public JsonSaveAction(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
             super(component, context);
             putValue(NAME, "Export JSON...");
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_S,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
         }
 
         @Override
@@ -224,6 +234,9 @@ public class GuiSwingJsonTransfer {
         public JsonLoadAction(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
             super(component, context);
             putValue(NAME, "Import JSON...");
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_O,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
         }
 
         @Override

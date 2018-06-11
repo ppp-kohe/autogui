@@ -214,6 +214,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         public void initPopup() {
             popup = new PopupExtension(this, new PopupCategorized(this::getSwingStaticMenuItems));
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
             setInheritsPopupMenu(true);
         }
 
@@ -342,7 +343,11 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             actionToolBar = new JToolBar();
             actionToolBar.setFloatable(false);
             actionToolBar.setOpaque(false);
+            actionToolBar.setInheritsPopupMenu(true);
             add(actionToolBar, BorderLayout.PAGE_START);
+            if (popup != null) {
+                popup.addListenersTo(actionToolBar);
+            }
         }
 
         @Override

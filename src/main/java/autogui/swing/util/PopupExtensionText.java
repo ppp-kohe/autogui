@@ -268,6 +268,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextOpenBrowserAction(JComponent component) {
             this.component = component;
             putValue(NAME, "Open URL in Browser");
+            putValue(Action.ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_B,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+
         }
 
         @Override
@@ -842,6 +846,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
         public TextLoadAction(JTextComponent field) {
             putValue(NAME, "Load...");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.field = field;
         }
 
@@ -891,6 +897,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextSaveAction(JTextComponent component) {
             super(component);
             putValue(NAME, "Save...");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
         }
 
         @Override

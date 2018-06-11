@@ -171,9 +171,46 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
         } else if (item instanceof JComponent) {
             return new CategorizedMenuItemComponentDefault((JComponent) item);
         } else {
-            throw new IllegalArgumentException("unsupported type: " + item.getClass());
+            throw new IllegalArgumentException("unsupported type: " + (item == null ? "null" : item.getClass()));
         }
     }
+
+    public static Action getMenuItemAction(CategorizedMenuItem item) {
+        if (item instanceof Action) { //including CategorizedMenuItemAction
+            return (Action) item;
+        } else if (item instanceof AbstractButton) {
+            return ((AbstractButton) item).getAction();
+        } else if (item instanceof CategorizedMenuItemComponent) {
+            JComponent c = ((CategorizedMenuItemComponent) item).getMenuItem();
+            if (c instanceof AbstractButton) {
+                return ((AbstractButton) c).getAction();
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * @param item tested
+     * @return  a {@link JMenuItem} or null, no allocation in the class
+     */
+    public static JMenuItem getJMenuItem(CategorizedMenuItem item) {
+        if (item instanceof JMenuItem) {
+            return (JMenuItem) item;
+        } else if (item instanceof CategorizedMenuItemComponent) {
+            JComponent c = ((CategorizedMenuItemComponent) item).getMenuItem();
+            if (c instanceof JMenuItem) {
+                return (JMenuItem) c;
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
 
     @SafeVarargs
     public static Supplier<? extends Collection<CategorizedMenuItem>> getMenuItemsSupplier(
