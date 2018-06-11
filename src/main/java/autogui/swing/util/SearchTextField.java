@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -789,6 +790,69 @@ public class SearchTextField extends JComponent {
             } else {
                 return true;
             }
+        }
+    }
+
+    /**
+     * an action for dynamic created menu items: the returned action searches an action by the specified key.
+     *  So {@link #getSearchedItems()} will contains an item with the key
+     *    ({@link PopupCategorized.CategorizedMenuItem#getKeyStroke()}).
+     * @param name the name of the action, used for ActionMap and InputMap binding
+     * @param key the key-stroke of the action
+     * @param put if true, it binds to the component and also the field and the icon button
+     * @return the created item
+     */
+    public DynamicItemAction getDynamicItemAction(String name, KeyStroke key, boolean put) {
+        DynamicItemAction a = new DynamicItemAction(
+                this::getSearchedItems,
+                this::selectSearchedItemFromGui, name, key);
+        if (put) {
+            a.putTo(this);
+            a.putTo(getField());
+            a.putTo(getIcon());
+        }
+        return a;
+    }
+
+    public static class DynamicItemAction extends AbstractAction {
+        protected Supplier<List<PopupCategorized.CategorizedMenuItem>> currentSearchedItems;
+        protected Predicate<PopupCategorized.CategorizedMenuItem> filter;
+        protected Consumer<PopupCategorized.CategorizedMenuItem> selector;
+        protected KeyStroke key;
+
+        public DynamicItemAction(Supplier<List<PopupCategorized.CategorizedMenuItem>> currentSearchedItems,
+                                 Consumer<PopupCategorized.CategorizedMenuItem> selector,
+                                 String name, KeyStroke key) {
+            this(currentSearchedItems, selector, k -> Objects.equals(key, k.getKeyStroke()), name, key);
+        }
+
+        public DynamicItemAction(Supplier<List<PopupCategorized.CategorizedMenuItem>> currentSearchedItems,
+                                 Consumer<PopupCategorized.CategorizedMenuItem> selector,
+                                 Predicate<PopupCategorized.CategorizedMenuItem> filter,
+                                 String name, KeyStroke key) {
+            this.currentSearchedItems = currentSearchedItems;
+            this.selector = selector;
+            this.filter = filter;
+            putValue(NAME, name);
+            putValue(ACCELERATOR_KEY, key);
+            this.key = key;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            List<PopupCategorized.CategorizedMenuItem> items = currentSearchedItems.get();
+            if (items != null) {
+                items.stream()
+                        .filter(filter)
+                        .findFirst()
+                        .ifPresent(selector);
+            }
+        }
+
+        public void putTo(JComponent component) {
+            Object name = getValue(NAME);
+            component.getInputMap().put(key, name);
+            component.getActionMap().put(name, this);
         }
     }
 }

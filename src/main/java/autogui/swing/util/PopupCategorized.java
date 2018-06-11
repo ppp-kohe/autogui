@@ -49,6 +49,10 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
         }
 
         CategorizedMenuItem remap(String category, String subCategory);
+
+        default KeyStroke getKeyStroke() {
+            return null;
+        }
     }
 
     public static String CATEGORY_LABEL = MenuBuilder.getCategoryImplicit("Info");
@@ -440,6 +444,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
             this.item = item;
             putValue(NAME, item.getName());
             putValue(SMALL_ICON, item.getIcon());
+            putValue(ACCELERATOR_KEY, item.getKeyStroke());
         }
 
         @Override

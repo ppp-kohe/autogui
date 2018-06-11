@@ -72,7 +72,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         actions.forEach((sc, a) ->
             createSubAction(sc, pane, a, tables));
 
-        pane.fit();
+        pane.afterActionsAdded();
         return pane;
     }
 
@@ -214,7 +214,6 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         public void initPopup() {
             popup = new PopupExtension(this, new PopupCategorized(this::getSwingStaticMenuItems));
-            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
             setInheritsPopupMenu(true);
         }
 
@@ -312,6 +311,11 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             pane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, preferencesUpdater);
             pane.addPropertyChangeListener(JSplitPane.ORIENTATION_PROPERTY, preferencesUpdater);
             return pane;
+        }
+
+        public void afterActionsAdded() {
+            fit();
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
         }
 
         public void fit() {

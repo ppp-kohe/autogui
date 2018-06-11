@@ -60,6 +60,15 @@ public class SettingsWindow {
             @Override
             public void componentHidden(ComponentEvent e) { }
         });
+        window.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "window-close");
+        window.getRootPane().getActionMap()
+                .put("window-close", new AbstractAction() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        window.setVisible(false);
+                    }
+                });
     }
 
     public class SettingsFrame extends JFrame {

@@ -204,6 +204,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                                 switchFitAction,
                                 new ImageScaleOriginalSizeAction(this),
                                 autoSwitchByMouseWheel,
+                                new ImageScaleIncreaseAction(this, 0.1f),
+                                new ImageScaleIncreaseAction(this, -0.1f),
                                 new PopupCategorized.CategorizedMenuItemComponentDefault(scaleMenu,
                                         PopupExtension.MENU_CATEGORY_VIEW, ""),
                                 new ImageCopyAction(this::getImage, context),
@@ -521,7 +523,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             putValue(NAME, "Fit to View Size");
 
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_I,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_T,
                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
             updateSelected();
         }
@@ -630,6 +632,41 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public void updateSelected() {
             putValue(SELECTED_KEY, isSelected());
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_VIEW;
+        }
+    }
+
+    public static class ImageScaleIncreaseAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        protected PropertyImagePane pane;
+        protected float n;
+
+        public ImageScaleIncreaseAction(PropertyImagePane pane, float n) {
+            this.pane = pane;
+            putValue(NAME, n > 0 ? "Increase Scale" : "Decrease Scale");
+            putValue(ACCELERATOR_KEY,
+                    KeyStroke.getKeyStroke(n > 0 ? KeyEvent.VK_I : KeyEvent.VK_D,
+                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+            this.n = n;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            pane.setImageScale(pane.getImageScaleMouseWheel());
+            ImageScaleMouseWheel w = pane.getImageScaleMouseWheel();
+
+            if (n > 0) {
+                if (w.getCurrentZoom() < 8.0f) {
+                    w.setCurrentZoom(Math.min(8.0f, w.getCurrentZoom() + n));
+                }
+            } else {
+                if (w.getCurrentZoom() > 0.1f) {
+                    w.setCurrentZoom(Math.max(0.1f, w.getCurrentZoom() + n));
+                }
+            }
         }
 
         @Override

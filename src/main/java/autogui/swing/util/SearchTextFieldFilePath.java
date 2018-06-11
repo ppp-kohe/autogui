@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -46,6 +47,14 @@ public class SearchTextFieldFilePath extends SearchTextField {
     public void init() {
         super.init();
         initTransferHandler();
+    }
+
+    @Override
+    public void initPopup() {
+        super.initPopup();
+
+        getDynamicItemAction("parent", KeyStroke.getKeyStroke(KeyEvent.VK_UP,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), true);
     }
 
     public void initTransferHandler() {
@@ -212,7 +221,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
         @Override
         public boolean isEnabled() {
-            return super.isEnabled() && component.isSwingEditable();
+            return super.isEnabled() &&
+                    (component == null || component.isSwingEditable());
         }
 
         @Override
@@ -294,7 +304,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
         }
         @Override
         public boolean isEnabled() {
-            return super.isEnabled() && component.getFile() != null;
+            return super.isEnabled() &&
+                    (component == null || component.getFile() != null);
         }
 
         @Override
@@ -620,7 +631,12 @@ public class SearchTextFieldFilePath extends SearchTextField {
             List<FileItem> items = new ArrayList<>();
             while (p != null) {
                 if (Files.exists(p)) {
-                    items.add(getFileItem(p, MENU_CATEGORY_FILE_PARENT, false));
+                    FileItem item = getFileItem(p, MENU_CATEGORY_FILE_PARENT, false);
+                    if (items.isEmpty()) {
+                        item = item.withKey(KeyStroke.getKeyStroke(KeyEvent.VK_UP,
+                                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                    }
+                    items.add(item);
                 }
                 p = p.getParent();
             }
@@ -812,6 +828,30 @@ public class SearchTextFieldFilePath extends SearchTextField {
         @Override
         public PopupCategorized.CategorizedMenuItem remap(String category, String subCategory) {
             return new FileItem(path, iconGetter, category, subCategory, nameOnly);
+        }
+
+        public FileItemWithKey withKey(KeyStroke key) {
+            return new FileItemWithKey(path, iconGetter, category, subCategory, nameOnly, key);
+        }
+    }
+
+    public static class FileItemWithKey extends FileItem {
+        protected KeyStroke key;
+
+        public FileItemWithKey(Path path, Function<Path, Icon> iconGetter, String category, String subCategory,
+                               boolean nameOnly, KeyStroke key) {
+            super(path, iconGetter, category, subCategory, nameOnly);
+            this.key = key;
+        }
+
+        @Override
+        public KeyStroke getKeyStroke() {
+            return key;
+        }
+
+        @Override
+        public PopupCategorized.CategorizedMenuItem remap(String category, String subCategory) {
+            return new FileItemWithKey(path, iconGetter, category, subCategory, nameOnly, key);
         }
     }
 
