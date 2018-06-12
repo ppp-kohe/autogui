@@ -9,7 +9,9 @@ import java.awt.font.TextHitInfo;
 import java.awt.font.TextLayout;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
+import java.text.CharacterIterator;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -509,6 +511,10 @@ public class TextCellRenderer<ValueType> extends JPanel
         return getSelectionColor();
     }
 
+    public Color getLineSelectionForegroundColor() {
+        return UIManagerUtil.getInstance().getTextPaneSelectionForeground();
+    }
+
     public Color getLineFindColor() {
         return Color.orange;
     }
@@ -516,6 +522,8 @@ public class TextCellRenderer<ValueType> extends JPanel
     public Color getLineFindMatchColor() {
         return Color.yellow;
     }
+
+    Map<Color, Map<Color, Color>> textToBackToColor = new HashMap<>();
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -530,13 +538,18 @@ public class TextCellRenderer<ValueType> extends JPanel
         Color selectionColor = getLineSelectionColor();
         Color findColor = getLineFindColor();
         Color findMatchColor = getLineFindMatchColor();
+        Color selectionTextColor = getLineSelectionForegroundColor();
+        Color backgroundColor = getBackground();
+        Color foregroundColor = getForeground();
 
         int lineIndex = 0;
         LineInfo prev = null;
         float lineX = 0;
         g2.translate(x, y);
         for (LineInfo line : lines) {
-            TextLayout l = line.getLayout(frc);
+            TextLayout l = line.getSelectionLayout(frc, this.selectionStart, this.selectionEnd,
+                    foregroundColor, backgroundColor, selectionColor, textToBackToColor);
+//            TextLayout l = line.getLayout(frc);
 
             float ascent = l.getAscent();
             y += ascent;
@@ -547,7 +560,7 @@ public class TextCellRenderer<ValueType> extends JPanel
             paintLineSelection(g2, line, l, selectionColor, lineX);
             paintLineFinds(g2, line, l, lineIndex, findColor, findMatchColor, lineX);
 
-            g2.setPaint(getForeground());
+            g2.setPaint(foregroundColor);
 
             l.draw(g2, lineX, 0);
 
@@ -700,9 +713,17 @@ public class TextCellRenderer<ValueType> extends JPanel
 
         protected TextLayout layout;
 
+        protected TextLayout selectionLayout;
+        protected int selectionStart;
+        protected int selectionEnd;
+
         protected List<int[]> findRanges;
 
         public LineInfo(AttributedString attributedString, int start, int end) {
+            if (attributedString.getIterator().next() == CharacterIterator.DONE) {
+                //empty string cause an error at creating TextLayout
+                attributedString = new AttributedString(" ");
+            }
             this.attributedString = attributedString;
             this.start = start;
             this.end = end;
@@ -737,8 +758,77 @@ public class TextCellRenderer<ValueType> extends JPanel
             return layout;
         }
 
+        public TextLayout getSelectionLayout(FontRenderContext frc, int selectionStart, int selectionEnd,
+                                             Color foreground, Color background, Color selectionBackground,
+                                             Map<Color, Map<Color, Color>> textToBackToColor) {
+            int ss = Math.max(Math.max(selectionStart, start), end);
+            int se = Math.max(Math.min(selectionEnd, start), end);
+            if (ss < se) { //has a selection range in the line
+                if (ss == this.selectionStart && se == this.selectionEnd && selectionLayout != null) {
+                    return selectionLayout;
+                } else {
+                    this.selectionStart = ss;
+                    this.selectionEnd = se;
+                    AttributedString selStr = colorUpdate(attributedString, foreground, background, selectionBackground,
+                            textToBackToColor);
+                    selectionLayout = new TextLayout(selStr.getIterator(), frc);
+                    return selectionLayout;
+                }
+            } else {
+                return getLayout(frc);
+            }
+        }
+
+        public AttributedString colorUpdate(AttributedString attrStr, Color text, Color background, Color selectionBackground,
+                                Map<Color, Map<Color, Color>> textToBackToColor) {
+            int i = start;
+            Map<Color, List<int[]>> colorRange = new HashMap<>();
+            AttributedCharacterIterator iter = attrStr.getIterator();
+            for (char c = iter.next(); c != AttributedCharacterIterator.DONE; c = iter.next()) {
+                Map<AttributedCharacterIterator.Attribute,Object> attr = iter.getAttributes();
+                Color color = (attr == null ? text : (Color) attr.getOrDefault(TextAttribute.FOREGROUND, text));
+                Color back;
+                if (selectionStart <= i && i <= selectionEnd) {
+                    back = background;
+                } else {
+                    back = selectionBackground;
+                }
+
+                Color computedColor = textToBackToColor.computeIfAbsent(color, tc -> new HashMap<>())
+                        .computeIfAbsent(back, bc -> getColor(color, back));
+                List<int[]> r = colorRange.computeIfAbsent(computedColor, cc -> new ArrayList<>());
+                if (!r.isEmpty() && r.get(r.size() - 1)[1] + 1 == i) {
+                    r.get(r.size() - 1)[1] = i;
+                } else {
+                    r.add(new int[] {i, i});
+                }
+                ++i;
+            }
+            AttributedString colored = new AttributedString(attrStr.getIterator());
+            colorRange.forEach((c, rs) -> {
+                rs.forEach(r -> {
+                    colored.addAttribute(TextAttribute.FOREGROUND, c, r[0], r[1]); //+1 ?
+                });
+            });
+            return colored;
+        }
+
+        public Color getColor(Color darkForeground, Color background) {
+            double n = (background.getRed() * 0.3 + background.getGreen() * 0.58 + background.getBlue() + 0.11) / 255.0;
+            if (0.5 < n) {
+                float[] hsb = Color.RGBtoHSB(darkForeground.getRed(), darkForeground.getBlue(), darkForeground.getBlue(), null);
+                hsb[1] = Math.min(1.0f, hsb[1] * 1.3f);
+                hsb[2] = Math.min(1.0f, hsb[2] * 1.5f);
+                return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
+            } else {
+                return darkForeground;
+            }
+        }
+
+
         public void clearLayout() {
             layout = null;
+            selectionLayout = null;
         }
 
         /**

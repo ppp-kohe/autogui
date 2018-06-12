@@ -101,6 +101,16 @@ public class UIManagerUtil {
         return color;
     }
 
+    public Color getTextPaneSelectionForeground() {
+        Color color = UIManager.getColor("TextPane.selectionForeground");
+        if (color == null) {
+            color = Color.white;
+        }
+        return color;
+    }
+
+
+
     public Color getFocusColor() {
         Color color = UIManager.getColor("Focus.color");
         if (color == null) {

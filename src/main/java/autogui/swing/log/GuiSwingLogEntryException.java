@@ -475,13 +475,15 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         public LineInfo createLine(LineInfo prevLine, int lineIndex, int start, String line) {
             LineInfo info = super.createLine(prevLine, lineIndex, start, line);
             info.setIndent(4);
-            for (StackTraceAttributesForLine a : lineAttrs.get(lineIndex)) {
-                if (a.attributes != null && a.start < a.end) {
-                    int e = Math.min(line.length(), a.end);
-                    int s = Math.min(Math.max(a.start, 0), e);
-                    if (s < e) {
-                        info.attributedString.addAttributes(a.attributes,
-                                s, e);
+            if (lineAttrs != null && lineAttrs.containsKey(lineIndex)) {
+                for (StackTraceAttributesForLine a : lineAttrs.get(lineIndex)) {
+                    if (a.attributes != null && a.start < a.end) {
+                        int e = Math.min(line.length(), a.end);
+                        int s = Math.min(Math.max(a.start, 0), e);
+                        if (s < e) {
+                            info.attributedString.addAttributes(a.attributes,
+                                    s, e);
+                        }
                     }
                 }
             }
