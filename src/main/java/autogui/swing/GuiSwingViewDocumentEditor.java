@@ -222,17 +222,20 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
     public static void setSwingViewValue(JEditorPane pane, SpecifierManager specifierManager, GuiMappingContext context,
                                          Object newValue, boolean contextUpdate, GuiTaskClock viewClock) {
+        System.err.println(" setSwingViewValue " + newValue + " : " + (newValue == null ? null : newValue.getClass().getName()));
         GuiReprValueDocumentEditor docEditor = (GuiReprValueDocumentEditor) context.getRepresentation();
         Document doc = docEditor.toUpdateValue(context, newValue, delayedDoc -> {
             setSwingViewValueDocument(pane, specifierManager, context, delayedDoc, delayedDoc, contextUpdate, viewClock);
         });
-        setSwingViewValueDocument(pane, specifierManager, context, newValue, doc, contextUpdate, viewClock);
+        if (doc != null) {
+            setSwingViewValueDocument(pane, specifierManager, context, newValue, doc, contextUpdate, viewClock);
+        }
     }
 
     public static void setSwingViewValueDocument(JEditorPane pane, SpecifierManager specifierManager, GuiMappingContext context,
                                                  Object newValue, Document doc, boolean contextUpdate, GuiTaskClock viewClock) {
         GuiReprValueDocumentEditor docEditor = (GuiReprValueDocumentEditor) context.getRepresentation();
-        if (!Objects.equals(pane.getDocument(), doc)) {
+        if (doc != null && !Objects.equals(pane.getDocument(), doc)) {
             pane.setDocument(doc);
             pane.repaint();
         }
@@ -313,7 +316,10 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
+            if (viewClock.isOlderWithSet(contextClock)) { //the source from target precedes other GUI generated values
+                SwingUtilities.invokeLater(() ->
+                        GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, newValue, false, viewClock));
+            }
         }
 
         @Override
@@ -442,7 +448,10 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
+            if (viewClock.isOlderWithSet(contextClock)) {  //the source from target precedes other GUI generated values
+                SwingUtilities.invokeLater(() ->
+                        GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, newValue, false, viewClock));
+            }
         }
 
         @Override

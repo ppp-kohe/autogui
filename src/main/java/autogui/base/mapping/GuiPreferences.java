@@ -800,7 +800,7 @@ public class GuiPreferences {
 
         public Object loadAsCurrentValue() {
             String jsonSource = preferences.getValueStore().getString("$value", null);
-            if (jsonSource != null) {
+            if (jsonSource != null && getValueStore() != null) {
                 return this.value = fromJsonSource(jsonSource);
             } else {
                 return null;

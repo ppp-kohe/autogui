@@ -302,7 +302,7 @@ public interface GuiSwingView extends GuiSwingElement {
         Object v = prefs.getCurrentValue();
         if (v != null) {
             pane.setSwingViewHistoryValue(v);
-        } else {
+        } else if (pane.getSwingViewContext().isHistoryValueStored(null)) {
             List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefs.getHistoryValues());
             es.sort(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime));
             if (!es.isEmpty()) {

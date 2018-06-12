@@ -19,7 +19,7 @@ import java.util.Objects;
  *        and send it to the other side.
  */
 public class GuiTaskClock implements Comparable<GuiTaskClock>, Cloneable {
-    protected long count;
+    protected volatile long count;
     protected boolean view;
 
     public GuiTaskClock(boolean view) {
@@ -45,7 +45,9 @@ public class GuiTaskClock implements Comparable<GuiTaskClock>, Cloneable {
     }
 
     public GuiTaskClock increment() {
-        ++count;
+        synchronized (this) {
+            ++count;
+        }
         return this;
     }
 
