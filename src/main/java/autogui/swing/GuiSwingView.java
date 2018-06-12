@@ -253,6 +253,11 @@ public interface GuiSwingView extends GuiSwingElement {
             }
             return getActionDefault(this, e ->  Objects.equals(e.getContext(), context));
         }
+
+        @Override
+        default KeyStroke getSwingFocusKeyStroke() {
+            return null;
+        }
     }
 
 

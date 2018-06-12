@@ -166,6 +166,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public void initFocus() {
             setFocusable(true);
+            setBorder(new GuiSwingViewLabel.FocusBorder(this));
         }
 
         @Override

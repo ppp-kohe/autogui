@@ -170,7 +170,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             Arrays.stream(listeners).forEach(this::removeMouseListener);
             popup = new PopupExtensionCollection(this, PopupExtension.getDefaultKeyMatcher(),
                     this::getSwingStaticMenuItems);
-            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
             Arrays.stream(listeners).forEach(this::addMouseListener);
             //improve precedence of the popup listener
 
@@ -245,6 +244,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             ObjectTableModel model = getObjectTableModel();
             model.initTableWithoutScrollPane(this);
+
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this); //here, after actions are fixed
 
             getColumnModel().addColumnModelListener(preferencesUpdater);
             getRowSorter().addRowSorterListener(preferencesUpdater);
