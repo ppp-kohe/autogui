@@ -293,13 +293,18 @@ public interface GuiSwingView extends GuiSwingElement {
         if (!pane.isSwingEditable()) {
             return;
         }
-        List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefs.getHistoryValues());
-        es.sort(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime));
-        if (!es.isEmpty()) {
-            Object value = es.get(es.size() - 1).getValue();
-            pane.setSwingViewHistoryValue(value);
-        }
 
+        Object v = prefs.getCurrentValue();
+        if (v != null) {
+            pane.setSwingViewHistoryValue(v);
+        } else {
+            List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefs.getHistoryValues());
+            es.sort(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime));
+            if (!es.isEmpty()) {
+                Object value = es.get(es.size() - 1).getValue();
+                pane.setSwingViewHistoryValue(value);
+            }
+        }
     }
 
     static void saveChildren(GuiPreferences prefs, JComponent comp) {
@@ -319,7 +324,11 @@ public interface GuiSwingView extends GuiSwingElement {
     @SuppressWarnings("unchecked")
     static void savePreferencesDefault(JComponent pane, GuiPreferences prefs) {
         if (pane instanceof ValuePane<?>) {
-            prefs.getDescendant(((ValuePane<?>) pane).getSwingViewContext());
+            GuiMappingContext context = ((ValuePane<?>) pane).getSwingViewContext();
+            GuiPreferences targetPrefs = prefs.getDescendant(context);
+            if (context.isHistoryValueSupported()) {
+                targetPrefs.setCurrentValue(((ValuePane<?>) pane).getSwingViewValue());
+            }
         }
     }
 

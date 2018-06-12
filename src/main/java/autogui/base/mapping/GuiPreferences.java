@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
  *            "$saved"/
  *               "$0"/
  *                 "name" = ...
+ *                 "$value" = ... //current value, which will precede to history values
  *                 ... //same structure as "$default"
  *               ...
  *   </pre>
@@ -237,6 +238,16 @@ public class GuiPreferences {
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    public void setCurrentValue(Object value) {
+        HistoryValueEntry e = createHistoryValueEntry(value); //create an entry for serialization
+        e.storeAsCurrentValue();
+    }
+
+    public Object getCurrentValue() {
+        HistoryValueEntry e = createHistoryValueEntry(null);
+        return e.loadAsCurrentValue();
     }
 
     /**
@@ -708,15 +719,7 @@ public class GuiPreferences {
             if (index != -1) {
                 this.index = index;
                 String v = store.getString("value", "null");
-                Object jsonValue = JsonReader.create(v).parseValue();
-                if (jsonValue != null) {
-                    if (isJsonValue()) {
-                        this.value = jsonValue;
-                    } else {
-                        this.value = preferences.getContext().getRepresentation()
-                                .fromJson(preferences.getContext(), null, jsonValue);
-                    }
-                }
+                this.value = fromJsonSource(v);
 
                 String timeVal = store.getString("time", "null");
                 Object timeJson = JsonReader.create(timeVal).parseValue();
@@ -730,6 +733,20 @@ public class GuiPreferences {
             }
         }
 
+        public Object fromJsonSource(String s) {
+            Object jsonValue = JsonReader.create(s).parseValue();
+            if (jsonValue != null) {
+                if (isJsonValue()) {
+                    return jsonValue;
+                } else {
+                    return preferences.getContext().getRepresentation()
+                            .fromJson(preferences.getContext(), null, jsonValue);
+                }
+            } else {
+                return null;
+            }
+        }
+
         /** @return if false, the value holds a raw-object which might be a non-JSON object,
          *        and then the associated representation can create a new value from a JSON source without any raw-object. */
         public boolean isJsonValue() {
@@ -738,15 +755,22 @@ public class GuiPreferences {
 
         public void store() {
             GuiValueStore store = getValueStore();
-            Object json = isJsonValue() ? this.value :
-                    preferences.getContext().getRepresentation()
-                            .toJsonWithNamed(preferences.getContext(), this.value);
-            String jsonSource = JsonWriter.create().withNewLines(false).write(json).toSource();
+            String jsonSource = getStoredJsonValue();
             store.putString("value", jsonSource);
             if (index != -1) {
                 store.putInt("index", index);
             }
             store.putString("time", time.toString());
+        }
+
+        public String getStoredJsonValue() {
+            if (value == null || getValueStore() == null) {
+                return null;
+            }
+            Object json = isJsonValue() ? this.value :
+                    preferences.getContext().getRepresentation()
+                            .toJsonWithNamed(preferences.getContext(), this.value);
+            return JsonWriter.create().withNewLines(false).write(json).toSource();
         }
 
         public GuiValueStore getValueStore() {
@@ -765,6 +789,22 @@ public class GuiPreferences {
                 store.putInt("index", index);
             }
             this.index = index;
+        }
+
+        public void storeAsCurrentValue() {
+            String jsonSource = getStoredJsonValue();
+            if (jsonSource != null) {
+                preferences.getValueStore().putString("$value", jsonSource);
+            }
+        }
+
+        public Object loadAsCurrentValue() {
+            String jsonSource = preferences.getValueStore().getString("$value", null);
+            if (jsonSource != null) {
+                return this.value = fromJsonSource(jsonSource);
+            } else {
+                return null;
+            }
         }
     }
 
