@@ -388,34 +388,7 @@ public class GuiSwingPreferences {
         }
 
         public void reload() {
-            int oldSize = 0;
-            int launchPrefsIndex = 0;
-
-            GuiMappingContext context = this.rootContext.get();
-            if (list != null) {
-                oldSize = list.size();
-                if (launchPrefs != null) {
-                    launchPrefsIndex = list.indexOf(launchPrefs);
-                }
-            } else {
-                //init
-                launchPrefsIndex = context.getPreferences().getLaunchPrefsAsRoot();
-            }
-            targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
-            targetDefault.getValueStore().putString("$name", "Target Code Values");
-
-            list = new ArrayList<>();
-            list.add(context.getPreferences()); //0
-            list.add(targetDefault); //1
-            savedPrefsList = context.getPreferences().getSavedStoreListAsRoot();
-            list.addAll(savedPrefsList);
-
-            if (launchPrefsIndex < 0 || launchPrefsIndex >= list.size()) {
-                launchPrefsIndex = 0;
-            }
-            launchPrefs = list.get(launchPrefsIndex);
-
-            fireTableDataChanged();
+            update(true);
             /*
             int diff = oldSize - list.size();
             fireContentsChanged(this, 0, Math.min(oldSize - 1, list.size() - 1));
@@ -455,6 +428,43 @@ public class GuiSwingPreferences {
             rootContext.get().getPreferences().setLaunchPrefsAsRoot(newValue);
             fireTableCellUpdated(current, 1);
             fireTableCellUpdated(newValue, 1);
+        }
+
+        public void setName(GuiPreferences prefs, String name) {
+            prefs.getValueStore().putString("$name", name);
+            update(false);
+        }
+
+        public void update(boolean loadSavedList) {
+            GuiMappingContext context = this.rootContext.get();
+            targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
+            targetDefault.getValueStore().putString("$name", "Target Code Values");
+
+            list = new ArrayList<>();
+            list.add(context.getPreferences()); //0
+            list.add(targetDefault); //1
+            if (savedPrefsList == null || loadSavedList) {
+                savedPrefsList = context.getPreferences().getSavedStoreListAsRoot();
+            }
+            savedPrefsList.sort(Comparator.comparing(this::getName)); //sort by updated names
+            list.addAll(savedPrefsList);
+
+            int launchPrefsIndex = 0;
+            if (list != null) {
+                if (launchPrefs != null) {
+                    launchPrefsIndex = list.indexOf(launchPrefs);
+                    //save launchPrefs index
+                    rootContext.get().getPreferences().setLaunchPrefsAsRoot(launchPrefsIndex);
+                }
+            } else {
+                //init
+                launchPrefsIndex = context.getPreferences().getLaunchPrefsAsRoot();
+            }
+            if (launchPrefsIndex < 0 || launchPrefsIndex >= list.size()) {
+                launchPrefsIndex = 0;
+            }
+            launchPrefs = list.get(launchPrefsIndex);
+            fireTableDataChanged();
         }
     }
 
@@ -506,7 +516,7 @@ public class GuiSwingPreferences {
         public Object getCellEditorValue() {
             Object name = super.getCellEditorValue();
             if (currentPrefs != null) {
-                currentPrefs.getValueStore().putString("$name", name.toString());
+                listModel.setName(currentPrefs, name.toString());
             }
             return currentPrefs;
         }

@@ -9,6 +9,8 @@ import autogui.swing.util.*;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.*;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -249,6 +251,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             getColumnModel().addColumnModelListener(preferencesUpdater);
             getRowSorter().addRowSorterListener(preferencesUpdater);
+
+            new ColumnContextMenu(e -> System.out.println(e)).installTo(this);
 
             if (actions.isEmpty()) {
                 return initTableScrollPane();
@@ -1253,5 +1257,62 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public String getSubCategory() {
             return PopupExtension.MENU_SUB_CATEGORY_SELECT;
         }
+    }
+
+    public static class ColumnContextMenu implements MouseListener {
+        protected Consumer<TableColumn> runner;
+        protected JTable table;
+
+        public ColumnContextMenu(Consumer<TableColumn> runner) {
+            this.runner = runner;
+        }
+
+        public void installTo(JTable table) {
+            this.table = table;
+            table.getTableHeader().addMouseListener(this);
+
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            if (e.isPopupTrigger()) {
+                TableColumn c = getClickedColumn(e);
+
+            }
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            if (e.isPopupTrigger()) {
+                TableColumn c = getClickedColumn(e);
+
+            }
+        }
+
+        public TableColumn getClickedColumn(MouseEvent e) {
+            TableColumnModel model = table.getColumnModel();
+            JTableHeader header = table.getTableHeader();
+            int i = Math.min(model.getColumnCount() - 1,
+                    (int) (e.getX() / (header.getWidth() / (float) model.getColumnCount())));
+            int inc = 0;
+            while (0 <= i && i < model.getColumnCount()) {
+                Rectangle r = header.getHeaderRect(i);
+                if (r.contains(e.getPoint())) {
+                    return model.getColumn(i);
+                } else if (inc == 0) {
+                    inc = r.getMaxX() < e.getX() ? 1 : -1;
+                }
+                i += inc;
+            }
+            return null;
+        }
+
+
+        @Override
+        public void mouseClicked(MouseEvent e) { }
+        @Override
+        public void mouseEntered(MouseEvent e) { }
+        @Override
+        public void mouseExited(MouseEvent e) { }
     }
 }

@@ -24,7 +24,7 @@ public class GuiSwingIcons {
     protected Map<String, String> synonyms = new HashMap<>();
 
     protected Icon defaultIcon;
-    protected String suffix = "@2x.png";
+    protected String suffix = "@4x.png";
 
     public static GuiSwingIcons getInstance() {
         return instance;

@@ -549,10 +549,13 @@ public class GuiSwingKeyBinding {
                 modifiers = new ArrayList<>(Arrays.asList(
                         InputEvent.SHIFT_DOWN_MASK,
                         InputEvent.CTRL_DOWN_MASK,
-                        InputEvent.ALT_DOWN_MASK,
-                        InputEvent.META_DOWN_MASK));
+                        InputEvent.ALT_DOWN_MASK));
+                        //,InputEvent.META_DOWN_MASK)); //meta is invalid for generic keyboards in Win/Linux, for mac getMenuShortcutKeyMask() returns it
                 //InputEvent.ALT_GRAPH_DOWN_MASK);
                 modifiers.remove((Object) getMenuShortcutKeyMask());
+                // for Linux Desktop (GNOME only?): (Alt|Ctrl[+Alt])[+Shift] [+key]
+                // for Windows: Ctrl[+Alt][+Shift] [+key]
+                // for macOS:  Cmd=Meta, Opt=Alt, Meta[+Ctrl][+Alt][+Shift] [+key]
             }
             return modifiers;
         }
