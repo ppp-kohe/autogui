@@ -192,7 +192,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
         protected Object actionPerformedBody() {
             return ((GuiReprActionList) context.getRepresentation())
-                    .executeActionForList(context, source.getSelectedItems());
+                    .executeActionForList(context, source.getSelectedItems(), source.getTargetName());
         }
 
         /**

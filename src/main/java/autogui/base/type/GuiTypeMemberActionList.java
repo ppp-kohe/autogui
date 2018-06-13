@@ -14,15 +14,20 @@ import java.util.List;
  */
 public class GuiTypeMemberActionList extends GuiTypeMemberAction {
     protected GuiTypeElement elementType;
+    protected boolean takingTargetName;
 
-    public GuiTypeMemberActionList(String name, GuiTypeElement returnType, GuiTypeElement elementType, String methodName) {
+    public GuiTypeMemberActionList(String name, GuiTypeElement returnType, GuiTypeElement elementType, String methodName,
+                                   boolean takingTargetName) {
         super(name, returnType, methodName);
         this.elementType = elementType;
+        this.takingTargetName = takingTargetName;
     }
 
-    public GuiTypeMemberActionList(String name, GuiTypeElement returnType, GuiTypeElement elementType, Method method) {
+    public GuiTypeMemberActionList(String name, GuiTypeElement returnType, GuiTypeElement elementType, Method method,
+                                   boolean takingTargetName) {
         super(name, returnType, method);
         this.elementType = elementType;
+        this.takingTargetName = takingTargetName;
     }
 
     public GuiTypeElement getElementType() {
@@ -38,6 +43,10 @@ public class GuiTypeMemberActionList extends GuiTypeMemberAction {
         return method;
     }
 
+    public boolean isTakingTargetName() {
+        return takingTargetName;
+    }
+
     /**
      * execute the action method with items
      * @param target the target of the action
@@ -49,6 +58,23 @@ public class GuiTypeMemberActionList extends GuiTypeMemberAction {
         Method method = getMethod();
         if (method != null) {
             return method.invoke(target, selectedItems);
+        } else {
+            throw new UnsupportedOperationException("no method: " + methodName);
+        }
+    }
+
+    /**
+     * execute the action method with items and a name
+     * @param target the target of the action
+     * @param selectedItems the argument for the action
+     * @param targetName the name of target list
+     * @return the returned value of the action
+     * @throws Exception thrown in the action
+     */
+    public Object execute(Object target, List<?> selectedItems, String targetName) throws Exception {
+        Method method = getMethod();
+        if (method != null) {
+            return method.invoke(target, selectedItems, targetName);
         } else {
             throw new UnsupportedOperationException("no method: " + methodName);
         }

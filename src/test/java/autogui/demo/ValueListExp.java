@@ -28,6 +28,11 @@ public class ValueListExp {
     }
 
     @GuiIncluded
+    public void selection(List<Row> rows, String name) {
+        System.out.println(name + " : " + rows);
+    }
+
+    @GuiIncluded
     public static class Row {
 
         String str;

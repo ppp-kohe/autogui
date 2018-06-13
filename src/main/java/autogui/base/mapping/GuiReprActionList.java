@@ -30,13 +30,18 @@ public class GuiReprActionList implements GuiRepresentation {
      * the action executor relying on {@link GuiMappingContext#execute(Callable)}.
      * @param context the context
      * @param selection the parameter
+     * @param targetName the name of the target list
      * @return result of execution or null
      */
-    public Object executeActionForList(GuiMappingContext context, List<?> selection) {
+    public Object executeActionForList(GuiMappingContext context, List<?> selection, String targetName) {
         Object result = null;
         try {
             Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), GuiReprValue.NONE_WITH_CACHE);
-            result = context.execute(() -> context.getTypeElementAsActionList().execute(target, selection));
+            if (context.getTypeElementAsActionList().isTakingTargetName()) {
+                result = context.execute(() -> context.getTypeElementAsActionList().execute(target, selection, targetName));
+            } else {
+                result = context.execute(() -> context.getTypeElementAsActionList().execute(target, selection));
+            }
             context.updateSourceFromRoot(context);
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
@@ -58,6 +63,15 @@ public class GuiReprActionList implements GuiRepresentation {
         return context.getTypeElementAsAction().isSelectionAction();
     }
 
+    /**
+     * <pre>
+     *     //&#64;GuiListSelectionCallback(index=true) //for automatic selection
+     *     public void select(List&lt;E&gt; list) {...}
+     * </pre>
+     * @param context the action context
+     * @param tableContext context for the target element of list
+     * @return true if the action is taking a list of selected row values
+     */
     public boolean isSelectionAction(GuiMappingContext context, GuiMappingContext tableContext) {
         return context.isTypeElementActionList() &&
                 context.getTypeElementAsActionList().getElementType()
@@ -66,15 +80,14 @@ public class GuiReprActionList implements GuiRepresentation {
 
     /**
      * <pre>
-     *     &#64;GuiListSelectionCallback(index=true)
+     *     //&#64;GuiListSelectionCallback(index=true) //for automatic selection
      *     public void select(List&lt;Integer&gt; rows) {...}
      * </pre>
      * @param context the action context
      * @return true if the action is automatic selection and taking a list of row indexes
      */
-    public boolean isAutomaticSelectionRowIndexesAction(GuiMappingContext context) {
-        if (context.isTypeElementActionList() &&
-                context.getTypeElementAsActionList().isSelectionIndexAction()) {
+    public boolean isSelectionRowIndexesAction(GuiMappingContext context) {
+        if (context.isTypeElementActionList()) {
             GuiTypeElement elementType = context.getTypeElementAsActionList().getElementType();
             return elementType.equals(new GuiTypeValue(Integer.class));
         } else {
@@ -84,15 +97,14 @@ public class GuiReprActionList implements GuiRepresentation {
 
     /**
      * <pre>
-     *     &#64;GuiListSelectionCallback(index=true)
+     *     //&#64;GuiListSelectionCallback(index=true) //for automatic selection
      *     public void select(List&lt;int[]&gt; rows) {...}
      * </pre>
      * @param context the action context
      * @return true if the action is automatic selection and taking a list of row and column pair indexes
      */
-    public boolean isAutomaticSelectionRowAndColumnIndexesAction(GuiMappingContext context) {
-        if (context.isTypeElementActionList() &&
-                context.getTypeElementAsActionList().isSelectionIndexAction()) {
+    public boolean isSelectionRowAndColumnIndexesAction(GuiMappingContext context) {
+        if (context.isTypeElementActionList()) {
             GuiTypeElement elementType = context.getTypeElementAsActionList().getElementType();
             return elementType.equals(new GuiTypeValue(int[].class));
         } else {

@@ -291,7 +291,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         public <E> LambdaCollectionTable addAction(String name, Consumer<List<E>> action) {
             GuiMappingContext context = getSwingViewContext().createChildCandidate(new GuiTypeMemberActionList(name,
                     new GuiTypeValue(void.class),
-                    ((GuiTypeCollection) getSwingViewContext().getTypeElementAsProperty().getType()).getElementType(), (String) null));
+                    ((GuiTypeCollection) getSwingViewContext().getTypeElementAsProperty().getType()).getElementType(), (String) null, false));
             context.setRepresentation(new GuiReprActionList());
             context.addToParent();
 

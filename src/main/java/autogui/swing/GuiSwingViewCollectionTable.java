@@ -81,17 +81,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     GuiSwingTableColumnSetDefault.TableSelectionListAction createdAction = null;
                     if (listAction.isSelectionAction(siblingContext, context)) {
                         createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table);
-                        //isAutomaticSelectionAction(context) is included
-                    } else if (listAction.isAutomaticSelectionRowIndexesAction(siblingContext)) {
+                    } else if (listAction.isSelectionRowIndexesAction(siblingContext)) {
                         createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
                                 table.getSelectionSourceForRowIndexes());
-                    } else if (listAction.isAutomaticSelectionRowAndColumnIndexesAction(siblingContext)) {
+                    } else if (listAction.isSelectionRowAndColumnIndexesAction(siblingContext)) {
                         createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
                                 table.getSelectionSourceForRowAndColumnIndexes());
                     }
-                    actions.add(createdAction);
 
                     if (createdAction != null) {
+                        actions.add(createdAction);
                         createdAction.setSelectionChangeFactoryFromContext(context);
                     }
                 }
@@ -421,6 +420,15 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         @Override
+        public String getTargetName() {
+            if (context.isTypeElementCollection() && context.hasParent()) {
+                return context.getParent().getName();
+            } else {
+                return context.getName();
+            }
+        }
+
+        @Override
         public boolean isSelectionEmpty() {
             return getSelectionModel().isSelectionEmpty();
         }
@@ -716,6 +724,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             this.table = table;
             cellTargets = new TableTargetCellForJTable(table);
             this.rowAndColumns = rowAndColumns;
+        }
+
+        @Override
+        public String getTargetName() {
+            return table.getTargetName();
         }
 
         @Override

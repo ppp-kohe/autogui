@@ -35,6 +35,7 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
 
     /** an action target */
     interface TableSelectionSource {
+        String getTargetName();
         boolean isSelectionEmpty();
         List<?> getSelectedItems();
 

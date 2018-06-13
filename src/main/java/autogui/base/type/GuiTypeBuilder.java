@@ -281,7 +281,8 @@ public class GuiTypeBuilder {
         GuiTypeElement retType = get(method.getGenericReturnType());
         if (isList) {
             ParameterizedType pType = (ParameterizedType) method.getGenericParameterTypes()[0];
-            action = new GuiTypeMemberActionList(name, retType, get(pType.getActualTypeArguments()[0]), method);
+            action = new GuiTypeMemberActionList(name, retType, get(pType.getActualTypeArguments()[0]), method,
+                    method.getParameterCount() == 2);
         } else {
             action = new GuiTypeMemberAction(name, retType, method);
         }
@@ -397,14 +398,24 @@ public class GuiTypeBuilder {
 
     /**
      * @param m  the tested method
-     * @return m(L&lt;E&gt;) and L is a super type of {@link List} except for Object. */
+     * @return m(L&lt;E&gt;) and L is a super type of {@link List} except for Object.
+     *          or, m(L&lt;E&gt;, String)
+     *   */
     public boolean isActionListMethod(Method m) {
-        if (m.getParameterCount() == 1) {
+        if (m.getParameterCount() == 1 || m.getParameterCount() == 2) {
             Type t = m.getGenericParameterTypes()[0];
             if (t instanceof ParameterizedType) {
                 Class<?> rawType = getClass(t);
-                return rawType.isAssignableFrom(List.class) && !rawType.equals(Object.class) &&
-                            ((ParameterizedType) t).getActualTypeArguments().length == 1;
+                if (rawType.isAssignableFrom(List.class) && !rawType.equals(Object.class) &&
+                            ((ParameterizedType) t).getActualTypeArguments().length == 1) {
+                    if (m.getParameterCount() == 2) {
+                        return m.getParameterTypes()[1].equals(String.class);
+                    } else {
+                        return true;
+                    }
+                } else {
+                    return false;
+                }
             } else {
                 return false;
             }
