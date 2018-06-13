@@ -545,24 +545,13 @@ public class ObjectTableModel extends AbstractTableModel  {
     /**
      * an action for wrapping {@link TableTargetCellAction}
      */
-    public static class TableTargetCellExecutionAction extends AbstractAction
+    public static class TableTargetCellExecutionAction extends ObjectTableColumnValue.ActionDelegate<TableTargetCellAction>
             implements PopupCategorized.CategorizedMenuItemAction {
-        protected TableTargetCellAction action;
         protected GuiReprCollectionTable.TableTargetCell target;
 
         public TableTargetCellExecutionAction(TableTargetCellAction action, GuiReprCollectionTable.TableTargetCell target) {
-            this.action = action;
+            super(action);
             this.target = target;
-        }
-
-
-        @Override
-        public Object getValue(String key) {
-            return action.getValue(key);
-        }
-
-        public TableTargetCellAction getAction() {
-            return action;
         }
 
         public GuiReprCollectionTable.TableTargetCell getTarget() {

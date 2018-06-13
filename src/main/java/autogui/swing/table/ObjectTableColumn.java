@@ -320,6 +320,7 @@ public class ObjectTableColumn {
         public NumberCopyAction() {
             super(null);
             putValue(NAME, "Copy Indexes");
+            putValue(ACCELERATOR_KEY, null);
         }
 
         @Override

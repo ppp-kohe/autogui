@@ -17,8 +17,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
@@ -441,6 +440,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             } else {
                 r = o;
             }
+            r = clearKeyStroke(r);
             if (r != null) {
                 return filter.convert(r);
             } else {
@@ -486,6 +486,18 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             }
         }
 
+        public Object clearKeyStroke(Object o) {
+            if (o instanceof Action) {
+                ((Action) o).putValue(Action.ACCELERATOR_KEY, null);
+            } else if (o instanceof JMenu) {
+                Arrays.stream(((JMenu) o).getComponents())
+                        .forEach(this::clearKeyStroke);
+            } else if (o instanceof AbstractButton) {
+                clearKeyStroke(((AbstractButton) o).getAction());
+            }
+            return o;
+        }
+
         @Override
         public List<Object> aroundItems(boolean before) {
             if (!before && !afterReturned) {
@@ -502,15 +514,67 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         }
     }
 
+    public static class ActionDelegate<TargetActionType extends Action> extends AbstractAction {
+        protected TargetActionType action;
+        protected Map<String, Object> values;
+        protected static Object NULL = new Object();
+
+        public ActionDelegate(TargetActionType action) {
+            this.action = action;
+        }
+
+        public TargetActionType getAction() {
+            return action;
+        }
+
+        @Override
+        public Object getValue(String key) {
+            if (values != null && values.containsKey(key)) {
+                Object v = values.get(key);
+                if (v == NULL) {
+                    v = null;
+                }
+                return v;
+            }
+            return action.getValue(key);
+        }
+
+        @Override
+        public void putValue(String key, Object value) {
+            if (values == null) {
+                values = new HashMap<>();
+            }
+            if (value == null) {
+                value = NULL;
+            }
+            values.put(key, value);
+        }
+
+        @Override
+        public void setEnabled(boolean b) {
+            action.setEnabled(b);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return action.isEnabled();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            action.actionPerformed(e);
+        }
+    }
+
     /**
      * a wrapper class for {@link TableTargetColumnAction}
      */
-    public static class TableTargetExecutionAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        protected TableTargetColumnAction action;
+    public static class TableTargetExecutionAction extends ActionDelegate<TableTargetColumnAction>
+            implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiReprCollectionTable.TableTargetColumn target;
 
         public TableTargetExecutionAction(TableTargetColumnAction action, GuiReprCollectionTable.TableTargetColumn target) {
-            this.action = action;
+            super(action);
             this.target = target;
         }
 
@@ -524,17 +588,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             return action.isEnabled(target);
         }
 
-        @Override
-        public Object getValue(String key) {
-            return action.getValue(key);
-        }
-
         public GuiReprCollectionTable.TableTargetColumn getTarget() {
             return target;
-        }
-
-        public TableTargetColumnAction getAction() {
-            return action;
         }
 
         @Override
@@ -556,14 +611,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     /**
      * an action for selected rows of a column with a lambda
      */
-    public static class TableTargetInvocationAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        protected Action action;
+    public static class TableTargetInvocationAction extends ActionDelegate<Action>
+            implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiReprCollectionTable.TableTargetColumn target;
         protected BiConsumer<ActionEvent, GuiReprCollectionTable.TableTargetColumn> invoker;
 
         public TableTargetInvocationAction(Action action, GuiReprCollectionTable.TableTargetColumn target,
                                            BiConsumer<ActionEvent, GuiReprCollectionTable.TableTargetColumn> invoker) {
-            this.action = action;
+            super(action);
             this.target = target;
             this.invoker = invoker;
         }
@@ -571,11 +626,6 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
         @Override
         public boolean isEnabled() {
             return !target.isSelectionEmpty();
-        }
-
-        @Override
-        public Object getValue(String key) {
-            return action.getValue(key);
         }
 
         public GuiReprCollectionTable.TableTargetColumn getTarget() {
@@ -610,15 +660,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
      * an action for wrapping another action.
      *   this action iterates over the selected rows and changing the target column value with the each row value.
      */
-    public static class TableRowsRepeatAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+    public static class TableRowsRepeatAction extends ActionDelegate<Action> implements PopupCategorized.CategorizedMenuItemAction {
         protected JTable table;
         protected ObjectTableColumn column;
-        protected Action action;
 
         public TableRowsRepeatAction(JTable table, ObjectTableColumn column, Action action) {
+            super(action);
             this.table = table;
             this.column = column;
-            this.action = action;
             putValue(NAME, action.getValue(NAME));
             putValue(Action.LARGE_ICON_KEY, action.getValue(LARGE_ICON_KEY));
         }
