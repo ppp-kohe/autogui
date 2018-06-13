@@ -109,7 +109,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         } else if (value instanceof Document) {
             return (Document) value;
         } else if (value instanceof AbstractDocument.Content) {
-            return new ContentWrappingDocument((AbstractDocument.Content) value);
+            return ContentWrappingDocument.create((AbstractDocument.Content) value);
         } else if (value instanceof StringBuilder) {
             return toUpdateValue(context, new StringBuilderContent((StringBuilder) value));
         } else {
@@ -267,6 +267,29 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     public static class ContentWrappingDocument extends DefaultStyledDocument {
         protected Content value;
 
+        public static ContentWrappingDocument create(Content c) {
+            if (c.length() > 1) {
+                try {
+                    String str = c.getString(0, c.length() - 1);
+                    c.remove(0, c.length() - 1);
+
+                    ContentWrappingDocument doc = new ContentWrappingDocument(c);
+
+                    doc.insertString(0, str, null);
+                    return doc;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    return new ContentWrappingDocument(c);
+                }
+            } else {
+                return new ContentWrappingDocument(c);
+            }
+        }
+
+        /**
+         * @param c an empty content: DefaultStyleDocument seems to require an empty content at initialization.
+         *          To satisfy this, use {@link #create(Content)} which do removing, creating, and re-inserting
+         */
         public ContentWrappingDocument(Content c) {
             super(c, new StyleContext());
             this.value = c;
@@ -302,7 +325,6 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
     }
 
-    //TODO this is a worst way for implementing a text editor.
     /**
      *  a content for {@link StringBuilder}
      */
@@ -313,9 +335,6 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
 
         public StringBuilderContent(StringBuilder buffer) {
             this.buffer = buffer;
-            if (buffer.length() == 0) {
-                buffer.append('\n');
-            }
         }
 
         public StringBuilder getBuffer() {
@@ -332,7 +351,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         @Override
         public int length() {
             try {
-                return Math.max(1, run(buffer::length));
+                return buffer.length() + 1; //virtually append a new-line
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
@@ -397,7 +416,8 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
                 throw new BadLocationException("Invalid range", length());
             }
             return run(() -> {
-                return buffer.substring(where, where + len);
+                int end = Math.min(buffer.length(), where + len);
+                return buffer.substring(where, end) + (where + len > end ? "\n" : "");
             });
         }
 
@@ -407,8 +427,9 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
                 throw new BadLocationException("Invalid range", length());
             }
             txt.array = run(() -> {
-                if (array == null || array.length != buffer.length()) {
-                    array = buffer.toString().toCharArray();
+                if (array == null || array.length != buffer.length() + 1) {
+                    array = Arrays.copyOf(buffer.toString().toCharArray(), buffer.length() + 1);
+                    array[array.length - 1] = '\n';
                 }
                 return array;
             });

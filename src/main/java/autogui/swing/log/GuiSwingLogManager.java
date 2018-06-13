@@ -21,6 +21,16 @@ public class GuiSwingLogManager extends GuiLogManager {
     protected List<Consumer<GuiLogEntry>> views = new ArrayList<>();
     protected GuiLogManagerConsole console;
 
+    public static boolean replaceErr = true;
+    public static boolean replaceOut = true;
+    public static boolean replaceExceptionHandler = true;
+
+    public static void setDefaultReplace(boolean flag) {
+        replaceErr = flag;
+        replaceOut = flag;
+        replaceExceptionHandler = flag;
+    }
+
     /**
      * @param view might accept same entries
      * @return key object for removing, currently view itself

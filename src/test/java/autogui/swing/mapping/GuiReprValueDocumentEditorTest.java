@@ -307,7 +307,7 @@ public class GuiReprValueDocumentEditorTest extends GuiSwingTestCase {
     }
 
     public JTextPane create() {
-        JTextPane pane = new JTextPane(new GuiReprValueDocumentEditor.ContentWrappingDocument(content));
+        JTextPane pane = new JTextPane(GuiReprValueDocumentEditor.ContentWrappingDocument.create(content));
         undoManager.putListenersAndActionsTo(pane);
         JFrame frame = createFrame(pane);
         frame.setSize(400, 400);

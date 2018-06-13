@@ -515,8 +515,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                 cell.setBounds(table.getCellRect(row));
                 runner.accept(r);
                 rendererPane.removeAll();
-                table.repaint();
             }
+            table.repaint();
         }
 
         public Point convert(Rectangle cellRect, Point p) {

@@ -72,7 +72,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
 
     public static Map<AttributedCharacterIterator.Attribute, Object> getTimeStyle() {
         Map<AttributedCharacterIterator.Attribute, Object> m = new HashMap<>();
-        m.put(TextAttribute.FOREGROUND, new Color(48, 144,20));
+        m.put(TextAttribute.FOREGROUND, new Color(40, 134,10));
         m.put(TextAttribute.FONT, GuiSwingLogManager.getFont());
         return m;
     }
@@ -171,6 +171,20 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
                     selected = ((GuiSwingLogEntryString) value).isSelected();
                 }
                 return true;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public boolean isValueSame(GuiLogEntry value, boolean forMouseEvents) {
+            if (super.isValueSame(value, forMouseEvents)) {
+                if (value instanceof GuiSwingLogEntryString) {
+                    return selectionStart == ((GuiSwingLogEntryString) value).getSelectionFrom() &&
+                        selectionEnd == ((GuiSwingLogEntryString) value).getSelectionTo();
+                } else {
+                    return true;
+                }
             } else {
                 return false;
             }

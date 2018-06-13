@@ -42,17 +42,30 @@ public class TextCellRenderer<ValueType> extends JPanel
     protected int maxWidth;
     protected LineInfoMatch lastMatch;
 
+    protected Color selectionForeground;
+    protected Color selectionBackground;
+
     public TextCellRenderer() {
         lines = new ArrayList<>();
         setOpaque(false);
-        setBackground(new Color(255, 255, 255, 0));
+        initColor();
         initBorder();
+    }
+
+    protected void initColor() {
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        Color b = ui.getLabelBackground();
+        setBackground(new Color(b.getRed(), b.getGreen(), b.getBlue(), 0));
+        setForeground(ui.getLabelForeground());
+        setSelectionForeground(ui.getTextPaneSelectionBackground());
+        setSelectionBackground(ui.getTextPaneSelectionForeground());
     }
 
     protected void initBorder() {
         UIManagerUtil ui = UIManagerUtil.getInstance();
         setBorder(BorderFactory.createEmptyBorder(
-                ui.getScaledSizeInt(7), ui.getScaledSizeInt(10), ui.getScaledSizeInt(3), ui.getScaledSizeInt(10)));
+                ui.getScaledSizeInt(7), ui.getScaledSizeInt(10),
+                ui.getScaledSizeInt(7), ui.getScaledSizeInt(10)));
     }
 
     public String getText() {
@@ -94,12 +107,32 @@ public class TextCellRenderer<ValueType> extends JPanel
 
     @Override
     public Component getListCellRendererComponent(JList<? extends ValueType> list, ValueType value, int index, boolean isSelected, boolean cellHasFocus) {
+        setProperty(list);
         return getTableCellRendererComponent(null, value, isSelected, cellHasFocus, index, 0);
+    }
+
+    public void setProperty(JList<?> list) {
+        if (list != null) {
+            setSelectionForeground(list.getSelectionForeground());
+            setSelectionBackground(list.getSelectionBackground());
+            setForeground(list.getForeground());
+            setBackground(list.getBackground());
+        }
+    }
+
+    public void setProperty(JTable list) {
+        if (list != null) {
+            setSelectionForeground(list.getSelectionForeground());
+            setSelectionBackground(list.getSelectionBackground());
+            setForeground(list.getForeground());
+            setBackground(list.getBackground());
+        }
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        setProperty(table);
         boolean forMouseEvents = row <= -1;
         if (!forMouseEvents) {
             this.selected = isSelected;
@@ -503,16 +536,20 @@ public class TextCellRenderer<ValueType> extends JPanel
 
     /////////////////
 
-    public static Color getSelectionColor() {
-        return UIManagerUtil.getInstance().getTextPaneSelectionBackground();
+    public Color getSelectionBackground() {
+        return selectionBackground;
     }
 
-    public Color getLineSelectionColor() {
-        return getSelectionColor();
+    public Color getSelectionForeground() {
+        return selectionForeground;
     }
 
-    public Color getLineSelectionForegroundColor() {
-        return UIManagerUtil.getInstance().getTextPaneSelectionForeground();
+    public void setSelectionBackground(Color selectionBackground) {
+        this.selectionBackground = selectionBackground;
+    }
+
+    public void setSelectionForeground(Color selectionForeground) {
+        this.selectionForeground = selectionForeground;
     }
 
     public Color getLineFindColor() {
@@ -523,7 +560,7 @@ public class TextCellRenderer<ValueType> extends JPanel
         return Color.yellow;
     }
 
-    Map<Color, Map<Color, Color>> textToBackToColor = new HashMap<>();
+    protected Map<Color, Map<Color, Color>> textToBackToColor = new HashMap<>();
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -535,10 +572,11 @@ public class TextCellRenderer<ValueType> extends JPanel
         FontRenderContext frc = g2.getFontRenderContext();
         float x = insets.left;
         float y = insets.top;
-        Color selectionColor = getLineSelectionColor();
         Color findColor = getLineFindColor();
         Color findMatchColor = getLineFindMatchColor();
-        Color selectionTextColor = getLineSelectionForegroundColor();
+
+        Color selectionColor = getSelectionBackground();
+        Color selectionTextColor = getSelectionForeground();
         Color backgroundColor = getBackground();
         Color foregroundColor = getForeground();
 
@@ -547,8 +585,8 @@ public class TextCellRenderer<ValueType> extends JPanel
         float lineX = 0;
         g2.translate(x, y);
         for (LineInfo line : lines) {
-            TextLayout l = line.getSelectionLayout(frc, this.selectionStart, this.selectionEnd,
-                    foregroundColor, backgroundColor, selectionColor, textToBackToColor);
+            TextLayout l = line.getLayout(frc, this.selectionStart, this.selectionEnd,
+                    foregroundColor, backgroundColor, selectionTextColor, selectionColor, textToBackToColor);
 //            TextLayout l = line.getLayout(frc);
 
             float ascent = l.getAscent();
@@ -712,10 +750,9 @@ public class TextCellRenderer<ValueType> extends JPanel
         public int indent;
 
         protected TextLayout layout;
-
-        protected TextLayout selectionLayout;
         protected int selectionStart;
         protected int selectionEnd;
+        protected List<Object> layoutState = Collections.emptyList();
 
         protected List<int[]> findRanges;
 
@@ -753,82 +790,112 @@ public class TextCellRenderer<ValueType> extends JPanel
          */
         public TextLayout getLayout(FontRenderContext frc) {
             if (layout == null) {
+                layoutState = Collections.emptyList();
                 layout = new TextLayout(attributedString.getIterator(), frc);
+                return layout;
+            } else {
+                //the empty state always included any other layoutState
+                return layout;
             }
+        }
+
+        public TextLayout getLayout(FontRenderContext frc, int selectionStart, int selectionEnd,
+                                             Color foreground, Color background, Color selectionForeground, Color selectionBackground,
+                                             Map<Color, Map<Color, Color>> textToBackToColor) {
+            if (selectionStart > selectionEnd) {
+                int tmp = selectionStart;
+                selectionStart = selectionEnd;
+                selectionEnd = tmp;
+            }
+            int ss = Math.min(Math.max(selectionStart, start), end);
+            int se = Math.min(Math.max(selectionEnd, start), end + 1);
+
+            List<Object> newLayoutState = Arrays.asList(ss, se, foreground, background, selectionForeground, selectionBackground);
+            if (layout != null && newLayoutState.equals(layoutState)) {
+                return layout; //reuse
+            }
+            this.layoutState = newLayoutState;
+            this.selectionStart = ss;
+            this.selectionEnd = se;
+
+            AttributedString selStr = colorUpdate(attributedString, foreground, background,
+                    selectionForeground, selectionBackground, textToBackToColor);
+            layout = new TextLayout(selStr.getIterator(), frc);
             return layout;
         }
 
-        public TextLayout getSelectionLayout(FontRenderContext frc, int selectionStart, int selectionEnd,
-                                             Color foreground, Color background, Color selectionBackground,
-                                             Map<Color, Map<Color, Color>> textToBackToColor) {
-            int ss = Math.max(Math.max(selectionStart, start), end);
-            int se = Math.max(Math.min(selectionEnd, start), end);
-            if (ss < se) { //has a selection range in the line
-                if (ss == this.selectionStart && se == this.selectionEnd && selectionLayout != null) {
-                    return selectionLayout;
-                } else {
-                    this.selectionStart = ss;
-                    this.selectionEnd = se;
-                    AttributedString selStr = colorUpdate(attributedString, foreground, background, selectionBackground,
-                            textToBackToColor);
-                    selectionLayout = new TextLayout(selStr.getIterator(), frc);
-                    return selectionLayout;
-                }
-            } else {
-                return getLayout(frc);
-            }
-        }
-
-        public AttributedString colorUpdate(AttributedString attrStr, Color text, Color background, Color selectionBackground,
-                                Map<Color, Map<Color, Color>> textToBackToColor) {
-            int i = start;
+        public AttributedString colorUpdate(AttributedString attrStr,
+                                            Color text, Color background, Color selectionForeground, Color selectionBackground,
+                                            Map<Color, Map<Color, Color>> textToBackToColor) {
+            int i = 0;
             Map<Color, List<int[]>> colorRange = new HashMap<>();
             AttributedCharacterIterator iter = attrStr.getIterator();
-            for (char c = iter.next(); c != AttributedCharacterIterator.DONE; c = iter.next()) {
+            for (char c = iter.first(); c != AttributedCharacterIterator.DONE; c = iter.next(), ++i) {
                 Map<AttributedCharacterIterator.Attribute,Object> attr = iter.getAttributes();
-                Color color = (attr == null ? text : (Color) attr.getOrDefault(TextAttribute.FOREGROUND, text));
-                Color back;
-                if (selectionStart <= i && i <= selectionEnd) {
-                    back = background;
+                Color customColor = (attr == null ? null : (Color) attr.get(TextAttribute.FOREGROUND));
+                Color f;
+                Color b;
+                Color rf;
+                if (selectionStart <= (i + start) && (i + start) < selectionEnd) {
+                    b = selectionBackground;
+                    rf = selectionForeground;
+                    if (customColor != null) {
+                        f = customColor;
+                    } else {
+                        f = selectionForeground;
+                    }
                 } else {
-                    back = selectionBackground;
+                    b = background;
+                    rf = text;
+                    if (customColor != null) {
+                        f = customColor;
+                    } else {
+                        f = text;
+                    }
                 }
 
-                Color computedColor = textToBackToColor.computeIfAbsent(color, tc -> new HashMap<>())
-                        .computeIfAbsent(back, bc -> getColor(color, back));
+                Color computedColor = textToBackToColor.computeIfAbsent(f, tc -> new HashMap<>())
+                        .computeIfAbsent(b, bc -> getColor(f, rf, b));
                 List<int[]> r = colorRange.computeIfAbsent(computedColor, cc -> new ArrayList<>());
-                if (!r.isEmpty() && r.get(r.size() - 1)[1] + 1 == i) {
-                    r.get(r.size() - 1)[1] = i;
+                if (!r.isEmpty() && r.get(r.size() - 1)[1] == i) {
+                    r.get(r.size() - 1)[1] = i + 1;
                 } else {
-                    r.add(new int[] {i, i});
+                    r.add(new int[] {i, i + 1});
                 }
-                ++i;
             }
             AttributedString colored = new AttributedString(attrStr.getIterator());
             colorRange.forEach((c, rs) -> {
                 rs.forEach(r -> {
-                    colored.addAttribute(TextAttribute.FOREGROUND, c, r[0], r[1]); //+1 ?
+                    if (r[0] < r[1]) {
+                        colored.addAttribute(TextAttribute.FOREGROUND, c, r[0], r[1]);
+                    }
                 });
             });
             return colored;
         }
 
-        public Color getColor(Color darkForeground, Color background) {
-            double n = (background.getRed() * 0.3 + background.getGreen() * 0.58 + background.getBlue() + 0.11) / 255.0;
-            if (0.5 < n) {
-                float[] hsb = Color.RGBtoHSB(darkForeground.getRed(), darkForeground.getBlue(), darkForeground.getBlue(), null);
-                hsb[1] = Math.min(1.0f, hsb[1] * 1.3f);
-                hsb[2] = Math.min(1.0f, hsb[2] * 1.5f);
+        public Color getColor(Color foreground, Color regularForeground, Color background) {
+            double bb = brightness(background);
+            double rfb = brightness(regularForeground);
+            double fb = brightness(foreground);
+            //foreground is a color for dark-foreground and bright-background
+            if (rfb > bb && fb - bb < 0.2) { //dark mode, but the foreground brightness is not sufficient against the background
+                float[] hsb = Color.RGBtoHSB(foreground.getRed(), foreground.getGreen(), foreground.getBlue(), null);
+                hsb[1] = Math.min(1.0f, hsb[1] * 0.5f);
+                hsb[2] = Math.min(1.0f, hsb[2] * 1.8f);
                 return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
             } else {
-                return darkForeground;
+                return foreground;
             }
+        }
+
+        public double brightness(Color c) {
+            return (c.getRed() * 0.3 + c.getGreen() * 0.58 + c.getBlue() * 0.11) / 255.0;
         }
 
 
         public void clearLayout() {
             layout = null;
-            selectionLayout = null;
         }
 
         /**

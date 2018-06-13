@@ -4,25 +4,36 @@ import autogui.GuiIncluded;
 import autogui.base.log.GuiLogEntryProgress;
 import autogui.base.log.GuiLogManager;
 import autogui.swing.AutoGuiShell;
+import autogui.swing.log.GuiSwingLogManager;
 
 @GuiIncluded
 public class LogExp {
     public static void main(String[] args) {
+        //GuiSwingLogManager.setDefaultReplace(false);
         AutoGuiShell.get().showWindow(new LogExp());
     }
 
     @GuiIncluded
-    public StringBuilder message = new StringBuilder();
+    public StringBuilder message = new StringBuilder("Hello, world");
 
     @GuiIncluded
     public int max = 10;
 
-    @GuiIncluded
+    @GuiIncluded(index = 1)
     public void showMessage() {
-        System.err.print(message.toString()); //GUI based StringBuilder always has a new-line at the end of the data
+        System.err.println(message.toString());
+        //you can also write:
+        // GuiLogManager.get().logString(message.toString());
     }
 
-    @GuiIncluded
+    @GuiIncluded(index = 2)
+    public void showException() {
+        throw new RuntimeException(message.toString());
+        //you can also write:
+        //  GuiLogManager.get().logError(new RuntimeException(message.toString()));
+    }
+
+    @GuiIncluded(index = 3)
     public void showProgress() {
         final int max = this.max;
         new Thread(() -> {
@@ -41,8 +52,4 @@ public class LogExp {
         }).start();
     }
 
-    @GuiIncluded
-    public void showException() {
-        throw new RuntimeException(message.toString());
-    }
 }

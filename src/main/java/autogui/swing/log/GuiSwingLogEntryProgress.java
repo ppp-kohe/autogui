@@ -222,11 +222,15 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
         @Override
         public Component getListCellRendererComponent(JList<? extends GuiLogEntry> list, GuiLogEntry value, int index, boolean isSelected, boolean cellHasFocus) {
+            message.setProperty(list);
+            message2.setProperty(list);
             return getTableCellRendererComponent(null, value, isSelected, cellHasFocus, index, 0);
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            message.setProperty(table);
+            message2.setProperty(table);
             selected = isSelected;
             if (value instanceof GuiLogEntryProgress) {
                 lastValue = (GuiLogEntryProgress) value;
@@ -282,7 +286,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 int arc = ui.getScaledSizeInt(3);
                 RoundRectangle2D.Float r = new RoundRectangle2D.Float(xy, xy, size.width - wh, size.height - wh, arc, arc);
                 Graphics2D g2 = (Graphics2D) g;
-                g2.setColor(TextCellRenderer.getSelectionColor());
+                g2.setColor(message.getSelectionBackground());
                 g2.draw(r);
             }
         }

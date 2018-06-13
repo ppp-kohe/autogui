@@ -150,11 +150,15 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             if (list != null) {
                 lastList = list;
             }
+            message.setProperty(list);
+            stackTrace.setProperty(list);
             return getTableCellRendererComponent(null, value, isSelected, cellHasFocus, index, 0);
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            message.setProperty(table);
+            stackTrace.setProperty(table);
             this.selected = isSelected;
             if (value instanceof GuiLogEntryException) {
                 setValue((GuiLogEntryException) value, row <= -1);
@@ -168,8 +172,14 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
                 message.setValue(value, forMouseEvents);
                 stackTrace.setValue(value, forMouseEvents);
                 expansionChanged();
-                setSelection();
+            } else {
+                if (lastValue instanceof GuiSwingLogEntryException) {
+                    if (stackTrace.isExpanded() != ((GuiSwingLogEntryException) lastValue).isExpanded()) {
+                        expansionChanged();
+                    }
+                }
             }
+            setSelection();
         }
 
         @Override
@@ -185,7 +195,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
                 int arc = ui.getScaledSizeInt(3);
                 RoundRectangle2D.Float r = new RoundRectangle2D.Float(xy, xy, size.width - hw, size.height - hw, arc, arc);
                 Graphics2D g2 = (Graphics2D) g;
-                g2.setColor(TextCellRenderer.getSelectionColor());
+                g2.setColor(message.getSelectionBackground());
                 g2.draw(r);
             }
         }
@@ -310,7 +320,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
             messageAttributes = GuiSwingLogEntryString.getBodyStyle();
             {
-                messageAttributes.put(TextAttribute.FOREGROUND, new Color(142, 73, 60));
+                messageAttributes.put(TextAttribute.FOREGROUND, new Color(132, 63, 50));
             }
             setFont(GuiSwingLogManager.getFont());
         }
@@ -336,7 +346,6 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
         @Override
         public LineInfo createLine(LineInfo prevLine, int lineIndex, int start, String line) {
-            AttributedString a = new AttributedString(line);
             if (lineIndex == 0) {
                 int pos = 0;
                 if (start <= timeEnd && timeEnd < start + line.length()) {
@@ -405,14 +414,14 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
             topSet = new StackTraceAttributeSet();
             topSet.set(defaultSet,
-                    new Color(48, 144, 20),
-                    new Color(142,73,60),
-                    new Color(133, 120, 197),
-                    new Color(89, 184, 196),
-                    new Color(2, 129, 18),
-                    new Color(147, 159, 43),
-                    new Color(57, 104, 173),
-                    new Color(159, 65, 141));
+                    new Color(38, 115, 16),
+                    new Color(103,53,44),
+                    new Color(97, 88, 144),
+                    new Color(35, 151, 165),
+                    new Color(2, 142, 20),
+                    new Color(105, 113, 31),
+                    new Color(50, 91, 152),
+                    new Color(122, 50, 108));
 
             middleSet = new StackTraceAttributeSet();
             middleSet.set(defaultSet,
@@ -650,6 +659,10 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             } else {
                 setPreferredSize(new Dimension((int) collapsedStackSize[0], (int) collapsedStackSize[1]));
             }
+        }
+
+        public boolean isExpanded() {
+            return expanded;
         }
 
         @Override

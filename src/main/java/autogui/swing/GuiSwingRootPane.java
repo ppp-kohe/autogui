@@ -186,7 +186,10 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
                 logManager = (GuiSwingLogManager) m;
             } else {
                 logManager = new GuiSwingLogManager();
-                logManager.setupConsole(true, true, true);
+                logManager.setupConsole(
+                        GuiSwingLogManager.replaceErr,
+                        GuiSwingLogManager.replaceOut,
+                        GuiSwingLogManager.replaceExceptionHandler);
                 GuiLogManager.setManager(logManager);
             }
         }
