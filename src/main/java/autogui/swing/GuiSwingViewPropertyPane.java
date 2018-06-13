@@ -184,6 +184,12 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
                         GuiSwingJsonTransfer.getActions(this, context)).stream()
                         .map(i -> i.remap("Property " + MenuBuilder.getCategoryName(i.getCategory()), i.getSubCategory()))
                         .collect(Collectors.toList());
+                for (PopupCategorized.CategorizedMenuItem i : menuItems) {
+                    Action a = PopupCategorized.getMenuItemAction(i);
+                    if (a != null) {
+                        a.putValue(Action.ACCELERATOR_KEY, null);
+                    }
+                }
             }
             return menuItems;
         }

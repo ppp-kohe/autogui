@@ -252,7 +252,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             getColumnModel().addColumnModelListener(preferencesUpdater);
             getRowSorter().addRowSorterListener(preferencesUpdater);
 
-            new ColumnContextMenu(e -> System.out.println(e)).installTo(this);
+            new ColumnContextMenu(e -> System.out.println(e)).installTo(this); //TODO
+
+            getPopup().setupCompositeKeyMap();
 
             if (actions.isEmpty()) {
                 return initTableScrollPane();
@@ -690,6 +692,15 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public GuiSwingTableColumn.SpecifierManagerIndex getRowSpecifierManager() {
             return rowSpecifierManager;
         }
+
+        @Override
+        public void columnAdded(ObjectTableColumn column) {
+            super.columnAdded(column);
+            JTable table = getTable();
+            if (table instanceof CollectionTable) {
+                ((CollectionTable) table).getPopup().setupCompositeKeyMapByAddingColumn(column);
+            }
+        }
     }
 
     /**
@@ -1004,6 +1015,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected boolean showing;
         protected Timer showingTimer;
 
+        protected Set<ObjectTableColumn.TableMenuCompositeShared> existingShared;
+
         public PopupExtensionCollection(CollectionTable pane, Predicate<KeyEvent> keyMatcher, Supplier<? extends Collection<PopupCategorized.CategorizedMenuItem>> items) {
             super(pane, keyMatcher, null);
             this.table = pane;
@@ -1098,6 +1111,48 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     .map(table::convertColumnIndexToModel)
                     .mapToObj(model.getColumns().getColumns()::get)
                     .collect(Collectors.toList());
+        }
+
+        ////////////
+
+        public void setupCompositeKeyMap() {
+            existingShared = new LinkedHashSet<>();
+            table.getObjectTableModel().getColumns().getColumns().forEach(c ->
+                c.getCompositesForCells().forEach(cellComp ->
+                    existingShared.add(cellComp.getShared())));
+
+            existingShared.forEach(this::setupCompositeKeyMapForShared);
+        }
+
+        public void setupCompositeKeyMapForShared(ObjectTableColumn.TableMenuCompositeShared shared) {
+            //call composite to the shared with empty columns
+            shared.composite(table, Collections.emptyList(), false).forEach(item -> {
+                Action a = PopupCategorized.getMenuItemAction(item);
+                if (a != null) {
+
+                    TableCompositesAction keyAction =
+                            new TableCompositesAction(table,
+                                    (String) a.getValue(Action.NAME),
+                                    (KeyStroke) a.getValue(Action.ACCELERATOR_KEY),
+                                    shared,
+                                    item.getCategory(), item.getSubCategory());
+                    if (GuiSwingView.setupKeyBindingsForStaticMenuItemAction(table, keyAction, act -> false)) {
+                        System.err.println("bind action:" +
+                                keyAction.getValue(Action.NAME) + "  key:" +
+                                keyAction.getValue(Action.ACCELERATOR_KEY));
+                    }
+                }
+            });
+        }
+
+        public void setupCompositeKeyMapByAddingColumn(ObjectTableColumn newColumn) {
+            if (existingShared != null) {
+                newColumn.getCompositesForCells().forEach(cellComp -> {
+                    if (existingShared.add(cellComp.getShared())) {
+                        setupCompositeKeyMapForShared(cellComp.getShared());
+                    }
+                });
+            }
         }
     }
 
@@ -1256,6 +1311,47 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public String getSubCategory() {
             return PopupExtension.MENU_SUB_CATEGORY_SELECT;
+        }
+    }
+
+    public static class TableCompositesAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        protected CollectionTable table;
+        protected ObjectTableColumn.TableMenuCompositeShared shared;
+        protected String category;
+        protected String subCategory;
+
+        public TableCompositesAction(CollectionTable table, String name, KeyStroke key,
+                                     ObjectTableColumn.TableMenuCompositeShared shared,
+                                     String category, String subCategory) {
+            super(name);
+            putValue(ACCELERATOR_KEY, key);
+            this.shared = shared;
+            this.table = table;
+            this.category = category;
+            this.subCategory = subCategory;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String name = (String) getValue(Action.NAME);
+            table.getObjectTableModel().getBuildersForRowsOrCells(table, table.getPopup().getTargetColumns(), false).stream()
+                    .map(PopupCategorized::getMenuItemAction)
+                    .filter(Objects::nonNull)
+                    .filter(TableTargetCellAction.class::isInstance)
+                    .filter(a -> Objects.equals(name, a.getValue(Action.NAME)))
+                    .map(TableTargetCellAction.class::cast)
+                    .findFirst()
+                    .ifPresent(a -> a.actionPerformedOnTableCell(e, new TableTargetCellForJTable(table)));
+        }
+
+        @Override
+        public String getCategory() {
+            return category;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return subCategory;
         }
     }
 

@@ -179,6 +179,10 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
             changingColumns = new ArrayList<>();
         }
 
+        public ObjectTableColumnDynamicFactory getFactory() {
+            return factory;
+        }
+
         public int getEndIndexExclusive() {
             return index.getTotalIndex();
         }

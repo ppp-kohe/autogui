@@ -442,6 +442,8 @@ public class GuiSwingJsonTransfer {
 
         public JsonCopyCellsAction(List<TableMenuCompositeJsonCopy> activatedColumns) {
             putValue(NAME, "Copy Cells as JSON");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
             this.activatedColumns = activatedColumns;
         }
 
@@ -507,6 +509,8 @@ public class GuiSwingJsonTransfer {
         public JsonSaveCellsAction(List<TableMenuCompositeJsonCopy> activatedColumns, JComponent table) {
             super(activatedColumns);
             putValue(NAME, "Export Cells as JSON...");
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
             this.table = table;
         }
 
@@ -621,6 +625,10 @@ public class GuiSwingJsonTransfer {
             putValue(NAME, allCells
                     ? "Paste JSON to Rows"
                     : "Paste JSON to Cells");
+            if (!allCells) {
+                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
+            }
             rows = allCells;
             this.activeComposite = activeComposite;
         }
@@ -797,6 +805,10 @@ public class GuiSwingJsonTransfer {
             putValue(NAME, allCells
                     ? "Import JSON to Rows..."
                     : "Import JSON to Cells...");
+            if (!allCells) {
+                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
+            }
         }
 
         @Override

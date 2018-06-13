@@ -14,6 +14,7 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -89,6 +90,10 @@ public class ToStringCopyCell {
 
         public ToStringCopyForCellsAction(List<TableMenuCompositeToStringCopy> activatedColumns, boolean onlyApplyingSelectedColumns) {
             putValue(NAME, onlyApplyingSelectedColumns ? "Copy Cells as Text" : "Copy Row Cells as Text");
+            if (onlyApplyingSelectedColumns) {
+                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            }
             this.activatedColumns = activatedColumns;
             this.onlyApplyingSelectedColumns = onlyApplyingSelectedColumns;
         }
@@ -176,6 +181,10 @@ public class ToStringCopyCell {
                                           JComponent table) {
             super(activatedColumns, onlyApplyingSelectedColumns);
             putValue(NAME, onlyApplyingSelectedColumns ? "Save Cells as Text..." : "Save Row Cells as Text...");
+            if (onlyApplyingSelectedColumns) {
+                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            }
             this.table = table;
         }
 
@@ -244,7 +253,12 @@ public class ToStringCopyCell {
         public ToStringPasteForCellsAction(List<TableMenuCompositeToStringPaste> activeComposites, boolean onlyApplyingSelectedColumns) {
             super(null);
             putValue(NAME, onlyApplyingSelectedColumns ? "Paste Text to Cells" : "Paste Text to Row Cells");
-            putValue(ACCELERATOR_KEY, null);
+            if (onlyApplyingSelectedColumns) {
+                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            } else {
+                putValue(ACCELERATOR_KEY, null);
+            }
             this.activeComposites = activeComposites;
             this.onlyApplyingSelectedColumns = onlyApplyingSelectedColumns;
         }
@@ -320,7 +334,12 @@ public class ToStringCopyCell {
         public ToStringLoadForCellsAction(List<TableMenuCompositeToStringPaste> activeComposites, boolean onlyApplyingSelectedColumns, JComponent table) {
             super(activeComposites, onlyApplyingSelectedColumns);
             putValue(NAME, onlyApplyingSelectedColumns ? "Load Text to Cells..." : "Load Text to Row Cells...");
-            putValue(ACCELERATOR_KEY, null);
+            if (onlyApplyingSelectedColumns) {
+                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            } else {
+                putValue(ACCELERATOR_KEY, null);
+            }
             this.table = table;
             loader = new PopupExtensionText.TextLoadAction(null) {
                 @Override

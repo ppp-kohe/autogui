@@ -492,7 +492,7 @@ public interface GuiSwingView extends GuiSwingElement {
                 .forEach(i -> setupKeyBindingsForStaticJMenuSubItems(targetPane, i, overwrite));
     }
 
-    static void setupKeyBindingsForStaticMenuItemAction(JComponent pane, Action a, Predicate<Action> overwrite) {
+    static boolean setupKeyBindingsForStaticMenuItemAction(JComponent pane, Action a, Predicate<Action> overwrite) {
         KeyStroke s = (KeyStroke) a.getValue(Action.ACCELERATOR_KEY);
         if (s != null) {
             InputMap inputs = pane.getInputMap();
@@ -516,6 +516,9 @@ public interface GuiSwingView extends GuiSwingElement {
                 inputs.put(s, name);
                 actions.put(name, a);
             }
+            return put;
+        } else {
+            return false;
         }
     }
 

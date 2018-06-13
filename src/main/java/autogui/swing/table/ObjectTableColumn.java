@@ -220,7 +220,8 @@ public class ObjectTableColumn {
          *    and their actionPerformed(ActionEvent) will never be called.
          *    So you can just throw an exception in the method.
          * @param table the target table
-         * @param columns the selected target columns: also if row is true, row-fixed composites are included
+         * @param columns the selected target columns: also if row is true, row-fixed composites are included.
+         *                For setting up key-bindings, a table calls the methods with empty columns.
          * @param row true if the target are all columns of a row, or false if the target are only selected columns
          * @return menu items for composite items
          */

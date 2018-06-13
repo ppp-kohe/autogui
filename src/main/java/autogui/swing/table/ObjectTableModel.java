@@ -26,7 +26,7 @@ public class ObjectTableModel extends AbstractTableModel  {
     protected JTable table;
     protected Supplier<Object> source;
 
-    protected ObjectTableModelColumns columns = new ObjectTableModelColumns(this::refreshColumnView);
+    protected ObjectTableModelColumns columns = new ObjectTableModelColumns(this::columnAdded);
     /** cached computed values */
     protected Object[][] data;
 
@@ -395,7 +395,7 @@ public class ObjectTableModel extends AbstractTableModel  {
         fireTableRowsUpdatedAll();
     }
 
-    public void refreshColumnView(ObjectTableColumn column) {
+    public void columnAdded(ObjectTableColumn column) {
         fireTableRowsUpdatedAll(); //no data change
     }
 
