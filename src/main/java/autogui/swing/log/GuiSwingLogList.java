@@ -483,6 +483,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         public void mouseClicked(MouseEvent e) { }
 
         protected Instant popupTime;
+        protected Runnable delayedPressProcess;
 
         @Override
         public void mousePressed(MouseEvent e) {
@@ -495,29 +496,32 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             if (table.isPopupVisible()) {
                 return;
             }
-            popupTime = null;
-
-            table.requestFocusInWindow();
-            table.setValueIsAdjusting(true);
             pressPoint = e.getPoint();
+            delayedPressProcess = () -> {
+                popupTime = null;
 
-            int row = table.rowAtPoint(pressPoint);
-            pressIndex = row;
+                table.requestFocusInWindow();
+                table.setValueIsAdjusting(true);
 
-            Rectangle cellRect = table.getCellRect(row);
-            GuiSwingLogEntry entry = getEntry(pressPoint);
-            if (entry != null) {
-                ListSelectionModel sel = table.getSelectionModel();
-                //sel.addSelectionInterval(row, row);
-                if (e.isShiftDown()) {
-                    sel.setSelectionInterval(sel.getAnchorSelectionIndex(), row);
-                } else {
-                    sel.setSelectionInterval(row, row);
+                int row = table.rowAtPoint(pressPoint);
+                pressIndex = row;
+
+                Rectangle cellRect = table.getCellRect(row);
+                GuiSwingLogEntry entry = getEntry(pressPoint);
+                if (entry != null) {
+                    ListSelectionModel sel = table.getSelectionModel();
+                    //sel.addSelectionInterval(row, row);
+                    if (e.isShiftDown()) {
+                        sel.setSelectionInterval(sel.getAnchorSelectionIndex(), row);
+                    } else {
+                        sel.setSelectionInterval(row, row);
+                    }
+                    runEntry(row, entry, r -> {
+                        r.mousePressed(entry, convert(cellRect, pressPoint));
+                    });
                 }
-                runEntry(row, entry, r -> {
-                    r.mousePressed(entry, convert(cellRect, pressPoint));
-                });
-            }
+                delayedPressProcess = null;
+            };
         }
 
         public void runEntry(int row, GuiSwingLogEntry entry, Consumer<GuiSwingLogEntry.LogEntryRenderer> runner) {
@@ -549,6 +553,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                     table.isPopupVisible()) {
                 return;
             }
+            if (delayedPressProcess != null) {
+                delayedPressProcess.run();
+            }
 
             Point point = e.getPoint();
             int row = table.rowAtPoint(point);
@@ -568,6 +575,13 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         @Override
         public void mouseDragged(MouseEvent e) {
+            if (table.isPopupVisible()) {
+                return;
+            }
+            if (delayedPressProcess != null) {
+                delayedPressProcess.run();
+            }
+
             Point dragPoint = e.getPoint();
             int row = table.rowAtPoint(dragPoint);
             Rectangle cellRect = table.getCellRect(row);
