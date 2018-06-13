@@ -222,6 +222,7 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
             for (int i = 0; i < addingCount; ++i) {
                 ObjectTableColumn column = factory.createColumn(index);
                 column.getTableColumn().setModelIndex(index.getTotalIndex());
+                columns.add(column);
                 changingColumns.add(column);
                 index.increment(1);
             }
