@@ -19,6 +19,8 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -268,6 +270,11 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         menu.show(this, p.x, p.y);
     }
 
+    public boolean isPopupVisible() {
+        JPopupMenu menu = getComponentPopupMenu();
+        return menu != null && menu.isVisible();
+    }
+
     /** the list model for the log-list component */
     public static class GuiSwingLogListModel extends AbstractListModel<GuiLogEntry> {
         protected int entryLimit = -1;
@@ -475,13 +482,20 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         @Override
         public void mouseClicked(MouseEvent e) { }
 
+        protected Instant popupTime;
+
         @Override
         public void mousePressed(MouseEvent e) {
             if (e.isPopupTrigger()) {
                 e.consume();
                 table.showPopup(e.getPoint());
+                popupTime = Instant.now();
                 return;
             }
+            if (table.isPopupVisible()) {
+                return;
+            }
+            popupTime = null;
 
             table.requestFocusInWindow();
             table.setValueIsAdjusting(true);
@@ -530,6 +544,12 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                 table.showPopup(e.getPoint());
                 return;
             }
+            if ((popupTime != null &&
+                    Duration.between(popupTime, Instant.now()).compareTo(Duration.ofMillis(100)) <= 0) ||
+                    table.isPopupVisible()) {
+                return;
+            }
+
             Point point = e.getPoint();
             int row = table.rowAtPoint(point);
             Rectangle cellRect = table.getCellRect(row);

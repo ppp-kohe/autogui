@@ -9,7 +9,7 @@ import autogui.swing.log.GuiSwingLogManager;
 @GuiIncluded
 public class LogExp {
     public static void main(String[] args) {
-        //GuiSwingLogManager.setDefaultReplace(false);
+        GuiSwingLogManager.setDefaultReplace(false);
         AutoGuiShell.get().showWindow(new LogExp());
     }
 
@@ -21,16 +21,20 @@ public class LogExp {
 
     @GuiIncluded(index = 1)
     public void showMessage() {
-        System.err.println(message.toString());
-        //you can also write:
-        // GuiLogManager.get().logString(message.toString());
+        if (GuiSwingLogManager.replaceErr) {
+            System.err.println(message.toString());
+        } else {
+            GuiLogManager.get().logString(message.toString());
+        }
     }
 
     @GuiIncluded(index = 2)
     public void showException() {
-        throw new RuntimeException(message.toString());
-        //you can also write:
-        //  GuiLogManager.get().logError(new RuntimeException(message.toString()));
+        if (GuiSwingLogManager.replaceExceptionHandler) {
+            GuiLogManager.get().logError(new RuntimeException(message.toString()));
+        } else {
+            throw new RuntimeException(message.toString());
+        }
     }
 
     @GuiIncluded(index = 3)
