@@ -67,6 +67,7 @@ public class GuiReprActionList implements GuiRepresentation {
      * <pre>
      *     //&#64;GuiListSelectionCallback(index=true) //for automatic selection
      *     public void select(List&lt;E&gt; list) {...}
+     *     public void select(List&lt;E&gt; list, String propName) {...}
      * </pre>
      * @param context the action context
      * @param tableContext context for the target element of list
@@ -82,6 +83,7 @@ public class GuiReprActionList implements GuiRepresentation {
      * <pre>
      *     //&#64;GuiListSelectionCallback(index=true) //for automatic selection
      *     public void select(List&lt;Integer&gt; rows) {...}
+     *     public void select(List&lt;Integer&gt; rows, String propName) {...}
      * </pre>
      * @param context the action context
      * @return true if the action is automatic selection and taking a list of row indexes
@@ -99,6 +101,7 @@ public class GuiReprActionList implements GuiRepresentation {
      * <pre>
      *     //&#64;GuiListSelectionCallback(index=true) //for automatic selection
      *     public void select(List&lt;int[]&gt; rows) {...}
+     *     public void select(List&lt;int[]&gt; rows, String propName) {...}
      * </pre>
      * @param context the action context
      * @return true if the action is automatic selection and taking a list of row and column pair indexes

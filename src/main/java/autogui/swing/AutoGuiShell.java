@@ -60,7 +60,7 @@ public class AutoGuiShell {
         });
     }
 
-    public static GuiSwingWindow liveShow(Object o) {
+    public static GuiSwingWindow showLive(Object o) {
         GuiSwingWindow w = get().createWindowRelaxed(o);
         SwingUtilities.invokeLater(() -> w.setVisible(true));
         return w;

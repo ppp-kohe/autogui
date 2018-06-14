@@ -85,13 +85,17 @@ public class GuiReprAction implements GuiRepresentation {
         return GuiReprActionList.isSelectionChangeActionForActions(context, tableContext);
     }
 
+    /* //actions for an element-type do not support selection-changes with indexes.
+       // it cannot determine the target property;
+       // a property name (like List<int[]> act(String prop)) might be useless
+       //  because the element class can be used some other new classes.
+       // List<Integer> and List<int[]> is intended for primitive elements
+       //  which cannot have a new method and thus never contain GuiReprAction
     public boolean isSelectionChangeRowIndexesAction(GuiMappingContext context) {
         return GuiReprActionList.isSelectionChangeRowIndexesActionForActions(context);
     }
-
-
     public boolean isSelectionChangeRowAndColumnIndexesAction(GuiMappingContext context) {
         return GuiReprActionList.isSelectionChangeRowAndColumnIndexesActionForActions(context);
     }
-
+    */
 }

@@ -79,14 +79,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     GuiReprActionList listAction = (GuiReprActionList) siblingContext.getRepresentation();
 
                     GuiSwingTableColumnSetDefault.TableSelectionListAction createdAction = null;
-                    if (listAction.isSelectionAction(siblingContext, context)) {
-                        createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table);
-                    } else if (listAction.isSelectionRowIndexesAction(siblingContext)) {
+                    if (listAction.isSelectionRowIndexesAction(siblingContext)) {
                         createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
                                 table.getSelectionSourceForRowIndexes());
                     } else if (listAction.isSelectionRowAndColumnIndexesAction(siblingContext)) {
                         createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
                                 table.getSelectionSourceForRowAndColumnIndexes());
+                    } else if (listAction.isSelectionAction(siblingContext, context)) {
+                        createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table);
                     }
 
                     if (createdAction != null) {

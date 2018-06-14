@@ -125,8 +125,8 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
     /**
      * an action for executing an {@link GuiReprActionList} with selected targets.
-     *  instances of the class is created by a collection-table instead of the column-set,
-     *   because of a list-action is created as a sibling node of the target collection;
+     *  an instance of the class is created by a collection-table instead of the column-set,
+     *   because a list-action is created as a sibling node of the target collection;
      * <pre>
      *     class T {
      *         public List&lt;E&gt; collectionProp;
@@ -136,8 +136,11 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      * <p>
      *     also, the action can return newly selected items
      * <pre>
+     *         &#64;GuiListSelectionChanger
      *         public Collection&lt;Integer&gt; action(&lt;E&gt; selected) {...}  //selected row indexes
+     *         &#64;GuiListSelectionChanger(index=true)
      *         public Collection&lt;E&gt;       action(&lt;E&gt; selected) {...}  //selected row values
+     *         &#64;GuiListSelectionChanger(index=true)
      *         public Collection&lt;int[]&gt;   action(&lt;E&gt; selected) {...} //{row, column}
      * </pre>
      */
@@ -210,26 +213,20 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         public void setSelectionChangeFactoryFromContext(GuiMappingContext tableContext) {
             if (context.isReprActionList()) {
                 GuiReprActionList listAction = context.getReprActionList();
-                if (listAction.isSelectionChangeAction(context, tableContext)) {
-                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeValues);
-                    selectionChange = true;
-                } else if (listAction.isSelectionChangeRowIndexesAction(context)) {
+                if (listAction.isSelectionChangeRowIndexesAction(context)) { //even if the element type is Integer
                     setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndexes);
                     selectionChange = true;
                 } else if (listAction.isSelectionChangeRowAndColumnIndexesAction(context)) {
                     setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndexesRowAndColumn);
+                    selectionChange = true;
+                } else if (listAction.isSelectionChangeAction(context, tableContext)) {
+                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeValues);
                     selectionChange = true;
                 }
             } else if (context.isReprAction()) {
                 GuiReprAction listAction = context.getReprAction();
                 if (listAction.isSelectionChangeAction(context, tableContext)) {
                     setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeValues);
-                    selectionChange = true;
-                } else if (listAction.isSelectionChangeRowIndexesAction(context)) {
-                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndexes);
-                    selectionChange = true;
-                } else if (listAction.isSelectionChangeRowAndColumnIndexesAction(context)) {
-                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndexesRowAndColumn);
                     selectionChange = true;
                 }
             }
@@ -248,9 +245,11 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      *     }
      * </pre>
      * <pre>
-     *     public Collection&gt;Integer&gt; action() { ... }
-     *     public Collection&gt;E&gt;       action() { ... }
-     *     public Collection&gt;int[]&gt;   action() { ... }
+     *     class E {
+     *         ...
+     *         &#64;GuiListSelectionChanger
+     *         public Collection&lt;E&gt; action() { ... }
+     *     }
      * </pre>
      * */
     public static class TableSelectionAction extends TableSelectionListAction {

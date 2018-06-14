@@ -32,10 +32,6 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         for (GuiSwingViewCollectionTable.CollectionTable table : tables) {
             if (action.isSelectionChangeAction(context, table.getSwingViewContext())) {
                 conversions.add(new TableSelectionConversion(table, GuiSwingTableColumnSet::createChangeValues));
-            } else if (action.isSelectionChangeRowIndexesAction(context)) {
-                conversions.add(new TableSelectionConversion(table, GuiSwingTableColumnSet::createChangeIndexes));
-            } else if (action.isSelectionChangeRowAndColumnIndexesAction(context)) {
-                conversions.add(new TableSelectionConversion(table, GuiSwingTableColumnSet::createChangeIndexesRowAndColumn));
             }
         }
         return conversions;

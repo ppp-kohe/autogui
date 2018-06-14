@@ -56,10 +56,11 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
         return IntStream.of(rows)
                 .boxed()
                 .flatMap(r -> IntStream.of(cols)
-                    .mapToObj(c -> new int[] {
-                            table.convertRowIndexToModel(r),
-                            table.convertColumnIndexToModel(c)
-                    }));
+                        .filter(c -> table.isCellSelected(r, c))
+                        .mapToObj(c -> new int[] {
+                                table.convertRowIndexToModel(r),
+                                table.convertColumnIndexToModel(c)
+                        }));
     }
 
     @Override
@@ -67,12 +68,12 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
         int[] rows = table.getSelectedRows();
         return IntStream.of(rows)
                 .boxed()
-                .flatMap(r ->
-                        IntStream.range(0, table.getColumnCount())
-                            .mapToObj(c -> new int[] {
-                                    table.convertRowIndexToModel(r),
-                                    table.convertColumnIndexToModel(c)
-                            }));
+                .flatMap(r -> IntStream.range(0, table.getColumnCount())
+                        .filter(c -> table.isCellSelected(r, c))
+                        .mapToObj(c -> new int[] {
+                                table.convertRowIndexToModel(r),
+                                table.convertColumnIndexToModel(c)
+                        }));
     }
 
     @Override
