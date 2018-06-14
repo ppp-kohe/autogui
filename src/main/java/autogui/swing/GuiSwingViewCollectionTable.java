@@ -122,6 +122,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected TableSelectionSourceForIndexes selectionSourceForRowIndexes;
         protected TableSelectionSourceForIndexes selectionSourceForRowAndColumnIndexes;
 
+        protected PopupExtensionCollectionColumnHeader popupColumnHeader;
+        protected List<PopupCategorized.CategorizedMenuItem> columnHeaderMenuItems;
+
         protected MenuBuilder.MenuLabel infoLabel;
 
         protected JToolBar actionToolBar;
@@ -251,7 +254,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             getColumnModel().addColumnModelListener(preferencesUpdater);
             getRowSorter().addRowSorterListener(preferencesUpdater);
 
-            new ColumnContextMenu(e -> System.out.println(e)).installTo(this); //TODO
+            popupColumnHeader = new PopupExtensionCollectionColumnHeader(this,
+                    new PopupCategorized(this::getColumnHeaderMenuItems));
 
             getPopup().setupCompositeKeyMap();
 
@@ -639,6 +643,24 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setKeyStrokeString(String keyStrokeString) {
             infoLabel.setAdditionalInfo(keyStrokeString);
         }
+
+        public List<PopupCategorized.CategorizedMenuItem> getColumnHeaderMenuItems() {
+            if (columnHeaderMenuItems == null) {
+                ColumnResizeModeSwitchAction switchAction = new ColumnResizeModeSwitchAction(this);
+                columnHeaderMenuItems = PopupCategorized.getMenuItems(Arrays.asList(
+                        new ColumnFitAllWidthAction(this, popupColumnHeader::getTargetColumn,
+                                switchAction::updateSelected),
+                        switchAction,
+                        new ColumnOrderResetAction(this)
+                ));
+            }
+            return columnHeaderMenuItems;
+        }
+
+        @Override
+        public int convertColumnIndexToView(int modelColumnIndex) {
+            return getObjectTableModel().getColumns().convertColumnModelToView(modelColumnIndex);
+        }
     }
 
     public static class ObjectTableModelCollection extends ObjectTableModel {
@@ -722,7 +744,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public TableSelectionSourceForIndexes(CollectionTable table, boolean rowAndColumns) {
             this.table = table;
-            cellTargets = new TableTargetCellForJTable(table);
+            cellTargets = new TableTargetCellForCollectionTable(table);
             this.rowAndColumns = rowAndColumns;
         }
 
@@ -755,6 +777,32 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void selectionActionFinished(boolean autoSelection, GuiSwingTableColumnSet.TableSelectionChange change) {
             table.selectionActionFinished(autoSelection, change);
+        }
+    }
+
+    public static class TableTargetCellForCollectionTable extends TableTargetCellForJTable {
+        public TableTargetCellForCollectionTable(CollectionTable table) {
+            super(table);
+        }
+
+        public CollectionTable getCollectionTable() {
+            return (CollectionTable) getTable();
+        }
+
+        @Override
+        public int[] convertViewToData(int viewRow, int viewColumn) {
+            int[] idx = super.convertViewToData(viewRow, viewColumn);
+            ObjectTableColumn column = getCollectionTable().getObjectTableModel().getColumns().getColumnAt(idx[1]);
+
+            int[] subIndex = column.columnIndexToValueIndex(idx[1]); //subIndex = {column, prop}
+            if (subIndex == null) {
+                return null;
+            } else {
+                int[] res = new int[1 + subIndex.length];
+                res[0] = idx[0];
+                System.arraycopy(subIndex, 0, res, 1, subIndex.length);
+                return res;
+            }
         }
     }
 
@@ -1150,9 +1198,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                                     shared,
                                     item.getCategory(), item.getSubCategory());
                     if (GuiSwingView.setupKeyBindingsForStaticMenuItemAction(table, keyAction, act -> false)) {
-                        System.err.println("bind action:" +
-                                keyAction.getValue(Action.NAME) + "  key:" +
-                                keyAction.getValue(Action.ACCELERATOR_KEY));
+//                        System.err.println("bind action:" +
+//                                keyAction.getValue(Action.NAME) + "  key:" +
+//                                keyAction.getValue(Action.ACCELERATOR_KEY));
                     }
                 }
             });
@@ -1368,43 +1416,43 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
     }
 
-    public static class ColumnContextMenu implements MouseListener {
-        protected Consumer<TableColumn> runner;
-        protected JTable table;
+    public static class PopupExtensionCollectionColumnHeader extends PopupExtension implements MouseListener {
+        protected TableColumn targetColumn;
 
-        public ColumnContextMenu(Consumer<TableColumn> runner) {
-            this.runner = runner;
+        public PopupExtensionCollectionColumnHeader(JTable table, PopupMenuBuilder menuBuilder) {
+            super(table, PopupExtension.getDefaultKeyMatcher(), menuBuilder, new DefaultPopupGetter(table));
         }
 
-        public void installTo(JTable table) {
-            this.table = table;
-            table.getTableHeader().addMouseListener(this);
+        public JTable getPaneTable() {
+            return (JTable) getPane();
+        }
 
+        @Override
+        public void addListenersTo(JComponent pane) {
+            if (pane instanceof JTable) {
+                ((JTable) pane).getTableHeader().addMouseListener(this);
+            }
         }
 
         @Override
         public void mousePressed(MouseEvent e) {
-            if (e.isPopupTrigger()) {
-                TableColumn c = getClickedColumn(e);
-
-            }
+            targetColumn = getClickedColumn(e);
+            super.mousePressed(e);
         }
 
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            if (e.isPopupTrigger()) {
-                TableColumn c = getClickedColumn(e);
-
-            }
+        public TableColumn getTargetColumn() {
+            return targetColumn;
         }
 
         public TableColumn getClickedColumn(MouseEvent e) {
+            JTable table = getPaneTable();
             TableColumnModel model = table.getColumnModel();
             JTableHeader header = table.getTableHeader();
             int i = Math.min(model.getColumnCount() - 1,
                     (int) (e.getX() / (header.getWidth() / (float) model.getColumnCount())));
             int inc = 0;
-            while (0 <= i && i < model.getColumnCount()) {
+            int n = 0;
+            while (0 <= i && i < model.getColumnCount() && n < model.getColumnCount()) {
                 Rectangle r = header.getHeaderRect(i);
                 if (r.contains(e.getPoint())) {
                     return model.getColumn(i);
@@ -1412,16 +1460,119 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     inc = r.getMaxX() < e.getX() ? 1 : -1;
                 }
                 i += inc;
+                ++n;
             }
             return null;
+        }
+    }
+
+    public static String CATEGORY_COLUMN_RESIZE = MenuBuilder.getCategoryImplicit("Column Width");
+    public static String CATEGORY_COLUMN_ORDER = MenuBuilder.getCategoryImplicit("Column Order");
+
+    public static class ColumnFitAllWidthAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        protected JTable table;
+        protected Supplier<TableColumn> targetColumn;
+        protected Runnable afterRunner;
+
+        public ColumnFitAllWidthAction(JTable table, Supplier<TableColumn> targetColumn, Runnable afterRunner) {
+            putValue(NAME, "Set All Column Width to This");
+            this.table = table;
+            this.targetColumn = targetColumn;
+            this.afterRunner = afterRunner;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            TableColumn c = targetColumn.get();
+            if (c != null) {
+                table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+                int w = c.getWidth();
+                Collections.list(table.getColumnModel().getColumns())
+                        .forEach(otherCol -> otherCol.setPreferredWidth(w));
+                if (afterRunner != null) {
+                    afterRunner.run();
+                }
+            }
+        }
+
+        @Override
+        public String getCategory() {
+            return CATEGORY_COLUMN_RESIZE;
+        }
+    }
+
+    public static class ColumnResizeModeSwitchAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemActionCheck {
+        protected JTable table;
+
+        public ColumnResizeModeSwitchAction(JTable table) {
+            putValue(NAME, "Auto Resize");
+            this.table = table;
+            updateSelected();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (isSelected()) {
+                table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+            } else {
+                table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+            }
+            updateSelected();
+        }
+
+        public boolean isSelected() {
+            return table.getAutoResizeMode() != JTable.AUTO_RESIZE_OFF;
+        }
+
+        public void updateSelected() {
+            putValue(SELECTED_KEY, isSelected());
         }
 
 
         @Override
-        public void mouseClicked(MouseEvent e) { }
+        public String getCategory() {
+            return CATEGORY_COLUMN_RESIZE;
+        }
+    }
+
+    public static class ColumnOrderResetAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        protected JTable table;
+
+        public ColumnOrderResetAction(JTable table) {
+            putValue(NAME, "Reset Column Order");
+            this.table = table;
+        }
+
         @Override
-        public void mouseEntered(MouseEvent e) { }
+        public void actionPerformed(ActionEvent e) {
+            TableColumnModel model = table.getColumnModel();
+            List<TableColumn> cols = new ArrayList<>(Collections.list(model.getColumns()));
+
+            Map<Integer,Integer> modelToView = new HashMap<>(cols.size());
+
+            IntStream.range(0, cols.size())
+                    .forEach(i -> modelToView.put(cols.get(i).getModelIndex(), i));
+
+            cols.sort(Comparator.comparing(TableColumn::getModelIndex));
+
+            for (TableColumn col : cols) {
+                int mi = col.getModelIndex();
+                int vi = modelToView.get(mi);
+                model.moveColumn(vi, mi);
+                modelToView.remove(mi);
+
+                for (Map.Entry<Integer,Integer> entry : modelToView.entrySet()) {
+                    int i = entry.getValue();
+                    if (mi <= i && i < vi) { //always mi <= vi
+                        entry.setValue(i + 1);
+                    }
+                }
+            }
+        }
+
         @Override
-        public void mouseExited(MouseEvent e) { }
+        public String getCategory() {
+            return CATEGORY_COLUMN_ORDER;
+        }
     }
 }

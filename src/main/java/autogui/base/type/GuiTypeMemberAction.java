@@ -2,7 +2,7 @@ package autogui.base.type;
 
 import autogui.GuiIncluded;
 import autogui.GuiListSelectionCallback;
-import autogui.GuiListSelectionChanger;
+import autogui.GuiListSelectionUpdater;
 
 import java.lang.reflect.Method;
 
@@ -82,7 +82,7 @@ public class GuiTypeMemberAction extends GuiTypeMember {
     public boolean isSelectionChangeAction() {
         Method method = getMethod();
         if (method != null) {
-            return method.isAnnotationPresent(GuiListSelectionChanger.class);
+            return method.isAnnotationPresent(GuiListSelectionUpdater.class);
         } else {
             return false;
         }
@@ -91,8 +91,8 @@ public class GuiTypeMemberAction extends GuiTypeMember {
     public boolean isSelectionChangeIndexAction() {
         Method method = getMethod();
         if (method != null) {
-            return method.isAnnotationPresent(GuiListSelectionChanger.class) &&
-                    method.getAnnotation(GuiListSelectionChanger.class).index();
+            return method.isAnnotationPresent(GuiListSelectionUpdater.class) &&
+                    method.getAnnotation(GuiListSelectionUpdater.class).index();
         } else {
             return false;
         }

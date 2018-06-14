@@ -32,11 +32,10 @@ public class TableTargetColumnForJTable extends TableTargetCellForJTable
 
     @Override
     public Stream<int[]> getSelectedCellIndexesStream() {
-        int[] rows = table.getSelectedRows();
-        return IntStream.of(rows)
+        return getSelectedRows()
                 .boxed()
                 .map(r -> new int[]{
-                        table.convertRowIndexToModel(r),
+                        r,
                         column
                 });
     }

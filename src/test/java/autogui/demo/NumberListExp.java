@@ -1,7 +1,7 @@
 package autogui.demo;
 
 import autogui.GuiIncluded;
-import autogui.GuiListSelectionChanger;
+import autogui.GuiListSelectionUpdater;
 import autogui.swing.AutoGuiShell;
 
 import java.util.ArrayList;
@@ -40,14 +40,13 @@ public class NumberListExp {
 
         @GuiIncluded
         public void add() {
-            for (int i = 0 ; i < 10; ++i) {
+            for (int i = 0 ; i < size; ++i) {
                 integers.add(start);
                 start += stride;
             }
             integers = new ArrayList<>(integers);
         }
 
-        @GuiIncluded
         public void show(List<Integer> selectedIndexes) {
             StringBuilder buf = new StringBuilder();
             for (int i = 0, l = selectedIndexes.size(); i < l; ++i) {
@@ -72,7 +71,7 @@ public class NumberListExp {
                     .collect(Collectors.toList());
         }
 
-        @GuiListSelectionChanger(index = true)
+        @GuiListSelectionUpdater(index = true)
         @GuiIncluded
         public List<Integer> next(List<Integer> selectedIndexes) {
             return selectedIndexes.stream()
@@ -99,7 +98,7 @@ public class NumberListExp {
 
         @GuiIncluded
         public void addFloats() {
-            for (int i = 0 ; i < 10; ++i) {
+            for (int i = 0 ; i < size; ++i) {
                 floats.add((float) start);
                 start += stride;
             }
@@ -108,7 +107,7 @@ public class NumberListExp {
 
         @GuiIncluded
         public void addDoubles() {
-            for (int i = 0 ; i < 10; ++i) {
+            for (int i = 0 ; i < size; ++i) {
                 doubles.add(start);
                 start += stride;
             }
@@ -155,7 +154,7 @@ public class NumberListExp {
             }
         }
 
-        @GuiListSelectionChanger(index = true)
+        @GuiListSelectionUpdater(index = true)
         @GuiIncluded
         public List<Integer> next(List<Integer> selectedIndexes, String propName) {
             return selectedIndexes.stream()

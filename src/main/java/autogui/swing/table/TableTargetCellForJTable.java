@@ -5,6 +5,7 @@ import autogui.base.mapping.GuiReprCollectionTable;
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -27,8 +28,11 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
 
     @Override
     public IntStream getSelectedRows() {
-        return IntStream.of(table.getSelectedRows())
-                .map(table::convertRowIndexToModel);
+        return getSelectedRowsView().map(table::convertRowIndexToModel);
+    }
+
+    public IntStream getSelectedRowsView() {
+        return IntStream.of(table.getSelectedRows());
     }
 
     @Override
@@ -51,29 +55,30 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
 
     @Override
     public Stream<int[]> getSelectedCellIndexesStream() {
-        int[] rows = table.getSelectedRows();
         int[] cols = table.getSelectedColumns();
-        return IntStream.of(rows)
+        return getSelectedRowsView()
                 .boxed()
                 .flatMap(r -> IntStream.of(cols)
                         .filter(c -> table.isCellSelected(r, c))
-                        .mapToObj(c -> new int[] {
-                                table.convertRowIndexToModel(r),
-                                table.convertColumnIndexToModel(c)
-                        }));
+                        .mapToObj(c -> convertViewToData(r, c)))
+                        .filter(Objects::nonNull);
     }
 
     @Override
     public Stream<int[]> getSelectedRowAllCellIndexesStream() {
-        int[] rows = table.getSelectedRows();
-        return IntStream.of(rows)
+        return getSelectedRowsView()
                 .boxed()
                 .flatMap(r -> IntStream.range(0, table.getColumnCount())
                         .filter(c -> table.isCellSelected(r, c))
-                        .mapToObj(c -> new int[] {
-                                table.convertRowIndexToModel(r),
-                                table.convertColumnIndexToModel(c)
-                        }));
+                        .mapToObj(c -> convertViewToData(r, c)))
+                        .filter(Objects::nonNull);
+    }
+
+    public int[] convertViewToData(int viewRow, int viewColumn) {
+        return new int[] {
+                table.convertRowIndexToModel(viewRow),
+                table.convertColumnIndexToModel(viewColumn)
+        };
     }
 
     @Override

@@ -1,5 +1,8 @@
 package autogui.swing.table;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ObjectTableColumnIndex implements Cloneable {
     protected ObjectTableColumnIndex parent;
     protected int totalIndex;
@@ -44,5 +47,17 @@ public class ObjectTableColumnIndex implements Cloneable {
     public void increment(int flattenSize) {
         ++index;
         totalIndex +=flattenSize;
+    }
+
+    public int[] toIndexes() {
+        List<Integer> is = new ArrayList<>();
+        ObjectTableColumnIndex i = this;
+        while (i != null) {
+            is.add(0, index);
+            i = i.getParent();
+        }
+        return is.stream()
+                .mapToInt(Integer::intValue)
+                .toArray();
     }
 }

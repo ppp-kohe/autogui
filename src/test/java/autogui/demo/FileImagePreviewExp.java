@@ -2,7 +2,7 @@ package autogui.demo;
 
 import autogui.GuiIncluded;
 import autogui.GuiListSelectionCallback;
-import autogui.GuiListSelectionChanger;
+import autogui.GuiListSelectionUpdater;
 import autogui.swing.AutoGuiShell;
 
 import javax.imageio.ImageIO;
@@ -75,7 +75,7 @@ public class FileImagePreviewExp {
             preview.setImage(item.get(0).getThumb());
         }
 
-        @GuiListSelectionChanger
+        @GuiListSelectionUpdater
         @GuiIncluded
         public List<FileItem> up() {
             Path old = dir;

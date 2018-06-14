@@ -8,13 +8,11 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import java.text.Collator;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 /** column managing part of {@link ObjectTableModel} */
-public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColumnHost {
+public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColumnHost, TableColumnModelListener {
     protected DefaultTableColumnModel columnModel;
     protected List<ObjectTableColumn> columns = new ArrayList<>();
     protected List<ObjectTableColumn> staticColumns = new ArrayList<>();
@@ -23,11 +21,14 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
 
     protected Consumer<ObjectTableColumn> updater;
 
+    protected Map<Integer,Integer> modelToView = new HashMap<>();
+
     public ObjectTableModelColumns(Consumer<ObjectTableColumn> updater) {
         this.updater = updater;
         columnModel = new DefaultTableColumnModel();
 
-        //TODO debug
+        /*
+        //debug
         columnModel.addColumnModelListener(new TableColumnModelListener() {
             @Override
             public void columnAdded(TableColumnModelEvent e) {
@@ -51,7 +52,7 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
             @Override
             public void columnSelectionChanged(ListSelectionEvent e) {
             }
-        });
+        });*/
     }
 
     public DefaultTableColumnModel getColumnModel() {
@@ -161,6 +162,43 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
                 .mapToInt(ObjectTableColumn::getRowHeight)
                 .max().orElse(0);
     }
+
+    @Override
+    public void columnAdded(TableColumnModelEvent e) {
+        modelToView.put(columnModel.getColumn(e.getToIndex()).getModelIndex(), e.getToIndex());
+    }
+
+    @Override
+    public void columnRemoved(TableColumnModelEvent e) { }
+
+    @Override
+    public void columnMoved(TableColumnModelEvent e) {
+        modelToView.put(columnModel.getColumn(e.getToIndex()).getModelIndex(), e.getToIndex());
+    }
+
+    public int convertColumnModelToView(int modelIndex) {
+        Integer n = modelToView.get(modelIndex);
+        if (n == null || n >= columnModel.getColumnCount() || columnModel.getColumn(n).getModelIndex() != n) {
+            int i = 0;
+            n = -1;
+            for (Enumeration<TableColumn> iter = columnModel.getColumns(); iter.hasMoreElements();) {
+                TableColumn next = iter.nextElement();
+                if (next.getModelIndex() == modelIndex) {
+                    n = i;
+                    break;
+                }
+                ++i;
+            }
+            modelToView.put(modelIndex, n);
+        }
+        return n;
+    }
+
+    @Override
+    public void columnMarginChanged(ChangeEvent e) { }
+
+    @Override
+    public void columnSelectionChanged(ListSelectionEvent e) { }
 
     public static class ObjectTableColumnDynamic {
         protected ObjectTableColumnDynamicFactory factory;

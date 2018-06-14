@@ -30,7 +30,12 @@ public class GuiSwingKeyBinding {
             return null;
         } else {
             KeyStroke s = KeyStroke.getKeyStroke(key);
-            return copyWithModifiers(s, s.getModifiers() | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+            if (s == null) {
+                System.err.println("could not obtain key-stroke for \"" + key + "\"");
+                return null;
+            } else {
+                return copyWithModifiers(s, s.getModifiers() | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+            }
         }
     }
 

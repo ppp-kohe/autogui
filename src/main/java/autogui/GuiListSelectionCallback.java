@@ -19,10 +19,17 @@ import java.lang.annotation.Target;
  *         public void selectRowIndexes(List&lt;Integer&gt; rows) {
  *             ...
  *         }
- *
  *         &#64;GuiListSelectionCallback(index=true) &#64;GuiIncluded
  *         public void selectRowAndColumnIndexes(List&lt;int[]&gt; rowAndColumn) {
  *             ...
+ *         }
+ *
+ *         &#64;GuiIncluded public class E {
+ *              ...
+ *              &#64;GuiListSelectionCallback &#64;GuiIncluded
+ *              public void select() {
+ *                  ...
+ *              }
  *         }
  *     }
  * </pre>

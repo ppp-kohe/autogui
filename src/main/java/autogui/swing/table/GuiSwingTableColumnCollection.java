@@ -8,6 +8,7 @@ import autogui.swing.GuiSwingView;
 
 import javax.swing.table.TableColumn;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -112,15 +113,26 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
 
         @Override
         public ObjectTableColumn createColumn(ObjectTableColumnIndex columnIndex) {
-            int col = columnIndex.getIndex() % columnStatic.size();
+            int propIndex = columnIndex.getIndex() % columnStatic.size();
             int elemIndex = columnIndex.getIndex() / columnStatic.size(); //TODO OK?
+
+            int[] indexes = toIndexes(columnIndex, elemIndex, propIndex);
+
             columnSpecifierIndex.setIndex(elemIndex);
-            ContextAndColumn cc = columnStatic.get(col);
+            ContextAndColumn cc = columnStatic.get(propIndex);
             return new ObjectTableColumnCollectionWrapper(
                     cc.column.createColumn(cc.context, null, cc.parentSpecifier),
                     context.getChildren().get(0), //elementContext
-                    elemIndex,
+                    elemIndex, propIndex, indexes,
                     columnSpecifierIndex);
+        }
+
+        public int[] toIndexes(ObjectTableColumnIndex columnIndex, int elemIndex, int propIndex) {
+            int[] indexes = columnIndex.toIndexes();
+            int[] indexesWithElem = Arrays.copyOf(indexes, indexes.length + 1);
+            indexesWithElem[indexes.length - 1] = elemIndex;
+            indexesWithElem[indexes.length] = propIndex;
+            return indexesWithElem;
         }
     }
 
@@ -141,14 +153,21 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
         protected ObjectTableColumn column;
         protected GuiMappingContext elementContext;
         protected int elementIndex;
+        protected int propertyIndex;
+        /**
+         * suppose {(parentIndexes, ...,) elementIndex, propertyIndex}
+         */
+        protected int[] indexes;
         protected SpecifierManagerIndex elementSpecifier;
 
         public ObjectTableColumnCollectionWrapper(ObjectTableColumn column,
-                                                  GuiMappingContext elementContext, int elementIndex,
-                                                  SpecifierManagerIndex elementSpecifier) {
+                                                  GuiMappingContext elementContext, int elementIndex, int propertyIndex,
+                                                  int[] indexes, SpecifierManagerIndex elementSpecifier) {
             this.column = column;
             this.elementContext = elementContext;
             this.elementIndex = elementIndex;
+            this.propertyIndex = propertyIndex;
+            this.indexes = indexes;
             this.elementSpecifier = elementSpecifier;
             if (column != null) {
                 column.withHeaderValue(column.getTableColumn().getHeaderValue() + " [" + elementIndex + "]");
@@ -184,6 +203,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
             } catch (Throwable ex) {
                 throw new RuntimeException(ex);
             }
+        }
+
+        @Override
+        public int[] columnIndexToValueIndex(int columnIndex) {
+            return indexes;
         }
 
         @Override

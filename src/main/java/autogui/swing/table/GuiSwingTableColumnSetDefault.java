@@ -136,11 +136,11 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      * <p>
      *     also, the action can return newly selected items
      * <pre>
-     *         &#64;GuiListSelectionChanger
+     *         &#64;GuiListSelectionUpdater
      *         public Collection&lt;Integer&gt; action(&lt;E&gt; selected) {...}  //selected row indexes
-     *         &#64;GuiListSelectionChanger(index=true)
+     *         &#64;GuiListSelectionUpdater(index=true)
      *         public Collection&lt;E&gt;       action(&lt;E&gt; selected) {...}  //selected row values
-     *         &#64;GuiListSelectionChanger(index=true)
+     *         &#64;GuiListSelectionUpdater(index=true)
      *         public Collection&lt;int[]&gt;   action(&lt;E&gt; selected) {...} //{row, column}
      * </pre>
      */
@@ -247,7 +247,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      * <pre>
      *     class E {
      *         ...
-     *         &#64;GuiListSelectionChanger
+     *         &#64;GuiListSelectionUpdater
      *         public Collection&lt;E&gt; action() { ... }
      *     }
      * </pre>

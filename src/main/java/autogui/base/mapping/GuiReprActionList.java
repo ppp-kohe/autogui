@@ -129,7 +129,7 @@ public class GuiReprActionList implements GuiRepresentation {
 
     /**
      * <pre>
-     *     &#64;GuiListSelectionChanger
+     *     &#64;GuiListSelectionUpdater
      *     public Collection&lt;E&gt; select(...) { ... }
      * </pre>
      * @param context context of the action

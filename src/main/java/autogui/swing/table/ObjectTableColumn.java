@@ -98,6 +98,10 @@ public class ObjectTableColumn {
         return null;
     }
 
+    public int[] columnIndexToValueIndex(int columnIndex) {
+        return new int[] {columnIndex};
+    }
+
     //////////////// setter for table column
 
     public ObjectTableColumn withValueType(Class<?> valueType) {
@@ -265,6 +269,11 @@ public class ObjectTableColumn {
                     new ToStringCopyCell.TableMenuCompositeToStringPaste(index),
                     new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index),
                     new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(index));
+        }
+
+        @Override
+        public int[] columnIndexToValueIndex(int columnIndex) {
+            return null;
         }
     }
 
