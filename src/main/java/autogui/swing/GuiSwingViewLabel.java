@@ -12,6 +12,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.util.Arrays;
 import java.util.List;
@@ -71,6 +73,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
             initValue();
             initPopup();
             initDragDrop();
+            initKeyBindingsForStaticMenuItems();
         }
 
         public void initName() {
@@ -87,6 +90,12 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         public void initFocus() {
             setFocusable(true);
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    requestFocusInWindow();
+                }
+            });
         }
 
         public void initBorder() {
@@ -105,8 +114,11 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         public void initPopup() {
             popup = new PopupExtension(this, new PopupCategorized(this::getSwingStaticMenuItems));
-            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
             setInheritsPopupMenu(true);
+        }
+
+        public void initKeyBindingsForStaticMenuItems() {
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
         }
 
         public void initDragDrop() {
@@ -134,7 +146,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
                                 infoLabel,
-                                new ContextRefreshAction(context),
+                                new ContextRefreshAction(context, this),
                                 new LabelJsonCopyAction(this, context),
                                 new LabelToStringCopyAction(this),
                                 new PopupExtensionText.TextOpenBrowserAction(this))
@@ -231,6 +243,11 @@ public class GuiSwingViewLabel implements GuiSwingView {
         @Override
         public void setKeyStrokeString(String keyStrokeString) {
             infoLabel.setAdditionalInfo(keyStrokeString);
+        }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
         }
     }
 

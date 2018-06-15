@@ -10,9 +10,9 @@ import autogui.swing.util.PopupCategorized;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+import javax.swing.table.TableCellRenderer;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * a column factory for a {@link Number}.
@@ -49,12 +49,13 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         }
     }
 
-    public static class ColumnNumberPane extends GuiSwingViewLabel.PropertyLabel implements ObjectTableColumnValue.ColumnViewUpdateSource {
+    public static class ColumnNumberPane extends GuiSwingViewLabel.PropertyLabel
+            implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget {
         protected GuiSwingViewNumberSpinner.PropertyNumberSpinner editor;
-        protected String currentFormatPattern;
         protected NumberFormat currentFormat;
 
         protected Runnable updater;
+        protected int updating;
 
         public ColumnNumberPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager,
                                 GuiSwingViewNumberSpinner.PropertyNumberSpinner editor) {
@@ -63,10 +64,23 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
             setOpaque(true);
             this.editor = editor;
             if (editor != null) {
-                currentFormatPattern = editor.getModelTyped().getFormatPattern();
                 currentFormat = editor.getModelTyped().getFormat();
                 editor.addChangeListener(this::modelUpdated);
             }
+            super.initKeyBindingsForStaticMenuItems();
+        }
+
+        public GuiSwingViewNumberSpinner.PropertyNumberSpinner getEditor() {
+            return editor;
+        }
+
+        @Override
+        public void initKeyBindingsForStaticMenuItems() {
+            //delay
+        }
+
+        public NumberFormat getCurrentFormat() {
+            return currentFormat;
         }
 
         @Override
@@ -74,21 +88,76 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
             this.updater = updater;
         }
 
-        public void modelUpdated(ChangeEvent e) {
-            if (editor != null) {
-                String fmtPat = editor.getModelTyped().getFormatPattern();
-                if (!Objects.equals(fmtPat, currentFormatPattern)) {
-                    currentFormatPattern = fmtPat;
-                    currentFormat = editor.getModelTyped().getFormat();
-                    if (updater != null) {
-                        updater.run();
+        @Override
+        public void columnViewUpdateAsDynamic(ObjectTableColumn source) {
+            TableCellRenderer renderer = source.getTableColumn().getCellRenderer();
+            if (renderer instanceof ObjectTableColumnValue.ObjectTableCellRenderer) {
+                JComponent comp = ((ObjectTableColumnValue.ObjectTableCellRenderer) renderer).getComponent();
+                if (comp instanceof ColumnNumberPane) {
+                    ColumnNumberPane numPane = (ColumnNumberPane) comp;
+                    setCurrentFormat(numPane.getCurrentFormat(), numPane.getEditor());
+                }
+            } else if (source instanceof ObjectTableColumnWithContext) {
+                GuiMappingContext context = ((ObjectTableColumnWithContext) source).getContext();
+                if (context.getRepresentation() instanceof GuiReprValueNumberSpinner) {
+                    GuiReprValueNumberSpinner spinner = (GuiReprValueNumberSpinner) context.getRepresentation();
+                    setCurrentFormat(spinner.getFormat(), null);
+                }
+            }
+        }
+
+        public void setCurrentFormat(NumberFormat currentFormat, GuiSwingViewNumberSpinner.PropertyNumberSpinner updatedEditor) {
+            try {
+                ++updating;
+
+                if (editor != null && updatedEditor != null) {
+                    GuiSwingViewNumberSpinner.TypedSpinnerNumberModel updatedModel = updatedEditor.getModelTyped();
+                    GuiSwingViewNumberSpinner.TypedSpinnerNumberModel myModel = editor.getModelTyped();
+
+                    myModel.setMaximum(updatedModel.getMaximum());
+                    myModel.setMinimum(updatedModel.getMinimum());
+                    myModel.setStepSize(updatedModel.getStepSize());
+                    myModel.setFormatPattern(updatedModel.getFormatPattern());
+                } else {
+                    GuiReprValueNumberSpinner spinner = getNumberSpinner();
+                    if (spinner != null) {
+                        spinner.setFormat(currentFormat);
                     }
                 }
+            } finally {
+                --updating;
+            }
+        }
+
+        public void modelUpdated(ChangeEvent e) {
+            if (updating <= 0) {
+                if (editor != null) {
+                    NumberFormat fmt = editor.getModelTyped().getFormat();
+                    if (!Objects.equals(fmt, currentFormat)) {
+                        currentFormat = fmt;
+                    }
+                }
+                if (updater != null) {
+                    updater.run();
+                }
+            }
+        }
+
+        public GuiReprValueNumberSpinner getNumberSpinner() {
+            GuiMappingContext context = getSwingViewContext();
+            if (context.getRepresentation() instanceof GuiReprValueNumberSpinner) {
+                return (GuiReprValueNumberSpinner) context.getRepresentation();
+            } else {
+                return null;
             }
         }
 
         @Override
         public String format(Object value) {
+            GuiReprValueNumberSpinner spinner = getNumberSpinner();
+            if (spinner != null) {
+                return spinner.toHumanReadableString(context, value);
+            }
             if (currentFormat != null) {
                 return currentFormat.format(value);
             } else {
@@ -98,6 +167,10 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
 
         @Override
         public Object getValueFromString(String s) {
+            GuiReprValueNumberSpinner spinner = getNumberSpinner();
+            if (spinner != null) {
+                return spinner.fromHumanReadableString(context, s);
+            }
             if (currentFormat != null) {
                 try {
                     return currentFormat.parseObject(s);
@@ -114,7 +187,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
             if (menuItems == null) {
                 menuItems = PopupCategorized.getMenuItems(Arrays.asList(
                         infoLabel,
-                        new GuiSwingView.ContextRefreshAction(getSwingViewContext()),
+                        new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
                         new GuiSwingView.HistoryMenu<>(this, getSwingViewContext()),
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new GuiSwingTableColumnString.LabelTextPasteAllAction(this),

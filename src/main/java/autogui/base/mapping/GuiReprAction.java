@@ -71,6 +71,10 @@ public class GuiReprAction implements GuiRepresentation {
         return target;
     }
 
+    /**
+     * @param context the context of the action
+     * @return true if the target method has the annotation GuiListSelectionCallback
+     */
     public boolean isSelectionAction(GuiMappingContext context) {
         return context.getTypeElementAsAction().isSelectionAction();
     }
@@ -80,7 +84,13 @@ public class GuiReprAction implements GuiRepresentation {
         return toStringHeader();
     }
 
-
+    /**
+     *
+     * @param context the context of the action
+     * @param tableContext the table context in order to obtain the element-type of the list
+     * @return the target method returns a list of the element-type List&lt;E&gt;
+     *         and has the annotation GuiListSelectionUpdater
+     */
     public boolean isSelectionChangeAction(GuiMappingContext context, GuiMappingContext tableContext) {
         return GuiReprActionList.isSelectionChangeActionForActions(context, tableContext);
     }

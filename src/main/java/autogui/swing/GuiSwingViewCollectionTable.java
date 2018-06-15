@@ -225,7 +225,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
                                 infoLabel,
-                                new ContextRefreshAction(context),
+                                new ContextRefreshAction(context, this),
                                 new SelectAllAction(this),
                                 new UnSelectAction(this)),
                         getActions());
@@ -414,6 +414,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             getObjectTableModel().getColumns().getColumns()
                     .forEach(ObjectTableColumn::shutdown);
             selectionRunner.shutdown();
+        }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
         }
 
         /////////////////

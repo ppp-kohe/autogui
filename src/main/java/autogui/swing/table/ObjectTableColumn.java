@@ -73,6 +73,9 @@ public class ObjectTableColumn {
 
     public void setColumnViewUpdater(Consumer<ObjectTableColumn> updater) { }
 
+    public void viewUpdateAsDynamic(ObjectTableColumn source) { }
+
+
     /**
      *
      * @param rowObject the row object at rowIndex

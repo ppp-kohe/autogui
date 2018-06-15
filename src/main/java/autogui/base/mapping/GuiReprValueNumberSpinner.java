@@ -10,6 +10,32 @@ import java.util.Comparator;
  * a spinner text-field component for a {@link Number} or primitive number property
  */
 public class GuiReprValueNumberSpinner extends GuiReprValue {
+    protected NumberType type;
+    protected NumberFormat format;
+
+    public GuiReprValueNumberSpinner() { }
+
+    public GuiReprValueNumberSpinner(NumberType type, NumberFormat format) {
+        this.type = type;
+        this.format = format;
+    }
+
+    @Override
+    public boolean match(GuiMappingContext context) {
+        Class<?> cls = getValueType(context);
+        if (cls != null && matchValueType(cls)) {
+            NumberType type = getType(cls);
+            context.setRepresentation(createNumberSpinner(type));
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public GuiReprValueNumberSpinner createNumberSpinner(NumberType type) {
+        return new GuiReprValueNumberSpinner(type, type == null ? null : type.getFormat());
+    }
+
     @Override
     public boolean matchValueType(Class<?> cls) {
         return Number.class.isAssignableFrom(cls) || isPrimitiveNumberClass(cls);
@@ -89,16 +115,53 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
     @Override
     public Object fromHumanReadableString(GuiMappingContext context, String str) {
-        return getType(getValueType(context)).fromString(str);
+        NumberType type = getType(context);
+        NumberFormat fmt = getFormat();
+        if (fmt == null) {
+            fmt = type.getFormat();
+        }
+        try {
+            return type.parse(fmt, str);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override
     public String toHumanReadableString(GuiMappingContext context, Object source) {
+        NumberType type = getType(context);
+        NumberFormat fmt = getFormat();
+        if (fmt == null) {
+            fmt = type.getFormat();
+        }
         if (source instanceof Comparable<?>) {
-            return getType(getValueType(context)).toString((Comparable<?>) source);
+            return type.format(fmt, (Comparable<?>) source);
         } else {
             return "" + source;
         }
+    }
+
+    public NumberType getType(GuiMappingContext context) {
+        if (type == null && context != null) {
+            return getType(getValueType(context));
+        }
+        return type;
+    }
+
+    public NumberFormat getFormat() {
+        if (format == null) {
+            NumberType t = type;
+            if (t != null) {
+                return t.getFormat();
+            } else {
+                return null;
+            }
+        }
+        return format;
+    }
+
+    public void setFormat(NumberFormat format) {
+        this.format = format;
     }
 
     /**
@@ -127,6 +190,9 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         Comparable<?> fromString(String s);
 
         NumberFormat getFormat();
+
+        Object parse(NumberFormat format, String source);
+        String format(NumberFormat format, Comparable<?> value);
     }
 
     public static Infinity MAXIMUM = new Infinity(true);
@@ -360,6 +426,32 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
                 return null;
             }
         }
+
+        @Override
+        public Object parse(NumberFormat format, String source) {
+            Infinity i = fromStringInfinity(source);
+            if (i != null) {
+                return i;
+            } else {
+                try {
+                    return format.parse(source);
+                } catch (Exception ex) {
+                    return fromString(source);
+                }
+            }
+        }
+
+        @Override
+        public String format(NumberFormat format, Comparable<?> value) {
+            if (value instanceof Infinity) {
+                return toString(value);
+            }
+            try {
+                return format.format(value);
+            } catch (Exception ex) {
+                return toString(value);
+            }
+        }
     }
 
     /** the number type for int */
@@ -557,7 +649,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         @Override
         public NumberFormat getFormat() {
             DecimalFormat df = new DecimalFormat("#,###.#");
-            df.setMaximumFractionDigits(Short.MAX_VALUE);
+            df.setMaximumFractionDigits(6);
             return df;
         }
     }
@@ -600,7 +692,8 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         @Override
         public NumberFormat getFormat() {
             DecimalFormat df = new DecimalFormat("#,###.#");
-            df.setMaximumFractionDigits(Short.MAX_VALUE);
+            //df.setMaximumFractionDigits(Short.MAX_VALUE);
+            df.setMaximumFractionDigits(8);
             return df;
         }
     }
@@ -695,7 +788,8 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         @Override
         public NumberFormat getFormat() {
             DecimalFormat df = new DecimalFormat("#,###.#");
-            df.setMaximumFractionDigits(Short.MAX_VALUE);
+            //df.setMaximumFractionDigits(Short.MAX_VALUE);
+            df.setMaximumFractionDigits(16);
             df.setParseBigDecimal(true);
             return df;
         }

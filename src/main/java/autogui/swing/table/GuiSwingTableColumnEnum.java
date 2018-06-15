@@ -52,7 +52,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
             if (menuItems == null) {
                     menuItems = PopupCategorized.getMenuItems(Arrays.asList(
                             infoLabel,
-                            new GuiSwingView.ContextRefreshAction(getSwingViewContext()),
+                            new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
                             new GuiSwingView.HistoryMenu<>(this, getSwingViewContext()),
                             new GuiSwingViewLabel.LabelToStringCopyAction(this),
                             new GuiSwingTableColumnString.LabelTextPasteAllAction(this),

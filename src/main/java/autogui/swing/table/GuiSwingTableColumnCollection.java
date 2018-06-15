@@ -120,9 +120,9 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
 
             columnSpecifierIndex.setIndex(elemIndex);
             ContextAndColumn cc = columnStatic.get(propIndex);
-            return new ObjectTableColumnCollectionWrapper(
+            return new ObjectTableColumnCollectionWrapper(cc.context,
                     cc.column.createColumn(cc.context, null, cc.parentSpecifier),
-                    context.getChildren().get(0), //elementContext
+                    context.getChildren().get(0), //elementCon text
                     elemIndex, propIndex, indexes,
                     columnSpecifierIndex);
         }
@@ -149,7 +149,9 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
         }
     }
 
-    public static class ObjectTableColumnCollectionWrapper extends ObjectTableColumn {
+    public static class ObjectTableColumnCollectionWrapper extends ObjectTableColumn
+        implements ObjectTableColumnWithContext {
+        protected GuiMappingContext context;
         protected ObjectTableColumn column;
         protected GuiMappingContext elementContext;
         protected int elementIndex;
@@ -160,9 +162,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
         protected int[] indexes;
         protected SpecifierManagerIndex elementSpecifier;
 
-        public ObjectTableColumnCollectionWrapper(ObjectTableColumn column,
+        public ObjectTableColumnCollectionWrapper(GuiMappingContext context,
+                                                  ObjectTableColumn column,
                                                   GuiMappingContext elementContext, int elementIndex, int propertyIndex,
                                                   int[] indexes, SpecifierManagerIndex elementSpecifier) {
+            this.context = context;
             this.column = column;
             this.elementContext = elementContext;
             this.elementIndex = elementIndex;
@@ -172,6 +176,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
             if (column != null) {
                 column.withHeaderValue(column.getTableColumn().getHeaderValue() + " [" + elementIndex + "]");
             }
+        }
+
+        @Override
+        public GuiMappingContext getContext() {
+            return context;
         }
 
         @Override
@@ -253,6 +262,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
         @Override
         public List<TableMenuComposite> getCompositesForCells() {
             return column.getCompositesForCells();
+        }
+
+        @Override
+        public void viewUpdateAsDynamic(ObjectTableColumn source) {
+            column.viewUpdateAsDynamic(source);
         }
     }
 }

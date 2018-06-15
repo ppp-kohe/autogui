@@ -231,7 +231,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
                                 infoLabel,
-                                new ContextRefreshAction(context),
+                                new ContextRefreshAction(context, this),
                                 new ToStringCopyAction(this, context)),
                         GuiSwingJsonTransfer.getActions(this, context),
                         getActions());
@@ -439,6 +439,11 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         @Override
         public void setKeyStrokeString(String keyStrokeString) {
             infoLabel.setAdditionalInfo(keyStrokeString);
+        }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
         }
     }
 

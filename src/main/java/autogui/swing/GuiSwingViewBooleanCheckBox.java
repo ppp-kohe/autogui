@@ -124,7 +124,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
                                 infoLabel,
-                                new ContextRefreshAction(context),
+                                new ContextRefreshAction(context, this),
                                 new ToStringCopyAction(this, context),
                                 new BooleanPasteAction(this),
                                 new HistoryMenu<>(this, getSwingViewContext()),
@@ -227,6 +227,11 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         public String getValueAsString(Object v) {
             return getSwingViewContext().getRepresentation()
                     .toHumanReadableString(getSwingViewContext(), v);
+        }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
         }
     }
 

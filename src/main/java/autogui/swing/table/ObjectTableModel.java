@@ -22,11 +22,12 @@ import java.util.stream.Collectors;
 /**
  * a table-model based on a list of row objects
  */
-public class ObjectTableModel extends AbstractTableModel  {
+public class ObjectTableModel extends AbstractTableModel
+        implements ObjectTableModelColumns.ObjectTableModelColumnsListener {
     protected JTable table;
     protected Supplier<Object> source;
 
-    protected ObjectTableModelColumns columns = new ObjectTableModelColumns(this::columnAdded);
+    protected ObjectTableModelColumns columns;
     /** cached computed values */
     protected Object[][] data;
 
@@ -34,6 +35,9 @@ public class ObjectTableModel extends AbstractTableModel  {
 
     public static Object NULL_CELL = new Object();
 
+    public ObjectTableModel() {
+        columns = new ObjectTableModelColumns(this);
+    }
 
     public void setFutureWaiter(Consumer<Runnable> futureWaiter) {
         this.futureWaiter = futureWaiter;
@@ -395,7 +399,13 @@ public class ObjectTableModel extends AbstractTableModel  {
         fireTableRowsUpdatedAll();
     }
 
+    @Override
     public void columnAdded(ObjectTableColumn column) {
+        fireTableRowsUpdatedAll(); //no data change
+    }
+
+    @Override
+    public void columnViewUpdate(ObjectTableColumn column) {
         fireTableRowsUpdatedAll(); //no data change
     }
 

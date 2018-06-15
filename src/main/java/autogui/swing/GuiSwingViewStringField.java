@@ -148,7 +148,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
             if (menuItemsSource == null) {
                 menuItemsSource = super.getMenuItemsSource();
                 menuItemsSource.add(infoLabel);
-                menuItemsSource.add(new ContextRefreshAction(context));
+                menuItemsSource.add(new ContextRefreshAction(context, this));
                 menuItemsSource.add(new HistoryMenu<>(this, getSwingViewContext()));
                 menuItemsSource.addAll(GuiSwingJsonTransfer.getActions(this, context));
             }
@@ -234,6 +234,11 @@ public class GuiSwingViewStringField implements GuiSwingView {
         public void setKeyStrokeString(String keyStrokeString) {
             infoLabel.setAdditionalInfo(keyStrokeString);
         }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
+        }
     }
 
     /** handle entire text */
@@ -247,12 +252,13 @@ public class GuiSwingViewStringField implements GuiSwingView {
         @Override
         public boolean canImport(TransferSupport support) {
             return pane.getField().isEnabled() && pane.getField().isEditable() &&
+                    pane.getSwingViewContext().getReprValue().isEditable(pane.getSwingViewContext()) &&
                     support.isDataFlavorSupported(DataFlavor.stringFlavor);
         }
 
         @Override
         public boolean importData(TransferSupport support) {
-            if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+            if (support.isDataFlavorSupported(DataFlavor.stringFlavor) && canImport(support)) {
                 return importString(
                         getTransferableAsString(support, DataFlavor.stringFlavor));
             } else {

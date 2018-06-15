@@ -71,5 +71,10 @@ public class IconListExp {
         public String getSynonyms() {
             return String.join(", ", synonyms);
         }
+
+        @GuiIncluded
+        public int getSynonymSize() {
+            return synonyms.size();
+        }
     }
 }

@@ -22,7 +22,7 @@ public class ScheduledTaskRunner<EventType> {
 
     public static ScheduledExecutorService sharedExecutor;
     public static AtomicInteger sharedCount = new AtomicInteger();
-    static boolean debug = System.getProperty("autogui.util.debug", "false").equals("true");
+    static boolean debug = System.getProperty("autogui.base.debug", "false").equals("true");
 
     public ScheduledTaskRunner(long delay, Consumer<List<EventType>> consumer) {
         this.delay = delay;

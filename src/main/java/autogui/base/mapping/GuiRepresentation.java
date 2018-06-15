@@ -176,6 +176,11 @@ public interface GuiRepresentation {
         return getClass().getSimpleName();
     }
 
+    /**
+     * @param task the tested task
+     * @return true if the task can be executed under the task-runner of a context.
+     *          the method can be used for the cases that the task is dispatched to a custom task-runner mechanism
+     */
     default boolean isTaskRunnerUsedFor(Callable<?> task) {
         return true;
     }

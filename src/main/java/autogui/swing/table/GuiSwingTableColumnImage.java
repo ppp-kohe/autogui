@@ -8,6 +8,8 @@ import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,16 +31,22 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         ColumnEditImagePane edit = new ColumnEditImagePane(context, valueSpecifier, true);
         edit.setScaleTarget(img);
         img.setScaleTarget(edit);
-        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, img, edit)
-                .withRowHeight(UIManagerUtil.getInstance().getScaledSizeInt(64));
+        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, img, edit) {
+            @Override
+            protected TableCellEditor editorForColumn() {
+                return editor; //always apply the editor
+            }
+        }.withRowHeight(UIManagerUtil.getInstance().getScaledSizeInt(64));
     }
 
     /**
      * a component for column editor
      */
-    public static class ColumnEditImagePane extends GuiSwingViewImagePane.PropertyImagePane implements ObjectTableColumnValue.ColumnViewUpdateSource {
+    public static class ColumnEditImagePane extends GuiSwingViewImagePane.PropertyImagePane
+            implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget {
         protected ColumnEditImagePane scaleTarget;
         protected int updating;
+        protected int columnViewUpdating;
         protected boolean editor;
         protected Runnable viewUpdater;
 
@@ -60,12 +68,24 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         }
 
         @Override
+        public void columnViewUpdateAsDynamic(ObjectTableColumn source) {
+            TableCellRenderer renderer = source.getTableColumn().getCellRenderer();
+            if (renderer instanceof ObjectTableColumnValue.ObjectTableCellRenderer) {
+                JComponent comp = ((ObjectTableColumnValue.ObjectTableCellRenderer) renderer).getComponent();
+                if (comp instanceof GuiSwingViewImagePane.PropertyImagePane) {
+                    GuiSwingViewImagePane.PropertyImagePane pane = (GuiSwingViewImagePane.PropertyImagePane) comp;
+                    setImageScale(pane.getImageScale());
+                }
+            }
+        }
+
+        @Override
         public void updateScale() {
             super.updateScale();
             if (viewUpdater != null) {
                 viewUpdater.run();
             }
-            if (updating == 0) {
+            if (updating <= 0) {
                 if (scaleTarget != null) {
                     scaleTarget.setImageScaleFromOpponent(imageScale.copyFor(scaleTarget));
                 }

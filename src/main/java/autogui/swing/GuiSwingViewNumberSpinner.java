@@ -279,7 +279,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                                 .collect(Collectors.toList()),
                         Arrays.asList(
                                 infoLabel,
-                                new ContextRefreshAction(context),
+                                new ContextRefreshAction(context, this),
                                 new NumberMaximumAction(false, this),
                                 new NumberMaximumAction(true, this),
                                 new NumberIncrementAction(true, this),
@@ -302,7 +302,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public static TypedSpinnerNumberModel createModel(GuiMappingContext context) {
             GuiReprValueNumberSpinner repr = (GuiReprValueNumberSpinner) context.getRepresentation();
-            return new TypedSpinnerNumberModel(GuiReprValueNumberSpinner.getType(repr.getValueType(context)));
+            return new TypedSpinnerNumberModelWithRepr(context, repr);
         }
 
         public void updateNumber(List<Object> events) {
@@ -438,6 +438,11 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public void setKeyStrokeString(String keyStrokeString) {
             infoLabel.setAdditionalInfo(keyStrokeString);
         }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
+        }
     }
 
     public static abstract class NumberSetAction extends AbstractAction
@@ -523,6 +528,39 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         @Override
         public Object getNumber(Object current) {
             return inc ? model.getNextValue(current) : model.getPreviousValue(current);
+        }
+    }
+
+    public static class TypedSpinnerNumberModelWithRepr extends TypedSpinnerNumberModel {
+        protected GuiReprValueNumberSpinner numberSpinner;
+
+        public TypedSpinnerNumberModelWithRepr(GuiMappingContext context, GuiReprValueNumberSpinner numberSpinner) {
+            super(numberSpinner.getType(context));
+            this.numberSpinner = numberSpinner;
+            NumberFormat format = numberSpinner.getFormat();
+            if (format instanceof DecimalFormat) {
+                formatPattern = ((DecimalFormat) format).toPattern();
+            }
+        }
+
+        @Override
+        public void setFormatPattern(String formatPattern) {
+            try {
+                DecimalFormat format = createFormat(formatPattern);
+                numberSpinner.setFormat(format);
+            } catch (Exception ex) {
+                //
+            }
+            super.setFormatPattern(formatPattern);
+        }
+
+        @Override
+        public NumberFormat getFormat() {
+            NumberFormat format = numberSpinner.getFormat();
+            if (format == null) {
+                format = super.getFormat();
+            }
+            return format;
         }
     }
 
@@ -742,12 +780,16 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             if (formatPattern == null) {
                 return getNumberType().getFormat();
             } else {
-                DecimalFormat fmt = new DecimalFormat(formatPattern);
-                if (getType().equals(BigInteger.class) || getType().equals(BigDecimal.class)) {
-                    fmt.setParseBigDecimal(true);
-                }
-                return fmt;
+                return createFormat(formatPattern);
             }
+        }
+
+        public DecimalFormat createFormat(String formatPattern) {
+            DecimalFormat fmt = new DecimalFormat(formatPattern);
+            if (getType().equals(BigInteger.class) || getType().equals(BigDecimal.class)) {
+                fmt.setParseBigDecimal(true);
+            }
+            return fmt;
         }
 
     }

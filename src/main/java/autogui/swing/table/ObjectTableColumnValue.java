@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * a table-column with {@link GuiMappingContext}.
  *
  */
-public class ObjectTableColumnValue extends ObjectTableColumn {
+public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwingTableColumn.ObjectTableColumnWithContext {
     protected GuiMappingContext context;
     protected GuiSwingTableColumn.SpecifierManagerIndex specifierIndex;
     protected GuiSwingView.SpecifierManager specifierManager;
@@ -67,16 +67,18 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             this.contextIndex = ((GuiReprCollectionElement) parentRepr).getFixedColumnIndex(context.getParent(), context);
         }
 
-        GuiReprValue value = context.getReprValue();
         int size = UIManagerUtil.getInstance().getScaledSizeInt(64);
-        setTableColumn(new TableColumn(0, size, renderer,
-                value.isEditable(context) ? editor : null));
+        setTableColumn(new TableColumn(0, size, renderer, editorForColumn()));
         getTableColumn().setMinWidth(size);
         getTableColumn().setHeaderValue(context.getDisplayName());
 
         if (renderer instanceof ObjectTableCellRenderer) {
             ((ObjectTableCellRenderer) renderer).setOwnerColumn(this);
         }
+    }
+
+    protected TableCellEditor editorForColumn() {
+        return context.getReprValue().isEditable(context) ? editor : null;
     }
 
     @Override
@@ -92,18 +94,30 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
 
     @Override
     public void setColumnViewUpdater(Consumer<ObjectTableColumn> updater) {
-        if (renderer instanceof ObjectTableCellRenderer) {
-            JComponent c = ((ObjectTableCellRenderer) renderer).getComponent();
-            if (c instanceof ColumnViewUpdateSource) {
-                ((ColumnViewUpdateSource) c).setColumnViewUpdater(() -> updater.accept(this));
-            }
+        if (renderer instanceof ColumnViewUpdateSource) {
+            ((ColumnViewUpdateSource) renderer).setColumnViewUpdater(() -> updater.accept(this));
         }
     }
 
+    @Override
+    public void viewUpdateAsDynamic(ObjectTableColumn source) {
+        if (renderer instanceof ColumnViewUpdateTarget) {
+            ((ColumnViewUpdateTarget) renderer).columnViewUpdateAsDynamic(source);
+        }
+    }
+
+    /**
+     * an updater holder for renderer component: the component of {@link ObjectTableCellRenderer} may implement the interface
+     */
     public interface ColumnViewUpdateSource {
         void setColumnViewUpdater(Runnable updater);
     }
 
+    public interface ColumnViewUpdateTarget {
+        void columnViewUpdateAsDynamic(ObjectTableColumn source);
+    }
+
+    @Override
     public GuiMappingContext getContext() {
         return context;
     }
@@ -160,7 +174,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
     /**
      * a cell renderer with {@link autogui.swing.GuiSwingView.ValuePane}
      */
-    public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource {
+    public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource,
+            ColumnViewUpdateSource, ColumnViewUpdateTarget {
         protected JComponent component;
         protected ObjectTableColumn ownerColumn;
         protected GuiSwingTableColumn.SpecifierManagerIndex specifierIndex;
@@ -234,6 +249,22 @@ public class ObjectTableColumnValue extends ObjectTableColumn {
             GuiSwingView.ValuePane<?> p = getMenuTargetPane();
             if (p != null) {
                 p.shutdownSwingView();
+            }
+        }
+
+        @Override
+        public void setColumnViewUpdater(Runnable updater) {
+            JComponent c = getComponent();
+            if (c instanceof ColumnViewUpdateSource) {
+                ((ColumnViewUpdateSource) c).setColumnViewUpdater(updater);
+            }
+        }
+
+        @Override
+        public void columnViewUpdateAsDynamic(ObjectTableColumn source) {
+            JComponent c = getComponent();
+            if (c instanceof ColumnViewUpdateTarget) {
+                ((ColumnViewUpdateTarget) c).columnViewUpdateAsDynamic(source);
             }
         }
     }

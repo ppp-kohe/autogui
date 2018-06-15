@@ -111,7 +111,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             if (menuItems == null) {
                 menuItems = PopupCategorized.getMenuItems(Arrays.asList(
                         infoLabel,
-                        new GuiSwingView.ContextRefreshAction(getSwingViewContext()),
+                        new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
                         new ColumnHistoryMenuFilePath(this),
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new ColumnFileCopyAction(this),

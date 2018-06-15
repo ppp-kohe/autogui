@@ -179,7 +179,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
                                 infoLabel,
-                                new ContextRefreshAction(context),
+                                new ContextRefreshAction(context, this),
                                 new ToStringCopyAction(this, context)),
                         GuiSwingJsonTransfer.getActions(this, context)).stream()
                         .map(i -> i.remap("Property " + MenuBuilder.getCategoryName(i.getCategory()), i.getSubCategory()))
@@ -396,6 +396,11 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return GuiReprValue.NONE;
+        }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
         }
     }
 }

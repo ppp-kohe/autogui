@@ -19,11 +19,17 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
     protected List<ObjectTableColumnDynamic> dynamicColumns = new ArrayList<>();
     protected List<ObjectTableColumn.TableMenuComposite> menuRowComposites = new ArrayList<>();
 
-    protected Consumer<ObjectTableColumn> updater;
-
     protected Map<Integer,Integer> modelToView = new HashMap<>();
 
-    public ObjectTableModelColumns(Consumer<ObjectTableColumn> updater) {
+    protected ObjectTableModelColumnsListener updater;
+    protected int viewUpdating;
+
+    public interface ObjectTableModelColumnsListener {
+        void columnAdded(ObjectTableColumn column);
+        void columnViewUpdate(ObjectTableColumn column);
+    }
+
+    public ObjectTableModelColumns(ObjectTableModelColumnsListener updater) {
         this.updater = updater;
         columnModel = new DefaultTableColumnModel();
 
@@ -63,7 +69,7 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
     public void addColumnStatic(ObjectTableColumn column) {
         int modelIndex = columns.size();
         columns.add(column);
-        columnAdded(column);
+        columnAdded(column, null);
         staticColumns.add(column);
 
         TableColumn tableColumn = column.getTableColumn();
@@ -71,8 +77,21 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
         columnModel.addColumn(tableColumn);
     }
 
-    protected void columnAdded(ObjectTableColumn column) {
-        column.setColumnViewUpdater(updater);
+    protected void columnAdded(ObjectTableColumn column, ObjectTableColumnDynamic d) {
+        column.setColumnViewUpdater(e -> {
+            if (viewUpdating <= 0) {
+                ++viewUpdating;
+                if (d != null) {
+                    d.viewUpdate(e);
+                }
+            } else {
+                --viewUpdating;
+            }
+            if (updater != null) {
+                updater.columnViewUpdate(e);
+            }
+        });
+        updater.columnAdded(column);
     }
 
     @Override
@@ -123,7 +142,7 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
         for (ObjectTableColumnDynamic d : dynamicColumns) {
             startIndex = d.update(startIndex, list);
             if (d.hasAdding()) {
-                addColumnsDynamic(d.getChangingColumns());
+                addColumnsDynamic(d, d.getChangingColumns());
             } else if (d.hasRemoving()) {
                 removeColumnsDynamic(d.getChangingColumns());
             }
@@ -131,10 +150,10 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
         }
     }
 
-    public void addColumnsDynamic(List<ObjectTableColumn> columns) {
+    public void addColumnsDynamic(ObjectTableColumnDynamic d, List<ObjectTableColumn> columns) {
         for (ObjectTableColumn c : columns) {
             this.columns.add(c.getTableColumn().getModelIndex(), c);
-            columnAdded(c);
+            columnAdded(c, d);
             int idx = columnModel.getColumnCount();
             columnModel.addColumn(c.getTableColumn());
             int newIndex = c.getTableColumn().getModelIndex();
@@ -289,6 +308,12 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
 
         public void clearChanges() {
             changingColumns.clear();
+        }
+
+        public void viewUpdate(ObjectTableColumn source) {
+            columns.stream()
+                    .filter(c -> c != source)
+                    .forEach(c -> c.viewUpdateAsDynamic(source));
         }
     }
 

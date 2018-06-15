@@ -17,6 +17,9 @@ import java.util.Objects;
  *   The one side updates its value (e.g. an user edits the GUI value of the view),
  *      then the clock of the side {@link #increment()} and {@link #copy()}
  *        and send it to the other side.
+ *
+ *   <p>
+ *       the class is introduced in order to support delayed updating of context values (with the delayed-task-runner)
  */
 public class GuiTaskClock implements Comparable<GuiTaskClock>, Cloneable {
     protected volatile long count;
@@ -29,6 +32,10 @@ public class GuiTaskClock implements Comparable<GuiTaskClock>, Cloneable {
     public GuiTaskClock(long count, boolean view) {
         this.count = count;
         this.view = view;
+    }
+
+    public void clear() {
+        count = 0;
     }
 
     public boolean isNewer(GuiTaskClock o) {

@@ -178,5 +178,10 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return specifierManager.getSpecifier();
         }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
+        }
     }
 }

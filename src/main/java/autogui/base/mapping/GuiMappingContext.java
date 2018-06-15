@@ -66,6 +66,10 @@ public class GuiMappingContext {
 
     protected GuiTaskClock contextClock = new GuiTaskClock( false);
 
+    /**
+     * source value held by a context. it can distinguish null and nothing.
+     *  To distinguish other values, it is defined as an independent class, instead of using Optional
+     */
     public static class GuiSourceValue {
         public boolean isNone() {
             return false;
@@ -83,6 +87,9 @@ public class GuiMappingContext {
         }
     }
 
+    /**
+     * concrete source value
+     */
     public static final class GuiSourceValueObject extends GuiSourceValue {
         Object value;
 
@@ -117,6 +124,9 @@ public class GuiMappingContext {
 
     public static final GuiSourceValueNone NO_SOURCE = new GuiSourceValueNone();
 
+    /**
+     * nothing of source value, can be obtained by {@link #NO_SOURCE}
+     */
     public static final class GuiSourceValueNone extends GuiSourceValue {
         @Override
         public boolean isNone() {

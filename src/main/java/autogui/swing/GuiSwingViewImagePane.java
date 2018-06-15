@@ -9,10 +9,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -166,6 +163,12 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         public void initFocus() {
             setFocusable(true);
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    requestFocusInWindow();
+                }
+            });
             setBorder(new GuiSwingViewLabel.FocusBorder(this));
         }
 
@@ -201,7 +204,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
                                 infoLabel,
-                                new ContextRefreshAction(context),
+                                new ContextRefreshAction(context, this),
                                 switchFitAction,
                                 new ImageScaleOriginalSizeAction(this),
                                 autoSwitchByMouseWheel,
@@ -420,6 +423,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             } else {
                 setSwingViewValueWithUpdate((Image) value);
             }
+        }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
         }
     }
 

@@ -171,7 +171,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         return PopupCategorized.getMenuItems(
                 Arrays.asList(
                         infoLabel,
-                        new ContextRefreshAction(context)),
+                        new ContextRefreshAction(context, pane)),
                 PopupExtensionText.getEditActions((JTextComponent) pane),
                 GuiSwingJsonTransfer.getActions(pane, context),
                 settingActions);
@@ -394,6 +394,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public void setKeyStrokeString(String keyStrokeString) {
             infoLabel.setAdditionalInfo(keyStrokeString);
         }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
+        }
     }
 
     public static class PropertyDocumentTextPane extends JTextPane
@@ -562,6 +567,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public void setKeyStrokeString(String keyStrokeString) {
             infoLabel.setAdditionalInfo(keyStrokeString);
+        }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
         }
     }
 

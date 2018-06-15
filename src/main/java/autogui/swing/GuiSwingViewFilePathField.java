@@ -132,7 +132,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
             if (menuItemsSource == null) {
                 List<Object> actions = super.getMenuItemsSource();
                 actions.add(infoLabel);
-                actions.add(new ContextRefreshAction(context));
+                actions.add(new ContextRefreshAction(context, this));
 
                 actions.addAll(GuiSwingJsonTransfer.getActions(this, context));
                 actions.add(new HistoryMenuFilePath(this, context));
@@ -240,6 +240,11 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         @Override
         public void setKeyStrokeString(String keyStrokeString) {
             infoLabel.setAdditionalInfo(keyStrokeString);
+        }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
         }
     }
 

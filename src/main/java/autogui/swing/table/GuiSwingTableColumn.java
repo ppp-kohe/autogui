@@ -52,4 +52,9 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
             return new GuiReprValue.ObjectSpecifierIndex(tableSpecifier.get(), index);
         }
     }
+
+    /** interface for {@link ObjectTableColumn} */
+    interface ObjectTableColumnWithContext {
+        GuiMappingContext getContext();
+    }
 }

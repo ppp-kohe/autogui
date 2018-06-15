@@ -124,7 +124,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                 menuItems = PopupCategorized.getMenuItems(
                         Arrays.asList(
                                 infoLabel,
-                                new ContextRefreshAction(context),
+                                new ContextRefreshAction(context, this),
                                 new HistoryMenu<>(this, context),
                                 new EnumSetMenu(this),
                                 new ToStringCopyAction(this, getSwingViewContext()),
@@ -240,6 +240,11 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         public Object getValueFromString(String str) {
             return ((GuiReprValueEnumComboBox) getSwingViewContext().getRepresentation()).getEnumValue(getSwingViewContext(), str);
+        }
+
+        @Override
+        public void prepareForRefresh() {
+            viewClock.clear();
         }
     }
 

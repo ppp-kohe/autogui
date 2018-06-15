@@ -213,6 +213,8 @@ public interface GuiSwingView extends GuiSwingElement {
         default void setSwingViewHistoryValue(Object value) {
             setSwingViewValueWithUpdate((ValueType) value);
         }
+
+        void prepareForRefresh();
     }
 
     /**
@@ -467,8 +469,20 @@ public interface GuiSwingView extends GuiSwingElement {
                 .orElse(null);
     }
 
+    /**
+     * a refresh-action calls the method in order to clear view-clocks of sub-panes
+     * @param pane a root component
+     */
+    static void prepareForRefresh(ValuePane<?> pane) {
+        forEach(ValuePane.class, pane.asSwingViewComponent(), ValuePane::prepareForRefresh);
+    }
+
     /////////////////////////
 
+    /**
+     * @param pane the method obtains static-methods from the pane.
+     *              so it needs to be called after building valid menu items.
+     */
     static void setupKeyBindingsForStaticMenuItems(ValuePane<?> pane) {
         setupKeyBindingsForStaticMenuItems(pane, pane.asSwingViewComponent(), a -> {
             a.putValue(Action.ACCELERATOR_KEY, null);
@@ -623,6 +637,9 @@ public interface GuiSwingView extends GuiSwingElement {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return pane == null ? GuiReprValue.NONE : pane.getSpecifier();
         }
+
+        @Override
+        public void prepareForRefresh() { }
     }
 
 
@@ -721,20 +738,28 @@ public interface GuiSwingView extends GuiSwingElement {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return pane == null ? GuiReprValue.NONE : pane.getSpecifier();
         }
+
+        @Override
+        public void prepareForRefresh() { }
     }
 
     class ContextRefreshAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiMappingContext context;
+        protected ValuePane<?> pane;
 
-        public ContextRefreshAction(GuiMappingContext context) {
+        public ContextRefreshAction(GuiMappingContext context, ValuePane<?> pane) {
             putValue(NAME, "Refresh");
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_R,
                     Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+            this.pane = pane;
             this.context = context;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if (pane != null) {
+                GuiSwingView.prepareForRefresh(pane);
+            }
             context.clearSourceSubTree();
             context.updateSourceSubTree();
         }

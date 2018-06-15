@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
  *            "$default"/
  *               propName = value... //regular preferences entries
  *               ...
+ *               "$value" = ... //current value, which will precede to history values
  *               "$history"/
  *                  "0"/    //key-index
  *                     "index" = ...
@@ -31,10 +32,10 @@ import java.util.stream.Collectors;
  *                  ...
  *               propertyName/   //the name of a sub-context
  *                  ...
+ *            "$launchPrefs" = index...
  *            "$saved"/
  *               "$0"/
  *                 "name" = ...
- *                 "$value" = ... //current value, which will precede to history values
  *                 ... //same structure as "$default"
  *               ...
  *   </pre>
@@ -199,7 +200,7 @@ public class GuiPreferences {
     }
 
     /**
-     * @return 0: using "$default", 1: no application, 2,3,4...: "$saved"-2
+     * @return 0: using "$default", 1: no application, 2,3,4...: ("$saved" by sorted by "$name")-2 ({@link #getSavedStoreListAsRoot()}.sort(...name...))
      */
     public int getLaunchPrefsAsRoot() {
         GuiValueStore root = getPreferencesNodeAsRoot();
