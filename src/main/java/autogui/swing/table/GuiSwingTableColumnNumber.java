@@ -49,10 +49,9 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         }
     }
 
-    public static class ColumnNumberPane extends GuiSwingViewLabel.PropertyLabel
+    public static class ColumnNumberPane extends GuiSwingViewNumberSpinner.PropertyLabelNumber
             implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget {
         protected GuiSwingViewNumberSpinner.PropertyNumberSpinner editor;
-        protected NumberFormat currentFormat;
 
         protected Runnable updater;
         protected int updating;
@@ -60,27 +59,32 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         public ColumnNumberPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager,
                                 GuiSwingViewNumberSpinner.PropertyNumberSpinner editor) {
             super(context, specifierManager);
-            setHorizontalAlignment(SwingConstants.RIGHT);
             setOpaque(true);
             this.editor = editor;
             if (editor != null) {
                 currentFormat = editor.getModelTyped().getFormat();
                 editor.addChangeListener(this::modelUpdated);
             }
-            super.initKeyBindingsForStaticMenuItems();
+            super.init();
+        }
+
+        @Override
+        public void init() {
+            //delayed
+        }
+
+        @Override
+        public void initModel() {
+            //nothing
+        }
+
+        @Override
+        public GuiSwingViewNumberSpinner.TypedSpinnerNumberModel getModelTyped() {
+            return editor != null ? editor.getModelTyped() : model;
         }
 
         public GuiSwingViewNumberSpinner.PropertyNumberSpinner getEditor() {
             return editor;
-        }
-
-        @Override
-        public void initKeyBindingsForStaticMenuItems() {
-            //delay
-        }
-
-        public NumberFormat getCurrentFormat() {
-            return currentFormat;
         }
 
         @Override
@@ -129,56 +133,15 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
             }
         }
 
+        @Override
         public void modelUpdated(ChangeEvent e) {
             if (updating <= 0) {
                 if (editor != null) {
-                    NumberFormat fmt = editor.getModelTyped().getFormat();
-                    if (!Objects.equals(fmt, currentFormat)) {
-                        currentFormat = fmt;
-                    }
+                    currentFormat = editor.getModelTyped().getFormat();
                 }
                 if (updater != null) {
                     updater.run();
                 }
-            }
-        }
-
-        public GuiReprValueNumberSpinner getNumberSpinner() {
-            GuiMappingContext context = getSwingViewContext();
-            if (context.getRepresentation() instanceof GuiReprValueNumberSpinner) {
-                return (GuiReprValueNumberSpinner) context.getRepresentation();
-            } else {
-                return null;
-            }
-        }
-
-        @Override
-        public String format(Object value) {
-            GuiReprValueNumberSpinner spinner = getNumberSpinner();
-            if (spinner != null) {
-                return spinner.toHumanReadableString(context, value);
-            }
-            if (currentFormat != null) {
-                return currentFormat.format(value);
-            } else {
-                return super.format(value);
-            }
-        }
-
-        @Override
-        public Object getValueFromString(String s) {
-            GuiReprValueNumberSpinner spinner = getNumberSpinner();
-            if (spinner != null) {
-                return spinner.fromHumanReadableString(context, s);
-            }
-            if (currentFormat != null) {
-                try {
-                    return currentFormat.parseObject(s);
-                } catch (Exception ex) {
-                    return super.getValueFromString(s);
-                }
-            } else {
-                return super.getValueFromString(s);
             }
         }
 
@@ -192,19 +155,10 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new GuiSwingTableColumnString.LabelTextPasteAllAction(this),
                         new GuiSwingTableColumnString.LabelTextLoadAction(this),
-                        new GuiSwingTableColumnString.LabelTextSaveAction(this)
+                        new GuiSwingTableColumnString.ColumnLabelTextSaveAction(this)
                     ), getEditorActions(), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
             }
             return menuItems;
-        }
-
-        public List<Action> getEditorActions() {
-            return editor == null ? Collections.emptyList() : Arrays.asList(
-                    new GuiSwingViewNumberSpinner.NumberMaximumAction(false, editor),
-                    new GuiSwingViewNumberSpinner.NumberMaximumAction(true, editor),
-                    new GuiSwingViewNumberSpinner.NumberIncrementAction(true, editor),
-                    new GuiSwingViewNumberSpinner.NumberIncrementAction(false, editor),
-                    editor.getSettingAction());
         }
     }
 }

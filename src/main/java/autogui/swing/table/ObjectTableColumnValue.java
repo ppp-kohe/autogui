@@ -164,7 +164,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
             }
             GuiReprValue reprValue = context.getReprValue();
             reprValue.addHistoryValue(context, newColumnValue);
-            reprValue.update(context, GuiMappingContext.GuiSourceValue.of(rowObject), newColumnValue, specifierManager.getSpecifier());
+            if (reprValue.isEditable(context)) {
+                reprValue.update(context, GuiMappingContext.GuiSourceValue.of(rowObject), newColumnValue, specifierManager.getSpecifier());
+            }
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
         }

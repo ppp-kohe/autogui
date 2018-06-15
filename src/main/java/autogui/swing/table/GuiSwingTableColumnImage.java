@@ -46,7 +46,6 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
             implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget {
         protected ColumnEditImagePane scaleTarget;
         protected int updating;
-        protected int columnViewUpdating;
         protected boolean editor;
         protected Runnable viewUpdater;
 

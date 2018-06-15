@@ -411,8 +411,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void shutdownSwingView() {
-            getObjectTableModel().getColumns().getColumns()
-                    .forEach(ObjectTableColumn::shutdown);
+            getObjectTableModel().getColumns().shutdown();
             selectionRunner.shutdown();
         }
 

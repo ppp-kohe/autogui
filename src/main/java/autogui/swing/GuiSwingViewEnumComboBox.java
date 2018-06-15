@@ -40,11 +40,16 @@ import java.util.stream.Collectors;
 public class GuiSwingViewEnumComboBox implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        PropertyEnumComboBox box = new PropertyEnumComboBox(context, new SpecifierManagerDefault(parentSpecifier));
-        if (context.isTypeElementProperty()) {
-            return box.wrapSwingNamed();
+        ValuePane<Object> pane;
+        if (!context.getReprValue().isEditable(context)) {
+            pane = new PropertyLabelEnum(context, new SpecifierManagerDefault(parentSpecifier));
         } else {
-            return box;
+            pane = new PropertyEnumComboBox(context, new SpecifierManagerDefault(parentSpecifier));
+        }
+        if (context.isTypeElementProperty()) {
+            return pane.wrapSwingNamed();
+        } else {
+            return pane.asSwingViewComponent();
         }
     }
 
@@ -288,7 +293,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         @Override
         public boolean canImport(TransferSupport support) {
-            return pane.isEnabled() &&
+            return pane.isSwingEditable() && pane.isEnabled() &&
                     support.isDataFlavorSupported(DataFlavor.stringFlavor);
         }
 
@@ -427,6 +432,27 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         @Override
         public void actionPerformed(ActionEvent e) {
             pane.setSwingViewValueWithUpdate(value);
+        }
+    }
+
+    public static class PropertyLabelEnum extends GuiSwingViewLabel.PropertyLabel {
+        public PropertyLabelEnum(GuiMappingContext context, SpecifierManager specifierManager) {
+            super(context, specifierManager);
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(Arrays.asList(
+                        infoLabel,
+                        new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
+                        new GuiSwingView.HistoryMenu<>(this, getSwingViewContext()),
+                        new GuiSwingViewLabel.LabelToStringCopyAction(this),
+                        new GuiSwingViewLabel.LabelTextSaveAction(this),
+                        new GuiSwingViewLabel.LabelJsonCopyAction(this, context),
+                        new GuiSwingViewLabel.LabelJsonSaveAction(this, context)));
+            }
+            return menuItems;
         }
     }
 }

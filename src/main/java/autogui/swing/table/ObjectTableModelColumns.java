@@ -167,6 +167,7 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
         this.columns.removeAll(columns);
         columns.forEach(c ->
                 columnModel.removeColumn(c.getTableColumn()));
+        columns.forEach(ObjectTableColumn::shutdown);
     }
 
 
@@ -218,6 +219,10 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
 
     @Override
     public void columnSelectionChanged(ListSelectionEvent e) { }
+
+    public void shutdown() {
+        getColumns().forEach(ObjectTableColumn::shutdown);
+    }
 
     public static class ObjectTableColumnDynamic {
         protected ObjectTableColumnDynamicFactory factory;

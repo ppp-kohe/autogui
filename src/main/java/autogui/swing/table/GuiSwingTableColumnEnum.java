@@ -2,8 +2,10 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.base.mapping.GuiReprValueEnumComboBox;
-import autogui.swing.*;
+import autogui.swing.GuiSwingJsonTransfer;
+import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingViewEnumComboBox;
+import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.util.PopupCategorized;
 
 import javax.swing.*;
@@ -41,7 +43,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
                 .withValueType(Enum.class);
     }
 
-    public static class ColumnEnumPane extends GuiSwingViewLabel.PropertyLabel {
+    public static class ColumnEnumPane extends GuiSwingViewEnumComboBox.PropertyLabelEnum {
         public ColumnEnumPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
             super(context, specifierManager);
             setOpaque(true);
@@ -57,7 +59,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
                             new GuiSwingViewLabel.LabelToStringCopyAction(this),
                             new GuiSwingTableColumnString.LabelTextPasteAllAction(this),
                             new GuiSwingTableColumnString.LabelTextLoadAction(this),
-                            new GuiSwingTableColumnString.LabelTextSaveAction(this),
+                            new GuiSwingTableColumnString.ColumnLabelTextSaveAction(this),
                             new ColumnEnumSetMenu(this)
                     ), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
             }

@@ -14,7 +14,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -54,7 +53,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new LabelTextPasteAllAction(this),
                         new LabelTextLoadAction(this),
-                        new LabelTextSaveAction(this),
+                        new ColumnLabelTextSaveAction(this),
                         new PopupExtensionText.TextOpenBrowserAction(this)
                 ), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
             }
@@ -136,24 +135,11 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
     }
 
-    public static class LabelTextSaveAction extends PopupExtensionText.TextSaveAction
+    public static class ColumnLabelTextSaveAction extends GuiSwingViewLabel.LabelTextSaveAction
         implements TableTargetColumnAction {
-        protected GuiSwingViewLabel.PropertyLabel label;
 
-        public LabelTextSaveAction(GuiSwingViewLabel.PropertyLabel label) {
-            super(null);
-            putValue(NAME, "Save Text...");
-            this.label = label;
-        }
-
-        @Override
-        protected JComponent getComponent() {
-            return label;
-        }
-
-        @Override
-        public void save(Path path) {
-            saveLines(path, Collections.singletonList(label.getValueAsString()));
+        public ColumnLabelTextSaveAction(GuiSwingViewLabel.PropertyLabel label) {
+            super(label);
         }
 
         @Override

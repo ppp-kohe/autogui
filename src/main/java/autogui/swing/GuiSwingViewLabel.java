@@ -1,8 +1,10 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiTaskClock;
+import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.*;
 
 import javax.swing.*;
@@ -10,14 +12,14 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * a fallback swing view for {@link GuiReprValue}
@@ -148,7 +150,9 @@ public class GuiSwingViewLabel implements GuiSwingView {
                                 infoLabel,
                                 new ContextRefreshAction(context, this),
                                 new LabelJsonCopyAction(this, context),
+                                new LabelJsonSaveAction(this, context),
                                 new LabelToStringCopyAction(this),
+                                new LabelTextSaveAction(this),
                                 new PopupExtensionText.TextOpenBrowserAction(this))
                 );
             }
@@ -173,10 +177,8 @@ public class GuiSwingViewLabel implements GuiSwingView {
         @Override
         public void setSwingViewValue(Object value) {
             viewClock.increment();
-            GuiReprValue label = (GuiReprValue) context.getRepresentation();
             this.value = value;
-            setTextWithFormatting(label.toUpdateValue(context, value));
-            revalidate();
+            setTextWithFormattingCurrentValue();
         }
 
         public String format(Object value) {
@@ -200,11 +202,15 @@ public class GuiSwingViewLabel implements GuiSwingView {
         @Override
         public void setSwingViewValue(Object value, GuiTaskClock clock) {
             if (viewClock.isOlderWithSet(clock)) {
-                GuiReprValue label = (GuiReprValue) context.getRepresentation();
                 this.value = value;
-                setTextWithFormatting(label.toUpdateValue(context, value));
-                revalidate();
+                setTextWithFormattingCurrentValue();
             }
+        }
+
+        public void setTextWithFormattingCurrentValue() {
+            GuiReprValue label = (GuiReprValue) context.getRepresentation();
+            setTextWithFormatting(label.toUpdateValue(context, value));
+            revalidate();
         }
 
         @Override
@@ -352,6 +358,21 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
     }
 
+    public static class LabelJsonSaveAction extends GuiSwingJsonTransfer.JsonSaveAction {
+        public LabelJsonSaveAction(ValuePane<?> component, GuiMappingContext context) {
+            super(component, context);
+        }
+
+        @Override
+        public Object toCopiedJson(Object value) {
+            if (value instanceof GuiReprValue.NamedValue) {
+                return ((GuiReprValue.NamedValue) value).toJson(toCopiedJson(((GuiReprValue.NamedValue) value).value));
+            } else {
+                return "" + value;
+            }
+        }
+    }
+
     public static class LabelTransferHandler extends  TransferHandler {
         protected PropertyLabel pane;
 
@@ -374,6 +395,28 @@ public class GuiSwingViewLabel implements GuiSwingView {
             return new StringSelection(pane.getValueAsString());
         }
     }
+
+    public static class LabelTextSaveAction extends PopupExtensionText.TextSaveAction {
+        protected GuiSwingViewLabel.PropertyLabel label;
+
+        public LabelTextSaveAction(GuiSwingViewLabel.PropertyLabel label) {
+            super(null);
+            putValue(NAME, "Save Text...");
+            this.label = label;
+        }
+
+        @Override
+        protected JComponent getComponent() {
+            return label;
+        }
+
+        @Override
+        public void save(Path path) {
+            saveLines(path, Collections.singletonList(label.getValueAsString()));
+        }
+    }
+
+
 
 }
 

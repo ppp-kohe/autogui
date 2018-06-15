@@ -151,8 +151,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
         @Override
         public boolean canImport(TransferSupport support) {
             return component.getField().isEnabled() && component.getField().isEditable() &&
-                    support.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
-                    support.isDataFlavorSupported(DataFlavor.stringFlavor);
+                    (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
+                    support.isDataFlavorSupported(DataFlavor.stringFlavor));
         }
 
         @Override

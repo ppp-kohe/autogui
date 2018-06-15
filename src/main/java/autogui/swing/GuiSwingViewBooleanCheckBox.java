@@ -64,6 +64,10 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
+        protected boolean editable;
+        protected boolean lastValue;
+
+        protected int editing = 0;
 
         public PropertyCheckBox(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -93,7 +97,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         public void initEditable() {
             GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
-            setEnabled(repr.isEditable(context));
+            editable = repr.isEditable(context);
         }
 
         public void initContextUpdate() {
@@ -145,7 +149,18 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            GuiSwingView.updateFromGui(this, isSelected(), viewClock.increment());
+            if (editing <= 0) {
+                ++editing;
+                try {
+                    if (editable) {
+                        GuiSwingView.updateFromGui(this, isSelected(), viewClock.increment());
+                    } else {
+                        setSelected(lastValue);
+                    }
+                } finally {
+                    --editing;
+                }
+            }
         }
 
         @Override
@@ -165,6 +180,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         }
 
         private void setSwingViewValueWithoutClock(Boolean value) {
+            lastValue = (value == null ? false : value);
             GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
             //setSelected seems not to cause ActionEvent
             setSelected(repr.toUpdateValue(context, value));
@@ -418,14 +434,14 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         @Override
         public boolean canImport(TransferSupport support) {
-            return pane.isEnabled() &&
+            return pane.isSwingEditable() && pane.isEnabled() &&
                     support.isDataFlavorSupported(DataFlavor.stringFlavor);
         }
 
 
         @Override
         public boolean importData(TransferSupport support) {
-            if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+            if (support.isDataFlavorSupported(DataFlavor.stringFlavor) && canImport(support)) {
                 try {
                     String data = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
                     Boolean value = pane.getValueFromString(data);

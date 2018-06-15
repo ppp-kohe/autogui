@@ -19,7 +19,6 @@ import java.awt.event.ActionEvent;
 import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 
@@ -117,7 +116,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
                         new ColumnFileCopyAction(this),
                         new GuiSwingTableColumnString.LabelTextPasteAllAction(this),
                         new GuiSwingTableColumnString.LabelTextLoadAction(this),
-                        new GuiSwingTableColumnString.LabelTextSaveAction(this),
+                        new GuiSwingTableColumnString.ColumnLabelTextSaveAction(this),
                         new ColumnDesktopOpenAction(this),
                         new ColumnDesktopRevealAction(this),
                         new ColumnOpenDialogAction(this)

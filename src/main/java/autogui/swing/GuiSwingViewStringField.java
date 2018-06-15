@@ -252,7 +252,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         @Override
         public boolean canImport(TransferSupport support) {
             return pane.getField().isEnabled() && pane.getField().isEditable() &&
-                    pane.getSwingViewContext().getReprValue().isEditable(pane.getSwingViewContext()) &&
+                    pane.isSwingEditable() &&
                     support.isDataFlavorSupported(DataFlavor.stringFlavor);
         }
 

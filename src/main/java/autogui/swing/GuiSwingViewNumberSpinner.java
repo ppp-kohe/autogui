@@ -24,7 +24,6 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
@@ -69,11 +68,16 @@ import java.util.stream.Collectors;
 public class GuiSwingViewNumberSpinner implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        PropertyNumberSpinner spinner = new PropertyNumberSpinner(context, new SpecifierManagerDefault(parentSpecifier));
-        if (context.isTypeElementProperty()) {
-            return spinner.wrapSwingNamed();
+        ValuePane<Object> pane;
+        if (!context.getReprValue().isEditable(context)) {
+            pane = new PropertyLabelNumber(context, new SpecifierManagerDefault(parentSpecifier));
         } else {
-            return spinner;
+            pane = new PropertyNumberSpinner(context, new SpecifierManagerDefault(parentSpecifier));
+        }
+        if (context.isTypeElementProperty()) {
+            return pane.wrapSwingNamed();
+        } else {
+            return pane.asSwingViewComponent();
         }
     }
 
@@ -447,14 +451,14 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
     public static abstract class NumberSetAction extends AbstractAction
             implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
-        protected PropertyNumberSpinner spinner;
+        protected ValuePane<Object> spinner;
         protected TypedSpinnerNumberModel model;
 
         public NumberSetAction(PropertyNumberSpinner spinner) {
             this(spinner, spinner.getModelTyped());
         }
 
-        public NumberSetAction(PropertyNumberSpinner spinner, TypedSpinnerNumberModel model) {
+        public NumberSetAction(ValuePane<Object> spinner, TypedSpinnerNumberModel model) {
             this.spinner = spinner;
             this.model = model;
         }
@@ -466,11 +470,11 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            setValue(getNumber(spinner.getValue()));
+            setValue(getNumber(spinner.getSwingViewValue()));
         }
 
         public void setValue(Object n) {
-            spinner.setValue(n);
+            spinner.setSwingViewValueWithUpdate(n);
         }
 
         public abstract Object getNumber(Object current);
@@ -496,7 +500,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             this(max, spinner, spinner.getModelTyped());
         }
 
-        public NumberMaximumAction(boolean max, PropertyNumberSpinner spinner, TypedSpinnerNumberModel model) {
+        public NumberMaximumAction(boolean max, ValuePane<Object> spinner, TypedSpinnerNumberModel model) {
             super(spinner, model);
             this.max = max;
             putValue(NAME, max ? "Set Maximum" : "Set Minimum");
@@ -513,16 +517,16 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public NumberIncrementAction(boolean inc, PropertyNumberSpinner spinner) {
             this(inc, spinner, spinner.getModelTyped());
+        }
+
+        public NumberIncrementAction(boolean inc, ValuePane<Object> spinner, TypedSpinnerNumberModel model) {
+            super(spinner, model);
+            this.inc = inc;
+            putValue(NAME, inc ? "Increment" : "Decrement");
 
             putValue(Action.ACCELERATOR_KEY,
                     KeyStroke.getKeyStroke(inc ? KeyEvent.VK_I : KeyEvent.VK_D,
                             Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
-        }
-
-        public NumberIncrementAction(boolean inc, PropertyNumberSpinner spinner, TypedSpinnerNumberModel model) {
-            super(spinner, model);
-            this.inc = inc;
-            putValue(NAME, inc ? "Increment" : "Decrement");
         }
 
         @Override
@@ -826,13 +830,13 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public boolean canImport(TransferSupport support) {
-            return pane.getEditorField().isEditValid() &&
+            return pane.getEditorField().isEditValid() && pane.isSwingEditable() &&
                     support.isDataFlavorSupported(DataFlavor.stringFlavor);
         }
 
         @Override
         public boolean importData(TransferSupport support) {
-            if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+            if (support.isDataFlavorSupported(DataFlavor.stringFlavor) && canImport(support)) {
                 try {
                     String data = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
                     Object val = pane.getEditorField().getFormatter().stringToValue(data);
@@ -1106,6 +1110,181 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 return true;
             } catch (Exception ex){
                 return false;
+            }
+        }
+    }
+
+    public static class PropertyLabelNumber extends GuiSwingViewLabel.PropertyLabel
+            implements SettingsWindowClient, GuiSwingPreferences.PreferencesUpdateSupport {
+        protected TypedSpinnerNumberModel model;
+        protected TypedSpinnerNumberModelPreferencesUpdater modelPreferencesUpdater;
+        protected SettingsWindow settingsWindow;
+        protected NumberSettingAction settingAction;
+        protected NumberFormat currentFormat;
+
+        public PropertyLabelNumber(GuiMappingContext context, SpecifierManager specifierManager) {
+            super(context, specifierManager);
+            setHorizontalAlignment(SwingConstants.RIGHT);
+        }
+
+        public void init() {
+            super.init();
+            initModel();
+            initModelPreferencesUpdater();
+            initSettingAction();
+            super.initKeyBindingsForStaticMenuItems();
+        }
+
+        @Override
+        public void initKeyBindingsForStaticMenuItems() {
+            //delay
+        }
+
+        public void initModel() {
+            model = PropertyNumberSpinner.createModel(context);
+            model.addChangeListener(this::modelUpdated);
+            currentFormat = model.getFormat();
+        }
+
+        public void initModelPreferencesUpdater() {
+            TypedSpinnerNumberModel m = getModelTyped();
+            if (m != null) {
+                modelPreferencesUpdater = new TypedSpinnerNumberModelPreferencesUpdater(context, m);
+                m.addChangeListener(modelPreferencesUpdater);
+            }
+        }
+
+        public void initSettingAction() {
+            TypedSpinnerNumberModel m = getModelTyped();
+            if (m != null) {
+                settingAction = new NumberSettingAction(context, this,
+                        GuiSwingContextInfo.get().getInfoLabel(context), m);
+            }
+        }
+
+        public TypedSpinnerNumberModel getModelTyped() {
+            return model;
+        }
+
+        public NumberFormat getCurrentFormat() {
+            return currentFormat;
+        }
+
+        public void modelUpdated(ChangeEvent e) {
+            currentFormat = getModelTyped().getFormat();
+            setTextWithFormattingCurrentValue();
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(Arrays.asList(
+                        infoLabel,
+                        new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
+                        new GuiSwingView.HistoryMenu<>(this, getSwingViewContext()),
+                        new GuiSwingViewLabel.LabelToStringCopyAction(this),
+                        new GuiSwingViewLabel.LabelTextSaveAction(this),
+                        new GuiSwingViewLabel.LabelJsonCopyAction(this, context),
+                        new GuiSwingViewLabel.LabelJsonSaveAction(this, context),
+                        settingAction));
+            }
+            return menuItems;
+        }
+
+        public List<Action> getEditorActions() {
+            TypedSpinnerNumberModel m = getModelTyped();
+            return Arrays.asList(
+                    new NumberMaximumAction(false, this, m),
+                    new NumberMaximumAction(true, this, m),
+                    new NumberIncrementAction(true, this, m),
+                    new NumberIncrementAction(false, this, m),
+                    settingAction);
+        }
+
+        @Override
+        public void saveSwingPreferences(GuiPreferences prefs) {
+            try {
+                GuiSwingView.savePreferencesDefault(this, prefs);
+                GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
+                getModelTyped().saveTo(targetPrefs);
+                if (settingAction != null) {
+                    settingAction.saveTo(targetPrefs);
+                }
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
+        }
+
+        @Override
+        public void loadSwingPreferences(GuiPreferences prefs) {
+            try {
+                GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
+                getModelTyped().loadFrom(targetPrefs);
+                if (settingAction != null) {
+                    settingAction.loadFrom(targetPrefs);
+                }
+                GuiSwingView.loadPreferencesDefault(this, prefs);
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
+        }
+
+        @Override
+        public void setSettingsWindow(SettingsWindow settingsWindow) {
+            this.settingsWindow = settingsWindow;
+        }
+
+        @Override
+        public SettingsWindow getSettingsWindow() {
+            return settingsWindow == null ? SettingsWindow.get() : settingsWindow;
+        }
+
+        @Override
+        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+            if (settingAction != null) {
+                settingAction.setUpdater(updater);
+            }
+            if (modelPreferencesUpdater != null) {
+                modelPreferencesUpdater.setUpdater(updater);
+            }
+        }
+
+        public GuiReprValueNumberSpinner getNumberSpinner() {
+            GuiMappingContext context = getSwingViewContext();
+            if (context.getRepresentation() instanceof GuiReprValueNumberSpinner) {
+                return (GuiReprValueNumberSpinner) context.getRepresentation();
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public String format(Object value) {
+            GuiReprValueNumberSpinner spinner = getNumberSpinner();
+            if (spinner != null) {
+                return spinner.toHumanReadableString(context, value);
+            }
+            if (currentFormat != null) {
+                return currentFormat.format(value);
+            } else {
+                return super.format(value);
+            }
+        }
+
+        @Override
+        public Object getValueFromString(String s) {
+            GuiReprValueNumberSpinner spinner = getNumberSpinner();
+            if (spinner != null) {
+                return spinner.fromHumanReadableString(context, s);
+            }
+            if (currentFormat != null) {
+                try {
+                    return currentFormat.parseObject(s);
+                } catch (Exception ex) {
+                    return super.getValueFromString(s);
+                }
+            } else {
+                return super.getValueFromString(s);
             }
         }
     }
