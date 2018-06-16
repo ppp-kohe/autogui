@@ -1,10 +1,13 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingMapperSet;
+import autogui.swing.GuiSwingPreferences;
 import autogui.swing.GuiSwingView;
+import autogui.swing.util.SettingsWindow;
 
 import javax.swing.table.TableColumn;
 import java.util.ArrayList;
@@ -186,6 +189,26 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumn {
         @Override
         public void setColumnViewUpdater(Consumer<ObjectTableColumn> updater) {
             column.setColumnViewUpdater(o -> updater.accept(this)); //convert column to this wrapper
+        }
+
+        @Override
+        public void setSettingsWindow(SettingsWindow settingWindow) {
+            column.setSettingsWindow(settingWindow);
+        }
+
+        @Override
+        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+            column.setPreferencesUpdater(updater);
+        }
+
+        @Override
+        public void saveSwingPreferences(GuiPreferences prefs) {
+            column.saveSwingPreferences(prefs);
+        }
+
+        @Override
+        public void loadSwingPreferences(GuiPreferences prefs) {
+            column.loadSwingPreferences(prefs);
         }
 
         @Override

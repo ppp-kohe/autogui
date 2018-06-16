@@ -1,10 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.*;
-import autogui.swing.GuiSwingActionDefault;
-import autogui.swing.GuiSwingJsonTransfer;
-import autogui.swing.GuiSwingView;
-import autogui.swing.GuiSwingViewLabel;
+import autogui.swing.*;
 import autogui.swing.util.*;
 
 import javax.swing.*;
@@ -82,28 +79,46 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
     }
 
     @Override
+    public void setSettingsWindow(SettingsWindow settingWindow) {
+        setForComponents(GuiSwingView.SettingsWindowClient.class,
+                p -> p.setSettingsWindow(settingWindow), renderer, editor);
+    }
+
+    @Override
+    public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        setForComponents(GuiSwingPreferences.PreferencesUpdateSupport.class,
+                p -> p.setPreferencesUpdater(updater), renderer, editor);
+    }
+
+    @Override
+    public void loadSwingPreferences(GuiPreferences prefs) {
+        setForComponents(GuiSwingView.ValuePane.class,
+                p -> p.loadSwingPreferences(prefs), renderer, editor);
+    }
+
+    @Override
+    public void saveSwingPreferences(GuiPreferences prefs) {
+        setForComponents(GuiSwingView.ValuePane.class,
+                p -> p.saveSwingPreferences(prefs), renderer, editor);
+    }
+
+    @Override
     public void shutdown() {
         super.shutdown();
-        if (renderer instanceof ObjectTableCellRenderer) {
-            ((ObjectTableCellRenderer) renderer).shutdown();
-        }
-        if (editor instanceof ObjectTableCellEditor) {
-            ((ObjectTableCellEditor) editor).shutdown();
-        }
+        setForComponents(GuiSwingView.ValuePane.class,
+                GuiSwingView.ValuePane::shutdownSwingView, renderer, editor);
     }
 
     @Override
     public void setColumnViewUpdater(Consumer<ObjectTableColumn> updater) {
-        if (renderer instanceof ColumnViewUpdateSource) {
-            ((ColumnViewUpdateSource) renderer).setColumnViewUpdater(() -> updater.accept(this));
-        }
+        setForComponents(ColumnViewUpdateSource.class,
+                p -> p.setColumnViewUpdater(() -> updater.accept(this)), renderer);
     }
 
     @Override
     public void viewUpdateAsDynamic(ObjectTableColumn source) {
-        if (renderer instanceof ColumnViewUpdateTarget) {
-            ((ColumnViewUpdateTarget) renderer).columnViewUpdateAsDynamic(source);
-        }
+        setForComponents(ColumnViewUpdateTarget.class,
+                p -> p.columnViewUpdateAsDynamic(source), renderer);
     }
 
     /**
@@ -173,11 +188,34 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
         return null;
     }
 
+    /** interface for renderer and editor, in order to setting up some properties like preferences and setting-windows */
+    public interface ObjectTableColumnCellView {
+        JComponent getComponent();
+
+        default boolean isSkippingSet() {
+            return false;
+        }
+
+        default <CompType> void setForComponent(Class<CompType> componentType, Consumer<CompType> setter) {
+            JComponent c = getComponent();
+            if (!isSkippingSet() && componentType.isInstance(c)) {
+                setter.accept(componentType.cast(c));
+            }
+        }
+    }
+
+    public static <CompType> void setForComponents(Class<CompType> componentType, Consumer<CompType> setter, Object... views) {
+        for (Object view : views) {
+            if (view instanceof ObjectTableColumnCellView) {
+                ((ObjectTableColumnCellView) view).setForComponent(componentType, setter);
+            }
+        }
+    }
+
     /**
      * a cell renderer with {@link autogui.swing.GuiSwingView.ValuePane}
      */
-    public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource,
-            ColumnViewUpdateSource, ColumnViewUpdateTarget {
+    public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource, ObjectTableColumnCellView {
         protected JComponent component;
         protected ObjectTableColumn ownerColumn;
         protected GuiSwingTableColumn.SpecifierManagerIndex specifierIndex;
@@ -192,6 +230,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
             this.specifierIndex = specifierIndex;
         }
 
+        @Override
         public JComponent getComponent() {
             return component;
         }
@@ -216,7 +255,6 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
                 valuePane.setSwingViewValue(value);
             }
             ObjectTableColumn.setCellBorder(table, component, row, column);
-
 
             return component;
         }
@@ -246,29 +284,6 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
                 return null;
             }
         }
-
-        public void shutdown() {
-            GuiSwingView.ValuePane<?> p = getMenuTargetPane();
-            if (p != null) {
-                p.shutdownSwingView();
-            }
-        }
-
-        @Override
-        public void setColumnViewUpdater(Runnable updater) {
-            JComponent c = getComponent();
-            if (c instanceof ColumnViewUpdateSource) {
-                ((ColumnViewUpdateSource) c).setColumnViewUpdater(updater);
-            }
-        }
-
-        @Override
-        public void columnViewUpdateAsDynamic(ObjectTableColumn source) {
-            JComponent c = getComponent();
-            if (c instanceof ColumnViewUpdateTarget) {
-                ((ColumnViewUpdateTarget) c).columnViewUpdateAsDynamic(source);
-            }
-        }
     }
 
     public static void setTableColor(JTable table, JComponent component, boolean isSelected) {
@@ -287,7 +302,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
     /**
      * a cell-editor with {@link autogui.swing.GuiSwingView.ValuePane}
      */
-    public static class ObjectTableCellEditor extends AbstractCellEditor implements TableCellEditor {
+    public static class ObjectTableCellEditor extends AbstractCellEditor implements TableCellEditor, ObjectTableColumnCellView {
         protected JComponent component;
         protected int clickCount = 2;
         protected boolean skipShutDown;
@@ -306,8 +321,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
             }
         }
 
+        @Override
         public JComponent getComponent() {
             return component;
+        }
+
+        @Override
+        public boolean isSkippingSet() {
+            return skipShutDown;
         }
 
         @Override
@@ -369,12 +390,6 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
 
         public int getClickCount() {
             return clickCount;
-        }
-
-        public void shutdown() {
-            if (!skipShutDown && component instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane) component).shutdownSwingView();
-            }
         }
     }
 

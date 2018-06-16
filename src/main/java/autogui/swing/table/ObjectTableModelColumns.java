@@ -1,5 +1,10 @@
 package autogui.swing.table;
 
+import autogui.base.mapping.GuiPreferences;
+import autogui.swing.GuiSwingPreferences;
+import autogui.swing.GuiSwingView;
+import autogui.swing.util.SettingsWindow;
+
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
@@ -12,7 +17,9 @@ import java.util.*;
 import java.util.function.Consumer;
 
 /** column managing part of {@link ObjectTableModel} */
-public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColumnHost, TableColumnModelListener {
+public class ObjectTableModelColumns
+        implements GuiSwingTableColumnSet.TableColumnHost, TableColumnModelListener,
+                GuiSwingView.SettingsWindowClient, GuiSwingPreferences.PreferencesUpdateSupport {
     protected DefaultTableColumnModel columnModel;
     protected List<ObjectTableColumn> columns = new ArrayList<>();
     protected List<ObjectTableColumn> staticColumns = new ArrayList<>();
@@ -23,6 +30,10 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
 
     protected ObjectTableModelColumnsListener updater;
     protected int viewUpdating;
+
+    protected SettingsWindow settingsWindow;
+    protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> prefsUpdater;
+    protected GuiPreferences currentPreferences;
 
     public interface ObjectTableModelColumnsListener {
         void columnAdded(ObjectTableColumn column);
@@ -92,6 +103,41 @@ public class ObjectTableModelColumns implements GuiSwingTableColumnSet.TableColu
             }
         });
         updater.columnAdded(column);
+        if (settingsWindow != null) {
+            column.setSettingsWindow(settingsWindow);
+        }
+        if (prefsUpdater != null) {
+            column.setPreferencesUpdater(prefsUpdater);
+        }
+        if (currentPreferences != null) {
+            column.loadSwingPreferences(currentPreferences);
+        }
+    }
+
+    @Override
+    public void setSettingsWindow(SettingsWindow settingsWindow) {
+        this.settingsWindow = settingsWindow;
+        columns.forEach(c -> c.setSettingsWindow(settingsWindow));
+    }
+
+    @Override
+    public SettingsWindow getSettingsWindow() {
+        return settingsWindow;
+    }
+
+    @Override
+    public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        prefsUpdater = updater;
+        columns.forEach(c -> c.setPreferencesUpdater(updater));
+    }
+
+    public void loadSwingPreferences(GuiPreferences prefs) {
+        currentPreferences = prefs;
+        columns.forEach(c -> c.loadSwingPreferences(prefs));
+    }
+
+    public void saveSwingPreferences(GuiPreferences prefs) {
+        columns.forEach(c -> c.saveSwingPreferences(prefs));
     }
 
     @Override

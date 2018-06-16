@@ -29,11 +29,15 @@ public class SettingsWindow {
     public SettingsFrame window;
     protected SettingSupport settingSupport;
 
+    public static boolean debug = System.getProperty("autogui.swing.util.debug", "false").equals("true");
+
     public static SettingsWindow get() {
-        if (instance == null) {
-            instance = new SettingsWindow();
+        synchronized (SettingsWindow.class) {
+            if (instance == null) {
+                instance = new SettingsWindow();
+            }
+            return instance;
         }
-        return instance;
     }
 
     public SettingsWindow() {
@@ -60,6 +64,10 @@ public class SettingsWindow {
             @Override
             public void componentHidden(ComponentEvent e) { }
         });
+
+        if (debug) {
+            System.err.printf("created: %x\n", System.identityHashCode(window));
+        }
         window.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "window-close");
         window.getRootPane().getActionMap()
@@ -90,6 +98,13 @@ public class SettingsWindow {
     public void show() {
         window.setShown(true);
         window.setVisible(true);
+    }
+
+    public void dispose() {
+        if (debug) {
+            System.err.printf("dispose: %x\n", System.identityHashCode(window));
+        }
+        window.dispose();
     }
 
     public void show(JComponent sender) {

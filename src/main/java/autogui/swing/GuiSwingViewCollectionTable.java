@@ -106,7 +106,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
     public static class CollectionTable extends JTable
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<List<?>>,
-                        GuiSwingTableColumnSet.TableSelectionSource, GuiSwingPreferences.PreferencesUpdateSupport {
+                        GuiSwingTableColumnSet.TableSelectionSource, GuiSwingPreferences.PreferencesUpdateSupport,
+                        SettingsWindowClient {
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected List<?> source;
@@ -130,6 +131,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected JToolBar actionToolBar;
 
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
+
+        protected SettingsWindow settingsWindow;
 
         public CollectionTable(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -334,6 +337,17 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             }
         }
 
+        @Override
+        public void setSettingsWindow(SettingsWindow settingsWindow) {
+            this.settingsWindow = settingsWindow;
+            getObjectTableModel().getColumns().setSettingsWindow(settingsWindow);
+        }
+
+        @Override
+        public SettingsWindow getSettingsWindow() {
+            return settingsWindow;
+        }
+
         public List<Action> getActions() {
             return actions;
         }
@@ -407,6 +421,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
             this.preferencesUpdater.setUpdater(updater);
+            getObjectTableModel().getColumns().setPreferencesUpdater(updater);
         }
 
         @Override
@@ -568,6 +583,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 GuiSwingView.loadPreferencesDefault(this, prefs);
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 preferencesUpdater.apply(targetPrefs);
+                getObjectTableModel().getColumns().loadSwingPreferences(targetPrefs);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
             }
@@ -580,6 +596,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 PreferencesForTable p = preferencesUpdater.getPrefs();
                 p.saveTo(targetPrefs);
+                getObjectTableModel().getColumns().saveSwingPreferences(targetPrefs);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
             }
@@ -953,7 +970,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 rowSort.add(row);
             }
         }
-
+        //TODO size limitation
         @Override
         public String getKey() {
             return "$table";

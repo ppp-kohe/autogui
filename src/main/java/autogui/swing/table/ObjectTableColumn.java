@@ -1,12 +1,11 @@
 package autogui.swing.table;
 
+import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.GuiSwingJsonTransfer;
+import autogui.swing.GuiSwingPreferences;
 import autogui.swing.GuiSwingView;
-import autogui.swing.util.PopupCategorized;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.PopupExtensionText;
-import autogui.swing.util.UIManagerUtil;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -59,9 +58,15 @@ public class ObjectTableColumn {
         this.comparator = comparator;
     }
 
-    public void shutdown() {
+    public void shutdown() { }
 
-    }
+    public void setSettingsWindow(SettingsWindow settingWindow) { }
+
+    public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) { }
+
+    public void loadSwingPreferences(GuiPreferences prefs) { }
+
+    public void saveSwingPreferences(GuiPreferences prefs) { }
 
     public Class<?> getValueType() {
         return valueType;

@@ -295,7 +295,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
                 GuiSwingView.ValuePane::shutdownSwingView);
         preferences.shutdown();
         logWindow.dispose();
-        settingsWindow.getWindow().dispose();
+        settingsWindow.dispose();
         keyBinding.unbind();
         fileDialogPreferencesUpdater.removeFromDialogManager();
     }
