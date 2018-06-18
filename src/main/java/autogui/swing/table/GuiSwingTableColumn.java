@@ -14,12 +14,6 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
     ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                    GuiSwingView.SpecifierManager parentSpecifier);
 
-    default ObjectTableColumnDynamicFactory createColumnDynamic(GuiMappingContext context,
-                                                                SpecifierManagerIndex rowSpecifier,
-                                                                GuiSwingView.SpecifierManager parentSpecifier) {
-        return null;
-    }
-
 
     class SpecifierManagerIndex implements GuiSwingView.SpecifierManager {
         protected Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier;

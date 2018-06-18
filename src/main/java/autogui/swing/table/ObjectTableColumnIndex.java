@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectTableColumnIndex implements Cloneable {
+    protected GuiSwingTableColumnDynamic.ObjectTableColumnSize size;
     protected ObjectTableColumnIndex parent;
     protected int totalIndex;
     protected int index;

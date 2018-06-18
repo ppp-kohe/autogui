@@ -141,7 +141,7 @@ public class ObjectTableModelColumns
     }
 
     @Override
-    public void addColumnDynamic(ObjectTableColumnDynamicFactory column) {
+    public void addColumnDynamic(DynamicColumnFactory column) {
         dynamicColumns.add(new ObjectTableColumnDynamic(column, staticColumns.size()));
     }
 
@@ -271,7 +271,7 @@ public class ObjectTableModelColumns
     }
 
     public static class ObjectTableColumnDynamic {
-        protected ObjectTableColumnDynamicFactory factory;
+        protected DynamicColumnFactory factory;
 
         protected int startIndex;
         protected ObjectTableColumnIndex index;
@@ -280,14 +280,14 @@ public class ObjectTableModelColumns
         protected boolean changeTypeIsAdding;
         protected List<ObjectTableColumn> changingColumns;
 
-        public ObjectTableColumnDynamic(ObjectTableColumnDynamicFactory factory, int startIndex) {
+        public ObjectTableColumnDynamic(DynamicColumnFactory factory, int startIndex) {
             this.factory = factory;
             index = new ObjectTableColumnIndex(null, startIndex, 0);
             columns = new ArrayList<>();
             changingColumns = new ArrayList<>();
         }
 
-        public ObjectTableColumnDynamicFactory getFactory() {
+        public DynamicColumnFactory getFactory() {
             return factory;
         }
 

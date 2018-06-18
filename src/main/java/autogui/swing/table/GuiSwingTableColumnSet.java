@@ -5,7 +5,6 @@ import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingView;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -20,7 +19,7 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
     interface TableColumnHost {
         void addColumnRowIndex();
         void addColumnStatic(ObjectTableColumn column);
-        void addColumnDynamic(ObjectTableColumnDynamicFactory columnFactory);
+        void addColumnDynamic(DynamicColumnFactory columnFactory);
         void addMenuRowComposite(ObjectTableColumn.TableMenuComposite rowComposite);
     }
 
@@ -111,6 +110,6 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
     }
 
     void createColumnsForDynamicCollection(GuiMappingContext context,
-                                           GuiSwingTableColumnCollection.ObjectTableColumnDynamicCollection collection,
+                                           GuiSwingTableColumnCollection.DynamicColumnCollection collection,
                                            GuiSwingView.SpecifierManager parentSpecifier);
 }
