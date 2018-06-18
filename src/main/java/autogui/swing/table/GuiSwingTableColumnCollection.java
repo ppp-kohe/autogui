@@ -25,7 +25,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
     @Override
     public DynamicColumnFactory createColumnDynamic(GuiMappingContext context, GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
-                                                    GuiSwingView.SpecifierManager parentSpecifier) {
+                                                    GuiSwingView.SpecifierManager parentSpecifier, boolean tableTop) {
         /*
         tableContext: GuiReprCollectionTable  -> GuiSwingTableCollection
              //rowSpecifier = table.getRowSpecifier(); ... columnSet.createColumns(elementContext, rowSpecifier, rowSpecifier)
@@ -41,12 +41,13 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                          //cc.column.createColumn(cc.context, ..., rowSpecifier:null, parentSpecifier:columnSpecifierIndex)
          */
         GuiSwingView.SpecifierManagerDefault tableSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
-        DynamicColumnFactoryCollection col = new DynamicColumnFactoryCollection(context, rowSpecifier, tableSpecifier);
-        GuiSwingTableColumn.SpecifierManagerIndex elementSpecifier = col.getColumnSpecifierIndex();
 
-        for (GuiMappingContext elementCollection : context.getChildren()) {
+        DynamicColumnFactoryCollection col = new DynamicColumnFactoryCollection(context, rowSpecifier, tableSpecifier);
+        GuiSwingTableColumn.SpecifierManagerIndex elementSpecifier = col.getElementSpecifierIndex();
+
+        for (GuiMappingContext elementCollection : context.getChildren()) { //always a single-element context
             GuiSwingElement elemView = columnMapperSet.viewTableColumn(elementCollection);
-            if (elemView instanceof GuiSwingTableColumnSet) {
+            if (elemView instanceof GuiSwingTableColumnSet) { //and, usually element-repr machines to the column-set
                 ((GuiSwingTableColumnSet) elemView).createColumnsForDynamicCollection(elementCollection,
                         col, elementSpecifier);
             } else {
@@ -64,66 +65,202 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         return col;
     }
 
-    public static class DynamicColumnFactoryCollection implements DynamicColumnFactory {
+    /**
+     * size-factory for List&lt;E&gt;
+     */
+    public static class DynamicColumnFactoryList implements DynamicColumnFactory, GuiSwingTableColumnSet.DynamicColumnHost {
+        protected DynamicColumnFactory elementFactory;
+        protected GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex;
+
+        public DynamicColumnFactoryList(GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex) {
+            this.elementSpecifierIndex = elementSpecifierIndex;
+        }
+
+        public GuiSwingTableColumn.SpecifierManagerIndex getElementSpecifierIndex() {
+            return elementSpecifierIndex;
+        }
+
+        @Override
+        public ObjectTableColumnSize getColumnSize(Object c) {
+            if (elementFactory instanceof ObjectTableColumnSizeConcrete) { //for List<Value>
+                return getColumnSizeForConcrete(c);
+            } else {
+                return getColumnSizeForObjectList(c);
+            }
+        }
+
+        public ObjectTableColumnSize getColumnSizeForConcrete(Object c) {
+            ObjectTableColumnSize size = elementFactory.getColumnSize(null);
+
+            int n = 0;
+            if (c instanceof Collection<?>) {
+                n = ((Collection) c).size();
+            } else if (c != null && c.getClass().isArray()) {
+                n = Array.getLength(c);
+            }
+            size.setSize(n);
+            size.setElementSpecifierIndex(elementSpecifierIndex);
+            return size;
+        }
+
+        public ObjectTableColumnSize getColumnSizeForObjectList(Object c) {
+            if (c instanceof List<?>) {
+                List<?> list = (List<?>) c;
+                ObjectTableColumnSizeComposite elements = new ObjectTableColumnSizeComposite(new ArrayList<>(list.size()));
+                for (Object e : list) {
+                    elements.add(elementFactory.getColumnSize(e));
+                }
+                return elements;
+            } else if (c != null && c.getClass().isArray()) {
+                int l = Array.getLength(c);
+                ObjectTableColumnSizeComposite elements = new ObjectTableColumnSizeComposite(new ArrayList<>(l));
+                for (int i = 0; i < l; ++i) {
+                    elements.add(elementFactory.getColumnSize(Array.get(c, i)));
+                }
+                return elements;
+            } else {
+                return new ObjectTableColumnSizeComposite(Collections.emptyList());
+            }
+        }
+
+        @Override
+        public void addColumn(GuiMappingContext context, GuiSwingTableColumn column,
+                              GuiSwingView.SpecifierManager parentSpecifier) {
+            add(new ObjectTableColumnSizeConcrete(1, context, column, parentSpecifier));
+        }
+
+        @Override
+        public void addColumnDynamic(GuiMappingContext context, GuiSwingTableColumnDynamic d,
+                                     GuiSwingView.SpecifierManager parentSpecifier) {
+
+            add(d.createColumnDynamic(context, null, parentSpecifier, false));
+        }
+
+        @Override
+        public void add(DynamicColumnFactory d) {
+            if (elementFactory != null) {
+                //something-wrong
+            }
+            elementFactory = d;
+        }
+
+        public DynamicColumnFactory getElementFactory() {
+            return elementFactory;
+        }
+
+
+    }
+
+    /**
+     * size-factory for class C { T0 f0; T1 f0; ... }
+     */
+    public static class DynamicColumnFactoryComposite implements DynamicColumnFactory, GuiSwingTableColumnSet.DynamicColumnHost {
+        protected List<DynamicColumnFactory> factories = new ArrayList<>();
+
+        @Override
+        public ObjectTableColumnSize getColumnSize(Object c) {
+            return new ObjectTableColumnSizeComposite(factories.stream()
+                    .map(f -> f.getColumnSize(c))
+                    .collect(Collectors.toList()));
+        }
+
+        @Override
+        public void addColumn(GuiMappingContext context, GuiSwingTableColumn column, GuiSwingView.SpecifierManager parentSpecifier) {
+            factories.add(new ObjectTableColumnSizeConcrete(1, context, column, parentSpecifier));
+        }
+
+        @Override
+        public void addColumnDynamic(GuiMappingContext context, GuiSwingTableColumnDynamic d, GuiSwingView.SpecifierManager parentSpecifier) {
+            factories.add(d.createColumnDynamic(context, null, parentSpecifier, false));
+        }
+
+        @Override
+        public void add(DynamicColumnFactory d) {
+            factories.add(d);
+        }
+    }
+
+
+    public static class ObjectTableColumnSizeConcrete extends ObjectTableColumnSize implements DynamicColumnFactory {
+        protected GuiMappingContext context;
+        protected GuiSwingTableColumn column;
+        public GuiSwingView.SpecifierManager parentSpecifier;
+
+        public ObjectTableColumnSizeConcrete(int size, GuiMappingContext context, GuiSwingTableColumn column, GuiSwingView.SpecifierManager parentSpecifier) {
+            this.size = size;
+            this.context = context;
+            this.column = column;
+            this.parentSpecifier = parentSpecifier;
+        }
+
+        @Override
+        public ObjectTableColumn createColumn(ObjectTableColumnIndex index) {
+            super.createColumn(index); //set elementSpecifierIndex
+            /*
+            ObjectTableColumnCollectionWrapper w = new ObjectTableColumnCollectionWrapper(context,
+                    column.createColumn(context, null, parentSpecifier),
+                    context.getChildren().get(0), //elementCon text
+                    elemIndex, propIndex, indexes,
+                    elementSpecifierIndex);
+            w.setSize(this);
+            return w;*/
+            //TODO
+            return null;
+        }
+
+        /**
+         * @param c a value contained a list
+         * @return a copy of this: this is a prototype
+         */
+        @Override
+        public ObjectTableColumnSize getColumnSize(Object c) {
+            return new ObjectTableColumnSizeConcrete(size, context, column, parentSpecifier);
+        }
+    }
+
+    /**
+     * size-factory for root List&lt;List&lt;T&gt;&gt;
+     */
+    public static class DynamicColumnFactoryCollection extends DynamicColumnFactoryList {
         protected GuiMappingContext context;
         protected GuiSwingTableColumn.SpecifierManagerIndex rowSpecifierIndex;
         protected GuiSwingView.SpecifierManager tableSpecifier;
-        protected GuiSwingTableColumn.SpecifierManagerIndex columnSpecifierIndex;
-
-        protected List<DynamicColumnFactory> columnFactories = new ArrayList<>();
 
         public DynamicColumnFactoryCollection(GuiMappingContext context,
                                        GuiSwingTableColumn.SpecifierManagerIndex rowSpecifierIndex,
                                        GuiSwingView.SpecifierManager tableSpecifier) {
+            super(new GuiSwingTableColumn.SpecifierManagerIndex(tableSpecifier::getSpecifier));
             this.context = context;
             this.rowSpecifierIndex = rowSpecifierIndex;
             this.tableSpecifier = tableSpecifier;
-            this.columnSpecifierIndex = new GuiSwingTableColumn.SpecifierManagerIndex(tableSpecifier::getSpecifier);
         }
 
         public GuiSwingView.SpecifierManager getTableSpecifier() {
             return tableSpecifier;
         }
 
-        public GuiSwingTableColumn.SpecifierManagerIndex getColumnSpecifierIndex() {
-            return columnSpecifierIndex;
-        }
-
-        public void addColumn(GuiMappingContext context, GuiSwingTableColumn column,
-                              GuiSwingView.SpecifierManager parentSpecifier) {
-            columnFactories.add(new ObjectTableColumnSizeConcrete(1, context, column, parentSpecifier));
-        }
-
-        public void addColumnDynamic(GuiMappingContext context, GuiSwingTableColumnDynamic d,
-                                     GuiSwingView.SpecifierManager parentSpecifier) {
-            DynamicColumnFactory c = d.createColumnDynamic(context, null, parentSpecifier); //TODO
-            if (c instanceof DynamicColumnFactoryCollection) {
-                columnFactories.add(new DynamicColumnFactoryComposite(c));
-            }
-        }
-
         @Override
         public ObjectTableColumnSize getColumnSize(Object c) {
             if (c instanceof List<?>) {
-                ObjectTableColumnSizeCollection size = new ObjectTableColumnSizeCollection(10);
-                int i = 0;
-                for (Object row : (List<?>) c) {
-                    for (Object col : (List<?>) row) {//not a value list
-                        size.set(i, getColumnSizeElement(col));
-                        ++i;
-                    }
+                List<?> list = (List<?>) c;
+                ObjectTableColumnSizeComposite elements = new ObjectTableColumnSizeComposite(new ArrayList<>());
+                for (Object e : list) {
+                    elements.set(super.getColumnSize(e));
                 }
+                return elements;
+            } else if (c != null && c.getClass().isArray()) {
+                int l = Array.getLength(c);
+                ObjectTableColumnSizeComposite elements = new ObjectTableColumnSizeComposite(new ArrayList<>());
+                for (int i = 0; i < l; ++i) {
+                    elements.set(super.getColumnSize(Array.get(c, i)));
+                }
+                return elements;
+            } else {
+                return new ObjectTableColumnSizeComposite(Collections.emptyList());
             }
-            return null;
         }
 
-        public ObjectTableColumnSize getColumnSizeElement(Object e) {
-            ObjectTableColumnSizeCollection c = new ObjectTableColumnSizeCollection();
-            for (DynamicColumnFactory f : columnFactories) {
-                c.add(f.getColumnSize(e));
-            }
-            return c;
-        }
+        /*
 
         public int getColumnCount(Object collection) {
             if (collection instanceof List<?>) {
@@ -161,7 +298,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             indexesWithElem[indexes.length - 1] = elemIndex;
             indexesWithElem[indexes.length] = propIndex;
             return indexesWithElem;
-        }
+        }*/
     }
 
 
@@ -192,7 +329,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             return parent;
         }
 
-        @Override
+        //TODO @Override
         public void setParent(ObjectTableColumnSize parent) {
             this.parent = parent;
         }
@@ -235,7 +372,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
 
     }
-    @Deprecated
+    /*
     public static class ContextAndColumn {
         public GuiMappingContext context;
         public GuiSwingTableColumn column;
@@ -247,10 +384,10 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             this.column = column;
             this.parentSpecifier = parentSpecifier;
         }
-    }
+    }*/
 
     public static class ObjectTableColumnCollectionWrapper extends ObjectTableColumn
-        implements ObjectTableColumnWithContext {
+        implements GuiSwingTableColumn.ObjectTableColumnWithContext {
         protected GuiMappingContext context;
         protected ObjectTableColumn column;
         protected GuiMappingContext elementContext;
@@ -260,12 +397,12 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
          * suppose {(parentIndexes, ...,) elementIndex, propertyIndex}
          */
         protected int[] indexes;
-        protected SpecifierManagerIndex elementSpecifier;
+        protected GuiSwingTableColumn.SpecifierManagerIndex elementSpecifier;
 
         public ObjectTableColumnCollectionWrapper(GuiMappingContext context,
                                                   ObjectTableColumn column,
                                                   GuiMappingContext elementContext, int elementIndex, int propertyIndex,
-                                                  int[] indexes, SpecifierManagerIndex elementSpecifier) {
+                                                  int[] indexes, GuiSwingTableColumn.SpecifierManagerIndex elementSpecifier) {
             this.context = context;
             this.column = column;
             this.elementContext = elementContext;
@@ -390,138 +527,4 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
     }
 
-    /**
-     * size-factory for List&lt;V&gt;
-     */
-    public static class DynamicColumnFactoryValueList implements DynamicColumnFactory {
-        protected ObjectTableColumnSizeConcrete column;
-
-        public DynamicColumnFactoryValueList(ObjectTableColumnSizeConcrete column) {
-            this.column = column;
-        }
-
-        @Override
-        public ObjectTableColumnSize getColumnSize(Object c) {
-            int n = 0;
-            if (c instanceof Collection<?>) {
-                n = ((Collection) c).size();
-            } else if (c != null && c.getClass().isArray()) {
-                n = Array.getLength(c);
-            }
-            ObjectTableColumnSize size = column.getColumnSize(null);
-            size.setSize(n);
-            return size;
-        }
-    }
-
-    /**
-     * size-factory for List&lt;E&gt;
-     */
-    public static class DynamicColumnFactoryList implements DynamicColumnFactory {
-        protected DynamicColumnFactory elementFactory;
-
-        public DynamicColumnFactoryList(DynamicColumnFactory elementFactory) {
-            this.elementFactory = elementFactory;
-        }
-
-        @Override
-        public ObjectTableColumnSize getColumnSize(Object c) {
-            if (c instanceof List<?>) {
-                List<?> list = (List<?>) c;
-                ObjectTableColumnSizeComposite elements = new ObjectTableColumnSizeComposite(new ArrayList<>(list.size()));
-                for (Object e : list) {
-                    elements.add(elementFactory.getColumnSize(e));
-                }
-                return elements;
-            } else if (c != null && c.getClass().isArray()) {
-                int l = Array.getLength(c);
-                ObjectTableColumnSizeComposite elements = new ObjectTableColumnSizeComposite(new ArrayList<>(l));
-                for (int i = 0; i < l; ++i) {
-                    elements.add(elementFactory.getColumnSize(Array.get(c, i)));
-                }
-                return elements;
-            } else {
-                return new ObjectTableColumnSizeComposite(Collections.emptyList());
-            }
-        }
-    }
-
-    /**
-     * size-factory for class C { T0 f0; T1 f0; ... }
-     */
-    public static class DynamicColumnFactoryComposite implements DynamicColumnFactory {
-        protected List<DynamicColumnFactory> factories = new ArrayList<>();
-
-        @Override
-        public ObjectTableColumnSize getColumnSize(Object c) {
-            return new ObjectTableColumnSizeComposite(factories.stream()
-                    .map(f -> f.getColumnSize(c))
-                    .collect(Collectors.toList()));
-        }
-    }
-
-    /**
-     * size-factory for root List&lt;List&lt;T&gt;&gt;
-     */
-    public static class DynamicColumnFactoryTable extends DynamicColumnFactoryList {
-
-        public DynamicColumnFactoryTable(DynamicColumnFactory elementFactory) {
-            super(elementFactory);
-        }
-
-        @Override
-        public ObjectTableColumnSize getColumnSize(Object c) {
-            if (c instanceof List<?>) {
-                List<?> list = (List<?>) c;
-                ObjectTableColumnSizeComposite elements = new ObjectTableColumnSizeComposite(new ArrayList<>());
-                for (Object e : list) {
-                    elements.set(super.getColumnSize(e));
-                }
-                return elements;
-            } else if (c != null && c.getClass().isArray()) {
-                int l = Array.getLength(c);
-                ObjectTableColumnSizeComposite elements = new ObjectTableColumnSizeComposite(new ArrayList<>());
-                for (int i = 0; i < l; ++i) {
-                    elements.set(super.getColumnSize(Array.get(c, i)));
-                }
-                return elements;
-            } else {
-                return new ObjectTableColumnSizeComposite(Collections.emptyList());
-            }
-        }
-    }
-
-    public static class ObjectTableColumnSizeConcrete extends ObjectTableColumnSize implements DynamicColumnFactory {
-        protected GuiMappingContext context;
-        protected GuiSwingTableColumn column;
-        public GuiSwingView.SpecifierManager parentSpecifier;
-
-        public ObjectTableColumnSizeConcrete(int size, GuiMappingContext context, GuiSwingTableColumn column, GuiSwingView.SpecifierManager parentSpecifier) {
-            this.size = size;
-            this.context = context;
-            this.column = column;
-            this.parentSpecifier = parentSpecifier;
-        }
-
-        @Override
-        public ObjectTableColumn createColumn(ObjectTableColumnIndex index) {
-            columnSpecifierIndex.setIndex(index.getIndex());
-            ObjectTableColumnCollectionWrapper w = new ObjectTableColumnCollectionWrapper(context,
-                    column.createColumn(context, null, parentSpecifier),
-                    context.getChildren().get(0), //elementCon text
-                    elemIndex, propIndex, indexes,
-                    columnSpecifierIndex);
-            w.setSize(this);
-            return w;
-        }
-
-        /**
-         * @param c a value contained a list
-         * @return a copy of this: this is a prototype
-         */
-        @Override
-        public ObjectTableColumnSize getColumnSize(Object c) {
-            return new ObjectTableColumnSizeConcrete(size, context, column, parentSpecifier);
-        }
-    }
 }

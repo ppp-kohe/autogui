@@ -10,9 +10,14 @@ public class ObjectTableColumnIndex implements Cloneable {
     protected int index;
 
     public ObjectTableColumnIndex(ObjectTableColumnIndex parent, int totalIndex, int index) {
+        this(parent, totalIndex, index, null);
+    }
+
+    public ObjectTableColumnIndex(ObjectTableColumnIndex parent, int totalIndex, int index, GuiSwingTableColumnDynamic.ObjectTableColumnSize size) {
         this.parent = parent;
         this.totalIndex = totalIndex;
         this.index = index;
+        this.size = size;
     }
 
     public ObjectTableColumnIndex next(int flattenSizeForThisColumn) {
@@ -21,8 +26,8 @@ public class ObjectTableColumnIndex implements Cloneable {
         return n;
     }
 
-    public ObjectTableColumnIndex child() {
-        return new ObjectTableColumnIndex(this, totalIndex, 0);
+    public ObjectTableColumnIndex child(GuiSwingTableColumnDynamic.ObjectTableColumnSize size) {
+        return new ObjectTableColumnIndex(this, totalIndex, 0, size);
     }
 
     public ObjectTableColumnIndex copy() {

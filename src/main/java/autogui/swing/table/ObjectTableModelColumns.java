@@ -141,7 +141,7 @@ public class ObjectTableModelColumns
     }
 
     @Override
-    public void addColumnDynamic(DynamicColumnFactory column) {
+    public void addColumnDynamic(GuiSwingTableColumnDynamic.DynamicColumnFactory column) {
         dynamicColumns.add(new ObjectTableColumnDynamic(column, staticColumns.size()));
     }
 
@@ -186,6 +186,7 @@ public class ObjectTableModelColumns
     public void update(Object list) {
         int startIndex = staticColumns.size();
         for (ObjectTableColumnDynamic d : dynamicColumns) {
+            /* TODO
             startIndex = d.update(startIndex, list);
             if (d.hasAdding()) {
                 addColumnsDynamic(d, d.getChangingColumns());
@@ -193,6 +194,7 @@ public class ObjectTableModelColumns
                 removeColumnsDynamic(d.getChangingColumns());
             }
             d.clearChanges();
+            */
         }
     }
 
@@ -271,7 +273,9 @@ public class ObjectTableModelColumns
     }
 
     public static class ObjectTableColumnDynamic {
-        protected DynamicColumnFactory factory;
+        protected GuiSwingTableColumnDynamic.DynamicColumnFactory factory;
+
+        protected GuiSwingTableColumnDynamic.ObjectTableColumnSize preSize;
 
         protected int startIndex;
         protected ObjectTableColumnIndex index;
@@ -280,14 +284,14 @@ public class ObjectTableModelColumns
         protected boolean changeTypeIsAdding;
         protected List<ObjectTableColumn> changingColumns;
 
-        public ObjectTableColumnDynamic(DynamicColumnFactory factory, int startIndex) {
+        public ObjectTableColumnDynamic(GuiSwingTableColumnDynamic.DynamicColumnFactory factory, int startIndex) {
             this.factory = factory;
             index = new ObjectTableColumnIndex(null, startIndex, 0);
             columns = new ArrayList<>();
             changingColumns = new ArrayList<>();
         }
 
-        public DynamicColumnFactory getFactory() {
+        public GuiSwingTableColumnDynamic.DynamicColumnFactory getFactory() {
             return factory;
         }
 
@@ -295,8 +299,77 @@ public class ObjectTableModelColumns
             return index.getTotalIndex();
         }
 
-        public int update(int startIndex, Object list) {
-            int newSize = factory.getColumnCount(list);
+        public void update(int startIndex, Object list) {
+            GuiSwingTableColumnDynamic.ObjectTableColumnSize newSize = factory.getColumnSize(list);
+            index = new ObjectTableColumnIndex(null, startIndex, 0, newSize);
+            update(preSize, newSize, index);
+        }
+
+        public void update(GuiSwingTableColumnDynamic.ObjectTableColumnSize preSize,
+                           GuiSwingTableColumnDynamic.ObjectTableColumnSize newSize,
+                           ObjectTableColumnIndex index) {
+            //TODO up index to parent index
+            if (newSize.isComposition()) {
+                List<GuiSwingTableColumnDynamic.ObjectTableColumnSize> preChildren = preSize.getChildren();
+                List<GuiSwingTableColumnDynamic.ObjectTableColumnSize> newChildren = newSize.getChildren();
+                int ps = preChildren.size();
+                int ns = newChildren.size();
+                for (int i = 0; i < ps; ++i) {
+                    if (i < ns) {
+                        update(preChildren.get(i), newChildren.get(i), index.child(newChildren.get(i)));
+                    } else {
+                        remove(preChildren.get(i), index.child(preChildren.get(i)));
+                    }
+                }
+                for (int i = ps; i < ns; ++i) {
+                    add(newChildren.get(i), index.child(newChildren.get(i)));
+                }
+            } else {
+                int diff = newSize.size() - preSize.size();
+                if (diff < 0) {
+                    remove(-diff, index, newSize);
+                } else if (diff > 0) {
+                    add(diff, index, newSize);
+                } else {
+                    updateIndex(index, newSize);
+                }
+            }
+        }
+
+        public void add(GuiSwingTableColumnDynamic.ObjectTableColumnSize newSize, ObjectTableColumnIndex index) {
+            if (!newSize.isComposition()) {
+                add(newSize.size(), index, newSize);
+            } else {
+                newSize.getChildren()
+                        .forEach(s -> add(s, index.child(s)));
+            }
+        }
+
+        public void add(int adding, ObjectTableColumnIndex index, GuiSwingTableColumnDynamic.ObjectTableColumnSize newSize) {
+            updateIndex(index, newSize);
+            for (int i = 0; i < adding; ++i) {
+                ObjectTableColumn column = newSize.createColumn(index);
+                column.getTableColumn().setModelIndex(index.getTotalIndex());
+                columns.add(column);
+                //TODO map newSize structure index -> column
+                changingColumns.add(column);
+                index.increment(1);
+            }
+        }
+
+        public void updateIndex(ObjectTableColumnIndex index, GuiSwingTableColumnDynamic.ObjectTableColumnSize size) {
+            //TODO
+        }
+
+        public void remove(GuiSwingTableColumnDynamic.ObjectTableColumnSize removed, ObjectTableColumnIndex index) {
+            //TODO
+        }
+
+        public void remove(int removing, ObjectTableColumnIndex index, GuiSwingTableColumnDynamic.ObjectTableColumnSize size) {
+            //TODO
+        }
+
+            /*
             int preSize = columns.size();
 
             updateStartIndex(startIndex, newSize);
@@ -309,8 +382,8 @@ public class ObjectTableModelColumns
                 changingColumns.clear();
             }
             return getEndIndexExclusive();
-        }
-
+        }*/
+        /*
         public void updateStartIndex(int startIndex, int newSize) {
             if (this.startIndex != startIndex) {
                 int modelIndex = startIndex;
@@ -320,8 +393,8 @@ public class ObjectTableModelColumns
                 }
                 this.startIndex = startIndex;
             }
-        }
-
+        }*/
+        /*
         public void updateWithAdding(int addingCount) {
             changeTypeIsAdding = true;
             int preSize = columns.size();
@@ -334,7 +407,7 @@ public class ObjectTableModelColumns
                 changingColumns.add(column);
                 index.increment(1);
             }
-        }
+        }*/
 
         public void updateWithRemoving(int removingCount) {
             changeTypeIsAdding = false;

@@ -14,8 +14,10 @@ import java.util.List;
 public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
     DynamicColumnFactory createColumnDynamic(GuiMappingContext context,
                                              GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
-                                             GuiSwingView.SpecifierManager parentSpecifier);
+                                             GuiSwingView.SpecifierManager parentSpecifier, boolean tableTop);
 
+    /**
+     * a factory of size info. which becomes a set of factories of each concrete columns */
     interface DynamicColumnFactory {
         ObjectTableColumnSize getColumnSize(Object c);
     }
@@ -71,6 +73,7 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
     abstract class ObjectTableColumnSize {
         protected int size;
         protected ObjectTableColumnSize parent;
+        protected GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex;
 
         public int size() {
             return size;
@@ -85,6 +88,7 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
         }
 
         public List<ObjectTableColumnSize> getChildren() {
+            error("getChildren", null);
             return Collections.emptyList();
         }
 
@@ -92,7 +96,34 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
             return parent;
         }
 
-        public abstract ObjectTableColumn createColumn(ObjectTableColumnIndex index);
+        public ObjectTableColumn createColumn(ObjectTableColumnIndex index) {
+            if (elementSpecifierIndex != null) {
+                elementSpecifierIndex.setIndex(index.getIndex());
+            }
+            return null;
+        }
+
+        public void setElementSpecifierIndex(GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex) {
+            this.elementSpecifierIndex = elementSpecifierIndex;
+        }
+
+        public void set(ObjectTableColumnSize newSize) {
+            if (!newSize.isComposition()) {
+                size = Math.max(size, newSize.size());
+            } else {
+                error("set", newSize);
+            }
+        }
+
+        protected void error(String msg, ObjectTableColumnSize error) {
+            System.err.printf("something wrong: %s this=%s, error=%s\n", msg, this, error);
+
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "(size=" + size + ", isComposition()=" + isComposition() + ")";
+        }
     }
 
     class ObjectTableColumnSizeComposite extends ObjectTableColumnSize {
@@ -112,9 +143,25 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
             return children;
         }
 
+        public void add(ObjectTableColumnSize childSize) {
+            this.size += childSize.size();
+            children.add(childSize);
+        }
+
         @Override
-        public ObjectTableColumn createColumn(ObjectTableColumnIndex index) {
-            return null;
+        public void set(ObjectTableColumnSize newSize) {
+            if (newSize.isComposition()) {
+                List<ObjectTableColumnSize> newChildren = newSize.getChildren();
+                for (int i = 0, l = Math.min(children.size(), newChildren.size()); i < l; ++i) {
+                    children.get(i).set(newChildren.get(i));
+                }
+
+                for (int i = children.size(), l = newChildren.size(); i < l; ++i) {
+                    children.add(newChildren.get(i));
+                }
+            } else {
+                error("set", newSize);
+            }
         }
     }
 }
