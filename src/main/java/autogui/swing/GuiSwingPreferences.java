@@ -12,6 +12,7 @@ import autogui.swing.util.*;
 import autogui.base.mapping.ScheduledTaskRunner;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.table.AbstractTableModel;
@@ -180,6 +181,7 @@ public class GuiSwingPreferences {
                 columnSelect.setCellEditor(new PreferencesLaunchApplyEditor(listModel));
             }
             addSelectionListener(this::showSelectedPrefs);
+            list.setAutoCreateColumnsFromModel(false); //avoid to reset above columns
 
             UIManagerUtil ui = UIManagerUtil.getInstance();
 
@@ -348,7 +350,8 @@ public class GuiSwingPreferences {
         protected List<GuiPreferences> list;
         protected List<GuiPreferences> savedPrefsList;
         protected GuiPreferences launchPrefs;
-        protected GuiPreferences targetDefault;
+        protected GuiPreferences lastDefault;
+        protected GuiPreferences targetDefault; //prefs is "empty" and thus using default values of context objects
 
         public PreferencesListModel(Supplier<GuiMappingContext> rootContext) {
             this.rootContext = rootContext;
@@ -387,6 +390,13 @@ public class GuiSwingPreferences {
             return launchPrefs;
         }
 
+        public boolean isLaunchPrefs(GuiPreferences prefs) {
+            return launchPrefs == prefs ||
+                    (launchPrefs == null && isDefault(prefs)) ||
+                    (isDefault(launchPrefs) && isDefault(prefs)) ||
+                    (isDefault(launchPrefs) && prefs == null);
+        }
+
         public void reload() {
             update(true);
             /*
@@ -409,15 +419,38 @@ public class GuiSwingPreferences {
         }
 
         public boolean isNameEditable(GuiPreferences prefs) {
-            return prefs != targetDefault &&
-                    prefs != rootContext.get().getPreferences();
+            return !isEmpty(prefs) && !isDefault(prefs);
         }
 
         public String getName(GuiPreferences prefs) {
-            if (prefs == rootContext.get().getPreferences()) {
+            if (isDefault(prefs)) {
                 return "Defaults";
             } else {
                 return prefs.getValueStore().getString("$name", "Preferences " + list.indexOf(prefs));
+            }
+        }
+
+        public boolean isDefault(GuiPreferences prefs) {
+            return prefs == lastDefault ||
+                    prefs == rootContext.get().getPreferences();
+        }
+
+        public boolean isEmpty(GuiPreferences prefs) {
+            return prefs == targetDefault;
+        }
+
+        public String getUUID(GuiPreferences prefs) {
+            if (prefs == null || isDefault(prefs)) {
+                return "";
+            } else if (isEmpty(prefs)) {
+                return "empty";
+            } else {
+                String v = prefs.getValueStore().getString("$uuid", "");
+                if (v.isEmpty()) {
+                    v = UUID.randomUUID().toString();
+                    prefs.getValueStore().putString("$uuid", v);
+                }
+                return v;
             }
         }
 
@@ -425,9 +458,13 @@ public class GuiSwingPreferences {
             int current = list.indexOf(getLaunchPrefs());
             this.launchPrefs = launchPrefs;
             int newValue = list.indexOf(launchPrefs);
-            rootContext.get().getPreferences().setLaunchPrefsAsRoot(newValue);
+            saveLaunchPrefsUUID();
             fireTableCellUpdated(current, 1);
             fireTableCellUpdated(newValue, 1);
+        }
+
+        protected void saveLaunchPrefsUUID() {
+            rootContext.get().getPreferences().setLaunchPrefsAsRoot(getUUID(launchPrefs));
         }
 
         public void setName(GuiPreferences prefs, String name) {
@@ -437,33 +474,31 @@ public class GuiSwingPreferences {
 
         public void update(boolean loadSavedList) {
             GuiMappingContext context = this.rootContext.get();
+            lastDefault = context.getPreferences();
             targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
             targetDefault.getValueStore().putString("$name", "Target Code Values");
+            targetDefault.getValueStore().putString("$uuid", "empty");
 
             list = new ArrayList<>();
-            list.add(context.getPreferences()); //0
+            list.add(lastDefault); //0
             list.add(targetDefault); //1
             if (savedPrefsList == null || loadSavedList) {
-                savedPrefsList = context.getPreferences().getSavedStoreListAsRoot();
+                savedPrefsList = lastDefault.getSavedStoreListAsRoot();
             }
             savedPrefsList.sort(Comparator.comparing(this::getName)); //sort by updated names
             list.addAll(savedPrefsList);
 
-            int launchPrefsIndex = 0;
-            if (list != null) {
-                if (launchPrefs != null) {
-                    launchPrefsIndex = list.indexOf(launchPrefs);
-                    //save launchPrefs index
-                    rootContext.get().getPreferences().setLaunchPrefsAsRoot(launchPrefsIndex);
-                }
+            String launchPrefsUUID = lastDefault.getLaunchPrefsAsRoot();
+            if (launchPrefsUUID.isEmpty()) { //default
+                launchPrefs = lastDefault;
+            } else if (launchPrefsUUID.equals("empty")) {
+                launchPrefs = targetDefault;
             } else {
-                //init
-                launchPrefsIndex = context.getPreferences().getLaunchPrefsAsRoot();
+                launchPrefs = savedPrefsList.stream()
+                        .filter(p -> p.getValueStore().getString("$uuid", "").equals(launchPrefsUUID))
+                        .findFirst()
+                        .orElse(targetDefault);
             }
-            if (launchPrefsIndex < 0 || launchPrefsIndex >= list.size()) {
-                launchPrefsIndex = 0;
-            }
-            launchPrefs = list.get(launchPrefsIndex);
             fireTableDataChanged();
         }
     }
@@ -532,7 +567,11 @@ public class GuiSwingPreferences {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setSelected(listModel.getLaunchPrefs() == value);
+            if (value instanceof Boolean) {
+                setSelected((Boolean) value);
+            } else {
+                setSelected(listModel.isLaunchPrefs((GuiPreferences) value));
+            }
             ObjectTableColumnValue.setTableColor(table, this, isSelected);
             return this;
         }
@@ -559,7 +598,8 @@ public class GuiSwingPreferences {
             if (value instanceof GuiPreferences) {
                 currentPrefs = (GuiPreferences) value;
             }
-            Boolean v = (listModel.getLaunchPrefs() == value);
+            Boolean v = (value instanceof GuiPreferences &&
+                            listModel.isLaunchPrefs((GuiPreferences) value));
             return super.getTableCellEditorComponent(table, v, isSelected, row, column);
         }
 
@@ -590,9 +630,12 @@ public class GuiSwingPreferences {
             GuiPreferences rootPrefs = owner.getRootContext().getPreferences();
             GuiPreferences newStore = rootPrefs.addNewSavedStoreAsRoot();
             owner.savePreferences(newStore);
+
             Map<String,Object> map = rootPrefs.toJson();
             map.remove("$name");
+            map.remove("$uuid");
             newStore.fromJson(map);
+
             newStore.getValueStore().flush();
             owner.reloadList();
         }
@@ -775,8 +818,9 @@ public class GuiSwingPreferences {
             int r = JOptionPane.showConfirmDialog(owner.getMainPane(),
                     "Reset Entire Preferences ?");
             if (r == JOptionPane.OK_OPTION) {
-                owner.getRootContext().getPreferences().clearAll();
+                owner.getRootContext().getPreferences().resetAsRoot();
                 owner.applyPreferences();
+                owner.reloadList();
             }
         }
 

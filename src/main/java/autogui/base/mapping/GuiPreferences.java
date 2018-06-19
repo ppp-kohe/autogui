@@ -32,10 +32,11 @@ import java.util.stream.Collectors;
  *                  ...
  *               propertyName/   //the name of a sub-context
  *                  ...
- *            "$launchPrefs" = index...
+ *            "$launchPrefs" = "..." //value of "$uuid", "" or "empty"
  *            "$saved"/
  *               "$0"/
- *                 "name" = ...
+ *                 "$name" = ...
+ *                 "$uuid" = "..." //a value from UUID.randomUUID()
  *                 ... //same structure as "$default"
  *               ...
  *   </pre>
@@ -163,14 +164,23 @@ public class GuiPreferences {
         return new GuiValueStoreDefault(this, node);
     }
 
+    public void resetAsRoot() {
+        clearAll();
+        GuiValueStore root = getPreferencesNodeAsRoot();
+        root.removeThisNode();
+        root.flush();
+        valueStore = null;
+    }
+
     /**
      * <pre>
      *            "$default/"
      *               ...
-     *            "$launchPrefs" = 0
+     *            "$launchPrefs" = "..."
      *            "$saved/"
      *               "$0/"
      *                  "$name" = "prefs yyyy/mm/dd hh:mm"
+     *                  "$uuid" = "..." //checked
      *                  ...
      *               "$1/"
      *               ...
@@ -189,7 +199,9 @@ public class GuiPreferences {
                     if (saved.hasNodeKey(key)) {
                         GuiPreferences savedPrefs = new GuiPreferences(context);
                         savedPrefs.valueStore = saved.getChild(savedPrefs, key);
-                        savedList.add(savedPrefs);
+                        if (!savedPrefs.getValueStore().getString("$uuid", "").isEmpty()) {
+                            savedList.add(savedPrefs);
+                        }
                     }
                 }
             }
@@ -200,16 +212,16 @@ public class GuiPreferences {
     }
 
     /**
-     * @return 0: using "$default", 1: no application, 2,3,4...: ("$saved" by sorted by "$name")-2 ({@link #getSavedStoreListAsRoot()}.sort(...name...))
+     * @return "": value of "$uuid", "" (default) or "empty" (empty)
      */
-    public int getLaunchPrefsAsRoot() {
+    public String getLaunchPrefsAsRoot() {
         GuiValueStore root = getPreferencesNodeAsRoot();
-        return root.getInt("$launchPrefs", 0);
+        return root.getString("$launchPrefs", "");
     }
 
-    public void setLaunchPrefsAsRoot(int n) {
+    public void setLaunchPrefsAsRoot(String uuid) {
         GuiValueStore root = getPreferencesNodeAsRoot();
-        root.putInt("$launchPrefs", n);
+        root.putString("$launchPrefs", uuid);
     }
 
     static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
@@ -234,6 +246,8 @@ public class GuiPreferences {
 
             newPrefs.valueStore.putString("$name",
                     String.format("%s %d - %s", name, (n + 1), LocalDateTime.now().format(formatter)));
+            newPrefs.valueStore.putString("$uuid",
+                    UUID.randomUUID().toString());
 
             return newPrefs;
         } catch (Exception ex) {
@@ -413,6 +427,7 @@ public class GuiPreferences {
             clearHistoriesTree();
         }
         getValueStore().removeThisNode();
+        getValueStore().flush();
     }
 
     public void clearHistoriesTree() {
