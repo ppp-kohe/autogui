@@ -119,6 +119,8 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         /**
+         * only save the component itself, not including children.
+         *  it can use {@link #savePreferencesDefault(JComponent, GuiPreferences)}
          * @param prefs target prefs or ancestor of the target;
          *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
          */
@@ -128,7 +130,8 @@ public interface GuiSwingView extends GuiSwingElement {
 
         /**
          * a sub-class which wraps another value-pane should overrides the method
-         *   in order to omit needless value setting
+         *   in order to omit needless value setting.
+         *   it can use {@link #loadPreferencesDefault(JComponent, GuiPreferences)}
          * @param prefs target prefs or ancestor of the target;
          *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
          */
@@ -136,6 +139,9 @@ public interface GuiSwingView extends GuiSwingElement {
             loadPreferencesDefault(asSwingViewComponent(), prefs);
         }
 
+        /**
+         * for each component, at the end of the process, this method will be called
+         */
         default void shutdownSwingView() { }
 
         default boolean isSwingEditable() {
@@ -214,6 +220,9 @@ public interface GuiSwingView extends GuiSwingElement {
             setSwingViewValueWithUpdate((ValueType) value);
         }
 
+        /**
+         * for each component, the method is called before refreshing in order to clear the view-clock.
+         */
         void prepareForRefresh();
     }
 
@@ -260,6 +269,21 @@ public interface GuiSwingView extends GuiSwingElement {
         default KeyStroke getSwingFocusKeyStroke() {
             return null;
         }
+
+        /**
+         * nothing happen in the wrapper pane. the wrapped pane do the task
+         * @param prefs target prefs or ancestor of the target;
+         */
+        @Override
+        default void saveSwingPreferences(GuiPreferences prefs) { }
+
+        /**
+         * nothing happen in the wrapper pane. the wrapped pane do the task
+         * @param prefs target prefs or ancestor of the target;
+         */
+        @Override
+        default void loadSwingPreferences(GuiPreferences prefs) { }
+
     }
 
 
@@ -628,10 +652,6 @@ public interface GuiSwingView extends GuiSwingElement {
             return pane == null ? null : pane.getSwingViewContext();
         }
 
-        @Override
-        public void loadSwingPreferences(GuiPreferences prefs) {
-        }
-
         @SuppressWarnings("unchecked")
         @Override
         public ValuePane<Object> getSwingViewWrappedPane() {
@@ -727,10 +747,6 @@ public interface GuiSwingView extends GuiSwingElement {
         @Override
         public GuiMappingContext getSwingViewContext() {
             return pane == null ? null : pane.getSwingViewContext();
-        }
-
-        @Override
-        public void loadSwingPreferences(GuiPreferences prefs) {
         }
 
         @SuppressWarnings("unchecked")

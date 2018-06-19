@@ -365,11 +365,6 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
             }
         }
 
-        @Override
-        public void loadSwingPreferences(GuiPreferences prefs) {
-            GuiSwingView.loadChildren(prefs.getDescendant(getSwingViewContext()), this);
-        }
-
         /**
          * @return null
          *        meaning the named pane will never become key-binding target,
