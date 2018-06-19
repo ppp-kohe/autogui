@@ -10,6 +10,7 @@ import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.table.ObjectTableColumnValue;
 import autogui.swing.util.*;
 import autogui.base.mapping.ScheduledTaskRunner;
+import com.sun.jndi.cosnaming.CNCtx;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -132,6 +133,8 @@ public class GuiSwingPreferences {
 
     protected SettingsWindow settingsWindow;
 
+    protected int[] lastSelection = new int[0];
+
     public interface RootView {
         GuiMappingContext getContext();
         JComponent getViewComponent();
@@ -164,7 +167,10 @@ public class GuiSwingPreferences {
         {
             listModel = new PreferencesListModel(this::getRootContext);
             listModel.addTableModelListener(e -> {
-                this.showSelectedPrefs();
+                if (e.getColumn() == PreferencesListModel.COLUMN_LAUNCH) {
+                    lastSelection = new int[] {e.getLastRow()};
+                }
+                SwingUtilities.invokeLater(this::restoreSelection);
             });
             list = new JTable(listModel);
             TableColumn column = list.getColumnModel().getColumn(0);
@@ -259,7 +265,11 @@ public class GuiSwingPreferences {
     }
 
     public void addSelectionListener(Runnable r) {
-        list.getSelectionModel().addListSelectionListener(e -> r.run());
+        list.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                r.run();
+            }
+        });
     }
 
     public boolean isSelectionEmpty() {
@@ -298,7 +308,21 @@ public class GuiSwingPreferences {
         return prefsWindowUpdater;
     }
 
+    public void restoreSelection() {
+        ListSelectionModel m = list.getSelectionModel();
+        m.setValueIsAdjusting(true);
+        IntStream.of(lastSelection)
+                .forEach(i -> {
+                    m.addSelectionInterval(i, i);
+                });
+        m.setValueIsAdjusting(false);
+    }
+
     public void showSelectedPrefs() {
+        int[] sels = list.getSelectedRows();
+        if (sels.length > 0) {
+            lastSelection = sels;
+        }
         List<Object> list = new ArrayList<>();
         for (GuiPreferences prefs : getSelectedSavedPreferencesList()) {
             list.add(prefs.toJson());
@@ -353,6 +377,10 @@ public class GuiSwingPreferences {
         protected GuiPreferences lastDefault;
         protected GuiPreferences targetDefault; //prefs is "empty" and thus using default values of context objects
 
+        public static int COLUMN_SIZE = 2;
+        public static int COLUMN_NAME = 0;
+        public static int COLUMN_LAUNCH = 1;
+
         public PreferencesListModel(Supplier<GuiMappingContext> rootContext) {
             this.rootContext = rootContext;
             reload();
@@ -365,22 +393,44 @@ public class GuiSwingPreferences {
 
         @Override
         public int getColumnCount() {
-            return 2;
+            return COLUMN_SIZE;
         }
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            return list.get(rowIndex);
+            GuiPreferences prefs = list.get(rowIndex);
+            if (columnIndex == COLUMN_NAME) {
+                return getName(prefs);
+            } else if (columnIndex == COLUMN_LAUNCH) {
+                return isLaunchPrefs(prefs);
+            } else {
+                return "?";
+            }
         }
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            fireTableCellUpdated(rowIndex, columnIndex);
+            GuiPreferences prefs = list.get(rowIndex);
+            if (columnIndex == COLUMN_NAME) {
+                setName(prefs, (String) aValue);
+                reload();
+            } else if (columnIndex == COLUMN_LAUNCH) {
+                if (aValue.equals(Boolean.TRUE)) {
+                    setLaunchPrefs(prefs);
+                }
+                reload();
+            }
         }
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 0 || columnIndex == 1;
+            if (columnIndex == COLUMN_NAME) {
+                return isNameEditable(list.get(rowIndex));
+            } else if (columnIndex == COLUMN_LAUNCH) {
+                return true;
+            } else {
+                return false;
+            }
         }
 
         public GuiPreferences getLaunchPrefs() {
@@ -522,7 +572,6 @@ public class GuiSwingPreferences {
     }
 
     public static class PreferencesNameEditor extends DefaultCellEditor {
-        protected GuiPreferences currentPrefs;
         protected PreferencesListModel listModel;
 
         public PreferencesNameEditor(PreferencesListModel listModel) {
@@ -532,28 +581,11 @@ public class GuiSwingPreferences {
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            currentPrefs = null;
             if (value instanceof GuiPreferences) {
                 GuiPreferences prefs = (GuiPreferences) value;
-                if (listModel.isNameEditable(prefs)) {
-                    currentPrefs = prefs;
-                } else {
-                    currentPrefs = null;
-
-                }
-                ((JTextField) getComponent()).setEditable(currentPrefs != null);
                 value = listModel.getName(prefs);
             }
             return super.getTableCellEditorComponent(table, value, isSelected, row, column);
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            Object name = super.getCellEditorValue();
-            if (currentPrefs != null) {
-                listModel.setName(currentPrefs, name.toString());
-            }
-            return currentPrefs;
         }
     }
 
@@ -569,7 +601,7 @@ public class GuiSwingPreferences {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             if (value instanceof Boolean) {
                 setSelected((Boolean) value);
-            } else {
+            } else if (value instanceof GuiPreferences) {
                 setSelected(listModel.isLaunchPrefs((GuiPreferences) value));
             }
             ObjectTableColumnValue.setTableColor(table, this, isSelected);
@@ -585,7 +617,6 @@ public class GuiSwingPreferences {
 
     public static class PreferencesLaunchApplyEditor extends DefaultCellEditor {
         protected PreferencesListModel listModel;
-        protected GuiPreferences currentPrefs;
 
         public PreferencesLaunchApplyEditor(PreferencesListModel listModel) {
             super(new JCheckBox());
@@ -596,21 +627,9 @@ public class GuiSwingPreferences {
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             if (value instanceof GuiPreferences) {
-                currentPrefs = (GuiPreferences) value;
+                value = listModel.isLaunchPrefs((GuiPreferences) value);
             }
-            Boolean v = (value instanceof GuiPreferences &&
-                            listModel.isLaunchPrefs((GuiPreferences) value));
-            return super.getTableCellEditorComponent(table, v, isSelected, row, column);
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            if (super.getCellEditorValue().equals(Boolean.TRUE)) {
-                if (currentPrefs != null) {
-                    listModel.setLaunchPrefs(currentPrefs);
-                }
-            }
-            return currentPrefs;
+            return super.getTableCellEditorComponent(table, value, isSelected, row, column);
         }
     }
 
