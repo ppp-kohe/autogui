@@ -310,11 +310,11 @@ public class GuiSwingPreferences {
 
     public void restoreSelection() {
         ListSelectionModel m = list.getSelectionModel();
+        int size = list.getRowCount();
         m.setValueIsAdjusting(true);
         IntStream.of(lastSelection)
-                .forEach(i -> {
-                    m.addSelectionInterval(i, i);
-                });
+                .filter(i -> 0 <= i && i < size)
+                .forEach(i -> m.addSelectionInterval(i, i));
         m.setValueIsAdjusting(false);
     }
 

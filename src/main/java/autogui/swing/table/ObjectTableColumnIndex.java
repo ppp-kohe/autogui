@@ -6,28 +6,20 @@ import java.util.List;
 public class ObjectTableColumnIndex implements Cloneable {
     protected GuiSwingTableColumnDynamic.ObjectTableColumnSize size;
     protected ObjectTableColumnIndex parent;
-    protected int totalIndex;
     protected int index;
 
-    public ObjectTableColumnIndex(ObjectTableColumnIndex parent, int totalIndex, int index) {
-        this(parent, totalIndex, index, null);
+    public ObjectTableColumnIndex(ObjectTableColumnIndex parent, int index) {
+        this(parent, index, null);
     }
 
-    public ObjectTableColumnIndex(ObjectTableColumnIndex parent, int totalIndex, int index, GuiSwingTableColumnDynamic.ObjectTableColumnSize size) {
+    public ObjectTableColumnIndex(ObjectTableColumnIndex parent, int index, GuiSwingTableColumnDynamic.ObjectTableColumnSize size) {
         this.parent = parent;
-        this.totalIndex = totalIndex;
         this.index = index;
         this.size = size;
     }
 
-    public ObjectTableColumnIndex next(int flattenSizeForThisColumn) {
-        ObjectTableColumnIndex n = copy();
-        n.increment(flattenSizeForThisColumn);
-        return n;
-    }
-
     public ObjectTableColumnIndex child(GuiSwingTableColumnDynamic.ObjectTableColumnSize size) {
-        return new ObjectTableColumnIndex(this, totalIndex, 0, size);
+        return new ObjectTableColumnIndex(this, 0, size);
     }
 
     public ObjectTableColumnIndex copy() {
@@ -42,17 +34,24 @@ public class ObjectTableColumnIndex implements Cloneable {
         return parent;
     }
 
-    public int getTotalIndex() {
-        return totalIndex;
-    }
-
     public int getIndex() {
         return index;
     }
 
-    public void increment(int flattenSize) {
-        ++index;
-        totalIndex +=flattenSize;
+    public ObjectTableColumnIndex next() {
+        ObjectTableColumnIndex index = copy();
+        ++index.index;
+        return index;
+    }
+
+    public void injectIndexToSpecifier() {
+        if (parent != null) {
+            parent.injectIndexToSpecifier();
+        }
+        GuiSwingTableColumn.SpecifierManagerIndex specIndex;
+        if (size != null && (specIndex = size.getElementSpecifierIndex()) != null) {
+            specIndex.setIndex(index);
+        }
     }
 
     public int[] toIndexes() {

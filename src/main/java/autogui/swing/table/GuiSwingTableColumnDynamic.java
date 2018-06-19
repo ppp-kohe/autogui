@@ -97,14 +97,15 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
         }
 
         public ObjectTableColumn createColumn(ObjectTableColumnIndex index) {
-            if (elementSpecifierIndex != null) {
-                elementSpecifierIndex.setIndex(index.getIndex());
-            }
             return null;
         }
 
         public void setElementSpecifierIndex(GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex) {
             this.elementSpecifierIndex = elementSpecifierIndex;
+        }
+
+        public GuiSwingTableColumn.SpecifierManagerIndex getElementSpecifierIndex() {
+            return elementSpecifierIndex;
         }
 
         public void set(ObjectTableColumnSize newSize) {

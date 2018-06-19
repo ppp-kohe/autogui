@@ -23,7 +23,7 @@ public class ObjectTableModelColumns
     protected DefaultTableColumnModel columnModel;
     protected List<ObjectTableColumn> columns = new ArrayList<>();
     protected List<ObjectTableColumn> staticColumns = new ArrayList<>();
-    protected List<ObjectTableColumnDynamic> dynamicColumns = new ArrayList<>();
+    protected List<DynamicColumnContainer> dynamicColumns = new ArrayList<>();
     protected List<ObjectTableColumn.TableMenuComposite> menuRowComposites = new ArrayList<>();
 
     protected Map<Integer,Integer> modelToView = new HashMap<>();
@@ -88,7 +88,7 @@ public class ObjectTableModelColumns
         columnModel.addColumn(tableColumn);
     }
 
-    protected void columnAdded(ObjectTableColumn column, ObjectTableColumnDynamic d) {
+    protected void columnAdded(ObjectTableColumn column, DynamicColumnContainer d) {
         column.setColumnViewUpdater(e -> {
             if (viewUpdating <= 0) {
                 ++viewUpdating;
@@ -142,7 +142,7 @@ public class ObjectTableModelColumns
 
     @Override
     public void addColumnDynamic(GuiSwingTableColumnDynamic.DynamicColumnFactory column) {
-        dynamicColumns.add(new ObjectTableColumnDynamic(column, staticColumns.size()));
+        dynamicColumns.add(new DynamicColumnContainer(column));
     }
 
     @Override
@@ -175,7 +175,7 @@ public class ObjectTableModelColumns
         return staticColumns;
     }
 
-    public List<ObjectTableColumnDynamic> getDynamicColumns() {
+    public List<DynamicColumnContainer> getDynamicColumns() {
         return dynamicColumns;
     }
 
@@ -185,7 +185,7 @@ public class ObjectTableModelColumns
 
     public void update(Object list) {
         int startIndex = staticColumns.size();
-        for (ObjectTableColumnDynamic d : dynamicColumns) {
+        for (DynamicColumnContainer d : dynamicColumns) {
             /* TODO
             startIndex = d.update(startIndex, list);
             if (d.hasAdding()) {
@@ -198,7 +198,7 @@ public class ObjectTableModelColumns
         }
     }
 
-    public void addColumnsDynamic(ObjectTableColumnDynamic d, List<ObjectTableColumn> columns) {
+    public void addColumnsDynamic(DynamicColumnContainer d, List<ObjectTableColumn> columns) {
         for (ObjectTableColumn c : columns) {
             this.columns.add(c.getTableColumn().getModelIndex(), c);
             columnAdded(c, d);
@@ -272,21 +272,20 @@ public class ObjectTableModelColumns
         getColumns().forEach(ObjectTableColumn::shutdown);
     }
 
-    public static class ObjectTableColumnDynamic {
+    public static class DynamicColumnContainer {
         protected GuiSwingTableColumnDynamic.DynamicColumnFactory factory;
 
         protected GuiSwingTableColumnDynamic.ObjectTableColumnSize preSize;
 
-        protected int startIndex;
         protected ObjectTableColumnIndex index;
+        protected int totalColumnIndex;
         protected List<ObjectTableColumn> columns;
 
         protected boolean changeTypeIsAdding;
         protected List<ObjectTableColumn> changingColumns;
 
-        public ObjectTableColumnDynamic(GuiSwingTableColumnDynamic.DynamicColumnFactory factory, int startIndex) {
+        public DynamicColumnContainer(GuiSwingTableColumnDynamic.DynamicColumnFactory factory) {
             this.factory = factory;
-            index = new ObjectTableColumnIndex(null, startIndex, 0);
             columns = new ArrayList<>();
             changingColumns = new ArrayList<>();
         }
@@ -295,13 +294,14 @@ public class ObjectTableModelColumns
             return factory;
         }
 
-        public int getEndIndexExclusive() {
-            return index.getTotalIndex();
+        public int getTotalColumnIndex() {
+            return totalColumnIndex;
         }
 
         public void update(int startIndex, Object list) {
             GuiSwingTableColumnDynamic.ObjectTableColumnSize newSize = factory.getColumnSize(list);
-            index = new ObjectTableColumnIndex(null, startIndex, 0, newSize);
+            totalColumnIndex = startIndex;
+            index = new ObjectTableColumnIndex(null, 0, newSize);
             update(preSize, newSize, index);
         }
 
@@ -349,11 +349,11 @@ public class ObjectTableModelColumns
             updateIndex(index, newSize);
             for (int i = 0; i < adding; ++i) {
                 ObjectTableColumn column = newSize.createColumn(index);
-                column.getTableColumn().setModelIndex(index.getTotalIndex());
+                //TODO column.getTableColumn().setModelIndex(index.getTotalIndex());
                 columns.add(column);
                 //TODO map newSize structure index -> column
                 changingColumns.add(column);
-                index.increment(1);
+                //TODO index.increment(1);
             }
         }
 
@@ -412,7 +412,7 @@ public class ObjectTableModelColumns
         public void updateWithRemoving(int removingCount) {
             changeTypeIsAdding = false;
             int newSize = columns.size() - removingCount;
-            index = new ObjectTableColumnIndex(null, startIndex + newSize, newSize);
+            index = new ObjectTableColumnIndex(null, /*TODO startIndex + newSize,*/ newSize);
             changingColumns.clear();
             changingColumns.addAll(columns.subList(newSize, columns.size()));
             columns.removeAll(changingColumns);
