@@ -94,6 +94,15 @@ public class ObjectTableColumn {
         return rowObject;
     }
 
+    public Object getCellValueFromContext(int rowIndex, int columnIndex) {
+        return null;
+    }
+
+    public Future<?> setCellValueFromContext(int rowIndex, int columnIndex, Object newColumnValue) {
+        return null;
+    }
+
+
     /**
      *
      * @param rowObject the row object at rowIndex

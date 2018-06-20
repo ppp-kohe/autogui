@@ -18,7 +18,7 @@ public class ValueMatrixExp {
     {
         for (int j = 0; j < 10; ++j) {
             List<Cell> row = new ArrayList<>();
-            for (int i = 0; i < 10; ++i) {
+            for (int i = 0; i < j + 1; ++i) {
                 row.add(new Cell("item-" + i + "," + j, i * j));
             }
             list.add(row);

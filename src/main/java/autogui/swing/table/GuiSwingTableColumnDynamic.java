@@ -1,12 +1,11 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingView;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * the dynamic version of {@link GuiSwingTableColumn}, creating a factory instead of a column
@@ -96,9 +95,12 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
             return parent;
         }
 
-        public ObjectTableColumn createColumn(ObjectTableColumnIndex index) {
-            return null;
+        public void setParent(ObjectTableColumnSize parent) {
+            this.parent = parent;
         }
+
+        public abstract void create(ObjectTableModelColumns.DynamicColumnContainer targetContainer);
+
 
         public void setElementSpecifierIndex(GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex) {
             this.elementSpecifierIndex = elementSpecifierIndex;
@@ -106,6 +108,28 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
 
         public GuiSwingTableColumn.SpecifierManagerIndex getElementSpecifierIndex() {
             return elementSpecifierIndex;
+        }
+
+        public Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> toIndexInjection(int index) {
+            Map<GuiSwingTableColumn.SpecifierManagerIndex,Integer> is;
+            if (parent != null) {
+                is = parent.toIndexInjection(getIndexInParent());
+            } else {
+                is = new LinkedHashMap<>();
+            }
+            GuiSwingTableColumn.SpecifierManagerIndex i = getElementSpecifierIndex();
+            if (i != null && index != -1) {
+                is.put(i, index);
+            }
+            return is;
+        }
+
+        public int getIndexInParent() {
+            if (parent != null) {
+                return parent.getChildren().indexOf(this);
+            } else {
+                return -1;
+            }
         }
 
         public void set(ObjectTableColumnSize newSize) {
@@ -125,10 +149,39 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
         public String toString() {
             return getClass().getSimpleName() + "(size=" + size + ", isComposition()=" + isComposition() + ")";
         }
+
+
+        public GuiSwingView.SpecifierManager getSpecifier() {
+            ObjectTableColumnSize size = this;
+            while (size != null) {
+                GuiSwingTableColumn.SpecifierManagerIndex i = size.getElementSpecifierIndex();
+                if (i != null) {
+                    return i;
+                }
+                size = size.getParent();
+            }
+            return () -> GuiReprValue.NONE;
+        }
+
+        public int[] toIndexes(int indexInSize) {
+            List<Integer> is = new ArrayList<>();
+            ObjectTableColumnSize size = this;
+            while (size != null) {
+                is.add(indexInSize);
+                indexInSize = size.getIndexInParent();
+                size = size.getParent();
+            }
+            Collections.reverse(is);
+            return is.stream()
+                    .mapToInt(Integer::intValue)
+                    .toArray();
+        }
+
     }
 
     class ObjectTableColumnSizeComposite extends ObjectTableColumnSize {
         protected List<ObjectTableColumnSize> children;
+        protected Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> injectionMapPrototype;
 
         public ObjectTableColumnSizeComposite(List<ObjectTableColumnSize> children) {
             this.children = children;
@@ -147,6 +200,7 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
         public void add(ObjectTableColumnSize childSize) {
             this.size += childSize.size();
             children.add(childSize);
+            childSize.setParent(this);
         }
 
         @Override
@@ -163,6 +217,51 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
             } else {
                 error("set", newSize);
             }
+        }
+
+        @Override
+        public void create(ObjectTableModelColumns.DynamicColumnContainer targetContainer) {
+            targetContainer.moveExistingColumns();
+            int i = 0;
+            for (ObjectTableColumnSize child : getChildren()) {
+                ObjectTableModelColumns.DynamicColumnContainer childContainer = targetContainer.getChild(i);
+                child.create(childContainer);
+                targetContainer.setLastIndex(childContainer.getLastIndexAfterUpdate());
+                ++i;
+            }
+            int removing = targetContainer.getChildSize() - getChildren().size();
+            if (removing > 0) {
+                targetContainer.removeChildrenFromEnd(removing);
+            }
+        }
+
+        @Override
+        public Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> toIndexInjection(int index) {
+            Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> is = new LinkedHashMap<>(
+                    toIndexInjection());
+            GuiSwingTableColumn.SpecifierManagerIndex i = getElementSpecifierIndex();
+            if (i != null && index != -1) {
+                is.put(i, index);
+            }
+            return is;
+        }
+
+        public Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> toIndexInjection() {
+            if (injectionMapPrototype != null) {
+                Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> map = new LinkedHashMap<>();
+                ObjectTableColumnSize size = getParent();
+                int index = getIndexInParent();
+                while (size != null) {
+                    GuiSwingTableColumn.SpecifierManagerIndex spec = size.getElementSpecifierIndex();
+                    if (spec != null && index != -1) {
+                        map.put(spec, index);
+                    }
+                    index = size.getIndexInParent();
+                    size = size.getParent();
+                }
+                injectionMapPrototype = map;
+            }
+            return injectionMapPrototype;
         }
     }
 }

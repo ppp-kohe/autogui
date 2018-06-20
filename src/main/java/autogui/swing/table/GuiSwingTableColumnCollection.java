@@ -181,43 +181,6 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
     }
 
 
-    public static class ObjectTableColumnSizeConcrete extends ObjectTableColumnSize implements DynamicColumnFactory {
-        protected GuiMappingContext context;
-        protected GuiSwingTableColumn column;
-        public GuiSwingView.SpecifierManager parentSpecifier;
-
-        public ObjectTableColumnSizeConcrete(int size, GuiMappingContext context, GuiSwingTableColumn column, GuiSwingView.SpecifierManager parentSpecifier) {
-            this.size = size;
-            this.context = context;
-            this.column = column;
-            this.parentSpecifier = parentSpecifier;
-        }
-
-        @Override
-        public ObjectTableColumn createColumn(ObjectTableColumnIndex index) {
-            super.createColumn(index); //set elementSpecifierIndex
-            /*
-            ObjectTableColumnCollectionWrapper w = new ObjectTableColumnCollectionWrapper(context,
-                    column.createColumn(context, null, parentSpecifier),
-                    context.getChildren().get(0), //elementCon text
-                    elemIndex, propIndex, indexes,
-                    elementSpecifierIndex);
-            w.setSize(this);
-            return w;*/
-            //TODO
-            return null;
-        }
-
-        /**
-         * @param c a value contained a list
-         * @return a copy of this: this is a prototype
-         */
-        @Override
-        public ObjectTableColumnSize getColumnSize(Object c) {
-            return new ObjectTableColumnSizeConcrete(size, context, column, parentSpecifier);
-        }
-    }
-
     /**
      * size-factory for root List&lt;List&lt;T&gt;&gt;
      */
@@ -259,165 +222,88 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 return new ObjectTableColumnSizeComposite(Collections.emptyList());
             }
         }
-
-        /*
-
-        public int getColumnCount(Object collection) {
-            if (collection instanceof List<?>) {
-                int columns = 0;
-                for (Object e : (List<?>) collection) {
-                    if (e instanceof List<?>) {
-                        columns = Math.max(columns, ((List<?>) e).size());
-                    }
-                }
-                return columns * columnFactories.size();
-            } else {
-                return 0;
-            }
-        }
-
-        @Override
-        public ObjectTableColumn createColumn(ObjectTableColumnIndex columnIndex) {
-            int propIndex = columnIndex.getIndex() % columnFactories.size();
-            int elemIndex = columnIndex.getIndex() / columnFactories.size(); //TODO OK?
-
-            int[] indexes = toIndexes(columnIndex, elemIndex, propIndex);
-
-            columnSpecifierIndex.setIndex(elemIndex);
-            ContextAndColumn cc = columnFactories.get(propIndex);
-            return new ObjectTableColumnCollectionWrapper(cc.context,
-                    cc.column.createColumn(cc.context, null, cc.parentSpecifier),
-                    context.getChildren().get(0), //elementCon text
-                    elemIndex, propIndex, indexes,
-                    columnSpecifierIndex);
-        }
-
-        public int[] toIndexes(ObjectTableColumnIndex columnIndex, int elemIndex, int propIndex) {
-            int[] indexes = columnIndex.toIndexes();
-            int[] indexesWithElem = Arrays.copyOf(indexes, indexes.length + 1);
-            indexesWithElem[indexes.length - 1] = elemIndex;
-            indexesWithElem[indexes.length] = propIndex;
-            return indexesWithElem;
-        }*/
     }
 
 
-    public static class ObjectTableColumnSizeCollection extends ObjectTableColumnSizeComposite {
-        protected ObjectTableColumnSize parent;
-
-        public ObjectTableColumnSizeCollection(int capacity) {
-            super(new ArrayList<>(capacity));
-        }
-
-        @Override
-        public int size() {
-            return size;
-        }
-
-        @Override
-        public boolean isComposition() {
-            return false;
-        }
-
-        @Override
-        public List<ObjectTableColumnSize> getChildren() {
-            return children;
-        }
-
-        @Override
-        public ObjectTableColumnSize getParent() {
-            return parent;
-        }
-
-        //TODO @Override
-        public void setParent(ObjectTableColumnSize parent) {
-            this.parent = parent;
-        }
-
-        public void set(int i, ObjectTableColumnSize newSize) {
-            if (i < children.size()) {
-                ObjectTableColumnSize ex = children.get(i);
-                int diff = newSize.size() - ex.size();
-
-                if (ex.isComposition()) {
-                    if (diff > 0) {
-                        size += diff;
-                    }
-                    ((ObjectTableColumnSizeCollection) ex).set((ObjectTableColumnSizeCollection) newSize);
-                } else {
-                    if (diff > 0) {
-                        size += diff;
-                        children.set(i, newSize);
-                    }
-                }
-            } else {
-                size += newSize.size();
-                children.add(newSize);
-            }
-        }
-
-        public void set(ObjectTableColumnSizeCollection newSize) {
-            //TODO
-        }
-
-        public void add(ObjectTableColumnSize subSize) {
-            size += subSize.size();
-            children.add(subSize);
-        }
-
-        @Override
-        public ObjectTableColumn createColumn(ObjectTableColumnIndex index) {
-            return null;
-        }
-
-
-    }
-    /*
-    public static class ContextAndColumn {
-        public GuiMappingContext context;
-        public GuiSwingTableColumn column;
+    public static class ObjectTableColumnSizeConcrete extends ObjectTableColumnSize implements DynamicColumnFactory {
+        protected GuiMappingContext context;
+        protected GuiSwingTableColumn column;
         public GuiSwingView.SpecifierManager parentSpecifier;
 
-        public ContextAndColumn(GuiMappingContext context, GuiSwingTableColumn column,
-                                GuiSwingView.SpecifierManager parentSpecifier) {
+        public ObjectTableColumnSizeConcrete(int size, GuiMappingContext context, GuiSwingTableColumn column, GuiSwingView.SpecifierManager parentSpecifier) {
+            this.size = size;
             this.context = context;
             this.column = column;
             this.parentSpecifier = parentSpecifier;
         }
-    }*/
+
+        @Override
+        public void create(ObjectTableModelColumns.DynamicColumnContainer targetContainer) {
+            targetContainer.moveExistingColumns();
+            int existing = targetContainer.getColumnsInSize().size();
+            int diff = size() - existing;
+
+            if (diff < 0) {
+                targetContainer.removeColumnsFromEnd(-diff);
+            } else if (diff > 0) {
+                for (int n = 0; n < diff; ++n) {
+                    createSingle(targetContainer, existing + n);
+                }
+            }
+        }
+
+        public void createSingle(ObjectTableModelColumns.DynamicColumnContainer targetContainer, int indexInSize) {
+            ObjectTableColumn c = column.createColumn(context, null, parentSpecifier);
+            if (c instanceof GuiSwingTableColumn.ObjectTableColumnWithContext) {
+                targetContainer.add(new ObjectTableColumnCollectionWrapper(
+                        (GuiSwingTableColumn.ObjectTableColumnWithContext) c,
+                        //context.getChildren().get(0),
+                        toIndexInjection(indexInSize),
+                        toIndexes(indexInSize),
+                        getSpecifier()));
+            } else {
+                targetContainer.add(c);
+            }
+        }
+
+        /**
+         * @param c a value contained a list
+         * @return a copy of this: this is a prototype
+         */
+        @Override
+        public ObjectTableColumnSize getColumnSize(Object c) {
+            return new ObjectTableColumnSizeConcrete(size, context, column, parentSpecifier);
+        }
+    }
 
     public static class ObjectTableColumnCollectionWrapper extends ObjectTableColumn
         implements GuiSwingTableColumn.ObjectTableColumnWithContext {
-        protected GuiMappingContext context;
         protected ObjectTableColumn column;
-        protected GuiMappingContext elementContext;
-        protected int elementIndex;
-        protected int propertyIndex;
+//        protected GuiMappingContext elementContext;
+        protected Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> indexInjection;
         /**
          * suppose {(parentIndexes, ...,) elementIndex, propertyIndex}
          */
         protected int[] indexes;
-        protected GuiSwingTableColumn.SpecifierManagerIndex elementSpecifier;
+        protected GuiSwingView.SpecifierManager elementSpecifier;
 
-        public ObjectTableColumnCollectionWrapper(GuiMappingContext context,
-                                                  ObjectTableColumn column,
-                                                  GuiMappingContext elementContext, int elementIndex, int propertyIndex,
-                                                  int[] indexes, GuiSwingTableColumn.SpecifierManagerIndex elementSpecifier) {
-            this.context = context;
-            this.column = column;
-            this.elementContext = elementContext;
-            this.elementIndex = elementIndex;
-            this.propertyIndex = propertyIndex;
+        public ObjectTableColumnCollectionWrapper(GuiSwingTableColumn.ObjectTableColumnWithContext column,
+                                                  Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> indexInjection,
+                                                  int[] indexes,
+                                                  GuiSwingView.SpecifierManager elementSpecifier) {
+            this.column = column.asColumn();
+//            this.elementContext = elementContext;
+            this.indexInjection = indexInjection;
             this.indexes = indexes;
             this.elementSpecifier = elementSpecifier;
-            if (column != null) {
-                column.withHeaderValue(column.getTableColumn().getHeaderValue() + " [" + elementIndex + "]");
+            if (this.column != null) {
+                this.column.withHeaderValue(this.column.getTableColumn().getHeaderValue() + Arrays.toString(indexes));
             }
         }
 
         @Override
         public GuiMappingContext getContext() {
-            return context;
+            return ((GuiSwingTableColumn.ObjectTableColumnWithContext) column).getContext();
         }
 
         @Override
@@ -448,10 +334,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         @Override
         public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
             try {
-                GuiReprValue.ObjectSpecifier specifier = elementSpecifier.getSpecifierWithSettingIndex(elementIndex);
-                Object colValue = elementContext.getReprValue()
-                        .getValueWithoutNoUpdate(elementContext, GuiMappingContext.GuiSourceValue.of(rowObject), specifier);
-                return column.getCellValue(colValue, rowIndex, columnIndex);
+                indexInjection.forEach(GuiSwingTableColumn.SpecifierManagerIndex::setIndex);
+//                GuiReprValue.ObjectSpecifier specifier = elementSpecifier.getSpecifier();
+//                Object colValue = elementContext.getReprValue()
+//                        .getValueWithoutNoUpdate(elementContext, GuiMappingContext.GuiSourceValue.of(rowObject), specifier);
+                return column.getCellValueFromContext(rowIndex, columnIndex);
             } catch (Throwable ex) {
                 throw new RuntimeException(ex);
             }
@@ -460,12 +347,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         @Override
         public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
             try {
-                GuiReprValue.ObjectSpecifier specifier = elementSpecifier.getSpecifierWithSettingIndex(elementIndex);
-                Object colValue = elementContext.getReprValue()
-                        .getValueWithoutNoUpdate(elementContext, GuiMappingContext.GuiSourceValue.of(rowObject), specifier);
-                column.setCellValue(colValue, rowIndex, columnIndex, newColumnValue);
-
-                return null;
+                indexInjection.forEach(GuiSwingTableColumn.SpecifierManagerIndex::setIndex);
+//                GuiReprValue.ObjectSpecifier specifier = elementSpecifier.getSpecifier();
+//                Object colValue = elementContext.getReprValue()
+//                        .getValueWithoutNoUpdate(elementContext, GuiMappingContext.GuiSourceValue.of(rowObject), specifier);
+                return column.setCellValueFromContext(rowIndex, columnIndex, newColumnValue);
             } catch (Throwable ex) {
                 throw new RuntimeException(ex);
             }

@@ -50,5 +50,12 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
     /** interface for {@link ObjectTableColumn} */
     interface ObjectTableColumnWithContext {
         GuiMappingContext getContext();
+
+        /**
+         * @return always this
+         */
+        default ObjectTableColumn asColumn() {
+            return (ObjectTableColumn) this;
+        }
     }
 }

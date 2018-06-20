@@ -188,6 +188,38 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
         return null;
     }
 
+    @Override
+    public Object getCellValueFromContext(int rowIndex, int columnIndex) {
+        GuiReprValue field = context.getReprValue();
+        try {
+            if (specifierIndex != null) {
+                specifierIndex.setIndex(rowIndex);
+            }
+            return field.getUpdatedValueWithoutNoUpdate(context, specifierManager.getSpecifier());
+            //the columnIndex is an index on the view model, so it passes contextIndex as the context's column index
+        } catch (Throwable ex) {
+            context.errorWhileUpdateSource(ex);
+            return null;
+        }
+    }
+
+    @Override
+    public Future<?> setCellValueFromContext(int rowIndex, int columnIndex, Object newColumnValue) {
+        try {
+            if (specifierIndex != null) {
+                specifierIndex.setIndex(rowIndex);
+            }
+            GuiReprValue reprValue = context.getReprValue();
+            reprValue.addHistoryValue(context, newColumnValue);
+            if (reprValue.isEditable(context)) {
+                reprValue.updateWithParentSource(context, newColumnValue, specifierManager.getSpecifier());
+            }
+        } catch (Throwable ex) {
+            context.errorWhileUpdateSource(ex);
+        }
+        return null;
+    }
+
     /** interface for renderer and editor, in order to setting up some properties like preferences and setting-windows */
     public interface ObjectTableColumnCellView {
         JComponent getComponent();
