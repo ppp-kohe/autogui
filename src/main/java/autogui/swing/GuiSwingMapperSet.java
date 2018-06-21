@@ -175,6 +175,7 @@ public class GuiSwingMapperSet {
                 .addReprClassTableColumn(GuiReprAction.class, new GuiSwingActionDefault());
 
         viewSet.addReprClass(GuiReprValueBooleanCheckBox.class, new GuiSwingViewBooleanCheckBox())
+                .addReprClass(GuiReprEmbeddedComponent.class, new GuiSwingViewEmbeddedComponent())
                 .addReprClass(GuiReprValueDocumentEditor.class, new GuiSwingViewDocumentEditor())
                 .addReprClass(GuiReprValueEnumComboBox.class, new GuiSwingViewEnumComboBox())
                 .addReprClass(GuiReprValueFilePathField.class, new GuiSwingViewFilePathField())

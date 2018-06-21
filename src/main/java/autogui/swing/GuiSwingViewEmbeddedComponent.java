@@ -59,6 +59,7 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         public PropertyEmbeddedPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
             this.specifierManager = specifierManager;
+            init();
         }
 
         public void init() {

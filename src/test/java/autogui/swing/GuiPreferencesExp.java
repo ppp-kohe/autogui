@@ -8,7 +8,7 @@ import java.util.prefs.Preferences;
 
 public class GuiPreferencesExp {
     public static void main(String[] args) throws Exception {
-        SwingUtilities.invokeLater(GuiPreferencesExp::new);
+        SwingUtilities.invokeLater(new GuiPreferencesExp()::run);
     }
 
 
@@ -17,10 +17,9 @@ public class GuiPreferencesExp {
     JTree tree;
 
     public GuiPreferencesExp() {
-        init();
     }
 
-    protected void init() {
+    public void run() {
         JFrame frame = new JFrame("Prefs");
         JPanel pane = new JPanel();
         {
@@ -37,15 +36,23 @@ public class GuiPreferencesExp {
             }
             pane.add(bar, BorderLayout.NORTH);
 
-            root = new DefaultMutableTreeNode("root");
-            model = new DefaultTreeModel(root);
-            tree = new JTree(model);
-            tree.setCellRenderer(new Renderer());
+            initTree();
             pane.add(new JScrollPane(tree), BorderLayout.CENTER);
         }
         frame.setContentPane(pane);
         frame.pack();
         frame.setVisible(true);
+    }
+
+    public void initTree() {
+        root = new DefaultMutableTreeNode("root");
+        model = new DefaultTreeModel(root);
+        tree = new JTree(model);
+        tree.setCellRenderer(new Renderer());
+    }
+
+    public JTree getTree() {
+        return tree;
     }
 
     public void load(String name) {
