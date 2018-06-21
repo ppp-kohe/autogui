@@ -22,6 +22,8 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
     interface DynamicColumnFactory {
         ObjectTableColumnSize getColumnSize(Object c);
 
+        default void setParentFactory(DynamicColumnFactory factory) { }
+
         List<GuiSwingTableColumn.SpecifierManagerIndex> getIndexSpecifiers();
         Object getValue(Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> indexInjection);
         List<Action> getActions(GuiReprCollectionTable.TableTargetCell selection);

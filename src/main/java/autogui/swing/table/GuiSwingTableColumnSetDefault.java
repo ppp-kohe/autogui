@@ -107,15 +107,15 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                                         TableColumnHost model,
                                         GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
                                         GuiSwingView.SpecifierManager parentSpecifier) {
-        GuiSwingView.SpecifierManager subSpecifier = context.isReprCollectionElement() ?
-                parentSpecifier : //which is elementSpecifier
-                new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
-
+        GuiSwingView.SpecifierManager subSpecifier;
         DynamicColumnHost target;
         if (context.isReprCollectionElement()) {
+            subSpecifier = parentSpecifier;  //which is elementSpecifier
             target = collection;
         } else {
-            GuiSwingTableColumnCollection.DynamicColumnFactoryComposite sub = new GuiSwingTableColumnCollection.DynamicColumnFactoryComposite();
+            subSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+            GuiSwingTableColumnCollection.DynamicColumnFactoryComposite sub =
+                    new GuiSwingTableColumnCollection.DynamicColumnFactoryComposite(context, subSpecifier, model, rowSpecifier);
             target = sub;
             collection.addColumnDynamic(sub);
         }

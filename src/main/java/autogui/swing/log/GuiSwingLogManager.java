@@ -24,6 +24,7 @@ public class GuiSwingLogManager extends GuiLogManager {
     public static boolean replaceErr = true;
     public static boolean replaceOut = true;
     public static boolean replaceExceptionHandler = true;
+    public static boolean redirectToConsole = true;
 
     public static void setDefaultReplace(boolean flag) {
         replaceErr = flag;
@@ -55,8 +56,11 @@ public class GuiSwingLogManager extends GuiLogManager {
         return console;
     }
 
-    public GuiLogManager setupConsole(boolean replaceError, boolean replaceOutput, boolean uncaughtHandler) {
-        setConsole(new GuiLogManagerConsole(getSystemErr()));
+    public GuiLogManager setupConsole(boolean replaceError, boolean replaceOutput, boolean uncaughtHandler,
+                                      boolean redirectToConsole) {
+        if (redirectToConsole) {
+            setConsole(new GuiLogManagerConsole(getSystemErr()));
+        }
         replaceConsole(replaceError, replaceOutput);
         if (uncaughtHandler) {
             replaceUncaughtHandler();

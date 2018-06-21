@@ -79,6 +79,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
     }
 
     @Override
+    public GuiSwingView.SpecifierManager getSpecifierManager() {
+        return specifierManager;
+    }
+
+    @Override
     public void setSettingsWindow(SettingsWindow settingWindow) {
         setForComponents(GuiSwingView.SettingsWindowClient.class,
                 p -> p.setSettingsWindow(settingWindow), renderer, editor);

@@ -51,6 +51,8 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
     interface ObjectTableColumnWithContext {
         GuiMappingContext getContext();
 
+        GuiSwingView.SpecifierManager getSpecifierManager();
+
         /**
          * @return always this
          */
