@@ -271,8 +271,6 @@ public class ObjectTableModelColumns
 
         protected int lastIndex;
 
-        protected int indexInSize;
-
         public DynamicColumnContainer(ObjectTableModelColumns columns, GuiSwingTableColumnDynamic.DynamicColumnFactory factory) {
             this.factory = factory;
             this.columns = columns;

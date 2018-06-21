@@ -4,6 +4,7 @@ import autogui.GuiIncluded;
 import autogui.swing.AutoGuiShell;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @GuiIncluded
@@ -19,7 +20,7 @@ public class ValueMatrixExp {
         for (int j = 0; j < 10; ++j) {
             List<Cell> row = new ArrayList<>();
             for (int i = 0; i < j + 1; ++i) {
-                row.add(new Cell("item-" + i + "," + j, i * j));
+                row.add(new Cell("item-r[" + j + "]-c[" + i + "]", i * j));
             }
             list.add(row);
         }
@@ -34,12 +35,18 @@ public class ValueMatrixExp {
             this.name = name;
             this.value = value;
         }
+
+        @GuiIncluded
+        public void hello() {
+            System.err.println("cell-action: " + name + "," + value);
+        }
     }
 
     @GuiIncluded
     public void show(List<int[]> items) {
+        System.err.println("----- " + items.size());
         for (int[] i : items) {
-            System.err.println("(" + i[0] + "," + i[1] + ")");
+            System.err.println(Arrays.toString(i));
         }
     }
 }

@@ -150,22 +150,10 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
             return getClass().getSimpleName() + "(size=" + size + ", isComposition()=" + isComposition() + ")";
         }
 
-
-        public GuiSwingView.SpecifierManager getSpecifier() {
-            ObjectTableColumnSize size = this;
-            while (size != null) {
-                GuiSwingTableColumn.SpecifierManagerIndex i = size.getElementSpecifierIndex();
-                if (i != null) {
-                    return i;
-                }
-                size = size.getParent();
-            }
-            return () -> GuiReprValue.NONE;
-        }
-
-        public int[] toIndexes(int indexInSize) {
+        public int[] toIndexes() {
             List<Integer> is = new ArrayList<>();
-            ObjectTableColumnSize size = this;
+            ObjectTableColumnSize size = getParent();
+            int indexInSize = getIndexInParent();
             while (size != null) {
                 is.add(indexInSize);
                 indexInSize = size.getIndexInParent();
@@ -185,6 +173,12 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
 
         public ObjectTableColumnSizeComposite(List<ObjectTableColumnSize> children) {
             this.children = children;
+            int s = 0;
+            for (ObjectTableColumnSize c : children) {
+                s += c.size();
+                c.setParent(this);
+            }
+            this.size = s;
         }
 
         @Override
@@ -203,16 +197,24 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
             childSize.setParent(this);
         }
 
+        /**
+         * the method does not care about copying elementSpecifier of newSize
+         * @param newSize another size which has same structure to this
+         */
         @Override
         public void set(ObjectTableColumnSize newSize) {
             if (newSize.isComposition()) {
                 List<ObjectTableColumnSize> newChildren = newSize.getChildren();
                 for (int i = 0, l = Math.min(children.size(), newChildren.size()); i < l; ++i) {
-                    children.get(i).set(newChildren.get(i));
+                    ObjectTableColumnSize ns = newChildren.get(i);
+                    ObjectTableColumnSize es = children.get(i);
+                    children.get(i).set(es);
+                    this.size += es.size() - ns.size();
+                    es.setParent(this);
                 }
 
                 for (int i = children.size(), l = newChildren.size(); i < l; ++i) {
-                    children.add(newChildren.get(i));
+                    add(newChildren.get(i));
                 }
             } else {
                 error("set", newSize);
@@ -247,7 +249,7 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
         }
 
         public Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> toIndexInjection() {
-            if (injectionMapPrototype != null) {
+            if (injectionMapPrototype == null) {
                 Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> map = new LinkedHashMap<>();
                 ObjectTableColumnSize size = getParent();
                 int index = getIndexInParent();
