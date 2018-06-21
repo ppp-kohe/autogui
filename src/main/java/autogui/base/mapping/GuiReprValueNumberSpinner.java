@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Comparator;
 
 /**
  * a spinner text-field component for a {@link Number} or primitive number property

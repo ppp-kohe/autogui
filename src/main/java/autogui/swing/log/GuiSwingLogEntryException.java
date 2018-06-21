@@ -14,7 +14,6 @@ import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator;
-import java.text.AttributedString;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;

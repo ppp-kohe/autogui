@@ -1,6 +1,9 @@
 package autogui.swing;
 
-import autogui.base.mapping.*;
+import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprPropertyPane;
+import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.util.*;
 
 import javax.swing.*;

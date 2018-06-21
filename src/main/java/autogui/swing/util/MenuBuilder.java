@@ -2,7 +2,6 @@ package autogui.swing.util;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.color.ColorSpace;
 import java.util.List;
 import java.util.function.Consumer;
 

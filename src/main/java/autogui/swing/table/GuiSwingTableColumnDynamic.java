@@ -1,7 +1,6 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingView;
 

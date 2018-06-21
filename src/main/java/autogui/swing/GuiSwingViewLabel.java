@@ -1,10 +1,8 @@
 package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiTaskClock;
-import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.*;
 
 import javax.swing.*;
@@ -12,14 +10,16 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * a fallback swing view for {@link GuiReprValue}

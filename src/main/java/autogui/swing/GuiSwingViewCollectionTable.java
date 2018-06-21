@@ -521,8 +521,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void changeSelectionNothing(int[] selectedModelRowsIndexes, GuiSwingTableColumnSet.TableSelectionChange change) {
             ListSelectionModel sel = getSelectionModel();
             sel.setValueIsAdjusting(true);
+            int rows = getRowCount();
             IntStream.of(selectedModelRowsIndexes)
                     .map(this::convertRowIndexToView)
+                    .filter(i -> 0 <= i && i < rows)
                     .forEach(i -> sel.addSelectionInterval(i, i));
             sel.setValueIsAdjusting(false);
         }

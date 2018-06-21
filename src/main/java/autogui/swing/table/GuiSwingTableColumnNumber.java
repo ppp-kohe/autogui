@@ -12,7 +12,9 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellRenderer;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * a column factory for a {@link Number}.
