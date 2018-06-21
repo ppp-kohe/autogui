@@ -1,10 +1,12 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiPreferences;
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.GuiSwingPreferences;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.SettingsWindow;
 
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
@@ -15,6 +17,7 @@ import javax.swing.table.TableRowSorter;
 import java.text.Collator;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /** column managing part of {@link ObjectTableModel} */
 public class ObjectTableModelColumns
@@ -163,6 +166,7 @@ public class ObjectTableModelColumns
         return columns.size();
     }
 
+    @Override
     public ObjectTableColumn getColumnAt(int index) {
         return columns.get(index);
     }
@@ -181,6 +185,12 @@ public class ObjectTableModelColumns
 
     public boolean hasDynamicColumns() {
         return !dynamicColumns.isEmpty();
+    }
+
+    public List<Action> getDynamicColumnsActions(GuiReprCollectionTable.TableTargetCell selection) {
+        return dynamicColumns.stream()
+                .flatMap(d -> d.getFactory().getActions(selection).stream())
+                .collect(Collectors.toList());
     }
 
     public void update(Object list) {

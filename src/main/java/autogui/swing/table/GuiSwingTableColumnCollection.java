@@ -2,18 +2,21 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingMapperSet;
 import autogui.swing.GuiSwingPreferences;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.SettingsWindow;
 
+import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic {
     protected GuiSwingMapperSet columnMapperSet;
@@ -23,7 +26,9 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
     }
 
     @Override
-    public DynamicColumnFactory createColumnDynamic(GuiMappingContext context, GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
+    public DynamicColumnFactory createColumnDynamic(GuiMappingContext context,
+                                                    GuiSwingTableColumnSet.TableColumnHost model,
+                                                    GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
                                                     GuiSwingView.SpecifierManager parentSpecifier, boolean tableTop) {
         /*
         tableContext: GuiReprCollectionTable  -> GuiSwingTableCollection
@@ -48,7 +53,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             GuiSwingElement elemView = columnMapperSet.viewTableColumn(elementCollection);
             if (elemView instanceof GuiSwingTableColumnSet) { //and, usually element-repr machines to the column-set
                 ((GuiSwingTableColumnSet) elemView).createColumnsForDynamicCollection(elementCollection,
-                        col, elementSpecifier);
+                        col, model, rowSpecifier, elementSpecifier);
                 /*
             } else {
                 for (GuiMappingContext subContext : elementCollection.getChildren()) {
@@ -66,14 +71,104 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         return col;
     }
 
+    public static class DynamicColumnFactoryBase {
+        protected DynamicColumnFactory parent;
+        protected GuiSwingTableColumn.SpecifierManagerIndex index;
+        protected List<GuiSwingTableColumn.SpecifierManagerIndex> indexSet;
+        protected List<GuiMappingContext> actionContexts = new ArrayList<>();
+
+        protected GuiSwingTableColumnSet.TableColumnHost model;
+        protected GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier;
+
+        public void setParent(DynamicColumnFactory parent) {
+            this.parent = parent;
+        }
+
+        public DynamicColumnFactory getParent() {
+            return parent;
+        }
+
+        public void setRowSpecifier(GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier) {
+            this.rowSpecifier = rowSpecifier;
+        }
+
+        public GuiSwingTableColumn.SpecifierManagerIndex getRowSpecifier() {
+            return rowSpecifier;
+        }
+
+        public void setModel(GuiSwingTableColumnSet.TableColumnHost model) {
+            this.model = model;
+        }
+
+        public GuiSwingTableColumnSet.TableColumnHost getModel() {
+            return model;
+        }
+
+        public void setIndex(GuiSwingTableColumn.SpecifierManagerIndex index) {
+            this.index = index;
+        }
+
+        public GuiSwingTableColumn.SpecifierManagerIndex getIndex() {
+            return index;
+        }
+
+        public void addActionContext(GuiMappingContext context) {
+            actionContexts.add(context);
+        }
+
+        public List<GuiMappingContext> getActionContexts() {
+            return actionContexts;
+        }
+
+        public List<GuiSwingTableColumn.SpecifierManagerIndex> getIndexSpecifiers() {
+            if (indexSet == null) {
+                indexSet = new ArrayList<>();
+                if (parent != null) {
+                    indexSet.addAll(parent.getIndexSpecifiers());
+                }
+                if (index != null) {
+                    indexSet.add(index);
+                }
+                ((ArrayList<GuiSwingTableColumn.SpecifierManagerIndex>) indexSet).trimToSize();
+            }
+            return indexSet;
+        }
+
+        public List<Action> getActions(DynamicColumnFactory sender, List<DynamicColumnFactory> children,
+                                       GuiReprCollectionTable.TableTargetCell selection) {
+            return Stream.concat(
+                        actionContexts.stream()
+                            .map(a -> toAction(a, sender, selection))
+                            .filter(Objects::nonNull),
+                        children.stream()
+                            .flatMap(d -> d.getActions(selection).stream()))
+                    .collect(Collectors.toList());
+        }
+
+        public Action toAction(GuiMappingContext context, DynamicColumnFactory sender, GuiReprCollectionTable.TableTargetCell selection) {
+            if (context.isReprAction()) {
+                return new GuiSwingTableColumnSetDefault.TableSelectionAction(context,
+                        new TableSelectionSourceDynamic(model, rowSpecifier, selection, sender, context.getName()));
+                //TODO targetName ok?
+            } else if (context.isReprActionList()) {
+                return null; //TODO
+            } else {
+                return null;
+            }
+        }
+    }
+
     /**
      * size-factory for List&lt;E&gt;
      */
-    public static class DynamicColumnFactoryList implements DynamicColumnFactory, GuiSwingTableColumnSet.DynamicColumnHost {
+    public static class DynamicColumnFactoryList extends DynamicColumnFactoryBase
+            implements DynamicColumnFactory, GuiSwingTableColumnSet.DynamicColumnHost {
         protected DynamicColumnFactory elementFactory;
         protected GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex;
 
-        public DynamicColumnFactoryList(GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex) {
+        public DynamicColumnFactoryList(GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
+                                        GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex) {
+            setRowSpecifier(rowSpecifier);
             this.elementSpecifierIndex = elementSpecifierIndex;
         }
 
@@ -130,18 +225,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         @Override
         public void addColumn(GuiMappingContext context, GuiSwingTableColumn column,
                               GuiSwingView.SpecifierManager parentSpecifier) {
-            add(new ObjectTableColumnSizeConcrete(1, context, column, parentSpecifier));
+            addColumnDynamic(new ObjectTableColumnSizeConcrete(1, context, column, model, rowSpecifier, parentSpecifier));
         }
 
         @Override
-        public void addColumnDynamic(GuiMappingContext context, GuiSwingTableColumnDynamic d,
-                                     GuiSwingView.SpecifierManager parentSpecifier) {
-
-            add(d.createColumnDynamic(context, null, parentSpecifier, false));
-        }
-
-        @Override
-        public void add(DynamicColumnFactory d) {
+        public void addColumnDynamic(DynamicColumnFactory d) {
             if (elementFactory != null) {
                 //something-wrong
             }
@@ -152,13 +240,25 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             return elementFactory;
         }
 
+        @Override
+        public List<Action> getActions(GuiReprCollectionTable.TableTargetCell selection) {
+            return getActions(this,
+                    elementFactory == null ? Collections.emptyList() : Collections.singletonList(elementFactory),
+                    selection);
+        }
 
+        @Override
+        public Object getValue(Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> indexInjection) {
+            //TODO ???
+            return null;
+        }
     }
 
     /**
      * size-factory for class C { T0 f0; T1 f0; ... }
      */
-    public static class DynamicColumnFactoryComposite implements DynamicColumnFactory, GuiSwingTableColumnSet.DynamicColumnHost {
+    public static class DynamicColumnFactoryComposite extends DynamicColumnFactoryBase
+            implements DynamicColumnFactory, GuiSwingTableColumnSet.DynamicColumnHost {
         protected List<DynamicColumnFactory> factories = new ArrayList<>();
 
         @Override
@@ -170,17 +270,23 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         @Override
         public void addColumn(GuiMappingContext context, GuiSwingTableColumn column, GuiSwingView.SpecifierManager parentSpecifier) {
-            factories.add(new ObjectTableColumnSizeConcrete(1, context, column, parentSpecifier));
+            factories.add(new ObjectTableColumnSizeConcrete(1, context, column, model, rowSpecifier, parentSpecifier));
         }
 
         @Override
-        public void addColumnDynamic(GuiMappingContext context, GuiSwingTableColumnDynamic d, GuiSwingView.SpecifierManager parentSpecifier) {
-            factories.add(d.createColumnDynamic(context, null, parentSpecifier, false));
-        }
-
-        @Override
-        public void add(DynamicColumnFactory d) {
+        public void addColumnDynamic(DynamicColumnFactory d) {
             factories.add(d);
+        }
+
+        @Override
+        public List<Action> getActions(GuiReprCollectionTable.TableTargetCell selection) {
+            return super.getActions(this, factories, selection);
+        }
+
+        @Override
+        public Object getValue(Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> indexInjection) {
+            //TODO
+            return null;
         }
     }
 
@@ -190,15 +296,13 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
      */
     public static class DynamicColumnFactoryCollection extends DynamicColumnFactoryList {
         protected GuiMappingContext context;
-        protected GuiSwingTableColumn.SpecifierManagerIndex rowSpecifierIndex;
         protected GuiSwingView.SpecifierManager tableSpecifier;
 
         public DynamicColumnFactoryCollection(GuiMappingContext context,
-                                       GuiSwingTableColumn.SpecifierManagerIndex rowSpecifierIndex,
+                                       GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
                                        GuiSwingView.SpecifierManager tableSpecifier) {
-            super(new GuiSwingTableColumn.SpecifierManagerIndex(tableSpecifier::getSpecifier));
+            super(rowSpecifier, new GuiSwingTableColumn.SpecifierManagerIndex(tableSpecifier::getSpecifier));
             this.context = context;
-            this.rowSpecifierIndex = rowSpecifierIndex;
             this.tableSpecifier = tableSpecifier;
         }
 
@@ -235,13 +339,36 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
     public static class ObjectTableColumnSizeConcrete extends ObjectTableColumnSize implements DynamicColumnFactory {
         protected GuiMappingContext context;
         protected GuiSwingTableColumn column;
-        public GuiSwingView.SpecifierManager parentSpecifier;
+        protected DynamicColumnFactoryBase factoryBase;
+        protected GuiSwingView.SpecifierManager parentSpecifier;
 
-        public ObjectTableColumnSizeConcrete(int size, GuiMappingContext context, GuiSwingTableColumn column, GuiSwingView.SpecifierManager parentSpecifier) {
+        public ObjectTableColumnSizeConcrete(int size, GuiMappingContext context, GuiSwingTableColumn column,
+                                             GuiSwingTableColumnSet.TableColumnHost model,
+                                             GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
+                                             GuiSwingView.SpecifierManager parentSpecifier) {
+            factoryBase = new DynamicColumnFactoryBase();
+            factoryBase.setModel(model);
+            factoryBase.setRowSpecifier(rowSpecifier);
             this.size = size;
             this.context = context;
             this.column = column;
             this.parentSpecifier = parentSpecifier;
+        }
+
+        public ObjectTableColumnSizeConcrete(int size, GuiMappingContext context, GuiSwingTableColumn column,
+                                             DynamicColumnFactoryBase factoryBase,
+                                             GuiSwingView.SpecifierManager parentSpecifier) {
+            this.factoryBase = factoryBase;
+            this.size = size;
+            this.context = context;
+            this.column = column;
+            this.parentSpecifier = parentSpecifier;
+        }
+
+
+
+        public void setFactoryParent(DynamicColumnFactory parent) {
+            factoryBase.setParent(parent);
         }
 
         @Override
@@ -278,7 +405,28 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
          */
         @Override
         public ObjectTableColumnSize getColumnSize(Object c) {
-            return new ObjectTableColumnSizeConcrete(size, context, column, parentSpecifier);
+            return new ObjectTableColumnSizeConcrete(size, context, column, factoryBase, parentSpecifier);
+        }
+
+        @Override
+        public List<GuiSwingTableColumn.SpecifierManagerIndex> getIndexSpecifiers() {
+            return factoryBase.getIndexSpecifiers();
+        }
+
+        @Override
+        public Object getValue(Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> indexInjection) {
+            try {
+                indexInjection.forEach(GuiSwingTableColumn.SpecifierManagerIndex::setIndex);
+                return context.getReprValue().getUpdatedValueWithoutNoUpdate(context,
+                        new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier).getSpecifier()); //TODO spec
+            } catch (Throwable ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        @Override
+        public List<Action> getActions(GuiReprCollectionTable.TableTargetCell selection) {
+            return factoryBase.getActions(this, Collections.emptyList(), selection);
         }
     }
 
@@ -405,6 +553,71 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         @Override
         public void viewUpdateAsDynamic(ObjectTableColumn source) {
             column.viewUpdateAsDynamic(source);
+        }
+
+        public Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> getIndexInjection(
+                Collection<GuiSwingTableColumn.SpecifierManagerIndex> requiredSpecs) {
+            Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> spec = new LinkedHashMap<>(requiredSpecs.size() + 1);
+            requiredSpecs.forEach(s -> {
+                Integer n = indexInjection.get(s);
+                if (n != null) {
+                    spec.put(s, n);
+                }
+            });
+            return spec;
+        }
+    }
+
+    public static class TableSelectionSourceDynamic implements GuiSwingTableColumnSet.TableSelectionSource {
+        protected GuiSwingTableColumnSet.TableColumnHost model;
+        protected GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier;
+        protected GuiReprCollectionTable.TableTargetCell selection;
+        protected DynamicColumnFactory factory;
+        protected String targetName;
+
+        public TableSelectionSourceDynamic(GuiSwingTableColumnSet.TableColumnHost model,
+                                           GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
+                                           GuiReprCollectionTable.TableTargetCell selection,
+                                           DynamicColumnFactory factory,
+                                           String targetName) {
+            this.model = model;
+            this.rowSpecifier = rowSpecifier;
+            this.selection = selection;
+            this.factory = factory;
+            this.targetName = targetName;
+        }
+
+        @Override
+        public String getTargetName() {
+            return targetName;
+        }
+
+        @Override
+        public boolean isSelectionEmpty() {
+            return selection.isSelectionEmpty();
+        }
+
+        @Override
+        public List<?> getSelectedItems() {
+            List<Object> result = new ArrayList<>();
+            List<GuiSwingTableColumn.SpecifierManagerIndex> indexSpecifiers = factory.getIndexSpecifiers();
+            Set<Map<GuiSwingTableColumn.SpecifierManagerIndex,Integer>> occurrences = new HashSet<>();
+            selection.getSelectedRowAllCellIndexesStream().forEach(cell -> {
+                ObjectTableColumn column = model.getColumnAt(cell[1]);
+                if (column instanceof ObjectTableColumnCollectionWrapper) {
+                    Map<GuiSwingTableColumn.SpecifierManagerIndex,Integer> specMap = ((ObjectTableColumnCollectionWrapper) column).getIndexInjection(indexSpecifiers);
+                    specMap.put(rowSpecifier, cell[0]);
+                    if (occurrences.add(specMap)) {
+                        result.add(factory.getValue(specMap));
+                    }
+                }
+            });
+            return result;
+        }
+
+        @Override
+        public void selectionActionFinished(boolean autoSelection, GuiSwingTableColumnSet.TableSelectionChange change) {
+            //TODO selection change
         }
     }
 

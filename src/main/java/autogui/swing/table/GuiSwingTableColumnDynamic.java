@@ -1,9 +1,11 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingView;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -11,6 +13,7 @@ import java.util.*;
  */
 public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
     DynamicColumnFactory createColumnDynamic(GuiMappingContext context,
+                                             GuiSwingTableColumnSet.TableColumnHost model,
                                              GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
                                              GuiSwingView.SpecifierManager parentSpecifier, boolean tableTop);
 
@@ -18,6 +21,10 @@ public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
      * a factory of size info. which becomes a set of factories of each concrete columns */
     interface DynamicColumnFactory {
         ObjectTableColumnSize getColumnSize(Object c);
+
+        List<GuiSwingTableColumn.SpecifierManagerIndex> getIndexSpecifiers();
+        Object getValue(Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> indexInjection);
+        List<Action> getActions(GuiReprCollectionTable.TableTargetCell selection);
     }
 
     /**

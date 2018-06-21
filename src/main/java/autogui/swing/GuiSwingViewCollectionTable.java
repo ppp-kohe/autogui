@@ -69,6 +69,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             }
         }
 
+        actions.addAll(table.getObjectTableModel().getColumns()
+                .getDynamicColumnsActions(new TableTargetCellForJTable(table)));
+
         if (context.hasParent()) {
             GuiMappingContext parent = context.getParent();
             if (parent.isTypeElementProperty() && parent.hasParent()) {
