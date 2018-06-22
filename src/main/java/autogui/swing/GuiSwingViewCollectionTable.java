@@ -403,7 +403,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(List<?> value) {
             setSwingViewValue(value);
-            GuiSwingView.updateFromGui(this, value, viewClock);
+            updateFromGui(value, viewClock);
         }
 
         @Override
@@ -417,8 +417,12 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setSwingViewValueWithUpdate(List<?> value, GuiTaskClock clock) {
             if (viewClock.isOlderWithSet(clock)) {
                 setSwingViewValueWithoutIncrementClock(value);
-                GuiSwingView.updateFromGui(this, value, viewClock);
+                updateFromGui(value, viewClock);
             }
+        }
+
+        public void updateFromGui(Object v, GuiTaskClock viewClock) {
+            GuiSwingView.updateFromGui(this, v, viewClock);
         }
 
         @Override

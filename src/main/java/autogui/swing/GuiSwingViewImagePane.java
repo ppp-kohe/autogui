@@ -277,7 +277,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
             Image v = (Image) img.toUpdateValue(context, image);
             setImageWithoutContextUpdate(v);
-            GuiSwingView.updateFromGui(this, v, viewClock.increment());
+            updateFromGui(v, viewClock.increment());
+        }
+
+        public void updateFromGui(Object v, GuiTaskClock viewClock) {
+            GuiSwingView.updateFromGui(this, v, viewClock);
         }
 
         public Dimension getImageSize() {
@@ -399,7 +403,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
                 Image v = img.updateValue(context, value);
                 setImageWithoutContextUpdate(v);
-                GuiSwingView.updateFromGui(this, v, viewClock);
+                updateFromGui(v, viewClock);
             }
         }
 

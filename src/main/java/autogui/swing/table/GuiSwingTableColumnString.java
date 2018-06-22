@@ -2,6 +2,7 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewLabel;
@@ -188,6 +189,17 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         public void setForeground(Color fg) {
             super.setForeground(fg);
             field.setForeground(fg);
+        }
+
+        @Override
+        public void updateFromGui(Object v, GuiTaskClock viewClock) {
+            //nothing
+        }
+
+        @Override
+        public String getSwingViewValue() {
+            updateFieldInEventWithoutEditFinish();
+            return super.getSwingViewValue();
         }
     }
 }

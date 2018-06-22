@@ -362,16 +362,20 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         /** special case: update the source */
         @Override
         public void setSwingViewValue(Object value) {
-            GuiSwingView.updateFromGui(this, value, viewClock.increment());
+            updateFromGui(value, viewClock.increment());
             revalidate();
             repaint();
         }
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
-            GuiSwingView.updateFromGui(this, value, viewClock.increment());
+            updateFromGui(value, viewClock.increment());
             revalidate();
             repaint();
+        }
+
+        public void updateFromGui(Object v, GuiTaskClock viewClock) {
+            GuiSwingView.updateFromGui(this, v, viewClock);
         }
 
         @Override

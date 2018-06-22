@@ -2,6 +2,7 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewEnumComboBox;
@@ -29,10 +30,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
         GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
         GuiSwingViewLabel.PropertyLabel label = new ColumnEnumPane(context, valueSpecifier);
 
-        GuiSwingViewEnumComboBox.PropertyEnumComboBox comboBox = new GuiSwingViewEnumComboBox.PropertyEnumComboBox(context, valueSpecifier);
-        comboBox.setCurrentValueSupported(false);
-        comboBox.setBorder(BorderFactory.createEmptyBorder());
-        comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        GuiSwingViewEnumComboBox.PropertyEnumComboBox comboBox = new ColumnEditEnumComboBox(context, valueSpecifier);
         ObjectTableColumnValue.ObjectTableCellEditor editor = new ObjectTableColumnValue.ObjectTableCellEditor(
                 comboBox, false, rowSpecifier);
         editor.setClickCount(2);
@@ -65,6 +63,20 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
                     ), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
             }
             return menuItems;
+        }
+    }
+
+    public static class ColumnEditEnumComboBox extends GuiSwingViewEnumComboBox.PropertyEnumComboBox {
+        public ColumnEditEnumComboBox(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+            super(context, specifierManager);
+            setCurrentValueSupported(false);
+            setBorder(BorderFactory.createEmptyBorder());
+            putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        }
+
+        @Override
+        public void updateFromGui(Object value, GuiTaskClock viewClock) {
+            //nothing
         }
     }
 

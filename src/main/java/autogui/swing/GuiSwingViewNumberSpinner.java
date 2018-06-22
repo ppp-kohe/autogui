@@ -23,6 +23,7 @@ import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
@@ -192,6 +193,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         protected boolean currentValueSupported = true;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
+        protected List<Runnable> editFinishHandlers = new ArrayList<>(1);
 
         public PropertyNumberSpinner(GuiMappingContext context, SpecifierManager specifierManager) {
             super(createModel(context));
@@ -320,8 +322,21 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         public void updateNumber(List<Object> events) {
-            SwingUtilities.invokeLater(() ->
-                GuiSwingView.updateFromGui(this, getValue(), viewClock.increment()));
+            boolean immediate = isImmediate(events);
+            if (immediate && SwingUtilities.isEventDispatchThread()) {
+                updateFromGui(getValue(), viewClock.increment());
+            } else {
+                SwingUtilities.invokeLater(() ->
+                        updateFromGui(getValue(), viewClock.increment()));
+            }
+            if (immediate) {
+                editFinishHandlers.forEach(Runnable::run);
+            }
+        }
+
+        public boolean isImmediate(List<Object> events) {
+            return events.stream()
+                    .anyMatch(e -> e instanceof ActionEvent);
         }
 
         @Override
@@ -353,7 +368,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public void setSwingViewValueWithUpdate(Object value) {
             viewClock.increment();
             setValueWithoutUpdate(value);
-            GuiSwingView.updateFromGui(this, value, viewClock);
+            updateFromGui(value, viewClock);
         }
 
         @Override
@@ -367,13 +382,17 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         public void setSwingViewValueWithUpdate(Object value, GuiTaskClock clock) {
             if (viewClock.isOlderWithSet(clock)) {
                 setValueWithoutUpdate(value);
-                GuiSwingView.updateFromGui(this, value, viewClock);
+                updateFromGui(value, viewClock);
             }
         }
 
+        public void updateFromGui(Object value, GuiTaskClock viewClock) {
+            GuiSwingView.updateFromGui(this, value, viewClock);
+        }
+
         @Override
-        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
-            getEditorField().addActionListener(eventHandler::accept);
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
+            editFinishHandlers.add(eventHandler);
         }
 
         public JFormattedTextField getEditorField() {

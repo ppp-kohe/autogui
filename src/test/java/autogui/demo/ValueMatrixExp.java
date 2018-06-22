@@ -43,6 +43,7 @@ public class ValueMatrixExp {
 
         @GuiIncluded
         public void setValue(int value) {
+            System.err.println("setValue " + this.value + " -> " + value + " : " + name);
             this.value = value;
         }
 

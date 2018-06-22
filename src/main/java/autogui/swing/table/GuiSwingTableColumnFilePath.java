@@ -3,6 +3,7 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewFilePathField;
@@ -272,6 +273,16 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         }
 
         @Override
+        public boolean isUpdateFieldImmediateEvent(Object e) {
+            return super.isUpdateFieldImmediateEvent(e);
+        }
+
+        @Override
+        public void updateFieldInEvent(boolean modified, boolean immediate) {
+            super.updateFieldInEvent(modified, immediate);
+        }
+
+        @Override
         public void selectSearchedItemFromModel(PopupCategorized.CategorizedMenuItem item) {
             super.selectSearchedItemFromModel(item);
         }
@@ -279,6 +290,18 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         @Override
         public void setSwingViewValue(Object value) {
             super.setSwingViewValue(value);
+        }
+
+        @Override
+        public void updateFromGui(Object value, GuiTaskClock viewClock) {
+            //nothing
+        }
+
+        @Override
+        public Object getSwingViewValue() {
+            //force to update: tab-key's focus lost causes a stopEditing which precedes any other events
+            updateFieldInEventWithoutEditFinish();
+            return super.getSwingViewValue();
         }
     }
 

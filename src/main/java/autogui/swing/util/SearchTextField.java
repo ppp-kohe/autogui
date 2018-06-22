@@ -415,7 +415,12 @@ public class SearchTextField extends JComponent {
     public void updateField(List<Object> events) {
         try {
             boolean modified = isUpdateFieldModifiedEvents(events);
-            SwingUtilities.invokeLater(() -> updateFieldInEvent(modified));
+            boolean immediate = isUpdateFieldImmediateEvent(events);
+            if (immediate && SwingUtilities.isEventDispatchThread()) { //to support cell-editor's finish editing
+                updateFieldInEvent(modified, true);
+            } else {
+                SwingUtilities.invokeLater(() -> updateFieldInEvent(modified, immediate));
+            }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -430,17 +435,27 @@ public class SearchTextField extends JComponent {
         return !(e instanceof ActionEvent || e instanceof FocusEvent);
     }
 
+    public boolean isUpdateFieldImmediateEvent(List<Object> events) {
+        return events.stream()
+                .anyMatch(this::isUpdateFieldImmediateEvent);
+    }
+
+    public boolean isUpdateFieldImmediateEvent(Object e) {
+        return e instanceof ActionEvent;
+    }
+
     /** executed under event thread:
      *  start a new search task in background
      * @param modified  true if the field is actually edited
+     * @param immediate if true, a background task will not be created even if the model supports it
      */
-    public void updateFieldInEvent(boolean modified) {
+    public void updateFieldInEvent(boolean modified, boolean immediate) {
         if (modified || currentSearchedItems == null) {
             String text = field.getText();
             if (currentTask != null && !currentTask.isDone()) {
                 currentTask.cancel(true);
             }
-            if (model.isBackgroundTask()) {
+            if (!immediate && model.isBackgroundTask()) {
                 currentTask = createSearchTask(text);
                 currentTask.execute();
             } else {
@@ -498,9 +513,9 @@ public class SearchTextField extends JComponent {
         setIconFromSearchedItem(item);
         setTextFromSearchedItem(item);
         if (SwingUtilities.isEventDispatchThread()) {
-            updateFieldInEvent(true);
+            updateFieldInEvent(true, false);
         } else {
-            SwingUtilities.invokeLater(() -> updateFieldInEvent(true));
+            SwingUtilities.invokeLater(() -> updateFieldInEvent(true, false));
         }
     }
 

@@ -1,6 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewImagePane;
 import autogui.swing.util.MenuBuilder;
@@ -121,6 +122,11 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
             return MenuBuilder.get().createLabel(String.format("Scale: %s",
                     imageScale == null ? "null" : imageScale.getInfo()),
                     PopupCategorized.SUB_CATEGORY_LABEL_VALUE);
+        }
+
+        @Override
+        public void updateFromGui(Object v, GuiTaskClock viewClock) {
+            //nothing
         }
     }
 }

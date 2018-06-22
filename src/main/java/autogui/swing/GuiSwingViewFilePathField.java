@@ -8,6 +8,7 @@ import autogui.swing.util.SearchTextFieldFilePath;
 
 import javax.swing.*;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
@@ -23,7 +24,7 @@ import java.util.function.Supplier;
  *
  * <p>
  *     updating is caused by {@link PropertyFilePathPane#setFile(Path)} -&gt; editingRunner -&gt;
- *       {@link autogui.swing.util.SearchTextField#updateFieldInEvent(boolean)} -&gt;
+ *       {@link autogui.swing.util.SearchTextField#updateFieldInEvent(boolean,boolean)} -&gt;
  *       {@link PropertyFilePathPane#setCurrentSearchedItems(List, PopupCategorized.CategorizedMenuItem)} -&gt;
  *         {@link PropertyFilePathPane#selectSearchedItemFromModel(PopupCategorized.CategorizedMenuItem)}
  *
@@ -54,6 +55,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         protected MenuBuilder.MenuLabel infoLabel;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
         protected boolean currentValueSupported = true;
+        protected List<Runnable> editFinishHandlers = new ArrayList<>(1);
 
         public PropertyFilePathPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this(context, specifierManager, new SearchTextFieldModelFilePath());
@@ -155,14 +157,18 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         @Override
         public void selectSearchedItemFromGui(PopupCategorized.CategorizedMenuItem item) {
             super.selectSearchedItemFromGui(item);
-            GuiSwingView.updateFromGui(this, getFile(), viewClock.increment());
+            updateFromGui(getFile(), viewClock.increment());
         }
 
         /** update property: search done, and then the matched item will be set to the target property*/
         @Override
         public void selectSearchedItemFromModel(PopupCategorized.CategorizedMenuItem item) {
             super.selectSearchedItemFromModel(item);
-            GuiSwingView.updateFromGui(this, getFile(), viewClock.increment());
+            updateFromGui(getFile(), viewClock.increment());
+        }
+
+        public void updateFromGui(Object value, GuiTaskClock viewClock) {
+            GuiSwingView.updateFromGui(this, value, viewClock);
         }
 
         /** no property update
@@ -176,6 +182,18 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
             SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
+        }
+
+        @Override
+        public void updateFieldInEvent(boolean modified, boolean immediate) {
+            super.updateFieldInEvent(modified, immediate);
+            if (modified && immediate) {
+                editFinishHandlers.forEach(Runnable::run);
+            }
+        }
+
+        public void updateFieldInEventWithoutEditFinish() {
+            super.updateFieldInEvent(true, true);
         }
 
         @Override
@@ -201,7 +219,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
             viewClock.increment();
             FileItem item = getFileItemFromValue(value);
             selectSearchedItemWithoutUpdateContext(item);
-            GuiSwingView.updateFromGui(this, item.getPath(), viewClock);
+            updateFromGui(item.getPath(), viewClock);
 
         }
 
@@ -218,13 +236,13 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
             if (viewClock.isOlderWithSet(clock)) {
                 FileItem item = getFileItemFromValue(value);
                 selectSearchedItemWithoutUpdateContext(item);
-                GuiSwingView.updateFromGui(this, item.getPath(), viewClock);
+                updateFromGui(item.getPath(), viewClock);
             }
         }
 
         @Override
-        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
-            getField().addActionListener(eventHandler::accept);
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
+            editFinishHandlers.add(eventHandler);
         }
 
         @Override

@@ -13,6 +13,7 @@ import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
@@ -27,7 +28,7 @@ import java.util.function.Supplier;
  * <p>
  *   updating is caused by field's setText(String) -&gt;
  *      document listener -&gt;
- *      taskRunner -&gt; {@link PropertyStringPane#updateFieldInEvent(boolean)}.
+ *      taskRunner -&gt; {@link PropertyStringPane#updateFieldInEvent(boolean, boolean)}.
  *
  * <h3>history-value</h3>
  * supported.
@@ -60,6 +61,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         protected MenuBuilder.MenuLabel infoLabel;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
         protected boolean currentValueSupported = true;
+        protected List<Runnable> editFinishHandlers = new ArrayList<>(1);
 
         public PropertyStringPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -162,11 +164,22 @@ public class GuiSwingViewStringField implements GuiSwingView {
         }
 
         @Override
-        public void updateFieldInEvent(boolean modified) {
-            super.updateFieldInEvent(modified);
+        public void updateFieldInEvent(boolean modified, boolean immediate) {
+            super.updateFieldInEvent(modified, immediate);
             if (modified) {
-                GuiSwingView.updateFromGui(this, getField().getText(), viewClock.increment());
+                updateFromGui(getField().getText(), viewClock.increment());
             }
+            if (modified && immediate) {
+                editFinishHandlers.forEach(Runnable::run);
+            }
+        }
+
+        public void updateFieldInEventWithoutEditFinish() {
+            super.updateFieldInEvent(true, true);
+        }
+
+        public void updateFromGui(Object v, GuiTaskClock viewClock) {
+            GuiSwingView.updateFromGui(this, v, viewClock);
         }
 
         @Override
@@ -194,7 +207,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(String value) {
             viewClock.increment();
-            GuiSwingView.updateFromGui(this, setValueWithoutUpdateField(value), viewClock);
+            updateFromGui(setValueWithoutUpdateField(value), viewClock);
         }
 
         @Override
@@ -207,13 +220,14 @@ public class GuiSwingViewStringField implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(String value, GuiTaskClock contextClock) {
             if (viewClock.isOlderWithSet(contextClock)) {
-                GuiSwingView.updateFromGui(this, setValueWithoutUpdateField(value), viewClock);
+                updateFromGui(setValueWithoutUpdateField(value), viewClock);
             }
         }
 
         @Override
-        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
-            getField().addActionListener(eventHandler::accept);
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
+            //getField().addActionListener(eventHandler::accept);
+            editFinishHandlers.add(eventHandler);
         }
 
         @Override

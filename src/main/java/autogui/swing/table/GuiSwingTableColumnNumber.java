@@ -2,6 +2,7 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewLabel;
@@ -12,6 +13,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellRenderer;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -28,9 +30,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           GuiSwingView.SpecifierManager parentSpecifier) {
         GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
-        GuiSwingViewNumberSpinner.PropertyNumberSpinner spinner = new GuiSwingViewNumberSpinner.PropertyNumberSpinner(context, valueSpecifier);
-        spinner.setCurrentValueSupported(false);
-        spinner.getEditorField().setBorder(BorderFactory.createEmptyBorder());
+        GuiSwingViewNumberSpinner.PropertyNumberSpinner spinner = new ColumnEditNumberSpinner(context, valueSpecifier);
         ColumnNumberPane label = new ColumnNumberPane(context, valueSpecifier, spinner);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 label,
@@ -162,6 +162,29 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
                     ), getEditorActions(), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
             }
             return menuItems;
+        }
+    }
+
+    public static class ColumnEditNumberSpinner extends GuiSwingViewNumberSpinner.PropertyNumberSpinner {
+        public ColumnEditNumberSpinner(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+            super(context, specifierManager);
+            setCurrentValueSupported(false);
+            getEditorField().setBorder(BorderFactory.createEmptyBorder());
+        }
+
+        @Override
+        public void updateFromGui(Object value, GuiTaskClock viewClock) {
+            //nothing
+        }
+
+        @Override
+        public Object getSwingViewValue() {
+            try {
+                commitEdit();
+            } catch (ParseException e) {
+                //e.printStackTrace();
+            }
+            return super.getSwingViewValue();
         }
     }
 }

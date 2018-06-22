@@ -1,6 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewBooleanCheckBox;
 
@@ -22,19 +23,9 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           GuiSwingView.SpecifierManager parentSpecifier) {
         GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox view = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, valueSpecifier);
-        view.setCurrentValueSupported(false);
-        view.setHorizontalAlignment(SwingConstants.CENTER);
-        view.setBorderPainted(true);
-        view.setOpaque(true);
-        view.setText("");
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox view = new ColumnCheckBox(context, valueSpecifier);
 
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox editor = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, valueSpecifier);
-        editor.setCurrentValueSupported(false);
-        editor.setHorizontalAlignment(SwingConstants.CENTER);
-        editor.setBorderPainted(true);
-        editor.setOpaque(true);
-        editor.setText("");
+        GuiSwingViewBooleanCheckBox.PropertyCheckBox editor = new ColumnCheckBox(context, valueSpecifier);
 
         ObjectTableColumnValue column = new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(view, rowSpecifier),
@@ -43,6 +34,22 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
         column.setValueType(Boolean.class);
 
         return column;
+    }
+
+    public static class ColumnCheckBox extends GuiSwingViewBooleanCheckBox.PropertyCheckBox {
+        public ColumnCheckBox(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+            super(context, specifierManager);
+            setCurrentValueSupported(false);
+            setHorizontalAlignment(SwingConstants.CENTER);
+            setBorderPainted(true);
+            setOpaque(true);
+            setText("");
+        }
+
+        @Override
+        public void updateFromGui(Object value, GuiTaskClock viewClock) {
+            //nothing
+        }
     }
 
     /**

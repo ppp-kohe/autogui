@@ -165,8 +165,12 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         @Override
         public void itemStateChanged(ItemEvent e) {
             if (listenerEnabled) {
-                GuiSwingView.updateFromGui(this, getSelectedItem(), viewClock.increment());
+                updateFromGui(getSelectedItem(), viewClock.increment());
             }
+        }
+
+        public void updateFromGui(Object value, GuiTaskClock viewClock) {
+            GuiSwingView.updateFromGui(this, value, viewClock);
         }
 
         @Override
@@ -193,7 +197,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         public void setSwingViewValueWithUpdate(Object value) {
             viewClock.increment();
             setSelectedItemWithoutListener(value);
-            GuiSwingView.updateFromGui(this, value, viewClock);
+            updateFromGui(value, viewClock);
         }
 
         @Override
@@ -207,7 +211,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         public void setSwingViewValueWithUpdate(Object value, GuiTaskClock clock) {
             if (viewClock.isOlderWithSet(clock)) {
                 setSelectedItemWithoutListener(value);
-                GuiSwingView.updateFromGui(this, value, viewClock);
+                updateFromGui(value, viewClock);
             }
         }
 
@@ -217,8 +221,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         }
 
         @Override
-        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
-            addItemListener(eventHandler::accept);
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
+            addItemListener(e -> eventHandler.run());
         }
 
         @Override

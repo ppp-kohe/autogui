@@ -163,7 +163,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
                 ++editing;
                 try {
                     if (editable) {
-                        GuiSwingView.updateFromGui(this, isSelected(), viewClock.increment());
+                        updateFromGui(isSelected(), viewClock.increment());
                     } else {
                         setSelected(lastValue);
                     }
@@ -203,8 +203,12 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         }
 
         private void setSwingViewValueWithUpdateWithoutClock(Boolean value) {
-            GuiSwingView.updateFromGui(this, value, viewClock);
+            updateFromGui(value, viewClock);
             setSwingViewValueWithoutClock(value);
+        }
+
+        public void updateFromGui(Object value, GuiTaskClock viewClock) {
+            GuiSwingView.updateFromGui(this, value, viewClock);
         }
 
         @Override
@@ -222,8 +226,8 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         }
 
         @Override
-        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
-            addActionListener(eventHandler::accept);
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
+            addActionListener(e -> eventHandler.run());
         }
 
         @Override

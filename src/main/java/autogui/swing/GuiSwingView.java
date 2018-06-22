@@ -64,7 +64,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
         void setSwingViewValueWithUpdate(ValueType value, GuiTaskClock clock);
 
-        default void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) { }
+        default void addSwingEditFinishHandler(Runnable eventHandler) { }
 
         /**
          * a typical implementation becomes like the following code:
@@ -642,7 +642,7 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         @Override
-        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
             if (pane != null) {
                 pane.addSwingEditFinishHandler(eventHandler);
             }
@@ -739,7 +739,7 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         @Override
-        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
             if (pane != null) {
                 pane.addSwingEditFinishHandler(eventHandler);
             }

@@ -157,7 +157,7 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
             setSwingViewValue(value);
-            GuiSwingView.updateFromGui(this, value, viewClock);
+            updateFromGui(value, viewClock);
         }
 
         @Override
@@ -171,8 +171,12 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         public void setSwingViewValueWithUpdate(Object value, GuiTaskClock clock) {
             if (viewClock.isOlderWithSet(clock)) {
                 setSwingViewValueWithoutClockIncrement(value);
-                GuiSwingView.updateFromGui(this, value, viewClock);
+                updateFromGui(value, viewClock);
             }
+        }
+
+        public void updateFromGui(Object v, GuiTaskClock viewClock) {
+            GuiSwingView.updateFromGui(this, v, viewClock);
         }
 
         @Override

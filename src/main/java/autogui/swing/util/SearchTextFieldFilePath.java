@@ -832,6 +832,11 @@ public class SearchTextFieldFilePath extends SearchTextField {
         public FileItemWithKey withKey(KeyStroke key) {
             return new FileItemWithKey(path, iconGetter, category, subCategory, nameOnly, key);
         }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "(" + path  +")";
+        }
     }
 
     public static class FileItemWithKey extends FileItem {

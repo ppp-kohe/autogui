@@ -363,7 +363,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             this.skipShutDown = skipShutDown;
             this.specifierIndex = specifierIndex;
             if (component instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane<?>) component).addSwingEditFinishHandler(e -> stopCellEditing());
+                ((GuiSwingView.ValuePane<?>) component).addSwingEditFinishHandler(this::stopCellEditing);
             }
         }
 

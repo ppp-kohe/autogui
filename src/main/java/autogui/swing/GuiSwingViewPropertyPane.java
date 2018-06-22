@@ -344,7 +344,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
 
         @Override
-        public void addSwingEditFinishHandler(Consumer<EventObject> eventHandler) {
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
             if (hasContentValuePane()) {
                 getContentPaneAsValuePane().addSwingEditFinishHandler(eventHandler);
             }
