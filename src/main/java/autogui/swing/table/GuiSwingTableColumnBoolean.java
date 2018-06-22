@@ -23,12 +23,14 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
                                           GuiSwingView.SpecifierManager parentSpecifier) {
         GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
         GuiSwingViewBooleanCheckBox.PropertyCheckBox view = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, valueSpecifier);
+        view.setCurrentValueSupported(false);
         view.setHorizontalAlignment(SwingConstants.CENTER);
         view.setBorderPainted(true);
         view.setOpaque(true);
         view.setText("");
 
         GuiSwingViewBooleanCheckBox.PropertyCheckBox editor = new GuiSwingViewBooleanCheckBox.PropertyCheckBox(context, valueSpecifier);
+        editor.setCurrentValueSupported(false);
         editor.setHorizontalAlignment(SwingConstants.CENTER);
         editor.setBorderPainted(true);
         editor.setOpaque(true);

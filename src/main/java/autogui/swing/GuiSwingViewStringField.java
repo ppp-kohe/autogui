@@ -59,6 +59,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected MenuBuilder.MenuLabel infoLabel;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
+        protected boolean currentValueSupported = true;
 
         public PropertyStringPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -117,6 +118,15 @@ public class GuiSwingViewStringField implements GuiSwingView {
         @Override
         public void updateField(List<Object> events) {
             super.updateField(events);
+        }
+
+        @Override
+        public boolean isSwingCurrentValueSupported() {
+            return currentValueSupported && getSwingViewContext().isHistoryValueSupported();
+        }
+
+        public void setCurrentValueSupported(boolean currentValueSupported) {
+            this.currentValueSupported = currentValueSupported;
         }
 
         @Override

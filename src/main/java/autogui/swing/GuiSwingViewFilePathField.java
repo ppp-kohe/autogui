@@ -53,6 +53,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected MenuBuilder.MenuLabel infoLabel;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
+        protected boolean currentValueSupported = true;
 
         public PropertyFilePathPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this(context, specifierManager, new SearchTextFieldModelFilePath());
@@ -105,6 +106,15 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
 
         public void initValue() {
             update(context, context.getSource().getValue(), context.getContextClock().copy());
+        }
+
+        @Override
+        public boolean isSwingCurrentValueSupported() {
+            return currentValueSupported && getSwingViewContext().isHistoryValueSupported();
+        }
+
+        public void setCurrentValueSupported(boolean currentValueSupported) {
+            this.currentValueSupported = currentValueSupported;
         }
 
         @Override

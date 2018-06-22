@@ -533,6 +533,16 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         @Override
         public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
+            return getCellValueFromContext(rowIndex, columnIndex);
+        }
+
+        @Override
+        public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
+            return setCellValueFromContext(rowIndex, columnIndex, newColumnValue);
+        }
+
+        @Override
+        public Object getCellValueFromContext(int rowIndex, int columnIndex) {
             try {
                 indexInjection.forEach(GuiSwingTableColumn.SpecifierManagerIndex::setIndex);
                 return column.getCellValueFromContext(rowIndex, columnIndex);
@@ -542,7 +552,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
+        public Future<?> setCellValueFromContext(int rowIndex, int columnIndex, Object newColumnValue) {
             try {
                 indexInjection.forEach(GuiSwingTableColumn.SpecifierManagerIndex::setIndex);
                 return column.setCellValueFromContext(rowIndex, columnIndex, newColumnValue);

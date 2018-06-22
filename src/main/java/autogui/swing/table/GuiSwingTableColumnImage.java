@@ -54,6 +54,7 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
             setOpaque(true);
             int size = UIManagerUtil.getInstance().getScaledSizeInt(64);
             setPreferredSize(new Dimension(size, size));
+            setCurrentValueSupported(false);
         }
 
         public void setScaleTarget(ColumnEditImagePane scaleTarget) {

@@ -66,6 +66,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected boolean editable;
         protected boolean lastValue;
+        protected boolean currentValueSupported = true;
 
         protected int editing = 0;
 
@@ -120,6 +121,15 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         public void initDragDrop() {
             GuiSwingView.setupTransferHandler(this, new BooleanTransferHandler(this));
+        }
+
+        @Override
+        public boolean isSwingCurrentValueSupported() {
+            return currentValueSupported && getSwingViewContext().isHistoryValueSupported();
+        }
+
+        public void setCurrentValueSupported(boolean currentValueSupported) {
+            this.currentValueSupported = currentValueSupported;
         }
 
         @Override

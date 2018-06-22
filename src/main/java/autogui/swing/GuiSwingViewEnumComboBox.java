@@ -65,6 +65,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
         protected MenuBuilder.MenuLabel infoLabel;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
+        protected boolean currentValueSupported = true;
 
         public PropertyEnumComboBox(GuiMappingContext context, SpecifierManager specifierManager) {
             super(getEnumConstants(context));
@@ -124,6 +125,15 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         public void initDragDrop() {
             GuiSwingView.setupTransferHandler(this, new EnumTransferHandler(this));
+        }
+
+        @Override
+        public boolean isSwingCurrentValueSupported() {
+            return currentValueSupported && getSwingViewContext().isHistoryValueSupported();
+        }
+
+        public void setCurrentValueSupported(boolean currentValueSupported) {
+            this.currentValueSupported = currentValueSupported;
         }
 
         @Override

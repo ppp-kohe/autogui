@@ -223,6 +223,10 @@ public interface GuiSwingView extends GuiSwingElement {
          * for each component, the method is called before refreshing in order to clear the view-clock.
          */
         void prepareForRefresh();
+
+        default boolean isSwingCurrentValueSupported() {
+            return getSwingViewContext().isHistoryValueSupported();
+        }
     }
 
     /**
@@ -325,7 +329,7 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane) {
-        if (!pane.isSwingEditable()) {
+        if (!pane.isSwingEditable() || !pane.isSwingCurrentValueSupported()) {
             return;
         }
 
@@ -361,7 +365,7 @@ public interface GuiSwingView extends GuiSwingElement {
         if (pane instanceof ValuePane<?>) {
             GuiMappingContext context = ((ValuePane<?>) pane).getSwingViewContext();
             GuiPreferences targetPrefs = prefs.getDescendant(context);
-            if (context.isHistoryValueSupported()) {
+            if (((ValuePane<?>) pane).isSwingCurrentValueSupported()) {
                 targetPrefs.setCurrentValue(((ValuePane<?>) pane).getSwingViewValue());
             }
         }
@@ -373,9 +377,7 @@ public interface GuiSwingView extends GuiSwingElement {
             if (pane instanceof ValuePane<?>) {
                 GuiMappingContext context = ((ValuePane) pane).getSwingViewContext();
                 GuiPreferences targetPrefs = prefs.getDescendant(context);
-                if (context.isHistoryValueSupported()) {
-                    setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane);
-                }
+                setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane);
             }
         } catch (Exception ex) {
             GuiLogManager.get().logError(ex);

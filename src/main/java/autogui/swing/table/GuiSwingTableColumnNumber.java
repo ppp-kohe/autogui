@@ -29,6 +29,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
                                           GuiSwingView.SpecifierManager parentSpecifier) {
         GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
         GuiSwingViewNumberSpinner.PropertyNumberSpinner spinner = new GuiSwingViewNumberSpinner.PropertyNumberSpinner(context, valueSpecifier);
+        spinner.setCurrentValueSupported(false);
         spinner.getEditorField().setBorder(BorderFactory.createEmptyBorder());
         ColumnNumberPane label = new ColumnNumberPane(context, valueSpecifier, spinner);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,

@@ -127,6 +127,11 @@ public class GuiSwingViewLabel implements GuiSwingView {
             GuiSwingView.setupTransferHandler(this, new LabelTransferHandler(this));
         }
 
+        @Override
+        public boolean isSwingCurrentValueSupported() {
+            return false;
+        }
+
         /**
          * a table renderer call the method after changing it's color and before updating the value.
          *  the foreground and the background will be saved

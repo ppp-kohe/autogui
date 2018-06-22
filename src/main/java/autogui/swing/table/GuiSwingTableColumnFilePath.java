@@ -240,6 +240,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     public static class ColumnEditFilePathPane extends GuiSwingViewFilePathField.PropertyFilePathPane {
         public ColumnEditFilePathPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
             super(context, specifierManager, new SearchTextFieldModelFilePath());
+            setCurrentValueSupported(false);
         }
 
         @Override

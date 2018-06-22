@@ -158,6 +158,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyStringPane {
         public ColumnEditTextPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
             super(context, specifierManager);
+            setCurrentValueSupported(false);
             //getField().setEditable(false);
         }
 

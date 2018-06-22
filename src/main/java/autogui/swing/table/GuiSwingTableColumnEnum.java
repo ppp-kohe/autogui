@@ -30,6 +30,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
         GuiSwingViewLabel.PropertyLabel label = new ColumnEnumPane(context, valueSpecifier);
 
         GuiSwingViewEnumComboBox.PropertyEnumComboBox comboBox = new GuiSwingViewEnumComboBox.PropertyEnumComboBox(context, valueSpecifier);
+        comboBox.setCurrentValueSupported(false);
         comboBox.setBorder(BorderFactory.createEmptyBorder());
         comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         ObjectTableColumnValue.ObjectTableCellEditor editor = new ObjectTableColumnValue.ObjectTableCellEditor(

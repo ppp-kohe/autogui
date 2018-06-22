@@ -190,6 +190,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected NumberSettingAction settingAction;
         protected MenuBuilder.MenuLabel infoLabel;
 
+        protected boolean currentValueSupported = true;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
         public PropertyNumberSpinner(GuiMappingContext context, SpecifierManager specifierManager) {
@@ -265,6 +266,15 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public void initUndo() {
             undoManager.putListenersAndActionsTo(getEditorField());
+        }
+
+        @Override
+        public boolean isSwingCurrentValueSupported() {
+            return currentValueSupported && getSwingViewContext().isHistoryValueSupported();
+        }
+
+        public void setCurrentValueSupported(boolean currentValueSupported) {
+            this.currentValueSupported = currentValueSupported;
         }
 
         public NumberSettingAction getSettingAction() {
@@ -1174,6 +1184,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             currentFormat = getModelTyped().getFormat();
             setTextWithFormattingCurrentValue();
         }
+
 
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {

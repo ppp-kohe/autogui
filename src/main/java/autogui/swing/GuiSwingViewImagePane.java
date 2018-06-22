@@ -77,6 +77,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         protected ImageScaleSwitchFitAction switchFitAction;
 
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
+        protected boolean currentValueSupported = true;
 
         public PropertyImagePane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -170,6 +171,15 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 }
             });
             setBorder(new GuiSwingViewLabel.FocusBorder(this));
+        }
+
+        @Override
+        public boolean isSwingCurrentValueSupported() {
+            return currentValueSupported && getSwingViewContext().isHistoryValueSupported();
+        }
+
+        public void setCurrentValueSupported(boolean currentValueSupported) {
+            this.currentValueSupported = currentValueSupported;
         }
 
         @Override

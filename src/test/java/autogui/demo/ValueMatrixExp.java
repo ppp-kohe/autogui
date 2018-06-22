@@ -29,10 +29,20 @@ public class ValueMatrixExp {
     @GuiIncluded
     public static class Cell {
         @GuiIncluded public String name;
-        @GuiIncluded public int value;
+        int value;
 
         public Cell(String name, int value) {
             this.name = name;
+            this.value = value;
+        }
+
+        @GuiIncluded
+        public int getValue() {
+            return value;
+        }
+
+        @GuiIncluded
+        public void setValue(int value) {
             this.value = value;
         }
 
@@ -48,5 +58,10 @@ public class ValueMatrixExp {
         for (int[] i : items) {
             System.err.println(Arrays.toString(i));
         }
+    }
+
+    @GuiIncluded
+    public void sum(List<List<Cell>> cells) {
+        System.out.println(cells.stream().flatMapToInt(c -> c.stream().mapToInt(e -> e.value)).sum());
     }
 }
