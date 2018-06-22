@@ -510,7 +510,7 @@ public class GuiReprValue implements GuiRepresentation {
      *   To specify a value of <code>prop3</code> from the top <code>A</code>,
      *     we can write <code>a.prop1.get(i).prop2.get(j).prop3</code>.
      *    <p>
-     *      This class represents the expression of the property chain with indexes:
+     *      This class represents the expression of the property chain with indices:
      *       <code>NONE.childIndex(i).child(false).childIndex(j).child(false)</code>
      */
     public static class ObjectSpecifier {

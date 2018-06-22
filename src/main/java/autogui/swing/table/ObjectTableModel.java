@@ -362,12 +362,12 @@ public class ObjectTableModel extends AbstractTableModel
     }
 
     /** executed under event thread
-     * @param rowIndexes the target rows
+     * @param rowIndices the target rows
      */
-    public void refreshRows(int... rowIndexes) {
+    public void refreshRows(int... rowIndices) {
         int min = -1;
         int max = -1;
-        for (int rowIndex : rowIndexes) {
+        for (int rowIndex : rowIndices) {
             if (min == -1 || rowIndex < min) {
                 min = rowIndex;
             }
@@ -382,20 +382,20 @@ public class ObjectTableModel extends AbstractTableModel
     }
 
     /** executed under event thread
-     * @param columnIndexes the target columns
+     * @param columnIndices the target columns
      */
-    public void refreshColumns(Collection<Integer> columnIndexes) {
-        refreshColumns(columnIndexes.stream()
+    public void refreshColumns(Collection<Integer> columnIndices) {
+        refreshColumns(columnIndices.stream()
                 .mapToInt(Integer::intValue)
                 .toArray());
     }
 
     /** executed under event thread
-     * @param columnIndexes the target columns
+     * @param columnIndices the target columns
      */
-    public void refreshColumns(int... columnIndexes) {
+    public void refreshColumns(int... columnIndices) {
         for (Object[] rowData : data) {
-            for (int columnIndex : columnIndexes) {
+            for (int columnIndex : columnIndices) {
                 rowData[columnIndex] = null;
             }
         }

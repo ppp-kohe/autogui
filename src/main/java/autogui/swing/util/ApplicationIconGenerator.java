@@ -225,7 +225,7 @@ public class ApplicationIconGenerator {
     }
 
     public static class NameLinePattern {
-        List<List<Integer>> indexes = new ArrayList<>();
+        List<List<Integer>> indices = new ArrayList<>();
         double width;
         double height;
         double ratio;
@@ -233,8 +233,8 @@ public class ApplicationIconGenerator {
         public NameLinePattern() {
         }
 
-        public List<List<Integer>> getIndexes() {
-            return indexes;
+        public List<List<Integer>> getIndices() {
+            return indices;
         }
 
         public float getWidth() {
@@ -248,7 +248,7 @@ public class ApplicationIconGenerator {
         public List<Rectangle2D.Float> layout(float x, float y, float[] ws, float h) {
             List<Rectangle2D.Float> ret = new ArrayList<>();
             float lineY = y + h;
-            for (List<Integer> line : indexes) {
+            for (List<Integer> line : indices) {
                 float lineX = x;
                 for (int i : line) {
                     ret.add(new Rectangle2D.Float(lineX, lineY, ws[i], h));
@@ -268,36 +268,36 @@ public class ApplicationIconGenerator {
         }
 
         public void setSize(float[] w, float h) {
-            for (List<Integer> i : indexes) {
+            for (List<Integer> i : indices) {
                 width = Math.max(width, i.stream()
                         .mapToDouble(idx -> w[idx])
                         .sum());
             }
-            height = indexes.size() * h;
+            height = indices.size() * h;
             ratio = width / height;
         }
 
         public NameLinePattern add(int i, boolean nextLine) {
-            if (indexes.isEmpty() || nextLine){
-                indexes.add(new ArrayList<>());
+            if (indices.isEmpty() || nextLine){
+                indices.add(new ArrayList<>());
             }
-            indexes.get(indexes.size() - 1).add(i);
+            indices.get(indices.size() - 1).add(i);
             return this;
         }
 
         public NameLinePattern copy() {
             NameLinePattern p = new NameLinePattern();
-            p.indexes.addAll(indexes);
-            if (!p.indexes.isEmpty()) {
-                p.indexes.remove(p.indexes.size() - 1);
-                p.indexes.add(new ArrayList<>(indexes.get(indexes.size() - 1)));
+            p.indices.addAll(indices);
+            if (!p.indices.isEmpty()) {
+                p.indices.remove(p.indices.size() - 1);
+                p.indices.add(new ArrayList<>(indices.get(indices.size() - 1)));
             }
             return p;
         }
 
         @Override
         public String toString() {
-            return String.format("r=%.3f: %s", ratio, indexes.toString());
+            return String.format("r=%.3f: %s", ratio, indices.toString());
         }
     }
 

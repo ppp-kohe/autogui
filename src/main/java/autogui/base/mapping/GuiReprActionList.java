@@ -86,9 +86,9 @@ public class GuiReprActionList implements GuiRepresentation {
      *     public void select(List&lt;Integer&gt; rows, String propName) {...}
      * </pre>
      * @param context the action context
-     * @return true if the action is automatic selection and taking a list of row indexes
+     * @return true if the action is automatic selection and taking a list of row indices
      */
-    public boolean isSelectionRowIndexesAction(GuiMappingContext context) {
+    public boolean isSelectionRowIndicesAction(GuiMappingContext context) {
         if (context.isTypeElementActionList()) {
             GuiTypeElement elementType = context.getTypeElementAsActionList().getElementType();
             return elementType.equals(new GuiTypeValue(Integer.class));
@@ -104,9 +104,9 @@ public class GuiReprActionList implements GuiRepresentation {
      *     public void select(List&lt;int[]&gt; rows, String propName) {...}
      * </pre>
      * @param context the action context
-     * @return true if the action is automatic selection and taking a list of row and column pair indexes
+     * @return true if the action is automatic selection and taking a list of row and column pair indices
      */
-    public boolean isSelectionRowAndColumnIndexesAction(GuiMappingContext context) {
+    public boolean isSelectionRowAndColumnIndicesAction(GuiMappingContext context) {
         if (context.isTypeElementActionList()) {
             GuiTypeElement elementType = context.getTypeElementAsActionList().getElementType();
             return elementType.equals(new GuiTypeValue(int[].class));
@@ -119,12 +119,12 @@ public class GuiReprActionList implements GuiRepresentation {
         return isSelectionChangeActionForActions(context, tableContext);
     }
 
-    public boolean isSelectionChangeRowIndexesAction(GuiMappingContext context) {
-        return isSelectionChangeRowIndexesActionForActions(context);
+    public boolean isSelectionChangeRowIndicesAction(GuiMappingContext context) {
+        return isSelectionChangeRowIndicesActionForActions(context);
     }
 
-    public boolean isSelectionChangeRowAndColumnIndexesAction(GuiMappingContext context) {
-        return isSelectionChangeRowAndColumnIndexesActionForActions(context);
+    public boolean isSelectionChangeRowAndColumnIndicesAction(GuiMappingContext context) {
+        return isSelectionChangeRowAndColumnIndicesActionForActions(context);
     }
 
     /**
@@ -151,7 +151,7 @@ public class GuiReprActionList implements GuiRepresentation {
         }
     }
 
-    public static boolean isSelectionChangeRowIndexesActionForActions(GuiMappingContext context) {
+    public static boolean isSelectionChangeRowIndicesActionForActions(GuiMappingContext context) {
         return (context.isTypeElementAction() || context.isTypeElementActionList()) &&
                 context.getTypeElementAsAction().isSelectionChangeIndexAction() &&
                 isCollectionType(context.getTypeElementAsAction().getReturnType(),
@@ -159,7 +159,7 @@ public class GuiReprActionList implements GuiRepresentation {
     }
 
 
-    public static boolean isSelectionChangeRowAndColumnIndexesActionForActions(GuiMappingContext context) {
+    public static boolean isSelectionChangeRowAndColumnIndicesActionForActions(GuiMappingContext context) {
         return (context.isTypeElementAction() || context.isTypeElementActionList()) &&
                 context.getTypeElementAsAction().isSelectionChangeIndexAction() &&
                 isCollectionType(context.getTypeElementAsAction().getReturnType(),

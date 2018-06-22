@@ -149,7 +149,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      *     also, the action can return newly selected items
      * <pre>
      *         &#64;GuiListSelectionUpdater
-     *         public Collection&lt;Integer&gt; action(&lt;E&gt; selected) {...}  //selected row indexes
+     *         public Collection&lt;Integer&gt; action(&lt;E&gt; selected) {...}  //selected row indices
      *         &#64;GuiListSelectionUpdater(index=true)
      *         public Collection&lt;E&gt;       action(&lt;E&gt; selected) {...}  //selected row values
      *         &#64;GuiListSelectionUpdater(index=true)
@@ -225,11 +225,11 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         public void setSelectionChangeFactoryFromContext(GuiMappingContext tableContext) {
             if (context.isReprActionList()) {
                 GuiReprActionList listAction = context.getReprActionList();
-                if (listAction.isSelectionChangeRowIndexesAction(context)) { //even if the element type is Integer
-                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndexes);
+                if (listAction.isSelectionChangeRowIndicesAction(context)) { //even if the element type is Integer
+                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndices);
                     selectionChange = true;
-                } else if (listAction.isSelectionChangeRowAndColumnIndexesAction(context)) {
-                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndexesRowAndColumn);
+                } else if (listAction.isSelectionChangeRowAndColumnIndicesAction(context)) {
+                    setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeIndicesRowAndColumn);
                     selectionChange = true;
                 } else if (listAction.isSelectionChangeAction(context, tableContext)) {
                     setSelectionChangeFactory(GuiSwingTableColumnSet::createChangeValues);

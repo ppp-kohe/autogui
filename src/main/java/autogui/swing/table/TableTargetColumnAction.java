@@ -18,7 +18,7 @@ import java.util.function.Consumer;
  *   and calls {@link ObjectTableColumn#getMenuBuilderSource()} to the target.
  *   The current impl. of the method returns the cell renderer implementing {@link autogui.swing.table.ObjectTableColumn.PopupMenuBuilderSource}.
  *      For instance, those renderers are {@link ObjectTableColumnValue.ObjectTableCellRenderer} and
- *       {@link ObjectTableColumn.NumberRenderer} (for indexes).
+ *       {@link ObjectTableColumn.NumberRenderer} (for indices).
  *   <p>
  *       In  the case of {@link ObjectTableColumnValue.ObjectTableCellRenderer},
  *         it creates {@link ObjectTableColumnValue.ObjectTableColumnActionBuilder} with

@@ -30,7 +30,7 @@ public class TableTargetColumnForJTable extends TableTargetCellForJTable
     }
 
     @Override
-    public Stream<int[]> getSelectedCellIndexesStream() {
+    public Stream<int[]> getSelectedCellIndicesStream() {
         return getSelectedRows()
                 .boxed()
                 .map(r -> new int[]{

@@ -279,7 +279,7 @@ public class GuiPreferences {
      *  <li>
      *   The entry moves to the end of the history as the latest value,
      *    by setting the max index + 1 as it's index, which is a temporarly index.
-     *    The entire history is sorted by the indexes.
+     *    The entire history is sorted by the indices.
      *  </li>
      *  <li>
      *   remove overflowed entries with calling {@link HistoryValueEntry#remove()}.
@@ -394,7 +394,7 @@ public class GuiPreferences {
 
     /**
      * load or create historyValues: it's size becomes up to historyValueLimit and sorted by index.
-     * The new entries have -1 indexes.
+     * The new entries have -1 indices.
      */
     public void loadHistoryValues() {
         historyValues = new ArrayList<>();

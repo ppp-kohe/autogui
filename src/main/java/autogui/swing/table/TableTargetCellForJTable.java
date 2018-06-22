@@ -54,7 +54,7 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
     }
 
     @Override
-    public Stream<int[]> getSelectedCellIndexesStream() {
+    public Stream<int[]> getSelectedCellIndicesStream() {
         int[] cols = table.getSelectedColumns();
         return getSelectedRowsView()
                 .boxed()
@@ -65,7 +65,7 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
     }
 
     @Override
-    public Stream<int[]> getSelectedRowAllCellIndexesStream() {
+    public Stream<int[]> getSelectedRowAllCellIndicesStream() {
         return getSelectedRowsView()
                 .boxed()
                 .flatMap(r -> IntStream.range(0, table.getColumnCount())
@@ -83,15 +83,15 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
 
     @Override
     public List<GuiReprCollectionTable.CellValue> getSelectedCells() {
-        return getCellsByCellIndexes(getSelectedCellIndexesStream());
+        return getCellsByCellIndices(getSelectedCellIndicesStream());
     }
 
     @Override
     public List<GuiReprCollectionTable.CellValue> getSelectedRowAllCells() {
-        return getCellsByCellIndexes(getSelectedRowAllCellIndexesStream());
+        return getCellsByCellIndices(getSelectedRowAllCellIndicesStream());
     }
 
-    public List<GuiReprCollectionTable.CellValue> getCellsByCellIndexes(Stream<int[]> idx) {
+    public List<GuiReprCollectionTable.CellValue> getCellsByCellIndices(Stream<int[]> idx) {
         TableModel model = table.getModel();
         return idx
                 .map(pos -> new GuiReprCollectionTable.CellValue(pos[0], pos[1],

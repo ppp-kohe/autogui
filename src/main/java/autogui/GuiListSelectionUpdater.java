@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * indicates that the method returns a list of elements or indexes of elements
+ * indicates that the method returns a list of elements or indices of elements
  *    which become selected elements of a target list after the execution of the method.
  * <pre>
  *   &#64;GuiIncluded public class Table {
@@ -17,11 +17,11 @@ import java.lang.annotation.Target;
  *             ...
  *         }
  *         &#64;GuiListSelectionUpdater(index = true) &#64;GuiIncluded
- *         public List&lt;Integer&gt; selectRowIndexes() {
+ *         public List&lt;Integer&gt; selectRowIndices() {
  *             ...
  *         }
  *         &#64;GuiListSelectionUpdater(index = true) &#64;GuiIncluded
- *         public List&lt;int[]&gt; selectRowAndColumnsIndexes() {
+ *         public List&lt;int[]&gt; selectRowAndColumnsIndices() {
  *             ...
  *         }
  *

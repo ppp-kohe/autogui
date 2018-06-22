@@ -62,11 +62,11 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
     /**
      * index list of selected rows
      */
-    class TableSelectionChangeIndexes implements TableSelectionChange {
-        public Collection<Integer> indexes;
+    class TableSelectionChangeIndices implements TableSelectionChange {
+        public Collection<Integer> indices;
 
-        public TableSelectionChangeIndexes(Collection<Integer> indexes) {
-            this.indexes = indexes;
+        public TableSelectionChangeIndices(Collection<Integer> indices) {
+            this.indices = indices;
         }
     }
 
@@ -82,13 +82,13 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
     }
 
     /**
-     * list of selected {row, column} indexes
+     * list of selected {row, column} indices
      */
-    class TableSelectionChangeIndexesRowAndColumn implements TableSelectionChange {
-        public Collection<int[]> indexes;
+    class TableSelectionChangeIndicesRowAndColumn implements TableSelectionChange {
+        public Collection<int[]> indices;
 
-        public TableSelectionChangeIndexesRowAndColumn(Collection<int[]> indexes) {
-            this.indexes = indexes;
+        public TableSelectionChangeIndicesRowAndColumn(Collection<int[]> indices) {
+            this.indices = indices;
         }
     }
 
@@ -97,13 +97,13 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
     }
 
     @SuppressWarnings("unchecked")
-    static TableSelectionChangeIndexes createChangeIndexes(Object obj) { //List<Integer>
-        return new TableSelectionChangeIndexes((Collection<Integer>) obj);
+    static TableSelectionChangeIndices createChangeIndices(Object obj) { //List<Integer>
+        return new TableSelectionChangeIndices((Collection<Integer>) obj);
     }
 
     @SuppressWarnings("unchecked")
-    static TableSelectionChangeIndexesRowAndColumn createChangeIndexesRowAndColumn(Object obj) { //List<int[]>
-        return new TableSelectionChangeIndexesRowAndColumn((Collection<int[]>) obj);
+    static TableSelectionChangeIndicesRowAndColumn createChangeIndicesRowAndColumn(Object obj) { //List<int[]>
+        return new TableSelectionChangeIndicesRowAndColumn((Collection<int[]>) obj);
     }
 
     @SuppressWarnings("unchecked")

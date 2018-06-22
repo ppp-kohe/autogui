@@ -82,12 +82,12 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     GuiReprActionList listAction = (GuiReprActionList) siblingContext.getRepresentation();
 
                     GuiSwingTableColumnSetDefault.TableSelectionListAction createdAction = null;
-                    if (listAction.isSelectionRowIndexesAction(siblingContext)) {
+                    if (listAction.isSelectionRowIndicesAction(siblingContext)) {
                         createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
-                                table.getSelectionSourceForRowIndexes());
-                    } else if (listAction.isSelectionRowAndColumnIndexesAction(siblingContext)) {
+                                table.getSelectionSourceForRowIndices());
+                    } else if (listAction.isSelectionRowAndColumnIndicesAction(siblingContext)) {
                         createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
-                                table.getSelectionSourceForRowAndColumnIndexes());
+                                table.getSelectionSourceForRowAndColumnIndices());
                     } else if (listAction.isSelectionAction(siblingContext, context)) {
                         createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table);
                     }
@@ -122,9 +122,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected EditingRunner selectionRunner;
 
         protected TablePreferencesUpdater preferencesUpdater;
-        protected List<Integer> lastSelectionActionIndexes = Collections.emptyList();
-        protected TableSelectionSourceForIndexes selectionSourceForRowIndexes;
-        protected TableSelectionSourceForIndexes selectionSourceForRowAndColumnIndexes;
+        protected List<Integer> lastSelectionActionIndices = Collections.emptyList();
+        protected TableSelectionSourceForIndices selectionSourceForRowIndices;
+        protected TableSelectionSourceForIndices selectionSourceForRowAndColumnIndices;
 
         protected PopupExtensionCollectionColumnHeader popupColumnHeader;
         protected List<PopupCategorized.CategorizedMenuItem> columnHeaderMenuItems;
@@ -197,8 +197,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initSelectionSource() {
-            selectionSourceForRowIndexes = new TableSelectionSourceForIndexes(this, false);
-            selectionSourceForRowAndColumnIndexes = new TableSelectionSourceForIndexes(this, true);
+            selectionSourceForRowIndices = new TableSelectionSourceForIndices(this, false);
+            selectionSourceForRowAndColumnIndices = new TableSelectionSourceForIndices(this, true);
         }
 
         public void initSelectionClear() {
@@ -368,12 +368,12 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             return source;
         }
 
-        public TableSelectionSourceForIndexes getSelectionSourceForRowAndColumnIndexes() {
-            return selectionSourceForRowAndColumnIndexes;
+        public TableSelectionSourceForIndices getSelectionSourceForRowAndColumnIndices() {
+            return selectionSourceForRowAndColumnIndices;
         }
 
-        public TableSelectionSourceForIndexes getSelectionSourceForRowIndexes() {
-            return selectionSourceForRowIndexes;
+        public TableSelectionSourceForIndices getSelectionSourceForRowIndices() {
+            return selectionSourceForRowIndices;
         }
 
         @Override
@@ -467,17 +467,17 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public List<?> getSelectedItems() {
             ListSelectionModel sel = getSelectionModel();
             List<Object> selected = new ArrayList<>();
-            List<Integer> selectedIndexes = new ArrayList<>();
+            List<Integer> selectedIndices = new ArrayList<>();
             if (source != null) {
                 for (int i = sel.getMinSelectionIndex(), max = sel.getMaxSelectionIndex(); i <= max; ++i) {
                     if (i >= 0 && sel.isSelectedIndex(i)) {
                         int modelIndex = convertRowIndexToModel(i);
-                        selectedIndexes.add(modelIndex);
+                        selectedIndices.add(modelIndex);
                         selected.add(source.get(modelIndex));
                     }
                 }
             }
-            lastSelectionActionIndexes = selectedIndexes;
+            lastSelectionActionIndices = selectedIndices;
             return selected;
         }
 
@@ -488,17 +488,17 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             }
 
             int rows = getRowCount();
-            int[] selectedModelRowsIndexes = lastSelectionActionIndexes.stream()
+            int[] selectedModelRowsIndices = lastSelectionActionIndices.stream()
                     .filter(i -> i >= 0 && i < rows)
                     .mapToInt(Integer::intValue).toArray();
-            getObjectTableModel().refreshRows(selectedModelRowsIndexes);
+            getObjectTableModel().refreshRows(selectedModelRowsIndices);
 
             //after execution an action, source will be updated by invokeLater
             // change contains info. of the updated source, so the following code intends to be executed after the updating
             SwingUtilities.invokeLater(() -> {
                 try {
                     //re-selection
-                    changeSelection(selectedModelRowsIndexes, change);
+                    changeSelection(selectedModelRowsIndices, change);
                 } finally {
                     if (autoSelection) {
                         autoSelectionDepth--;
@@ -507,40 +507,40 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             });
         }
 
-        public void changeSelection(int[] selectedModelRowsIndexes, GuiSwingTableColumnSet.TableSelectionChange change) {
+        public void changeSelection(int[] selectedModelRowsIndices, GuiSwingTableColumnSet.TableSelectionChange change) {
             if (change instanceof GuiSwingTableColumnSet.TableSelectionChangeNothing) {
-                changeSelectionNothing(selectedModelRowsIndexes, change);
+                changeSelectionNothing(selectedModelRowsIndices, change);
 
-            } else if (change instanceof GuiSwingTableColumnSet.TableSelectionChangeIndexes) {
-                changeSelectionIndexes(selectedModelRowsIndexes, (GuiSwingTableColumnSet.TableSelectionChangeIndexes) change);
+            } else if (change instanceof GuiSwingTableColumnSet.TableSelectionChangeIndices) {
+                changeSelectionIndices(selectedModelRowsIndices, (GuiSwingTableColumnSet.TableSelectionChangeIndices) change);
 
             } else if (change instanceof GuiSwingTableColumnSet.TableSelectionChangeValues) {
-                changeSelectionValues(selectedModelRowsIndexes, (GuiSwingTableColumnSet.TableSelectionChangeValues) change);
+                changeSelectionValues(selectedModelRowsIndices, (GuiSwingTableColumnSet.TableSelectionChangeValues) change);
 
-            } else if (change instanceof GuiSwingTableColumnSet.TableSelectionChangeIndexesRowAndColumn) {
-                changeSelectionIndexesRowAndColumns(selectedModelRowsIndexes, (GuiSwingTableColumnSet.TableSelectionChangeIndexesRowAndColumn) change);
+            } else if (change instanceof GuiSwingTableColumnSet.TableSelectionChangeIndicesRowAndColumn) {
+                changeSelectionIndicesRowAndColumns(selectedModelRowsIndices, (GuiSwingTableColumnSet.TableSelectionChangeIndicesRowAndColumn) change);
 
             } else {
                 System.err.println("Unknown selection change type: " + change);
             }
         }
 
-        public void changeSelectionNothing(int[] selectedModelRowsIndexes, GuiSwingTableColumnSet.TableSelectionChange change) {
+        public void changeSelectionNothing(int[] selectedModelRowsIndices, GuiSwingTableColumnSet.TableSelectionChange change) {
             ListSelectionModel sel = getSelectionModel();
             sel.setValueIsAdjusting(true);
             int rows = getRowCount();
-            IntStream.of(selectedModelRowsIndexes)
+            IntStream.of(selectedModelRowsIndices)
                     .map(this::convertRowIndexToView)
                     .filter(i -> 0 <= i && i < rows)
                     .forEach(i -> sel.addSelectionInterval(i, i));
             sel.setValueIsAdjusting(false);
         }
 
-        public void changeSelectionIndexes(int[] selectedModelRowsIndexes, GuiSwingTableColumnSet.TableSelectionChangeIndexes change) {
+        public void changeSelectionIndices(int[] selectedModelRowsIndices, GuiSwingTableColumnSet.TableSelectionChangeIndices change) {
             ListSelectionModel sel = getSelectionModel();
             int rows = getRowCount();
 
-            Collection<Integer> is = change.indexes;
+            Collection<Integer> is = change.indices;
             sel.setValueIsAdjusting(true);
             sel.clearSelection();
             is.stream()
@@ -550,7 +550,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             sel.setValueIsAdjusting(false);
 
             Set<Integer> update = new HashSet<>(is);
-            IntStream.of(selectedModelRowsIndexes).forEach(update::remove);
+            IntStream.of(selectedModelRowsIndices).forEach(update::remove);
 
             getObjectTableModel().refreshRows(update.stream()
                     .mapToInt(Integer::intValue)
@@ -559,16 +559,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     .toArray());
         }
 
-        public void changeSelectionValues(int[] selectedModelRowsIndexes, GuiSwingTableColumnSet.TableSelectionChangeValues change) {
+        public void changeSelectionValues(int[] selectedModelRowsIndices, GuiSwingTableColumnSet.TableSelectionChangeValues change) {
             //TODO updating source by action?
-            changeSelectionIndexes(selectedModelRowsIndexes, new GuiSwingTableColumnSet.TableSelectionChangeIndexes(change.values.stream()
+            changeSelectionIndices(selectedModelRowsIndices, new GuiSwingTableColumnSet.TableSelectionChangeIndices(change.values.stream()
                     .map(source::indexOf)
                     .collect(Collectors.toList())));
         }
 
-        public void changeSelectionIndexesRowAndColumns(int[] selectedModelRowsIndexes, GuiSwingTableColumnSet.TableSelectionChangeIndexesRowAndColumn change) {
+        public void changeSelectionIndicesRowAndColumns(int[] selectedModelRowsIndices, GuiSwingTableColumnSet.TableSelectionChangeIndicesRowAndColumn change) {
             ListSelectionModel sel = getSelectionModel();
-            Collection<int[]> is = change.indexes;
+            Collection<int[]> is = change.indices;
             int rows = getRowCount();
             int cols = getColumnCount();
             sel.setValueIsAdjusting(true);
@@ -694,15 +694,15 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     /**
-     * a table source for obtaining indexes instead of row items.
+     * a table source for obtaining indices instead of row items.
      * This can be supplied for {@link autogui.swing.table.GuiSwingTableColumnSetDefault.TableSelectionListAction}.
      */
-    public static class TableSelectionSourceForIndexes implements GuiSwingTableColumnSet.TableSelectionSource {
+    public static class TableSelectionSourceForIndices implements GuiSwingTableColumnSet.TableSelectionSource {
         protected CollectionTable table;
         protected TableTargetCellForJTable cellTargets;
         protected boolean rowAndColumns;
 
-        public TableSelectionSourceForIndexes(CollectionTable table, boolean rowAndColumns) {
+        public TableSelectionSourceForIndices(CollectionTable table, boolean rowAndColumns) {
             this.table = table;
             cellTargets = new TableTargetCellForCollectionTable(table);
             this.rowAndColumns = rowAndColumns;
@@ -720,11 +720,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public List<?> getSelectedItems() {
-            table.getSelectedItems(); //saving selected indexes
+            table.getSelectedItems(); //saving selected indices
 
             if (rowAndColumns) {
                 //List<int[]>
-                return cellTargets.getSelectedRowAllCellIndexesStream()
+                return cellTargets.getSelectedRowAllCellIndicesStream()
                         .collect(Collectors.toList());
             } else {
                 //List<Integer>

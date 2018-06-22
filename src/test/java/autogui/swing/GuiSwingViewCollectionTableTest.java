@@ -349,11 +349,11 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
         run(() -> colTable.setRowSelectionInterval(1, 2));
 
         Assert.assertFalse("has selection",
-                runGet(() -> colTable.getSelectionSourceForRowIndexes().isSelectionEmpty()));
+                runGet(() -> colTable.getSelectionSourceForRowIndices().isSelectionEmpty()));
 
         Assert.assertEquals("selection",
                 Arrays.asList(1, 2),
-                runGet(() -> colTable.getSelectionSourceForRowIndexes().getSelectedItems()));
+                runGet(() -> colTable.getSelectionSourceForRowIndices().getSelectedItems()));
     }
 
 
@@ -371,9 +371,9 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
         run(() -> colTable.setRowSelectionInterval(1, 2));
 
         Assert.assertFalse("has selection",
-                runGet(() -> colTable.getSelectionSourceForRowAndColumnIndexes().isSelectionEmpty()));
+                runGet(() -> colTable.getSelectionSourceForRowAndColumnIndices().isSelectionEmpty()));
 
-        List<?> items = runGet(() -> colTable.getSelectionSourceForRowAndColumnIndexes().getSelectedItems());
+        List<?> items = runGet(() -> colTable.getSelectionSourceForRowAndColumnIndices().getSelectedItems());
         Assert.assertArrayEquals("1st row, idx col", new int[] {1, 0}, (int[]) items.get(0));
         Assert.assertArrayEquals("1st row, 2nd col", new int[] {1, 1}, (int[]) items.get(1));
         Assert.assertArrayEquals("1st row, 3rd col", new int[] {1, 2}, (int[]) items.get(2));

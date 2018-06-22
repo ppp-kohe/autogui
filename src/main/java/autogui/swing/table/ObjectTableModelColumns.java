@@ -552,7 +552,7 @@ public class ObjectTableModelColumns
             return getClass().getSimpleName() + "(size=" + size + ", isComposition()=" + isComposition() + ")";
         }
 
-        public int[] toIndexes() {
+        public int[] toIndices() {
             List<Integer> is = new ArrayList<>();
             ObjectTableColumnSize size = getParent();
             int indexInSize = getIndexInParent();

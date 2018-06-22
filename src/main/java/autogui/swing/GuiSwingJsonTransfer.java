@@ -332,7 +332,7 @@ public class GuiSwingJsonTransfer {
         }
 
         public Object toJsonWithName(Object value) {
-            if (context == null && value instanceof Number) { //for indexes
+            if (context == null && value instanceof Number) { //for indices
                 return new GuiReprValue.NamedValue(getName(), value);
             } else if (context != null) {
                 return context.getRepresentation().toJsonWithNamed(context, value);
@@ -675,7 +675,7 @@ public class GuiSwingJsonTransfer {
                     List<GuiReprCollectionTable.CellValue> updatedRow = getCellsForRow(0, json); //single row
                     fillLoop.addRow(updatedRow);
                 }
-                target.setCellValues(target.getSelectedCellIndexesStream(), fillLoop);
+                target.setCellValues(target.getSelectedCellIndicesStream(), fillLoop);
             }
         }
 

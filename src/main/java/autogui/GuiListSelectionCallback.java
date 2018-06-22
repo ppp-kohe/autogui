@@ -16,11 +16,11 @@ import java.lang.annotation.Target;
  *             ...
  *         }
  *         &#64;GuiListSelectionCallback(index=true) &#64;GuiIncluded
- *         public void selectRowIndexes(List&lt;Integer&gt; rows) {
+ *         public void selectRowIndices(List&lt;Integer&gt; rows) {
  *             ...
  *         }
  *         &#64;GuiListSelectionCallback(index=true) &#64;GuiIncluded
- *         public void selectRowAndColumnIndexes(List&lt;int[]&gt; rowAndColumn) {
+ *         public void selectRowAndColumnIndices(List&lt;int[]&gt; rowAndColumn) {
  *             ...
  *         }
  *
@@ -40,8 +40,8 @@ public @interface GuiListSelectionCallback {
     /**
      * determines the type of parameter list.
      * @return if true, the target method must take
-     *   a list of row-indexes (List&lt;Integer&gt;) or
-     *   a list of  a list of row-and-column-indexes (List&lt;int[]&gt;).
+     *   a list of row-indices (List&lt;Integer&gt;) or
+     *   a list of  a list of row-and-column-indices (List&lt;int[]&gt;).
      *   if false, the target method must take a list of table elements
      *     (List&lt;E&gt; and E will be used for matching the table property).
      */

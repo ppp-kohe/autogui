@@ -223,7 +223,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
         public NumberCopyAction() {
             super(null);
-            putValue(NAME, "Copy Indexes");
+            putValue(NAME, "Copy Indices");
             putValue(ACCELERATOR_KEY, null);
         }
 

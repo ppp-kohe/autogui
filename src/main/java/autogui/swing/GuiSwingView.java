@@ -999,7 +999,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            target.setCellValues(target.getSelectedCellIndexesStream(), i -> value);
+            target.setCellValues(target.getSelectedCellIndicesStream(), i -> value);
         }
     }
 

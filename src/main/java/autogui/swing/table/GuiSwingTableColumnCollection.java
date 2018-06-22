@@ -432,7 +432,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                         (GuiSwingTableColumn.ObjectTableColumnWithContext) c,
                         //context.getChildren().get(0),
                         toIndexInjection(indexInSize),
-                        toIndexes()));
+                        toIndices()));
             } else {
                 targetContainer.add(c);
             }
@@ -472,18 +472,18 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         protected ObjectTableColumn column;
         protected Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> indexInjection;
         /**
-         * suppose {(parentIndexes, ...,) elementIndex, propertyIndex}
+         * suppose {(parentIndices, ...,) elementIndex, propertyIndex}
          */
-        protected int[] indexes;
+        protected int[] indices;
 
         public ObjectTableColumnCollectionWrapper(GuiSwingTableColumn.ObjectTableColumnWithContext column,
                                                   Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> indexInjection,
-                                                  int[] indexes) {
+                                                  int[] indices) {
             this.column = column.asColumn();
             this.indexInjection = indexInjection;
-            this.indexes = indexes;
+            this.indices = indices;
             if (this.column != null) {
-                this.column.withHeaderValue(this.column.getTableColumn().getHeaderValue() + Arrays.toString(indexes));
+                this.column.withHeaderValue(this.column.getTableColumn().getHeaderValue() + Arrays.toString(indices));
             }
         }
 
@@ -563,7 +563,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         @Override
         public int[] columnIndexToValueIndex(int columnIndex) {
-            return indexes;
+            return indices;
         }
 
         @Override
@@ -663,7 +663,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             List<Object> result = new ArrayList<>();
             List<GuiSwingTableColumn.SpecifierManagerIndex> indexSpecifiers = factory.getIndexSpecifiers();
             Set<Map<GuiSwingTableColumn.SpecifierManagerIndex,Integer>> occurrences = new HashSet<>();
-            selection.getSelectedRowAllCellIndexesStream().forEach(cell -> {
+            selection.getSelectedRowAllCellIndicesStream().forEach(cell -> {
                 ObjectTableColumn column = model.getColumnAt(cell[1]);
                 if (column instanceof ObjectTableColumnCollectionWrapper) {
                     Map<GuiSwingTableColumn.SpecifierManagerIndex,Integer> specMap = ((ObjectTableColumnCollectionWrapper) column).getIndexInjection(indexSpecifiers);

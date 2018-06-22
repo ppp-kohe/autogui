@@ -231,29 +231,29 @@ public class GuiTypeBuilder {
         property.setOwner(objType);
 
         Type type = null;
-        Set<Integer> indexes = new HashSet<>();
+        Set<Integer> indices = new HashSet<>();
         if (fld != null) {
             property.setField(fld);
             type = fld.getGenericType();
             getMemberOrdinalIndex(fld)
-                    .ifPresent(indexes::add);
+                    .ifPresent(indices::add);
         }
         if (setter != null) {
             property.setSetter(setter);
             type = setter.getGenericParameterTypes()[0];
             getMemberOrdinalIndex(setter)
-                    .ifPresent(indexes::add);
+                    .ifPresent(indices::add);
         }
         if (getter != null) {
             property.setGetter(getter);
             type = getter.getGenericReturnType();
             getMemberOrdinalIndex(getter)
-                    .ifPresent(indexes::add);
+                    .ifPresent(indices::add);
         }
 
         property.setType(get(type));
         property.setOrdinal(new GuiTypeMemberProperty.MemberOrdinal(
-                indexes.stream()
+                indices.stream()
                         .mapToInt(Integer::intValue)
                         .min().orElse(Short.MAX_VALUE), name));
 

@@ -361,11 +361,11 @@ public class GuiReprCollectionTable extends GuiReprValue {
         List<CellValue> getSelectedCells();
 
         /**
-         * @return a stream of {row, column}. those indexes are from the view model,
+         * @return a stream of {row, column}. those indices are from the view model,
          *    which might be different from the context's ones.
          *    The view-model has additional columns other than the context, e.g. the row-index column.
          */
-        Stream<int[]> getSelectedCellIndexesStream();
+        Stream<int[]> getSelectedCellIndicesStream();
 
         default List<Object> getSelectedCellValues() {
             return getSelectedCells().stream()
@@ -388,7 +388,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
      *   it also supports obtaining all-cells in a row.
      */
     public interface TableTargetCell extends TableTarget {
-        Stream<int[]> getSelectedRowAllCellIndexesStream();
+        Stream<int[]> getSelectedRowAllCellIndicesStream();
 
         List<CellValue> getSelectedRowAllCells();
     }
@@ -401,7 +401,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
         Object getSelectedCellValue();
 
         default void setSelectedCellValuesLoop(List<?> rowValues) {
-            setCellValues(getSelectedCellIndexesStream(),
+            setCellValues(getSelectedCellIndicesStream(),
                     new TableTargetColumnFillLoop(rowValues));
         }
     }

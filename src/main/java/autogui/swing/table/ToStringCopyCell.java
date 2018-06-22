@@ -287,7 +287,7 @@ public class ToStringCopyCell {
                     ++rowIndex;
                 }
             }
-            target.setCellValues(target.getSelectedRowAllCellIndexesStream(), fillLoop);
+            target.setCellValues(target.getSelectedRowAllCellIndicesStream(), fillLoop);
         }
 
         public List<GuiReprCollectionTable.CellValue> runLine(String line, int targetRow) {
