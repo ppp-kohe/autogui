@@ -1,8 +1,10 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValue;
 import autogui.swing.GuiSwingElement;
+import autogui.swing.GuiSwingPreferences;
 import autogui.swing.GuiSwingView;
 
 import java.util.function.Supplier;
@@ -48,7 +50,8 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
     }
 
     /** interface for {@link ObjectTableColumn} */
-    interface ObjectTableColumnWithContext {
+    interface ObjectTableColumnWithContext
+            extends GuiSwingPreferences.PreferencesUpdateSupport, GuiSwingView.SettingsWindowClient{
         GuiMappingContext getContext();
 
         GuiSwingView.SpecifierManager getSpecifierManager();
@@ -59,5 +62,9 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
         default ObjectTableColumn asColumn() {
             return (ObjectTableColumn) this;
         }
+
+        void loadSwingPreferences(GuiPreferences prefs);
+
+        void saveSwingPreferences(GuiPreferences prefs);
     }
 }

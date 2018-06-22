@@ -1,11 +1,8 @@
 package autogui.swing.table;
 
-import autogui.base.mapping.GuiPreferences;
-import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.swing.GuiSwingJsonTransfer;
-import autogui.swing.GuiSwingPreferences;
-import autogui.swing.GuiSwingView;
-import autogui.swing.util.*;
+import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupExtension;
+import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -13,8 +10,6 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -22,7 +17,6 @@ import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * a table-column with additional info.
@@ -59,14 +53,6 @@ public class ObjectTableColumn {
     }
 
     public void shutdown() { }
-
-    public void setSettingsWindow(SettingsWindow settingWindow) { }
-
-    public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) { }
-
-    public void loadSwingPreferences(GuiPreferences prefs) { }
-
-    public void saveSwingPreferences(GuiPreferences prefs) { }
 
     public Class<?> getValueType() {
         return valueType;
@@ -208,7 +194,10 @@ public class ObjectTableColumn {
      * a menu-builder holder
      */
     public interface PopupMenuBuilderSource {
-        default GuiSwingView.ValuePane<Object> getMenuTargetPane() {
+        /**
+         * @return a setter for the pane or null
+         */
+        default Consumer<Object> getMenuTargetPane() {
             return null;
         }
 
@@ -257,35 +246,19 @@ public class ObjectTableColumn {
      */
     public static class ObjectTableColumnRowIndex extends ObjectTableColumn {
         public ObjectTableColumnRowIndex() {
-            tableColumn = new TableColumn(0, UIManagerUtil.getInstance().getScaledSizeInt(64), new NumberRenderer(this), null);
+            tableColumn = new TableColumn(0, UIManagerUtil.getInstance().getScaledSizeInt(64),
+                    createRenderer(), null);
             tableColumn.setHeaderValue("#");
             setValueType(Number.class);
-            withComparator(new GuiSwingTableColumnNumber.NumberComparator());
+        }
+
+        protected TableCellRenderer createRenderer() {
+            return new NumberRenderer();
         }
 
         @Override
         public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
             return rowIndex;
-        }
-
-        @Override
-        public List<TableMenuComposite> getCompositesForRows() {
-            int index = getTableColumn().getModelIndex();
-            return Arrays.asList(
-                    new ToStringCopyCell.TableMenuCompositeToStringCopy(index),
-                    new ToStringCopyCell.TableMenuCompositeToStringPaste(index),
-                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index),
-                    new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(index));
-        }
-
-        @Override
-        public List<TableMenuComposite> getCompositesForCells() {
-            int index = getTableColumn().getModelIndex();
-            return Arrays.asList(
-                    new ToStringCopyCell.TableMenuCompositeToStringCopy(index),
-                    new ToStringCopyCell.TableMenuCompositeToStringPaste(index),
-                    new GuiSwingJsonTransfer.TableMenuCompositeJsonCopy(index),
-                    new GuiSwingJsonTransfer.TableMenuCompositeJsonPaste(index));
         }
 
         @Override
@@ -311,12 +284,9 @@ public class ObjectTableColumn {
     /**
      * a renderer for index numbers
      */
-    public static class NumberRenderer extends DefaultTableCellRenderer
-            implements PopupMenuBuilderSource {
-        protected ObjectTableColumn column;
+    public static class NumberRenderer extends DefaultTableCellRenderer {
 
-        public NumberRenderer(ObjectTableColumn column) {
-            this.column = column;
+        public NumberRenderer() {
             setHorizontalAlignment(JLabel.RIGHT);
         }
 
@@ -328,42 +298,6 @@ public class ObjectTableColumn {
                     row, column);
             setCellBorder(table, this, row, column);
             return this;
-        }
-
-        @Override
-        public PopupExtension.PopupMenuBuilder getMenuBuilder(JTable table) {
-            return new ObjectTableColumnValue.ObjectTableColumnActionBuilder(table, column,
-                    new PopupCategorized(() -> Collections.singletonList(new NumberCopyAction()), null,
-                            new ObjectTableModel.MenuBuilderWithEmptySeparator()));
-        }
-    }
-
-    /**
-     * an action for copying an index number to the clip-board
-     */
-    public static class NumberCopyAction extends PopupExtensionText.TextCopyAllAction
-            implements TableTargetColumnAction {
-
-        public NumberCopyAction() {
-            super(null);
-            putValue(NAME, "Copy Indexes");
-            putValue(ACCELERATOR_KEY, null);
-        }
-
-        @Override
-        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
-            actionPerformedOnTable(e, target.getSelectedCells().stream()
-                .map(GuiReprCollectionTable.CellValue::getValue)
-                .collect(Collectors.toList()));
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Object src = e.getSource();
-            if (src instanceof JLabel) {
-                String text = ((JLabel) src).getText();
-                copy(text);
-            }
         }
     }
 

@@ -19,7 +19,7 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
     interface TableColumnHost {
         void addColumnRowIndex();
         void addColumnStatic(ObjectTableColumn column);
-        void addColumnDynamic(GuiSwingTableColumnDynamic.DynamicColumnFactory columnFactory);
+        void addColumnDynamic(ObjectTableModelColumns.DynamicColumnFactory columnFactory);
         void addMenuRowComposite(ObjectTableColumn.TableMenuComposite rowComposite);
 
         ObjectTableColumn getColumnAt(int modelIndex);
@@ -120,7 +120,7 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
     interface DynamicColumnHost {
         void addColumn(GuiMappingContext context, GuiSwingTableColumn column,
                               GuiSwingView.SpecifierManager parentSpecifier);
-        void addColumnDynamic(GuiSwingTableColumnDynamic.DynamicColumnFactory d);
+        void addColumnDynamic(ObjectTableModelColumns.DynamicColumnFactory d);
         void addActionContext(GuiMappingContext context);
     }
 }

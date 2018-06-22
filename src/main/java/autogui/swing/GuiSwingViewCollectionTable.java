@@ -165,7 +165,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initModel() {
-            ObjectTableModel model = new ObjectTableModelCollection(context, this::getSpecifier, this::getSource);
+            ObjectTableModel model = new GuiSwingTableModelCollection(context, this::getSpecifier, this::getSource);
             model.setTable(this);
             setModel(model);
             setColumnModel(model.getColumnModel());
@@ -343,7 +343,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void setSettingsWindow(SettingsWindow settingsWindow) {
             this.settingsWindow = settingsWindow;
-            getObjectTableModel().getColumns().setSettingsWindow(settingsWindow);
+            getObjectTableModel().getColumnsWithContext().setSettingsWindow(settingsWindow);
         }
 
         @Override
@@ -360,8 +360,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             return popup.getMenuBuilder();
         }
 
-        public ObjectTableModelCollection getObjectTableModel() {
-            return (ObjectTableModelCollection) getModel();
+        public GuiSwingTableModelCollection getObjectTableModel() {
+            return (GuiSwingTableModelCollection) getModel();
         }
 
         public List<?> getSource() {
@@ -424,7 +424,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
             this.preferencesUpdater.setUpdater(updater);
-            getObjectTableModel().getColumns().setPreferencesUpdater(updater);
+            getObjectTableModel().getColumnsWithContext().setPreferencesUpdater(updater);
         }
 
         @Override
@@ -588,7 +588,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 GuiSwingView.loadPreferencesDefault(this, prefs);
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 preferencesUpdater.apply(targetPrefs);
-                getObjectTableModel().getColumns().loadSwingPreferences(targetPrefs);
+                getObjectTableModel().getColumnsWithContext().loadSwingPreferences(targetPrefs);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
             }
@@ -601,7 +601,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 PreferencesForTable p = preferencesUpdater.getPrefs();
                 p.saveTo(targetPrefs);
-                getObjectTableModel().getColumns().saveSwingPreferences(targetPrefs);
+                getObjectTableModel().getColumnsWithContext().saveSwingPreferences(targetPrefs);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
             }
@@ -686,76 +686,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public int convertColumnIndexToView(int modelColumnIndex) {
             return getObjectTableModel().getColumns().convertColumnModelToView(modelColumnIndex);
-        }
-    }
-
-    public static class ObjectTableModelCollection extends ObjectTableModel {
-        protected GuiMappingContext context;
-        protected GuiMappingContext elementContext;
-        protected Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier;
-        protected GuiSwingTableColumn.SpecifierManagerIndex rowSpecifierManager;
-
-        public ObjectTableModelCollection(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier,
-                                          Supplier<Object> source) {
-            this.context = context;
-            this.tableSpecifier = tableSpecifier;
-            this.rowSpecifierManager = new GuiSwingTableColumn.SpecifierManagerIndex(tableSpecifier);
-            setElementContextFromContext();
-            setSource(source);
-        }
-
-        protected void setElementContextFromContext() {
-            elementContext = context.getReprCollectionTable().getElementContext(context);
-        }
-
-        @Override
-        public Object getRowAtIndex(int row) {
-            Object collection = getCollectionFromSource();
-            try {
-                GuiReprValue.ObjectSpecifier specifier = rowSpecifierManager.getSpecifierWithSettingIndex(row);
-                return elementContext.getReprValue()
-                        .getValueWithoutNoUpdate(elementContext, GuiMappingContext.GuiSourceValue.of(collection), specifier);
-            } catch (Throwable ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-
-        @Override
-        public int getRowCountUpdated() {
-            Object collection = getCollectionFromSource();
-            try {
-                return elementContext.getReprValue()
-                            .getValueCollectionSize(elementContext, GuiMappingContext.GuiSourceValue.of(collection), tableSpecifier.get());
-            } catch (Throwable ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-
-        @Override
-        public Object getCollectionFromSource() {
-            Object collection = super.getCollectionFromSource();
-            if (collection == null) {
-                try {
-                    collection = context.getReprValue()
-                            .getUpdatedValueWithoutNoUpdate(context, tableSpecifier.get());
-                } catch (Throwable ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-            return collection;
-        }
-
-        public GuiSwingTableColumn.SpecifierManagerIndex getRowSpecifierManager() {
-            return rowSpecifierManager;
-        }
-
-        @Override
-        public void columnAdded(ObjectTableColumn column) {
-            super.columnAdded(column);
-            JTable table = getTable();
-            if (table instanceof CollectionTable) {
-                ((CollectionTable) table).getPopup().setupCompositeKeyMapByAddingColumn(column);
-            }
         }
     }
 

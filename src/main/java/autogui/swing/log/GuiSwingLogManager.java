@@ -32,6 +32,10 @@ public class GuiSwingLogManager extends GuiLogManager {
         replaceExceptionHandler = flag;
     }
 
+    public static void setRedirectToConsole(boolean flag) {
+        redirectToConsole = flag;
+    }
+
     /**
      * @param view might accept same entries
      * @return key object for removing, currently view itself

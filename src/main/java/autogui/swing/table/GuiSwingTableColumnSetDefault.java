@@ -45,7 +45,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                     model.addColumnStatic(columnStatic);
                 }
             } else if (subView instanceof GuiSwingTableColumnDynamic) {
-                GuiSwingTableColumnDynamic.DynamicColumnFactory columnFactory = ((GuiSwingTableColumnDynamic) subView).createColumnDynamic(
+                ObjectTableModelColumns.DynamicColumnFactory columnFactory = ((GuiSwingTableColumnDynamic) subView).createColumnDynamic(
                         subContext, model, rowSpecifier, subManager, true);
                 if (columnFactory != null) {
                     model.addColumnDynamic(columnFactory);

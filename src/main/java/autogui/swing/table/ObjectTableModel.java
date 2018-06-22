@@ -36,6 +36,10 @@ public class ObjectTableModel extends AbstractTableModel
     public static Object NULL_CELL = new Object();
 
     public ObjectTableModel() {
+        initColumns();
+    }
+
+    public void initColumns() {
         columns = new ObjectTableModelColumns(this);
     }
 

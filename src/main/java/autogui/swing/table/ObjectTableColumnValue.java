@@ -25,7 +25,8 @@ import java.util.stream.Collectors;
  * a table-column with {@link GuiMappingContext}.
  *
  */
-public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwingTableColumn.ObjectTableColumnWithContext {
+public class ObjectTableColumnValue extends ObjectTableColumn
+        implements GuiSwingTableColumn.ObjectTableColumnWithContext {
     protected GuiMappingContext context;
     protected GuiSwingTableColumn.SpecifierManagerIndex specifierIndex;
     protected GuiSwingView.SpecifierManager specifierManager;
@@ -87,6 +88,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
     public void setSettingsWindow(SettingsWindow settingWindow) {
         setForComponents(GuiSwingView.SettingsWindowClient.class,
                 p -> p.setSettingsWindow(settingWindow), renderer, editor);
+    }
+
+    /**
+     * @return null
+     */
+    @Override
+    public SettingsWindow getSettingsWindow() {
+        return null;
     }
 
     @Override
@@ -287,9 +296,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
             }
 
             setTableColor(table, component, isSelected);
-            GuiSwingView.ValuePane<Object> valuePane = getMenuTargetPane();
+            Consumer<Object> valuePane = getMenuTargetPane();
             if (valuePane != null) {
-                valuePane.setSwingViewValue(value);
+                valuePane.accept(value);
             }
             ObjectTableColumn.setCellBorder(table, component, row, column);
 
@@ -298,9 +307,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
 
         @SuppressWarnings("unchecked")
         @Override
-        public GuiSwingView.ValuePane<Object> getMenuTargetPane() {
+        public Consumer<Object> getMenuTargetPane() {
             if (component instanceof GuiSwingView.ValuePane) {
-                return (GuiSwingView.ValuePane<Object>) component;
+                return ((GuiSwingView.ValuePane) component)::setSwingViewValue;
             } else {
                 return null;
             }
@@ -765,7 +774,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
         @Override
         public void actionPerformed(ActionEvent e) {
             ObjectTableColumn.PopupMenuBuilderSource source = (column == null ? null : column.getMenuBuilderSource());
-            GuiSwingView.ValuePane<Object> valuePane = (source == null ? null : source.getMenuTargetPane());
+            Consumer<Object> valuePane = (source == null ? null : source.getMenuTargetPane());
 
             for (int row : table.getSelectedRows()) {
                 Object prev = null;
@@ -773,11 +782,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn implements GuiSwin
                     int modelRow = table.convertRowIndexToModel(row);
                     prev = table.getModel().getValueAt(modelRow, column.getTableColumn().getModelIndex());
                     //TODO future value?
-                    valuePane.setSwingViewValue(prev);
+                    valuePane.accept(prev);
                 }
                 action.actionPerformed(e);
                 if (valuePane != null) {
-                    Object next = valuePane.getSwingViewValue();
+                    //Object next = valuePane.getSwingViewValue();
                     //TODO compare?
 
                 }
