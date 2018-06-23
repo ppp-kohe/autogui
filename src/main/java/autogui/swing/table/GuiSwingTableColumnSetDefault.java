@@ -25,19 +25,20 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     @Override
     public void createColumns(GuiMappingContext context, TableColumnHost parentModel,
                               GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
-                              GuiSwingView.SpecifierManager specifierManager) {
+                              GuiSwingView.SpecifierManager parentSpecifier,
+                              GuiSwingView.SpecifierManager specifierManager) { //optional
 
         DynamicColumnHost model;
-        if (context.isReprCollectionElement() && context.isParentCollectionTable()) {
+        if (context.isReprCollectionElement() && context.isParentCollectionTable()) { //specifierManager != null
             parentModel.addColumnRowIndex();
-            model = new GuiSwingTableColumnCollection.DynamicColumnFactoryCollectionRoot(context.getParent(), specifierManager, parentModel, rowSpecifier);
+            model = new GuiSwingTableColumnCollection.DynamicColumnFactoryCollectionRoot(context.getParent(), parentSpecifier, parentModel, rowSpecifier);
         } else {
             model = new GuiSwingTableColumnCollection.DynamicColumnFactoryComposite(context, specifierManager, parentModel);
         }
 
         GuiSwingView.SpecifierManager subManager = context.isReprCollectionElement() ?
                 specifierManager : //specifier for collection-element is an index, which will be specifierManager (usually rowSpecifier) created in the parent table
-                new GuiSwingView.SpecifierManagerDefault(specifierManager::getSpecifier);  //specifier for object-pane is a sub-spec of a parent
+                new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);  //specifier for object-pane is a sub-spec of a parent
 
         for (GuiMappingContext subContext : context.getChildren()) {
             //context: GuiReprCollectionElement(...) { subContext: GuiReprObjectPane { ... }  }
@@ -55,7 +56,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
             } else if (subView instanceof GuiSwingTableColumnSet) {
                 GuiSwingTableColumnSet set = (GuiSwingTableColumnSet) subView;
 
-                set.createColumns(subContext, model, rowSpecifier, subManager);
+                set.createColumns(subContext, model, rowSpecifier, subManager, null);
             }
         }
 

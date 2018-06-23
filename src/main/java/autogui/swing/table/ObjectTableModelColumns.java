@@ -524,7 +524,7 @@ public class ObjectTableModelColumns
                 is = new LinkedHashMap<>();
             }
             GuiSwingTableColumn.SpecifierManagerIndex i = getElementSpecifierIndex();
-            if (i != null && index != -1) {
+            if (i != null && index != -1) { //-1 for rowSpecifier, thus the map does not include rowSpecifier
                 is.put(i, index);
             }
             return is;

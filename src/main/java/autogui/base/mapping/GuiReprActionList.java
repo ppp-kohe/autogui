@@ -37,6 +37,16 @@ public class GuiReprActionList implements GuiRepresentation {
         Object result = null;
         try {
             Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), GuiReprValue.NONE_WITH_CACHE);
+            result = executeActionForList(context, target, selection, targetName);
+        } catch (Throwable ex) {
+            context.errorWhileUpdateSource(ex);
+        }
+        return result;
+    }
+
+    public Object executeActionForList(GuiMappingContext context, Object target, List<?> selection, String targetName) {
+        Object result = null;
+        try {
             if (context.getTypeElementAsActionList().isTakingTargetName()) {
                 result = context.execute(() -> context.getTypeElementAsActionList().execute(target, selection, targetName));
             } else {
@@ -48,6 +58,8 @@ public class GuiReprActionList implements GuiRepresentation {
         }
         return result;
     }
+
+
 
     @Override
     public Object toJson(GuiMappingContext context, Object source) {

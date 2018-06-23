@@ -14,6 +14,7 @@ import java.util.List;
 public interface GuiSwingTableColumnSet extends GuiSwingElement {
     void createColumns(GuiMappingContext context, TableColumnHost model,
                        GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
+                       GuiSwingView.SpecifierManager parentSpecifier,
                        GuiSwingView.SpecifierManager specifierManager);
 
     interface TableColumnHost {

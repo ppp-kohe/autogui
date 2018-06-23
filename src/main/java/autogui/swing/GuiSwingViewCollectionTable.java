@@ -54,7 +54,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        CollectionTable table = new CollectionTable(context, new SpecifierManagerDefault(parentSpecifier));
+        SpecifierManager tableSpecifier = new SpecifierManagerDefault(parentSpecifier);
+        CollectionTable table = new CollectionTable(context, tableSpecifier);
         GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier = table.getRowSpecifier();
         List<Action> actions = new ArrayList<>();
 
@@ -63,7 +64,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (subView instanceof GuiSwingTableColumnSet) {
                 GuiSwingTableColumnSet columnSet = (GuiSwingTableColumnSet) subView;
 
-                columnSet.createColumns(elementContext, table.getObjectTableModel().getColumns(), rowSpecifier, rowSpecifier);
+                columnSet.createColumns(elementContext, table.getObjectTableModel().getColumns(), rowSpecifier, tableSpecifier, rowSpecifier);
 
                 actions.addAll(columnSet.createColumnActions(elementContext, table));
             }
@@ -89,7 +90,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                         createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
                                 table.getSelectionSourceForRowAndColumnIndices());
                     } else if (listAction.isSelectionAction(siblingContext, context)) {
-                        createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table);
+                        if (table.getObjectTableModel().getColumns().hasDynamicColumns()) {
+
+                        } else {
+                            createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table);
+                        }
                     }
 
                     if (createdAction != null) {

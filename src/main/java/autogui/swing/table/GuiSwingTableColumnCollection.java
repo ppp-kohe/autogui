@@ -1,6 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.*;
+import autogui.base.type.GuiTypeCollection;
 import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingMapperSet;
 import autogui.swing.GuiSwingPreferences;
@@ -172,9 +173,6 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 if (p != null) {
                     indexSet.addAll(p.getIndexSpecifiers());
                 }
-                if (index != null) {
-                    indexSet.add(index);
-                }
                 addIndexToList(indexSet);
                 ((ArrayList<GuiSwingTableColumn.SpecifierManagerIndex>) indexSet).trimToSize();
             }
@@ -221,21 +219,48 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         public Action toActionForList(GuiMappingContext actionContext, ObjectTableModelColumns.DynamicColumnFactory sender,
                                       List<ObjectTableModelColumns.DynamicColumnFactory> children,
                                       GuiReprCollectionTable.TableTargetCell selection) {
-            GuiReprActionList listAction = actionContext.getReprActionList();
             for (ObjectTableModelColumns.DynamicColumnFactory childFactory : children) {
-                if (childFactory instanceof DynamicColumnFactoryList) {
-                    GuiMappingContext listContext = ((DynamicColumnFactoryList) childFactory).getContext();
-                    if (listAction.isSelectionRowIndicesAction(actionContext)) {
-                        //TODO
-                    } else if (listAction.isSelectionRowAndColumnIndicesAction(actionContext)) {
-
-                    } else if (listAction.isSelectionAction(actionContext, listContext)) {
-                        return new GuiSwingTableColumnSetDefault.TableSelectionListAction(actionContext,
-                                new TableSelectionSourceDynamic(getModel(), selection, childFactory, getTargetName(listContext)));
-                    }
+                Action a = findListForActionList(sender, childFactory, actionContext, selection); //sender is the target of the action
+                if (a != null) {
+                    return a;
                 }
             }
             return null;
+        }
+
+        public Action findListForActionList(ObjectTableModelColumns.DynamicColumnFactory targetFactory,
+                                            ObjectTableModelColumns.DynamicColumnFactory childFactory,
+                                            GuiMappingContext actionContext,
+                                            GuiReprCollectionTable.TableTargetCell selection) {
+            GuiReprActionList listAction = actionContext.getReprActionList();
+            if (childFactory instanceof DynamicColumnFactoryList) {
+                DynamicColumnFactoryList list = (DynamicColumnFactoryList) childFactory;
+                GuiMappingContext listContext = list.getContext();
+                if (listAction.isSelectionRowIndicesAction(actionContext)) {
+                    //TODO
+                    return null;
+                } else if (listAction.isSelectionRowAndColumnIndicesAction(actionContext)) {
+                    return null; //TODO
+                } else if (listAction.isSelectionAction(actionContext, listContext)) {
+                    return new TableSelectionListDynamicAction(actionContext,
+                            new TableSelectionSourceDynamicForList(getModel(), selection, targetFactory, list.getElementFactory(), getTargetName(listContext)));
+                } else {
+                    return null;
+                }
+            } else if (childFactory instanceof DynamicColumnFactoryComposite) {
+                DynamicColumnFactoryComposite composite = (DynamicColumnFactoryComposite) childFactory;
+                if (composite.getContext().getRepresentation() instanceof GuiReprPropertyPane) {
+                    for (ObjectTableModelColumns.DynamicColumnFactory prop : composite.getFactories()) {
+                        Action a = findListForActionList(targetFactory, prop, actionContext, selection);
+                        if (a != null) {
+                            return a;
+                        }
+                    }
+                }
+                return null;
+            } else {
+                return null;
+            }
         }
 
 
@@ -445,6 +470,10 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                                              GuiSwingView.SpecifierManager specifierManager,
                                              GuiSwingTableColumnSet.TableColumnHost model) {
             super(context, specifierManager, model, null);
+        }
+
+        public List<ObjectTableModelColumns.DynamicColumnFactory> getFactories() {
+            return factories;
         }
 
         @Override
@@ -733,6 +762,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             column.viewUpdateAsDynamic(source);
         }
 
+        public boolean containsIndexInjections(List<GuiSwingTableColumn.SpecifierManagerIndex> requiredSpecs) {
+            return indexInjection.keySet().containsAll(
+                    requiredSpecs.subList(Math.min(1, requiredSpecs.size()), requiredSpecs.size()));
+        }
+
         public Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> getIndexInjection(
                 int rowIndex,
                 List<GuiSwingTableColumn.SpecifierManagerIndex> requiredSpecs) {
@@ -754,16 +788,16 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
     public static class TableSelectionSourceDynamic implements GuiSwingTableColumnSet.TableSelectionSource {
         protected GuiSwingTableColumnSet.TableColumnHost model;
         protected GuiReprCollectionTable.TableTargetCell selection;
-        protected ObjectTableModelColumns.DynamicColumnFactory factory;
+        protected ObjectTableModelColumns.DynamicColumnFactory argumentFactory;
         protected String targetName;
 
         public TableSelectionSourceDynamic(GuiSwingTableColumnSet.TableColumnHost model,
                                            GuiReprCollectionTable.TableTargetCell selection,
-                                           ObjectTableModelColumns.DynamicColumnFactory factory,
+                                           ObjectTableModelColumns.DynamicColumnFactory argumentFactory,
                                            String targetName) {
             this.model = model;
             this.selection = selection;
-            this.factory = factory;
+            this.argumentFactory = argumentFactory;
             this.targetName = targetName;
         }
 
@@ -780,21 +814,29 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         @Override
         public List<?> getSelectedItems() {
             List<Object> result = new ArrayList<>();
-            List<GuiSwingTableColumn.SpecifierManagerIndex> indexSpecifiers = factory.getIndexSpecifiers();
+            select(specMap -> result.add(argumentFactory.getValue(specMap)));
+            return result;
+        }
+
+        public void select(Consumer<Map<GuiSwingTableColumn.SpecifierManagerIndex,Integer>> resultGen) {
+            List<GuiSwingTableColumn.SpecifierManagerIndex> indexSpecifiers = argumentFactory.getIndexSpecifiers();
             Set<Map<GuiSwingTableColumn.SpecifierManagerIndex,Integer>> occurrences = new HashSet<>();
             selection.getSelectedRowAllCellIndicesStream().forEach(cell -> {
                 ObjectTableColumn column = model.getColumnAt(cell[1]);
                 if (column instanceof ObjectTableColumnCollectionWrapper) {
-                    Map<GuiSwingTableColumn.SpecifierManagerIndex,Integer> specMap = ((ObjectTableColumnCollectionWrapper) column)
-                            .getIndexInjection(cell[0], indexSpecifiers);
-                    if (occurrences.add(specMap)) {
-                        result.add(factory.getValue(specMap));
+                    ObjectTableColumnCollectionWrapper colWrapper = (ObjectTableColumnCollectionWrapper) column;
+                    if (colWrapper.containsIndexInjections(indexSpecifiers)) {
+                        Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> specMap = ((ObjectTableColumnCollectionWrapper) column)
+                                .getIndexInjection(cell[0], indexSpecifiers);
+                        if (occurrences.add(specMap)) {
+                            resultGen.accept(specMap);
+                        }
                     }
                 } else {
                     //TODO regular row?
+
                 }
             });
-            return result;
         }
 
         @Override
@@ -803,4 +845,74 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
     }
 
+    public static class TableSelectionSourceDynamicForList extends TableSelectionSourceDynamic {
+        protected ObjectTableModelColumns.DynamicColumnFactory targetFactory;
+
+        public TableSelectionSourceDynamicForList(GuiSwingTableColumnSet.TableColumnHost model,
+                                                  GuiReprCollectionTable.TableTargetCell selection,
+                                                  ObjectTableModelColumns.DynamicColumnFactory targetFactory,
+                                                  ObjectTableModelColumns.DynamicColumnFactory argumentFactory,
+                                                  String targetName) {
+            super(model, selection, argumentFactory, targetName);
+            this.targetFactory = targetFactory;
+        }
+
+        @Override
+        public List<TargetAndArgumentList> getSelectedItems() {
+            Map<Object, List<Object>> targetToArgumentMap = new LinkedHashMap<>();
+            select(specMap -> //targetIndexSpecifiers is a sub-set of argumentIndexSpecifiers
+                    targetToArgumentMap.computeIfAbsent(targetFactory.getValue(specMap), k -> new ArrayList<>())
+                            .add(argumentFactory.getValue(specMap)));
+
+            List<TargetAndArgumentList> result = new ArrayList<>(targetToArgumentMap.size());
+            targetToArgumentMap.forEach((k,v) ->
+                    result.add(new TargetAndArgumentList(k, v)));
+            return result;
+        }
+    }
+
+    public static class TargetAndArgumentList {
+        public Object target;
+        public List<Object> argument;
+
+        public TargetAndArgumentList(Object target, List<Object> argument) {
+            this.target = target;
+            this.argument = argument;
+        }
+
+        @Override
+        public String toString() {
+            return "(" + target + "," + argument + ")";
+        }
+    }
+
+    public static class TableSelectionListDynamicAction extends GuiSwingTableColumnSetDefault.TableSelectionListAction  {
+        public TableSelectionListDynamicAction(GuiMappingContext context, TableSelectionSourceDynamicForList source) {
+            super(context, source);
+        }
+
+        @Override
+        protected Object actionPerformedBody() {
+            List<?> src = source.getSelectedItems();
+            List<Object> values = new ArrayList<>(src.size());
+            boolean expand = false;
+            if (context.isTypeElementActionList() && context.getTypeElementAsActionList().getReturnType() instanceof GuiTypeCollection) {
+                expand = true;
+            }
+            GuiReprActionList action = context.getReprActionList();
+            String targetName = source.getTargetName();
+            for (Object v : source.getSelectedItems()) {
+                if (v instanceof TargetAndArgumentList) {
+                    TargetAndArgumentList ta = (TargetAndArgumentList) v;
+                    Object ret = action.executeActionForList(context, ta.target, ta.argument, targetName);
+                    if (expand) {
+                        values.addAll((Collection<?>) ret);
+                    } else {
+                        values.add(ret);
+                    }
+                }
+            }
+            return values;
+        }
+    }
 }
