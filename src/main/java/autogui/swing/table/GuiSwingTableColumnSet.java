@@ -115,14 +115,10 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
 
     void createColumnsForDynamicCollection(GuiMappingContext context,
                                            DynamicColumnHost collection,
-                                           TableColumnHost model,
                                            GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
                                            GuiSwingView.SpecifierManager parentSpecifier);
 
-    interface DynamicColumnHost {
-        void addColumn(GuiMappingContext context, GuiSwingTableColumn column,
-                              GuiSwingView.SpecifierManager parentSpecifier);
-        void addColumnDynamic(ObjectTableModelColumns.DynamicColumnFactory d);
+    interface DynamicColumnHost extends TableColumnHost {
         void addActionContext(GuiMappingContext context);
     }
 }

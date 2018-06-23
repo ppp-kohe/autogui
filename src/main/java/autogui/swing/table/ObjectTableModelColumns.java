@@ -397,10 +397,14 @@ public class ObjectTableModelColumns
     public interface DynamicColumnFactory {
         ObjectTableColumnSize getColumnSize(Object c);
 
+        Object getValueAsMember(Object parent);
+
         default void setParentFactory(DynamicColumnFactory factory) { }
 
         List<GuiSwingTableColumn.SpecifierManagerIndex> getIndexSpecifiers();
+
         Object getValue(Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> indexInjection);
+
         List<Action> getActions(GuiReprCollectionTable.TableTargetCell selection);
     }
 
@@ -549,7 +553,7 @@ public class ObjectTableModelColumns
 
         @Override
         public String toString() {
-            return getClass().getSimpleName() + "(size=" + size + ", isComposition()=" + isComposition() + ")";
+            return getClass().getSimpleName() + "(size=" + size + ")";
         }
 
         public int[] toIndices() {
@@ -566,7 +570,6 @@ public class ObjectTableModelColumns
                     .mapToInt(Integer::intValue)
                     .toArray();
         }
-
     }
 
     public static class ObjectTableColumnSizeComposite extends ObjectTableColumnSize {
@@ -618,6 +621,9 @@ public class ObjectTableModelColumns
                 for (int i = children.size(), l = newChildren.size(); i < l; ++i) {
                     add(newChildren.get(i));
                 }
+                if (newSize.getElementSpecifierIndex() != null) {
+                    setElementSpecifierIndex(newSize.getElementSpecifierIndex());
+                }
             } else {
                 error("set", newSize);
             }
@@ -666,6 +672,18 @@ public class ObjectTableModelColumns
                 injectionMapPrototype = map;
             }
             return injectionMapPrototype;
+        }
+
+        @Override
+        public void setElementSpecifierIndex(GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex) {
+            super.setElementSpecifierIndex(elementSpecifierIndex);
+            injectionMapPrototype = null;
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "(size=" + size + ") { " +
+                    children.stream().map(Object::toString).collect(Collectors.joining(",")) + " }";
         }
     }
 }
