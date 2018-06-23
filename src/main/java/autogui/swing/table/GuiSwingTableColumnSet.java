@@ -22,6 +22,8 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
         void addColumnDynamic(ObjectTableModelColumns.DynamicColumnFactory columnFactory);
         void addMenuRowComposite(ObjectTableColumn.TableMenuComposite rowComposite);
 
+        boolean hasDynamicColumns();
+
         ObjectTableColumn getColumnAt(int modelIndex);
     }
 

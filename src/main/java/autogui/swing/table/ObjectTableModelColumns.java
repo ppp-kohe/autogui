@@ -527,7 +527,7 @@ public class ObjectTableModelColumns
         }
 
         public int getIndexInParent() {
-            if (parent != null) {
+            if (parent != null && parent.getParent() != null) { //parent.parent = null: parent is the root: -1, for rowSpecifier
                 return parent.getChildren().indexOf(this);
             } else {
                 return -1;

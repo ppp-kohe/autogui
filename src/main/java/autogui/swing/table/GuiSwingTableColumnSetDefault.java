@@ -23,11 +23,16 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     }
 
     @Override
-    public void createColumns(GuiMappingContext context, TableColumnHost model,
+    public void createColumns(GuiMappingContext context, TableColumnHost parentModel,
                               GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
                               GuiSwingView.SpecifierManager specifierManager) {
+
+        TableColumnHost model;
         if (context.isReprCollectionElement() && context.isParentCollectionTable()) {
-            model.addColumnRowIndex();
+            parentModel.addColumnRowIndex();
+            model = new GuiSwingTableColumnCollection.DynamicColumnFactoryCollectionRoot(context.getParent(), specifierManager, parentModel, rowSpecifier);
+        } else {
+            model = new GuiSwingTableColumnCollection.DynamicColumnFactoryComposite(context, specifierManager, parentModel);
         }
 
         GuiSwingView.SpecifierManager subManager = context.isReprCollectionElement() ?
@@ -45,11 +50,8 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                     model.addColumnStatic(columnStatic);
                 }
             } else if (subView instanceof GuiSwingTableColumnDynamic) {
-                ObjectTableModelColumns.DynamicColumnFactory columnFactory = ((GuiSwingTableColumnDynamic) subView).createColumnDynamic(
-                        subContext, model, rowSpecifier, subManager, true);
-                if (columnFactory != null) {
-                    model.addColumnDynamic(columnFactory);
-                }
+                ((GuiSwingTableColumnDynamic) subView).createColumnDynamic(
+                        subContext, model, rowSpecifier, subManager);
             } else if (subView instanceof GuiSwingTableColumnSet) {
                 GuiSwingTableColumnSet set = (GuiSwingTableColumnSet) subView;
 
@@ -59,6 +61,10 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
         getMenuRowComposites(context)
                 .forEach(model::addMenuRowComposite);
+
+        if (model.hasDynamicColumns() /*&& model instanceof ObjectTableModelColumns.DynamicColumnFactory*/) {
+            parentModel.addColumnDynamic((ObjectTableModelColumns.DynamicColumnFactory) model);
+        }
     }
 
     public List<ObjectTableColumn.TableMenuComposite> getMenuRowComposites(GuiMappingContext context) {
@@ -104,34 +110,49 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     @Override
     public void createColumnsForDynamicCollection(GuiMappingContext context,
                                         DynamicColumnHost collection,
-                                        TableColumnHost model,
+                                        TableColumnHost parentModel,
                                         GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
                                         GuiSwingView.SpecifierManager parentSpecifier) {
         GuiSwingView.SpecifierManager subSpecifier;
         DynamicColumnHost target;
+        TableColumnHost model;
         if (context.isReprCollectionElement()) {
             subSpecifier = parentSpecifier;  //which is elementSpecifier
             target = collection;
+            model = parentModel;
         } else {
             subSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
             GuiSwingTableColumnCollection.DynamicColumnFactoryComposite sub =
-                    new GuiSwingTableColumnCollection.DynamicColumnFactoryComposite(context, subSpecifier, model, rowSpecifier);
+                    new GuiSwingTableColumnCollection.DynamicColumnFactoryComposite(context, subSpecifier, parentModel);
             target = sub;
+            model = sub;
             collection.addColumnDynamic(sub);
         }
         for (GuiMappingContext subContext : context.getChildren()) { //for repr-collection-element, a concrete element type follows as the subContext
             GuiSwingElement view = columnMappingSet.viewTableColumn(subContext);
-            if (view instanceof GuiSwingTableColumn) { //a value-type : List<List<String>>
-                GuiSwingTableColumn column = (GuiSwingTableColumn) view;
-                target.addColumn(subContext, column, subSpecifier);
-            } else if (view instanceof GuiSwingTableColumnDynamic) { //further collection: List<List<List<...>>>
-                target.addColumnDynamic(((GuiSwingTableColumnDynamic) view).createColumnDynamic(subContext, model, rowSpecifier, subSpecifier, false));
-            } else if (view instanceof GuiSwingTableColumnSet) {   //regular object: List<List<Obj>>
-                ((GuiSwingTableColumnSet) view).createColumnsForDynamicCollection(subContext,
-                        target, model, rowSpecifier, subSpecifier);
-            } else if (subContext.isReprAction() || subContext.isReprActionList()) {
-                target.addActionContext(subContext);
-            }
+            createColumnForDynamicCollection(subContext, target, model, rowSpecifier, subSpecifier, view);
+        }
+        if (model.hasDynamicColumns() && model != parentModel) {
+            parentModel.addColumnDynamic((ObjectTableModelColumns.DynamicColumnFactory) model);
+        }
+    }
+
+    public static void createColumnForDynamicCollection(GuiMappingContext subContext,
+                                                        DynamicColumnHost target,
+                                                        TableColumnHost model,
+                                                        GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
+                                                        GuiSwingView.SpecifierManager subSpecifier,
+                                                        GuiSwingElement view) {
+        if (view instanceof GuiSwingTableColumn) { //a value-type : List<List<String>>
+            GuiSwingTableColumn column = (GuiSwingTableColumn) view;
+            target.addColumn(subContext, column, subSpecifier);
+        } else if (view instanceof GuiSwingTableColumnDynamic) { //further collection: List<List<List<...>>>
+            ((GuiSwingTableColumnDynamic) view).createColumnDynamic(subContext, model, rowSpecifier, subSpecifier);
+        } else if (view instanceof GuiSwingTableColumnSet) {   //regular object: List<List<Obj>>
+            ((GuiSwingTableColumnSet) view).createColumnsForDynamicCollection(subContext,
+                    target, model, rowSpecifier, subSpecifier);
+        } else if (subContext.isReprAction() || subContext.isReprActionList()) {
+            target.addActionContext(subContext);
         }
     }
 

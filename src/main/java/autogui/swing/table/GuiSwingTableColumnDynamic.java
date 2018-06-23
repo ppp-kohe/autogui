@@ -8,9 +8,9 @@ import autogui.swing.GuiSwingView;
  * the dynamic version of {@link GuiSwingTableColumn}, creating a factory instead of a column
  */
 public interface GuiSwingTableColumnDynamic extends GuiSwingElement {
-    ObjectTableModelColumns.DynamicColumnFactory createColumnDynamic(GuiMappingContext context,
-                                                                     GuiSwingTableColumnSet.TableColumnHost model,
-                                                                     GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
-                                                                     GuiSwingView.SpecifierManager parentSpecifier, boolean tableTop);
+    void createColumnDynamic(GuiMappingContext context,
+                         GuiSwingTableColumnSet.TableColumnHost model,
+                         GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
+                         GuiSwingView.SpecifierManager parentSpecifier);
 
 }

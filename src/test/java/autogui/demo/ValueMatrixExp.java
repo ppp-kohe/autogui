@@ -31,9 +31,12 @@ public class ValueMatrixExp {
         @GuiIncluded public String name;
         int value;
 
+        @GuiIncluded public List<Integer> nums;
+
         public Cell(String name, int value) {
             this.name = name;
             this.value = value;
+            nums = new ArrayList<>(Arrays.asList(value * 2, value * 3, value * 4));
         }
 
         @GuiIncluded
@@ -50,6 +53,11 @@ public class ValueMatrixExp {
         @GuiIncluded
         public void hello() {
             System.err.println("cell-action: " + name + "," + value);
+        }
+
+        @GuiIncluded
+        public void showNums(List<Integer> nums) {
+            System.err.println("nums: " + nums);
         }
     }
 

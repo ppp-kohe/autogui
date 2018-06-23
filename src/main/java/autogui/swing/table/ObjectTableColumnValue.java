@@ -395,6 +395,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             if (component instanceof GuiSwingView.ValuePane<?>) {
                 GuiSwingView.ValuePane<Object> pane = (GuiSwingView.ValuePane<Object>) component;
                 pane.setSwingViewValue(value);
+                SwingUtilities.invokeLater(pane::requestSwingViewFocus);
 //                if (table.getModel() instanceof ObjectTableModel) {
 //                    ObjectTableModel model = (ObjectTableModel) table.getModel() ;
 //                    List<?> rows = model.getSource();
