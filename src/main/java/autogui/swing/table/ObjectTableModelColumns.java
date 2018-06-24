@@ -266,6 +266,7 @@ public class ObjectTableModelColumns
             if (columnsInSize == null) {
                 columnsInSize = new ArrayList<>();
             }
+            columnsInSize.add(column);
             columns.addColumnDynamic(this, column);
             ++lastIndex;
         }
@@ -304,6 +305,8 @@ public class ObjectTableModelColumns
             if (c == null) {
                 c = new DynamicColumnContainer(columns, lastIndex);
                 children.set(i, c);
+            } else {
+                c.setLastIndex(lastIndex);
             }
             return c;
         }

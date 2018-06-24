@@ -51,13 +51,18 @@ public class ValueMatrixExp {
         }
 
         @GuiIncluded
-        public void hello() {
+        public void cellAction() {
             System.err.println("cell-action: " + name + "," + value);
         }
 
         @GuiIncluded
-        public void showNums(List<Float> nums) {
+        public void cellNums(List<Float> nums) {
             System.err.println(name + ".nums: " + nums);
+        }
+
+        @GuiIncluded
+        public void cellIndices(List<Integer> idx, String target) {
+            System.err.println("cell-indices " + name + "." + target + " : " + idx);
         }
     }
 

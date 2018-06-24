@@ -128,7 +128,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         public void createColumnDynamic(GuiMappingContext context, TableColumnHost model,
                                                                                 SpecifierManagerIndex rowSpecifier,
                                                                                 SpecifierManager parentSpecifier) {
-            if (((GuiReprPropertyPane) context.getRepresentation()).getSubRepresentations() instanceof GuiReprCollectionTable) { //prop(list(E))
+            //GuiReprPropertyPane prop = (GuiReprPropertyPane) context.getRepresentation();
+            //if (prop.getSubRepresentations() instanceof GuiReprCollectionTable) { //prop(list(E))
                 SpecifierManager subSpecifier = new SpecifierManagerDefault(parentSpecifier::getSpecifier);
                 DynamicColumnFactoryComposite target = new DynamicColumnFactoryComposite(context, subSpecifier, model);
                 for (GuiMappingContext subContext : context.getChildren()) {
@@ -139,7 +140,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 if (target.hasDynamicColumns()) {
                     model.addColumnDynamic(target);
                 }
-            }
+            //}
         }
     }
 
