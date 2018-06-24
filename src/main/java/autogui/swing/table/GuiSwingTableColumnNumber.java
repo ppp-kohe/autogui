@@ -5,8 +5,13 @@ import autogui.base.mapping.GuiReprValueNumberSpinner;
 import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingView.SpecifierManager;
+import autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.GuiSwingViewNumberSpinner;
+import autogui.swing.GuiSwingViewNumberSpinner.PropertyNumberSpinner;
+import autogui.swing.GuiSwingViewNumberSpinner.TypedSpinnerNumberModel;
+import autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
 import autogui.swing.util.PopupCategorized;
 
 import javax.swing.*;
@@ -23,14 +28,14 @@ import java.util.List;
  *
  * <p>
  *     the renderer is realized by {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
- *     the editor is realized by {@link autogui.swing.GuiSwingViewNumberSpinner.PropertyNumberSpinner}.
+ *     the editor is realized by {@link PropertyNumberSpinner}.
  */
 public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager parentSpecifier) {
-        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
-        GuiSwingViewNumberSpinner.PropertyNumberSpinner spinner = new ColumnEditNumberSpinner(context, valueSpecifier);
+                                          SpecifierManager parentSpecifier) {
+        SpecifierManager valueSpecifier = new SpecifierManagerDefault(parentSpecifier::getSpecifier);
+        PropertyNumberSpinner spinner = new ColumnEditNumberSpinner(context, valueSpecifier);
         ColumnNumberPane label = new ColumnNumberPane(context, valueSpecifier, spinner);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 label,
@@ -54,13 +59,13 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
 
     public static class ColumnNumberPane extends GuiSwingViewNumberSpinner.PropertyLabelNumber
             implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget {
-        protected GuiSwingViewNumberSpinner.PropertyNumberSpinner editor;
+        protected PropertyNumberSpinner editor;
 
         protected Runnable updater;
         protected int updating;
 
-        public ColumnNumberPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager,
-                                GuiSwingViewNumberSpinner.PropertyNumberSpinner editor) {
+        public ColumnNumberPane(GuiMappingContext context, SpecifierManager specifierManager,
+                                PropertyNumberSpinner editor) {
             super(context, specifierManager);
             setOpaque(true);
             this.editor = editor;
@@ -82,11 +87,11 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         }
 
         @Override
-        public GuiSwingViewNumberSpinner.TypedSpinnerNumberModel getModelTyped() {
+        public TypedSpinnerNumberModel getModelTyped() {
             return editor != null ? editor.getModelTyped() : model;
         }
 
-        public GuiSwingViewNumberSpinner.PropertyNumberSpinner getEditor() {
+        public PropertyNumberSpinner getEditor() {
             return editor;
         }
 
@@ -98,8 +103,8 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         @Override
         public void columnViewUpdateAsDynamic(ObjectTableColumn source) {
             TableCellRenderer renderer = source.getTableColumn().getCellRenderer();
-            if (renderer instanceof ObjectTableColumnValue.ObjectTableCellRenderer) {
-                JComponent comp = ((ObjectTableColumnValue.ObjectTableCellRenderer) renderer).getComponent();
+            if (renderer instanceof ObjectTableCellRenderer) {
+                JComponent comp = ((ObjectTableCellRenderer) renderer).getComponent();
                 if (comp instanceof ColumnNumberPane) {
                     ColumnNumberPane numPane = (ColumnNumberPane) comp;
                     setCurrentFormat(numPane.getCurrentFormat(), numPane.getEditor());
@@ -113,13 +118,13 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
             }
         }
 
-        public void setCurrentFormat(NumberFormat currentFormat, GuiSwingViewNumberSpinner.PropertyNumberSpinner updatedEditor) {
+        public void setCurrentFormat(NumberFormat currentFormat, PropertyNumberSpinner updatedEditor) {
             try {
                 ++updating;
 
                 if (editor != null && updatedEditor != null) {
-                    GuiSwingViewNumberSpinner.TypedSpinnerNumberModel updatedModel = updatedEditor.getModelTyped();
-                    GuiSwingViewNumberSpinner.TypedSpinnerNumberModel myModel = editor.getModelTyped();
+                    TypedSpinnerNumberModel updatedModel = updatedEditor.getModelTyped();
+                    TypedSpinnerNumberModel myModel = editor.getModelTyped();
 
                     myModel.setMaximum(updatedModel.getMaximum());
                     myModel.setMinimum(updatedModel.getMinimum());
@@ -165,8 +170,8 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         }
     }
 
-    public static class ColumnEditNumberSpinner extends GuiSwingViewNumberSpinner.PropertyNumberSpinner {
-        public ColumnEditNumberSpinner(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+    public static class ColumnEditNumberSpinner extends PropertyNumberSpinner {
+        public ColumnEditNumberSpinner(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
             getEditorField().setBorder(BorderFactory.createEmptyBorder());

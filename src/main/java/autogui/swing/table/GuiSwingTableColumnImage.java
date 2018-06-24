@@ -3,9 +3,14 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingView.SpecifierManager;
+import autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import autogui.swing.GuiSwingViewImagePane;
+import autogui.swing.GuiSwingViewImagePane.PropertyImagePane;
+import autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
@@ -20,13 +25,13 @@ import java.util.List;
  *
  * <p>
  *     both editor and renderer are realized by a sub-class of
- *     {@link autogui.swing.GuiSwingViewImagePane.PropertyImagePane}.
+ *     {@link PropertyImagePane}.
  */
 public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager parentSpecifier) {
-        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+                                          SpecifierManager parentSpecifier) {
+        SpecifierManager valueSpecifier = new SpecifierManagerDefault(parentSpecifier::getSpecifier);
         ColumnEditImagePane img = new ColumnEditImagePane(context, valueSpecifier, false);
         ColumnEditImagePane edit = new ColumnEditImagePane(context, valueSpecifier, true);
         edit.setScaleTarget(img);
@@ -42,14 +47,14 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
     /**
      * a component for column editor
      */
-    public static class ColumnEditImagePane extends GuiSwingViewImagePane.PropertyImagePane
+    public static class ColumnEditImagePane extends PropertyImagePane
             implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget {
         protected ColumnEditImagePane scaleTarget;
         protected int updating;
         protected boolean editor;
         protected Runnable viewUpdater;
 
-        public ColumnEditImagePane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager, boolean editor) {
+        public ColumnEditImagePane(GuiMappingContext context, SpecifierManager specifierManager, boolean editor) {
             super(context, specifierManager);
             this.editor = editor;
             setOpaque(true);
@@ -70,10 +75,10 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         @Override
         public void columnViewUpdateAsDynamic(ObjectTableColumn source) {
             TableCellRenderer renderer = source.getTableColumn().getCellRenderer();
-            if (renderer instanceof ObjectTableColumnValue.ObjectTableCellRenderer) {
-                JComponent comp = ((ObjectTableColumnValue.ObjectTableCellRenderer) renderer).getComponent();
-                if (comp instanceof GuiSwingViewImagePane.PropertyImagePane) {
-                    GuiSwingViewImagePane.PropertyImagePane pane = (GuiSwingViewImagePane.PropertyImagePane) comp;
+            if (renderer instanceof ObjectTableCellRenderer) {
+                JComponent comp = ((ObjectTableCellRenderer) renderer).getComponent();
+                if (comp instanceof PropertyImagePane) {
+                    PropertyImagePane pane = (PropertyImagePane) comp;
                     setImageScale(pane.getImageScale());
                 }
             }
@@ -108,7 +113,7 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         }
 
 
-        public List<PopupCategorized.CategorizedMenuItem> getDynamicMenuItems() {
+        public List<CategorizedMenuItem> getDynamicMenuItems() {
             if (editor) {
                 return super.getDynamicMenuItems();
             } else {

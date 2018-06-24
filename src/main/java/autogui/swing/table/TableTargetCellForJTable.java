@@ -1,6 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiReprCollectionTable.CellValue;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -36,7 +37,7 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
     }
 
     @Override
-    public void setCellValues(List<GuiReprCollectionTable.CellValue> values) {
+    public void setCellValues(List<CellValue> values) {
         TableModel model = table.getModel();
         values.forEach(e ->
                 model.setValueAt(e.value, e.row, e.column));
@@ -82,19 +83,19 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
     }
 
     @Override
-    public List<GuiReprCollectionTable.CellValue> getSelectedCells() {
+    public List<CellValue> getSelectedCells() {
         return getCellsByCellIndices(getSelectedCellIndicesStream());
     }
 
     @Override
-    public List<GuiReprCollectionTable.CellValue> getSelectedRowAllCells() {
+    public List<CellValue> getSelectedRowAllCells() {
         return getCellsByCellIndices(getSelectedRowAllCellIndicesStream());
     }
 
-    public List<GuiReprCollectionTable.CellValue> getCellsByCellIndices(Stream<int[]> idx) {
+    public List<CellValue> getCellsByCellIndices(Stream<int[]> idx) {
         TableModel model = table.getModel();
         return idx
-                .map(pos -> new GuiReprCollectionTable.CellValue(pos[0], pos[1],
+                .map(pos -> new CellValue(pos[0], pos[1],
                         model.getValueAt(pos[0], pos[1])))
                 .collect(Collectors.toList());
     }

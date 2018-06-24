@@ -2,9 +2,15 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiReprCollectionTable.CellValue;
+import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingView.ValuePane;
+import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
+import autogui.swing.table.ObjectTableColumn.TableMenuCompositeShared;
 import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
 import autogui.swing.util.SettingsWindow;
@@ -32,7 +38,7 @@ public class ToStringCopyCell {
      * a composite for to-string relying on
      * {@link autogui.base.mapping.GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}
      */
-    public static class TableMenuCompositeToStringCopy implements ObjectTableColumn.TableMenuComposite {
+    public static class TableMenuCompositeToStringCopy implements TableMenuComposite {
         protected GuiMappingContext context;
         protected int index;
 
@@ -50,7 +56,7 @@ public class ToStringCopyCell {
         }
 
         @Override
-        public ObjectTableColumn.TableMenuCompositeShared getShared() {
+        public TableMenuCompositeShared getShared() {
             return shared;
         }
 
@@ -68,9 +74,9 @@ public class ToStringCopyCell {
     /**
      * the key of {@link TableMenuCompositeToStringCopy}
      */
-    public static class TableMenuCompositeSharedToStringCopy implements ObjectTableColumn.TableMenuCompositeShared {
+    public static class TableMenuCompositeSharedToStringCopy implements TableMenuCompositeShared {
         @Override
-        public List<PopupCategorized.CategorizedMenuItem> composite(JTable table, List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
+        public List<CategorizedMenuItem> composite(JTable table, List<TableMenuComposite> columns, boolean row) {
             List<TableMenuCompositeToStringCopy> cs = columns.stream()
                     .map(TableMenuCompositeToStringCopy.class::cast)
                     .filter(e -> e.getIndex() != -1)
@@ -104,19 +110,19 @@ public class ToStringCopyCell {
         }
 
         @Override
-        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+        public void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target) {
             copy(getString(target));
         }
 
-        public String getString(GuiReprCollectionTable.TableTargetCell target) {
+        public String getString(TableTargetCell target) {
             //follow the visual ordering
             int prevLine = -1;
             List<String> cols = new ArrayList<>();
             List<String> lines = new ArrayList<>();
-            List<GuiReprCollectionTable.CellValue> cells = (onlyApplyingSelectedColumns
+            List<CellValue> cells = (onlyApplyingSelectedColumns
                     ? target.getSelectedCells()
                     : target.getSelectedRowAllCells());
-            for (GuiReprCollectionTable.CellValue cell : cells) {
+            for (CellValue cell : cells) {
                 TableMenuCompositeToStringCopy col = getMenuCompositeForCell(cell);
                 if (col != null) {
                     if (prevLine != cell.getRow() && prevLine != -1) {
@@ -137,7 +143,7 @@ public class ToStringCopyCell {
             return String.join("\n", lines);
         }
 
-        public TableMenuCompositeToStringCopy getMenuCompositeForCell(GuiReprCollectionTable.CellValue cell) {
+        public TableMenuCompositeToStringCopy getMenuCompositeForCell(CellValue cell) {
             return activatedColumns.stream()
                     .filter(cmp -> cmp.getIndex() == cell.getColumn())
                     .findFirst()
@@ -189,10 +195,10 @@ public class ToStringCopyCell {
         }
 
         @Override
-        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+        public void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target) {
             String name = "selection";
-            if (table instanceof GuiSwingView.ValuePane<?>) {
-                name = ((GuiSwingView.ValuePane) table).getSwingViewContext().getName();
+            if (table instanceof ValuePane<?>) {
+                name = ((ValuePane) table).getSwingViewContext().getName();
             }
             save(() -> getString(target), table, name);
         }
@@ -225,15 +231,15 @@ public class ToStringCopyCell {
         }
 
         @Override
-        public ObjectTableColumn.TableMenuCompositeShared getShared() {
+        public TableMenuCompositeShared getShared() {
             return pasteShared;
         }
     }
 
-    public static class TableMenuCompositeSharedToStringPaste implements ObjectTableColumn.TableMenuCompositeShared  { //TODO
+    public static class TableMenuCompositeSharedToStringPaste implements TableMenuCompositeShared  { //TODO
 
         @Override
-        public List<PopupCategorized.CategorizedMenuItem> composite(JTable table, List<ObjectTableColumn.TableMenuComposite> columns, boolean row) {
+        public List<CategorizedMenuItem> composite(JTable table, List<TableMenuComposite> columns, boolean row) {
             List<TableMenuCompositeToStringPaste> cs = columns.stream()
                     .map(TableMenuCompositeToStringPaste.class::cast)
                     .filter(e -> e.getIndex() != -1)
@@ -275,11 +281,11 @@ public class ToStringCopyCell {
 
 
         @Override
-        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+        public void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target) {
             paste(s -> run(s, target));
         }
 
-        public void run(String str, GuiReprCollectionTable.TableTargetCell target) {
+        public void run(String str, TableTargetCell target) {
             int rowIndex = 0;
             GuiSwingJsonTransfer.JsonFillLoop fillLoop = new GuiSwingJsonTransfer.JsonFillLoop();
             for (String line :str.split(lineSeparator)) {
@@ -290,8 +296,8 @@ public class ToStringCopyCell {
             target.setCellValues(target.getSelectedRowAllCellIndicesStream(), fillLoop);
         }
 
-        public List<GuiReprCollectionTable.CellValue> runLine(String line, int targetRow) {
-            List<GuiReprCollectionTable.CellValue> updatedRow = new ArrayList<>();
+        public List<CellValue> runLine(String line, int targetRow) {
+            List<CellValue> updatedRow = new ArrayList<>();
             boolean rowSpecified = false;
             int rowIndex = targetRow;
             int c = 0;
@@ -301,14 +307,14 @@ public class ToStringCopyCell {
                     targetRow = Integer.valueOf(col);
                     rowSpecified = true;
                 } else {
-                    updatedRow.add(new GuiReprCollectionTable.CellValue(targetRow, composite.getIndex(),
+                    updatedRow.add(new CellValue(targetRow, composite.getIndex(),
                             composite.toValueFromString(col)));
                 }
 
                 ++c;
             }
             if (targetRow != rowIndex) {
-                for (GuiReprCollectionTable.CellValue cell : updatedRow) {
+                for (CellValue cell : updatedRow) {
                     cell.row = targetRow;
                 }
             }
@@ -350,7 +356,7 @@ public class ToStringCopyCell {
         }
 
         @Override
-        public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
+        public void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target) {
             String line = loader.load();
             if (line != null) {
                 run(line, target);

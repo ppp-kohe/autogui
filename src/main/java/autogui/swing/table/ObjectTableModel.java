@@ -1,9 +1,13 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
+import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
+import autogui.swing.util.PopupExtension.PopupMenuBuilder;
+import autogui.swing.util.PopupExtension.PopupMenuFilter;
 import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
@@ -433,7 +437,7 @@ public class ObjectTableModel extends AbstractTableModel
 
     ///////////
 
-    public PopupExtension.PopupMenuBuilder getBuilderForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
+    public PopupMenuBuilder getBuilderForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
         return new PopupCategorizedForRowsOrCells(() ->
                 getBuildersForRowsOrCells(table, cols, row));
     }
@@ -478,15 +482,15 @@ public class ObjectTableModel extends AbstractTableModel
      * a menu builder for {@link TableTargetCellAction}s
      */
     public interface PopupMenuBuilderForRowsOrCells {
-        void build(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu);
+        void build(PopupMenuFilter filter, Consumer<Object> menu);
     }
 
     public List<PopupCategorized.CategorizedMenuItem> getBuildersForRowsOrCells(JTable table,
                                                                                 List<ObjectTableColumn> cols, boolean row) {
-        Map<ObjectTableColumn.TableMenuCompositeShared, List<ObjectTableColumn.TableMenuComposite>> rows
+        Map<ObjectTableColumn.TableMenuCompositeShared, List<TableMenuComposite>> rows
                 = new LinkedHashMap<>();
 
-        Consumer<ObjectTableColumn.TableMenuComposite> rowsAdder = (cmp) ->
+        Consumer<TableMenuComposite> rowsAdder = (cmp) ->
             rows.computeIfAbsent(cmp.getShared(), key -> new ArrayList<>())
                     .add(cmp);
 
@@ -534,11 +538,11 @@ public class ObjectTableModel extends AbstractTableModel
     /**
      * a builder accepting a {@link TableTargetCellAction} and wrapping it to a {@link TableTargetCellExecutionAction}.
      */
-    public static class CollectionRowsAndCellsActionBuilder implements PopupExtension.PopupMenuFilter {
-        protected PopupExtension.PopupMenuFilter filter;
-        protected GuiReprCollectionTable.TableTargetCell target;
+    public static class CollectionRowsAndCellsActionBuilder implements PopupMenuFilter {
+        protected PopupMenuFilter filter;
+        protected TableTargetCell target;
 
-        public CollectionRowsAndCellsActionBuilder(JTable table, PopupExtension.PopupMenuFilter filter) {
+        public CollectionRowsAndCellsActionBuilder(JTable table, PopupMenuFilter filter) {
             this.filter = filter;
             target = new TableTargetCellForJTable(table);
         }
@@ -560,14 +564,14 @@ public class ObjectTableModel extends AbstractTableModel
      */
     public static class TableTargetCellExecutionAction extends ObjectTableColumnValue.ActionDelegate<TableTargetCellAction>
             implements PopupCategorized.CategorizedMenuItemAction {
-        protected GuiReprCollectionTable.TableTargetCell target;
+        protected TableTargetCell target;
 
-        public TableTargetCellExecutionAction(TableTargetCellAction action, GuiReprCollectionTable.TableTargetCell target) {
+        public TableTargetCellExecutionAction(TableTargetCellAction action, TableTargetCell target) {
             super(action);
             this.target = target;
         }
 
-        public GuiReprCollectionTable.TableTargetCell getTarget() {
+        public TableTargetCell getTarget() {
             return target;
         }
 

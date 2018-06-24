@@ -3,7 +3,9 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingView.SpecifierManager;
 import autogui.swing.GuiSwingViewBooleanCheckBox;
+import autogui.swing.GuiSwingViewBooleanCheckBox.PropertyCheckBox;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,17 +17,17 @@ import java.util.EventObject;
  * a column factory for {@link Boolean}.
  *
  * <p>
- * Both editor and renderer are realized by {@link autogui.swing.GuiSwingViewBooleanCheckBox.PropertyCheckBox}.
+ * Both editor and renderer are realized by {@link PropertyCheckBox}.
  */
 public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
 
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager parentSpecifier) {
-        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox view = new ColumnCheckBox(context, valueSpecifier);
+                                          SpecifierManager parentSpecifier) {
+        SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+        PropertyCheckBox view = new ColumnCheckBox(context, valueSpecifier);
 
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox editor = new ColumnCheckBox(context, valueSpecifier);
+        PropertyCheckBox editor = new ColumnCheckBox(context, valueSpecifier);
 
         ObjectTableColumnValue column = new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(view, rowSpecifier),
@@ -36,8 +38,8 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
         return column;
     }
 
-    public static class ColumnCheckBox extends GuiSwingViewBooleanCheckBox.PropertyCheckBox {
-        public ColumnCheckBox(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+    public static class ColumnCheckBox extends PropertyCheckBox {
+        public ColumnCheckBox(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
             setHorizontalAlignment(SwingConstants.CENTER);

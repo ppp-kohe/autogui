@@ -1,13 +1,21 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiMappingContext.GuiSourceValue;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.GuiReprValue.ObjectSpecifier;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingPreferences;
+import autogui.swing.GuiSwingPreferences.PreferencesUpdateEvent;
+import autogui.swing.GuiSwingPreferences.PreferencesUpdateSupport;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingView.SettingsWindowClient;
 import autogui.swing.GuiSwingViewCollectionTable;
+import autogui.swing.GuiSwingViewCollectionTable.CollectionTable;
+import autogui.swing.table.GuiSwingTableColumn.ObjectTableColumnWithContext;
+import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
@@ -29,14 +37,14 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
     protected GuiMappingContext context;
     protected GuiMappingContext elementContext;
-    protected Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier;
-    protected GuiSwingTableColumn.SpecifierManagerIndex rowSpecifierManager;
+    protected Supplier<ObjectSpecifier> tableSpecifier;
+    protected SpecifierManagerIndex rowSpecifierManager;
 
-    public GuiSwingTableModelCollection(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier,
+    public GuiSwingTableModelCollection(GuiMappingContext context, Supplier<ObjectSpecifier> tableSpecifier,
                                       Supplier<Object> source) {
         this.context = context;
         this.tableSpecifier = tableSpecifier;
-        this.rowSpecifierManager = new GuiSwingTableColumn.SpecifierManagerIndex(tableSpecifier);
+        this.rowSpecifierManager = new SpecifierManagerIndex(tableSpecifier);
         setElementContextFromContext();
         setSource(source);
     }
@@ -58,9 +66,9 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
     public Object getRowAtIndex(int row) {
         Object collection = getCollectionFromSource();
         try {
-            GuiReprValue.ObjectSpecifier specifier = rowSpecifierManager.getSpecifierWithSettingIndex(row);
+            ObjectSpecifier specifier = rowSpecifierManager.getSpecifierWithSettingIndex(row);
             return elementContext.getReprValue()
-                    .getValueWithoutNoUpdate(elementContext, GuiMappingContext.GuiSourceValue.of(collection), specifier);
+                    .getValueWithoutNoUpdate(elementContext, GuiSourceValue.of(collection), specifier);
         } catch (Throwable ex) {
             throw new RuntimeException(ex);
         }
@@ -71,7 +79,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         Object collection = getCollectionFromSource();
         try {
             return elementContext.getReprValue()
-                    .getValueCollectionSize(elementContext, GuiMappingContext.GuiSourceValue.of(collection), tableSpecifier.get());
+                    .getValueCollectionSize(elementContext, GuiSourceValue.of(collection), tableSpecifier.get());
         } catch (Throwable ex) {
             throw new RuntimeException(ex);
         }
@@ -91,7 +99,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         return collection;
     }
 
-    public GuiSwingTableColumn.SpecifierManagerIndex getRowSpecifierManager() {
+    public SpecifierManagerIndex getRowSpecifierManager() {
         return rowSpecifierManager;
     }
 
@@ -99,17 +107,17 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
     public void columnAdded(ObjectTableColumn column) {
         super.columnAdded(column);
         JTable table = getTable();
-        if (table instanceof GuiSwingViewCollectionTable.CollectionTable) {
-            ((GuiSwingViewCollectionTable.CollectionTable) table).getPopup().setupCompositeKeyMapByAddingColumn(column);
+        if (table instanceof CollectionTable) {
+            ((CollectionTable) table).getPopup().setupCompositeKeyMapByAddingColumn(column);
         }
     }
 
 
     public static class GuiSwingTableModelColumns extends ObjectTableModelColumns
-            implements GuiSwingPreferences.PreferencesUpdateSupport, GuiSwingView.SettingsWindowClient {
+            implements PreferencesUpdateSupport, SettingsWindowClient {
 
         protected SettingsWindow settingsWindow;
-        protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> prefsUpdater;
+        protected Consumer<PreferencesUpdateEvent> prefsUpdater;
         protected GuiPreferences currentPreferences;
 
         public GuiSwingTableModelColumns(ObjectTableModelColumnsListener updater) {
@@ -120,21 +128,21 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         protected void columnAdded(ObjectTableColumn column, DynamicColumnContainer d) {
             super.columnAdded(column, d);
 
-            if (settingsWindow != null && column instanceof GuiSwingView.SettingsWindowClient) {
-                ((GuiSwingView.SettingsWindowClient) column).setSettingsWindow(settingsWindow);
+            if (settingsWindow != null && column instanceof SettingsWindowClient) {
+                ((SettingsWindowClient) column).setSettingsWindow(settingsWindow);
             }
-            if (prefsUpdater != null && column instanceof GuiSwingPreferences.PreferencesUpdateSupport) {
-                ((GuiSwingPreferences.PreferencesUpdateSupport) column).setPreferencesUpdater(prefsUpdater);
+            if (prefsUpdater != null && column instanceof PreferencesUpdateSupport) {
+                ((PreferencesUpdateSupport) column).setPreferencesUpdater(prefsUpdater);
             }
-            if (currentPreferences != null && column instanceof GuiSwingTableColumn.ObjectTableColumnWithContext) {
-                ((GuiSwingTableColumn.ObjectTableColumnWithContext) column).loadSwingPreferences(currentPreferences);
+            if (currentPreferences != null && column instanceof ObjectTableColumnWithContext) {
+                ((ObjectTableColumnWithContext) column).loadSwingPreferences(currentPreferences);
             }
         }
 
         @Override
         public void setSettingsWindow(SettingsWindow settingsWindow) {
             this.settingsWindow = settingsWindow;
-            setColumns(GuiSwingView.SettingsWindowClient.class, c -> c.setSettingsWindow(settingsWindow));
+            setColumns(SettingsWindowClient.class, c -> c.setSettingsWindow(settingsWindow));
         }
 
         private <T> void setColumns(Class<T> type, Consumer<T> setter) {
@@ -150,19 +158,19 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
 
         @Override
-        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setPreferencesUpdater(Consumer<PreferencesUpdateEvent> updater) {
             prefsUpdater = updater;
-            setColumns(GuiSwingPreferences.PreferencesUpdateSupport.class, c -> c.setPreferencesUpdater(updater));
+            setColumns(PreferencesUpdateSupport.class, c -> c.setPreferencesUpdater(updater));
         }
 
 
         public void loadSwingPreferences(GuiPreferences prefs) {
             currentPreferences = prefs;
-            setColumns(GuiSwingTableColumn.ObjectTableColumnWithContext.class, c -> c.loadSwingPreferences(prefs));
+            setColumns(ObjectTableColumnWithContext.class, c -> c.loadSwingPreferences(prefs));
         }
 
         public void saveSwingPreferences(GuiPreferences prefs) {
-            setColumns(GuiSwingTableColumn.ObjectTableColumnWithContext.class, c -> c.saveSwingPreferences(prefs));
+            setColumns(ObjectTableColumnWithContext.class, c -> c.saveSwingPreferences(prefs));
         }
 
         @Override

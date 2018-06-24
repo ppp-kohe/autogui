@@ -1,8 +1,18 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.*;
+import autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
 import autogui.swing.*;
+import autogui.swing.GuiSwingView.SpecifierManager;
+import autogui.swing.GuiSwingView.ValuePane;
+import autogui.swing.GuiSwingViewLabel.PropertyLabel;
+import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
+import autogui.swing.table.ObjectTableColumn.PopupMenuBuilderSource;
 import autogui.swing.util.*;
+import autogui.swing.util.PopupCategorized.CategorizedMenuItem;
+import autogui.swing.util.PopupCategorized.CategorizedMenuItemAction;
+import autogui.swing.util.PopupExtension.PopupMenuBuilder;
+import autogui.swing.util.PopupExtension.PopupMenuFilter;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -28,32 +38,32 @@ import java.util.stream.Collectors;
 public class ObjectTableColumnValue extends ObjectTableColumn
         implements GuiSwingTableColumn.ObjectTableColumnWithContext {
     protected GuiMappingContext context;
-    protected GuiSwingTableColumn.SpecifierManagerIndex specifierIndex;
-    protected GuiSwingView.SpecifierManager specifierManager;
+    protected SpecifierManagerIndex specifierIndex;
+    protected SpecifierManager specifierManager;
     protected int contextIndex = -1;
     protected TableCellRenderer renderer;
     protected TableCellEditor editor;
 
     /**
      * the representation of the context must be a sub-type of {@link GuiReprValue}.
-     * view must be a {@link autogui.swing.GuiSwingView.ValuePane}
+     * view must be a {@link ValuePane}
      * @param context the associated context
      * @param view the component for both editor and renderer
      */
-    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex,
-                                  GuiSwingView.SpecifierManager specifierManager, JComponent view) {
+    public ObjectTableColumnValue(GuiMappingContext context, SpecifierManagerIndex specifierIndex,
+                                  SpecifierManager specifierManager, JComponent view) {
         this(context, specifierIndex, specifierManager, view, view);
     }
 
-    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex,
-                                  GuiSwingView.SpecifierManager specifierManager, JComponent view, JComponent editorView) {
+    public ObjectTableColumnValue(GuiMappingContext context, SpecifierManagerIndex specifierIndex,
+                                  SpecifierManager specifierManager, JComponent view, JComponent editorView) {
         this(context, specifierIndex, specifierManager, new ObjectTableCellRenderer(view, specifierIndex),
                 editorView == null ? null : new ObjectTableCellEditor(editorView, view == editorView, specifierIndex));
         setRowHeight(view.getPreferredSize().height + UIManagerUtil.getInstance().getScaledSizeInt(4));
     }
 
-    public ObjectTableColumnValue(GuiMappingContext context, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex,
-                                  GuiSwingView.SpecifierManager specifierManager, TableCellRenderer renderer, TableCellEditor editor) {
+    public ObjectTableColumnValue(GuiMappingContext context, SpecifierManagerIndex specifierIndex,
+                                  SpecifierManager specifierManager, TableCellRenderer renderer, TableCellEditor editor) {
         this.context = context;
         this.renderer = renderer;
         this.editor = editor;
@@ -80,7 +90,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     @Override
-    public GuiSwingView.SpecifierManager getSpecifierManager() {
+    public SpecifierManager getSpecifierManager() {
         return specifierManager;
     }
 
@@ -106,21 +116,21 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
     @Override
     public void loadSwingPreferences(GuiPreferences prefs) {
-        setForComponents(GuiSwingView.ValuePane.class,
+        setForComponents(ValuePane.class,
                 p -> p.loadSwingPreferences(prefs), renderer, editor);
     }
 
     @Override
     public void saveSwingPreferences(GuiPreferences prefs) {
-        setForComponents(GuiSwingView.ValuePane.class,
+        setForComponents(ValuePane.class,
                 p -> p.saveSwingPreferences(prefs), renderer, editor);
     }
 
     @Override
     public void shutdown() {
         super.shutdown();
-        setForComponents(GuiSwingView.ValuePane.class,
-                GuiSwingView.ValuePane::shutdownSwingView, renderer, editor);
+        setForComponents(ValuePane.class,
+                ValuePane::shutdownSwingView, renderer, editor);
     }
 
     @Override
@@ -259,19 +269,19 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     /**
-     * a cell renderer with {@link autogui.swing.GuiSwingView.ValuePane}
+     * a cell renderer with {@link ValuePane}
      */
     public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource, ObjectTableColumnCellView {
         protected JComponent component;
         protected ObjectTableColumn ownerColumn;
-        protected GuiSwingTableColumn.SpecifierManagerIndex specifierIndex;
+        protected SpecifierManagerIndex specifierIndex;
 
         /**
-         * @param component the renderer component, must be a {@link GuiSwingView.ValuePane},
+         * @param component the renderer component, must be a {@link ValuePane},
          *                   also may be a {@link ColumnViewUpdateSource}
          * @param specifierIndex specifier for the row, nullable
          */
-        public ObjectTableCellRenderer(JComponent component, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex) {
+        public ObjectTableCellRenderer(JComponent component, SpecifierManagerIndex specifierIndex) {
             this.component = component;
             this.specifierIndex = specifierIndex;
         }
@@ -308,17 +318,17 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         @SuppressWarnings("unchecked")
         @Override
         public Consumer<Object> getMenuTargetPane() {
-            if (component instanceof GuiSwingView.ValuePane) {
-                return ((GuiSwingView.ValuePane) component)::setSwingViewValue;
+            if (component instanceof ValuePane) {
+                return ((ValuePane) component)::setSwingViewValue;
             } else {
                 return null;
             }
         }
 
         @Override
-        public PopupExtension.PopupMenuBuilder getMenuBuilder(JTable table) {
-            if (component instanceof GuiSwingView.ValuePane) {
-                PopupExtension.PopupMenuBuilder rendererPaneOriginalBuilder = ((GuiSwingView.ValuePane) component).getSwingMenuBuilder();;
+        public PopupMenuBuilder getMenuBuilder(JTable table) {
+            if (component instanceof ValuePane) {
+                PopupMenuBuilder rendererPaneOriginalBuilder = ((ValuePane) component).getSwingMenuBuilder();;
 
                 if (rendererPaneOriginalBuilder instanceof PopupCategorized) {
                     ((PopupCategorized) rendererPaneOriginalBuilder).setMenuBuilder(
@@ -340,30 +350,30 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             component.setForeground(table.getForeground());
             component.setBackground(table.getBackground());
         }
-        if (component instanceof GuiSwingViewLabel.PropertyLabel) {
-            ((GuiSwingViewLabel.PropertyLabel) component).setSelected(isSelected);
+        if (component instanceof PropertyLabel) {
+            ((PropertyLabel) component).setSelected(isSelected);
         }
     }
 
     /**
-     * a cell-editor with {@link autogui.swing.GuiSwingView.ValuePane}
+     * a cell-editor with {@link ValuePane}
      */
     public static class ObjectTableCellEditor extends AbstractCellEditor implements TableCellEditor, ObjectTableColumnCellView {
         protected JComponent component;
         protected int clickCount = 2;
         protected boolean skipShutDown;
-        protected GuiSwingTableColumn.SpecifierManagerIndex specifierIndex;
+        protected SpecifierManagerIndex specifierIndex;
 
         /**
-         * @param component the editor component, must be a {@link autogui.swing.GuiSwingView.ValuePane}
+         * @param component the editor component, must be a {@link ValuePane}
          * @param skipShutDown if true, {@link #shutdown()} process for the component will be skipped
          */
-        public ObjectTableCellEditor(JComponent component, boolean skipShutDown, GuiSwingTableColumn.SpecifierManagerIndex specifierIndex) {
+        public ObjectTableCellEditor(JComponent component, boolean skipShutDown, SpecifierManagerIndex specifierIndex) {
             this.component = component;
             this.skipShutDown = skipShutDown;
             this.specifierIndex = specifierIndex;
-            if (component instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane<?>) component).addSwingEditFinishHandler(this::stopCellEditing);
+            if (component instanceof ValuePane<?>) {
+                ((ValuePane<?>) component).addSwingEditFinishHandler(this::stopCellEditing);
             }
         }
 
@@ -379,8 +389,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         @Override
         public Object getCellEditorValue() {
-            if (component instanceof GuiSwingView.ValuePane<?>) {
-                return ((GuiSwingView.ValuePane<?>) component).getSwingViewValue();
+            if (component instanceof ValuePane<?>) {
+                return ((ValuePane<?>) component).getSwingViewValue();
             } else {
                 return null;
             }
@@ -392,8 +402,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             if (specifierIndex != null) {
                 specifierIndex.setIndex(row);
             }
-            if (component instanceof GuiSwingView.ValuePane<?>) {
-                GuiSwingView.ValuePane<Object> pane = (GuiSwingView.ValuePane<Object>) component;
+            if (component instanceof ValuePane<?>) {
+                ValuePane<Object> pane = (ValuePane<Object>) component;
                 pane.setSwingViewValue(value);
                 SwingUtilities.invokeLater(pane::requestSwingViewFocus);
 //                if (table.getModel() instanceof ObjectTableModel) {
@@ -450,19 +460,19 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      *  for wrapping an original menu-builder (not intended for a table)
      *    with {@link autogui.swing.table.ObjectTableModel.CollectionRowsAndCellsActionBuilder}.
       */
-    public static class ObjectTableColumnActionBuilder implements PopupExtension.PopupMenuBuilder {
+    public static class ObjectTableColumnActionBuilder implements PopupMenuBuilder {
         protected JTable table;
         protected ObjectTableColumn column;
-        protected PopupExtension.PopupMenuBuilder paneOriginalBuilder;
+        protected PopupMenuBuilder paneOriginalBuilder;
 
-        public ObjectTableColumnActionBuilder(JTable table, ObjectTableColumn column, PopupExtension.PopupMenuBuilder paneOriginalBuilder) {
+        public ObjectTableColumnActionBuilder(JTable table, ObjectTableColumn column, PopupMenuBuilder paneOriginalBuilder) {
             this.table = table;
             this.column = column;
             this.paneOriginalBuilder = paneOriginalBuilder;
         }
 
         @Override
-        public void build(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu) {
+        public void build(PopupMenuFilter filter, Consumer<Object> menu) {
             if (table.getModel() instanceof ObjectTableModel) {
                 paneOriginalBuilder.build(new CollectionRowsActionBuilder(table, column, filter), menu);
             } else {
@@ -474,7 +484,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     /**
      * an action for selecting cells of a target column and all rows
      */
-    public static class ColumnSelectionAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+    public static class ColumnSelectionAction extends AbstractAction implements CategorizedMenuItemAction {
         protected JTable table;
         protected int column;
 
@@ -504,19 +514,19 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     /**
      * a menu filter for converting an action to another action which supports a selected rows.
      * <ul>
-     *  <li>{@link TableTargetMenu#convert(GuiReprCollectionTable.TableTargetColumn)}</li>
+     *  <li>{@link TableTargetMenu#convert(TableTargetColumn)}</li>
      *  <li>the class currently explicitly handles actions in {@link PopupExtensionText} and in {@link SearchTextFieldFilePath}.</li>
      *  <li>a {@link TableTargetCellAction} is converted to a {@link TableTargetExecutionAction}.</li>
      * </ul>
      */
-    public static class CollectionRowsActionBuilder implements PopupExtension.PopupMenuFilter {
+    public static class CollectionRowsActionBuilder implements PopupMenuFilter {
         protected JTable table;
         protected ObjectTableColumn column;
-        protected GuiReprCollectionTable.TableTargetColumn target;
-        protected PopupExtension.PopupMenuFilter filter;
+        protected TableTargetColumn target;
+        protected PopupMenuFilter filter;
         protected boolean afterReturned;
 
-        public CollectionRowsActionBuilder(JTable table, ObjectTableColumn column, PopupExtension.PopupMenuFilter filter) {
+        public CollectionRowsActionBuilder(JTable table, ObjectTableColumn column, PopupMenuFilter filter) {
             this.table = table;
             this.column = column;
             this.filter = filter;
@@ -665,10 +675,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * a wrapper class for {@link TableTargetColumnAction}
      */
     public static class TableTargetExecutionAction extends ActionDelegate<TableTargetColumnAction>
-            implements PopupCategorized.CategorizedMenuItemAction {
-        protected GuiReprCollectionTable.TableTargetColumn target;
+            implements CategorizedMenuItemAction {
+        protected TableTargetColumn target;
 
-        public TableTargetExecutionAction(TableTargetColumnAction action, GuiReprCollectionTable.TableTargetColumn target) {
+        public TableTargetExecutionAction(TableTargetColumnAction action, TableTargetColumn target) {
             super(action);
             this.target = target;
         }
@@ -683,7 +693,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             return action.isEnabled(target);
         }
 
-        public GuiReprCollectionTable.TableTargetColumn getTarget() {
+        public TableTargetColumn getTarget() {
             return target;
         }
 
@@ -707,12 +717,12 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * an action for selected rows of a column with a lambda
      */
     public static class TableTargetInvocationAction extends ActionDelegate<Action>
-            implements PopupCategorized.CategorizedMenuItemAction {
-        protected GuiReprCollectionTable.TableTargetColumn target;
-        protected BiConsumer<ActionEvent, GuiReprCollectionTable.TableTargetColumn> invoker;
+            implements CategorizedMenuItemAction {
+        protected TableTargetColumn target;
+        protected BiConsumer<ActionEvent, TableTargetColumn> invoker;
 
-        public TableTargetInvocationAction(Action action, GuiReprCollectionTable.TableTargetColumn target,
-                                           BiConsumer<ActionEvent, GuiReprCollectionTable.TableTargetColumn> invoker) {
+        public TableTargetInvocationAction(Action action, TableTargetColumn target,
+                                           BiConsumer<ActionEvent, TableTargetColumn> invoker) {
             super(action);
             this.target = target;
             this.invoker = invoker;
@@ -723,7 +733,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             return !target.isSelectionEmpty();
         }
 
-        public GuiReprCollectionTable.TableTargetColumn getTarget() {
+        public TableTargetColumn getTarget() {
             return target;
         }
 
@@ -735,16 +745,16 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         @Override
         public String getCategory() {
             String category = PopupCategorized.CATEGORY_ACTION;
-            if (action instanceof PopupCategorized.CategorizedMenuItem) {
-                category = ((PopupCategorized.CategorizedMenuItem) action).getCategory();
+            if (action instanceof CategorizedMenuItem) {
+                category = ((CategorizedMenuItem) action).getCategory();
             }
             return MenuBuilder.getCategoryWithPrefix(TableTargetMenu.MENU_COLUMN_ROWS, category);
         }
 
         @Override
         public String getSubCategory() {
-            if (action instanceof PopupCategorized.CategorizedMenuItem) {
-                return ((PopupCategorized.CategorizedMenuItem) action).getSubCategory();
+            if (action instanceof CategorizedMenuItem) {
+                return ((CategorizedMenuItem) action).getSubCategory();
             } else {
                 return "";
             }
@@ -755,7 +765,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * an action for wrapping another action.
      *   this action iterates over the selected rows and changing the target column value with the each row value.
      */
-    public static class TableRowsRepeatAction extends ActionDelegate<Action> implements PopupCategorized.CategorizedMenuItemAction {
+    public static class TableRowsRepeatAction extends ActionDelegate<Action> implements CategorizedMenuItemAction {
         protected JTable table;
         protected ObjectTableColumn column;
 
@@ -774,7 +784,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            ObjectTableColumn.PopupMenuBuilderSource source = (column == null ? null : column.getMenuBuilderSource());
+            PopupMenuBuilderSource source = (column == null ? null : column.getMenuBuilderSource());
             Consumer<Object> valuePane = (source == null ? null : source.getMenuTargetPane());
 
             for (int row : table.getSelectedRows()) {
@@ -797,16 +807,16 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         @Override
         public String getCategory() {
             String category = PopupCategorized.CATEGORY_ACTION;
-            if (action instanceof PopupCategorized.CategorizedMenuItem) {
-                category = ((PopupCategorized.CategorizedMenuItem) action).getCategory();
+            if (action instanceof CategorizedMenuItem) {
+                category = ((CategorizedMenuItem) action).getCategory();
             }
             return MenuBuilder.getCategoryWithPrefix(TableTargetMenu.MENU_COLUMN_ROWS, category);
         }
 
         @Override
         public String getSubCategory() {
-            if (action instanceof PopupCategorized.CategorizedMenuItem) {
-                return ((PopupCategorized.CategorizedMenuItem) action).getSubCategory();
+            if (action instanceof CategorizedMenuItem) {
+                return ((CategorizedMenuItem) action).getSubCategory();
             } else {
                 return "";
             }

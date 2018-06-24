@@ -3,6 +3,10 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingView.SpecifierManager;
+import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
+import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
+import autogui.swing.table.ObjectTableModelColumns.DynamicColumnFactory;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -13,15 +17,15 @@ import java.util.List;
  */
 public interface GuiSwingTableColumnSet extends GuiSwingElement {
     void createColumns(GuiMappingContext context, TableColumnHost model,
-                       GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
-                       GuiSwingView.SpecifierManager parentSpecifier,
-                       GuiSwingView.SpecifierManager specifierManager);
+                       SpecifierManagerIndex rowSpecifier,
+                       SpecifierManager parentSpecifier,
+                       SpecifierManager specifierManager);
 
     interface TableColumnHost {
         void addColumnRowIndex();
         void addColumnStatic(ObjectTableColumn column);
-        void addColumnDynamic(ObjectTableModelColumns.DynamicColumnFactory columnFactory);
-        void addMenuRowComposite(ObjectTableColumn.TableMenuComposite rowComposite);
+        void addColumnDynamic(DynamicColumnFactory columnFactory);
+        void addMenuRowComposite(TableMenuComposite rowComposite);
 
         boolean hasDynamicColumns();
 
@@ -116,8 +120,8 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
 
     void createColumnsForDynamicCollection(GuiMappingContext context,
                                            DynamicColumnHost collection,
-                                           GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier,
-                                           GuiSwingView.SpecifierManager parentSpecifier);
+                                           SpecifierManagerIndex rowSpecifier,
+                                           SpecifierManager parentSpecifier);
 
     interface DynamicColumnHost extends TableColumnHost {
         void addActionContext(GuiMappingContext context);

@@ -6,11 +6,18 @@ import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingView.SpecifierManager;
+import autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import autogui.swing.GuiSwingViewFilePathField;
 import autogui.swing.GuiSwingViewLabel;
+import autogui.swing.GuiSwingViewLabel.PropertyLabel;
+import autogui.swing.table.ObjectTableColumnValue.ObjectTableCellEditor;
+import autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
 import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 import autogui.swing.util.SearchTextField;
 import autogui.swing.util.SearchTextFieldFilePath;
+import autogui.swing.util.SearchTextFieldFilePath.SearchTextFieldModelFilePath;
 import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
@@ -32,13 +39,13 @@ import java.util.List;
 public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager parentSpecifier) {
-        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+                                          SpecifierManager parentSpecifier) {
+        SpecifierManager valueSpecifier = new SpecifierManagerDefault(parentSpecifier::getSpecifier);
 
         ColumnFilePathPane renderPane = new ColumnFilePathPane(context, valueSpecifier);
         ObjectTableColumn column = new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
-                new ObjectTableColumnValue.ObjectTableCellRenderer(renderPane, rowSpecifier),
-                new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditFilePathPane(context, valueSpecifier), false, rowSpecifier))
+                new ObjectTableCellRenderer(renderPane, rowSpecifier),
+                new ObjectTableCellEditor(new ColumnEditFilePathPane(context, valueSpecifier), false, rowSpecifier))
                 .withComparator(Comparator.comparing(Path.class::cast))
                 .withValueType(Path.class)
                 .withRowHeight(UIManagerUtil.getInstance().getScaledSizeInt(28));
@@ -46,11 +53,11 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         return column;
     }
 
-    public static class ColumnFilePathPane extends GuiSwingViewLabel.PropertyLabel {
+    public static class ColumnFilePathPane extends PropertyLabel {
         protected Graphics tester;
         protected TableColumn tableColumn;
         protected SearchTextFieldModelFilePathEmpty filePathModel;
-        public ColumnFilePathPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+        public ColumnFilePathPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             filePathModel = new SearchTextFieldModelFilePathEmpty();
             setOpaque(true);
@@ -107,7 +114,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         }
 
         @Override
-        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+        public List<CategorizedMenuItem> getSwingStaticMenuItems() {
             if (menuItems == null) {
                 menuItems = PopupCategorized.getMenuItems(Arrays.asList(
                         infoLabel,
@@ -128,8 +135,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     }
 
     public static class ColumnFileCopyAction extends SearchTextFieldFilePath.FileCopyAllAction {
-        protected GuiSwingViewLabel.PropertyLabel view;
-        public ColumnFileCopyAction(GuiSwingViewLabel.PropertyLabel view) {
+        protected PropertyLabel view;
+        public ColumnFileCopyAction(PropertyLabel view) {
             super(null);
             this.view = view;
         }
@@ -144,8 +151,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     }
 
     public static class ColumnDesktopOpenAction extends SearchTextFieldFilePath.DesktopOpenAction {
-        protected GuiSwingViewLabel.PropertyLabel view;
-        public ColumnDesktopOpenAction(GuiSwingViewLabel.PropertyLabel view) {
+        protected PropertyLabel view;
+        public ColumnDesktopOpenAction(PropertyLabel view) {
             super(null);
             this.view = view;
         }
@@ -160,8 +167,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     }
 
     public static class ColumnDesktopRevealAction extends SearchTextFieldFilePath.DesktopRevealAction {
-        protected GuiSwingViewLabel.PropertyLabel view;
-        public ColumnDesktopRevealAction(GuiSwingViewLabel.PropertyLabel view) {
+        protected PropertyLabel view;
+        public ColumnDesktopRevealAction(PropertyLabel view) {
             super(null);
             this.view = view;
         }
@@ -176,8 +183,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     }
 
     public static class ColumnOpenDialogAction extends SearchTextFieldFilePath.OpenDialogAction {
-        protected GuiSwingViewLabel.PropertyLabel view;
-        public ColumnOpenDialogAction(GuiSwingViewLabel.PropertyLabel view) {
+        protected PropertyLabel view;
+        public ColumnOpenDialogAction(PropertyLabel view) {
             super(null);
             this.view = view;
         }
@@ -239,7 +246,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
      * an editor for a file-path
      */
     public static class ColumnEditFilePathPane extends GuiSwingViewFilePathField.PropertyFilePathPane {
-        public ColumnEditFilePathPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+        public ColumnEditFilePathPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager, new SearchTextFieldModelFilePath());
             setCurrentValueSupported(false);
         }
@@ -283,7 +290,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         }
 
         @Override
-        public void selectSearchedItemFromModel(PopupCategorized.CategorizedMenuItem item) {
+        public void selectSearchedItemFromModel(CategorizedMenuItem item) {
             super.selectSearchedItemFromModel(item);
         }
 
@@ -308,14 +315,14 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     /**
      * a dummy editor for just rending a file-path
      */
-    public static class SearchTextFieldModelFilePathEmpty extends SearchTextFieldFilePath.SearchTextFieldModelFilePath {
+    public static class SearchTextFieldModelFilePathEmpty extends SearchTextFieldModelFilePath {
         @Override
         public boolean isBackgroundTask() {
             return false;
         }
 
         @Override
-        public List<PopupCategorized.CategorizedMenuItem> getCandidates(String text, boolean editable, SearchTextField.SearchTextFieldPublisher publisher) {
+        public List<CategorizedMenuItem> getCandidates(String text, boolean editable, SearchTextField.SearchTextFieldPublisher publisher) {
             setSelection(text);
             return new ArrayList<>();
         }

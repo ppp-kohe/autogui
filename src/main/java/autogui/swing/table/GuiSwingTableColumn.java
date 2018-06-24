@@ -2,10 +2,12 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
-import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.GuiReprValue.ObjectSpecifier;
+import autogui.base.mapping.GuiReprValue.ObjectSpecifierIndex;
 import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingPreferences;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingView.SpecifierManager;
 
 import java.util.function.Supplier;
 
@@ -14,23 +16,23 @@ import java.util.function.Supplier;
  */
 public interface GuiSwingTableColumn extends GuiSwingElement {
     ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                   GuiSwingView.SpecifierManager parentSpecifier);
+                                   SpecifierManager parentSpecifier);
 
 
-    class SpecifierManagerIndex implements GuiSwingView.SpecifierManager {
-        protected Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier;
+    class SpecifierManagerIndex implements SpecifierManager {
+        protected Supplier<ObjectSpecifier> tableSpecifier;
         protected int index;
 
-        public SpecifierManagerIndex(Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier) {
+        public SpecifierManagerIndex(Supplier<ObjectSpecifier> tableSpecifier) {
             this.tableSpecifier = tableSpecifier;
         }
 
-        public SpecifierManagerIndex(Supplier<GuiReprValue.ObjectSpecifier> tableSpecifier, int index) {
+        public SpecifierManagerIndex(Supplier<ObjectSpecifier> tableSpecifier, int index) {
             this.tableSpecifier = tableSpecifier;
             this.index = index;
         }
 
-        public GuiReprValue.ObjectSpecifier getTableSpecifier() {
+        public ObjectSpecifier getTableSpecifier() {
             return tableSpecifier.get();
         }
 
@@ -39,22 +41,22 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
         }
 
         @Override
-        public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return new GuiReprValue.ObjectSpecifierIndex(tableSpecifier.get(), index);
+        public ObjectSpecifier getSpecifier() {
+            return new ObjectSpecifierIndex(tableSpecifier.get(), index);
         }
 
-        public GuiReprValue.ObjectSpecifier getSpecifierWithSettingIndex(int index) {
+        public ObjectSpecifier getSpecifierWithSettingIndex(int index) {
             setIndex(index);
-            return new GuiReprValue.ObjectSpecifierIndex(tableSpecifier.get(), index);
+            return new ObjectSpecifierIndex(tableSpecifier.get(), index);
         }
     }
 
     /** interface for {@link ObjectTableColumn} */
     interface ObjectTableColumnWithContext
-            extends GuiSwingPreferences.PreferencesUpdateSupport, GuiSwingView.SettingsWindowClient{
+            extends GuiSwingPreferences.PreferencesUpdateSupport, GuiSwingView.SettingsWindowClient {
         GuiMappingContext getContext();
 
-        GuiSwingView.SpecifierManager getSpecifierManager();
+        SpecifierManager getSpecifierManager();
 
         /**
          * @return always this

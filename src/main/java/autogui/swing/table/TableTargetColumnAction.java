@@ -1,6 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupCategorized;
 
@@ -30,9 +31,9 @@ import java.util.function.Consumer;
  *   */
 public interface TableTargetColumnAction extends PopupCategorized.CategorizedMenuItemAction {
 
-    void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target);
+    void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target);
 
-    default boolean isEnabled(GuiReprCollectionTable.TableTargetColumn target) {
+    default boolean isEnabled(TableTargetColumn target) {
         return !target.isSelectionEmpty() && isEnabled();
     }
 }

@@ -5,8 +5,14 @@ import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingView.SpecifierManager;
+import autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import autogui.swing.GuiSwingViewEnumComboBox;
+import autogui.swing.GuiSwingViewEnumComboBox.PropertyEnumComboBox;
+import autogui.swing.GuiSwingViewEnumComboBox.PropertyLabelEnum;
 import autogui.swing.GuiSwingViewLabel;
+import autogui.swing.table.ObjectTableColumnValue.ObjectTableCellEditor;
+import autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
 import autogui.swing.util.PopupCategorized;
 
 import javax.swing.*;
@@ -21,29 +27,29 @@ import java.util.List;
  *
  * <p>
  *    The renderer is realized by {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
- *    The editor is realized by {@link autogui.swing.GuiSwingViewEnumComboBox.PropertyEnumComboBox}.
+ *    The editor is realized by {@link PropertyEnumComboBox}.
  */
 public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager parentSpecifier) {
-        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+                                          SpecifierManager parentSpecifier) {
+        SpecifierManager valueSpecifier = new SpecifierManagerDefault(parentSpecifier::getSpecifier);
         GuiSwingViewLabel.PropertyLabel label = new ColumnEnumPane(context, valueSpecifier);
 
-        GuiSwingViewEnumComboBox.PropertyEnumComboBox comboBox = new ColumnEditEnumComboBox(context, valueSpecifier);
-        ObjectTableColumnValue.ObjectTableCellEditor editor = new ObjectTableColumnValue.ObjectTableCellEditor(
+        PropertyEnumComboBox comboBox = new ColumnEditEnumComboBox(context, valueSpecifier);
+        ObjectTableCellEditor editor = new ObjectTableCellEditor(
                 comboBox, false, rowSpecifier);
         editor.setClickCount(2);
 
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
-                new ObjectTableColumnValue.ObjectTableCellRenderer(label, rowSpecifier),
+                new ObjectTableCellRenderer(label, rowSpecifier),
                 editor)
                 .withComparator(Comparator.naturalOrder())
                 .withValueType(Enum.class);
     }
 
-    public static class ColumnEnumPane extends GuiSwingViewEnumComboBox.PropertyLabelEnum {
-        public ColumnEnumPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+    public static class ColumnEnumPane extends PropertyLabelEnum {
+        public ColumnEnumPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setOpaque(true);
         }
@@ -66,8 +72,8 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
         }
     }
 
-    public static class ColumnEditEnumComboBox extends GuiSwingViewEnumComboBox.PropertyEnumComboBox {
-        public ColumnEditEnumComboBox(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+    public static class ColumnEditEnumComboBox extends PropertyEnumComboBox {
+        public ColumnEditEnumComboBox(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
             setBorder(BorderFactory.createEmptyBorder());

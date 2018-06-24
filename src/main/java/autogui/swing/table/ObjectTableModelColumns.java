@@ -1,6 +1,9 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
+import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
+import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -21,7 +24,7 @@ public class ObjectTableModelColumns
     protected List<ObjectTableColumn> columns = new ArrayList<>();
     protected List<ObjectTableColumn> staticColumns = new ArrayList<>();
     protected List<DynamicColumnContainer> dynamicColumns = new ArrayList<>();
-    protected List<ObjectTableColumn.TableMenuComposite> menuRowComposites = new ArrayList<>();
+    protected List<TableMenuComposite> menuRowComposites = new ArrayList<>();
 
     protected Map<Integer,Integer> modelToView = new HashMap<>();
 
@@ -109,11 +112,11 @@ public class ObjectTableModelColumns
     }
 
     @Override
-    public void addMenuRowComposite(ObjectTableColumn.TableMenuComposite rowComposite) {
+    public void addMenuRowComposite(TableMenuComposite rowComposite) {
         menuRowComposites.add(rowComposite);
     }
 
-    public List<ObjectTableColumn.TableMenuComposite> getMenuRowComposites() {
+    public List<TableMenuComposite> getMenuRowComposites() {
         return menuRowComposites;
     }
 
@@ -142,7 +145,7 @@ public class ObjectTableModelColumns
         return !dynamicColumns.isEmpty();
     }
 
-    public List<Action> getDynamicColumnsActions(GuiReprCollectionTable.TableTargetCell selection) {
+    public List<Action> getDynamicColumnsActions(TableTargetCell selection) {
         return dynamicColumns.stream()
                 .flatMap(d -> d.getFactory().getActions(selection).stream())
                 .collect(Collectors.toList());
@@ -401,11 +404,11 @@ public class ObjectTableModelColumns
 
         default void setParentFactory(DynamicColumnFactory factory) { }
 
-        List<GuiSwingTableColumn.SpecifierManagerIndex> getIndexSpecifiers();
+        List<SpecifierManagerIndex> getIndexSpecifiers();
 
-        Object getValue(Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> indexInjection);
+        Object getValue(Map<SpecifierManagerIndex, Integer> indexInjection);
 
-        List<Action> getActions(GuiReprCollectionTable.TableTargetCell selection);
+        List<Action> getActions(TableTargetCell selection);
     }
 
     /**
@@ -478,7 +481,7 @@ public class ObjectTableModelColumns
     public abstract static class ObjectTableColumnSize {
         protected int size;
         protected ObjectTableColumnSize parent;
-        protected GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex;
+        protected SpecifierManagerIndex elementSpecifierIndex;
 
         public int size() {
             return size;
@@ -508,22 +511,22 @@ public class ObjectTableModelColumns
         public abstract void create(DynamicColumnContainer targetContainer);
 
 
-        public void setElementSpecifierIndex(GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex) {
+        public void setElementSpecifierIndex(SpecifierManagerIndex elementSpecifierIndex) {
             this.elementSpecifierIndex = elementSpecifierIndex;
         }
 
-        public GuiSwingTableColumn.SpecifierManagerIndex getElementSpecifierIndex() {
+        public SpecifierManagerIndex getElementSpecifierIndex() {
             return elementSpecifierIndex;
         }
 
-        public Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> toIndexInjection(int index) {
-            Map<GuiSwingTableColumn.SpecifierManagerIndex,Integer> is;
+        public Map<SpecifierManagerIndex, Integer> toIndexInjection(int index) {
+            Map<SpecifierManagerIndex,Integer> is;
             if (parent != null) {
                 is = parent.toIndexInjection(getIndexInParent());
             } else {
                 is = new LinkedHashMap<>();
             }
-            GuiSwingTableColumn.SpecifierManagerIndex i = getElementSpecifierIndex();
+            SpecifierManagerIndex i = getElementSpecifierIndex();
             if (i != null && index != -1) { //-1 for rowSpecifier, thus the map does not include rowSpecifier
                 is.put(i, index);
             }
@@ -574,7 +577,7 @@ public class ObjectTableModelColumns
 
     public static class ObjectTableColumnSizeComposite extends ObjectTableColumnSize {
         protected List<ObjectTableColumnSize> children;
-        protected Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> injectionMapPrototype;
+        protected Map<SpecifierManagerIndex, Integer> injectionMapPrototype;
 
         public ObjectTableColumnSizeComposite(List<ObjectTableColumnSize> children) {
             this.children = children;
@@ -646,23 +649,23 @@ public class ObjectTableModelColumns
         }
 
         @Override
-        public Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> toIndexInjection(int index) {
-            Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> is = new LinkedHashMap<>(
+        public Map<SpecifierManagerIndex, Integer> toIndexInjection(int index) {
+            Map<SpecifierManagerIndex, Integer> is = new LinkedHashMap<>(
                     toIndexInjection());
-            GuiSwingTableColumn.SpecifierManagerIndex i = getElementSpecifierIndex();
+            SpecifierManagerIndex i = getElementSpecifierIndex();
             if (i != null && index != -1) {
                 is.put(i, index);
             }
             return is;
         }
 
-        public Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> toIndexInjection() {
+        public Map<SpecifierManagerIndex, Integer> toIndexInjection() {
             if (injectionMapPrototype == null) {
-                Map<GuiSwingTableColumn.SpecifierManagerIndex, Integer> map = new LinkedHashMap<>();
+                Map<SpecifierManagerIndex, Integer> map = new LinkedHashMap<>();
                 ObjectTableColumnSize size = getParent();
                 int index = getIndexInParent();
                 while (size != null) {
-                    GuiSwingTableColumn.SpecifierManagerIndex spec = size.getElementSpecifierIndex();
+                    SpecifierManagerIndex spec = size.getElementSpecifierIndex();
                     if (spec != null && index != -1) {
                         map.put(spec, index);
                     }
@@ -675,7 +678,7 @@ public class ObjectTableModelColumns
         }
 
         @Override
-        public void setElementSpecifierIndex(GuiSwingTableColumn.SpecifierManagerIndex elementSpecifierIndex) {
+        public void setElementSpecifierIndex(SpecifierManagerIndex elementSpecifierIndex) {
             super.setElementSpecifierIndex(elementSpecifierIndex);
             injectionMapPrototype = null;
         }

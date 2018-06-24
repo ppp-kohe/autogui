@@ -2,12 +2,17 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
+import autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
 import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingView.SpecifierManager;
+import autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import autogui.swing.GuiSwingViewLabel;
+import autogui.swing.GuiSwingViewLabel.PropertyLabel;
 import autogui.swing.GuiSwingViewStringField;
 import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 import autogui.swing.util.PopupExtensionText;
 
 import javax.swing.*;
@@ -24,13 +29,13 @@ import java.util.stream.Collectors;
 /**
  * a column factory for {@link String}.
  * <p>
- *     both editor and renderer are realized by a sub-class of {@link autogui.swing.GuiSwingViewLabel.PropertyLabel}.
+ *     both editor and renderer are realized by a sub-class of {@link PropertyLabel}.
  */
 public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
-                                          GuiSwingView.SpecifierManager parentSpecifier) {
-        GuiSwingView.SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
+                                          SpecifierManager parentSpecifier) {
+        SpecifierManager valueSpecifier = new SpecifierManagerDefault(parentSpecifier::getSpecifier);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ColumnTextPane(context, valueSpecifier),
                 new ColumnEditTextPane(context, valueSpecifier))
@@ -38,14 +43,14 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                     .withValueType(String.class);
     }
 
-    public static class ColumnTextPane extends GuiSwingViewLabel.PropertyLabel {
-        public ColumnTextPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+    public static class ColumnTextPane extends PropertyLabel {
+        public ColumnTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setOpaque(true);
         }
 
         @Override
-        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+        public List<CategorizedMenuItem> getSwingStaticMenuItems() {
             if (menuItems == null) {
                 menuItems = PopupCategorized.getMenuItems(Arrays.asList(
                         infoLabel,
@@ -64,9 +69,9 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     public static class LabelTextPasteAllAction extends PopupExtensionText.TextPasteAllAction
         implements TableTargetColumnAction {
-        protected GuiSwingViewLabel.PropertyLabel label;
+        protected PropertyLabel label;
 
-        public LabelTextPasteAllAction(GuiSwingViewLabel.PropertyLabel label) {
+        public LabelTextPasteAllAction(PropertyLabel label) {
             super(null);
             this.label = label;
         }
@@ -82,7 +87,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         @Override
-        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
             pasteLines(lines ->
                     target.setSelectedCellValuesLoop(
                             lines.stream()
@@ -93,9 +98,9 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     public static class LabelTextLoadAction extends PopupExtensionText.TextLoadAction
             implements TableTargetColumnAction {
-        protected GuiSwingViewLabel.PropertyLabel label;
+        protected PropertyLabel label;
 
-        public LabelTextLoadAction(GuiSwingViewLabel.PropertyLabel label) {
+        public LabelTextLoadAction(PropertyLabel label) {
             super(null);
             putValue(NAME, "Load Text...");
             this.label = label;
@@ -125,7 +130,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         @Override
-        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
             String str = load();
             if (str != null) {
                 target.setSelectedCellValuesLoop(
@@ -139,12 +144,12 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     public static class ColumnLabelTextSaveAction extends GuiSwingViewLabel.LabelTextSaveAction
         implements TableTargetColumnAction {
 
-        public ColumnLabelTextSaveAction(GuiSwingViewLabel.PropertyLabel label) {
+        public ColumnLabelTextSaveAction(PropertyLabel label) {
             super(label);
         }
 
         @Override
-        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
             Path path = getPath();
             if (path != null) {
                 saveLines(path, target.getSelectedCellValues().stream()
@@ -157,7 +162,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     /** a component for editor and renderer */
     public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyStringPane {
-        public ColumnEditTextPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager) {
+        public ColumnEditTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
             //getField().setEditable(false);
