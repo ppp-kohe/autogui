@@ -70,9 +70,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             }
         }
 
-        actions.addAll(table.getObjectTableModel().getColumns()
-                .getDynamicColumnsActions(new TableTargetCellForJTable(table)));
-
         if (context.hasParent()) {
             GuiMappingContext parent = context.getParent();
             if (parent.isTypeElementProperty() && parent.hasParent()) {
@@ -91,7 +88,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                                 table.getSelectionSourceForRowAndColumnIndices());
                     } else if (listAction.isSelectionAction(siblingContext, context)) {
                         if (table.getObjectTableModel().getColumns().hasDynamicColumns()) {
-
+                            //TODO
                         } else {
                             createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table);
                         }
@@ -104,6 +101,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 }
             }
         }
+
+        actions.addAll(table.getObjectTableModel().getColumns()
+                .getDynamicColumnsActions(new TableTargetCellForJTable(table)));
+
         return table.setupAfterAddingColumns(actions);
     }
 
