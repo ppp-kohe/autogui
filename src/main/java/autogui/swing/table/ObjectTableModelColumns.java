@@ -15,6 +15,7 @@ import javax.swing.table.TableRowSorter;
 import java.text.Collator;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /** column managing part of {@link ObjectTableModel} */
 public class ObjectTableModelColumns
@@ -262,6 +263,10 @@ public class ObjectTableModelColumns
             lastIndex = startIndex;
             ObjectTableColumnSize newSize = factory.getColumnSize(list);
             newSize.create(this); //event if staticColumns, it might need to shift modelIndex of existing columns
+            System.err.println("--------------------");
+            this.columns.getStaticColumns().forEach(e -> System.err.println("   static: " + e));
+            factory.debugPrint(1);
+            newSize.debugPrint(1);
             return lastIndex;
         }
 
@@ -413,15 +418,23 @@ public class ObjectTableModelColumns
 
         Object getValueAsMember(Object parent);
 
-        default void setParentFactory(DynamicColumnFactory factory) { }
+        void setParentFactory(DynamicColumnFactory factory);
+
+        DynamicColumnFactory getParentFactory();
 
         List<SpecifierManagerIndex> getIndexSpecifiers();
+
+        SpecifierManagerIndex getIndex();
 
         Object getValue(Map<SpecifierManagerIndex, Integer> indexInjection);
 
         List<Action> getActions(TableTargetCell selection);
 
         boolean isStaticColumns();
+
+        void debugPrint(int depth);
+
+        String getDisplayName();
     }
 
     /**
@@ -509,7 +522,7 @@ public class ObjectTableModelColumns
         }
 
         public List<ObjectTableColumnSize> getChildren() {
-            error("getChildren", null);
+            //error("getChildren", null);
             return Collections.emptyList();
         }
 
@@ -585,6 +598,16 @@ public class ObjectTableModelColumns
             return is.stream()
                     .mapToInt(Integer::intValue)
                     .toArray();
+        }
+
+        public void debugPrint(int depth) {
+            System.err.println(IntStream.range(0, depth)
+                    .mapToObj(i -> "   ")
+                    .collect(Collectors.joining()) + this.toString() +
+                        Arrays.toString(toIndices()));
+            for (ObjectTableColumnSize child : getChildren()) {
+                child.debugPrint(depth + 1);
+            }
         }
     }
 

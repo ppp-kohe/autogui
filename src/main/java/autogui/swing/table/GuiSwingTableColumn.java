@@ -49,6 +49,11 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
             setIndex(index);
             return new ObjectSpecifierIndex(tableSpecifier.get(), index);
         }
+
+        @Override
+        public String toString() {
+            return String.format("[%x]", System.identityHashCode(this));
+        }
     }
 
     /** interface for {@link ObjectTableColumn} */

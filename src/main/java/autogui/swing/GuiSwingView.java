@@ -1081,6 +1081,11 @@ public interface GuiSwingView extends GuiSwingElement {
             specifierCache = new GuiReprValue.ObjectSpecifier(parentSpec, false);
             return specifierCache;
         }
+
+        @Override
+        public String toString() {
+            return String.format("<%x>", System.identityHashCode(this));
+        }
     }
 
 

@@ -25,11 +25,13 @@ import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
+import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -491,6 +493,24 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         public boolean isStaticColumns() {
             return false;
         }
+
+        @Override
+        public String getDisplayName() {
+            return "";
+        }
+
+        public void debugPrint(int depth) {
+            PrintStream out = System.err;
+            String indent = IntStream.range(0, depth)
+                    .mapToObj(i -> "   ")
+                    .collect(Collectors.joining());
+            out.println(indent + this.toString());
+            out.println(indent + "   : name=" + getDisplayName() + ", context=" + getContext());
+            out.println(indent + "   : index=" + index + ", indexSpecs=" + getIndexSpecifiers());
+            if (elementFactory != null) {
+                elementFactory.debugPrint(depth + 1);
+            }
+        }
     }
 
     /**
@@ -506,9 +526,19 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         @Override
         public ObjectTableColumnSize getColumnSize(Object c) {
             ObjectTableColumnSizeComposite root = new ObjectTableColumnSizeComposite(new ArrayList<>(1));
-            ObjectTableColumnSizeComposite element = new ObjectTableColumnSizeComposite(new ArrayList<>());
-            forEachValue(c, this.context, this.specifierManager, this.index, e -> element.set(elementFactory.getColumnSize(e)));
-            root.add(element);
+            ObjectTableColumnSize[] element = new ObjectTableColumnSize[] { null };
+
+            forEachValue(c, this.context, this.specifierManager, this.index, e -> {
+                ObjectTableColumnSize next = elementFactory.getColumnSize(e);
+                if (element[0] == null) {
+                    element[0] = next;
+                } else {
+                    element[0].set(next);
+                }
+            });
+            if (element[0] != null) {
+                root.add(element[0]);
+            }
             root.setElementSpecifierIndex(getIndex());
             return root;
         }
@@ -590,6 +620,26 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             return factories.stream()
                     .allMatch(DynamicColumnFactory::isStaticColumns);
         }
+
+        @Override
+        public String getDisplayName() {
+            if (context.isTypeElementProperty()) {
+                return context.getDisplayName();
+            } else {
+                return "";
+            }
+        }
+
+        public void debugPrint(int depth) {
+            PrintStream out = System.err;
+            String indent = IntStream.range(0, depth)
+                    .mapToObj(i -> "   ")
+                    .collect(Collectors.joining());
+            out.println(indent + this.toString());
+            out.println(indent + "   : name=" + getDisplayName() + ", context=" + getContext());
+            out.println(indent + "   : index=" + index  + ", indexSpecs=" + getIndexSpecifiers());
+            factories.forEach(f -> f.debugPrint(depth + 1));
+        }
     }
 
 
@@ -632,15 +682,55 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         public void createSingle(DynamicColumnContainer targetContainer, int indexInSize) {
             ObjectTableColumn c = column.createColumn(factoryBase.getContext(), null, parentSpecifier);
             if (c instanceof ObjectTableColumnWithContext) {
+                Map<SpecifierManagerIndex,Integer> indexInjections = toIndexInjection(indexInSize);
                 factoryBase.setSpecifierManager(((ObjectTableColumnWithContext) c).getSpecifierManager());
-                targetContainer.add(new ObjectTableColumnCollectionWrapper(
+                targetContainer.add(new ObjectTableColumnCollectionWrapper(getHeaderName(indexInjections),
                         (ObjectTableColumnWithContext) c,
-                        //context.getChildren().get(0),
-                        toIndexInjection(indexInSize),
+                        indexInjections,
                         toIndices()));
             } else {
                 targetContainer.add(c);
             }
+        }
+
+        @Override
+        public DynamicColumnFactory getParentFactory() {
+            return factoryBase.getParentFactory();
+        }
+
+        public String getHeaderName(Map<SpecifierManagerIndex,Integer> indexInjection) {
+            DynamicColumnFactory f = this;
+            String name = "";
+            while (f != null) {
+                String n = f.getDisplayName();
+                SpecifierManagerIndex i = f.getIndex();
+                if (i != null) {
+                    Integer idx = indexInjection.get(i);
+                    if (idx != null) {
+                        n = n + "[" + idx + "]";
+                    }
+                }
+
+                if (!n.isEmpty()) {
+                    if (name.isEmpty()) {
+                        name = n;
+                    } else {
+                        if (name.startsWith("[")) {
+                            name = n + name;
+                        } else {
+                            name = n + "." + name;
+                        }
+                    }
+                }
+                f = f.getParentFactory();
+            }
+            return name;
+        }
+
+        @Override
+        public String getDisplayName() {
+            GuiMappingContext context = factoryBase.getContext();
+            return context.getDisplayName();
         }
 
         /**
@@ -662,6 +752,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
+        public SpecifierManagerIndex getIndex() {
+            return factoryBase.getIndex();
+        }
+
+        @Override
         public Object getValue(Map<SpecifierManagerIndex, Integer> indexInjection) {
             return factoryBase.getValue(indexInjection);
         }
@@ -680,6 +775,23 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         public boolean isStaticColumns() {
             return true;
         }
+
+        @Override
+        public void debugPrint(int depth) {
+            PrintStream out = System.err;
+            String indent = IntStream.range(0, depth)
+                    .mapToObj(i -> "   ")
+                    .collect(Collectors.joining());
+            out.println(indent + this.toString() + " : " + Arrays.toString(toIndices()));
+            out.println(indent + " : name=" + getDisplayName() + ", context=" + factoryBase.getContext());
+            out.println(indent + " : index=" + factoryBase.getIndex() + ", indexSpecs=" + getIndexSpecifiers());
+            out.println(indent + " : column=" + column );
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "(size=" + size() + ", name=" + getDisplayName() + ")";
+        }
     }
 
     public static class ObjectTableColumnCollectionWrapper extends ObjectTableColumn
@@ -691,15 +803,15 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
          */
         protected int[] indices;
 
-        public ObjectTableColumnCollectionWrapper(ObjectTableColumnWithContext column,
+        public ObjectTableColumnCollectionWrapper(String headerName, ObjectTableColumnWithContext column,
                                                   Map<SpecifierManagerIndex, Integer> indexInjection,
                                                   int[] indices) {
             this.column = column.asColumn();
             this.indexInjection = indexInjection;
             this.indices = indices;
             if (this.column != null) {
-                this.column.withHeaderValue(this.column.getTableColumn().getHeaderValue() +
-                        Arrays.toString(Arrays.copyOfRange(indices, 1, indices.length)));
+                this.column.withHeaderValue(headerName);//this.column.getTableColumn().getHeaderValue() +
+                        //Arrays.toString(Arrays.copyOfRange(indices, 1, indices.length)));
             }
         }
 

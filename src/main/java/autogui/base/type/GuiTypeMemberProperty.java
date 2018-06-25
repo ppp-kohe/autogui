@@ -254,10 +254,11 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     @Override
     public String getDescription() {
         if (description == null) {
-            description = join(join(
+            description = join(join(join(
                     description(getField()),
                     description(getGetter())),
-                    description(getSetter()));
+                    description(getSetter())),
+                    type != null ? type.getDescription() : "");
         }
         return description;
     }

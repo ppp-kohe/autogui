@@ -81,6 +81,11 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return GuiReprValue.NONE;
         }
+
+        @Override
+        public String toString() {
+            return "_";
+        }
     }
 
     ////////////
