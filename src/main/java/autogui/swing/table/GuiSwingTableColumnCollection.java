@@ -486,6 +486,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                     elementFactory == null ? Collections.emptyList() : Collections.singletonList(elementFactory),
                     selection);
         }
+
+        @Override
+        public boolean isStaticColumns() {
+            return false;
+        }
     }
 
     /**
@@ -506,6 +511,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             root.add(element);
             root.setElementSpecifierIndex(getIndex());
             return root;
+        }
+
+        @Override
+        public boolean isStaticColumns() {
+            return elementFactory.isStaticColumns();
         }
     }
 
@@ -573,6 +583,12 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         @Override
         public List<Action> getActions(TableTargetCell selection) {
             return getActions(this, factories, selection);
+        }
+
+        @Override
+        public boolean isStaticColumns() {
+            return factories.stream()
+                    .allMatch(DynamicColumnFactory::isStaticColumns);
         }
     }
 
@@ -658,6 +674,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         @Override
         public Object getValueAsMember(Object parent) {
             return factoryBase.getValueAsMember(parent);
+        }
+
+        @Override
+        public boolean isStaticColumns() {
+            return true;
         }
     }
 

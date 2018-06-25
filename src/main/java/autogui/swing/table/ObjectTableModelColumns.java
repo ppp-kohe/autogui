@@ -1,6 +1,5 @@
 package autogui.swing.table;
 
-import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
@@ -158,6 +157,11 @@ public class ObjectTableModelColumns
         }
     }
 
+    public boolean isStaticColumns() {
+        return dynamicColumns.stream()
+                .allMatch(DynamicColumnContainer::isStaticColumns);
+    }
+
     public void addColumnDynamic(DynamicColumnContainer d, ObjectTableColumn c) {
         this.columns.add(c.getTableColumn().getModelIndex(), c);
         columnAdded(c, d);
@@ -257,8 +261,12 @@ public class ObjectTableModelColumns
         public int update(int startIndex, Object list) {
             lastIndex = startIndex;
             ObjectTableColumnSize newSize = factory.getColumnSize(list);
-            newSize.create(this);
+            newSize.create(this); //event if staticColumns, it might need to shift modelIndex of existing columns
             return lastIndex;
+        }
+
+        public boolean isStaticColumns() {
+            return factory.isStaticColumns();
         }
 
         public void add(ObjectTableColumn column) {
@@ -412,6 +420,8 @@ public class ObjectTableModelColumns
         Object getValue(Map<SpecifierManagerIndex, Integer> indexInjection);
 
         List<Action> getActions(TableTargetCell selection);
+
+        boolean isStaticColumns();
     }
 
     /**

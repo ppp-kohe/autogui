@@ -9,6 +9,7 @@ import autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import autogui.swing.table.GuiSwingTableColumnCollection.DynamicColumnFactoryCollectionRoot;
 import autogui.swing.table.GuiSwingTableColumnCollection.DynamicColumnFactoryComposite;
+import autogui.swing.table.GuiSwingTableColumnCollection.ObjectTableColumnSizeConcrete;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 import autogui.swing.table.ObjectTableModelColumns.DynamicColumnFactory;
 
@@ -145,7 +146,8 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                                                         GuiSwingElement view) {
         if (view instanceof GuiSwingTableColumn) { //a value-type : List<List<String>>
             GuiSwingTableColumn column = (GuiSwingTableColumn) view;
-            target.addColumnDynamic(new GuiSwingTableColumnCollection.ObjectTableColumnSizeConcrete(1, subContext, column, subSpecifier, target));
+            ObjectTableColumnSizeConcrete c = new ObjectTableColumnSizeConcrete(1, subContext, column, subSpecifier, target);
+            target.addColumnDynamic(c);
         } else if (view instanceof GuiSwingTableColumnDynamic) { //further collection: List<List<List<...>>>
             ((GuiSwingTableColumnDynamic) view).createColumnDynamic(subContext, target, rowSpecifier, subSpecifier);
         } else if (view instanceof GuiSwingTableColumnSet) {   //regular object: List<List<Obj>>
