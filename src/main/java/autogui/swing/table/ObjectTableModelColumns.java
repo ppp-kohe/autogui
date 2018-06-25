@@ -141,8 +141,13 @@ public class ObjectTableModelColumns
         return dynamicColumns;
     }
 
-    public boolean hasDynamicColumns() {
+    public boolean isNonEmpty() {
         return !dynamicColumns.isEmpty();
+    }
+
+    public DynamicColumnContainer getRootContainer() {
+        return dynamicColumns.isEmpty() ? null :
+                dynamicColumns.get(0);
     }
 
     public List<Action> getDynamicColumnsActions(TableTargetCell selection) {

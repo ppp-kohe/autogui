@@ -114,7 +114,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 */
             }
         }
-        if (col.hasDynamicColumns()) {
+        if (col.isNonEmpty()) {
             model.addColumnDynamic(col);
         }
     }
@@ -139,7 +139,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                     GuiSwingTableColumnSetDefault.createColumnForDynamicCollection(
                             subContext, target, rowSpecifier, subSpecifier, view);
                 }
-                if (target.hasDynamicColumns()) {
+                if (target.isNonEmpty()) {
                     model.addColumnDynamic(target);
                 }
             //}
@@ -390,8 +390,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public boolean hasDynamicColumns() {
-            return elementFactory != null;
+        public boolean isNonEmpty() {
+            return !getActionContexts().isEmpty() || elementFactory != null;
         }
 
         @Override
@@ -464,7 +464,10 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         public ObjectTableColumnSize getColumnSizeForObjectList(Object c) {
             ObjectTableColumnSizeComposite size = new ObjectTableColumnSizeComposite(new ArrayList<>(getValueSize(c)));
-            forEachValue(c, this.context, this.specifierManager, this.index, e -> size.add(elementFactory.getColumnSize(e)));
+            forEachValue(c, this.context, this.specifierManager, this.index, e -> size.add(
+                    elementFactory == null ?
+                            new ObjectTableColumnSizeComposite(Collections.emptyList()) :
+                            elementFactory.getColumnSize(e)));
             size.setElementSpecifierIndex(getIndex());
             return size;
         }
@@ -529,7 +532,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             ObjectTableColumnSize[] element = new ObjectTableColumnSize[] { null };
 
             forEachValue(c, this.context, this.specifierManager, this.index, e -> {
-                ObjectTableColumnSize next = elementFactory.getColumnSize(e);
+                ObjectTableColumnSize next = elementFactory == null ? null : elementFactory.getColumnSize(e);
                 if (element[0] == null) {
                     element[0] = next;
                 } else {
@@ -545,7 +548,12 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         @Override
         public boolean isStaticColumns() {
-            return elementFactory.isStaticColumns();
+            return elementFactory == null || elementFactory.isStaticColumns();
+        }
+
+        @Override
+        public boolean isNonEmpty() {
+            return true; //always true for
         }
     }
 
@@ -583,8 +591,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public boolean hasDynamicColumns() {
-            return !factories.isEmpty();
+        public boolean isNonEmpty() {
+            return !getActionContexts().isEmpty() || !factories.isEmpty();
         }
 
         @Override

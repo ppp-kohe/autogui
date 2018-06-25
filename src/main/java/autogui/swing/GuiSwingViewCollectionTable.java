@@ -79,20 +79,26 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 if (siblingContext.getRepresentation() instanceof GuiReprActionList) {
                     GuiReprActionList listAction = (GuiReprActionList) siblingContext.getRepresentation();
 
-                    GuiSwingTableColumnSetDefault.TableSelectionListAction createdAction = null;
-                    if (listAction.isSelectionRowIndicesAction(siblingContext)) {
-                        createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
-                                table.getSelectionSourceForRowIndices());
-                    } else if (listAction.isSelectionRowAndColumnIndicesAction(siblingContext)) {
-                        createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
-                                table.getSelectionSourceForRowAndColumnIndices());
-                    } else if (listAction.isSelectionAction(siblingContext, context)) {
-                        createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table);
-                    }
+                    ObjectTableModelColumns.DynamicColumnContainer dc = table.getObjectTableModel().getColumns().getRootContainer();
+                    if (dc != null && dc.getFactory() instanceof GuiSwingTableColumnSet.DynamicColumnHost) {
+                        ObjectTableModelColumns.DynamicColumnFactory factory = dc.getFactory();
+                        ((GuiSwingTableColumnSet.DynamicColumnHost) factory).addActionContext(siblingContext);
+                    } else {
+                        GuiSwingTableColumnSetDefault.TableSelectionListAction createdAction = null;
+                        if (listAction.isSelectionRowIndicesAction(siblingContext)) {
+                            createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
+                                    table.getSelectionSourceForRowIndices());
+                        } else if (listAction.isSelectionRowAndColumnIndicesAction(siblingContext)) {
+                            createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
+                                    table.getSelectionSourceForRowAndColumnIndices());
+                        } else if (listAction.isSelectionAction(siblingContext, context)) {
+                            createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table);
+                        }
 
-                    if (createdAction != null) {
-                        actions.add(createdAction);
-                        createdAction.setSelectionChangeFactoryFromContext(context);
+                        if (createdAction != null) {
+                            actions.add(createdAction);
+                            createdAction.setSelectionChangeFactoryFromContext(context);
+                        }
                     }
                 }
             }

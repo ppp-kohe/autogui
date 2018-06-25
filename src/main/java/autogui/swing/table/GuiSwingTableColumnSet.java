@@ -2,7 +2,6 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.GuiSwingElement;
-import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingView.SpecifierManager;
 import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
@@ -27,7 +26,7 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
         void addColumnDynamic(DynamicColumnFactory columnFactory);
         void addMenuRowComposite(TableMenuComposite rowComposite);
 
-        boolean hasDynamicColumns();
+        boolean isNonEmpty();
 
         ObjectTableColumn getColumnAt(int modelIndex);
     }
