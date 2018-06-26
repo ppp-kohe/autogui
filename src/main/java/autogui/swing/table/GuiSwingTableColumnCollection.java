@@ -1012,7 +1012,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         public boolean containsIndexInjections(List<SpecifierManagerIndex> requiredSpecs) {
             return indexInjection.keySet().containsAll(
-                    requiredSpecs.subList(Math.min(1, requiredSpecs.size()), requiredSpecs.size()));
+                    requiredSpecs.subList(Math.min(1, requiredSpecs.size()), requiredSpecs.size())); //exclude rowSpecifier
         }
 
         public Map<SpecifierManagerIndex, Integer> getIndexInjection(
@@ -1042,6 +1042,27 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             this.selection = selection;
         }
 
+
+        /**
+         *  The method first obtains {@link ObjectTableColumn} of selected {row,column}.
+         *  <p>
+         *    If the column is a {@link ObjectTableColumnCollectionWrapper}, then it was created as a dynamic column.
+         *     The column has indexSpecifiers for obtaining the column value: {rowSpecifier,columnSpecifier,index1,index2, ...}.
+         *       The action's target or arguments only requires the former part of of the specs.
+         *        e.g. List&lt;List&lt;E&gt;&gt; and class E { List&lt;Float&gt; fs;}  act(List&lt;List&lt;E&gt;&gt;) },
+         *           then the specifier of the column "fs[n]" is {rowSpec,colSpec,indexSpecOfFs},
+         *               but the action "act" requires only {rowSpec}. //not {rowSpec,ColSpec}. currently, it is recognized as just act(List&lt;X&gt;)
+         *  <p>
+         *    If the column is another {@link ObjectTableColumn} type, then it was created as a static column.
+         *     The column's specifier becomes {rowSpecifier}.
+         *
+         * @param factory    source of required specifiers :
+         *                    For List&lt;E&gt; and action(List&lt;E&gt;), {rowSpecifier} become the required specifiers.
+         *                    For List&lt;List&lt;E&gt;&gt; and class E{ action() }, {rowSpecifier,columnSpecifier} become the required specs.
+         * @param targetName name of the target field. for List&lt;V&gt; f1; List&lt;V&gt; f2; and action(List&lt;V&gt;,String targetName)
+         * @param occurrences a set for ignoring duplicated entries
+         * @param resultGen   action for each occurrence
+         */
         public void select(DynamicColumnFactory factory, String targetName,
                            Set<TargetAndSpecifierMap> occurrences, Consumer<TargetAndSpecifierMap> resultGen) {
             List<SpecifierManagerIndex> indexSpecifiers = factory == null ? Collections.emptyList() :
@@ -1217,8 +1238,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 List<SpecifierManagerIndex> cellSpecs =  toCellIndexSpecs(targetSpecs,
                         elementFactory == null ?
                                 argumentFactory.getIndexSpecifiers() : elementFactory.getIndexSpecifiers());
-                select(elementFactory == null ?
-                                argumentFactory : elementFactory,
+                select(getSelectionFactory(argumentFactory),
                         targetName,
                         occurrences,
                         t -> {//targetIndexSpecifiers is a sub-set of argumentIndexSpecifiers
@@ -1234,6 +1254,10 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 targetToArgMap.forEach((target, args) ->
                         result.add(new TargetAndArgumentList(target, args, targetName))));
             return result;
+        }
+
+        public DynamicColumnFactory getSelectionFactory(DynamicColumnFactoryList argumentFactory) {
+            return argumentFactory;
         }
 
         public List<SpecifierManagerIndex> toCellIndexSpecs(List<SpecifierManagerIndex> targetSpecs, List<SpecifierManagerIndex> argSpecs) {
@@ -1423,13 +1447,18 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
+        public DynamicColumnFactory getSelectionFactory(DynamicColumnFactoryList argumentFactory) {
+            return argumentFactory.getElementFactory();
+        }
+
+        @Override
         public List<SpecifierManagerIndex> toCellIndexSpecs(List<SpecifierManagerIndex> targetSpecs, List<SpecifierManagerIndex> argSpecs) {
             int ts = targetSpecs.size();
             int as = argSpecs.size();
-            if (ts > 0 && ts < as) {
+            if (ts < as) {
                 List<SpecifierManagerIndex> cellSpecs = new ArrayList<>(as - ts + 1);
-                cellSpecs.add(targetSpecs.get(0));
-                cellSpecs.addAll(argSpecs.subList(ts, as));
+                cellSpecs.add(argSpecs.get(0));
+                cellSpecs.addAll(argSpecs.subList(Math.max(1, ts), as));
                 return cellSpecs;
             } else {
                 return Collections.emptyList();
@@ -1438,7 +1467,12 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         @Override
         public Object getIndexValue(DynamicColumnFactoryList argumentFactory, TargetAndSpecifierMap t, List<SpecifierManagerIndex> cellSpecs) {
-            return t.toIndices(cellSpecs);
+            int[] idx = t.toIndices(cellSpecs);
+            if (Arrays.stream(idx).anyMatch(i -> i == -1)) {
+                return null;
+            } else {
+                return idx;
+            }
         }
     }
 
