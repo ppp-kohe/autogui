@@ -1320,7 +1320,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 expand = true;
             }
             GuiReprActionList action = context.getReprActionList();
-            for (Object v : source.getSelectedItems()) {
+            for (Object v : src) {
                 if (v instanceof TargetAndArgumentList) {
                     TargetAndArgumentList ta = (TargetAndArgumentList) v;
                     Object ret = action.executeActionForList(context, ta.target, ta.argument, ta.targetName);

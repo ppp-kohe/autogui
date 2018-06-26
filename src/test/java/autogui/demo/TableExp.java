@@ -110,7 +110,7 @@ public class TableExp {
     public static class TableD {
         @GuiIncluded public List<List<ElemB>> listD = Arrays.asList(
                 Arrays.asList(new ElemB(10f), new ElemB(11f), new ElemB(12f), new ElemB(13f), new ElemB(14f)),
-                Arrays.asList(new ElemB(20f), new ElemB(21f), new ElemB(22f), new ElemB(22f)),
+                Arrays.asList(new ElemB(20f), new ElemB(21f), new ElemB(22f), new ElemB(23f)),
                 Arrays.asList(new ElemB(30f), new ElemB(31f), new ElemB(32f))
         );
 
