@@ -76,9 +76,8 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         getMenuRowComposites(context)
                 .forEach(model::addMenuRowComposite);
 
-        if (model.isNonEmpty() /*&& model instanceof ObjectTableModelColumns.DynamicColumnFactory*/) {
-            parentModel.addColumnDynamic((DynamicColumnFactory) model);
-        }
+        //if (model.isNonEmpty() /*&& model instanceof ObjectTableModelColumns.DynamicColumnFactory*/)
+        parentModel.addColumnDynamic((DynamicColumnFactory) model); //always append to the parent
     }
 
     public List<TableMenuComposite> getMenuRowComposites(GuiMappingContext context) {
@@ -139,7 +138,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
             GuiSwingElement view = columnMappingSet.viewTableColumn(subContext);
             createColumnForDynamicCollection(subContext, target, rowSpecifier, subSpecifier, view);
         }
-        if (target.isNonEmpty() && target != collection) {
+        if (/*target.isNonEmpty() && */target != collection) { //always append
             collection.addColumnDynamic((DynamicColumnFactory) target);
         }
     }

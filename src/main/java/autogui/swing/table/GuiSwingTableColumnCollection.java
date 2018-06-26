@@ -1,5 +1,6 @@
 package autogui.swing.table;
 
+import autogui.GuiIncluded;
 import autogui.base.mapping.*;
 import autogui.base.mapping.GuiMappingContext.GuiSourceValue;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
@@ -22,6 +23,7 @@ import autogui.swing.table.ObjectTableModelColumns.DynamicColumnFactory;
 import autogui.swing.table.ObjectTableModelColumns.ObjectTableColumnSize;
 import autogui.swing.table.ObjectTableModelColumns.ObjectTableColumnSizeComposite;
 import autogui.swing.util.SettingsWindow;
+import sun.rmi.rmic.iiop.SpecialInterfaceType;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -114,9 +116,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 */
             }
         }
-        if (col.isNonEmpty()) {
-            model.addColumnDynamic(col);
-        }
+        model.addColumnDynamic(col);
     }
 
     public static class GuiSwingTableColumnProperty implements GuiSwingTableColumnDynamic {
@@ -139,9 +139,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                     GuiSwingTableColumnSetDefault.createColumnForDynamicCollection(
                             subContext, target, rowSpecifier, subSpecifier, view);
                 }
-                if (target.isNonEmpty()) {
-                    model.addColumnDynamic(target);
-                }
+                //if (target.isNonEmpty())
+                model.addColumnDynamic(target);
             //}
         }
     }
@@ -424,8 +423,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @SuppressWarnings("unchecked")
-        public void forEachValue(Object c, GuiMappingContext context, SpecifierManager specifierManager,
-                                 SpecifierManagerIndex valueIndex, Consumer<Object> body) {
+        public void forEachValue(Object c, Consumer<Object> body) {
+            SpecifierManagerIndex valueIndex = this.index;
             if (context.isReprCollectionTable()) {
                 GuiReprCollectionTable table = context.getReprCollectionTable();
                 if (valueIndex == null) {
@@ -455,6 +454,34 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             }
         }
 
+        public Object getValueAt(Object c, int i) {
+            SpecifierManagerIndex valueIndex = this.index;
+            if (context.isReprCollectionTable()) {
+                GuiReprCollectionTable table = context.getReprCollectionTable();
+                if (valueIndex == null) {
+                    valueIndex = new SpecifierManagerIndex(specifierManager::getSpecifier);
+                }
+                try {
+                    GuiSourceValue col = GuiSourceValue.of(c);
+                    return table.getValueCollectionElement(context,
+                            col, valueIndex.getSpecifierWithSettingIndex(i), GuiMappingContext.NO_SOURCE)
+                            .getValue();
+                } catch (Throwable ex) {
+                    throw new RuntimeException(ex);
+                }
+            } else {
+                if (c instanceof List<?>) {
+                    return ((List<Object>) c).get(i);
+                } else if (c != null && c.getClass().isArray()) {
+                    return Array.get(c, i);
+                } else if (c != null) {
+                    throw new IllegalArgumentException("forEachValue " + c);
+                } else {
+                    return null;
+                }
+            }
+        }
+
         public ObjectTableColumnSize getColumnSizeForConcrete(Object c) {
             ObjectTableColumnSize size = elementFactory.getColumnSize(null);
             size.setSize(getValueSize(c));
@@ -464,7 +491,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         public ObjectTableColumnSize getColumnSizeForObjectList(Object c) {
             ObjectTableColumnSizeComposite size = new ObjectTableColumnSizeComposite(new ArrayList<>(getValueSize(c)));
-            forEachValue(c, this.context, this.specifierManager, this.index, e -> size.add(
+            forEachValue(c, e -> size.add(
                     elementFactory == null ?
                             new ObjectTableColumnSizeComposite(Collections.emptyList()) :
                             elementFactory.getColumnSize(e)));
@@ -519,7 +546,10 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
     /**
      * size-factory for root List&lt;List&lt;T&gt;&gt;
      */
-    public static class DynamicColumnFactoryCollectionRoot extends DynamicColumnFactoryList {
+    public static class DynamicColumnFactoryCollectionRoot extends DynamicColumnFactoryList
+            implements ObjectTableModelColumns.DynamicColumnFactoryRoot {
+        protected List<GuiMappingContext> rootActions = new ArrayList<>();
+
         public DynamicColumnFactoryCollectionRoot(GuiMappingContext context, SpecifierManager specifierManager,
                                                   TableColumnHost model,
                                                   SpecifierManagerIndex rowSpecifier) {
@@ -531,7 +561,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             ObjectTableColumnSizeComposite root = new ObjectTableColumnSizeComposite(new ArrayList<>(1));
             ObjectTableColumnSize[] element = new ObjectTableColumnSize[] { null };
 
-            forEachValue(c, this.context, this.specifierManager, this.index, e -> {
+            forEachValue(c, e -> {
                 ObjectTableColumnSize next = elementFactory == null ? null : elementFactory.getColumnSize(e);
                 if (element[0] == null) {
                     element[0] = next;
@@ -555,6 +585,34 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         public boolean isNonEmpty() {
             return true; //always true for
         }
+
+        @Override
+        public void addRootAction(GuiMappingContext actionContext) {
+            rootActions.add(actionContext);
+        }
+
+        @GuiIncluded
+        public List<Action> getRootActions(TableTargetCell selection) {
+            GuiMappingContext tableOwner = context.getParent();
+            SpecifierManager rootOwnerSpecifier;
+            SpecifierManager tableOwnerSpecifier =
+                    () -> getSpecifierManager()
+                            .getSpecifier() //for table
+                            .getParent();    //for table owner: maybe property
+            if (tableOwner.getRepresentation() instanceof GuiReprPropertyPane) { //property(collection)
+                tableOwner = tableOwner.getParent();
+                rootOwnerSpecifier = () -> tableOwnerSpecifier.getSpecifier().getParent();
+            } else {
+                rootOwnerSpecifier = tableOwnerSpecifier;
+            }
+            DynamicColumnFactory rootOwner = new DynamicColumnFactoryComposite(
+                    tableOwner, rootOwnerSpecifier, model); //create a temporary factory for root-list owner
+            return rootActions.stream()
+                    .map(a -> toAction(a, rootOwner, Collections.singletonList(this), selection))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
+
     }
 
     /**
@@ -986,7 +1044,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         public void select(DynamicColumnFactory factory, String targetName,
                            Set<TargetAndSpecifierMap> occurrences, Consumer<TargetAndSpecifierMap> resultGen) {
-            List<SpecifierManagerIndex> indexSpecifiers = factory.getIndexSpecifiers();
+            List<SpecifierManagerIndex> indexSpecifiers = factory == null ? Collections.emptyList() :
+                    factory.getIndexSpecifiers();
             selection.getSelectedRowAllCellIndicesStream().forEach(cell -> {
                 ObjectTableColumn column = model.getColumnAt(cell[1]);
                 if (column instanceof ObjectTableColumnCollectionWrapper) {
@@ -999,9 +1058,18 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                             resultGen.accept(t);
                         }
                     }
-                } else {
-                    //TODO regular row?
-
+                } else { //for non-dynamic columns
+                    Map<SpecifierManagerIndex, Integer> specMap;
+                    if (!indexSpecifiers.isEmpty()) {
+                        //rowIndex
+                        specMap = Collections.singletonMap(indexSpecifiers.get(0), cell[0]);
+                    } else {
+                        specMap = Collections.emptyMap();
+                    }
+                    TargetAndSpecifierMap t = new TargetAndSpecifierMap(targetName, specMap);
+                    if (occurrences.add(t)) {
+                        resultGen.accept(t);
+                    }
                 }
             });
         }
@@ -1146,19 +1214,20 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
                 DynamicColumnFactory elementFactory = argumentFactory.getElementFactory();
 
-                List<SpecifierManagerIndex> cellSpecs =  toCellIndexSpecs(targetSpecs, elementFactory.getIndexSpecifiers());
-                if (!cellSpecs.isEmpty()) {
-                    select(elementFactory,
-                            targetName,
-                            occurrences,
-                            t -> {//targetIndexSpecifiers is a sub-set of argumentIndexSpecifiers
-                                    Object value = getIndexValue(elementFactory, t, cellSpecs);
-                                    if (value != null) {
-                                        targetToArgumentMap.computeIfAbsent(targetFactory.getValue(t.specMap), k -> new ArrayList<>())
-                                                .add(value);
-                                    }
-                            });
-                }
+                List<SpecifierManagerIndex> cellSpecs =  toCellIndexSpecs(targetSpecs,
+                        elementFactory == null ?
+                                argumentFactory.getIndexSpecifiers() : elementFactory.getIndexSpecifiers());
+                select(elementFactory == null ?
+                                argumentFactory : elementFactory,
+                        targetName,
+                        occurrences,
+                        t -> {//targetIndexSpecifiers is a sub-set of argumentIndexSpecifiers
+                                Object value = getIndexValue(argumentFactory, t, cellSpecs);
+                                if (value != null) {
+                                    targetToArgumentMap.computeIfAbsent(targetFactory.getValue(t.specMap), k -> new ArrayList<>())
+                                            .add(value);
+                                }
+                        });
             }
             List<TargetAndArgumentList> result = new ArrayList<>();
             targetNameToTargetToArgumentMap.forEach((targetName, targetToArgMap) ->
@@ -1171,8 +1240,15 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             return argSpecs;
         }
 
-        public Object getIndexValue(DynamicColumnFactory elementFactory, TargetAndSpecifierMap t, List<SpecifierManagerIndex> cellSpecs) {
-            return elementFactory.getValue(t.specMap);
+        public Object getIndexValue(DynamicColumnFactoryList argumentFactory, TargetAndSpecifierMap t, List<SpecifierManagerIndex> cellSpecs) {
+            if (argumentFactory.getElementFactory() == null) {
+                //for non-dynamic column
+                Object list = argumentFactory.getValue(t.specMap);
+                Integer idx = t.specMap.get(cellSpecs.get(0));
+                return argumentFactory.getValueAt(list, idx);
+            } else {
+                return argumentFactory.getElementFactory().getValue(t.specMap);
+            }
         }
 
         @Override
@@ -1300,7 +1376,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public Object getIndexValue(DynamicColumnFactory elementFactory, TargetAndSpecifierMap t, List<SpecifierManagerIndex> cellSpecs) {
+        public Object getIndexValue(DynamicColumnFactoryList argumentFactory, TargetAndSpecifierMap t, List<SpecifierManagerIndex> cellSpecs) {
             return t.specMap.get(cellSpecs.get(0));
         }
     }
@@ -1361,7 +1437,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public Object getIndexValue(DynamicColumnFactory elementFactory, TargetAndSpecifierMap t, List<SpecifierManagerIndex> cellSpecs) {
+        public Object getIndexValue(DynamicColumnFactoryList argumentFactory, TargetAndSpecifierMap t, List<SpecifierManagerIndex> cellSpecs) {
             return t.toIndices(cellSpecs);
         }
     }

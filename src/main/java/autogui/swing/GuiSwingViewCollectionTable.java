@@ -80,9 +80,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     GuiReprActionList listAction = (GuiReprActionList) siblingContext.getRepresentation();
 
                     ObjectTableModelColumns.DynamicColumnContainer dc = table.getObjectTableModel().getColumns().getRootContainer();
-                    if (dc != null && dc.getFactory() instanceof GuiSwingTableColumnSet.DynamicColumnHost) {
-                        ObjectTableModelColumns.DynamicColumnFactory factory = dc.getFactory();
-                        ((GuiSwingTableColumnSet.DynamicColumnHost) factory).addActionContext(siblingContext);
+                    if (dc != null) {
+                        dc.addRootListActionContext(siblingContext);
+
                     } else {
                         GuiSwingTableColumnSetDefault.TableSelectionListAction createdAction = null;
                         if (listAction.isSelectionRowIndicesAction(siblingContext)) {

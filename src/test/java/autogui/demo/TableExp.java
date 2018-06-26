@@ -27,16 +27,16 @@ public class TableExp {
     public static class TableA {
         @GuiIncluded public List<Float> listA = Arrays.asList(10f, 20f, 30f);
 
-        @GuiIncluded public void action1(List<Float> l, String name) {
-            System.err.println("action1: " + l + " : " + name);
+        @GuiIncluded public void actionA1(List<Float> l, String name) {
+            System.err.println("actionA1: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action2(List<Integer> l, String name) {
-            System.err.println("action2: " + l + " : " + name);
+        @GuiIncluded public void actionA2(List<Integer> l, String name) {
+            System.err.println("actionA2: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action3(List<int[]> l, String name) {
-            System.err.println("action3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+        @GuiIncluded public void actionA3(List<int[]> l, String name) {
+            System.err.println("actionA3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
         }
     }
 
@@ -47,16 +47,16 @@ public class TableExp {
         @GuiIncluded public List<ElemB> listB = Arrays.asList(
                 new ElemB(10f), new ElemB(20f), new ElemB(30f));
 
-        @GuiIncluded public void action1(List<ElemB> l, String name) {
-            System.err.println("action1: " + l + " : " + name);
+        @GuiIncluded public void actionB1(List<ElemB> l, String name) {
+            System.err.println("actionB1: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action2(List<Integer> l, String name) {
-            System.err.println("action2: " + l + " : " + name);
+        @GuiIncluded public void actionB2(List<Integer> l, String name) {
+            System.err.println("actionB2: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action3(List<int[]> l, String name) {
-            System.err.println("action3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+        @GuiIncluded public void actionB3(List<int[]> l, String name) {
+            System.err.println("actionB3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
         }
     }
 
@@ -70,7 +70,7 @@ public class TableExp {
             str = "(" + value + ")";
         }
 
-        @GuiIncluded public void actionB1() {
+        @GuiIncluded public void actionElemB1() {
             System.err.println(this + ".action1");
         }
 
@@ -90,16 +90,16 @@ public class TableExp {
                 Arrays.asList(30f, 31f, 32f, 23f, 24f)
         );
 
-        @GuiIncluded public void action1(List<List<Float>> l, String name) {
-            System.err.println("action1: " + l + " : " + name);
+        @GuiIncluded public void actionC1(List<List<Float>> l, String name) {
+            System.err.println("actionC1: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action2(List<Integer> l, String name) {
-            System.err.println("action2: " + l + " : " + name);
+        @GuiIncluded public void actionC2(List<Integer> l, String name) {
+            System.err.println("actionC2: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action3(List<int[]> l, String name) {
-            System.err.println("action3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+        @GuiIncluded public void actionC3(List<int[]> l, String name) {
+            System.err.println("actionC3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
         }
     }
 
@@ -114,16 +114,16 @@ public class TableExp {
                 Arrays.asList(new ElemB(30f), new ElemB(31f), new ElemB(32f))
         );
 
-        @GuiIncluded public void action1(List<List<ElemB>> l, String name) {
-            System.err.println("action1: " + l + " : " + name);
+        @GuiIncluded public void actionD1(List<List<ElemB>> l, String name) {
+            System.err.println("actionD1: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action2(List<Integer> l, String name) {
-            System.err.println("action2: " + l + " : " + name);
+        @GuiIncluded public void actionD2(List<Integer> l, String name) {
+            System.err.println("actionD2: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action3(List<int[]> l, String name) {
-            System.err.println("action3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+        @GuiIncluded public void actionD3(List<int[]> l, String name) {
+            System.err.println("actionD3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
         }
     }
 
@@ -138,16 +138,16 @@ public class TableExp {
                 new ElemE(30f, 31f, 32f)
         );
 
-        @GuiIncluded public void action1(List<ElemE> l, String name) {
-            System.err.println("action1: " + l + " : " + name);
+        @GuiIncluded public void actionE1(List<ElemE> l, String name) {
+            System.err.println("actionE1: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action2(List<Integer> l, String name) {
-            System.err.println("action2: " + l + " : " + name);
+        @GuiIncluded public void actionE2(List<Integer> l, String name) {
+            System.err.println("actionE2: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action3(List<int[]> l, String name) {
-            System.err.println("action3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+        @GuiIncluded public void actionE3(List<int[]> l, String name) {
+            System.err.println("actionE3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
         }
     }
 
@@ -166,20 +166,20 @@ public class TableExp {
             return "E(" + value + "," + floatList + ")";
         }
 
-        @GuiIncluded public void actionE1(List<Float> l, String name) {
+        @GuiIncluded public void actionElemE1(List<Float> l, String name) {
             System.err.println(this + ".action1: " + l + " : " + name);
         }
 
-        @GuiIncluded public void actionE2(List<Integer> l, String name) {
+        @GuiIncluded public void actionElemE2(List<Integer> l, String name) {
             System.err.println(this + ".action2: " + l + " : " + name);
         }
 
-        @GuiIncluded public void actionE3(List<int[]> l, String name) {
+        @GuiIncluded public void actionElemE3(List<int[]> l, String name) {
             System.err.println(this + ".action3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
         }
 
 
-        @GuiIncluded public void actionE4() {
+        @GuiIncluded public void actionElemE4() {
             System.err.println(this + ".action4");
         }
     }
@@ -194,16 +194,16 @@ public class TableExp {
                 new ElemF(30f, 31f, 32f)
         );
 
-        @GuiIncluded public void action1(List<ElemF> l, String name) {
-            System.err.println("action1: " + l + " : " + name);
+        @GuiIncluded public void actionF1(List<ElemF> l, String name) {
+            System.err.println("actionF1: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action2(List<Integer> l, String name) {
-            System.err.println("action2: " + l + " : " + name);
+        @GuiIncluded public void actionF2(List<Integer> l, String name) {
+            System.err.println("actionF2: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action3(List<int[]> l, String name) {
-            System.err.println("action3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+        @GuiIncluded public void actionF3(List<int[]> l, String name) {
+            System.err.println("actionF3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
         }
     }
 
@@ -220,15 +220,15 @@ public class TableExp {
         }
 
 
-        @GuiIncluded public void actionF1() {
+        @GuiIncluded public void actionElemF1() {
             System.err.println(this + ".action1");
         }
 
-        @GuiIncluded public void actionF2(List<Integer> l, String name) {
+        @GuiIncluded public void actionElemF2(List<Integer> l, String name) {
             System.err.println(this + ".action2: " + l + " : " + name);
         }
 
-        @GuiIncluded public void actionF3(List<int[]> l, String name) {
+        @GuiIncluded public void actionElemF3(List<int[]> l, String name) {
             System.err.println(this + ".action3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
         }
 
@@ -245,16 +245,16 @@ public class TableExp {
         @GuiIncluded public List<ElemG> listG = Arrays.asList(
                 new ElemG(10f,11f), new ElemG(20f,21f), new ElemG(30f,31f));
 
-        @GuiIncluded public void action1(List<ElemG> l, String name) {
-            System.err.println("action1: " + l + " : " + name);
+        @GuiIncluded public void actionG1(List<ElemG> l, String name) {
+            System.err.println("actionG1: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action2(List<Integer> l, String name) {
-            System.err.println("action2: " + l + " : " + name);
+        @GuiIncluded public void actionG2(List<Integer> l, String name) {
+            System.err.println("actionG2: " + l + " : " + name);
         }
 
-        @GuiIncluded public void action3(List<int[]> l, String name) {
-            System.err.println("action3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+        @GuiIncluded public void actionG3(List<int[]> l, String name) {
+            System.err.println("actionG3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
         }
     }
 
@@ -268,7 +268,7 @@ public class TableExp {
             this.b = new ElemB(b);
         }
 
-        @GuiIncluded public void actionG1() {
+        @GuiIncluded public void actionElemG1() {
             System.err.println(this + ".action1");
         }
 

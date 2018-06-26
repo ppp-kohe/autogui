@@ -1,6 +1,8 @@
 package autogui.swing.table;
 
+import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
+import autogui.swing.GuiSwingView;
 import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 
@@ -152,7 +154,7 @@ public class ObjectTableModelColumns
 
     public List<Action> getDynamicColumnsActions(TableTargetCell selection) {
         return dynamicColumns.stream()
-                .flatMap(d -> d.getFactory().getActions(selection).stream())
+                .flatMap(d -> d.getDynamicColumnActions(selection).stream())
                 .collect(Collectors.toList());
     }
 
@@ -247,6 +249,8 @@ public class ObjectTableModelColumns
 
         protected List<ObjectTableColumn> columnsInSize;
         protected List<DynamicColumnContainer> children;
+
+        protected List<GuiMappingContext> rootListActionContexts = new ArrayList<>();
 
         protected int lastIndex;
 
@@ -379,6 +383,23 @@ public class ObjectTableModelColumns
                     .findFirst()
                     .ifPresent(c -> c.viewUpdateAsDynamic(source));
         }
+
+        public void addRootListActionContext(GuiMappingContext actionContext) {
+            DynamicColumnFactory factory = getFactory();
+            if (factory instanceof DynamicColumnFactoryRoot) {
+                ((DynamicColumnFactoryRoot) factory).addRootAction(actionContext);
+            }
+        }
+
+        public List<Action> getDynamicColumnActions(TableTargetCell selection) {
+            List<Action> actions = new ArrayList<>();
+            DynamicColumnFactory factory = getFactory();
+            if (factory instanceof DynamicColumnFactoryRoot) {
+                actions.addAll(((DynamicColumnFactoryRoot) factory).getRootActions(selection));
+            }
+            actions.addAll(factory.getActions(selection));
+            return actions;
+        }
     }
 
     public static class TableRowSorterDynamic extends TableRowSorter<ObjectTableModel> {
@@ -440,6 +461,12 @@ public class ObjectTableModelColumns
         void debugPrint(int depth);
 
         String getDisplayName();
+    }
+
+    public interface DynamicColumnFactoryRoot {
+        void addRootAction(GuiMappingContext actionContext);
+
+        List<Action> getRootActions(TableTargetCell cell);
     }
 
     /**
