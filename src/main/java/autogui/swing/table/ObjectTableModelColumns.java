@@ -331,7 +331,7 @@ public class ObjectTableModelColumns
                     }
                 }
                 for (int i = 0 ; i < removingSize; ++i) {
-                    children.remove(s - i);
+                    children.remove(children.size() - 1); //{0,...s-3,s-2,s-1}->{0,...s-3,s-2} -> {0,...s-3}
                 }
             }
         }

@@ -647,10 +647,10 @@ public class GuiSwingPreferences {
             GuiPreferences newStore = rootPrefs.addNewSavedStoreAsRoot();
             owner.savePreferences(newStore);
 
-            Map<String,Object> map = rootPrefs.toJson();
-            map.remove("$name");
-            map.remove("$uuid");
-            newStore.fromJson(map);
+//            Map<String,Object> map = rootPrefs.toJson();
+//            map.remove("$name");
+//            map.remove("$uuid");
+//            newStore.fromJson(map);
 
             newStore.getValueStore().flush();
             owner.reloadList();

@@ -368,6 +368,13 @@ public interface GuiSwingView extends GuiSwingElement {
             if (((ValuePane<?>) pane).isSwingCurrentValueSupported()) {
                 targetPrefs.setCurrentValue(((ValuePane<?>) pane).getSwingViewValue());
             }
+            if (context.isHistoryValueSupported()) {
+                GuiPreferences ctxPrefs = context.getPreferences();
+                if (!ctxPrefs.equals(targetPrefs)) {
+                    context.getPreferences().getHistoryValues()
+                            .forEach(e -> targetPrefs.addHistoryValue(e.getValue(), e.getTime()));
+                }
+            }
         }
     }
 
@@ -378,6 +385,14 @@ public interface GuiSwingView extends GuiSwingElement {
                 GuiMappingContext context = ((ValuePane) pane).getSwingViewContext();
                 GuiPreferences targetPrefs = prefs.getDescendant(context);
                 setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane);
+
+                if (context.isHistoryValueSupported()) {
+                    GuiPreferences ctxPrefs = context.getPreferences();
+                    if (!targetPrefs.equals(ctxPrefs)) {
+                        targetPrefs.getHistoryValues()
+                                .forEach(e -> ctxPrefs.addHistoryValue(e.getValue(), e.getTime()));
+                    }
+                }
             }
         } catch (Exception ex) {
             GuiLogManager.get().logError(ex);

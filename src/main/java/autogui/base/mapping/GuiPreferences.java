@@ -290,6 +290,10 @@ public class GuiPreferences {
      * @param value the new entry value
      */
     public void addHistoryValue(Object value) {
+        addHistoryValue(value, null);
+    }
+
+    public void addHistoryValue(Object value, Instant optionalTime) {
         if (historyValues == null) {
             loadHistoryValues();
         }
@@ -307,6 +311,9 @@ public class GuiPreferences {
                 .max()
                 .orElse(-1);
         e.setIndex(maxIndex + 1); //temporarily index
+        if (optionalTime != null) {
+            e.setTime(optionalTime);
+        }
         if (!historyValues.contains(e)) {
             historyValues.add(e);
         }
@@ -693,9 +700,6 @@ public class GuiPreferences {
             return time;
         }
 
-        public void setTime(Instant time) {
-            this.time = time;
-        }
 
         public void remove() {
             if (this.keyIndex != -1) {
@@ -807,6 +811,14 @@ public class GuiPreferences {
             this.index = index;
         }
 
+        public void setTime(Instant time) {
+            if (!Objects.equals(time, this.time) && time != null && keyIndex != -1) {
+                GuiValueStore store = getValueStore();
+                store.putString("time", time.toString());
+            }
+            this.time = time;
+        }
+
         public void storeAsCurrentValue() {
             String jsonSource = getStoredJsonValue();
             if (jsonSource != null) {
@@ -847,6 +859,11 @@ public class GuiPreferences {
         @Override
         public void setIndex(int index) {
             this.index = index;
+        }
+
+        @Override
+        public void setTime(Instant time) {
+            this.time = time;
         }
 
         @Override
