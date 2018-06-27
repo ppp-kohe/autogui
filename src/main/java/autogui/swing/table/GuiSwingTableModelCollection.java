@@ -125,11 +125,14 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         protected PreferencesForTableColumnOrderStatic nonContextOrder;
         protected PreferencesForTableColumnWidthStatic nonContextWidth;
 
+        protected List<PreferencesForTableColumnOrder> pendingOrders;
+
         public GuiSwingTableModelColumns(GuiSwingTableModelCollection tableModel) {
             super(tableModel);
             this.tableModel = tableModel;
             nonContextOrder = new PreferencesForTableColumnOrderStatic();
             nonContextWidth = new PreferencesForTableColumnWidthStatic();
+            pendingOrders = new ArrayList<>();
         }
 
         @Override
@@ -141,11 +144,15 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
                 TableColumn c = columnModel.getColumn(to);
                 ObjectTableColumn model = columns.get(c.getModelIndex());
                 PreferencesForTableColumnOrder order = new PreferencesForTableColumnOrder(c.getModelIndex(), to);
-                if (!(model instanceof ObjectTableColumnWithContext)) {
+                if (!(model instanceof ObjectTableColumnWithContext)) { //non-context columns: saved in the table prefs
                     nonContextOrder.put(model.getTableColumn().getModelIndex(), order);
-                    this.prefsUpdater.accept(new PreferencesUpdateEvent(getPrefsContextForColumn(model), nonContextOrder));
+                    if (prefsUpdater != null) {
+                        this.prefsUpdater.accept(new PreferencesUpdateEvent(getPrefsContextForColumn(model), nonContextOrder));
+                    }
                 } else {
-                    this.prefsUpdater.accept(new PreferencesUpdateEvent(getPrefsContextForColumn(model), order));
+                    if (prefsUpdater != null) {
+                        this.prefsUpdater.accept(new PreferencesUpdateEvent(getPrefsContextForColumn(model), order));
+                    }
                 }
             }
         }
@@ -172,13 +179,14 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
                 ((ObjectTableColumnWithContext) column).loadSwingPreferences(currentPreferences);
             }
 
+            pendingOrders.removeIf(o -> o.applyTo(this));
+
             if (!(column instanceof ObjectTableColumnWithContext)) {
-                nonContextWidth.applyTo(column);
-                nonContextOrder.applyTo(this, column.getTableColumn().getModelIndex());
+                applyPrefsToNonContext(column);
             } else {
-                //TODO apply width from context. for order, only non dynamic items(d == null) are applied
+                applyPrefsTo((ObjectTableColumnWithContext) column, d);
             }
-            //TODO row-sorter ? 
+
 
             column.getTableColumn().addPropertyChangeListener(e -> {
                 if (e.getPropertyName().equals("width")) {
@@ -188,14 +196,59 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
 
         public void columnWidthUpdated(ObjectTableColumn column, int width) {
-            PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth(width);
-            if (!(column instanceof ObjectTableColumnWithContext)) { //for row-index, ...
-                nonContextWidth.put(column.getTableColumn().getModelIndex(), w);
-                prefsUpdater.accept(new PreferencesUpdateEvent(
-                        getPrefsContextForColumn(column), nonContextWidth));
-            } else {
-                prefsUpdater.accept(new PreferencesUpdateEvent(
-                        getPrefsContextForColumn(column), w));
+            //both dynamic and non-dynamic columns are stored in each prefs of context:
+            // thus, dynamic ones will be merged to a single entry and only the last update is saved.
+            if (prefsUpdater != null) {
+                PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth(width);
+                if (!(column instanceof ObjectTableColumnWithContext)) { //for row-index, ...
+                    nonContextWidth.put(column.getTableColumn().getModelIndex(), w);
+                    prefsUpdater.accept(new PreferencesUpdateEvent(
+                            getPrefsContextForColumn(column), nonContextWidth));
+                } else {
+                    prefsUpdater.accept(new PreferencesUpdateEvent(
+                            getPrefsContextForColumn(column), w));
+                }
+            }
+        }
+
+        public void applyPrefsTo(ObjectTableColumnWithContext column, DynamicColumnContainer d) {
+            PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth();
+            w.loadFrom(column.getContext().getPreferences());
+            w.applyTo(column.asColumn());
+
+            if (d == null) { //non-dynamic column: the ordering might be incorrect due to the lack of dynamic column re-ordering
+                PreferencesForTableColumnOrder o = new PreferencesForTableColumnOrder();
+                o.loadFrom(column.getContext().getPreferences());
+                //o.modelIndex == column.tableModel.modelIndex
+                if (!o.applyTo(this)) {
+                    pendingOrders.add(o);
+                }
+            }
+        }
+
+        public void applyPrefsToNonContext(ObjectTableColumn column) {
+            nonContextWidth.applyTo(column);
+            if (!nonContextOrder.applyTo(this, column.getTableColumn().getModelIndex())) {
+                PreferencesForTableColumnOrder o = nonContextOrder.get(column.getTableColumn().getModelIndex());
+                if (o != null) {
+                    pendingOrders.add(o);
+                }
+            }
+        }
+
+        public void loadPrefsTo(GuiPreferences parentPrefs, ObjectTableColumnWithContext column) {
+            GuiPreferences prefs = parentPrefs.getDescendant(column.getContext());
+            PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth();
+            w.loadFrom(prefs);
+            w.applyTo(column.asColumn());
+
+            if (getStaticColumns().contains(column.asColumn())) { //static column
+                PreferencesForTableColumnOrder o = new PreferencesForTableColumnOrder();
+                o.loadFrom(prefs);
+                //o.modelIndex == column.tableModel.modelIndex
+                if (!o.applyTo(this)) {
+                    pendingOrders.add(o);
+                }
             }
         }
 
@@ -227,10 +280,44 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         public void loadSwingPreferences(GuiPreferences prefs) {
             currentPreferences = prefs;
             setColumns(ObjectTableColumnWithContext.class, c -> c.loadSwingPreferences(prefs));
+
+            nonContextWidth.loadFrom(prefs);
+            nonContextOrder.loadFrom(prefs);
+            for (ObjectTableColumn c : getColumns()) {
+                if (!(c instanceof ObjectTableColumnWithContext)) {
+                    applyPrefsToNonContext(c);
+                } else {
+                    loadPrefsTo(prefs, (ObjectTableColumnWithContext) c);
+                }
+            }
         }
 
         public void saveSwingPreferences(GuiPreferences prefs) {
             setColumns(ObjectTableColumnWithContext.class, c -> c.saveSwingPreferences(prefs));
+
+            for (ObjectTableColumn c : getColumns()) {
+                PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth(c.getTableColumn().getWidth());
+                int mi = c.getTableColumn().getModelIndex();
+                int vi = convertColumnModelToView(mi);
+                PreferencesForTableColumnOrder o = null;
+                if (mi != vi) {
+                    o = new PreferencesForTableColumnOrder(mi, vi);
+                }
+                if (!(c instanceof ObjectTableColumnWithContext)) {
+                    nonContextWidth.put(mi, w);
+                    if (o != null) {
+                        nonContextOrder.put(mi, o);
+                    }
+                } else {
+                    GuiPreferences subPref = prefs.getDescendant(((ObjectTableColumnWithContext) c).getContext());
+                    w.saveTo(subPref);
+                    if (o != null) {
+                        o.saveTo(subPref);
+                    }
+                }
+            }
+            nonContextWidth.saveTo(prefs);
+            nonContextOrder.saveTo(prefs);
         }
 
         @Override
@@ -251,11 +338,17 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
             modelIndexToOrder.put(modelIndex, w);
         }
 
-        public void applyTo(ObjectTableModelColumns columns, int modelIndex) {
+        public boolean applyTo(ObjectTableModelColumns columns, int modelIndex) {
             PreferencesForTableColumnOrder o = modelIndexToOrder.get(modelIndex);
             if (o != null) {
-                o.applyTo(columns);
+                return o.applyTo(columns);
+            } else {
+                return true;
             }
+        }
+
+        public PreferencesForTableColumnOrder get(int modelIndex) {
+            return modelIndexToOrder.get(modelIndex);
         }
 
         @Override
@@ -300,11 +393,20 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
             this.viewIndex = viewIndex;
         }
 
-        public void applyTo(ObjectTableModelColumns columns) {
+        /**
+         *
+         * @param columns the columns containing the target
+         * @return true if successfully moved. while adding columns,
+         *           the target index might beyond bounds.
+         */
+        public boolean applyTo(ObjectTableModelColumns columns) {
             if (0 <= modelIndex && modelIndex < columns.getColumnCount() &&
                     0 <= viewIndex && viewIndex < columns.getColumnCount()) {
                 ObjectTableColumn column = columns.getColumnAt(modelIndex);
                 columns.moveColumn(column, viewIndex);
+                return true;
+            } else {
+                return false;
             }
         }
 

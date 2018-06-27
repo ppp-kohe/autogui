@@ -220,7 +220,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initPreferencesUpdater() {
-            preferencesUpdater = new TablePreferencesUpdater(this, context);
+            //preferencesUpdater = new TablePreferencesUpdater(this, context);
+            preferencesUpdater = new TablePreferencesUpdaterWithDynamic(this, context);
         }
 
         public void initDragDrop() {
@@ -265,8 +266,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             GuiSwingView.setupKeyBindingsForStaticMenuItems(this); //here, after actions are fixed
 
-            getColumnModel().addColumnModelListener(preferencesUpdater);
-            getRowSorter().addRowSorterListener(preferencesUpdater);
+            preferencesUpdater.setUpListeners();
 
             popupColumnHeader = new PopupExtensionCollectionColumnHeader(this,
                     new PopupCategorized(this::getColumnHeaderMenuItems));
@@ -774,6 +774,44 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
     }
 
+    /**
+     * enable only row-sorter and disable column-width and column-ordering which are treated
+     *  by {@link autogui.swing.table.GuiSwingTableModelCollection.GuiSwingTableModelColumns}.
+     *
+     */
+    public static class TablePreferencesUpdaterWithDynamic extends TablePreferencesUpdater {
+        public TablePreferencesUpdaterWithDynamic(JTable table, GuiMappingContext context) {
+            super(table, context);
+        }
+
+        @Override
+        public void setUpListeners() {
+            table.getRowSorter().addRowSorterListener(this);
+        }
+
+        @Override
+        public void apply(GuiPreferences p) {
+            savingDisabled = true;
+            try {
+                prefs.loadFrom(p);
+                prefs.applyRowSortTo(table);
+            } finally {
+                savingDisabled = false;
+            }
+        }
+
+        @Override
+        public void applyJson(Map<String, Object> json) {
+            savingDisabled = true;
+            try {
+                prefs.setJson(json);
+                prefs.applyRowSortTo(table);
+            } finally {
+                savingDisabled = false;
+            }
+        }
+    }
+
     public static class TablePreferencesUpdater implements TableColumnModelListener, RowSorterListener {
         protected JTable table;
         protected GuiMappingContext context;
@@ -786,6 +824,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             this.table = table;
             this.context = context;
             prefs = new PreferencesForTable();
+        }
+
+        public void setUpListeners() {
+            table.getColumnModel().addColumnModelListener(this);
+            table.getRowSorter().addRowSorterListener(this);
         }
 
         public void setPrefs(PreferencesForTable prefs) {
@@ -862,11 +905,13 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected List<Integer> columnOrder = new ArrayList<>();
         protected List<Integer> columnWidth = new ArrayList<>();
         protected List<PreferencesForTableRowSort> rowSort = new ArrayList<>();
+        protected int sizeLimit = 100;
 
         public void applyTo(JTable table) {
             TableColumnModel columnModel = table.getColumnModel();
             applyColumnWidthTo(table, columnModel);
             applyColumnOrderTo(table, columnModel);
+            applyRowSortTo(table);
         }
 
         public void applyColumnWidthTo(JTable table, TableColumnModel columnModel) {
@@ -897,7 +942,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setColumnOrderFrom(JTable table) {
             TableColumnModel columnModel = table.getColumnModel();
             columnOrder.clear();
-            for (int i = 0, len = columnModel.getColumnCount(); i < len; ++i) {
+            for (int i = 0, len = columnModel.getColumnCount(); i < len && i < sizeLimit; ++i) {
                 columnOrder.add(table.convertColumnIndexToModel(i));
             }
         }
@@ -905,7 +950,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setColumnWidthFrom(JTable table) {
             TableColumnModel columnModel = table.getColumnModel();
             columnWidth.clear();
-            for (int i = 0, len = columnModel.getColumnCount(); i < len; ++i) {
+            for (int i = 0, len = columnModel.getColumnCount(); i < len && i < sizeLimit; ++i) {
                 columnWidth.add(columnModel.getColumn(table.convertColumnIndexToView(i)).getWidth());
             }
         }
@@ -913,11 +958,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setRowSortFrom(JTable table) {
             rowSort.clear();
             for (RowSorter.SortKey key : table.getRowSorter().getSortKeys()) {
+                if (rowSort.size() >= sizeLimit) {
+                    break;
+                }
                 PreferencesForTableRowSort row = new PreferencesForTableRowSort(key.getColumn(), key.getSortOrder().name());
                 rowSort.add(row);
             }
         }
-        //TODO size limitation
+
         @Override
         public String getKey() {
             return "$table";

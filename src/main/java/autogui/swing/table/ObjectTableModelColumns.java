@@ -51,12 +51,12 @@ public class ObjectTableModelColumns
     public void addColumnStatic(ObjectTableColumn column) {
         int modelIndex = columns.size();
         columns.add(column);
-        columnAdded(column, null);
         staticColumns.add(column);
 
         TableColumn tableColumn = column.getTableColumn();
         tableColumn.setModelIndex(modelIndex);
         columnModel.addColumn(tableColumn);
+        columnAdded(column, null);
     }
 
     protected void columnAdded(ObjectTableColumn column, DynamicColumnContainer d) {
