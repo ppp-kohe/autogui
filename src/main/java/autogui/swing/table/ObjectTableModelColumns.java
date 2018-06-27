@@ -250,8 +250,6 @@ public class ObjectTableModelColumns
         protected List<ObjectTableColumn> columnsInSize;
         protected List<DynamicColumnContainer> children;
 
-        protected List<GuiMappingContext> rootListActionContexts = new ArrayList<>();
-
         protected int lastIndex;
 
         public DynamicColumnContainer(ObjectTableModelColumns columns, DynamicColumnFactory factory) {
@@ -450,7 +448,7 @@ public class ObjectTableModelColumns
 
         List<SpecifierManagerIndex> getIndexSpecifiers();
 
-        SpecifierManagerIndex getIndex();
+        SpecifierManagerIndex getElementIndex();
 
         Object getValue(Map<SpecifierManagerIndex, Integer> indexInjection);
 
