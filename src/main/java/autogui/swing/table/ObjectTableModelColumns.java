@@ -2,7 +2,6 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
-import autogui.swing.GuiSwingView;
 import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 
@@ -41,33 +40,7 @@ public class ObjectTableModelColumns
     public ObjectTableModelColumns(ObjectTableModelColumnsListener updater) {
         this.updater = updater;
         columnModel = new DefaultTableColumnModel();
-
-        /*
-        //debug
-        columnModel.addColumnModelListener(new TableColumnModelListener() {
-            @Override
-            public void columnAdded(TableColumnModelEvent e) {
-                System.err.println("columnAdded " + e.getToIndex());
-            }
-
-            @Override
-            public void columnRemoved(TableColumnModelEvent e) {
-                System.err.println("columnAdded " + e.getFromIndex());
-            }
-
-            @Override
-            public void columnMoved(TableColumnModelEvent e) {
-                System.err.println("columnAdded " + e.getFromIndex() + "->" + e.getToIndex());
-            }
-
-            @Override
-            public void columnMarginChanged(ChangeEvent e) {
-            }
-
-            @Override
-            public void columnSelectionChanged(ListSelectionEvent e) {
-            }
-        });*/
+        columnModel.addColumnModelListener(this);
     }
 
     public DefaultTableColumnModel getColumnModel() {
@@ -214,6 +187,12 @@ public class ObjectTableModelColumns
         modelToView.put(columnModel.getColumn(e.getToIndex()).getModelIndex(), e.getToIndex());
     }
 
+    public void moveColumn(ObjectTableColumn column, int viewIndex) {
+        columnModel.moveColumn(
+                convertColumnModelToView(column.getTableColumn().getModelIndex()),
+                viewIndex);
+    }
+
     public int convertColumnModelToView(int modelIndex) {
         Integer n = modelToView.get(modelIndex);
         if (n == null || n >= columnModel.getColumnCount() || columnModel.getColumn(n).getModelIndex() != n) {
@@ -270,10 +249,12 @@ public class ObjectTableModelColumns
             lastIndex = startIndex;
             ObjectTableColumnSize newSize = factory.getColumnSize(list);
             newSize.create(this); //event if staticColumns, it might need to shift modelIndex of existing columns
+            /*
             System.err.println("--------------------");
             this.columns.getStaticColumns().forEach(e -> System.err.println("   static: " + e));
             factory.debugPrint(1);
             newSize.debugPrint(1);
+            */
             return lastIndex;
         }
 
@@ -682,8 +663,8 @@ public class ObjectTableModelColumns
                 for (int i = 0, l = Math.min(children.size(), newChildren.size()); i < l; ++i) {
                     ObjectTableColumnSize ns = newChildren.get(i);
                     ObjectTableColumnSize es = children.get(i);
-                    children.get(i).set(es);
-                    this.size += es.size() - ns.size();
+                    ns.set(es);
+                    this.size += Math.max(0, es.size() - ns.size());
                     es.setParent(this);
                 }
 

@@ -68,8 +68,8 @@ public class IconListExp {
         }
 
         @GuiIncluded
-        public String getSynonyms() {
-            return String.join(", ", synonyms);
+        public List<String> getSynonyms() {
+            return synonyms;
         }
 
         @GuiIncluded

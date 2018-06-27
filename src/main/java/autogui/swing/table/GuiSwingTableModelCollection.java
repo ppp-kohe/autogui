@@ -4,15 +4,12 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiMappingContext.GuiSourceValue;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
-import autogui.base.mapping.GuiReprValue;
 import autogui.base.mapping.GuiReprValue.ObjectSpecifier;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingPreferences;
 import autogui.swing.GuiSwingPreferences.PreferencesUpdateEvent;
 import autogui.swing.GuiSwingPreferences.PreferencesUpdateSupport;
-import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingView.SettingsWindowClient;
-import autogui.swing.GuiSwingViewCollectionTable;
 import autogui.swing.GuiSwingViewCollectionTable.CollectionTable;
 import autogui.swing.table.GuiSwingTableColumn.ObjectTableColumnWithContext;
 import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
@@ -22,10 +19,10 @@ import autogui.swing.util.PopupExtensionText;
 import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -47,6 +44,10 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         this.rowSpecifierManager = new SpecifierManagerIndex(tableSpecifier);
         setElementContextFromContext();
         setSource(source);
+    }
+
+    public GuiMappingContext getContext() {
+        return context;
     }
 
     @Override
@@ -119,9 +120,42 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         protected SettingsWindow settingsWindow;
         protected Consumer<PreferencesUpdateEvent> prefsUpdater;
         protected GuiPreferences currentPreferences;
+        protected GuiSwingTableModelCollection tableModel;
 
-        public GuiSwingTableModelColumns(ObjectTableModelColumnsListener updater) {
-            super(updater);
+        protected PreferencesForTableColumnOrderStatic nonContextOrder;
+        protected PreferencesForTableColumnWidthStatic nonContextWidth;
+
+        public GuiSwingTableModelColumns(GuiSwingTableModelCollection tableModel) {
+            super(tableModel);
+            this.tableModel = tableModel;
+            nonContextOrder = new PreferencesForTableColumnOrderStatic();
+            nonContextWidth = new PreferencesForTableColumnWidthStatic();
+        }
+
+        @Override
+        public void columnMoved(TableColumnModelEvent e) {
+            super.columnMoved(e);
+
+            int to = e.getToIndex();
+            if (to != e.getFromIndex()) {
+                TableColumn c = columnModel.getColumn(to);
+                ObjectTableColumn model = columns.get(c.getModelIndex());
+                PreferencesForTableColumnOrder order = new PreferencesForTableColumnOrder(c.getModelIndex(), to);
+                if (!(model instanceof ObjectTableColumnWithContext)) {
+                    nonContextOrder.put(model.getTableColumn().getModelIndex(), order);
+                    this.prefsUpdater.accept(new PreferencesUpdateEvent(getPrefsContextForColumn(model), nonContextOrder));
+                } else {
+                    this.prefsUpdater.accept(new PreferencesUpdateEvent(getPrefsContextForColumn(model), order));
+                }
+            }
+        }
+
+        public GuiMappingContext getPrefsContextForColumn(ObjectTableColumn column) {
+            if (column instanceof ObjectTableColumnWithContext) {
+                return ((ObjectTableColumnWithContext) column).getContext();
+            } else {
+                return tableModel.getContext();
+            }
         }
 
         @Override
@@ -136,6 +170,32 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
             }
             if (currentPreferences != null && column instanceof ObjectTableColumnWithContext) {
                 ((ObjectTableColumnWithContext) column).loadSwingPreferences(currentPreferences);
+            }
+
+            if (!(column instanceof ObjectTableColumnWithContext)) {
+                nonContextWidth.applyTo(column);
+                nonContextOrder.applyTo(this, column.getTableColumn().getModelIndex());
+            } else {
+                //TODO apply width from context. for order, only non dynamic items(d == null) are applied
+            }
+            //TODO row-sorter ? 
+
+            column.getTableColumn().addPropertyChangeListener(e -> {
+                if (e.getPropertyName().equals("width")) {
+                    columnWidthUpdated(column, ((Number) e.getNewValue()).intValue());
+                }
+            });
+        }
+
+        public void columnWidthUpdated(ObjectTableColumn column, int width) {
+            PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth(width);
+            if (!(column instanceof ObjectTableColumnWithContext)) { //for row-index, ...
+                nonContextWidth.put(column.getTableColumn().getModelIndex(), w);
+                prefsUpdater.accept(new PreferencesUpdateEvent(
+                        getPrefsContextForColumn(column), nonContextWidth));
+            } else {
+                prefsUpdater.accept(new PreferencesUpdateEvent(
+                        getPrefsContextForColumn(column), w));
             }
         }
 
@@ -178,6 +238,187 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
             addColumnStatic(new ObjectTableColumnRowIndexWithActions());
         }
     }
+
+    public static class PreferencesForTableColumnOrderStatic implements GuiSwingPreferences.PreferencesByJsonEntry {
+        protected Map<Integer, PreferencesForTableColumnOrder> modelIndexToOrder = new LinkedHashMap<>();
+
+        @Override
+        public String getKey() {
+            return "$columnWidth";
+        }
+
+        public void put(int modelIndex, PreferencesForTableColumnOrder w) {
+            modelIndexToOrder.put(modelIndex, w);
+        }
+
+        public void applyTo(ObjectTableModelColumns columns, int modelIndex) {
+            PreferencesForTableColumnOrder o = modelIndexToOrder.get(modelIndex);
+            if (o != null) {
+                o.applyTo(columns);
+            }
+        }
+
+        @Override
+        public Object toJson() {
+            Map<String,Object> map = new LinkedHashMap<>();
+            modelIndexToOrder.forEach((k,v) -> {
+                map.put(Integer.toString(k), v.toJson());
+            });
+            return map;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void setJson(Object json) {
+            if (json instanceof Map<?,?>) {
+                Map<String,Object> map = (Map<String,Object>) json;
+                map.forEach((k,v) -> {
+                    try {
+                        int n = Integer.valueOf(k);
+                        PreferencesForTableColumnOrder w = new PreferencesForTableColumnOrder();
+                        w.setJson(v);
+                        modelIndexToOrder.put(n, w);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                });
+            }
+        }
+
+    }
+
+    public static class PreferencesForTableColumnOrder implements GuiSwingPreferences.PreferencesByJsonEntry {
+        protected int modelIndex;
+        protected int viewIndex;
+
+        public PreferencesForTableColumnOrder() {
+            this(-1, -1);
+        }
+
+        public PreferencesForTableColumnOrder(int modelIndex, int viewIndex) {
+            this.modelIndex = modelIndex;
+            this.viewIndex = viewIndex;
+        }
+
+        public void applyTo(ObjectTableModelColumns columns) {
+            if (0 <= modelIndex && modelIndex < columns.getColumnCount() &&
+                    0 <= viewIndex && viewIndex < columns.getColumnCount()) {
+                ObjectTableColumn column = columns.getColumnAt(modelIndex);
+                columns.moveColumn(column, viewIndex);
+            }
+        }
+
+        @Override
+        public String getKey() {
+            return "$columnOrder";
+        }
+
+        @Override
+        public Object toJson() {
+            Map<String,Object> map = new LinkedHashMap<>();
+            map.put("modelIndex", modelIndex);
+            map.put("viewIndex", viewIndex);
+            return map;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void setJson(Object json) {
+            if (json instanceof Map<?,?>) {
+                Map<String,Object> map = (Map<String,Object>) json;
+                modelIndex = (Integer) map.getOrDefault("modelIndex", -1);
+                viewIndex = (Integer) map.getOrDefault("viewIndex", -1);
+            }
+        }
+    }
+
+    public static class PreferencesForTableColumnWidthStatic implements GuiSwingPreferences.PreferencesByJsonEntry {
+        protected Map<Integer, PreferencesForTableColumnWidth> modelIndexToWidth = new LinkedHashMap<>();
+
+        @Override
+        public String getKey() {
+            return "$columnWidth";
+        }
+
+        public void put(int modelIndex, PreferencesForTableColumnWidth w) {
+            modelIndexToWidth.put(modelIndex, w);
+        }
+
+        public void applyTo(ObjectTableColumn column) {
+            PreferencesForTableColumnWidth w = modelIndexToWidth.get(column.getTableColumn().getModelIndex());
+            if (w != null) {
+                w.applyTo(column);
+            }
+        }
+
+        @Override
+        public Object toJson() {
+            Map<String,Object> map = new LinkedHashMap<>();
+            modelIndexToWidth.forEach((k,v) -> {
+                map.put(Integer.toString(k), v.toJson());
+            });
+            return map;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void setJson(Object json) {
+            if (json instanceof Map<?,?>) {
+                Map<String,Object> map = (Map<String,Object>) json;
+                map.forEach((k,v) -> {
+                    try {
+                        int n = Integer.valueOf(k);
+                        PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth();
+                        w.setJson(v);
+                        modelIndexToWidth.put(n, w);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                });
+            }
+        }
+    }
+
+    public static class PreferencesForTableColumnWidth implements GuiSwingPreferences.PreferencesByJsonEntry {
+        protected int width;
+
+        public PreferencesForTableColumnWidth() {
+            this(-1);
+        }
+
+        public PreferencesForTableColumnWidth(int width) {
+            this.width = width;
+        }
+
+        public void applyTo(ObjectTableColumn column) {
+            if (width > 0) {
+                column.getTableColumn().setPreferredWidth(width);
+            }
+        }
+
+
+        @Override
+        public String getKey() {
+            return "$columnWidth";
+        }
+
+        @Override
+        public Object toJson() {
+            Map<String,Object> map = new LinkedHashMap<>();
+            map.put("width", width);
+            return map;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void setJson(Object json) {
+            if (json instanceof Map<?,?>) {
+                Map<String,Object> map = (Map<String,Object>) json;
+                width = (Integer) map.getOrDefault("width", -1);
+            }
+        }
+    }
+
 
     public static class ObjectTableColumnRowIndexWithActions
             extends ObjectTableColumn.ObjectTableColumnRowIndex implements ObjectTableColumn.PopupMenuBuilderSource {
