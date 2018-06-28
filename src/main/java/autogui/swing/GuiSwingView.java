@@ -371,8 +371,9 @@ public interface GuiSwingView extends GuiSwingElement {
             if (context.isHistoryValueSupported()) {
                 GuiPreferences ctxPrefs = context.getPreferences();
                 if (!ctxPrefs.equals(targetPrefs)) {
-                    context.getPreferences().getHistoryValues()
-                            .forEach(e -> targetPrefs.addHistoryValue(e.getValue(), e.getTime()));
+                    context.getPreferences().getHistoryValues().stream()
+                            .sorted(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime))
+                            .forEachOrdered(e -> targetPrefs.addHistoryValue(e.getValue(), e.getTime()));
                 }
             }
         }
@@ -389,8 +390,9 @@ public interface GuiSwingView extends GuiSwingElement {
                 if (context.isHistoryValueSupported()) {
                     GuiPreferences ctxPrefs = context.getPreferences();
                     if (!targetPrefs.equals(ctxPrefs)) {
-                        targetPrefs.getHistoryValues()
-                                .forEach(e -> ctxPrefs.addHistoryValue(e.getValue(), e.getTime()));
+                        targetPrefs.getHistoryValues().stream()
+                                .sorted(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime))
+                                .forEachOrdered(e -> ctxPrefs.addHistoryValue(e.getValue(), e.getTime()));
                     }
                 }
             }

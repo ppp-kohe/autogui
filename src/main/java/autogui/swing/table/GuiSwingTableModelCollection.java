@@ -88,7 +88,8 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
     @Override
     public Object getCollectionFromSource() {
-        Object collection = super.getCollectionFromSource();
+        return super.getCollectionFromSource();
+        /*
         if (collection == null) {
             try {
                 collection = context.getReprValue()
@@ -98,6 +99,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
             }
         }
         return collection;
+        */
     }
 
     public SpecifierManagerIndex getRowSpecifierManager() {

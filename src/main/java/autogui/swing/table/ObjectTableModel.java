@@ -315,11 +315,11 @@ public class ObjectTableModel extends AbstractTableModel
         Object[] rowData = data[rowIndex];
         rowData[columnIndex] = (aValue == null ? NULL_CELL : aValue);
 
-        Object rowObject = getRowAtIndex(rowIndex);
-        offerValueForSource(rowObject, aValue, rowIndex, columnIndex);
+        offerValueForSource(aValue, rowIndex, columnIndex);
     }
 
-    public void offerValueForSource(Object rowObject, Object aValue, int rowIndex, int columnIndex) {
+    public void offerValueForSource(Object aValue, int rowIndex, int columnIndex) {
+        Object rowObject = getRowAtIndex(rowIndex);
         Future<?> future = getColumnAt(columnIndex)
                 .setCellValue(rowObject, rowIndex, columnIndex, aValue);
         futureWaiter.accept(() -> offsetValueForSourceFuture(rowObject, aValue, rowIndex, columnIndex, future));

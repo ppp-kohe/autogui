@@ -176,6 +176,10 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
      * @return {@link List#size()}
      */
     public int getSize(Object list) {
-        return ((List<?>) list).size();
+        if (list == null) {
+            return 0;
+        } else {
+            return ((List<?>) list).size();
+        }
     }
 }
