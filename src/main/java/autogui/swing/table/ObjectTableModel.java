@@ -139,6 +139,23 @@ public class ObjectTableModel extends AbstractTableModel
         return scrollPane;
     }
 
+    //////////// task
+
+    public <RetType> RetType execute(Supplier<RetType> task, RetType timeOutValue, RetType cancelValue, Consumer<RetType> afterTask) {
+        RetType ret;
+        try {
+            ret = task.get();
+//            } catch (InterruptedException ie) {
+//                ret = timeoutValue;
+        } catch (Throwable ex) {
+            ret = cancelValue;
+        }
+        if (afterTask != null) {
+            afterTask.accept(ret);
+        }
+        return ret;
+    }
+
     //////////// row
 
     public void setSource(Supplier<Object> source) {
@@ -152,7 +169,10 @@ public class ObjectTableModel extends AbstractTableModel
     @Override
     public int getRowCount() {
         if (data == null) {
-            buildDataArray();
+            BuildResult d = buildDataArray(this::fireTableRowsUpdatedAll);
+            if (d.equals(BuildResult.Delayed)) {
+                return 0;
+            }
         }
         return data.length;
     }
@@ -182,19 +202,34 @@ public class ObjectTableModel extends AbstractTableModel
 
     //////////// values
 
+    public enum BuildResult {
+        Updated, NoUpdate, Delayed
+    }
 
-
-    public boolean buildDataArray() {
-        int rows = getRowCountUpdated();
-        int cols = getColumnCount();
-
-        if (data == null ||
-                data.length != rows ||
-                data.length > 0 && data[0].length != cols) {
-            data = new Object[rows][cols];
-            return true;
+    public BuildResult buildDataArray(Runnable delayedAfterInEvent) {
+        int[] size = execute(() -> {
+            int[] s = new int[2];
+            s[0] = getRowCountUpdated();
+            s[1] = getColumnCount();
+            return s;
+        }, null, null, s -> {
+            if (s == null) {
+                SwingUtilities.invokeLater(delayedAfterInEvent);
+            }
+        });
+        if (size != null) {
+            int rows = size[0];
+            int cols = size[1];
+            if (data == null ||
+                    data.length != rows ||
+                    data.length > 0 && data[0].length != cols) {
+                data = new Object[rows][cols];
+                return BuildResult.Updated;
+            } else {
+                return BuildResult.NoUpdate;
+            }
         } else {
-            return false;
+            return BuildResult.Delayed;
         }
     }
 
@@ -202,12 +237,19 @@ public class ObjectTableModel extends AbstractTableModel
     public Object getValueAt(int rowIndex, int columnIndex) {
         try {
             if (data == null) {
-                buildDataArray();
+                BuildResult res = buildDataArray(() -> fireTableCellUpdated(rowIndex, columnIndex));
+                if (res.equals(BuildResult.Delayed)) {
+                    return null;
+                }
             }
             return getValueAtWithError(rowIndex, columnIndex);
         } catch (Exception ex) {
-            buildDataArray();
-            return getValueAtWithError(rowIndex, columnIndex);
+            BuildResult res = buildDataArray(() -> fireTableCellUpdated(rowIndex, columnIndex));
+            if (res.equals(BuildResult.Delayed)) {
+                return null;
+            } else {
+                return getValueAtWithError(rowIndex, columnIndex);
+            }
         }
     }
 
@@ -235,6 +277,10 @@ public class ObjectTableModel extends AbstractTableModel
         }
     }
 
+    public enum TaskResult {
+        Timeout, Cancel
+    }
+
     /**
      *  the column's {@link ObjectTableColumn#getCellValue(Object, int, int)} might return
      *   a {@link Future} object and
@@ -246,13 +292,28 @@ public class ObjectTableModel extends AbstractTableModel
      * @return the cell value, nullable
      */
     public Object takeValueFromSource(Object[] rowData, int rowIndex, int columnIndex) {
-        Object cellObject;
-        try {
-            Object rowObject = getRowAtIndex(rowIndex);
-            cellObject = getColumnAt(columnIndex)
-                    .getCellValue(rowObject, rowIndex, columnIndex);
-        } catch (Exception ex) {
-            //TODO error reporting
+        Object cellObject = execute(() -> {
+            try {
+
+                Object rowObject = getRowAtIndex(rowIndex);
+                return getColumnAt(columnIndex)
+                        .getCellValue(rowObject, rowIndex, columnIndex);
+            } catch (Exception ex) {
+                //TODO error reporting
+                return null;
+            }
+        }, TaskResult.Timeout, TaskResult.Cancel, c -> {
+            if (c.equals(TaskResult.Timeout)) {
+                SwingUtilities.invokeLater(() -> fireTableCellUpdated(rowIndex, columnIndex));
+            } else if (!c.equals(TaskResult.Cancel)) {
+                SwingUtilities.invokeLater(() -> taskValueFromSourceAfter(rowData, rowIndex, columnIndex, c));
+            }
+        });
+        return taskValueFromSourceAfter(rowData, rowIndex, columnIndex, cellObject);
+    }
+
+    public Object taskValueFromSourceAfter(Object[] rowData, int rowIndex, int columnIndex, Object cellObject) {
+        if (cellObject instanceof TaskResult) { //timeout or cancel
             cellObject = null;
         }
         if (cellObject instanceof Future<?>) {
@@ -301,8 +362,10 @@ public class ObjectTableModel extends AbstractTableModel
         try {
             setValueAtWithError(aValue, rowIndex, columnIndex);
         } catch (Exception ex) {
-            buildDataArray();
-            setValueAtWithError(aValue, rowIndex, columnIndex);
+            BuildResult res = buildDataArray(() -> setValueAtWithError(aValue, rowIndex, columnIndex));
+            if (!res.equals(BuildResult.Delayed)) {
+                setValueAtWithError(aValue, rowIndex, columnIndex);
+            }
         }
     }
 
@@ -319,10 +382,23 @@ public class ObjectTableModel extends AbstractTableModel
     }
 
     public void offerValueForSource(Object aValue, int rowIndex, int columnIndex) {
-        Object rowObject = getRowAtIndex(rowIndex);
-        Future<?> future = getColumnAt(columnIndex)
-                .setCellValue(rowObject, rowIndex, columnIndex, aValue);
-        futureWaiter.accept(() -> offsetValueForSourceFuture(rowObject, aValue, rowIndex, columnIndex, future));
+        execute(() -> {
+                    Object rowObject = getRowAtIndex(rowIndex);
+                    return new OfferResult(getColumnAt(columnIndex)
+                            .setCellValue(rowObject, rowIndex, columnIndex, aValue), rowObject);
+                }, null, null, or ->
+                    futureWaiter.accept(() ->
+                            offsetValueForSourceFuture(or.rowObject, aValue, rowIndex, columnIndex, or.result)));
+    }
+
+    private static class OfferResult {
+        public Future<?> result;
+        public Object rowObject;
+
+        public OfferResult(Future<?> result, Object rowObject) {
+            this.result = result;
+            this.rowObject = rowObject;
+        }
     }
 
     public void offsetValueForSourceFuture(Object rowObject, Object aValue, int rowIndex, int columnIndex, Future<?> future) {
@@ -340,12 +416,13 @@ public class ObjectTableModel extends AbstractTableModel
 
     /** executed under event thread */
     public void refreshData() {
-        if (!buildDataArray()) {
+        BuildResult res = buildDataArray(this::fireTableDataChanged);
+        if (res.equals(BuildResult.NoUpdate)) {
             for (int i = 0, l = data.length; i < l; ++i) {
                 clearRowData(i);
             }
             fireTableRowsUpdatedAll();
-        } else {
+        } else if (!res.equals(BuildResult.Delayed)) {
             //changed row size
             fireTableDataChanged();
         }

@@ -227,6 +227,21 @@ public interface GuiSwingView extends GuiSwingElement {
         default boolean isSwingCurrentValueSupported() {
             return getSwingViewContext().isHistoryValueSupported();
         }
+
+        default <RetType> RetType execute(Supplier<RetType> task, RetType timeOutValue, RetType cancelValue, Consumer<RetType> afterTask) {
+            RetType ret;
+            try {
+                ret = task.get();
+//            } catch (InterruptedException ie) {
+//                ret = timeoutValue;
+            } catch (Throwable ex) {
+                ret = cancelValue;
+            }
+            if (afterTask != null) {
+                afterTask.accept(ret);
+            }
+            return ret;
+        }
     }
 
     /**
@@ -296,7 +311,13 @@ public interface GuiSwingView extends GuiSwingElement {
         GuiMappingContext context = pane.getSwingViewContext();
         GuiReprValue repr = context.getReprValue();
         if (repr.isEditable(context)) {
-            repr.updateFromGui(context, value, pane.getSpecifier(), viewClock.copy());
+            GuiReprValue.ObjectSpecifier spec = pane.getSpecifier();
+            GuiTaskClock clock = viewClock.copy();
+
+            pane.execute(() -> {
+                repr.updateFromGui(context, value, spec, clock);
+                return null;
+            }, null, null, null);
         }
     }
 

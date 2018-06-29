@@ -106,7 +106,7 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
         ObjectTableModel m = (ObjectTableModel) table.getModel();
         return getSelectedRows()
                 .sorted()
-                .mapToObj(m::getRowAtIndex)
+                .mapToObj(m::getRowAtIndex) //TODO delayed
                 .collect(Collectors.toList());
     }
 
