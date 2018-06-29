@@ -188,7 +188,6 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         protected TableSelectionSource source;
         protected Function<Object, TableSelectionChange> selectionChangeFactory;
         protected boolean selectionChange;
-        protected AtomicBoolean running = new AtomicBoolean(false);
 
         public TableSelectionListAction(GuiMappingContext context, TableSelectionSource source) {
             super(context);
@@ -210,11 +209,16 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
             actionPerformedAround(false);
         }
 
+        @Override
+        public void actionPerformedWithoutCheckingRunning(ActionEvent e) {
+            actionPerformedAroundWithoutCheckingRunning(false);
+        }
+
         /**
          * action runner for automatic selection
          */
         public void actionPerformedBySelection() {
-            actionPerformedAround(true);
+            actionPerformedAroundWithoutCheckingRunning(true);
         }
 
         @Override
@@ -224,19 +228,24 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
         protected Object actionPerformedAround(boolean autoSelection) {
             if (running.getAndSet(true)) {
-                List<?> selection = source.getSelectedItems();
-                String targetName = source.getTargetName();
-                return execute(() -> actionPerformedBody(selection, targetName), null, null, ret -> {
-                    SwingUtilities.invokeLater(() -> {
-                        if (ret != null){
-                            source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret));
-                        }
-                        running.set(false);
-                    });
-                });
+                return actionPerformedAroundWithoutCheckingRunning(autoSelection);
             } else {
+                System.err.printf("already running action \"%s\" \n", getValue(NAME));
                 return null;
             }
+        }
+
+        public Object actionPerformedAroundWithoutCheckingRunning(boolean autoSelection) {
+            List<?> selection = source.getSelectedItems();
+            String targetName = source.getTargetName();
+            return execute(() -> actionPerformedBody(selection, targetName), null, null, ret -> {
+                running.set(false);
+                SwingUtilities.invokeLater(() -> {
+                    if (ret != null){
+                        source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret));
+                    }
+                });
+            });
         }
 
         protected Object actionPerformedBody(List<?> selection, String targetName) {

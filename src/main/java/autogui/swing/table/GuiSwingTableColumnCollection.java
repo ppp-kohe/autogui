@@ -753,7 +753,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 targetContainer.add(new ObjectTableColumnCollectionWrapper(getHeaderName(indexInjections),
                         (ObjectTableColumnWithContext) c,
                         indexInjections,
-                        toIndices()));
+                        toIndices(indexInjections)));
             } else {
                 targetContainer.add(c);
             }
@@ -848,7 +848,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             String indent = IntStream.range(0, depth)
                     .mapToObj(i -> "   ")
                     .collect(Collectors.joining());
-            out.println(indent + this.toString() + " : " + Arrays.toString(toIndices()));
+            out.println(indent + this.toString() + " : " + Arrays.toString(toIndices(Collections.emptyMap())));
             out.println(indent + " : name=" + getDisplayName() + ", context=" + factoryBase.getContext());
             out.println(indent + " : index=" + factoryBase.getElementIndex() + ", indexSpecs=" + getIndexSpecifiers());
             out.println(indent + " : column=" + column );
@@ -926,30 +926,34 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
-            return getCellValueFromContext(rowIndex, columnIndex);
+        public GuiReprValue.ObjectSpecifier getSpecifier(int rowIndex, int columnIndex) {
+            indexInjection.forEach(SpecifierManagerIndex::setIndex);
+            return column.getSpecifier(rowIndex, columnIndex);
         }
 
         @Override
-        public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
-            return setCellValueFromContext(rowIndex, columnIndex, newColumnValue);
+        public Object getCellValue(Object rowObject, int rowIndex, int columnIndex, GuiReprValue.ObjectSpecifier specifier) {
+            return getCellValueFromContext(rowIndex, columnIndex, specifier);
         }
 
         @Override
-        public Object getCellValueFromContext(int rowIndex, int columnIndex) {
+        public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue, GuiReprValue.ObjectSpecifier specifier) {
+            return setCellValueFromContext(rowIndex, columnIndex, newColumnValue, specifier);
+        }
+
+        @Override
+        public Object getCellValueFromContext(int rowIndex, int columnIndex, GuiReprValue.ObjectSpecifier specifier) {
             try {
-                indexInjection.forEach(SpecifierManagerIndex::setIndex);
-                return column.getCellValueFromContext(rowIndex, columnIndex);
+                return column.getCellValueFromContext(rowIndex, columnIndex, specifier);
             } catch (Throwable ex) {
                 throw new RuntimeException(ex);
             }
         }
 
         @Override
-        public Future<?> setCellValueFromContext(int rowIndex, int columnIndex, Object newColumnValue) {
+        public Future<?> setCellValueFromContext(int rowIndex, int columnIndex, Object newColumnValue, GuiReprValue.ObjectSpecifier specifier) {
             try {
-                indexInjection.forEach(SpecifierManagerIndex::setIndex);
-                return column.setCellValueFromContext(rowIndex, columnIndex, newColumnValue);
+                return column.setCellValueFromContext(rowIndex, columnIndex, newColumnValue, specifier);
             } catch (Throwable ex) {
                 throw new RuntimeException(ex);
             }

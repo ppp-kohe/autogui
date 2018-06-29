@@ -1,5 +1,7 @@
 package autogui.swing.table;
 
+import autogui.base.mapping.GuiReprValue;
+import autogui.base.mapping.GuiReprValue.ObjectSpecifier;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.UIManagerUtil;
@@ -66,28 +68,23 @@ public class ObjectTableColumn {
 
     public void viewUpdateAsDynamic(ObjectTableColumn source) { }
 
+    public ObjectSpecifier getSpecifier(int rowIndex, int columnIndex) {
+        return null;
+    }
 
     /**
      *
      * @param rowObject the row object at rowIndex
      * @param rowIndex   the row index
      * @param columnIndex the column index
+     * @param specifier specifier from {@link #getSpecifier(int, int)}
      * @return the value at columnIndex of rowObject.
      *  it might be {@link java.util.concurrent.Future}, and then
      *    the value will be specially treated as getting the value of the future as the cell value.
      */
-    public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
+    public Object getCellValue(Object rowObject, int rowIndex, int columnIndex, ObjectSpecifier specifier) {
         return rowObject;
     }
-
-    public Object getCellValueFromContext(int rowIndex, int columnIndex) {
-        return null;
-    }
-
-    public Future<?> setCellValueFromContext(int rowIndex, int columnIndex, Object newColumnValue) {
-        return null;
-    }
-
 
     /**
      *
@@ -95,9 +92,18 @@ public class ObjectTableColumn {
      * @param rowIndex  the row index
      * @param columnIndex the column index
      * @param newColumnValue the new value to be set
+     * @param specifier specifier from {@link #getSpecifier(int, int)}
      * @return a future object for checking completion of the updating or null
      */
-    public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
+    public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue, ObjectSpecifier specifier) {
+        return null;
+    }
+
+    public Object getCellValueFromContext(int rowIndex, int columnIndex, ObjectSpecifier specifier) {
+        return null;
+    }
+
+    public Future<?> setCellValueFromContext(int rowIndex, int columnIndex, Object newColumnValue, ObjectSpecifier specifier) {
         return null;
     }
 
@@ -257,7 +263,7 @@ public class ObjectTableColumn {
         }
 
         @Override
-        public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
+        public Object getCellValue(Object rowObject, int rowIndex, int columnIndex, ObjectSpecifier specifier) {
             return rowIndex;
         }
 
@@ -346,13 +352,13 @@ public class ObjectTableColumn {
 
         @SuppressWarnings("unchecked")
         @Override
-        public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
+        public Object getCellValue(Object rowObject, int rowIndex, int columnIndex, ObjectSpecifier specifier) {
             return getter.apply((ObjType) rowObject);
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
+        public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue, ObjectSpecifier specifier) {
             if (setter != null) {
                 setter.accept((ObjType) rowObject, (PropType) newColumnValue);
             }

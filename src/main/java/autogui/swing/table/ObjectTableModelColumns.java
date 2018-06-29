@@ -131,10 +131,18 @@ public class ObjectTableModelColumns
                 .collect(Collectors.toList());
     }
 
-    public void update(Object list) {
+    public List<ObjectTableColumnSize> getColumnSizeForUpdate(Object list) {
+        return dynamicColumns.stream()
+            .map(d -> d.getColumnSize(list))
+            .collect(Collectors.toList());
+    }
+
+    public void update(List<ObjectTableColumnSize> sizeListForEachColumns) {
         int startIndex = staticColumns.size();
+        int i = 0;
         for (DynamicColumnContainer d : dynamicColumns) {
-            startIndex = d.update(startIndex, list);
+            startIndex = d.update(startIndex, sizeListForEachColumns.get(i));
+            ++i;
         }
     }
 
@@ -245,9 +253,12 @@ public class ObjectTableModelColumns
             return factory;
         }
 
-        public int update(int startIndex, Object list) {
+        public ObjectTableColumnSize getColumnSize(Object list) {
+            return factory.getColumnSize(list);
+        }
+
+        public int update(int startIndex, ObjectTableColumnSize newSize) {
             lastIndex = startIndex;
-            ObjectTableColumnSize newSize = factory.getColumnSize(list);
             newSize.create(this); //event if staticColumns, it might need to shift modelIndex of existing columns
             /*
             System.err.println("--------------------");
@@ -596,13 +607,13 @@ public class ObjectTableModelColumns
             return getClass().getSimpleName() + "(size=" + size + ")";
         }
 
-        public int[] toIndices() {
+        public int[] toIndices(Map<SpecifierManagerIndex,Integer> indexSpecifiers) {
             List<Integer> is = new ArrayList<>();
+            int indexInSize = indexSpecifiers.getOrDefault(getElementSpecifierIndex(), getIndexInParent());
             ObjectTableColumnSize size = getParent();
-            int indexInSize = getIndexInParent();
             while (size != null) {
                 is.add(indexInSize);
-                indexInSize = size.getIndexInParent();
+                indexInSize = indexSpecifiers.getOrDefault(size.getElementSpecifierIndex(), size.getIndexInParent());
                 size = size.getParent();
             }
             Collections.reverse(is);
@@ -615,7 +626,7 @@ public class ObjectTableModelColumns
             System.err.println(IntStream.range(0, depth)
                     .mapToObj(i -> "   ")
                     .collect(Collectors.joining()) + this.toString() +
-                        Arrays.toString(toIndices()));
+                        Arrays.toString(toIndices(Collections.emptyMap())));
             for (ObjectTableColumnSize child : getChildren()) {
                 child.debugPrint(depth + 1);
             }

@@ -2,6 +2,7 @@ package autogui.swing.table;
 
 import autogui.base.mapping.*;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
+import autogui.base.mapping.GuiReprValue.ObjectSpecifier;
 import autogui.swing.GuiSwingActionDefault;
 import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingPreferences;
@@ -167,6 +168,19 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         return contextIndex;
     }
 
+    @Override
+    public ObjectSpecifier getSpecifier(int rowIndex, int columnIndex) {
+        if (specifierIndex != null) {
+            specifierIndex.setIndex(rowIndex);
+        }
+        SpecifierManager m = getSpecifierManager();
+        if (m != null) {
+            return m.getSpecifier();
+        } else {
+            return null;
+        }
+    }
+
     /**
      *
      * @param rowObject the row object at rowIndex
@@ -175,13 +189,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * @return the column value
      */
     @Override
-    public Object getCellValue(Object rowObject, int rowIndex, int columnIndex) {
+    public Object getCellValue(Object rowObject, int rowIndex, int columnIndex, ObjectSpecifier specifier) {
         GuiReprValue field = context.getReprValue();
         try {
-            if (specifierIndex != null) {
-                specifierIndex.setIndex(rowIndex);
-            }
-            return field.getValueWithoutNoUpdate(context, GuiMappingContext.GuiSourceValue.of(rowObject), specifierManager.getSpecifier());
+            return field.getValueWithoutNoUpdate(context, GuiMappingContext.GuiSourceValue.of(rowObject), specifier);
                //the columnIndex is an index on the view model, so it passes contextIndex as the context's column index
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
@@ -198,15 +209,12 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * @return null
      */
     @Override
-    public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue) {
+    public Future<?> setCellValue(Object rowObject, int rowIndex, int columnIndex, Object newColumnValue, ObjectSpecifier specifier) {
         try {
-            if (specifierIndex != null) {
-                specifierIndex.setIndex(rowIndex);
-            }
             GuiReprValue reprValue = context.getReprValue();
             reprValue.addHistoryValue(context, newColumnValue);
             if (reprValue.isEditable(context)) {
-                reprValue.update(context, GuiMappingContext.GuiSourceValue.of(rowObject), newColumnValue, specifierManager.getSpecifier());
+                reprValue.update(context, GuiMappingContext.GuiSourceValue.of(rowObject), newColumnValue, specifier);
             }
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
@@ -215,13 +223,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     @Override
-    public Object getCellValueFromContext(int rowIndex, int columnIndex) {
+    public Object getCellValueFromContext(int rowIndex, int columnIndex, ObjectSpecifier specifier) {
         GuiReprValue field = context.getReprValue();
         try {
-            if (specifierIndex != null) {
-                specifierIndex.setIndex(rowIndex);
-            }
-            return field.getUpdatedValueWithoutNoUpdate(context, specifierManager.getSpecifier());
+            return field.getUpdatedValueWithoutNoUpdate(context, specifier);
             //the columnIndex is an index on the view model, so it passes contextIndex as the context's column index
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
@@ -230,15 +235,12 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     @Override
-    public Future<?> setCellValueFromContext(int rowIndex, int columnIndex, Object newColumnValue) {
+    public Future<?> setCellValueFromContext(int rowIndex, int columnIndex, Object newColumnValue, ObjectSpecifier specifier) {
         try {
-            if (specifierIndex != null) {
-                specifierIndex.setIndex(rowIndex);
-            }
             GuiReprValue reprValue = context.getReprValue();
             reprValue.addHistoryValue(context, newColumnValue);
             if (reprValue.isEditable(context)) {
-                reprValue.updateWithParentSource(context, newColumnValue, specifierManager.getSpecifier());
+                reprValue.updateWithParentSource(context, newColumnValue, specifier);
             }
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
@@ -796,7 +798,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn
                     prev = table.getModel().getValueAt(modelRow, column.getTableColumn().getModelIndex());
                     valuePane.accept(prev);
                 }
-                action.actionPerformed(e);
+                if (action instanceof GuiSwingActionDefault.ExecutionAction) {
+                    ((GuiSwingActionDefault.ExecutionAction) action).actionPerformedWithoutCheckingRunning(e);
+                } else {
+                    action.actionPerformed(e);
+                }
                 if (valuePane != null) {
                     //Object next = valuePane.getSwingViewValue();
                 }

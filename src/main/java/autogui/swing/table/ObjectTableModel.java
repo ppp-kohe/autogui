@@ -1,6 +1,7 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
@@ -92,7 +93,12 @@ public class ObjectTableModel extends AbstractTableModel
     }
 
     public void refreshColumns() {
-        columns.update(getCollectionFromSource());
+        execute(() -> columns.getColumnSizeForUpdate(getCollectionFromSource()),
+                null, null, sizes -> {
+                    if (sizes != null) {
+                        SwingUtilities.invokeLater(() -> columns.update(sizes));
+                    }
+                });
     }
 
 
@@ -280,7 +286,7 @@ public class ObjectTableModel extends AbstractTableModel
     }
 
     /**
-     *  the column's {@link ObjectTableColumn#getCellValue(Object, int, int)} might return
+     *  the column's {@link ObjectTableColumn#getCellValue(Object, int, int, autogui.base.mapping.GuiReprValue.ObjectSpecifier)} might return
      *   a {@link Future} object and
      *   then it waits completion of the task in {@link #takeValueFromSourceFuture(Object[], int, int, Future)}.
      *   The method is run in {@link #getFutureWaiter()} (default is just call the method)
@@ -290,20 +296,21 @@ public class ObjectTableModel extends AbstractTableModel
      * @return the cell value, nullable
      */
     public Object takeValueFromSource(Object[] rowData, int rowIndex, int columnIndex) {
+        ObjectTableColumn column = getColumnAt(columnIndex);
+        GuiReprValue.ObjectSpecifier specifier = column.getSpecifier(rowIndex, columnIndex);
+
         Object cellObject = execute(() -> {
             try {
-
                 Object rowObject = getRowAtIndex(rowIndex);
-                return getColumnAt(columnIndex)
-                        .getCellValue(rowObject, rowIndex, columnIndex); //TODO copy objectSpecifier outside of execute?
+                return column.getCellValue(rowObject, rowIndex, columnIndex, specifier);
             } catch (Exception ex) {
                 //TODO error reporting
                 return null;
             }
         }, TaskResult.Timeout, TaskResult.Cancel, c -> {
-            if (c.equals(TaskResult.Timeout)) {
+            if (c != null && c.equals(TaskResult.Timeout)) {
                 SwingUtilities.invokeLater(() -> fireTableCellUpdated(rowIndex, columnIndex));
-            } else if (!c.equals(TaskResult.Cancel)) {
+            } else if (c == null || !c.equals(TaskResult.Cancel)) {
                 SwingUtilities.invokeLater(() -> taskValueFromSourceAfter(rowData, rowIndex, columnIndex, c));
             }
         });
@@ -380,10 +387,11 @@ public class ObjectTableModel extends AbstractTableModel
     }
 
     public void offerValueForSource(Object aValue, int rowIndex, int columnIndex) {
+        ObjectTableColumn column = getColumnAt(columnIndex);
+        GuiReprValue.ObjectSpecifier specifier = column.getSpecifier(rowIndex, columnIndex);
         execute(() -> {
                     Object rowObject = getRowAtIndex(rowIndex);
-                    return new OfferResult(getColumnAt(columnIndex)
-                            .setCellValue(rowObject, rowIndex, columnIndex, aValue), rowObject);
+                    return new OfferResult(column.setCellValue(rowObject, rowIndex, columnIndex, aValue, specifier), rowObject);
                 }, null, null, or ->
                     futureWaiter.accept(() ->
                             offsetValueForSourceFuture(or.rowObject, aValue, rowIndex, columnIndex, or.result)));

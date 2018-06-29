@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -55,6 +56,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
     public static class ExecutionAction extends GuiSwingView.ContextAction implements PopupCategorized.CategorizedMenuItemAction,
             GuiSwingKeyBinding.RecommendedKeyStroke {
         protected Consumer<Object> resultTarget;
+        protected AtomicBoolean running = new AtomicBoolean(false);
 
         public ExecutionAction(GuiMappingContext context) {
             super(context);
@@ -81,8 +83,17 @@ public class GuiSwingActionDefault implements GuiSwingAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if (!running.getAndSet(true)) {
+                actionPerformedWithoutCheckingRunning(e);
+            } else {
+                System.err.printf("already running action \"%s\" \n", getValue(NAME));
+            }
+        }
+
+        public void actionPerformedWithoutCheckingRunning(ActionEvent e) {
             execute(this::executeAction, null, null,
                     r -> {
+                        running.set(false);
                         if (r != null && resultTarget != null) {
                             SwingUtilities.invokeLater(() -> resultTarget.accept(r));
                         }
