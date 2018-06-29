@@ -453,6 +453,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             }
         }
 
+        @SuppressWarnings("unchecked")
         public Object getValueAt(Object c, int i) {
             SpecifierManagerIndex valueIndex = this.elementIndex;
             if (context.isReprCollectionTable()) {
@@ -1077,7 +1078,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                            Set<TargetAndSpecifierMap> occurrences, Consumer<TargetAndSpecifierMap> resultGen) {
             List<SpecifierManagerIndex> indexSpecifiers = factory == null ? Collections.emptyList() :
                     factory.getIndexSpecifiers();
-            selection.getSelectedRowAllCellIndicesStream().forEach(cell -> {
+            selection.getSelectedRowAllCellIndices().forEach(cell -> {
                 ObjectTableColumn column = model.getColumnAt(cell[1]);
                 if (column instanceof ObjectTableColumnCollectionWrapper) {
                     ObjectTableColumnCollectionWrapper colWrapper = (ObjectTableColumnCollectionWrapper) column;

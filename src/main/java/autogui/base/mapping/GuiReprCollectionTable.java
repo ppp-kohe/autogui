@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * representation for {@link autogui.base.type.GuiTypeCollection}.
@@ -354,18 +355,23 @@ public class GuiReprCollectionTable extends GuiReprValue {
     public interface TableTarget {
         boolean isSelectionEmpty();
 
-        IntStream getSelectedRows();
+        int[] getSelectedRows();
 
         List<Object> getSelectedRowValues();
 
         List<CellValue> getSelectedCells();
 
         /**
-         * @return a stream of {row, column}. those indices are from the view model,
+         * @return a sequence of {row, column}. those indices are from the view model,
          *    which might be different from the context's ones.
          *    The view-model has additional columns other than the context, e.g. the row-index column.
          */
-        Stream<int[]> getSelectedCellIndicesStream();
+        Iterable<int[]> getSelectedCellIndices();
+
+        default List<int[]> getSelectedCellIndicesAsList() {
+            return StreamSupport.stream(getSelectedCellIndices().spliterator(), false)
+                    .collect(Collectors.toList());
+        }
 
         default List<Object> getSelectedCellValues() {
             return getSelectedCells().stream()
@@ -379,7 +385,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
          * @param pos the specified cell: {row, column}
          * @param posToValue pos: {row, column} to a cell value, if it returns null, then it skips the updating
          */
-        void setCellValues(Stream<int[]> pos, Function<int[], Object> posToValue);
+        void setCellValues(Iterable<int[]> pos, Function<int[], Object> posToValue);
     }
 
     /**
@@ -388,7 +394,13 @@ public class GuiReprCollectionTable extends GuiReprValue {
      *   it also supports obtaining all-cells in a row.
      */
     public interface TableTargetCell extends TableTarget {
-        Stream<int[]> getSelectedRowAllCellIndicesStream();
+
+        Iterable<int[]> getSelectedRowAllCellIndices();
+
+        default List<int[]> getSelectedRowAllCellIndicesAsList() {
+            return StreamSupport.stream(getSelectedRowAllCellIndices().spliterator(), false)
+                    .collect(Collectors.toList());
+        }
 
         List<CellValue> getSelectedRowAllCells();
     }
@@ -401,7 +413,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
         Object getSelectedCellValue();
 
         default void setSelectedCellValuesLoop(List<?> rowValues) {
-            setCellValues(getSelectedCellIndicesStream(),
+            setCellValues(getSelectedCellIndices(),
                     new TableTargetColumnFillLoop(rowValues));
         }
     }

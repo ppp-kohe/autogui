@@ -675,7 +675,7 @@ public class GuiSwingJsonTransfer {
                     List<GuiReprCollectionTable.CellValue> updatedRow = getCellsForRow(0, json); //single row
                     fillLoop.addRow(updatedRow);
                 }
-                target.setCellValues(target.getSelectedCellIndicesStream(), fillLoop);
+                target.setCellValues(target.getSelectedCellIndices(), fillLoop);
             }
         }
 

@@ -860,7 +860,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
-            paste(img -> target.setCellValues(target.getSelectedCellIndicesStream(), r -> img));
+            paste(img -> target.setCellValues(target.getSelectedCellIndices(), r -> img));
         }
 
 

@@ -1,15 +1,12 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiReprCollectionTable.CellValue;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import autogui.swing.GuiSwingJsonTransfer;
-import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingView.ValuePane;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 import autogui.swing.table.ObjectTableColumn.TableMenuCompositeShared;
-import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtensionText;
@@ -293,7 +290,7 @@ public class ToStringCopyCell {
                     ++rowIndex;
                 }
             }
-            target.setCellValues(target.getSelectedRowAllCellIndicesStream(), fillLoop);
+            target.setCellValues(target.getSelectedRowAllCellIndices(), fillLoop);
         }
 
         public List<CellValue> runLine(String line, int targetRow) {

@@ -732,11 +732,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             if (rowAndColumns) {
                 //List<int[]>
-                return cellTargets.getSelectedRowAllCellIndicesStream()
-                        .collect(Collectors.toList());
+                return cellTargets.getSelectedRowAllCellIndicesAsList();
             } else {
                 //List<Integer>
-                return cellTargets.getSelectedRows()
+                return IntStream.of(cellTargets.getSelectedRows())
                         .boxed()
                         .collect(Collectors.toList());
             }

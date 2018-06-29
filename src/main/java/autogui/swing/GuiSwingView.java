@@ -862,6 +862,16 @@ public interface GuiSwingView extends GuiSwingElement {
 
     ///////////////////////////
 
+    abstract class ContextAction extends AbstractAction {
+        protected GuiMappingContext context;
+
+        public ContextAction(GuiMappingContext context) {
+            this.context = context;
+        }
+
+
+    }
+
     class HistoryMenu<ValueType, PaneType extends ValuePane<ValueType>> extends JMenu implements TableTargetMenu,
             PopupCategorized.CategorizedMenuItemComponent {
         protected PaneType component;
@@ -1016,7 +1026,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            target.setCellValues(target.getSelectedCellIndicesStream(), i -> value);
+            target.setCellValues(target.getSelectedCellIndices(), i -> value);
         }
     }
 

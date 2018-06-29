@@ -11,6 +11,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * an implementation of {@link autogui.base.mapping.GuiReprCollectionTable.TableTargetCell} for {@link JTable}.
@@ -28,8 +29,10 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
     }
 
     @Override
-    public IntStream getSelectedRows() {
-        return getSelectedRowsView().map(table::convertRowIndexToModel);
+    public int[] getSelectedRows() {
+        return getSelectedRowsView()
+                .map(table::convertRowIndexToModel)
+                .toArray();
     }
 
     public IntStream getSelectedRowsView() {
@@ -44,7 +47,7 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
     }
 
     @Override
-    public void setCellValues(Stream<int[]> pos, Function<int[], Object> posToValue) {
+    public void setCellValues(Iterable<int[]> pos, Function<int[], Object> posToValue) {
         TableModel model = table.getModel();
         pos.forEach(p -> {
                 Object v = posToValue.apply(p);
@@ -55,24 +58,26 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
     }
 
     @Override
-    public Stream<int[]> getSelectedCellIndicesStream() {
+    public Iterable<int[]> getSelectedCellIndices() {
         int[] cols = table.getSelectedColumns();
         return getSelectedRowsView()
                 .boxed()
                 .flatMap(r -> IntStream.of(cols)
                         .filter(c -> table.isCellSelected(r, c))
                         .mapToObj(c -> convertViewToData(r, c)))
-                        .filter(Objects::nonNull);
+                        .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Stream<int[]> getSelectedRowAllCellIndicesStream() {
+    public Iterable<int[]> getSelectedRowAllCellIndices() {
         return getSelectedRowsView()
                 .boxed()
                 .flatMap(r -> IntStream.range(0, table.getColumnCount())
                         .filter(c -> table.isCellSelected(r, c))
                         .mapToObj(c -> convertViewToData(r, c)))
-                        .filter(Objects::nonNull);
+                        .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     public int[] convertViewToData(int viewRow, int viewColumn) {
@@ -84,17 +89,17 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
 
     @Override
     public List<CellValue> getSelectedCells() {
-        return getCellsByCellIndices(getSelectedCellIndicesStream());
+        return getCellsByCellIndices(getSelectedCellIndices());
     }
 
     @Override
     public List<CellValue> getSelectedRowAllCells() {
-        return getCellsByCellIndices(getSelectedRowAllCellIndicesStream());
+        return getCellsByCellIndices(getSelectedRowAllCellIndices());
     }
 
-    public List<CellValue> getCellsByCellIndices(Stream<int[]> idx) {
+    public List<CellValue> getCellsByCellIndices(Iterable<int[]> idx) {
         TableModel model = table.getModel();
-        return idx
+        return StreamSupport.stream(idx.spliterator(), false)
                 .map(pos -> new CellValue(pos[0], pos[1],
                         model.getValueAt(pos[0], pos[1])))
                 .collect(Collectors.toList());
@@ -104,7 +109,7 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
     @Override
     public List<Object> getSelectedRowValues() {
         ObjectTableModel m = (ObjectTableModel) table.getModel();
-        return getSelectedRows()
+        return IntStream.of(getSelectedRows())
                 .sorted()
                 .mapToObj(m::getRowAtIndex)
                 .collect(Collectors.toList());

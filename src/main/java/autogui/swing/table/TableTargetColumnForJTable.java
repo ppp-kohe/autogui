@@ -3,6 +3,8 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiReprCollectionTable;
 
 import javax.swing.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -30,12 +32,13 @@ public class TableTargetColumnForJTable extends TableTargetCellForJTable
     }
 
     @Override
-    public Stream<int[]> getSelectedCellIndicesStream() {
-        return getSelectedRows()
+    public Iterable<int[]> getSelectedCellIndices() {
+        return IntStream.of(getSelectedRows())
                 .boxed()
                 .map(r -> new int[]{
                         r,
                         column
-                });
+                })
+                .collect(Collectors.toList());
     }
 }
