@@ -1,11 +1,9 @@
 package autogui.swing.table;
 
-import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
-import autogui.swing.util.PopupExtension;
 import autogui.swing.util.PopupExtension.PopupMenuBuilder;
 import autogui.swing.util.PopupExtension.PopupMenuFilter;
 import autogui.swing.util.UIManagerUtil;
@@ -297,7 +295,7 @@ public class ObjectTableModel extends AbstractTableModel
 
                 Object rowObject = getRowAtIndex(rowIndex);
                 return getColumnAt(columnIndex)
-                        .getCellValue(rowObject, rowIndex, columnIndex);
+                        .getCellValue(rowObject, rowIndex, columnIndex); //TODO copy objectSpecifier outside of execute?
             } catch (Exception ex) {
                 //TODO error reporting
                 return null;

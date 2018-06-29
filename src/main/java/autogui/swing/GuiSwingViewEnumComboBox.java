@@ -14,9 +14,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
-import java.util.EventObject;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -143,7 +141,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                         Arrays.asList(
                                 infoLabel,
                                 new ContextRefreshAction(context, this),
-                                new HistoryMenu<>(this, context),
+                                new GuiSwingHistoryMenu<>(this, context),
                                 new EnumSetMenu(this),
                                 new ToStringCopyAction(this, getSwingViewContext()),
                                 new EnumPasteAction(this)),
@@ -463,7 +461,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                 menuItems = PopupCategorized.getMenuItems(Arrays.asList(
                         infoLabel,
                         new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
-                        new GuiSwingView.HistoryMenu<>(this, getSwingViewContext()),
+                        new GuiSwingHistoryMenu<>(this, getSwingViewContext()),
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new GuiSwingViewLabel.LabelTextSaveAction(this),
                         new GuiSwingViewLabel.LabelJsonCopyAction(this, context),

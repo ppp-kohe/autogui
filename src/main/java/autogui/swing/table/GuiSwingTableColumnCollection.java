@@ -1365,11 +1365,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        protected Object actionPerformedBody() {
-            List<?> src = source.getSelectedItems();
+        protected Object actionPerformedBody(List<?> src, String targetName) {
             List<Object> values = new ArrayList<>(src.size());
             boolean expand = false;
-            if (context.isTypeElementActionList() && context.getTypeElementAsActionList().getReturnType() instanceof GuiTypeCollection) {
+            if (context.isTypeElementActionList() &&
+                    context.getTypeElementAsActionList().getReturnType() instanceof GuiTypeCollection) {
                 expand = true;
             }
             GuiReprActionList action = context.getReprActionList();

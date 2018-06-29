@@ -10,9 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EventObject;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -233,7 +231,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         }
     }
 
-    public static class NamedPropertyPane extends NamedPane implements ValuePaneWrapper<Object> {
+    public static class NamedPropertyPane extends NamedPane implements GuiSwingViewWrapper.ValuePaneWrapper<Object> {
         protected PopupExtension popup;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
 

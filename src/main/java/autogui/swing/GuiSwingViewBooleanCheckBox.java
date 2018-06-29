@@ -18,9 +18,7 @@ import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EventObject;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,7 +45,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         //wraps the check-box by a panel with flow layout: the size of the check-box becomes its preferred size.
         //  mouse clicks only pointing within bounds of the check-box will be processed
-        JPanel pane = new GuiSwingView.ValueWrappingPane(new FlowLayout(FlowLayout.LEADING));
+        JPanel pane = new GuiSwingViewWrapper.ValueWrappingPane(new FlowLayout(FlowLayout.LEADING));
         pane.setOpaque(false);
         pane.setBorder(BorderFactory.createEmptyBorder());
         pane.add(new PropertyCheckBox(context, new SpecifierManagerDefault(parentSpecifier)));
@@ -141,7 +139,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
                                 new ContextRefreshAction(context, this),
                                 new ToStringCopyAction(this, context),
                                 new BooleanPasteAction(this),
-                                new HistoryMenu<>(this, getSwingViewContext()),
+                                new GuiSwingHistoryMenu<>(this, getSwingViewContext()),
                                 new BooleanFlipAction(this),
                                 new BooleanSetValueAction(this, true),
                                 new BooleanSetValueAction(this, false),

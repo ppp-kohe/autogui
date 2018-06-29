@@ -4,7 +4,9 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable.CellValue;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import autogui.swing.GuiSwingJsonTransfer;
+import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingView.ValuePane;
+import autogui.swing.GuiSwingViewCollectionTable.CollectionTable;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 import autogui.swing.table.ObjectTableColumn.TableMenuCompositeShared;
 import autogui.swing.util.PopupCategorized.CategorizedMenuItem;
@@ -78,20 +80,25 @@ public class ToStringCopyCell {
                     .map(TableMenuCompositeToStringCopy.class::cast)
                     .filter(e -> e.getIndex() != -1)
                     .collect(Collectors.toList());
+            GuiMappingContext context = null;
+            if (table instanceof CollectionTable) {
+                context = ((CollectionTable) table).getSwingViewContext();
+            }
             return Arrays.asList(
-                    new ToStringCopyForCellsAction(cs, !row),
-                    new ToStringSaveForCellsAction(cs, !row, table));
+                    new ToStringCopyForCellsAction(context, cs, !row),
+                    new ToStringSaveForCellsAction(context, cs, !row, table));
         }
     }
 
     /**
      * the action defined by composition of selected columns; it joins cell strings by new-lines (for row) and tabs (for columns).
      */
-    public static class ToStringCopyForCellsAction extends AbstractAction implements TableTargetCellAction {
+    public static class ToStringCopyForCellsAction extends GuiSwingView.ContextAction implements TableTargetCellAction {
         protected List<TableMenuCompositeToStringCopy> activatedColumns;
         protected boolean onlyApplyingSelectedColumns;
 
-        public ToStringCopyForCellsAction(List<TableMenuCompositeToStringCopy> activatedColumns, boolean onlyApplyingSelectedColumns) {
+        public ToStringCopyForCellsAction(GuiMappingContext context, List<TableMenuCompositeToStringCopy> activatedColumns, boolean onlyApplyingSelectedColumns) {
+            super(context);
             putValue(NAME, onlyApplyingSelectedColumns ? "Copy Cells as Text" : "Copy Row Cells as Text");
             if (onlyApplyingSelectedColumns) {
                 putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C,
@@ -108,17 +115,22 @@ public class ToStringCopyCell {
 
         @Override
         public void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target) {
-            copy(getString(target));
+            List<CellValue> cells = getSelectedCells(target);
+            execute(() -> getString(cells), null, null,
+                    str -> SwingUtilities.invokeLater(() -> copy(str)));
         }
 
-        public String getString(TableTargetCell target) {
+        public List<CellValue> getSelectedCells(TableTargetCell target) {
+            return (onlyApplyingSelectedColumns
+                    ? target.getSelectedCells()
+                    : target.getSelectedRowAllCells());
+        }
+
+        public String getString(List<CellValue> cells) {
             //follow the visual ordering
             int prevLine = -1;
             List<String> cols = new ArrayList<>();
             List<String> lines = new ArrayList<>();
-            List<CellValue> cells = (onlyApplyingSelectedColumns
-                    ? target.getSelectedCells()
-                    : target.getSelectedRowAllCells());
             for (CellValue cell : cells) {
                 TableMenuCompositeToStringCopy col = getMenuCompositeForCell(cell);
                 if (col != null) {
@@ -148,9 +160,11 @@ public class ToStringCopyCell {
         }
 
         public void copy(String data) {
-            Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
-            StringSelection sel = new StringSelection(data);
-            board.setContents(sel, sel);
+            if (data != null) {
+                Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
+                StringSelection sel = new StringSelection(data);
+                board.setContents(sel, sel);
+            }
         }
 
         @Override
@@ -164,25 +178,29 @@ public class ToStringCopyCell {
         }
     }
 
-    public static void save(Supplier<String> data, JComponent component, String name) {
+    public static void save(GuiSwingView.ContextAction runner, Supplier<String> data, JComponent component, String name) {
         SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
         Path p = fd.showConfirmDialogIfOverwriting(component,
                 fd.showSaveDialog(component, PopupExtensionText.getEncodingPane(), name + ".txt"));
         if (p != null) {
-            try {
-                Files.write(p, Collections.singletonList(data.get()), PopupExtensionText.selectedCharset);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
+            runner.execute(data, null, null, str -> {
+                if (str != null) {
+                    try {
+                        Files.write(p, Collections.singletonList(str), PopupExtensionText.selectedCharset);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
+            });
         }
     }
 
     public static class ToStringSaveForCellsAction extends ToStringCopyForCellsAction {
         protected JComponent table;
 
-        public ToStringSaveForCellsAction(List<TableMenuCompositeToStringCopy> activatedColumns, boolean onlyApplyingSelectedColumns,
+        public ToStringSaveForCellsAction(GuiMappingContext context, List<TableMenuCompositeToStringCopy> activatedColumns, boolean onlyApplyingSelectedColumns,
                                           JComponent table) {
-            super(activatedColumns, onlyApplyingSelectedColumns);
+            super(context, activatedColumns, onlyApplyingSelectedColumns);
             putValue(NAME, onlyApplyingSelectedColumns ? "Save Cells as Text..." : "Save Row Cells as Text...");
             if (onlyApplyingSelectedColumns) {
                 putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S,
@@ -197,7 +215,8 @@ public class ToStringCopyCell {
             if (table instanceof ValuePane<?>) {
                 name = ((ValuePane) table).getSwingViewContext().getName();
             }
-            save(() -> getString(target), table, name);
+            List<CellValue> cells = getSelectedCells(target);
+            save(this, () -> getString(cells), table, name);
         }
 
         @Override
@@ -241,9 +260,13 @@ public class ToStringCopyCell {
                     .map(TableMenuCompositeToStringPaste.class::cast)
                     .filter(e -> e.getIndex() != -1)
                     .collect(Collectors.toList());
+            GuiMappingContext context = null;
+            if (table instanceof CollectionTable) {
+                context = ((CollectionTable) table).getSwingViewContext();
+            }
             return Arrays.asList(
-                    new ToStringPasteForCellsAction(cs, !row),
-                    new ToStringLoadForCellsAction(cs, !row, table));
+                    new ToStringPasteForCellsAction(context, cs, !row),
+                    new ToStringLoadForCellsAction(context, cs, !row, table));
         }
     }
 
@@ -253,8 +276,11 @@ public class ToStringCopyCell {
         protected String columnSeparator = "\\t"; //regex
         protected boolean onlyApplyingSelectedColumns;
 
-        public ToStringPasteForCellsAction(List<TableMenuCompositeToStringPaste> activeComposites, boolean onlyApplyingSelectedColumns) {
+        protected GuiSwingView.ContextAction runner;
+
+        public ToStringPasteForCellsAction(GuiMappingContext context, List<TableMenuCompositeToStringPaste> activeComposites, boolean onlyApplyingSelectedColumns) {
             super(null);
+            runner = new GuiSwingView.ContextAction(context);
             putValue(NAME, onlyApplyingSelectedColumns ? "Paste Text to Cells" : "Paste Text to Row Cells");
             if (onlyApplyingSelectedColumns) {
                 putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_V,
@@ -283,14 +309,22 @@ public class ToStringCopyCell {
         }
 
         public void run(String str, TableTargetCell target) {
-            int rowIndex = 0;
-            GuiSwingJsonTransfer.JsonFillLoop fillLoop = new GuiSwingJsonTransfer.JsonFillLoop();
-            for (String line :str.split(lineSeparator)) {
-                if (fillLoop.addRow(runLine(line, rowIndex))) {
-                    ++rowIndex;
-                }
-            }
-            target.setCellValues(target.getSelectedRowAllCellIndices(), fillLoop);
+            Iterable<int[]> is = target.getSelectedRowAllCellIndices();
+            runner.execute(() -> {
+                        int rowIndex = 0;
+                        GuiSwingJsonTransfer.JsonFillLoop fillLoop = new GuiSwingJsonTransfer.JsonFillLoop();
+                        for (String line : str.split(lineSeparator)) {
+                            if (fillLoop.addRow(runLine(line, rowIndex))) {
+                                ++rowIndex;
+                            }
+                        }
+                        return fillLoop;
+                    }, null, null, fl -> {
+                        if (fl != null) {
+                            SwingUtilities.invokeLater(() ->
+                                target.setCellValues(is, fl));
+                        }
+                    });
         }
 
         public List<CellValue> runLine(String line, int targetRow) {
@@ -334,8 +368,8 @@ public class ToStringCopyCell {
         protected JComponent table;
         protected PopupExtensionText.TextLoadAction loader;
 
-        public ToStringLoadForCellsAction(List<TableMenuCompositeToStringPaste> activeComposites, boolean onlyApplyingSelectedColumns, JComponent table) {
-            super(activeComposites, onlyApplyingSelectedColumns);
+        public ToStringLoadForCellsAction(GuiMappingContext context, List<TableMenuCompositeToStringPaste> activeComposites, boolean onlyApplyingSelectedColumns, JComponent table) {
+            super(context, activeComposites, onlyApplyingSelectedColumns);
             putValue(NAME, onlyApplyingSelectedColumns ? "Load Text to Cells..." : "Load Text to Row Cells...");
             if (onlyApplyingSelectedColumns) {
                 putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O,

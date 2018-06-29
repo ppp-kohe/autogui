@@ -41,7 +41,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         PropertyImagePane imagePane = new PropertyImagePane(context, new SpecifierManagerDefault(parentSpecifier));
-        ValuePane<Image> pane = new GuiSwingView.ValueScrollPane<>(imagePane);
+        ValuePane<Image> pane = new GuiSwingViewWrapper.ValueScrollPane<>(imagePane);
         if (context.isTypeElementProperty()) {
             return pane.wrapSwingProperty();
         } else {
@@ -700,7 +700,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     ///////////////////////
 
-    public static class HistoryMenuImage extends HistoryMenu<Image, PropertyImagePane> {
+    public static class HistoryMenuImage extends GuiSwingHistoryMenu<Image, PropertyImagePane> {
         public HistoryMenuImage(PropertyImagePane component, GuiMappingContext context) {
             super(component, context);
         }

@@ -1,16 +1,12 @@
 package autogui.swing.table;
 
 import autogui.base.mapping.GuiMappingContext;
-import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
 import autogui.base.mapping.GuiTaskClock;
-import autogui.swing.GuiSwingJsonTransfer;
-import autogui.swing.GuiSwingView;
+import autogui.swing.*;
 import autogui.swing.GuiSwingView.SpecifierManager;
 import autogui.swing.GuiSwingView.SpecifierManagerDefault;
-import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.GuiSwingViewLabel.PropertyLabel;
-import autogui.swing.GuiSwingViewStringField;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 import autogui.swing.util.PopupExtensionText;
@@ -55,7 +51,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                 menuItems = PopupCategorized.getMenuItems(Arrays.asList(
                         infoLabel,
                         new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
-                        new GuiSwingView.HistoryMenu<>(this, getSwingViewContext()),
+                        new GuiSwingHistoryMenu<>(this, getSwingViewContext()),
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new LabelTextPasteAllAction(this),
                         new LabelTextLoadAction(this),

@@ -17,6 +17,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 /**
@@ -187,6 +188,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         protected TableSelectionSource source;
         protected Function<Object, TableSelectionChange> selectionChangeFactory;
         protected boolean selectionChange;
+        protected AtomicBoolean running = new AtomicBoolean(false);
 
         public TableSelectionListAction(GuiMappingContext context, TableSelectionSource source) {
             super(context);
@@ -221,20 +223,25 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         }
 
         protected Object actionPerformedAround(boolean autoSelection) {
-            setEnabled(false);
-            Object ret = null;
-            try {
-                ret = actionPerformedBody();
-                return ret;
-            } finally {
-                source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret));
-                setEnabled(true);
+            if (running.getAndSet(true)) {
+                List<?> selection = source.getSelectedItems();
+                String targetName = source.getTargetName();
+                return execute(() -> actionPerformedBody(selection, targetName), null, null, ret -> {
+                    SwingUtilities.invokeLater(() -> {
+                        if (ret != null){
+                            source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret));
+                        }
+                        running.set(false);
+                    });
+                });
+            } else {
+                return null;
             }
         }
 
-        protected Object actionPerformedBody() {
+        protected Object actionPerformedBody(List<?> selection, String targetName) {
             return ((GuiReprActionList) context.getRepresentation())
-                    .executeActionForList(context, source.getSelectedItems(), source.getTargetName());
+                    .executeActionForList(context, selection, targetName);
         }
 
         /**
@@ -297,9 +304,9 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         }
 
         @Override
-        protected Object actionPerformedBody() {
+        protected Object actionPerformedBody(List<?> selection, String targetName) {
             List<Object> os = ((GuiReprAction) context.getRepresentation())
-                    .executeActionForTargets(context, source.getSelectedItems());
+                    .executeActionForTargets(context, selection);
 
             if (selectionChange) {
                 List<Object> flat = new ArrayList<>();

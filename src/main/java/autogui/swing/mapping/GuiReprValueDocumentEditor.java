@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -148,6 +149,21 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
+        try {
+            Object ret = SwingDeferredRunner.run(() -> toJsonInEvent(source));
+            if (ret instanceof SwingDeferredRunner.TaskResultFuture) {
+                Future<Object> v = ((SwingDeferredRunner.TaskResultFuture) ret).getFuture();
+                return v.get(1, TimeUnit.SECONDS);
+            } else {
+                return ret;
+            }
+        } catch (Throwable ex) {
+            context.errorWhileJson(ex);
+            return null;
+        }
+    }
+
+    public Object toJsonInEvent(Object source) {
         if (source instanceof Document) {
             Document doc = (Document) source;
             try {
@@ -182,6 +198,21 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
 
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
+        try {
+            Object ret = SwingDeferredRunner.run(() -> fromJsonInEvent(context, target, json));
+            if (ret instanceof SwingDeferredRunner.TaskResultFuture) {
+                Future<Object> f = ((SwingDeferredRunner.TaskResultFuture) ret).getFuture();
+                return f.get(1, TimeUnit.SECONDS);
+            } else {
+                return ret;
+            }
+        } catch (Throwable ex) {
+            context.errorWhileJson(ex);
+            return null;
+        }
+    }
+
+    public Object fromJsonInEvent(GuiMappingContext context, Object target, Object json) {
         Class<?> cls = getValueType(context);
         if (json instanceof String) {
             String jsonStr = (String) json;

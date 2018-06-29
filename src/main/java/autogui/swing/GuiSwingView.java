@@ -3,15 +3,11 @@ package autogui.swing;
 import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.*;
 import autogui.swing.table.TableTargetColumnAction;
-import autogui.swing.table.TableTargetMenu;
-import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
 import autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
-import javax.swing.event.MenuEvent;
-import javax.swing.event.MenuListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -20,9 +16,6 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -92,14 +85,14 @@ public interface GuiSwingView extends GuiSwingElement {
          */
         PopupExtension.PopupMenuBuilder getSwingMenuBuilder();
 
-        default ValueScrollPane<ValueType> wrapSwingScrollPane(boolean verticalAlways, boolean horizontalAlways) {
-            return new ValueScrollPane<>(asSwingViewComponent(),
+        default GuiSwingViewWrapper.ValueScrollPane<ValueType> wrapSwingScrollPane(boolean verticalAlways, boolean horizontalAlways) {
+            return new GuiSwingViewWrapper.ValueScrollPane<>(asSwingViewComponent(),
                     verticalAlways ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     horizontalAlways ? ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         }
 
-        default ValueWrappingPane<ValueType> wrapSwingPane() {
-            return new ValueWrappingPane<>(asSwingViewComponent());
+        default GuiSwingViewWrapper.ValueWrappingPane<ValueType> wrapSwingPane() {
+            return new GuiSwingViewWrapper.ValueWrappingPane<>(asSwingViewComponent());
         }
 
         GuiMappingContext getSwingViewContext();
@@ -228,6 +221,7 @@ public interface GuiSwingView extends GuiSwingElement {
             return getSwingViewContext().isHistoryValueSupported();
         }
 
+        //TODO execute impl
         default <RetType> RetType execute(Supplier<RetType> task, RetType timeOutValue, RetType cancelValue, Consumer<RetType> afterTask) {
             RetType ret;
             try {
@@ -244,66 +238,6 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
-    /**
-     * indicating the pane wraps another {@link ValuePane}
-     * @param <ValueType> the value type
-     */
-    interface ValuePaneWrapper<ValueType> extends ValuePane<ValueType> {
-        /**
-         * @return a wrapped child pane or null.
-         *   the returned pane might have the same context of this, or different one like "property(value)"
-         */
-        ValuePane<Object> getSwingViewWrappedPane();
-
-        default boolean isSwingViewWrappedPaneSameContext() {
-            ValuePane<Object> p = getSwingViewWrappedPane();
-            return p != null && Objects.equals(p.getSwingViewContext(), getSwingViewContext());
-        }
-
-        @Override
-        default GuiSwingActionDefault.ExecutionAction getActionByName(String name) {
-            if (isSwingViewWrappedPaneSameContext()) {
-                GuiSwingActionDefault.ExecutionAction a = getSwingViewWrappedPane().getActionByName(name);
-                if (a != null) {
-                    return a;
-                }
-            }
-            return getActionDefault(this,
-                    e ->  e.getContext() != null && e.getContext().getName().equals(name));
-        }
-
-        @Override
-        default GuiSwingActionDefault.ExecutionAction getActionByContext(GuiMappingContext context) {
-            if (isSwingViewWrappedPaneSameContext()) {
-                GuiSwingActionDefault.ExecutionAction a = getSwingViewWrappedPane().getActionByContext(context);
-                if (a != null) {
-                    return a;
-                }
-            }
-            return getActionDefault(this, e ->  Objects.equals(e.getContext(), context));
-        }
-
-        @Override
-        default KeyStroke getSwingFocusKeyStroke() {
-            return null;
-        }
-
-        /**
-         * nothing happen in the wrapper pane. the wrapped pane do the task
-         * @param prefs target prefs or ancestor of the target;
-         */
-        @Override
-        default void saveSwingPreferences(GuiPreferences prefs) { }
-
-        /**
-         * nothing happen in the wrapper pane. the wrapped pane do the task
-         * @param prefs target prefs or ancestor of the target;
-         */
-        @Override
-        default void loadSwingPreferences(GuiPreferences prefs) { }
-
-    }
-
 
     ///////////////////////////////
 
@@ -315,7 +249,7 @@ public interface GuiSwingView extends GuiSwingElement {
             GuiTaskClock clock = viewClock.copy();
 
             pane.execute(() -> {
-                repr.updateFromGui(context, value, spec, clock);
+                repr.updateFromGui(context, value, spec, clock); //callbacks are done by invokeLater
                 return null;
             }, null, null, null);
         }
@@ -466,8 +400,8 @@ public interface GuiSwingView extends GuiSwingElement {
             }
         }
         //descendant for wrapper
-        if (component instanceof ValuePaneWrapper<?>) {
-            ValuePaneWrapper<?> wrapper = (ValuePaneWrapper<?>) component;
+        if (component instanceof GuiSwingViewWrapper.ValuePaneWrapper<?>) {
+            GuiSwingViewWrapper.ValuePaneWrapper<?> wrapper = (GuiSwingViewWrapper.ValuePaneWrapper<?>) component;
             if (wrapper.isSwingViewWrappedPaneSameContext()) {
                 return getChild(wrapper.getSwingViewWrappedPane().asSwingViewComponent(), predicate);
             }
@@ -511,9 +445,9 @@ public interface GuiSwingView extends GuiSwingElement {
             ValuePane<Object> vp = (ValuePane<Object>) component;
             T t = f.apply(vp);
             if (t != null) {
-                if (component instanceof GuiSwingView.ValuePaneWrapper<?> &&
-                        ((GuiSwingView.ValuePaneWrapper<Object>) component).isSwingViewWrappedPaneSameContext()) {
-                    GuiSwingView.ValuePane<Object> wrapped = ((GuiSwingView.ValuePaneWrapper<Object>) component).getSwingViewWrappedPane();
+                if (component instanceof GuiSwingViewWrapper.ValuePaneWrapper<?> &&
+                        ((GuiSwingViewWrapper.ValuePaneWrapper<Object>) component).isSwingViewWrappedPaneSameContext()) {
+                    GuiSwingView.ValuePane<Object> wrapped = ((GuiSwingViewWrapper.ValuePaneWrapper<Object>) component).getSwingViewWrappedPane();
                     T wrappedResult = checkNonNull(wrapped.asSwingViewComponent(), f);
                     if (wrappedResult != null) {
                         return wrappedResult;
@@ -617,191 +551,6 @@ public interface GuiSwingView extends GuiSwingElement {
                 .forEach(si -> setupKeyBindingsForStaticJMenuSubItems(pane, si, overwrite));
     }
 
-    class ValueScrollPane<ValueType> extends JScrollPane implements ValuePaneWrapper<ValueType> {
-        protected ValuePane<ValueType> pane;
-
-        @SuppressWarnings("unchecked")
-        public ValueScrollPane(Component view, int vsbPolicy, int hsbPolicy) {
-            super(view, vsbPolicy, hsbPolicy);
-            if (view instanceof ValuePane) {
-                this.pane = (ValuePane<ValueType>) view;
-            }
-        }
-
-        @SuppressWarnings("unchecked")
-        public ValueScrollPane(Component view) {
-            super(view);
-            if (view instanceof ValuePane) {
-                this.pane = (ValuePane<ValueType>) view;
-            }
-        }
-
-        @Override
-        public ValueType getSwingViewValue() {
-            return pane == null ? null : pane.getSwingViewValue();
-        }
-
-        @Override
-        public void setSwingViewValue(ValueType value) {
-            if (pane != null) {
-                pane.setSwingViewValue(value);
-            }
-        }
-
-        @Override
-        public void setSwingViewValueWithUpdate(ValueType value) {
-            if (pane != null) {
-                pane.setSwingViewValueWithUpdate(value);
-            }
-        }
-
-        @Override
-        public void setSwingViewValue(ValueType value, GuiTaskClock clock) {
-            if (pane != null) {
-                pane.setSwingViewValue(value, clock);
-            }
-        }
-
-        @Override
-        public void setSwingViewValueWithUpdate(ValueType value, GuiTaskClock clock) {
-            if (pane != null) {
-                pane.setSwingViewValueWithUpdate(value, clock);
-            }
-        }
-
-        @Override
-        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
-            return pane == null ? null : pane.getSwingMenuBuilder();
-        }
-
-        @Override
-        public void addSwingEditFinishHandler(Runnable eventHandler) {
-            if (pane != null) {
-                pane.addSwingEditFinishHandler(eventHandler);
-            }
-        }
-
-        @Override
-        public GuiMappingContext getSwingViewContext() {
-            return pane == null ? null : pane.getSwingViewContext();
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public ValuePane<Object> getSwingViewWrappedPane() {
-            return (ValuePane<Object>) pane;
-        }
-
-        @Override
-        public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return pane == null ? GuiReprValue.NONE : pane.getSpecifier();
-        }
-
-        @Override
-        public void prepareForRefresh() { }
-    }
-
-
-    class ValueWrappingPane<ValueType> extends JPanel implements ValuePaneWrapper<ValueType> {
-        protected ValuePane<ValueType> pane;
-
-        public ValueWrappingPane(Component view) {
-            super(new BorderLayout());
-            setOpaque(false);
-            add(view, BorderLayout.CENTER);
-        }
-
-        @SuppressWarnings("unchecked")
-        private void setPane(Component view) {
-            if (view instanceof ValuePane) {
-                this.pane = (ValuePane<ValueType>) view;
-            }
-        }
-
-        public ValueWrappingPane(LayoutManager m) {
-            super(m);
-        }
-
-        @Override
-        protected void addImpl(Component comp, Object constraints, int index) {
-            setPane(comp);
-            super.addImpl(comp, constraints, index);
-        }
-
-        @Override
-        public ValueType getSwingViewValue() {
-            return pane == null ? null : pane.getSwingViewValue();
-        }
-
-        @Override
-        public void setSwingViewValue(ValueType value) {
-            if (pane != null) {
-                pane.setSwingViewValue(value);
-            }
-        }
-
-        @Override
-        public void setSwingViewValueWithUpdate(ValueType value) {
-            if (pane != null) {
-                pane.setSwingViewValueWithUpdate(value);
-            }
-        }
-
-        @Override
-        public void setSwingViewValue(ValueType value, GuiTaskClock clock) {
-            if (pane != null) {
-                pane.setSwingViewValue(value, clock);
-            }
-        }
-
-        @Override
-        public void setSwingViewValueWithUpdate(ValueType value, GuiTaskClock clock) {
-            if (pane != null) {
-                pane.setSwingViewValueWithUpdate(value, clock);
-            }
-        }
-
-        @Override
-        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
-            return pane == null ? null : pane.getSwingMenuBuilder();
-        }
-
-        @Override
-        public void addSwingEditFinishHandler(Runnable eventHandler) {
-            if (pane != null) {
-                pane.addSwingEditFinishHandler(eventHandler);
-            }
-        }
-
-        @Override
-        public GuiMappingContext getSwingViewContext() {
-            return pane == null ? null : pane.getSwingViewContext();
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public ValuePane<Object> getSwingViewWrappedPane() {
-            return (ValuePane<Object>) pane;
-        }
-
-        @Override
-        public GuiReprValue.ObjectSpecifier getSpecifier() {
-            return pane == null ? GuiReprValue.NONE : pane.getSpecifier();
-        }
-
-        @Override
-        public void prepareForRefresh() { }
-    }
 
     class ContextRefreshAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiMappingContext context;
@@ -835,21 +584,22 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
-    class ToStringCopyAction extends AbstractAction implements TableTargetColumnAction {
+    class ToStringCopyAction extends ContextAction implements TableTargetColumnAction {
         protected ValuePane<?> pane;
-        protected GuiMappingContext context;
 
         public ToStringCopyAction(ValuePane<?> pane, GuiMappingContext context) {
+            super(context);
             putValue(NAME, "Copy as Text");
             putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C,
                     Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
             this.pane = pane;
-            this.context = context;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            copy(toString(pane.getSwingViewValue()));
+            Object v = pane.getSwingViewValue();
+            execute(() -> toString(v), null, null,
+                    this::copy);
         }
 
         public String toString(Object v) {
@@ -858,16 +608,20 @@ public interface GuiSwingView extends GuiSwingElement {
 
 
         public void copy(String data) {
-            Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
-            StringSelection sel = new StringSelection(data);
-            board.setContents(sel, sel);
+            if (data != null) {
+                Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
+                StringSelection sel = new StringSelection(data);
+                board.setContents(sel, sel);
+            }
         }
 
         @Override
         public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
-            copy(target.getSelectedCellValues().stream()
+            List<Object> vs = target.getSelectedCellValues();
+            execute(() -> vs.stream()
                     .map(this::toString)
-                    .collect(Collectors.joining("\n")));
+                    .collect(Collectors.joining("\n")), null, null,
+                    this::copy);
         }
 
         @Override
@@ -883,195 +637,36 @@ public interface GuiSwingView extends GuiSwingElement {
 
     ///////////////////////////
 
-    abstract class ContextAction extends AbstractAction {
+    class ContextAction extends AbstractAction {
         protected GuiMappingContext context;
 
-        public ContextAction(GuiMappingContext context) {
+        public ContextAction(GuiMappingContext context) { //context may be null
             this.context = context;
         }
 
-
-    }
-
-    class HistoryMenu<ValueType, PaneType extends ValuePane<ValueType>> extends JMenu implements TableTargetMenu,
-            PopupCategorized.CategorizedMenuItemComponent {
-        protected PaneType component;
-        protected GuiMappingContext context;
-
-        public HistoryMenu(PaneType component, GuiMappingContext context) {
-            super("History");
-            this.component = component;
-            this.context = context;
-            buildMenu();
+        public GuiMappingContext getContext() {
+            return context;
         }
-
-        protected void buildMenu() {
-            addMenuListener(new MenuListener() {
-                @Override
-                public void menuSelected(MenuEvent e) {
-                    loadItems();
-                }
-                @Override
-                public void menuDeselected(MenuEvent e) { }
-                @Override
-                public void menuCanceled(MenuEvent e) { }
-            });
-        }
-
-        @Override
-        public JComponent getMenuItem() {
-            return this;
-        }
-
-        @Override
-        public JMenu convert(GuiReprCollectionTable.TableTargetColumn target) {
-            return new HistoryMenuForTableColumn<>(component, context, target);
-        }
-
-        public void clearHistory() {
-            context.getPreferences().clearHistories();
-        }
-
-        public void loadItems() {
-            removeAll();
-            boolean added = false;
-            List<GuiPreferences.HistoryValueEntry> prefEs = context.getPreferences().getHistoryValues();
-            List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefEs);
-            Collections.reverse(es);
-            for (GuiPreferences.HistoryValueEntry e : es) {
-                if (e.getIndex() != -1 && e.getValue() != null) {
-                    addAction(e);
-                    added = true;
+        //TODO execute impl
+        public <RetType> RetType execute(Supplier<RetType> task, RetType timeOutValue, RetType cancelValue, Consumer<RetType> afterTask) {
+            RetType ret = null;
+            try {
+                ret = task.get();
+//            } catch (InterruptedException ie) {
+//                ret = timeoutValue;
+            } catch (Throwable ex) {
+                ret = cancelValue;
+            } finally {
+                if (afterTask != null) {
+                    afterTask.accept(ret);
                 }
             }
-            if (!added) {
-                JMenuItem nothing = new JMenuItem("Nothing");
-                nothing.setEnabled(false);
-                add(nothing);
-            }
-            HistoryClearAction clearAction = new HistoryClearAction(this);
-            if (!added) {
-                clearAction.setEnabled(false);
-            }
-            addSeparator();
-            add(clearAction);
-        }
-
-        static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
-        public void addAction(GuiPreferences.HistoryValueEntry e) {
-            JMenuItem item = new JMenuItem(createAction(e));
-            item.setText(item.getText() + " : " + formatter.format(LocalDateTime.ofInstant(e.getTime(), ZoneId.systemDefault())));
-            add(item);
-        }
-
-        @SuppressWarnings("unchecked")
-        public Action createAction(GuiPreferences.HistoryValueEntry e) {
-            ValueType v = (ValueType) e.getValue();
-            return new HistorySetAction<>(getActionName(e), v, component);
-        }
-
-        public String getActionName(GuiPreferences.HistoryValueEntry e) {
-            String name = context.getRepresentation().toHumanReadableString(context, e.getValue());
-            return getActionNameFromString(name);
-        }
-
-        public String getActionNameFromString(String name) {
-            int max = getMaxNameLength();
-            if (name.length() > max) {
-                name = name.substring(0, max) + "...";
-            }
-            return name;
-        }
-
-        public int getMaxNameLength() {
-            return 30;
-        }
-
-        @Override
-        public String getCategory() {
-            return PopupExtension.MENU_CATEGORY_SET;
-        }
-
-    }
-
-    class HistoryMenuForTableColumn<ValueType, PaneType extends ValuePane<ValueType>> extends HistoryMenu<ValueType, PaneType> {
-        protected GuiReprCollectionTable.TableTargetColumn target;
-        public HistoryMenuForTableColumn(PaneType component, GuiMappingContext context, GuiReprCollectionTable.TableTargetColumn target) {
-            super(component, context);
-            this.target = target;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public Action createAction(GuiPreferences.HistoryValueEntry e) {
-            return new HistorySetForColumnAction<>(getActionName(e), (ValueType) e.getValue(), target);
-        }
-
-        @Override
-        public String getCategory() {
-            return MenuBuilder.getCategoryWithPrefix(MENU_COLUMN_ROWS, PopupExtension.MENU_CATEGORY_SET);
-        }
-    }
-
-    class HistorySetAction<ValueType> extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        protected ValueType value;
-        protected ValuePane<ValueType> component;
-
-        public HistorySetAction(String name, ValueType value, ValuePane<ValueType> component) {
-            super(name);
-            this.value = value;
-            this.component = component;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return component.isSwingEditable();
+            return ret;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            component.setSwingViewValueWithUpdate(value);
-        }
-    }
-
-    class HistorySetForColumnAction<ValueType> extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        protected ValueType value;
-        protected GuiReprCollectionTable.TableTargetColumn target;
-
-        public HistorySetForColumnAction(String name, ValueType value, GuiReprCollectionTable.TableTargetColumn target) {
-            super(name);
-            this.value = value;
-            this.target = target;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            target.setCellValues(target.getSelectedCellIndices(), i -> value);
-        }
-    }
-
-    class HistoryClearAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        protected HistoryMenu menu;
-
-        public HistoryClearAction(HistoryMenu menu) {
-            putValue(NAME, "Clear");
-            this.menu = menu;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            menu.clearHistory();
-        }
-
-        @Override
-        public String getCategory() {
-            return PopupExtension.MENU_CATEGORY_EDIT;
-        }
-
-        @Override
-        public String getSubCategory() {
-            return PopupExtension.MENU_SUB_CATEGORY_DELETE;
+            throw new UnsupportedOperationException();
         }
     }
 

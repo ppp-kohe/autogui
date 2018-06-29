@@ -14,9 +14,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -157,7 +155,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
                 menuItemsSource = super.getMenuItemsSource();
                 menuItemsSource.add(infoLabel);
                 menuItemsSource.add(new ContextRefreshAction(context, this));
-                menuItemsSource.add(new HistoryMenu<>(this, getSwingViewContext()));
+                menuItemsSource.add(new GuiSwingHistoryMenu<>(this, getSwingViewContext()));
                 menuItemsSource.addAll(GuiSwingJsonTransfer.getActions(this, context));
             }
             return menuItemsSource;

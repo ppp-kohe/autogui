@@ -52,13 +52,12 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         }
     }
 
-    public static class ExecutionAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction,
+    public static class ExecutionAction extends GuiSwingView.ContextAction implements PopupCategorized.CategorizedMenuItemAction,
             GuiSwingKeyBinding.RecommendedKeyStroke {
-        protected GuiMappingContext context;
         protected Consumer<Object> resultTarget;
 
         public ExecutionAction(GuiMappingContext context) {
-            this.context = context;
+            super(context);
             putValue(Action.NAME, context.getDisplayName());
 
             Icon icon = getIcon();
@@ -82,10 +81,12 @@ public class GuiSwingActionDefault implements GuiSwingAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            Object r = executeAction();
-            if (resultTarget != null) {
-                resultTarget.accept(r);
-            }
+            execute(this::executeAction, null, null,
+                    r -> {
+                        if (r != null && resultTarget != null) {
+                            SwingUtilities.invokeLater(() -> resultTarget.accept(r));
+                        }
+                    });
         }
 
         public String getIconName() {

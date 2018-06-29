@@ -5,7 +5,6 @@ import autogui.base.mapping.GuiReprCollectionTable;
 import javax.swing.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * a impl. of {@link autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn} with a {@link JTable}.

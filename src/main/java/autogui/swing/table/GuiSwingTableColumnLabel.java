@@ -3,7 +3,6 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingView.SpecifierManager;
-import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.GuiSwingViewLabel.PropertyLabel;
 
 /**

@@ -4,12 +4,9 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiTaskClock;
-import autogui.swing.GuiSwingJsonTransfer;
-import autogui.swing.GuiSwingView;
+import autogui.swing.*;
 import autogui.swing.GuiSwingView.SpecifierManager;
 import autogui.swing.GuiSwingView.SpecifierManagerDefault;
-import autogui.swing.GuiSwingViewFilePathField;
-import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.GuiSwingViewLabel.PropertyLabel;
 import autogui.swing.table.ObjectTableColumnValue.ObjectTableCellEditor;
 import autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
@@ -200,7 +197,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         }
     }
 
-    public static class ColumnHistoryMenuFilePath extends GuiSwingViewFilePathField.HistoryMenu<Object, ColumnFilePathPane> {
+    public static class ColumnHistoryMenuFilePath extends GuiSwingHistoryMenu<Object, ColumnFilePathPane> {
 
         public ColumnHistoryMenuFilePath(ColumnFilePathPane view) {
             super(view, view.getSwingViewContext());
@@ -224,7 +221,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         }
 
         public Action createActionBase(GuiPreferences.HistoryValueEntry e) {
-            return new GuiSwingView.HistorySetAction<>(getActionName(e), e.getValue(), component);
+            return new HistorySetAction<>(getActionName(e), e.getValue(), component);
         }
     }
 
@@ -238,7 +235,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
 
         @Override
         public Action createActionBase(GuiPreferences.HistoryValueEntry e) {
-            return new GuiSwingView.HistorySetForColumnAction<>(getActionName(e), e.getValue(), target);
+            return new HistorySetForColumnAction<>(getActionName(e), e.getValue(), target);
         }
     }
 

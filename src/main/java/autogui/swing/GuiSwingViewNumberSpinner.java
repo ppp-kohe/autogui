@@ -25,7 +25,6 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EventObject;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -300,7 +299,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                                 new NumberMaximumAction(true, this),
                                 new NumberIncrementAction(true, this),
                                 new NumberIncrementAction(false, this),
-                                new HistoryMenu<>(this, context),
+                                new GuiSwingHistoryMenu<>(this, context),
                                 settingAction),
                         GuiSwingJsonTransfer.getActions(this, context));
             }
@@ -1211,7 +1210,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 menuItems = PopupCategorized.getMenuItems(Arrays.asList(
                         infoLabel,
                         new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
-                        new GuiSwingView.HistoryMenu<>(this, getSwingViewContext()),
+                        new GuiSwingHistoryMenu<>(this, getSwingViewContext()),
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new GuiSwingViewLabel.LabelTextSaveAction(this),
                         new GuiSwingViewLabel.LabelJsonCopyAction(this, context),

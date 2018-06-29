@@ -115,6 +115,10 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
     }
 
+    @Override
+    public <RetType> RetType execute(Supplier<RetType> task, RetType timeOutValue, RetType cancelValue, Consumer<RetType> afterTask) {
+        return super.execute(task, timeOutValue, cancelValue, afterTask); //TODO execute impl
+    }
 
     public static class GuiSwingTableModelColumns extends ObjectTableModelColumns
             implements PreferencesUpdateSupport, SettingsWindowClient {

@@ -2,12 +2,14 @@ package autogui.swing.table;
 
 import autogui.base.mapping.*;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
-import autogui.swing.*;
+import autogui.swing.GuiSwingActionDefault;
+import autogui.swing.GuiSwingJsonTransfer;
+import autogui.swing.GuiSwingPreferences;
+import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingView.SpecifierManager;
 import autogui.swing.GuiSwingView.ValuePane;
 import autogui.swing.GuiSwingViewLabel.PropertyLabel;
 import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
-import autogui.swing.table.ObjectTableColumn.PopupMenuBuilderSource;
 import autogui.swing.util.*;
 import autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 import autogui.swing.util.PopupCategorized.CategorizedMenuItemAction;
@@ -792,14 +794,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn
                 if (valuePane != null) {
                     int modelRow = table.convertRowIndexToModel(row);
                     prev = table.getModel().getValueAt(modelRow, column.getTableColumn().getModelIndex());
-                    //TODO future value?
                     valuePane.accept(prev);
                 }
                 action.actionPerformed(e);
                 if (valuePane != null) {
                     //Object next = valuePane.getSwingViewValue();
-                    //TODO compare?
-
                 }
             }
         }

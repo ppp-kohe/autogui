@@ -3,14 +3,11 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiTaskClock;
-import autogui.swing.GuiSwingJsonTransfer;
-import autogui.swing.GuiSwingView;
+import autogui.swing.*;
 import autogui.swing.GuiSwingView.SpecifierManager;
 import autogui.swing.GuiSwingView.SpecifierManagerDefault;
-import autogui.swing.GuiSwingViewEnumComboBox;
 import autogui.swing.GuiSwingViewEnumComboBox.PropertyEnumComboBox;
 import autogui.swing.GuiSwingViewEnumComboBox.PropertyLabelEnum;
-import autogui.swing.GuiSwingViewLabel;
 import autogui.swing.table.ObjectTableColumnValue.ObjectTableCellEditor;
 import autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
 import autogui.swing.util.PopupCategorized;
@@ -60,7 +57,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
                     menuItems = PopupCategorized.getMenuItems(Arrays.asList(
                             infoLabel,
                             new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
-                            new GuiSwingView.HistoryMenu<>(this, getSwingViewContext()),
+                            new GuiSwingHistoryMenu<>(this, getSwingViewContext()),
                             new GuiSwingViewLabel.LabelToStringCopyAction(this),
                             new GuiSwingTableColumnString.LabelTextPasteAllAction(this),
                             new GuiSwingTableColumnString.LabelTextLoadAction(this),

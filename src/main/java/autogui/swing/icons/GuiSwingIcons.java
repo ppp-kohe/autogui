@@ -9,6 +9,8 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.net.URL;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -217,6 +219,8 @@ public class GuiSwingIcons {
 
     /** an action button with the customized border */
     public static class ActionButton extends JButton {
+        protected Instant lastDisabledWithFocusTime = Instant.EPOCH;
+
         public ActionButton(Action a) {
             super(a);
             setFocusable(true);
@@ -235,6 +239,25 @@ public class GuiSwingIcons {
             Object o = a.getValue(PRESSED_ICON_KEY);
             if (o != null) {
                 setPressedIcon((Icon) o);
+            }
+            addPropertyChangeListener("enabled", e -> {
+                updateFocusWhenEnableChanged(e.getNewValue().equals(Boolean.TRUE));
+            });
+        }
+
+        public void updateFocusWhenEnableChanged(boolean e) {
+            if (e) {
+                if (Duration.ofSeconds(2).compareTo(
+                        Duration.between(lastDisabledWithFocusTime, Instant.now())) > 0) {
+                    requestFocusInWindow();
+                }
+                lastDisabledWithFocusTime = Instant.EPOCH;
+            } else {
+                if (isFocusOwner()) {
+                    lastDisabledWithFocusTime = Instant.now();
+                } else {
+                    lastDisabledWithFocusTime = Instant.EPOCH;
+                }
             }
         }
     }

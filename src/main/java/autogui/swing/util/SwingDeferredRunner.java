@@ -4,7 +4,19 @@ import javax.swing.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
-/** a task runner in the event dispatching thread without blocking */
+/** a task runner in the event dispatching thread without blocking
+ * <pre>
+ *   try {
+ *      Object ret = SwingDeferredRunner.run(task);
+ *      if (ret instanceof {@link TaskResultFuture}) {
+ *         Future&lt;Object&gt; f = ((TaskResultFuture) ret).getFuture();
+ *          ...
+ *      } else {
+ *          ...
+ *      }
+ *   } catch(Throwable errorWhileTask) { ... }
+ * </pre>
+ * */
 public class SwingDeferredRunner {
     protected LinkedBlockingQueue<Object> result = new LinkedBlockingQueue<>();
     protected Task task;

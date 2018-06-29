@@ -3,12 +3,9 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprValueNumberSpinner;
 import autogui.base.mapping.GuiTaskClock;
-import autogui.swing.GuiSwingJsonTransfer;
-import autogui.swing.GuiSwingView;
+import autogui.swing.*;
 import autogui.swing.GuiSwingView.SpecifierManager;
 import autogui.swing.GuiSwingView.SpecifierManagerDefault;
-import autogui.swing.GuiSwingViewLabel;
-import autogui.swing.GuiSwingViewNumberSpinner;
 import autogui.swing.GuiSwingViewNumberSpinner.PropertyNumberSpinner;
 import autogui.swing.GuiSwingViewNumberSpinner.TypedSpinnerNumberModel;
 import autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
@@ -159,7 +156,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
                 menuItems = PopupCategorized.getMenuItems(Arrays.asList(
                         infoLabel,
                         new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
-                        new GuiSwingView.HistoryMenu<>(this, getSwingViewContext()),
+                        new GuiSwingHistoryMenu<>(this, getSwingViewContext()),
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new GuiSwingTableColumnString.LabelTextPasteAllAction(this),
                         new GuiSwingTableColumnString.LabelTextLoadAction(this),

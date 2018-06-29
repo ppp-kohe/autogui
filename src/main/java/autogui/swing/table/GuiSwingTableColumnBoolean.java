@@ -4,7 +4,6 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiTaskClock;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingView.SpecifierManager;
-import autogui.swing.GuiSwingViewBooleanCheckBox;
 import autogui.swing.GuiSwingViewBooleanCheckBox.PropertyCheckBox;
 
 import javax.swing.*;

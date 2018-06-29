@@ -1,6 +1,5 @@
 package autogui.swing.table;
 
-import autogui.base.mapping.GuiReprCollectionTable;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
 import autogui.swing.GuiSwingView;
 import autogui.swing.util.PopupCategorized;

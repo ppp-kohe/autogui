@@ -9,9 +9,7 @@ import autogui.swing.util.SearchTextFieldFilePath;
 import javax.swing.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 
@@ -276,7 +274,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
         }
     }
 
-    public static class HistoryMenuFilePath extends HistoryMenu<Object, PropertyFilePathPane> {
+    public static class HistoryMenuFilePath extends GuiSwingHistoryMenu<Object, PropertyFilePathPane> {
         public HistoryMenuFilePath(PropertyFilePathPane component, GuiMappingContext context) {
             super(component, context);
         }

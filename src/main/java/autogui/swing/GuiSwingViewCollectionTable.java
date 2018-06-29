@@ -4,6 +4,7 @@ import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.*;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.table.*;
+import autogui.swing.table.ToStringCopyCell.ToStringCopyForCellsAction;
 import autogui.swing.util.*;
 
 import javax.swing.*;
@@ -276,14 +277,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (actions.isEmpty()) {
                 return initTableScrollPane();
             } else {
-                JPanel pane = new GuiSwingView.ValueWrappingPane(initTableScrollPane());
+                JPanel pane = new GuiSwingViewWrapper.ValueWrappingPane(initTableScrollPane());
                 pane.add(initActionToolBar(actions), BorderLayout.PAGE_START);
                 return pane;
             }
         }
 
-        public ValueScrollPane initTableScrollPane() {
-            ValueScrollPane scrollPane = new GuiSwingView.ValueScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        public GuiSwingViewWrapper.ValueScrollPane initTableScrollPane() {
+            GuiSwingViewWrapper.ValueScrollPane scrollPane = new GuiSwingViewWrapper.ValueScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             initTableScrollPane(scrollPane);
             return scrollPane;
         }
@@ -1343,9 +1344,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected Transferable createTransferable(JComponent c) {
 
             if (pane.isSelectionEmpty()) {
-                String data = pane.getSwingViewContext().getRepresentation()
-                        .toHumanReadableString(pane.getSwingViewContext(), pane.getSwingViewValue());
-                return new StringSelection(data);
+                List<?> v = pane.getSwingViewValue();
+                String data = pane.execute(() -> pane.getSwingViewContext().getRepresentation()
+                        .toHumanReadableString(pane.getSwingViewContext(), v), null, null, null);
+                if (data != null) {
+                    return new StringSelection(data);
+                } else {
+                    return null;
+                }
             } else {
                 //manual composition of to-string action for columns of selected cells.
                 List<ToStringCopyCell.TableMenuCompositeToStringCopy> composites = pane.getPopup().getTargetColumns().stream()
@@ -1353,8 +1359,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                                     .filter(ToStringCopyCell.TableMenuCompositeToStringCopy.class::isInstance)
                                     .map(ToStringCopyCell.TableMenuCompositeToStringCopy.class::cast))
                             .collect(Collectors.toList());
-                String data = new ToStringCopyCell.ToStringCopyForCellsAction(composites, true)
-                    .getString(new TableTargetCellForJTable(pane));
+                ToStringCopyForCellsAction action = new ToStringCopyForCellsAction(pane.getSwingViewContext(), composites, true);
+                String data = action.getString(action.getSelectedCells(new TableTargetCellForJTable(pane)));
                 return new StringSelection(data);
 
             }
