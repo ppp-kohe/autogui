@@ -6,9 +6,9 @@ import autogui.base.type.GuiUpdatedValue;
 import autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * a GUI component for a property holding a {@link JComponent}
@@ -20,7 +20,7 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
     }
 
     @Override
-    public boolean isTaskRunnerUsedFor(Callable<?> task) {
+    public boolean isTaskRunnerUsedFor(Supplier<?> task) {
         return false;
     }
 

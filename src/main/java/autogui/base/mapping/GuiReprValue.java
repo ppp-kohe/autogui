@@ -79,6 +79,7 @@ public class GuiReprValue implements GuiRepresentation {
         try {
             if (isHistoryValueSupported()) {
                 context.getPreferences().addHistoryValue(value);
+                context.getPreferences().setCurrentValue(value);
             }
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);

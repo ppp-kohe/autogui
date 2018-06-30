@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.log.GuiLogManager;
 import autogui.base.mapping.*;
+import autogui.swing.GuiSwingTaskRunner.ContextTaskResult;
 import autogui.swing.table.TableTargetColumnAction;
 import autogui.swing.util.PopupCategorized;
 import autogui.swing.util.PopupExtension;
@@ -221,20 +222,9 @@ public interface GuiSwingView extends GuiSwingElement {
             return getSwingViewContext().isHistoryValueSupported();
         }
 
-        //TODO execute impl
-        default <RetType> RetType execute(Supplier<RetType> task, RetType timeOutValue, RetType cancelValue, Consumer<RetType> afterTask) {
-            RetType ret;
-            try {
-                ret = task.get();
-//            } catch (InterruptedException ie) {
-//                ret = timeoutValue;
-            } catch (Throwable ex) {
-                ret = cancelValue;
-            }
-            if (afterTask != null) {
-                afterTask.accept(ret);
-            }
-            return ret;
+        default <RetType> ContextTaskResult<RetType> executeContextTask(Supplier<RetType> task,
+                                                                        Consumer<ContextTaskResult<RetType>> afterTask) {
+            return new GuiSwingTaskRunner(getSwingViewContext()).executeContextTask(task, afterTask);
         }
     }
 
@@ -248,10 +238,10 @@ public interface GuiSwingView extends GuiSwingElement {
             GuiReprValue.ObjectSpecifier spec = pane.getSpecifier();
             GuiTaskClock clock = viewClock.copy();
 
-            pane.execute(() -> {
+            pane.executeContextTask(() -> {
                 repr.updateFromGui(context, value, spec, clock); //callbacks are done by invokeLater
                 return null;
-            }, null, null, null);
+            }, null);
         }
     }
 
@@ -584,7 +574,7 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
-    class ToStringCopyAction extends ContextAction implements TableTargetColumnAction {
+    class ToStringCopyAction extends GuiSwingTaskRunner.ContextAction implements TableTargetColumnAction {
         protected ValuePane<?> pane;
 
         public ToStringCopyAction(ValuePane<?> pane, GuiMappingContext context) {
@@ -598,12 +588,13 @@ public interface GuiSwingView extends GuiSwingElement {
         @Override
         public void actionPerformed(ActionEvent e) {
             Object v = pane.getSwingViewValue();
-            execute(() -> toString(v), null, null,
-                    this::copy);
+            executeContextTask(
+                    () -> toString(v),
+                    r -> r.executeIfPresent(this::copy));
         }
 
         public String toString(Object v) {
-            return context.getRepresentation().toHumanReadableString(context, v);
+            return getContext().getRepresentation().toHumanReadableString(getContext(), v);
         }
 
 
@@ -618,10 +609,10 @@ public interface GuiSwingView extends GuiSwingElement {
         @Override
         public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
             List<Object> vs = target.getSelectedCellValues();
-            execute(() -> vs.stream()
+            executeContextTask(() -> vs.stream()
                     .map(this::toString)
-                    .collect(Collectors.joining("\n")), null, null,
-                    this::copy);
+                    .collect(Collectors.joining("\n")),
+                    r -> r.executeIfPresent(this::copy));
         }
 
         @Override
@@ -637,38 +628,8 @@ public interface GuiSwingView extends GuiSwingElement {
 
     ///////////////////////////
 
-    class ContextAction extends AbstractAction {
-        protected GuiMappingContext context;
 
-        public ContextAction(GuiMappingContext context) { //context may be null
-            this.context = context;
-        }
-
-        public GuiMappingContext getContext() {
-            return context;
-        }
-        //TODO execute impl
-        public <RetType> RetType execute(Supplier<RetType> task, RetType timeOutValue, RetType cancelValue, Consumer<RetType> afterTask) {
-            RetType ret = null;
-            try {
-                ret = task.get();
-//            } catch (InterruptedException ie) {
-//                ret = timeoutValue;
-            } catch (Throwable ex) {
-                ret = cancelValue;
-            } finally {
-                if (afterTask != null) {
-                    afterTask.accept(ret);
-                }
-            }
-            return ret;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            throw new UnsupportedOperationException();
-        }
-    }
+    ///////////////////////////
 
     /**
      * set up the transfer handler for a component.

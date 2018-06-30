@@ -416,7 +416,7 @@ public class SearchTextField extends JComponent {
         try {
             boolean modified = isUpdateFieldModifiedEvents(events);
             boolean immediate = isUpdateFieldImmediateEvent(events);
-            if (immediate && SwingUtilities.isEventDispatchThread()) { //to support cell-editor's finish editing
+            if (immediate && SwingDeferredRunner.isEventThreadOrDispatchedFromEventThread()) { //to support cell-editor's finish editing
                 updateFieldInEvent(modified, true);
             } else {
                 SwingUtilities.invokeLater(() -> updateFieldInEvent(modified, immediate));
@@ -512,7 +512,7 @@ public class SearchTextField extends JComponent {
         model.select(item);
         setIconFromSearchedItem(item);
         setTextFromSearchedItem(item);
-        if (SwingUtilities.isEventDispatchThread()) {
+        if (SwingDeferredRunner.isEventThreadOrDispatchedFromEventThread()) {
             updateFieldInEvent(true, false);
         } else {
             SwingUtilities.invokeLater(() -> updateFieldInEvent(true, false));

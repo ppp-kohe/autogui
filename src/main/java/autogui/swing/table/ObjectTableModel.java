@@ -2,6 +2,8 @@ package autogui.swing.table;
 
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import autogui.base.mapping.GuiReprValue;
+import autogui.swing.GuiSwingTaskRunner;
+import autogui.swing.GuiSwingTaskRunner.ContextTaskResult;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
@@ -35,10 +37,16 @@ public class ObjectTableModel extends AbstractTableModel
     protected Object[][] data;
 
     protected Consumer<Runnable> futureWaiter = Runnable::run;
+    protected GuiSwingTaskRunner runner;
 
     public static Object NULL_CELL = new Object();
 
     public ObjectTableModel() {
+        this(new GuiSwingTaskRunner(null));
+    }
+
+    public ObjectTableModel(GuiSwingTaskRunner runner) {
+        this.runner = runner;
         initColumns();
     }
 
@@ -93,12 +101,10 @@ public class ObjectTableModel extends AbstractTableModel
     }
 
     public void refreshColumns() {
-        execute(() -> columns.getColumnSizeForUpdate(getCollectionFromSource()),
-                null, null, sizes -> {
-                    if (sizes != null) {
-                        SwingUtilities.invokeLater(() -> columns.update(sizes));
-                    }
-                });
+        executeContextTask(
+                () -> columns.getColumnSizeForUpdate(getCollectionFromSource()),
+                r -> r.executeIfPresent(
+                        sizes -> SwingUtilities.invokeLater(() -> columns.update(sizes))));
     }
 
 
@@ -145,19 +151,9 @@ public class ObjectTableModel extends AbstractTableModel
 
     //////////// task
 
-    public <RetType> RetType execute(Supplier<RetType> task, RetType timeOutValue, RetType cancelValue, Consumer<RetType> afterTask) {
-        RetType ret;
-        try {
-            ret = task.get();
-//            } catch (InterruptedException ie) {
-//                ret = timeoutValue;
-        } catch (Throwable ex) {
-            ret = cancelValue;
-        }
-        if (afterTask != null) {
-            afterTask.accept(ret);
-        }
-        return ret;
+    public <RetType> ContextTaskResult<RetType> executeContextTask(Supplier<RetType> task,
+                                                                   Consumer<ContextTaskResult<RetType>> afterTask) {
+        return runner.executeContextTask(task, afterTask);
     }
 
     //////////// row
@@ -211,19 +207,19 @@ public class ObjectTableModel extends AbstractTableModel
     }
 
     public BuildResult buildDataArray(Runnable delayedAfterInEvent) {
-        int[] size = execute(() -> {
-            int[] s = new int[2];
-            s[0] = getRowCountUpdated();
-            s[1] = getColumnCount();
-            return s;
-        }, null, null, s -> {
-            if (s == null) {
-                SwingUtilities.invokeLater(delayedAfterInEvent);
-            }
-        });
-        if (size != null) {
-            int rows = size[0];
-            int cols = size[1];
+        ContextTaskResult<int[]> size = executeContextTask(
+                () -> {
+                    int[] s = new int[2];
+                    s[0] = getRowCountUpdated();
+                    s[1] = getColumnCount();
+                    return s;
+                },
+                r -> r.executeIfPresentWithDelay(
+                        v -> SwingUtilities.invokeLater(delayedAfterInEvent)));
+        if (size.isPresented()) {
+            int[] s = size.getValue();
+            int rows = s[0];
+            int cols = s[1];
             if (data == null ||
                     data.length != rows ||
                     data.length > 0 && data[0].length != cols) {
@@ -281,10 +277,6 @@ public class ObjectTableModel extends AbstractTableModel
         }
     }
 
-    public enum TaskResult {
-        Timeout, Cancel
-    }
-
     /**
      *  the column's {@link ObjectTableColumn#getCellValue(Object, int, int, autogui.base.mapping.GuiReprValue.ObjectSpecifier)} might return
      *   a {@link Future} object and
@@ -299,28 +291,27 @@ public class ObjectTableModel extends AbstractTableModel
         ObjectTableColumn column = getColumnAt(columnIndex);
         GuiReprValue.ObjectSpecifier specifier = column.getSpecifier(rowIndex, columnIndex);
 
-        Object cellObject = execute(() -> {
-            try {
-                Object rowObject = getRowAtIndex(rowIndex);
-                return column.getCellValue(rowObject, rowIndex, columnIndex, specifier);
-            } catch (Exception ex) {
-                //TODO error reporting
-                return null;
-            }
-        }, TaskResult.Timeout, TaskResult.Cancel, c -> {
-            if (c != null && c.equals(TaskResult.Timeout)) {
-                SwingUtilities.invokeLater(() -> fireTableCellUpdated(rowIndex, columnIndex));
-            } else if (c == null || !c.equals(TaskResult.Cancel)) {
-                SwingUtilities.invokeLater(() -> taskValueFromSourceAfter(rowData, rowIndex, columnIndex, c));
-            }
-        });
-        return taskValueFromSourceAfter(rowData, rowIndex, columnIndex, cellObject);
+        ContextTaskResult<Object> cellObject = executeContextTask(
+                () -> {
+                    try {
+                        Object rowObject = getRowAtIndex(rowIndex);
+                        return column.getCellValue(rowObject, rowIndex, columnIndex, specifier);
+                    } catch (Exception ex) {
+                        //TODO error reporting
+                        return null;
+                    }
+                },
+                r -> {
+                    if (r.isTimeout()) {
+                        SwingUtilities.invokeLater(() -> fireTableCellUpdated(rowIndex, columnIndex));
+                    } else if (!r.isCancel()) {
+                        SwingUtilities.invokeLater(() -> taskValueFromSourceAfter(rowData, rowIndex, columnIndex, r.getValue()));
+                    }
+                });
+        return taskValueFromSourceAfter(rowData, rowIndex, columnIndex, cellObject.getValue());
     }
 
     public Object taskValueFromSourceAfter(Object[] rowData, int rowIndex, int columnIndex, Object cellObject) {
-        if (cellObject instanceof TaskResult) { //timeout or cancel
-            cellObject = null;
-        }
         if (cellObject instanceof Future<?>) {
             rowData[columnIndex] = NULL_CELL;
             Object v = cellObject;
@@ -389,12 +380,13 @@ public class ObjectTableModel extends AbstractTableModel
     public void offerValueForSource(Object aValue, int rowIndex, int columnIndex) {
         ObjectTableColumn column = getColumnAt(columnIndex);
         GuiReprValue.ObjectSpecifier specifier = column.getSpecifier(rowIndex, columnIndex);
-        execute(() -> {
+        executeContextTask(() -> {
                     Object rowObject = getRowAtIndex(rowIndex);
                     return new OfferResult(column.setCellValue(rowObject, rowIndex, columnIndex, aValue, specifier), rowObject);
-                }, null, null, or ->
-                    futureWaiter.accept(() ->
-                            offsetValueForSourceFuture(or.rowObject, aValue, rowIndex, columnIndex, or.result)));
+                },
+                r -> r.executeIfPresent(
+                        or -> futureWaiter.accept(() ->
+                                    offsetValueForSourceFuture(or.rowObject, aValue, rowIndex, columnIndex, or.result))));
     }
 
     private static class OfferResult {

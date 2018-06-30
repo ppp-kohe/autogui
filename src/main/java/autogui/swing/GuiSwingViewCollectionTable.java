@@ -1345,8 +1345,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             if (pane.isSelectionEmpty()) {
                 List<?> v = pane.getSwingViewValue();
-                String data = pane.execute(() -> pane.getSwingViewContext().getRepresentation()
-                        .toHumanReadableString(pane.getSwingViewContext(), v), null, null, null);
+                String data = pane.executeContextTask(
+                        () -> pane.getSwingViewContext().getRepresentation()
+                        .toHumanReadableString(pane.getSwingViewContext(), v), null)
+                        .getValueOr(null, null);
                 if (data != null) {
                     return new StringSelection(data);
                 } else {

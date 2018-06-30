@@ -22,6 +22,16 @@ public class SwingDeferredRunner {
     protected Task task;
     protected Supplier<ExecutorService> futureFactory;
 
+    public static ThreadLocal<Boolean> dispatchedFromEventThread = ThreadLocal.withInitial(() -> false);
+
+    public static boolean isEventThreadOrDispatchedFromEventThread() {
+        return SwingUtilities.isEventDispatchThread() || isDispatchedFromEventThread();
+    }
+
+    public static boolean isDispatchedFromEventThread() {
+        return dispatchedFromEventThread.get();
+    }
+
     public static ExecutorService defaultService;
 
     public static ExecutorService getDefaultService() {
@@ -59,7 +69,7 @@ public class SwingDeferredRunner {
      * @throws Throwable if the task throws an exception without delay, then it is thrown
      */
     public Object run() throws Throwable {
-        if (SwingUtilities.isEventDispatchThread()) {
+        if (SwingDeferredRunner.isEventThreadOrDispatchedFromEventThread()) {
             return task.call();
         } else {
             SwingUtilities.invokeLater(() -> {

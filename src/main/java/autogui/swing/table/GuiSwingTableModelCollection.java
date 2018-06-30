@@ -9,6 +9,7 @@ import autogui.swing.GuiSwingJsonTransfer;
 import autogui.swing.GuiSwingPreferences;
 import autogui.swing.GuiSwingPreferences.PreferencesUpdateEvent;
 import autogui.swing.GuiSwingPreferences.PreferencesUpdateSupport;
+import autogui.swing.GuiSwingTaskRunner;
 import autogui.swing.GuiSwingView.SettingsWindowClient;
 import autogui.swing.GuiSwingViewCollectionTable.CollectionTable;
 import autogui.swing.table.GuiSwingTableColumn.ObjectTableColumnWithContext;
@@ -31,15 +32,13 @@ import java.util.stream.Collectors;
  * a table-model with {@link GuiMappingContext}
  */
 public class GuiSwingTableModelCollection extends ObjectTableModel {
-
-    protected GuiMappingContext context;
     protected GuiMappingContext elementContext;
     protected Supplier<ObjectSpecifier> tableSpecifier;
     protected SpecifierManagerIndex rowSpecifierManager;
 
     public GuiSwingTableModelCollection(GuiMappingContext context, Supplier<ObjectSpecifier> tableSpecifier,
                                       Supplier<Object> source) {
-        this.context = context;
+        super(new GuiSwingTaskRunner(context));
         this.tableSpecifier = tableSpecifier;
         this.rowSpecifierManager = new SpecifierManagerIndex(tableSpecifier);
         setElementContextFromContext();
@@ -47,7 +46,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
     }
 
     public GuiMappingContext getContext() {
-        return context;
+        return runner.getContext();
     }
 
     @Override
@@ -60,6 +59,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
     }
 
     protected void setElementContextFromContext() {
+        GuiMappingContext context = getContext();
         elementContext = context.getReprCollectionTable().getElementContext(context);
     }
 
@@ -115,10 +115,6 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
     }
 
-    @Override
-    public <RetType> RetType execute(Supplier<RetType> task, RetType timeOutValue, RetType cancelValue, Consumer<RetType> afterTask) {
-        return super.execute(task, timeOutValue, cancelValue, afterTask); //TODO execute impl
-    }
 
     public static class GuiSwingTableModelColumns extends ObjectTableModelColumns
             implements PreferencesUpdateSupport, SettingsWindowClient {

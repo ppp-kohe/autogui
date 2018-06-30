@@ -55,16 +55,14 @@ public class GuiSwingJsonTransfer {
         }
     }
 
-    public static void save(GuiSwingView.ContextAction runner, Supplier<Object> json, JComponent owner, String name) {
+    public static void save(GuiSwingTaskRunner.ContextAction runner, Supplier<Object> json, JComponent owner, String name) {
         Path path = SettingsWindow.getFileDialogManager().showSaveDialog(
                 owner, null,
                 name + ".json");
         if (path != null) {
-            runner.execute(json, null, null, j -> {
-                if (j !=  null) {
-                    SwingUtilities.invokeLater(() -> JsonWriter.write(j, path.toFile()));
-                }
-            });
+            runner.executeContextTask(json,
+                    r -> r.executeIfPresent(
+                            j -> SwingUtilities.invokeLater(() -> JsonWriter.write(j, path.toFile()))));
         }
     }
 
@@ -109,7 +107,7 @@ public class GuiSwingJsonTransfer {
         }
     }
 
-    public static class JsonCopyAction extends GuiSwingView.ContextAction implements TableTargetColumnAction,
+    public static class JsonCopyAction extends GuiSwingTaskRunner.ContextAction implements TableTargetColumnAction,
             PopupCategorized.CategorizedMenuItemAction  {
         protected GuiSwingView.ValuePane<?> component;
 
@@ -125,28 +123,28 @@ public class GuiSwingJsonTransfer {
         @Override
         public void actionPerformed(ActionEvent e) {
             Object value = component.getSwingViewValue();
-            execute(() -> toCopiedJson(value), null, null,
-                    v -> SwingUtilities.invokeLater(() -> copy(v)));
+            executeContextTask(
+                    () -> toCopiedJson(value),
+                    r -> r.executeIfPresent(
+                            v -> SwingUtilities.invokeLater(() -> copy(v))));
         }
 
 
         public Object toCopiedJson(Object value) {
-            return context.getRepresentation().toJsonWithNamed(context, value);
+            return getContext().getRepresentation().toJsonWithNamed(getContext(), value);
         }
 
         @Override
         public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
             //suppose the map preserves order of values, and skip null element
             List<Object> values = target.getSelectedCellValues();
-            execute(() -> values.stream()
-                    .map(this::toCopiedJson)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList()), null, null,
-                    json -> {
-                        if (json != null) {
-                            SwingUtilities.invokeLater(() -> copy(json.size() == 1 ? json.get(0) : json)); //if singleton, unwrap the list);
-                        }
-                    });
+            executeContextTask(
+                    () -> values.stream()
+                            .map(this::toCopiedJson)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList()),
+                    r -> r.executeIfPresent(
+                            json -> SwingUtilities.invokeLater(() -> copy(json.size() == 1 ? json.get(0) : json)))); //if singleton, unwrap the list);
         }
 
         @Override
@@ -160,7 +158,7 @@ public class GuiSwingJsonTransfer {
         }
     }
 
-    public static class JsonPasteAction extends GuiSwingView.ContextAction
+    public static class JsonPasteAction extends GuiSwingTaskRunner.ContextAction
         implements PopupCategorized.CategorizedMenuItemAction  {
         protected GuiSwingView.ValuePane<?> component;
 
@@ -175,6 +173,7 @@ public class GuiSwingJsonTransfer {
 
         @Override
         public boolean isEnabled() {
+            GuiMappingContext context = getContext();
             return !context.isReprValue() || context.getReprValue().isEditable(context);
         }
 
@@ -186,17 +185,16 @@ public class GuiSwingJsonTransfer {
         @SuppressWarnings("unchecked")
         public void set(Object json) {
             Object v = component.getSwingViewValue();
-            execute(() -> {
-                if (context.isTypeElementProperty()) {
-                    return context.getRepresentation().fromJsonWithNamed(context, v, json);
-                } else {
-                    return context.getRepresentation().fromJson(context, v, json);
-                }}, null, null,
-                    ret -> SwingUtilities.invokeLater(() -> {
-                        if (ret != null) {
-                            ((GuiSwingView.ValuePane<Object>) component).setSwingViewValueWithUpdate(ret);
-                        }
-                    }));
+            GuiMappingContext context = getContext();
+            executeContextTask(() -> {
+                        if (context.isTypeElementProperty()) {
+                            return context.getRepresentation().fromJsonWithNamed(context, v, json);
+                        } else {
+                            return context.getRepresentation().fromJson(context, v, json);
+                        }},
+                    r -> r.executeIfPresent(
+                        ret -> SwingUtilities.invokeLater(() ->
+                            ((GuiSwingView.ValuePane<Object>) component).setSwingViewValueWithUpdate(ret))));
         }
 
         @Override
@@ -223,7 +221,7 @@ public class GuiSwingJsonTransfer {
         public void actionPerformed(ActionEvent e) {
             Object v = component.getSwingViewValue();
             save(this, () -> toCopiedJson(v), component.asSwingViewComponent(),
-                    context.getName());
+                    getContext().getName());
         }
 
         @Override
@@ -232,7 +230,7 @@ public class GuiSwingJsonTransfer {
             save(this, () -> cells.stream()
                     .map(this::toCopiedJson)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList()), component.asSwingViewComponent(), context.getName());
+                    .collect(Collectors.toList()), component.asSwingViewComponent(), getContext().getName());
         }
 
         @Override
@@ -404,7 +402,7 @@ public class GuiSwingJsonTransfer {
         }
     }
 
-    public static class JsonCopyRowsAction extends GuiSwingView.ContextAction implements TableTargetCellAction {
+    public static class JsonCopyRowsAction extends GuiSwingTaskRunner.ContextAction implements TableTargetCellAction {
         protected GuiMappingContext context;
 
         public JsonCopyRowsAction(GuiMappingContext context) {
@@ -420,8 +418,10 @@ public class GuiSwingJsonTransfer {
         @Override
         public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
             List<Object> values = target.getSelectedRowValues();
-            execute(() -> getJson(values), null, null,
-                    json -> SwingUtilities.invokeLater(() -> copy(json)));
+            executeContextTask(
+                    () -> getJson(values),
+                    r -> r.executeIfPresent(
+                            json -> SwingUtilities.invokeLater(() -> copy(json))));
         }
 
         public Object getJson(List<Object> values) {
@@ -460,7 +460,7 @@ public class GuiSwingJsonTransfer {
         }
     }
 
-    public static class JsonCopyCellsAction extends GuiSwingView.ContextAction implements TableTargetCellAction {
+    public static class JsonCopyCellsAction extends GuiSwingTaskRunner.ContextAction implements TableTargetCellAction {
         protected List<TableMenuCompositeJsonCopy> activatedColumns;
 
         public JsonCopyCellsAction(GuiMappingContext contextOptional, List<TableMenuCompositeJsonCopy> activatedColumns) {
@@ -479,8 +479,10 @@ public class GuiSwingJsonTransfer {
         @Override
         public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
             List<CellValue> cells = target.getSelectedCells();
-            execute(() -> getJson(cells), null, null,
-                    json -> SwingUtilities.invokeLater(() -> copy(json)));
+            executeContextTask(
+                    () -> getJson(cells),
+                    r -> r.executeIfPresent(
+                            json -> SwingUtilities.invokeLater(() -> copy(json))));
         }
 
         public List<Object> getJson(List<CellValue> cells) {
@@ -648,7 +650,7 @@ public class GuiSwingJsonTransfer {
         }
     }
 
-    public static class JsonPasteCellsAction extends GuiSwingView.ContextAction implements TableTargetCellAction {
+    public static class JsonPasteCellsAction extends GuiSwingTaskRunner.ContextAction implements TableTargetCellAction {
         protected List<TableMenuCompositeJsonPaste> activeComposite;
         protected boolean rows;
 
@@ -695,7 +697,7 @@ public class GuiSwingJsonTransfer {
              */
             if (json != null) {
                 Iterable<int[]> is = target.getSelectedCellIndices();
-                execute(() -> {
+                executeContextTask(() -> {
                             JsonFillLoop fillLoop = new JsonFillLoop();
                             if (json instanceof List<?>) { //[ ... ]
                                 int rowIndex = 0;
@@ -710,11 +712,9 @@ public class GuiSwingJsonTransfer {
                                 fillLoop.addRow(updatedRow);
                             }
                             return fillLoop;
-                        }, null, null, fl -> {
-                            if (fl != null) {
-                                SwingUtilities.invokeLater(() -> target.setCellValues(is, fl));
-                            }
-                        });
+                        },
+                        r -> r.executeIfPresent(
+                                fl -> SwingUtilities.invokeLater(() -> target.setCellValues(is, fl))));
             }
         }
 

@@ -4,7 +4,10 @@ import autogui.base.log.GuiLogManager;
 import autogui.base.type.*;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -714,24 +717,14 @@ public class GuiMappingContext {
         }
     }
 
-    /** submit the task to the task runner and wait the completion of the task
-     * @param task the task submitted to the runner
+    /** run the task
+     * @param task the task to be executed
      * @param <T> the returned type
      * @return the returned value of the task
      * @throws Throwable an exception from the task
      * */
     public <T> T execute(Callable<T> task) throws Throwable {
-        try {
-            if (getRepresentation() == null || getRepresentation().isTaskRunnerUsedFor(task)) {
-                return getTaskRunner()
-                        .submit(task)
-                        .get();
-            } else {
-                return task.call();
-            }
-        } catch (ExecutionException e) {
-            throw e.getCause();
-        }
+        return task.call();
     }
 
     public ScheduledTaskRunner<DelayedTask> getDelayedTaskRunner() {

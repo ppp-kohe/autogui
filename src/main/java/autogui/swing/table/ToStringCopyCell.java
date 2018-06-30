@@ -4,7 +4,7 @@ import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable.CellValue;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import autogui.swing.GuiSwingJsonTransfer;
-import autogui.swing.GuiSwingView;
+import autogui.swing.GuiSwingTaskRunner;
 import autogui.swing.GuiSwingView.ValuePane;
 import autogui.swing.GuiSwingViewCollectionTable.CollectionTable;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
@@ -93,7 +93,7 @@ public class ToStringCopyCell {
     /**
      * the action defined by composition of selected columns; it joins cell strings by new-lines (for row) and tabs (for columns).
      */
-    public static class ToStringCopyForCellsAction extends GuiSwingView.ContextAction implements TableTargetCellAction {
+    public static class ToStringCopyForCellsAction extends GuiSwingTaskRunner.ContextAction implements TableTargetCellAction {
         protected List<TableMenuCompositeToStringCopy> activatedColumns;
         protected boolean onlyApplyingSelectedColumns;
 
@@ -116,8 +116,10 @@ public class ToStringCopyCell {
         @Override
         public void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target) {
             List<CellValue> cells = getSelectedCells(target);
-            execute(() -> getString(cells), null, null,
-                    str -> SwingUtilities.invokeLater(() -> copy(str)));
+            executeContextTask(
+                    () -> getString(cells),
+                    r -> r.executeIfPresent(
+                            str -> SwingUtilities.invokeLater(() -> copy(str))));
         }
 
         public List<CellValue> getSelectedCells(TableTargetCell target) {
@@ -178,20 +180,20 @@ public class ToStringCopyCell {
         }
     }
 
-    public static void save(GuiSwingView.ContextAction runner, Supplier<String> data, JComponent component, String name) {
+    public static void save(GuiSwingTaskRunner.ContextAction runner, Supplier<String> data, JComponent component, String name) {
         SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
         Path p = fd.showConfirmDialogIfOverwriting(component,
                 fd.showSaveDialog(component, PopupExtensionText.getEncodingPane(), name + ".txt"));
         if (p != null) {
-            runner.execute(data, null, null, str -> {
-                if (str != null) {
-                    try {
-                        Files.write(p, Collections.singletonList(str), PopupExtensionText.selectedCharset);
-                    } catch (Exception ex) {
-                        throw new RuntimeException(ex);
-                    }
-                }
-            });
+            runner.executeContextTask(data,
+                    r -> r.executeIfPresent(
+                            str -> {
+                                try {
+                                    Files.write(p, Collections.singletonList(str), PopupExtensionText.selectedCharset);
+                                } catch (Exception ex) {
+                                    throw new RuntimeException(ex);
+                                }
+                            }));
         }
     }
 
@@ -276,11 +278,11 @@ public class ToStringCopyCell {
         protected String columnSeparator = "\\t"; //regex
         protected boolean onlyApplyingSelectedColumns;
 
-        protected GuiSwingView.ContextAction runner;
+        protected GuiSwingTaskRunner runner;
 
         public ToStringPasteForCellsAction(GuiMappingContext context, List<TableMenuCompositeToStringPaste> activeComposites, boolean onlyApplyingSelectedColumns) {
             super(null);
-            runner = new GuiSwingView.ContextAction(context);
+            runner = new GuiSwingTaskRunner(context);
             putValue(NAME, onlyApplyingSelectedColumns ? "Paste Text to Cells" : "Paste Text to Row Cells");
             if (onlyApplyingSelectedColumns) {
                 putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_V,
@@ -310,7 +312,7 @@ public class ToStringCopyCell {
 
         public void run(String str, TableTargetCell target) {
             Iterable<int[]> is = target.getSelectedRowAllCellIndices();
-            runner.execute(() -> {
+            runner.executeContextTask(() -> {
                         int rowIndex = 0;
                         GuiSwingJsonTransfer.JsonFillLoop fillLoop = new GuiSwingJsonTransfer.JsonFillLoop();
                         for (String line : str.split(lineSeparator)) {
@@ -319,12 +321,10 @@ public class ToStringCopyCell {
                             }
                         }
                         return fillLoop;
-                    }, null, null, fl -> {
-                        if (fl != null) {
-                            SwingUtilities.invokeLater(() ->
-                                target.setCellValues(is, fl));
-                        }
-                    });
+                    },
+                    r -> r.executeIfPresent(
+                            fl -> SwingUtilities.invokeLater(() ->
+                                        target.setCellValues(is, fl))));
         }
 
         public List<CellValue> runLine(String line, int targetRow) {

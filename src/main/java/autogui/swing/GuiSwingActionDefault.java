@@ -53,7 +53,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         }
     }
 
-    public static class ExecutionAction extends GuiSwingView.ContextAction implements PopupCategorized.CategorizedMenuItemAction,
+    public static class ExecutionAction extends GuiSwingTaskRunner.ContextAction implements PopupCategorized.CategorizedMenuItemAction,
             GuiSwingKeyBinding.RecommendedKeyStroke {
         protected Consumer<Object> resultTarget;
         protected AtomicBoolean running = new AtomicBoolean(false);
@@ -91,25 +91,21 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         }
 
         public void actionPerformedWithoutCheckingRunning(ActionEvent e) {
-            execute(this::executeAction, null, null,
+            executeContextTask(this::executeAction,
                     r -> {
                         running.set(false);
-                        if (r != null && resultTarget != null) {
-                            SwingUtilities.invokeLater(() -> resultTarget.accept(r));
+                        if (r.isPresented() && resultTarget != null) {
+                            SwingUtilities.invokeLater(() -> resultTarget.accept(r.getValue()));
                         }
                     });
         }
 
         public String getIconName() {
-            return context.getIconName();
-        }
-
-        public GuiMappingContext getContext() {
-            return context;
+            return getContext().getIconName();
         }
 
         public Object executeAction() {
-            return context.executeAction();
+            return getContext().executeAction();
         }
 
         @Override
@@ -129,12 +125,12 @@ public class GuiSwingActionDefault implements GuiSwingAction {
 
         @Override
         public KeyStroke getRecommendedKeyStroke() {
-            return GuiSwingKeyBinding.getKeyStroke(context.getAcceleratorKeyStroke());
+            return GuiSwingKeyBinding.getKeyStroke(getContext().getAcceleratorKeyStroke());
         }
 
         @Override
         public GuiSwingKeyBinding.KeyPrecedenceSet getRecommendedKeyPrecedence() {
-            if (context.isAcceleratorKeyStrokeSpecified()) {
+            if (getContext().isAcceleratorKeyStrokeSpecified()) {
                 return new GuiSwingKeyBinding.KeyPrecedenceSet(GuiSwingKeyBinding.PRECEDENCE_FLAG_USER_SPECIFIED);
             } else {
                 return new GuiSwingKeyBinding.KeyPrecedenceSet();

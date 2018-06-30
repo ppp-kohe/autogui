@@ -23,13 +23,13 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
         PopupCategorized.CategorizedMenuItemComponent {
     protected PaneType component;
     protected GuiMappingContext context;
-    protected GuiSwingView.ContextAction runner;
+    protected GuiSwingTaskRunner.ContextAction runner;
 
     public GuiSwingHistoryMenu(PaneType component, GuiMappingContext context) {
         super("History");
         this.component = component;
         this.context = context;
-        runner = new GuiSwingView.ContextAction(context);
+        runner = new GuiSwingTaskRunner.ContextAction(context);
         buildMenu();
 
     }
@@ -102,9 +102,9 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
 
     public String getActionName(GuiPreferences.HistoryValueEntry e) {
         Object v = e.getValue();
-        String name = runner.execute(() ->
-                context.getRepresentation().toHumanReadableString(context, v),
-                "ERROR: Timeout", "ERROR: Cancel", null);
+        String name = runner.executeContextTask(
+                () -> context.getRepresentation().toHumanReadableString(context, v), null)
+                .getValueOr("ERROR: cancel", "ERROR: timeout");
         return getActionNameFromString(name);
     }
 

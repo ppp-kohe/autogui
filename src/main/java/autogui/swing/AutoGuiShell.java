@@ -1,5 +1,7 @@
 package autogui.swing;
 
+import autogui.swing.util.SwingDeferredRunner;
+
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -75,7 +77,7 @@ public class AutoGuiShell {
     }
 
     public <T> T invokeAndWait(Supplier<T> factory) {
-        if (SwingUtilities.isEventDispatchThread()) {
+        if (SwingDeferredRunner.isEventThreadOrDispatchedFromEventThread()) {
             return factory.get();
         } else {
             AtomicReference<T> res = new AtomicReference<>();

@@ -1,7 +1,7 @@
 package autogui.base.mapping;
 
 import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 /** abstract GUI component:
  *    most methods of the interface always take  a {@link GuiMappingContext},
@@ -181,7 +181,7 @@ public interface GuiRepresentation {
      * @return true if the task can be executed under the task-runner of a context.
      *          the method can be used for the cases that the task is dispatched to a custom task-runner mechanism
      */
-    default boolean isTaskRunnerUsedFor(Callable<?> task) {
+    default boolean isTaskRunnerUsedFor(Supplier<?> task) {
         return true;
     }
 }

@@ -322,7 +322,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public void updateNumber(List<Object> events) {
             boolean immediate = isImmediate(events);
-            if (immediate && SwingUtilities.isEventDispatchThread()) {
+            if (immediate && SwingDeferredRunner.isEventThreadOrDispatchedFromEventThread()) {
                 updateFromGui(getValue(), viewClock.increment());
             } else {
                 SwingUtilities.invokeLater(() ->

@@ -17,7 +17,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 /**
@@ -227,7 +226,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         }
 
         protected Object actionPerformedAround(boolean autoSelection) {
-            if (running.getAndSet(true)) {
+            if (!running.getAndSet(true)) {
                 return actionPerformedAroundWithoutCheckingRunning(autoSelection);
             } else {
                 System.err.printf("already running action \"%s\" \n", getValue(NAME));
@@ -238,17 +237,18 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         public Object actionPerformedAroundWithoutCheckingRunning(boolean autoSelection) {
             List<?> selection = source.getSelectedItems();
             String targetName = source.getTargetName();
-            return execute(() -> actionPerformedBody(selection, targetName), null, null, ret -> {
-                running.set(false);
-                SwingUtilities.invokeLater(() -> {
-                    if (ret != null){
-                        source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret));
-                    }
-                });
-            });
+            return executeContextTask(
+                    () -> actionPerformedBody(selection, targetName),
+                    r -> {
+                        running.set(false);
+                        r.executeIfPresent(
+                            ret -> SwingUtilities.invokeLater(() ->
+                                source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret))));
+                    });
         }
 
         protected Object actionPerformedBody(List<?> selection, String targetName) {
+            GuiMappingContext context = getContext();
             return ((GuiReprActionList) context.getRepresentation())
                     .executeActionForList(context, selection, targetName);
         }
@@ -257,6 +257,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
          * @return if true, the action will be called automatically when some cells are selected
          */
         public boolean isAutomaticSelectionAction() {
+            GuiMappingContext context = getContext();
             return ((GuiReprActionList) context.getRepresentation())
                     .isAutomaticSelectionAction(context);
         }
@@ -266,6 +267,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         }
 
         public void setSelectionChangeFactoryFromContext(GuiMappingContext tableContext) {
+            GuiMappingContext context = getContext();
             if (context.isReprActionList()) {
                 GuiReprActionList listAction = context.getReprActionList();
                 if (listAction.isSelectionChangeRowIndicesAction(context)) { //even if the element type is Integer
@@ -314,6 +316,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
         @Override
         protected Object actionPerformedBody(List<?> selection, String targetName) {
+            GuiMappingContext context = getContext();
             List<Object> os = ((GuiReprAction) context.getRepresentation())
                     .executeActionForTargets(context, selection);
 
@@ -332,6 +335,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
         @Override
         public boolean isAutomaticSelectionAction() {
+            GuiMappingContext context = getContext();
             return ((GuiReprAction) context.getRepresentation())
                     .isSelectionAction(context);
         }

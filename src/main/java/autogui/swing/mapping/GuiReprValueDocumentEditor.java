@@ -6,7 +6,6 @@ import autogui.base.type.GuiUpdatedValue;
 import autogui.swing.util.SwingDeferredRunner;
 import autogui.swing.util.UIManagerUtil;
 
-import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -18,10 +17,10 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -30,8 +29,8 @@ import java.util.stream.IntStream;
  *  the representation depends on some Swing classes(java.desktop module)  */
 public class GuiReprValueDocumentEditor extends GuiReprValue {
     @Override
-    public boolean isTaskRunnerUsedFor(Callable<?> task) {
-        return !SwingUtilities.isEventDispatchThread();
+    public boolean isTaskRunnerUsedFor(Supplier<?> task) {
+        return !SwingDeferredRunner.isEventThreadOrDispatchedFromEventThread();
     }
 
     @Override
