@@ -748,11 +748,13 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         public void createSingle(DynamicColumnContainer targetContainer, int indexInSize) {
             ObjectTableColumn c = column.createColumn(factoryBase.getContext(), null, parentSpecifier);
             if (c instanceof ObjectTableColumnWithContext) {
+                SpecifierManagerIndex rootRowSpec = getIndexSpecifiers().get(0); //top spec is the rowSpecifier
                 Map<SpecifierManagerIndex,Integer> indexInjections = toIndexInjection(indexInSize);
                 factoryBase.setSpecifierManager(((ObjectTableColumnWithContext) c).getSpecifierManager());
                 targetContainer.add(new ObjectTableColumnCollectionWrapper(getHeaderName(indexInjections),
                         (ObjectTableColumnWithContext) c,
                         indexInjections,
+                        rootRowSpec,
                         toIndices(indexInjections)));
             } else {
                 targetContainer.add(c);
@@ -863,6 +865,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
     public static class ObjectTableColumnCollectionWrapper extends ObjectTableColumn
         implements ObjectTableColumnWithContext {
         protected ObjectTableColumn column;
+        protected SpecifierManagerIndex rowSpecifier;
         protected Map<SpecifierManagerIndex, Integer> indexInjection;
         /**
          * suppose {(parentIndices, ...,) elementIndex, propertyIndex}
@@ -871,10 +874,12 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         public ObjectTableColumnCollectionWrapper(String headerName, ObjectTableColumnWithContext column,
                                                   Map<SpecifierManagerIndex, Integer> indexInjection,
+                                                  SpecifierManagerIndex rowSpecifier,
                                                   int[] indices) {
             this.column = column.asColumn();
             this.indexInjection = indexInjection;
             this.indices = indices;
+            this.rowSpecifier = rowSpecifier;
             if (this.column != null) {
                 this.column.withHeaderValue(headerName);//this.column.getTableColumn().getHeaderValue() +
                         //Arrays.toString(Arrays.copyOfRange(indices, 1, indices.length)));
@@ -927,6 +932,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier(int rowIndex, int columnIndex) {
+            rowSpecifier.setIndex(rowIndex);
             indexInjection.forEach(SpecifierManagerIndex::setIndex);
             return column.getSpecifier(rowIndex, columnIndex);
         }

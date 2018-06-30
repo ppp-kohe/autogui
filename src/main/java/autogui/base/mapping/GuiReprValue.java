@@ -562,6 +562,18 @@ public class GuiReprValue implements GuiRepresentation {
         public ObjectSpecifier child(boolean usingCache) {
             return new ObjectSpecifier(this, usingCache);
         }
+
+        @Override
+        public String toString() {
+            String self = usingCache ? "O" : "o";
+            if (parent == null) {
+                return self;
+            } else if (parent == this) {
+                return "..." + self;
+            } else {
+                return parent + "." + self;
+            }
+        }
     }
 
     /**
@@ -584,6 +596,17 @@ public class GuiReprValue implements GuiRepresentation {
         public boolean isIndex() {
             return true;
         }
+
+        @Override
+        public String toString() {
+            if (parent != null && parent != this) {
+                return parent + "[" + + index + "]";
+            } else if (parent == this) {
+                return "...[" + index + "]";
+            } else {
+                return "?[" + index + "]";
+            }
+        }
     }
 
     /**
@@ -601,6 +624,11 @@ public class GuiReprValue implements GuiRepresentation {
         public ObjectSpecifierNothing(boolean usingCache) {
             super(null, usingCache);
             this.parent = this;
+        }
+
+        @Override
+        public String toString() {
+            return "*";
         }
     }
 
