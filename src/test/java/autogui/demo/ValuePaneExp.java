@@ -17,11 +17,16 @@ public class ValuePaneExp {
     NonEditablePane immutable = new NonEditablePane();
     EditablePane mutable = new EditablePane();
 
+    public enum EnumVal {
+        Hello,
+        World
+    }
+
     public ValuePaneExp() {
         immutable.setStr("hello, world");
         immutable.setFlag(true);
         immutable.setNum(123.456f);
-        immutable.setSelection(ValueListExp.EnumVal.Hello);
+        immutable.setSelection(EnumVal.Hello);
         immutable.setPath(Paths.get("src/main/resources/autogui/swing/icons"));
         try {
             immutable.setImage(
@@ -29,7 +34,6 @@ public class ValuePaneExp {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-
     }
 
     @GuiIncluded
@@ -47,7 +51,7 @@ public class ValuePaneExp {
         protected String str;
         protected float num;
         protected boolean flag;
-        protected ValueListExp.EnumVal selection;
+        protected EnumVal selection;
         protected Path path;
         protected Image image;
 
@@ -67,7 +71,7 @@ public class ValuePaneExp {
         }
 
         @GuiIncluded(index = 4)
-        public ValueListExp.EnumVal getSelection() {
+        public EnumVal getSelection() {
             return selection;
         }
 
@@ -93,7 +97,7 @@ public class ValuePaneExp {
             this.flag = flag;
         }
 
-        public void setSelection(ValueListExp.EnumVal selection) {
+        public void setSelection(EnumVal selection) {
             this.selection = selection;
         }
 
@@ -126,7 +130,7 @@ public class ValuePaneExp {
         }
 
         @GuiIncluded @Override
-        public void setSelection(ValueListExp.EnumVal selection) {
+        public void setSelection(EnumVal selection) {
             super.setSelection(selection);
         }
 

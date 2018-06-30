@@ -87,11 +87,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     } else {
                         GuiSwingTableColumnSetDefault.TableSelectionListAction createdAction = null;
                         if (listAction.isSelectionRowIndicesAction(siblingContext)) {
-                            createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
-                                    table.getSelectionSourceForRowIndices());
+                            createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,                                     table.getSelectionSourceForRowIndices());
                         } else if (listAction.isSelectionRowAndColumnIndicesAction(siblingContext)) {
-                            createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,
-                                    table.getSelectionSourceForRowAndColumnIndices());
+                            createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext,                                     table.getSelectionSourceForRowAndColumnIndices());
                         } else if (listAction.isSelectionAction(siblingContext, context)) {
                             createdAction = new GuiSwingTableColumnSetDefault.TableSelectionListAction(siblingContext, table);
                         }
@@ -374,7 +372,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public List<?> getSource() {
-            return source;
+            return source; //TODO support array
         }
 
         public TableSelectionSourceForIndices getSelectionSourceForRowAndColumnIndices() {

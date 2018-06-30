@@ -24,6 +24,9 @@ public class NumberListExp {
     @GuiIncluded(index = 3)
     public Matrix matrix = new Matrix();
 
+    @GuiIncluded(index = 4)
+    public MatrixPrimitive matrixPrimitive = new MatrixPrimitive();
+
     @GuiIncluded
     public class Integers {
         @GuiIncluded(index = 1)
@@ -197,6 +200,46 @@ public class NumberListExp {
                 System.err.print(" (" + idx[0] + "," + idx[1] + "):");
                 try {
                     System.err.println(matrix.get(idx[0]).get(idx[1]));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+
+    @GuiIncluded
+    public static class MatrixPrimitive {
+        @GuiIncluded(index = 1)
+        public double start = 0;
+        @GuiIncluded(index = 2)
+        public double stride = 1;
+        @GuiIncluded(index = 3)
+        public int width = 10;
+        @GuiIncluded(index = 4)
+        public int height = 10;
+
+        @GuiIncluded
+        public float[][] matrix = {};
+
+        @GuiIncluded
+        public void set() {
+            matrix = new float[height][width];
+            for (int i = 0; i < height; ++i) {
+                float[] row = matrix[i];
+                for (int j = 0; j < width; ++j) {
+                    row[j] = ((float) start);
+                    start += stride;
+                }
+            }
+        }
+
+        @GuiIncluded
+        public void show(List<int[]> indexes) {
+            System.err.println("---------------- "+ indexes.size());
+            for (int[] idx : indexes) {
+                System.err.print(" (" + idx[0] + "," + idx[1] + "):");
+                try {
+                    System.err.println(matrix[idx[0]][idx[1]]);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }

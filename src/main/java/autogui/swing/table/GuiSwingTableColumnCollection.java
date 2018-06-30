@@ -8,6 +8,7 @@ import autogui.base.type.GuiTypeCollection;
 import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingMapperSet;
 import autogui.swing.GuiSwingPreferences;
+import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingView.SpecifierManager;
 import autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import autogui.swing.table.GuiSwingTableColumn.ObjectTableColumnWithContext;
@@ -1375,7 +1376,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        protected Object actionPerformedBody(List<?> src, String targetName) {
+        protected Object actionPerformedBody(List<?> src, String targetName, GuiReprValue.ObjectSpecifier targetSpec) {
             List<Object> values = new ArrayList<>(src.size());
             boolean expand = false;
             GuiMappingContext context = getContext();

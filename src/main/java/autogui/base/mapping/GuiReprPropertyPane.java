@@ -53,6 +53,16 @@ public class GuiReprPropertyPane extends GuiReprValue {
         }
     }
 
+    @Override
+    public Object toSource(Object o) {
+        return ((GuiReprValue) subRepresentations).toSource(o);
+    }
+
+    @Override
+    public Object fromSource(Object o) {
+        return ((GuiReprValue) subRepresentations).fromSource(o);
+    }
+
     public GuiReprPropertyPane createForContext(GuiMappingContext context) {
         return new GuiReprPropertyPane();
     }

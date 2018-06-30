@@ -65,6 +65,7 @@ public class GuiTypeBuilder {
     public GuiTypeElement create(Type type) {
         if (type instanceof Class<?>) {
             return createFromClass((Class<?>) type);
+            //GenericArrayType is not supported
         } else if (type instanceof ParameterizedType) {
             ParameterizedType pType = (ParameterizedType) type;
             Class<?> rawType = getClass(pType);
@@ -85,10 +86,20 @@ public class GuiTypeBuilder {
      *    if {@link #isValueType(Class)} or {@link #isExcludedType(Class)} then {@link #createValueFromClass(Class)}
      *    else {@link #createObjectFromClass(Class)}*/
     public GuiTypeElement createFromClass(Class<?> cls) {
-        if (isValueType(cls) || isExcludedType(cls)) {
+        if (cls.isArray() && isIncludedClass(cls.getComponentType())) {
+            return createCollectionArrayFromClass(cls);
+        } else if (isValueType(cls) || isExcludedType(cls)) {
             return createValueFromClass(cls);
         } else {
             return createObjectFromClass(cls);
+        }
+    }
+
+    public boolean isIncludedClass(Class<?> cls) {
+        if (cls.isArray()) {
+            return isIncludedClass(cls.getComponentType());
+        } else {
+            return isValueType(cls) || !isExcludedType(cls);
         }
     }
 
@@ -110,6 +121,13 @@ public class GuiTypeBuilder {
         put(type, collectionType);
         collectionType.setElementType(get(type.getActualTypeArguments()[0]));
         return collectionType;
+    }
+
+    public GuiTypeCollectionArray createCollectionArrayFromClass(Class<?> cls) {
+        GuiTypeCollectionArray array = new GuiTypeCollectionArray(cls);
+        put(cls, array);
+        array.setElementType(get(cls.getComponentType()));
+        return array;
     }
 
     /**

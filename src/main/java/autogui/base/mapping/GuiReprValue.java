@@ -1,5 +1,6 @@
 package autogui.base.mapping;
 
+import autogui.base.mapping.GuiMappingContext.GuiSourceValue;
 import autogui.base.type.GuiTypeMemberProperty;
 import autogui.base.type.GuiTypeValue;
 import autogui.base.type.GuiUpdatedValue;
@@ -88,7 +89,7 @@ public class GuiReprValue implements GuiRepresentation {
 
     public void setSource(GuiMappingContext context, Object value) {
         context.getContextClock().increment();
-        context.setSource(GuiMappingContext.GuiSourceValue.of(value));
+        context.setSource(GuiSourceValue.of(value));
     }
 
     /**
@@ -106,40 +107,70 @@ public class GuiReprValue implements GuiRepresentation {
      * @return an obtained property value (nullable) or {@link GuiUpdatedValue#NO_UPDATE} if the value is equivalent to the previous value.
      * @throws Throwable might be caused by executing method invocations.
      */
-    public GuiUpdatedValue getValue(GuiMappingContext context, GuiMappingContext.GuiSourceValue parentSource,
-                                    ObjectSpecifier specifier, GuiMappingContext.GuiSourceValue prev) throws Throwable {
+    public GuiUpdatedValue getValue(GuiMappingContext context, GuiSourceValue parentSource,
+                                    ObjectSpecifier specifier, GuiSourceValue prev) throws Throwable {
         if (context.isTypeElementProperty()) {
             GuiTypeMemberProperty prop = context.getTypeElementAsProperty();
-            return context.execute(() ->
+            return fromSourceUpdated(context, context.execute(() ->
                         prev.isNone() ? //it always needs the parent source
-                                prop.executeGet(parentSource.getValue()) :
-                                prop.executeGet(parentSource.getValue(), prev.getValue()));
+                                prop.executeGet(toParentSource(context, parentSource)) :
+                                prop.executeGet(toParentSource(context, parentSource), toSource(prev.getValue()))));
 
         } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
             GuiTypeValue val = context.getTypeElementValue();
-            return context.execute(() -> {
+            return context.execute(() -> { //in the branch, parentSource is handled as the value of the repr. so, use toSource
                 if (prev.isNone() && parentSource.isNone()) {
-                    return val.getValue();
+                    return fromSourceUpdated(context, val.getValue());
                 } else if (prev.isNone() && !parentSource.isNone()) {
-                    return val.getValue(parentSource.getValue());
+                    return fromSourceUpdated(context, val.getValue(toSource(parentSource.getValue())));
                 } else if (!prev.isNone() && parentSource.isNone()) {
-                    return val.updatedValue(prev.getValue());
+                    return fromSourceUpdated(context, val.updatedValue(toSource(prev.getValue())));
                 } else {
-                    return val.updatedValue(prev.getValue(), parentSource.getValue());
+                    return fromSourceUpdated(context, val.updatedValue(toSource(prev.getValue()), toSource(parentSource.getValue())));
                 }
             });
         } else {
             if (prev.isNone()) {
                 return GuiUpdatedValue.NO_UPDATE;
             } else {
-                return GuiUpdatedValue.of(prev.getValue());
+                return GuiUpdatedValue.of(prev.getValue()); //toSource -> fromSource
             }
         }
+    }
 
+    public static void convertLog(String msg, Object from, Object to, GuiMappingContext context) {
+        System.err.println(msg + " : " + id(from) + " -> " + id(to) + " : " + context);
+    }
+
+    private static String id(Object o) {
+        return o == null ? "null" : String.format("<%x:%s>", System.identityHashCode(o), o.getClass().getSimpleName());
+    }
+
+    public Object toParentSource(GuiMappingContext context, GuiSourceValue v) {
+        Object o;
+        if (context.hasParent()) {
+            if (context.getParent().isReprCollectionElement() && context.getParent().hasParent()) {
+                o = context.getParent().getParent().getReprValue().toSource(v.getValue());
+            } else {
+                o = context.getParent().getReprValue().toSource(v.getValue());
+            }
+        } else {
+            o = v.getValue();
+        }
+        return o;
+    }
+
+    protected GuiUpdatedValue fromSourceUpdated(GuiMappingContext context, GuiUpdatedValue v) {
+        if (v.isNone()) {
+            return v;
+        } else {
+            Object o = fromSource(v.getValue());
+            return GuiUpdatedValue.of(o);
+        }
     }
 
     /**
-     * call {@link #getValue(GuiMappingContext, GuiMappingContext.GuiSourceValue, ObjectSpecifier, GuiMappingContext.GuiSourceValue)}
+     * call {@link #getValue(GuiMappingContext, GuiSourceValue, ObjectSpecifier, GuiSourceValue)}
      * and never return NO_UPDATE
      * @param context the context
      * @param parentSource the property owner. if null then nothing will happen for properties
@@ -147,12 +178,12 @@ public class GuiReprValue implements GuiRepresentation {
      * @return an obtained value or null
      * @throws Throwable might be caused by executing method invocation
      */
-    public Object getValueWithoutNoUpdate(GuiMappingContext context, GuiMappingContext.GuiSourceValue parentSource, ObjectSpecifier specifier) throws Throwable {
+    public Object getValueWithoutNoUpdate(GuiMappingContext context, GuiSourceValue parentSource, ObjectSpecifier specifier) throws Throwable {
         return unwrapNoUpdate(GuiMappingContext.NO_SOURCE,
                 getValue(context, parentSource, specifier, GuiMappingContext.NO_SOURCE));
     }
 
-    public static Object unwrapNoUpdate(GuiMappingContext.GuiSourceValue prev, GuiUpdatedValue ret) {
+    public static Object unwrapNoUpdate(GuiSourceValue prev, GuiUpdatedValue ret) {
         if (ret.isNone()) {
             return prev.getValue();
         } else {
@@ -164,15 +195,15 @@ public class GuiReprValue implements GuiRepresentation {
      * obtain the current value of the context.
      *  This is called from {@link #checkAndUpdateSource(GuiMappingContext)},
      *   and invoke {@link #getParentSource(GuiMappingContext, ObjectSpecifier)}
-     *   and {@link #getValue(GuiMappingContext, GuiMappingContext.GuiSourceValue, ObjectSpecifier, GuiMappingContext.GuiSourceValue)}
+     *   and {@link #getValue(GuiMappingContext, GuiSourceValue, ObjectSpecifier, GuiSourceValue)}
      * @param context  target context,
      * @param specifier the specifier of the value
      * @return the current value (nullable) or {@link GuiUpdatedValue#NO_UPDATE}
      * @throws Throwable might be caused by executing method invocations.
      */
     public GuiUpdatedValue getUpdatedValue(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
-        GuiMappingContext.GuiSourceValue prev = context.getSource();
-        GuiMappingContext.GuiSourceValue src = getParentSource(context, specifier.getParent());
+        GuiSourceValue prev = context.getSource();
+        GuiSourceValue src = getParentSource(context, specifier.getParent());
         return getValue(context, src, specifier, prev);
     }
 
@@ -184,7 +215,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @throws Throwable might be caused by executing method invocation
      */
     public Object getUpdatedValueWithoutNoUpdate(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
-        GuiMappingContext.GuiSourceValue prev = context.getSource();
+        GuiSourceValue prev = context.getSource();
         return unwrapNoUpdate(prev,
                 getUpdatedValue(context, specifier));
     }
@@ -199,14 +230,14 @@ public class GuiReprValue implements GuiRepresentation {
      * @return the updated value as a source-value or the current source value of the context
      * @throws Throwable might be cause d by executing method invocation
      */
-    public GuiMappingContext.GuiSourceValue getUpdatedSource(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
+    public GuiSourceValue getUpdatedSource(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
         if (context.isParentValuePane() &&
                 (context.getSource().isNone() || specifier.isUsingCache())) {
             GuiUpdatedValue v = context.getReprValue().getUpdatedValue(context, specifier);
             if (v.isNone()) {
                 return context.getSource();
             } else {
-                return GuiMappingContext.GuiSourceValue.of(v.getValue());
+                return GuiSourceValue.of(v.getValue());
             }
         } else {
             return context.getSource();
@@ -222,7 +253,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @return the source value of the parent
      * @throws Throwable the action might cause an error
      */
-    public GuiMappingContext.GuiSourceValue getParentSource(GuiMappingContext context, ObjectSpecifier parentSpecifier) throws Throwable {
+    public GuiSourceValue getParentSource(GuiMappingContext context, ObjectSpecifier parentSpecifier) throws Throwable {
         if (context.hasParent()) {
             return context.getParent().getReprValue().getUpdatedSource(context.getParent(), parentSpecifier);
         } else {
@@ -239,8 +270,8 @@ public class GuiReprValue implements GuiRepresentation {
      * @return an element in the collection, default is null
      * @throws Throwable an error while getting
      */
-    public GuiUpdatedValue getValueCollectionElement(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection,
-                                                     ObjectSpecifier elementSpecifier, GuiMappingContext.GuiSourceValue prev) throws Throwable {
+    public GuiUpdatedValue getValueCollectionElement(GuiMappingContext context, GuiSourceValue collection,
+                                                     ObjectSpecifier elementSpecifier, GuiSourceValue prev) throws Throwable {
         return null;
     }
 
@@ -252,7 +283,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @return the size of the collection, default is 1
      * @throws Throwable an error while getting
      */
-    public int getValueCollectionSize(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection, ObjectSpecifier specifier) throws Throwable {
+    public int getValueCollectionSize(GuiMappingContext context, GuiSourceValue collection, ObjectSpecifier specifier) throws Throwable {
         return 1;
     }
 
@@ -265,7 +296,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @return the updated value
      * @throws Throwable an error while updating
      */
-    public Object updateCollectionElement(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection,
+    public Object updateCollectionElement(GuiMappingContext context, GuiSourceValue collection,
                                           Object newValue, ObjectSpecifier elementSpecifier) throws Throwable {
         return newValue;
     }
@@ -304,7 +335,7 @@ public class GuiReprValue implements GuiRepresentation {
 
     /**
      * obtain the parent source by {@link #getUpdatedSource(GuiMappingContext, ObjectSpecifier)} and
-     *   call {@link #update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)}
+     *   call {@link #update(GuiMappingContext, GuiSourceValue, Object, ObjectSpecifier)}
      * @param context the target context
      * @param newValue a new value to be set to the property
      * @param specifier the specifier of the value
@@ -312,7 +343,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @throws Throwable an error while getParentSource or udpate
      */
     public Object updateWithParentSource(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) throws Throwable {
-        GuiMappingContext.GuiSourceValue src = getParentSource(context, specifier.getParent());
+        GuiSourceValue src = getParentSource(context, specifier.getParent());
         if (src.isNone()) {
             System.err.println("no src: context=" + context.getRepresentation() + " : parent=" + context.getParentRepresentation());
         }
@@ -338,27 +369,27 @@ public class GuiReprValue implements GuiRepresentation {
      * @return newValue which will need to be passed to {@link GuiMappingContext#updateSourceFromGui(Object)},  or null if error
      * @throws Throwable an error while updating
      */
-    public Object update(GuiMappingContext context, GuiMappingContext.GuiSourceValue parentSource,
+    public Object update(GuiMappingContext context, GuiSourceValue parentSource,
                                   Object newValue, ObjectSpecifier specifier) throws Throwable {
         if (context.isTypeElementProperty()) {
             GuiTypeMemberProperty prop = context.getTypeElementAsProperty();
-            return context.execute(() ->
-                    prop.executeSet(parentSource.getValue(), newValue));
+            return fromSource(context.execute(() ->
+                    prop.executeSet(toParentSource(context, parentSource), toSource(newValue))));
         } else if (context.isParentPropertyPane() || context.isParentCollectionElement()) {
             return context.getParentValuePane()
                     .updateWithParentSource(context.getParent(), newValue, specifier.getParent());
         } else if (context.isTypeElementValue() || context.isTypeElementObject() || context.isTypeElementCollection()) {
-            GuiMappingContext.GuiSourceValue prev = context.getSource();
+            GuiSourceValue prev = context.getSource();
             GuiTypeValue val = context.getTypeElementValue();
-            return context.execute(() -> {
+            return context.execute(() -> { //in the branch, parentSource is handled as the value of the repr. so, use toSource
                 if (prev.isNone() && parentSource.isNone()) {
-                    return val.writeValue(newValue);
+                    return fromSource(val.writeValue(toSource(newValue)));
                 } else if (prev.isNone() && !parentSource.isNone()) {
-                    return val.writeValueInheritedValue(parentSource.getValue(), newValue);
+                    return fromSource(val.writeValueInheritedValue(toSource(parentSource.getValue()), toSource(newValue)));
                 } else if (!prev.isNone() && parentSource.isNone()) {
-                    return val.writeValue(prev.getValue(), newValue);
+                    return fromSource(val.writeValue(prev.getValue(), toSource(newValue)));
                 } else {
-                    return val.writeValue(prev.getValue(), parentSource.getValue(), newValue);
+                    return fromSource(val.writeValue(prev.getValue(), toSource(parentSource.getValue()), toSource(newValue)));
                 }
             });
 
@@ -452,6 +483,22 @@ public class GuiReprValue implements GuiRepresentation {
     @Override
     public String toString() {
         return toStringHeader();
+    }
+
+    /**
+     * @param o a raw-object which can be directly passed to type-element's executing methods
+     * @return a wrapped object for clients of the representation
+     */
+    public Object fromSource(Object o) {
+        return o;
+    }
+
+    /**
+     * @param o a wrapped object for clients of the representation
+     * @return a raw-object which can be directly passed to type-element's executing methods
+     */
+    public Object toSource(Object o) {
+        return o;
     }
 
     /**

@@ -3,6 +3,7 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprAction;
 import autogui.base.mapping.GuiReprActionList;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.*;
 import autogui.swing.GuiSwingView.SpecifierManager;
 import autogui.swing.GuiSwingView.SpecifierManagerDefault;
@@ -189,7 +190,9 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         protected boolean selectionChange;
 
         public TableSelectionListAction(GuiMappingContext context, TableSelectionSource source) {
-            super(context);
+            super(context, () -> GuiReprValue.NONE_WITH_CACHE); //unused specifier:
+                                    // for spec path outside of List, NONE... can be used
+                                    // for spec path inside of complex List<List<...E...>>, the spec will be used
             this.source = source;
             selectionChangeFactory = GuiSwingTableColumnSet::getNoChange;
             if (isAutomaticSelectionAction()) {
@@ -205,40 +208,42 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            actionPerformedAround(false);
+            actionPerformedAround(false, this.targetSpecifier.getSpecifier());
         }
 
         @Override
         public void actionPerformedWithoutCheckingRunning(ActionEvent e) {
-            actionPerformedAroundWithoutCheckingRunning(false);
+            actionPerformedAroundWithoutCheckingRunning(false,
+                    this.targetSpecifier.getSpecifier());
         }
 
         /**
          * action runner for automatic selection
          */
         public void actionPerformedBySelection() {
-            actionPerformedAroundWithoutCheckingRunning(true);
+            actionPerformedAroundWithoutCheckingRunning(true,
+                    this.targetSpecifier.getSpecifier());
         }
 
         @Override
-        public Object executeAction() {
-            return actionPerformedAround(false);
+        public Object executeAction(GuiReprValue.ObjectSpecifier specifier) {
+            return actionPerformedAround(false, specifier);
         }
 
-        protected Object actionPerformedAround(boolean autoSelection) {
+        protected Object actionPerformedAround(boolean autoSelection, GuiReprValue.ObjectSpecifier targetSpec) {
             if (!running.getAndSet(true)) {
-                return actionPerformedAroundWithoutCheckingRunning(autoSelection);
+                return actionPerformedAroundWithoutCheckingRunning(autoSelection, targetSpec);
             } else {
                 System.err.printf("already running action \"%s\" \n", getValue(NAME));
                 return null;
             }
         }
 
-        public Object actionPerformedAroundWithoutCheckingRunning(boolean autoSelection) {
+        public Object actionPerformedAroundWithoutCheckingRunning(boolean autoSelection, GuiReprValue.ObjectSpecifier targetSpec) {
             List<?> selection = source.getSelectedItems();
             String targetName = source.getTargetName();
             return executeContextTask(
-                    () -> actionPerformedBody(selection, targetName),
+                    () -> actionPerformedBody(selection, targetName, targetSpec),
                     r -> {
                         running.set(false);
                         r.executeIfPresent(
@@ -247,10 +252,10 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                     });
         }
 
-        protected Object actionPerformedBody(List<?> selection, String targetName) {
+        protected Object actionPerformedBody(List<?> selection, String targetName, GuiReprValue.ObjectSpecifier targetSpec) {
             GuiMappingContext context = getContext();
             return ((GuiReprActionList) context.getRepresentation())
-                    .executeActionForList(context, selection, targetName);
+                    .executeActionForList(context, selection, targetName, targetSpec);
         }
 
         /**
@@ -315,7 +320,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         }
 
         @Override
-        protected Object actionPerformedBody(List<?> selection, String targetName) {
+        protected Object actionPerformedBody(List<?> selection, String targetName, GuiReprValue.ObjectSpecifier targetSpec) {
             GuiMappingContext context = getContext();
             List<Object> os = ((GuiReprAction) context.getRepresentation())
                     .executeActionForTargets(context, selection);

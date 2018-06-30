@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprAction;
+import autogui.base.mapping.GuiReprValue;
 import autogui.swing.icons.GuiSwingIcons;
 import autogui.swing.table.GuiSwingTableColumnSet;
 import autogui.swing.util.PopupCategorized;
@@ -20,7 +21,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
                                List<GuiSwingViewCollectionTable.CollectionTable> tables) {
 
         List<TableSelectionConversion> conversions = getTableConversions(context, tables);
-        ExecutionAction a = new ExecutionAction(context);
+        ExecutionAction a = new ExecutionAction(context, pane::getSpecifier);
         a.setResultTarget(r ->
                 conversions.forEach(c -> c.run(r)));
         return a;
@@ -57,9 +58,11 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             GuiSwingKeyBinding.RecommendedKeyStroke {
         protected Consumer<Object> resultTarget;
         protected AtomicBoolean running = new AtomicBoolean(false);
+        protected GuiSwingView.SpecifierManager targetSpecifier;
 
-        public ExecutionAction(GuiMappingContext context) {
+        public ExecutionAction(GuiMappingContext context, GuiSwingView.SpecifierManager targetSpecifier) {
             super(context);
+            this.targetSpecifier = targetSpecifier;
             putValue(Action.NAME, context.getDisplayName());
 
             Icon icon = getIcon();
@@ -91,7 +94,8 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         }
 
         public void actionPerformedWithoutCheckingRunning(ActionEvent e) {
-            executeContextTask(this::executeAction,
+            GuiReprValue.ObjectSpecifier specifier = targetSpecifier.getSpecifier();
+            executeContextTask(() -> executeAction(specifier),
                     r -> {
                         running.set(false);
                         if (r.isPresented() && resultTarget != null) {
@@ -104,8 +108,8 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             return getContext().getIconName();
         }
 
-        public Object executeAction() {
-            return getContext().executeAction();
+        public Object executeAction(GuiReprValue.ObjectSpecifier specifier) {
+            return getContext().executeAction(specifier);
         }
 
         @Override

@@ -27,10 +27,10 @@ public class GuiReprAction implements GuiRepresentation {
      * @param context  the context
      * @return result of method execution or null
      * */
-    public Object executeAction(GuiMappingContext context) {
+    public Object executeAction(GuiMappingContext context, GuiReprValue.ObjectSpecifier targetSpecifier) {
         Object result = null;
         try {
-            Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), GuiReprValue.NONE_WITH_CACHE);
+            Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), targetSpecifier);
             result = context.execute(() -> context.getTypeElementAsAction().execute(target));
             context.updateSourceFromRoot();
         } catch (Throwable ex) {

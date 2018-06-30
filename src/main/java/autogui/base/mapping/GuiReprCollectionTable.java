@@ -1,8 +1,13 @@
 package autogui.base.mapping;
 
+import autogui.base.mapping.GuiMappingContext.GuiSourceValue;
 import autogui.base.type.GuiTypeCollection;
+import autogui.base.type.GuiTypeCollectionArray;
+import autogui.base.type.GuiTypeElement;
 import autogui.base.type.GuiUpdatedValue;
 
+import java.lang.reflect.Array;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -72,8 +77,8 @@ import java.util.stream.StreamSupport;
  *    A GUI column obtains its model value via {@link GuiReprValue#getUpdatedValue(GuiMappingContext, ObjectSpecifier)} ,
  *      and then the repr. obtains a parent value which is an element in a list.
  *    A parent {@link GuiReprCollectionElement} provides an element value by
- *        the special {@link #getValueCollectionElement(GuiMappingContext, GuiMappingContext.GuiSourceValue,
- *                          ObjectSpecifier, GuiMappingContext.GuiSourceValue)} .
+ *        the special {@link #getValueCollectionElement(GuiMappingContext, GuiSourceValue,
+ *                          ObjectSpecifier, GuiSourceValue)} .
  *
  * <h3>examples</h3>
  *   <pre>
@@ -134,7 +139,7 @@ import java.util.stream.StreamSupport;
  *
  *                  <li><code>ObjectTableModel#getValueAt(int,int)</code> obtains a row object from the obtained source list</li>
  *                  <li>and call  <code>ObjectTableColumnValue#getCellValue(rowObject,ri,ci)</code>,
- *                              which causes {@link GuiReprValue#getValueWithoutNoUpdate(GuiMappingContext, GuiMappingContext.GuiSourceValue, ObjectSpecifier)}
+ *                              which causes {@link GuiReprValue#getValueWithoutNoUpdate(GuiMappingContext, GuiSourceValue, ObjectSpecifier)}
  *                                  with the rowObject and a row-indexed specifier.
  *              </ul>
  *       </li>
@@ -157,13 +162,13 @@ import java.util.stream.StreamSupport;
  *          <ul>
  *            <li><code>ObjectTableModel#setValueAt(v,ri,ci)</code> causes
  *             <code>ObjectTableColumnValue#setCellValue(rowObj,ri,ci,v)</code></li>
- *            <li>the repr's update is {@link GuiReprValue#update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)}
+ *            <li>the repr's update is {@link GuiReprValue#update(GuiMappingContext, GuiSourceValue, Object, ObjectSpecifier)}
  *              and it matches the case of the parent context is a collection-element,
  *                then it calls parent's {@link GuiReprValue#updateWithParentSource(GuiMappingContext, Object, ObjectSpecifier)}</li>
  *            <li>the method of the parent obtains the source of the parent of the parent, which is a list, and
- *                 call {@link GuiReprCollectionElement#update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)}
+ *                 call {@link GuiReprCollectionElement#update(GuiMappingContext, GuiSourceValue, Object, ObjectSpecifier)}
  *                 as the parent update.
- *                 the method delegates {@link GuiReprCollectionTable#updateCollectionElement(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)}</li>
+ *                 the method delegates {@link GuiReprCollectionTable#updateCollectionElement(GuiMappingContext, GuiSourceValue, Object, ObjectSpecifier)}</li>
  *
  *          </ul>
  *        </li>
@@ -173,16 +178,22 @@ import java.util.stream.StreamSupport;
  * */
 public class GuiReprCollectionTable extends GuiReprValue {
     protected GuiRepresentation subRepresentation;
+    protected ListConverter listConverter = castConverter;
 
     public GuiReprCollectionTable(GuiRepresentation subRepresentation) {
         this.subRepresentation = subRepresentation;
+    }
+
+    public GuiReprCollectionTable(GuiRepresentation subRepresentation, ListConverter listConverter) {
+        this.subRepresentation = subRepresentation;
+        this.listConverter = listConverter;
     }
 
     @Override
     public boolean match(GuiMappingContext context) {
         //currently allow: class O { List<E> l; }  class E { List<String> c; } //c becomes a dynamic column
         if (context.isTypeElementCollection()) {
-            context.setRepresentation(this);
+            context.setRepresentation(create(context));
             for (GuiMappingContext subContext : context.createChildCandidates()) {
                 if (subRepresentation.match(subContext)) {
                     subContext.addToParent();
@@ -194,6 +205,43 @@ public class GuiReprCollectionTable extends GuiReprValue {
         }
     }
 
+    public GuiRepresentation create(GuiMappingContext context) {
+        return new GuiReprCollectionTable(subRepresentation,
+                context.getTypeElement() instanceof GuiTypeCollectionArray ?
+                    new ListConverterArray(getArrayDimension(context.getTypeElement())) :
+                    listConverter);
+    }
+
+    public int getArrayDimension(GuiTypeElement element) {
+        if (element instanceof GuiTypeCollectionArray) {
+            return getArrayDimension(((GuiTypeCollectionArray) element).getElementType()) + 1;
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
+    public Object fromSource(Object o) {
+        return listConverter.toList(o);
+    }
+
+    @Override
+    public Object toSource(Object o) {
+        return listConverter.fromList((List<?>) o);
+    }
+
+    public GuiMappingContext getElementValueContext(GuiMappingContext context) {
+        List<GuiMappingContext> cs = context.getChildren();
+        if (!cs.isEmpty()) {
+            GuiMappingContext elementContext = cs.get(0);
+            List<GuiMappingContext> valueContexts = elementContext.getChildren();
+            if (!valueContexts.isEmpty()) {
+                return valueContexts.get(0);
+            }
+        }
+        return null;
+    }
+
     public List<?> toUpdateValue(GuiMappingContext context, Object newValue) {
         if (newValue == null) {
             return Collections.emptyList();
@@ -203,21 +251,34 @@ public class GuiReprCollectionTable extends GuiReprValue {
     }
 
     @Override
-    public int getValueCollectionSize(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection, ObjectSpecifier specifier) throws Throwable {
+    public int getValueCollectionSize(GuiMappingContext context, GuiSourceValue collection, ObjectSpecifier specifier) throws Throwable {
         GuiTypeCollection collType = context.getTypeElementCollection();
-        return context.execute(() -> collType.getSize(collection.getValue()));
+        return context.execute(() -> collType.getSize(toSource(collection.getValue())));
     }
 
     @Override
-    public GuiUpdatedValue getValueCollectionElement(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection,
-                                                     ObjectSpecifier elementSpecifier, GuiMappingContext.GuiSourceValue prev) throws Throwable {
+    public GuiUpdatedValue getValueCollectionElement(GuiMappingContext context, GuiSourceValue collection,
+                                                     ObjectSpecifier elementSpecifier, GuiSourceValue prev) throws Throwable {
         GuiTypeCollection collType = context.getTypeElementCollection();
-
+        Object col = toSource(collection.getValue());
+        GuiMappingContext elementValueContext = getElementValueContext(context);
         try {
-            return context.execute(() ->
+            GuiSourceValue pv;
+            if (!prev.isNone() && elementValueContext != null) {
+                pv = GuiSourceValue.of(elementValueContext.getReprValue().toSource(prev.getValue()));
+            } else {
+                pv = prev;
+            }
+            GuiUpdatedValue elementValue = context.execute(() ->
                     prev.isNone() ?
-                            collType.executeGetElement(collection.getValue(), elementSpecifier.getIndex()) :
-                            collType.executeGetElement(collection.getValue(), elementSpecifier.getIndex(), prev));
+                            collType.executeGetElement(col, elementSpecifier.getIndex()) :
+                            collType.executeGetElement(col, elementSpecifier.getIndex(), pv));
+            if (!elementValue.isNone() && elementValueContext != null) {
+                Object v = elementValueContext.getReprValue().fromSource(elementValue.getValue());
+                return GuiUpdatedValue.of(v); //wrap for element
+            } else {
+                return elementValue;
+            }
         } catch (Throwable ex) {
             if (!(ex instanceof IndexOutOfBoundsException)) {
                 context.errorWhileUpdateSource(ex);
@@ -229,13 +290,27 @@ public class GuiReprCollectionTable extends GuiReprValue {
         }
     }
 
+
     @Override
-    public Object updateCollectionElement(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection,
+    public Object updateCollectionElement(GuiMappingContext context, GuiSourceValue collection,
                                           Object newValue, ObjectSpecifier elementSpecifier) throws Throwable {
         GuiTypeCollection collType = context.getTypeElementCollection();
+        Object col = toSource(collection.getValue());
+        GuiMappingContext elementValueContext = getElementValueContext(context);
         try {
-            return context.execute(() ->
-                    collType.executeSetElement(collection.getValue(), elementSpecifier.getIndex(), newValue));
+            Object nv;
+            if (elementValueContext != null) {
+                nv = elementValueContext.getReprValue().toSource(newValue);
+            } else {
+                nv = newValue;
+            }
+            Object v = context.execute(() ->
+                    collType.executeSetElement(col, elementSpecifier.getIndex(), nv));
+            if (elementValueContext != null) {
+                return elementValueContext.getReprValue().fromSource(v);
+            } else {
+                return v;
+            }
         } catch (Throwable ex) {
             if (!(ex instanceof IndexOutOfBoundsException)) {
                 context.errorWhileUpdateSource(ex);
@@ -252,7 +327,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
             }
             values.add(newValue);
             return context.execute(() ->
-                    collType.executeAddElements(collection.getValue(), values));
+                    collType.executeAddElements(col, values));
         }
     }
 
@@ -294,7 +369,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
                     listResult.add(e);
                 }
             }
-            return listResult;
+            return listResult; //TODO support array
         }
         return null;
     }
@@ -347,6 +422,99 @@ public class GuiReprCollectionTable extends GuiReprValue {
     public String toString() {
         return toStringHeader() + "(" + subRepresentation + ")";
     }
+
+    public interface ListConverter {
+        List<?> toList(Object obj);
+        Object fromList(List<?> list);
+    }
+
+    public static ListConverterCast castConverter = new ListConverterCast();
+
+    public static class ListConverterCast implements ListConverter {
+        @Override
+        public List<?> toList(Object obj) {
+            if (obj == null) {
+                return Collections.emptyList();
+            } else {
+                return (List<?>) obj;
+            }
+        }
+
+        @Override
+        public Object fromList(List<?> list) {
+            return list;
+        }
+    }
+
+    public static class ListConverterArray implements ListConverter {
+        protected int dim;
+
+        public ListConverterArray(int dim) {
+            this.dim = dim;
+        }
+
+        @Override
+        public List<?> toList(Object obj) {
+            if (obj == null) {
+                return null;
+            } else {
+                if (obj instanceof List) {
+                    System.err.println("warning: wrapping list instead of array. something wrong :" + obj);
+                }
+                return new ArrayWrappingList(obj, dim);
+            }
+        }
+
+        @Override
+        public Object fromList(List<?> list) {
+            if (list == null) {
+                return null;
+            } else {
+                return ((ArrayWrappingList) list).getArray();
+            }
+        }
+    }
+
+    public static class ArrayWrappingList extends AbstractList<Object> {
+        protected Object array;
+        protected int dim;
+
+        public ArrayWrappingList(Object array, int dim) {
+            this.array = array;
+            this.dim = dim;
+        }
+
+        @Override
+        public Object get(int index) {
+            Object e = Array.get(array, index);
+            if (e != null && dim > 1) {
+                return new ArrayWrappingList(e, dim - 1);
+            } else {
+                return e;
+            }
+        }
+
+        public Object getArray() {
+            return array;
+        }
+
+        @Override
+        public Object set(int index, Object element) {
+            if (element != null && dim > 1) {
+                element = ((ArrayWrappingList) element).getArray();
+            }
+            Object e = get(index);
+            Array.set(array, index, element);
+            return e;
+        }
+
+        @Override
+        public int size() {
+            return Array.getLength(array);
+        }
+    }
+
+    ////////////////////////////////////
 
     /** interface for actions which handle selected-rows;
      *    an actual implementation relies on a concrete GUI component */

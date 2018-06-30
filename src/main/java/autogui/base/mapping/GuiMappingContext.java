@@ -815,9 +815,9 @@ public class GuiMappingContext {
      *     i.e. updating other components.
      * @return result of execution
      */
-    public Object executeAction() {
+    public Object executeAction(GuiReprValue.ObjectSpecifier targetSpecifier) {
         if (isReprAction()) {
-            return getReprAction().executeAction(this);
+            return getReprAction().executeAction(this, targetSpecifier);
         } else {
             throw new UnsupportedOperationException("" + getRepresentation());
         }

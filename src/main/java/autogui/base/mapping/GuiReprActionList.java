@@ -31,9 +31,10 @@ public class GuiReprActionList implements GuiRepresentation {
      * @param context the context
      * @param selection the parameter
      * @param targetName the name of the target list
+     * @param targetSpecifier the specifier for the target object
      * @return result of execution or null
      */
-    public Object executeActionForList(GuiMappingContext context, List<?> selection, String targetName) {
+    public Object executeActionForList(GuiMappingContext context, List<?> selection, String targetName, GuiReprValue.ObjectSpecifier targetSpecifier) {
         Object result = null;
         try {
             Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), GuiReprValue.NONE_WITH_CACHE);
