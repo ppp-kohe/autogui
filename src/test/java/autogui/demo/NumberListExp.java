@@ -5,6 +5,7 @@ import autogui.GuiListSelectionUpdater;
 import autogui.swing.AutoGuiShell;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -50,6 +51,7 @@ public class NumberListExp {
             integers = new ArrayList<>(integers);
         }
 
+        @GuiIncluded
         public void show(List<Integer> selectedIndexes) {
             StringBuilder buf = new StringBuilder();
             for (int i = 0, l = selectedIndexes.size(); i < l; ++i) {
@@ -77,6 +79,7 @@ public class NumberListExp {
         @GuiListSelectionUpdater(index = true)
         @GuiIncluded
         public List<Integer> next(List<Integer> selectedIndexes) {
+            System.err.println("next : " + selectedIndexes);
             return selectedIndexes.stream()
                     .map(i -> i + 1 >= integers.size() ? 0 : i + 1)
                     .collect(Collectors.toList());
@@ -160,6 +163,7 @@ public class NumberListExp {
         @GuiListSelectionUpdater(index = true)
         @GuiIncluded
         public List<Integer> next(List<Integer> selectedIndexes, String propName) {
+            System.err.println("next : " + selectedIndexes + " " + propName);
             return selectedIndexes.stream()
                     .map(i -> i + 1 >= (propName.equals("floats") ? floats : doubles).size() ? 0 : i + 1)
                     .collect(Collectors.toList());
@@ -197,11 +201,15 @@ public class NumberListExp {
         public void show(List<int[]> indexes) {
             System.err.println("---------------- "+ indexes.size());
             for (int[] idx : indexes) {
-                System.err.print(" (" + idx[0] + "," + idx[1] + "):");
-                try {
-                    System.err.println(matrix.get(idx[0]).get(idx[1]));
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                System.err.print(Arrays.toString(idx) + " : ");
+                if (idx.length >= 2) {
+                    try {
+                        System.err.println(matrix.get(idx[0]).get(idx[1]));
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                } else {
+                    System.err.println();
                 }
             }
         }
@@ -237,11 +245,15 @@ public class NumberListExp {
         public void show(List<int[]> indexes) {
             System.err.println("---------------- "+ indexes.size());
             for (int[] idx : indexes) {
-                System.err.print(" (" + idx[0] + "," + idx[1] + "):");
-                try {
-                    System.err.println(matrix[idx[0]][idx[1]]);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                System.err.print(Arrays.toString(idx) + " : ");
+                if (idx.length > 1) {
+                    try {
+                        System.err.println(matrix[idx[0]][idx[1]]);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                } else {
+                    System.err.println();
                 }
             }
         }

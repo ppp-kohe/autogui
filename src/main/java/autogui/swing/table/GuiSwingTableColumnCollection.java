@@ -244,7 +244,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                     .collect(Collectors.toList());
         }
 
-        public Action toAction(GuiMappingContext actionContext, DynamicColumnFactory sender,
+        public TableSelectionListAction toAction(GuiMappingContext actionContext, DynamicColumnFactory sender,
                                List<DynamicColumnFactory> children,
                                TableTargetCell selection) {
             if (actionContext.isReprAction()) {
@@ -256,14 +256,14 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             }
         }
 
-        public Action toActionForTarget(GuiMappingContext actionContext, DynamicColumnFactory sender,
+        public TableSelectionListAction toActionForTarget(GuiMappingContext actionContext, DynamicColumnFactory sender,
                                         List<DynamicColumnFactory> children,
                                         TableTargetCell selection) {
             return new TableSelectionAction(actionContext,
                         new TableSelectionSourceDynamic(getModel(), selection, sender, getTargetName(this.context)));
         }
 
-        public Action toActionForList(GuiMappingContext actionContext, DynamicColumnFactory sender,
+        public TableSelectionListAction toActionForList(GuiMappingContext actionContext, DynamicColumnFactory sender,
                                       List<DynamicColumnFactory> children,
                                       TableTargetCell selection) {
             List<DynamicColumnFactoryList> sourceFactories = children.stream()
@@ -545,16 +545,17 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
     }
 
     /**
-     * size-factory for root List&lt;List&lt;T&gt;&gt;
+     * size-factory for root List&lt;List&lt;T&gt;&gt;.
+     * the factory is only created for each root list outside of a list
      */
     public static class DynamicColumnFactoryCollectionRoot extends DynamicColumnFactoryList
             implements ObjectTableModelColumns.DynamicColumnFactoryRoot {
         protected List<GuiMappingContext> rootActions = new ArrayList<>();
 
-        public DynamicColumnFactoryCollectionRoot(GuiMappingContext context, SpecifierManager specifierManager,
+        public DynamicColumnFactoryCollectionRoot(GuiMappingContext tableContext, SpecifierManager specifierManager,
                                                   TableColumnHost model,
                                                   SpecifierManagerIndex rowSpecifier) {
-            super(context, specifierManager, model, rowSpecifier);
+            super(tableContext, specifierManager, model, rowSpecifier);
         }
 
         @Override
@@ -593,7 +594,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @GuiIncluded
-        public List<Action> getRootActions(TableTargetCell selection) {
+        public List<Action> getRootActions(TableTargetCell selection, TableSelectionSource tableSource) {
             GuiMappingContext tableOwner = context.getParent();
             SpecifierManager rootOwnerSpecifier;
             SpecifierManager tableOwnerSpecifier =
@@ -609,9 +610,23 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             DynamicColumnFactory rootOwner = new DynamicColumnFactoryComposite(
                     tableOwner, rootOwnerSpecifier, model); //create a temporary factory for root-list owner
             return rootActions.stream()
-                    .map(a -> toAction(a, rootOwner, Collections.singletonList(this), selection))
+                    .map(a -> withSelectionChange(toAction(a, rootOwner, Collections.singletonList(this), selection),
+                            tableSource))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
+        }
+
+        public TableSelectionListAction withSelectionChange(TableSelectionListAction a, TableSelectionSource source) {
+            if (a != null) {
+                if (context.isReprCollectionTable()){
+                    a.setSelectionChangeFactoryFromContext(context);
+                }
+                TableSelectionSource actionSource = a.getSource();
+                if (actionSource instanceof TableSelectionSourceDynamicBase) { //set the selection changer only for root-actions
+                    ((TableSelectionSourceDynamicBase) actionSource).setTableSource(source);
+                }
+            }
+            return a;
         }
 
     }
@@ -1058,6 +1073,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
     public static class TableSelectionSourceDynamicBase {
         protected TableColumnHost model;
         protected TableTargetCell selection;
+        protected TableSelectionSource tableSource;
 
         public TableSelectionSourceDynamicBase(TableColumnHost model, TableTargetCell selection) {
             this.model = model;
@@ -1127,6 +1143,17 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 return Collections.emptyMap();
             }
         }
+
+        public void selectionActionFinished(boolean autoSelection, TableSelectionChange change) {
+            //selection change: currently support selection change only for root-action
+            if (tableSource != null) {
+                tableSource.selectionActionFinished(autoSelection, change);
+            }
+        }
+
+        public void setTableSource(TableSelectionSource tableSource) {
+            this.tableSource = tableSource;
+        }
     }
 
     /**
@@ -1181,11 +1208,6 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             List<Object> result = new ArrayList<>();
             select(targetFactory, targetName, new HashSet<>(), t -> result.add(targetFactory.getValue(t.specMap)));
             return result;
-        }
-
-        @Override
-        public void selectionActionFinished(boolean autoSelection, TableSelectionChange change) {
-            //TODO selection change
         }
     }
 
@@ -1306,11 +1328,6 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             } else {
                 return argumentFactory.getElementFactory().getValue(t.specMap);
             }
-        }
-
-        @Override
-        public void selectionActionFinished(boolean autoSelection, TableSelectionChange change) {
-            //TODO selection change
         }
     }
 

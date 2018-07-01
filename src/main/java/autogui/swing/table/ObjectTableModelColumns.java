@@ -3,6 +3,7 @@ package autogui.swing.table;
 import autogui.base.mapping.GuiMappingContext;
 import autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
+import autogui.swing.table.GuiSwingTableColumnSet.TableSelectionSource;
 import autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 
 import javax.swing.*;
@@ -125,9 +126,9 @@ public class ObjectTableModelColumns
                 dynamicColumns.get(0);
     }
 
-    public List<Action> getDynamicColumnsActions(TableTargetCell selection) {
+    public List<Action> getDynamicColumnsActions(TableTargetCell selection, TableSelectionSource tableSource) {
         return dynamicColumns.stream()
-                .flatMap(d -> d.getDynamicColumnActions(selection).stream())
+                .flatMap(d -> d.getDynamicColumnActions(selection, tableSource).stream())
                 .collect(Collectors.toList());
     }
 
@@ -381,11 +382,11 @@ public class ObjectTableModelColumns
             }
         }
 
-        public List<Action> getDynamicColumnActions(TableTargetCell selection) {
+        public List<Action> getDynamicColumnActions(TableTargetCell selection, TableSelectionSource tableSource) {
             List<Action> actions = new ArrayList<>();
             DynamicColumnFactory factory = getFactory();
             if (factory instanceof DynamicColumnFactoryRoot) {
-                actions.addAll(((DynamicColumnFactoryRoot) factory).getRootActions(selection));
+                actions.addAll(((DynamicColumnFactoryRoot) factory).getRootActions(selection, tableSource));
             }
             actions.addAll(factory.getActions(selection));
             return actions;
@@ -456,7 +457,7 @@ public class ObjectTableModelColumns
     public interface DynamicColumnFactoryRoot {
         void addRootAction(GuiMappingContext actionContext);
 
-        List<Action> getRootActions(TableTargetCell cell);
+        List<Action> getRootActions(TableTargetCell cell, TableSelectionSource tableSource);
     }
 
     /**

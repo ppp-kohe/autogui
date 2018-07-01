@@ -1,6 +1,7 @@
 package autogui.base.mapping;
 
 import autogui.base.type.GuiTypeCollection;
+import autogui.base.type.GuiTypeCollectionArray;
 import autogui.base.type.GuiTypeElement;
 import autogui.base.type.GuiTypeValue;
 
@@ -122,10 +123,14 @@ public class GuiReprActionList implements GuiRepresentation {
     public boolean isSelectionRowAndColumnIndicesAction(GuiMappingContext context) {
         if (context.isTypeElementActionList()) {
             GuiTypeElement elementType = context.getTypeElementAsActionList().getElementType();
-            return elementType.equals(new GuiTypeValue(int[].class));
+            return elementType.equals(getRowAndColumnIndicesType());
         } else {
             return false;
         }
+    }
+
+    public static GuiTypeElement getRowAndColumnIndicesType() {
+        return new GuiTypeCollectionArray(int[].class, new GuiTypeValue(int.class));
     }
 
     public boolean isSelectionChangeAction(GuiMappingContext context, GuiMappingContext tableContext) {
@@ -176,7 +181,7 @@ public class GuiReprActionList implements GuiRepresentation {
         return (context.isTypeElementAction() || context.isTypeElementActionList()) &&
                 context.getTypeElementAsAction().isSelectionChangeIndexAction() &&
                 isCollectionType(context.getTypeElementAsAction().getReturnType(),
-                        new GuiTypeValue(int[].class));
+                        getRowAndColumnIndicesType());
     }
 
 

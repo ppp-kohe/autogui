@@ -206,6 +206,18 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
             }
         }
 
+        public TableSelectionSource getSource() {
+            return source;
+        }
+
+        public Function<Object, TableSelectionChange> getSelectionChangeFactory() {
+            return selectionChangeFactory;
+        }
+
+        public boolean isSelectionChange() {
+            return selectionChange;
+        }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             actionPerformedAround(false, this.targetSpecifier.getSpecifier());
