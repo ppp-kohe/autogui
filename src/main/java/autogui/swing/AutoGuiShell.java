@@ -6,6 +6,36 @@ import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+/**
+ * a launcher of automatic GUI binding.
+ * <pre>
+ *     &#64;{@link autogui.GuiIncluded}
+ *     public class MyApp {
+ *         public static void main(String[] args) {
+ *             AutoGuiShell.get().showWindow(new MyApp());
+ *         }
+ *
+ *         &#64;GuiIncluded public String input;
+ *         &#64;GuiIncluded public void action() {
+ *             System.out.println("hello " + input);
+ *         }
+ *     }
+ * </pre>
+ *
+ * <p>
+ * for jshell: the static method {@link #showLive(Object)} relaxes accessibility and annotations
+ * <pre>
+ *     jshell&gt; /env --add-class-path target/autogui-1.0-SNAPSHOT.jar
+ *     jshell&gt; class Hello {
+ *        ...&gt;   String value;
+ *        ...&gt;   void action() {
+ *        ...&gt;     System.out.println(value);
+ *        ...&gt;   }
+ *        ...&gt; }
+ *     jshell&gt; import autogui.swing.*
+ *     jshell&gt; AutoGuiShell.showLive(new Hello())
+ * </pre>
+ */
 public class AutoGuiShell {
     public String lookAndFeelClass = "#system";
 

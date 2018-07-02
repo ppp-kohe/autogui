@@ -31,17 +31,20 @@ public class GuiTypeBuilder {
         this.valueTypes = valueTypes;
     }
 
-    /** @return the default value types which are boxed primitive types: {@link Integer} etc. */
+    /**
+     * @return the default value types which are boxed primitive types: {@link Integer} etc.
+     */
     public List<Class<?>> getValueTypes() {
         return valueTypes;
     }
 
     /**
      * reuse a constructed type element, or {@link #create(Type)}.
-     *   the reusing can avoid infinity recursion
-     *   @param type for the element
-     *   @return the created type element
-     *   */
+     * the reusing can avoid infinity recursion
+     *
+     * @param type for the element
+     * @return the created type element
+     */
     public GuiTypeElement get(Type type) {
         GuiTypeElement e = typeElements.get(type);
         if (e == null) {
@@ -52,13 +55,14 @@ public class GuiTypeBuilder {
 
     /**
      * <ul>
-     *     <li>for {@link Class}: {@link #createFromClass(Class)}</li>
-     *     <li>for {@link ParameterizedType}: obtain the raw class and
-     *             check it is a {@link Collection} with a type arg &lt;T&gt;.
-     *             then, {@link #createCollectionFromType(ParameterizedType)},
-     *             otherwise {@link #createFromClass(Class)} for the raw type</li>
-     *     <li>otherwise null</li>
+     * <li>for {@link Class}: {@link #createFromClass(Class)}</li>
+     * <li>for {@link ParameterizedType}: obtain the raw class and
+     * check it is a {@link Collection} with a type arg &lt;T&gt;.
+     * then, {@link #createCollectionFromType(ParameterizedType)},
+     * otherwise {@link #createFromClass(Class)} for the raw type</li>
+     * <li>otherwise null</li>
      * </ul>
+     *
      * @param type for creation
      * @return nullable
      */
@@ -73,7 +77,7 @@ public class GuiTypeBuilder {
                     pType.getActualTypeArguments().length == 1) { //currently only support C<E>
                 return createCollectionFromType(pType);
             } else {
-                return createFromClass(rawType);
+                return createFromClass(rawType, pType);
             }
         } else {
             return null;
@@ -83,16 +87,20 @@ public class GuiTypeBuilder {
     /**
      * @param cls the target class
      * @return
-     *    if array class and {@link #isIncludedClass(Class)}, {@link #createCollectionArrayFromClass(Class)}.
-     *    if {@link #isValueType(Class)} or {@link #isExcludedType(Class)} then {@link #createValueFromClass(Class)}
-     *    else {@link #createObjectFromClass(Class)}*/
+     *    if array class and {@link #isIncludedClass(Class)}, {@link #createCollectionArrayFromClass(Class,Type)}.
+     *    if {@link #isValueType(Class)} or {@link #isExcludedType(Class)} then {@link #createValueFromClass(Class,Type)}
+     *    else {@link #createObjectFromClass(Class,Type)}*/
     public GuiTypeElement createFromClass(Class<?> cls) {
+        return createFromClass(cls, null);
+    }
+
+    public GuiTypeElement createFromClass(Class<?> cls, Type genericTypeOfCls) {
         if (cls.isArray() && isIncludedClass(cls.getComponentType())) {
-            return createCollectionArrayFromClass(cls);
+            return createCollectionArrayFromClass(cls, genericTypeOfCls);
         } else if (isValueType(cls) || isExcludedType(cls)) {
-            return createValueFromClass(cls);
+            return createValueFromClass(cls, genericTypeOfCls);
         } else {
-            return createObjectFromClass(cls);
+            return createObjectFromClass(cls, genericTypeOfCls);
         }
     }
 
@@ -112,10 +120,14 @@ public class GuiTypeBuilder {
 
     /**
      * @param cls the target type
+     * @param genericTypeOfCls a generic type version of cls, which will also be registered. nullable.
      * @return a new {@link GuiTypeValue} with registering it */
-    public GuiTypeValue createValueFromClass(Class<?> cls) {
+    public GuiTypeValue createValueFromClass(Class<?> cls, Type genericTypeOfCls) {
         GuiTypeValue valueType = new GuiTypeValue(cls);
         put(cls, valueType);
+        if (genericTypeOfCls != null) {
+            put(genericTypeOfCls, valueType);
+        }
         return valueType;
     }
 
@@ -130,9 +142,12 @@ public class GuiTypeBuilder {
         return collectionType;
     }
 
-    public GuiTypeCollectionArray createCollectionArrayFromClass(Class<?> cls) {
+    public GuiTypeCollectionArray createCollectionArrayFromClass(Class<?> cls, Type genericTypeOfCls) {
         GuiTypeCollectionArray array = new GuiTypeCollectionArray(cls);
         put(cls, array);
+        if (genericTypeOfCls != null) {
+            put(genericTypeOfCls, array);
+        }
         array.setElementType(get(cls.getComponentType()));
         return array;
     }
@@ -163,11 +178,15 @@ public class GuiTypeBuilder {
      *     }
      * </pre>
      *   @param cls the object class
+     *   @param genericTypeOfCls a generic type of cls, which is also registered. nullable
      *   @return an object type for the class
      *   */
-    public GuiTypeObject createObjectFromClass(Class<?> cls) {
+    public GuiTypeObject createObjectFromClass(Class<?> cls, Type genericTypeOfCls) {
         GuiTypeObject objType = new GuiTypeObject(cls);
         put(cls, objType);
+        if (genericTypeOfCls != null) {
+            put(genericTypeOfCls, objType);
+        }
 
         Map<String, MemberDefinitions> definitionsMap = new HashMap<>();
 
@@ -201,7 +220,7 @@ public class GuiTypeBuilder {
         return Arrays.asList(cls.getMethods());
     }
 
-    /** a temporarily created member group in {@link #createObjectFromClass(Class)} */
+    /** a temporarily created member group in {@link #createObjectFromClass(Class,Type)} */
     public static class MemberDefinitions {
         public String name;
         public List<Method> methods = new ArrayList<>();

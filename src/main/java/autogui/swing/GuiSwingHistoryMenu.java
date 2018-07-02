@@ -19,6 +19,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * the menu for history value selection.
+ *  the menu items are dynamically created from value histories of the context, loaded by preferences.
+ * @param <ValueType> the value type of the pane
+ * @param <PaneType>  a valued pane
+ */
 public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValuePane<ValueType>> extends JMenu implements TableTargetMenu,
         PopupCategorized.CategorizedMenuItemComponent {
     protected PaneType component;
@@ -125,6 +131,11 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
         return PopupExtension.MENU_CATEGORY_SET;
     }
 
+    /**
+     * a history menu for a table-column. the factory of {@link HistorySetForColumnAction}
+     * @param <ValueType> the value type of the column
+     * @param <PaneType>  the column component
+     */
     public static class HistoryMenuForTableColumn<ValueType, PaneType extends GuiSwingView.ValuePane<ValueType>> extends GuiSwingHistoryMenu<ValueType, PaneType> {
         protected GuiReprCollectionTable.TableTargetColumn target;
         public HistoryMenuForTableColumn(PaneType component, GuiMappingContext context, GuiReprCollectionTable.TableTargetColumn target) {
@@ -144,6 +155,10 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
         }
     }
 
+    /**
+     * the action for setting a specified value to a component
+     * @param <ValueType> the value type of the target component
+     */
     public static class HistorySetAction<ValueType> extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected ValueType value;
         protected GuiSwingView.ValuePane<ValueType> component;
@@ -165,6 +180,10 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
         }
     }
 
+    /**
+     * the action for setting a specified value to selected cells of a table-column
+     * @param <ValueType> the value type of the target column
+     */
     public static class HistorySetForColumnAction<ValueType> extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected ValueType value;
         protected GuiReprCollectionTable.TableTargetColumn target;
@@ -181,6 +200,9 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
         }
     }
 
+    /**
+     * the clear menu item for histories
+     */
     public static class HistoryClearAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiSwingHistoryMenu menu;
 

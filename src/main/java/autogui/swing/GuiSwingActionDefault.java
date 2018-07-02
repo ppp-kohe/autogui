@@ -15,6 +15,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * an implementation of action factory for {@link autogui.base.mapping.GuiReprAction}.
+ * An instance of the class is also registered for table-column, but the instance will not be used.
+ */
 public class GuiSwingActionDefault implements GuiSwingAction {
     @Override
     public Action createAction(GuiMappingContext context, GuiSwingView.ValuePane<?> pane,
@@ -27,9 +31,24 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         return a;
     }
 
+    /**
+     * creating runners of selection updating for tables.
+     * if there are multiple lists matching to the return type of the action, the selection of those lists updated by the action at once.
+     * <pre> //e.g.
+     *     &#64;GuiIncluded public class C {
+     *         &#64;GuiIncluded public List&lt;String&gt; a;
+     *         &#64;GuiIncluded public List&lt;String&gt; b;
+     *
+     *         &#64;GuiListSelectionUpdater
+     *         &#64;GuiIncluded public List&lt;String&gt; act() { ... } //the action updates selection of both a and b;
+     *     }
+     * </pre>
+     * @param context the context of the action
+     * @param tables the candidates of tables for the target of updating
+     * @return runners
+     */
     public List<TableSelectionConversion> getTableConversions(GuiMappingContext context, List<GuiSwingViewCollectionTable.CollectionTable> tables) {
         GuiReprAction action = context.getReprAction();
-
         List<TableSelectionConversion> conversions = new ArrayList<>();
         for (GuiSwingViewCollectionTable.CollectionTable table : tables) {
             if (action.isSelectionChangeAction(context, table.getSwingViewContext())) {
@@ -39,6 +58,18 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         return conversions;
     }
 
+    /**
+     * the table selection updater for object-actions:
+     *  <pre>
+     *      &#64;GuiIncluded public class C {
+     *          &#64;GuiIncluded public List&lt;String&gt; list;
+     *
+     *          &#64;{@link autogui.GuiListSelectionUpdater}
+     *          &#64;GuiIncluded public List&lt;String&gt; action() { ... }
+     *           //the action does not specify the list directly
+     *      }
+     *  </pre>
+     */
     public static class TableSelectionConversion {
         public GuiSwingTableColumnSet.TableSelectionSource table;
         public Function<Object, GuiSwingTableColumnSet.TableSelectionChange> conversion;
@@ -54,6 +85,10 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         }
     }
 
+    /**
+     * a swing-action executing the action of the context.
+     * the icon will be automatically determined by the name of the context via {@link GuiSwingIcons}
+     */
     public static class ExecutionAction extends GuiSwingTaskRunner.ContextAction implements PopupCategorized.CategorizedMenuItemAction,
             GuiSwingKeyBinding.RecommendedKeyStroke {
         protected Consumer<Object> resultTarget;

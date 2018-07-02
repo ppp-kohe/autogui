@@ -5,6 +5,9 @@ import autogui.base.type.*;
 import autogui.swing.util.MenuBuilder;
 import autogui.swing.util.PopupCategorized;
 
+/**
+ * a label factory for context target info.
+ */
 public class GuiSwingContextInfo {
     protected static GuiSwingContextInfo instance = new GuiSwingContextInfo();
 
