@@ -83,6 +83,7 @@ public class GuiTypeBuilder {
     /**
      * @param cls the target class
      * @return
+     *    if array class and {@link #isIncludedClass(Class)}, {@link #createCollectionArrayFromClass(Class)}.
      *    if {@link #isValueType(Class)} or {@link #isExcludedType(Class)} then {@link #createValueFromClass(Class)}
      *    else {@link #createObjectFromClass(Class)}*/
     public GuiTypeElement createFromClass(Class<?> cls) {
@@ -95,6 +96,12 @@ public class GuiTypeBuilder {
         }
     }
 
+    /**
+     *
+     * @param cls the target class
+     * @return if array class, recursively checks component type.
+     * otherwise, {@link #isValueType(Class)} or non-{@link #isExcludedType(Class)}
+     */
     public boolean isIncludedClass(Class<?> cls) {
         if (cls.isArray()) {
             return isIncludedClass(cls.getComponentType());
@@ -137,7 +144,24 @@ public class GuiTypeBuilder {
      *   and passed to {@link #createMember(GuiTypeObject, MemberDefinitions)}.
      *
      *   the rules for finding members are {@link #isMemberField(Field)} and {@link #isMemberMethod(Method)}.
+     * <pre>
+     *     //example
+     *     &#64;{@link GuiIncluded}
+     *     class C {
+     *         &#64;{@link GuiIncluded}(index=1)
+     *         public int fld;
      *
+     *         &#64;{@link GuiIncluded}(index=2, description="read-only value")
+     *         public String getReadOnlyProp() { ... }
+     *
+     *         &#64;{@link GuiIncluded}(index=3, description="property by setter and getter")
+     *         public String getValue() { ... }
+     *         public void setValue(String v) { ... }
+     *
+     *         &#64;{@link GuiIncluded}(index=4, description="action")
+     *         public void action() { ... }
+     *     }
+     * </pre>
      *   @param cls the object class
      *   @return an object type for the class
      *   */

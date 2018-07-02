@@ -51,6 +51,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * the representation of the context must be a sub-type of {@link GuiReprValue}.
      * view must be a {@link ValuePane}
      * @param context the associated context
+     * @param specifierIndex the optional index for row-index (nullable)
+     * @param specifierManager specifier factory for the column value
      * @param view the component for both editor and renderer
      */
     public ObjectTableColumnValue(GuiMappingContext context, SpecifierManagerIndex specifierIndex,
@@ -371,6 +373,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         /**
          * @param component the editor component, must be a {@link ValuePane}
          * @param skipShutDown if true, {@link #shutdown()} process for the component will be skipped
+         * @param specifierIndex optional specifier for row-index (nullable)
          */
         public ObjectTableCellEditor(JComponent component, boolean skipShutDown, SpecifierManagerIndex specifierIndex) {
             this.component = component;

@@ -313,6 +313,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @param context the context of this repr.
      * @param newValue the updated property value
      * @param specifier the specifier of the value
+     * @param viewClock the clock value of sender view
      */
     public void updateFromGui(GuiMappingContext context, Object newValue, ObjectSpecifier specifier,
                               GuiTaskClock viewClock) {

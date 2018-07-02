@@ -148,6 +148,7 @@ public interface GuiRepresentation {
     /**
      * @return the set of default representations.
      *  it does not includes swing-based representations.
+     *  Instead, GuiSwingMapperSet includes all representations.
      */
     static GuiReprSet getDefaultSet() {
         GuiReprSet set = new GuiReprSet();

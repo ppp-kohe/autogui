@@ -793,6 +793,7 @@ public class GuiMappingContext {
     }
 
     /**
+     * @param specifier the specifier for the value
      * @return get current value of the associated property
      *    obtaining through {@link GuiReprValue} (can be checked by {@link #isReprValue()}) from current value of the parent.
      */
@@ -813,6 +814,7 @@ public class GuiMappingContext {
      *   otherwise throw an exception.
      *   the method causes same effects by GUI operation,
      *     i.e. updating other components.
+     * @param targetSpecifier the specifier for the target object
      * @return result of execution
      */
     public Object executeAction(GuiReprValue.ObjectSpecifier targetSpecifier) {

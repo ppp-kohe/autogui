@@ -483,15 +483,15 @@ public class ObjectTableModelColumns
      *
      *  <pre>
      *      {a,b,c,...}.create(con) ::=
-     *                      con.columns.forEach(c -> c.modelIndex = con.lastIndex++);
+     *                      con.columns.forEach(c -&gt; c.modelIndex = con.lastIndex++);
      *                      a.create(con.child(0)); con.lastIndex = con.child(0).lastIndex;
      *                      b.create(con.child(1)); con.lastIndex = con.child(1).lastIndex;
      *                      ...
      *                      con.columns.remove(con.lastIndex,...);
      *                n.create(con) ::=
-     *                      con.columns.forEach(c -> c.modelIndex = con.lastIndex++);
+     *                      con.columns.forEach(c -&gt; c.modelIndex = con.lastIndex++);
      *                      diff = n - con.columns.size();
-     *                      if diff < 0: con.columns.remove(n,n+1,...);
+     *                      if diff &lt; 0: con.columns.remove(n,n+1,...);
      *                      else       : for (...diff...) con.columns.add(new Column(con.lastIndex++));
      *
      *

@@ -37,10 +37,12 @@ public class GuiSwingTaskRunner {
      *   The afterTask also be executed when a timeout or an interruption  happens:
      *     after the timeout task completion, the afterTask will be executed again
      *      with returned value wrapped by a result value with {@link ContextTaskResult#isPresentedWithDelay()}==true.
+     *      <ul>
      *      <li>
      *     While waiting after timeout, the user may click the cancel button of the task.
      *      This may cause an {@link InterruptedException} and then the afterTask is executed with {@link ContextTaskResult#isCancel()}==true
      *       </li>
+     *       </ul>
      *    </li>
      *    <li>
      *     In most cases, the method is executed from the event-dispatching thread.

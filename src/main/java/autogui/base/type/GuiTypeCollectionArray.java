@@ -3,6 +3,9 @@ package autogui.base.type;
 import java.lang.reflect.Array;
 import java.util.List;
 
+/**
+ * type information about an array. a sub-class of {@link GuiTypeCollection}
+ */
 public class GuiTypeCollectionArray extends GuiTypeCollection {
     public GuiTypeCollectionArray(String name) {
         super(name);

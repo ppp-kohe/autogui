@@ -7,6 +7,53 @@ import java.lang.annotation.Target;
 
 /**
  * the annotation for marking a member as a GUI element
+ * <pre>
+ *     //example
+ *     &#64;{@link GuiIncluded}
+ *     class C {
+ *         &#64;{@link GuiIncluded}(index=1)
+ *         public int fld;
+ *
+ *         &#64;{@link GuiIncluded}(index=2, description="read-only value")
+ *         public String getReadOnlyProp() { ... }
+ *
+ *         &#64;{@link GuiIncluded}(index=3, description="property by setter and getter")
+ *         public String getValue() { ... }
+ *         public void setValue(String v) { ... }
+ *
+ *         &#64;{@link GuiIncluded}(index=4, description="action")
+ *         public void action() { ... }
+ *
+ *         &#64;{@link GuiIncluded}(index=5, name="customizedName")
+ *         public float v;
+ *
+ *         &#64;{@link GuiIncluded}(index=6, description="table by list of string")
+ *         public List&lt;String&gt; strTable = ...;
+ *
+ *         &#64;{@link GuiIncluded}(index=7, description="table by list of E")
+ *         public List&lt;E&gt; eTable = ...;
+ *
+ *         &#64;{@link GuiIncluded}
+ *         public void actionForSelectedItems(List&lt;E&gt; items) {...}
+ *
+ *         &#64;{@link GuiIncluded}
+ *         public void actionForSelectedRows(List&lt;Integer&gt; rows, String tableName) {...}
+ *     }
+ *
+ *     &#64;{@link GuiIncluded} //column class
+ *     class E {
+ *         &#64;{@link GuiIncluded}
+ *         public boolean flag;
+ *
+ *         &#64;{@link GuiIncluded}
+ *         public EnumVal select;
+ *
+ *         &#64;{@link GuiIncluded}
+ *         public void actionForSelectedRow() { ... }
+ *     }
+ *
+ *     public enum EnumVal { ... }
+ * </pre>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.TYPE})
@@ -46,7 +93,7 @@ public @interface GuiIncluded {
      *    <pre>
      *        control* key
      *
-     *        control ::= "shift" | "meta" | "control" | "alt"        //lower cases
+     *        control ::= "shift" | "alt"        //lower cases ("meta" or "control" is automatically appended)
      *        key  ::= "0" | "1" | ... | "9" | "A" | "B" | ... | "Z"  //upper cases
      *    </pre>
      *    examples:
@@ -56,6 +103,27 @@ public @interface GuiIncluded {
      *    </pre>
      *    for properties, selects one of field(high-precedence), getter or setter.
      *    if the stroke is empty (default), then the first character of the name will be used.
+     *
+     *    <p>
+     *  Some keys are reserved with combination of Meta(Command) or Ctrl.
+     *  <ul>
+     *      <li>reserved keys:
+     *            Q (Quit), W (Window close), shift R (Refresh),
+     *            A (Select all), shift A (un-select),
+     *            Z (Undo), shift Z (redo),
+     *            O (Open), S (Save),
+     *            X (Cut), C (Copy) V (Paste),
+     *            alt O (JSON Open), alt S (JSON Save),
+     *            alt X (JSON Cut), alt C (JSON Copy) alt V (JSON Paste),
+     *            ','  (settings)
+     *            </li>
+     *      <li>conditionally used keys by some components:
+     *            shift B (open-in-browser for texts),
+     *            shift I (increment for numbers or zoom-in for images),
+     *            shift D (decrement for numbers or zoom-out for images),
+     *            shift ',' (settings for numbers or documents)
+     *            </li>
+     *  </ul>
      */
     String keyStroke() default "";
 }
