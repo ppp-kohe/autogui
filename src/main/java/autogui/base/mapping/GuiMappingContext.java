@@ -142,6 +142,12 @@ public class GuiMappingContext {
         }
     }
 
+    /**
+     * a task for update propagation.
+     *  frequently created tasks are aggregated for each task-type {@link #getTaskType()}.
+     *  and sorted by each clock {@link #getTaskType()} and
+     *   last one is executed {@link #run(List)} with taking accumulated tasks of same task-type.
+     */
     public static class DelayedTask {
         protected GuiTaskClock taskClock;
         protected Object taskType;
@@ -717,7 +723,7 @@ public class GuiMappingContext {
         }
     }
 
-    /** run the task
+    /** run the task. used for wrapping tasks that execute type-element's actions
      * @param task the task to be executed
      * @param <T> the returned type
      * @return the returned value of the task
@@ -727,6 +733,10 @@ public class GuiMappingContext {
         return task.call();
     }
 
+    /**
+     * task runner for deferring frequent events and dispatching with accumulated events
+     * @return the runner created as a root or obtained from the parent
+     */
     public ScheduledTaskRunner<DelayedTask> getDelayedTaskRunner() {
         if (delayedTaskRunner == null) {
             GuiMappingContext parent = getParent();

@@ -10,6 +10,71 @@ import java.util.concurrent.Callable;
 
 /**
  * the abstract action definition for a list (an action taking a list as its argument)
+ * <pre>
+ *     &#64;GuiIncluded
+ *     public class C {
+ *         &#64;GuiIncluded
+ *         public List&lt;String&gt; list = new ArrayList&lt;&gt;();
+ *
+ *         &#64;GuiIncluded
+ *         void action(List&lt;String&gt; selectedItemsInList) {
+ *             ...
+ *         }
+ *     }
+ * </pre>
+ * <p> actions taking List&lt;Integer&gt; will receive indices of selected rows.
+ *   <pre>
+ *     &#64;GuiIncluded
+ *     public class C {
+ *         &#64;GuiIncluded
+ *         public List&lt;String&gt; list = new ArrayList&lt;&gt;();
+ *
+ *         &#64;GuiIncluded
+ *         void action(List&lt;Integer&gt; selectedRowsInList) {
+ *             ...
+ *         }
+ *     }
+ * </pre>
+ * For tables of List&lt;Integer&gt;, the action will always take indices of selected rows.
+ *
+ * <p>in order to handle multiple lists,
+ *    the action can take the second argument for receiving the name of the target list.
+ *
+ *   <pre>
+ *          &#64;GuiIncluded
+ *          public List&lt;String&gt; listA = new ArrayList&lt;&gt;();
+ *          &#64;GuiIncluded
+ *          public List&lt;String&gt; listB = new ArrayList&lt;&gt;();
+ *
+ *          &#64;GuiIncluded
+ *          void action(List&lt;String&gt; selectedItemsInList, String name) {
+ *              if (name.equals("listA") {
+ *                  ...
+ *              } else {
+ *                  ...
+ *              }
+ *          }
+ *   </pre>
+ *
+ * <p> automatic selection callback: the action with {@link autogui.GuiListSelectionCallback}
+ * will be automatically invoked when a user selects some items in the list.
+ *    <pre>
+ *        &#64;GuiListSelectionCallback
+ *        &#64;GuiIncluded
+ *        public void action(List&lt;String&gt; items) {
+ *            ...
+ *        }
+ *    </pre>
+ *
+ * <p> list selection changer: the action with {@link autogui.GuiListSelectionUpdater}
+ *    can specify the next selected items after execution of the action.
+ *   <pre>
+ *       &#64;GuiListSelectionUpdater
+ *       &#64;GuiIncluded
+ *       public List&lt;String&gt; action(List&lt;String&gt; items) {
+ *              ...
+ *       }
+ *   </pre>
  */
 public class GuiReprActionList implements GuiRepresentation {
     @Override
@@ -133,14 +198,39 @@ public class GuiReprActionList implements GuiRepresentation {
         return new GuiTypeCollectionArray(int[].class, new GuiTypeValue(int.class));
     }
 
+    /**
+     * <pre>
+     *     &#64;GuiListSelectionUpdater
+     *     public Collection&lt;E&gt; select(List&lt;E&gt; items) { ... }
+     * </pre>
+     * @param context context of the action
+     * @param tableContext table context
+     * @return true if matched
+     */
     public boolean isSelectionChangeAction(GuiMappingContext context, GuiMappingContext tableContext) {
         return isSelectionChangeActionForActions(context, tableContext);
     }
 
+    /**
+     * <pre>
+     *     &#64;GuiListSelectionUpdater(index=true)
+     *     public Collection&lt;Integer&gt; select(List&lt;Integer&gt; rows) { ... }
+     * </pre>
+     * @param context context of the action
+     * @return true if matched
+     */
     public boolean isSelectionChangeRowIndicesAction(GuiMappingContext context) {
         return isSelectionChangeRowIndicesActionForActions(context);
     }
 
+    /**
+     * <pre>
+     *     &#64;GuiListSelectionUpdater(index=true)
+     *     public Collection&lt;int[]&gt; select(List&lt;int[]&gt; indices) { ... }
+     * </pre>
+     * @param context context of the action
+     * @return true if matched
+     */
     public boolean isSelectionChangeRowAndColumnIndicesAction(GuiMappingContext context) {
         return isSelectionChangeRowAndColumnIndicesActionForActions(context);
     }

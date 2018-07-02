@@ -7,6 +7,24 @@ import java.text.NumberFormat;
 
 /**
  * a spinner text-field component for a {@link Number} or primitive number property
+ * <pre>
+ *     &#64;GuiIncluded public int      intProp;
+ *     &#64;GuiIncluded public byte     byteProp;
+ *     &#64;GuiIncluded public short    shortProp;
+ *     &#64;GuiIncluded public long     longProp;
+ *     &#64;GuiIncluded public float    floatProp;
+ *     &#64;GuiIncluded public double   doubleProp;
+ *
+ *     &#64;GuiIncluded public Integer  intObjProp;
+ *     &#64;GuiIncluded public Byte     byteObjProp;
+ *     &#64;GuiIncluded public Short    shortObjProp;
+ *     &#64;GuiIncluded public Long     longObjProp;
+ *     &#64;GuiIncluded public Float    floatObjProp;
+ *     &#64;GuiIncluded public Double   doubleObjProp;
+ *
+ *     &#64;GuiIncluded public BigInteger bigIntProp;
+ *     &#64;GuiIncluded public BigDecimal bigDecimalProp;
+ * </pre>
  */
 public class GuiReprValueNumberSpinner extends GuiReprValue {
     protected NumberType type;

@@ -934,7 +934,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             for (int i = 0, len = Math.min(table.getColumnCount(), rowSort.size()); i < len; ++i) {
                 PreferencesForTableRowSort row = rowSort.get(i);
                 SortOrder order = SortOrder.valueOf(row.getOrder());
-                keys.add(new RowSorter.SortKey(row.getColumn(), order));
+                if (0 <= row.getColumn() && row.getColumn() < len) {
+                    keys.add(new RowSorter.SortKey(row.getColumn(), order));
+                }
             }
             table.getRowSorter().setSortKeys(keys);
         }

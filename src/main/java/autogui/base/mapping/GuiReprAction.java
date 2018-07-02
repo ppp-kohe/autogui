@@ -6,6 +6,17 @@ import java.util.concurrent.Callable;
 
 /**
  * The abstract action component for an action
+ * <pre>
+ *     &#64;GuiIncluded
+ *     public class C {
+ *         ...
+ *         &#64;GuiIncluded
+ *         public void action() {
+ *             ...
+ *         }
+ *     }
+ * </pre>
+ * an action can be selection-updater by attaching {@link autogui.GuiListSelectionUpdater}
  */
 public class GuiReprAction implements GuiRepresentation {
     @Override

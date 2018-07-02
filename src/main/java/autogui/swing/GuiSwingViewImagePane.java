@@ -848,7 +848,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             }
         }
 
-        @SuppressWarnings("all")
+        @SuppressWarnings("unchecked")
         private void setFile(Image img, Clipboard clip) throws Exception {
             if (clip.isDataFlavorAvailable(DataFlavor.javaFileListFlavor)) {
                 List<File> fs = (List<File>) clip.getData(DataFlavor.javaFileListFlavor);
@@ -1058,7 +1058,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             }
         }
 
-        @SuppressWarnings("all")
+        @SuppressWarnings("unchecked")
         private File getTransferableFile(TransferSupport support, DataFlavor flavor) throws Exception {
             List<File> fs = (List<File>) support.getTransferable().getTransferData(flavor);
             if (fs != null && !fs.isEmpty()) {

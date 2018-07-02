@@ -4,6 +4,13 @@ import java.util.Objects;
 
 /**
  * a read-only text label for any type of object property
+ * <pre>
+ *     &#64;GuiIncluded public Obj proLabel = new Obj();
+ *
+ *     public class Obj { //non GuiIncluded
+ *         public String toString() {return "label-text";}
+ *     }
+ * </pre>
  */
 public class GuiReprValueLabel extends GuiReprValue {
     public String toUpdateValue(GuiMappingContext context, Object newValue) {

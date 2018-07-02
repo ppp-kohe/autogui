@@ -7,7 +7,21 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 
-/** an object representation composing member sub-representations */
+/** an object representation composing member sub-representations
+ * <pre>
+ *     &#64;GuiIncluded
+ *     public class C {
+ *         &#64;GuiIncluded public String prop;
+ *
+ *         String v;
+ *         &#64;GuiIncluded public String getValue() { return v; };
+ *         &#64;GuiIncluded public void setValue(String v) { this.v = v; };
+ *
+ *         &#64;GuiIncluded public void action() {...};
+ *         ...
+ *     }
+ * </pre>
+ * */
 public class GuiReprObjectPane extends GuiReprValue {
     protected GuiRepresentation subRepresentation;
 

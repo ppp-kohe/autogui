@@ -3,7 +3,11 @@ package autogui.base.mapping;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-/** an abstract checkbox component for a {@link Boolean} or primitive boolean property */
+/** an abstract checkbox component for a {@link Boolean} or primitive boolean property
+ *  <pre>
+ *      &#64;GuiIncluded public boolean prop;
+ *  </pre>
+ * */
 public class GuiReprValueBooleanCheckBox extends GuiReprValue {
 
     @Override

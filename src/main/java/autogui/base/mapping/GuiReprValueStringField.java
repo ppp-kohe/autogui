@@ -2,6 +2,9 @@ package autogui.base.mapping;
 
 /**
  * a text-field component for a {@link String} property
+ * <pre>
+ *     &#64;GuiIncluded public String prop;
+ * </pre>
  */
 public class GuiReprValueStringField extends GuiReprValue {
     @Override

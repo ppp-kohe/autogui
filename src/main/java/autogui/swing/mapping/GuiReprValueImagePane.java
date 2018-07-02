@@ -26,7 +26,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** a GUI representation for a property holding an {@link Image}.
- * the representation depends on some AWT classes (java.desktop module) */
+ * the representation depends on some AWT classes (java.desktop module)
+ * <pre>
+ *      &#64;GuiIncluded public Image imageProp;
+ * </pre>
+ *
+ * */
 public class GuiReprValueImagePane extends GuiReprValue {
     protected Map<Image,Path> imageToReference = new WeakHashMap<>();
 

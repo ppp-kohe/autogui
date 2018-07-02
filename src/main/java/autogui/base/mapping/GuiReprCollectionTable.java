@@ -17,6 +17,32 @@ import java.util.stream.StreamSupport;
 
 /**
  * representation for {@link autogui.base.type.GuiTypeCollection}.
+ * <pre>
+ *     &#64;GuiIncluded
+ *     public class C {
+ *         &#64;GuiIncluded public List&lt;String&gt; items = new ArrayList&lt;&gt;();
+ *
+ *         &#64;GuiIncluded
+ *         public void addItem() {
+ *             items.add("item-" + items.size());
+ *             items = new ArrayList&lt;&gt;(items); //in order to update a GUI table, it needs to change reference of the list.
+ *         }
+ *     }
+ * </pre>
+ *
+ * <pre>
+ *         &#64;GuiIncluded public List&lt;E&gt; objList; //list of some object
+ *         &#64;GuiIncluded public class E {...}
+ *
+ *         &#64;GuiIncluded public int[] array; //array as a table
+ *
+ *         &#64;GuiIncluded public List&lt;List&lt;String&gt;&gt; strMatrix; //list of list: dynamic changing columns
+ *
+ *         &#64;GuiIncluded public List&lt;M&gt; objList; //complex definition of table
+ *         &#64;GuiIncluded public class M {
+ *             &#64;GuiIncluded public List&lt;String&gt; items;
+ *         }
+ * </pre>
  *
  * <h3>matching and sub-contexts</h3>
  *  <p>
@@ -423,6 +449,9 @@ public class GuiReprCollectionTable extends GuiReprValue {
         return toStringHeader() + "(" + subRepresentation + ")";
     }
 
+    /**
+     * in order to support arrays, the table-representation use a converter for input/output of values.
+     */
     public interface ListConverter {
         List<?> toList(Object obj);
         Object fromList(List<?> list);
@@ -430,6 +459,9 @@ public class GuiReprCollectionTable extends GuiReprValue {
 
     public static ListConverterCast castConverter = new ListConverterCast();
 
+    /**
+     * a converter for list object. so just casting
+     */
     public static class ListConverterCast implements ListConverter {
         @Override
         public List<?> toList(Object obj) {
@@ -446,6 +478,9 @@ public class GuiReprCollectionTable extends GuiReprValue {
         }
     }
 
+    /**
+     * a converter for arrays: converting between a wrapping list and an array
+     */
     public static class ListConverterArray implements ListConverter {
         protected int dim;
 
@@ -475,6 +510,10 @@ public class GuiReprCollectionTable extends GuiReprValue {
         }
     }
 
+    /**
+     * a list wraps an array. it relies on reflection ({@link Array}) and can support primitive arrays.
+     *  for multi-dimensional arrays (dim &gt; 1), it wraps/unwraps element values
+     */
     public static class ArrayWrappingList extends AbstractList<Object> {
         protected Object array;
         protected int dim;

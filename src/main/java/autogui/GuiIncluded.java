@@ -110,11 +110,11 @@ public @interface GuiIncluded {
      *      <li>reserved keys:
      *            Q (Quit), W (Window close), shift R (Refresh),
      *            A (Select all), shift A (un-select),
-     *            Z (Undo), shift Z (redo),
+     *            Z (Undo), shift Z (Redo),
      *            O (Open), S (Save),
-     *            X (Cut), C (Copy) V (Paste),
+     *            X (Cut), C (Copy), V (Paste),
      *            alt O (JSON Open), alt S (JSON Save),
-     *            alt X (JSON Cut), alt C (JSON Copy) alt V (JSON Paste),
+     *            alt X (JSON Cut), alt C (JSON Copy), alt V (JSON Paste),
      *            ','  (settings)
      *            </li>
      *      <li>conditionally used keys by some components:

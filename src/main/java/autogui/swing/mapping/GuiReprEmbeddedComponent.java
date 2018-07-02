@@ -12,6 +12,15 @@ import java.util.function.Supplier;
 
 /**
  * a GUI component for a property holding a {@link JComponent}
+ * <pre>
+ *     private JComponent comp;
+ *     &#64;GuiIncluded public JComponent getComp() {
+ *         if (comp == null) {
+ *             comp = new JLabel("hello");
+ *         }
+ *         return comp;
+ *     }
+ * </pre>
  */
 public class GuiReprEmbeddedComponent extends GuiReprValue {
     @Override

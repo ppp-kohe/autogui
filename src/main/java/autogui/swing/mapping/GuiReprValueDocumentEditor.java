@@ -26,7 +26,22 @@ import java.util.stream.IntStream;
 
 /** a GUI representation for a property holding
  * a {@link Document}, {@link javax.swing.text.AbstractDocument.Content}, or a {@link StringBuilder}.
- *  the representation depends on some Swing classes(java.desktop module)  */
+ *  the representation depends on some Swing classes(java.desktop module)
+ *  <pre>
+ *      StyledDocument doc;
+ *      &#64;GuiIncluded public StyledDocument getDoc() {
+ *          if (doc == null) {
+ *              doc = new DefaultStyledDocument();
+ *          }
+ *          return doc;
+ *      }
+ *
+ *      &#64;GuiIncluded public StringContent content = new StringContent();
+ *
+ *      &#64;GuiIncluded public StringBuilder builder = new StringBuilder();
+ *  </pre>
+ *
+ *  */
 public class GuiReprValueDocumentEditor extends GuiReprValue {
     @Override
     public boolean isTaskRunnerUsedFor(Supplier<?> task) {

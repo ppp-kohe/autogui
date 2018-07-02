@@ -7,6 +7,10 @@ import java.util.Objects;
 
 /**
  * a text-field component for a {@link File} or {@link Path} property.
+ * <pre>
+ *     &#64;GuiIncluded public Path propPath;
+ *     &#64;GuiIncluded public File propFile;
+ * </pre>
  */
 public class GuiReprValueFilePathField extends GuiReprValue {
     @Override

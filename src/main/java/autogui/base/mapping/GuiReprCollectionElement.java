@@ -18,7 +18,7 @@ import java.util.ArrayList;
  *       (i.e. {@link #getValueCollectionElement(GuiMappingContext, GuiMappingContext.GuiSourceValue, ObjectSpecifier, GuiMappingContext.GuiSourceValue)},
  *          and {@link #updateCollectionElement(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, ObjectSpecifier)}).
  *     </li>
- *      <li>Those methods takes an indexed specifier ({@link autogui.base.mapping.GuiReprValue.ObjectSpecifierIndex})
+ *      <li>Those methods take an indexed specifier ({@link autogui.base.mapping.GuiReprValue.ObjectSpecifierIndex})
  *          for specifying an element in a collection.
  *        </li>
  *     </ul>
