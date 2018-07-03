@@ -29,7 +29,7 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
      *
      * @param context a context holds the representation
      * @param source  the converted object
-     * @return Enum#name
+     * @return a name of a {@link Enum} member
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
@@ -60,11 +60,23 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
         }
     }
 
+    /**
+     * same as {@link #toJson(GuiMappingContext, Object)}
+     * @param context the context of the repr.
+     * @param source converted to string
+     * @return a name of a {@link Enum} member
+     */
     @Override
     public String toHumanReadableString(GuiMappingContext context, Object source) {
         return Objects.toString(toJson(context, source));
     }
 
+    /**
+     * same as {@link #fromJson(GuiMappingContext, Object, Object)}
+     * @param context the context of the repr.
+     * @param str the source str: name of a member
+     * @return an {@link Enum} member of the name
+     */
     @Override
     public Object fromHumanReadableString(GuiMappingContext context, String str) {
         return fromJson(context, null, str);

@@ -84,11 +84,23 @@ public class GuiReprValueFilePathField extends GuiReprValue {
         return false;
     }
 
+    /**
+     *  same as {@link #toJson(GuiMappingContext, Object)}
+     * @param context the context of the repr.
+     * @param source converted to string
+     * @return a path string
+     */
     @Override
     public String toHumanReadableString(GuiMappingContext context, Object source) {
         return Objects.toString(toJson(context, source));
     }
 
+    /**
+     * same as {@link #fromJson(GuiMappingContext, Object, Object)}
+     * @param context the context of the repr
+     * @param str a path string
+     * @return {@link Path} or {@link File}
+     */
     @Override
     public Object fromHumanReadableString(GuiMappingContext context, String str) {
         return fromJson(context, null, str);

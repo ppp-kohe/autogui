@@ -16,6 +16,19 @@ import java.util.function.Consumer;
 
 /**
  * a log-manager supporting Swing GUI
+ * <pre>
+ *     GuiSwingLogManager m = new GuiSwingLogManager();
+ *     m.setupConsole(
+ *               GuiSwingLogManager.replaceErr,
+ *               GuiSwingLogManager.replaceOut,
+ *               GuiSwingLogManager.replaceExceptionHandler,
+ *               GuiSwingLogManager.redirectToConsole);
+ *     GuiLogManager.setManager(m);
+ *     ...
+ *     frame.setContentPane(m.createWindow().getPaneWithStatusBar(frame.getContentPane()));
+ *     ...
+ *     GuiLogManager.log(...);
+ * </pre>
  */
 public class GuiSwingLogManager extends GuiLogManager {
     protected List<Consumer<GuiLogEntry>> views = new ArrayList<>();

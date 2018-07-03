@@ -11,7 +11,19 @@ import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.List;
 
-/** the base class for log managers */
+/** the base class for log managers
+ * <pre>
+ *     GuiLogManager.get().log("hello");
+ *
+ *     GuiLogManager.get().logFormat("%d", 123);
+ *
+ *     try { ... } catch (Exception ex) { GuiLogManager.get().logError(ex); }
+ *
+ *     try (GuiLogEntryProgress p = GuiLogManager.get().logProgress()) { //see {@link #logProgress()}
+ *         ...
+ *     }
+ * </pre>
+ * */
 public class GuiLogManager {
     protected static GuiLogManager manager;
 
@@ -191,6 +203,11 @@ public class GuiLogManager {
      *             //those methods will cause a runtime-exception if the thread is interrupted.
      *             p.addValueP(0.01f)
      *               .setMessage("running ...");
+     *             ...
+     *             //the running code can checks interruption
+     *             if (Thread.interrupted()) {
+     *                 break;
+     *             }
      *             ...
      *         }
      *     } catch (Exception ex) { ... }

@@ -130,6 +130,12 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         return false;
     }
 
+    /**
+     * @param context the context of the repr.
+     * @param str a source string
+     * @return parsed {@link Number} or {@link Comparable} (including "Infinity")
+     *           by a {@link NumberFormat} returned by {@link #getFormat()}
+     */
     @Override
     public Object fromHumanReadableString(GuiMappingContext context, String str) {
         NumberType type = getType(context);
@@ -144,6 +150,12 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
+    /**
+     *
+     * @param context the context of the repr.
+     * @param source a {@link Comparable} converted to string
+     * @return formatted string by {@link NumberFormat} returned by {@link #getFormat()}
+     */
     @Override
     public String toHumanReadableString(GuiMappingContext context, Object source) {
         NumberType type = getType(context);

@@ -6,7 +6,16 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-/** a delayed task executor accumulating subsequent firing events while the specified delay */
+/** a delayed task executor accumulating subsequent firing events while the specified delay
+ *  <pre>
+ *      ScheduledTaskRunner&lt;E&gt; r = new ScheduledTaskRunner&lt;&gt;(300, runner);
+ *      r.schedule(e1); //start a task with waiting 300 msec
+ *      r.schedule(e2); //cancel the previous task and start another new task with waiting 300 msec
+ *      sleep(300);
+ *      //the runner will be dispatched with a list of [e1, e2]
+ *  </pre>
+ *
+ * */
 public class ScheduledTaskRunner<EventType> {
     /** msec */
     protected long delay;

@@ -853,6 +853,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         return bar;
     }
 
+    /** the action for saving a log list to a file */
     public static class LogListSaveAction extends AbstractAction {
         protected GuiSwingLogList list;
         protected DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd-HH-mm");

@@ -28,6 +28,12 @@ public class GuiReprValueLabel extends GuiReprValue {
         return null;
     }
 
+    /**
+     * @param context  a context of the repr.
+     * @param target  a target object
+     * @param json json object, ignored
+     * @return the target object
+     */
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         return target;

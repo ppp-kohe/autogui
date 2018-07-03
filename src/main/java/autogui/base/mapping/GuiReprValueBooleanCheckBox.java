@@ -52,6 +52,12 @@ public class GuiReprValueBooleanCheckBox extends GuiReprValue {
         return Objects.toString(source);
     }
 
+    /**
+     * use {@link #getBooleanValue(String)}
+     * @param context the context (ignored)
+     * @param str the source string
+     * @return a {@link Boolean} value
+     */
     @Override
     public Object fromHumanReadableString(GuiMappingContext context, String str) {
         return getBooleanValue(str);
@@ -64,6 +70,10 @@ public class GuiReprValueBooleanCheckBox extends GuiReprValue {
 
     static Pattern numPattern = Pattern.compile("\\d+");
 
+    /**
+     * @param data a source string
+     * @return false for "false" or "0". true for "true" or digits. case insensitive. null for null
+     */
     public Boolean getBooleanValue(String data) {
         if (data == null) {
             return null;

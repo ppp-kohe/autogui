@@ -6,7 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-/** a property member definition: [propertyName: [  propertyValueField  ] ]
+/** a property member definition: [propertyName: [  propertyValueField  ] ].
+ * <p>
+ * the representation matches any context which has a property-member-type.
+ *  However, value representations (string, file, enum, boolean and number) directly support the property-member-type and
+ *     precedes this representation.
  * */
 public class GuiReprPropertyPane extends GuiReprValue {
     protected GuiRepresentation subRepresentations;

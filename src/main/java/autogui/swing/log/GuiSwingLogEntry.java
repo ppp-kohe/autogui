@@ -6,7 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * a log-entry supporting GUI rendering */
+ * a log-entry supporting GUI rendering, managed by {@link GuiSwingLogManager} */
 public interface GuiSwingLogEntry extends GuiLogEntry {
 
     /**

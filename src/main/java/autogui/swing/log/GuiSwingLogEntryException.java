@@ -14,6 +14,7 @@ import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator;
+import java.text.AttributedCharacterIterator.Attribute;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
@@ -85,6 +86,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         this.selected = selected;
     }
 
+    /** a renderer for exception stack-traces */
     public static class GuiSwingLogExceptionRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
         protected ContainerType containerType;
@@ -303,11 +305,12 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         }
     }
 
+    /** a renderer for an exception message */
     public static class ExceptionMessageRenderer extends TextCellRenderer<GuiLogEntryException> {
         protected GuiSwingLogManager manager;
         protected ContainerType containerType;
-        protected Map<AttributedCharacterIterator.Attribute, Object> messageTimeAttributes;
-        protected Map<AttributedCharacterIterator.Attribute, Object> messageAttributes;
+        protected Map<Attribute, Object> messageTimeAttributes;
+        protected Map<Attribute, Object> messageAttributes;
 
         protected int timeEnd;
 
@@ -374,13 +377,14 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         }
     }
 
+    /** attribute info. for stack-trace line */
     public static class StackTraceAttributesForLine {
         public int line;
         public int start;
         public int end;
-        public Map<AttributedCharacterIterator.Attribute,Object> attributes;
+        public Map<Attribute,Object> attributes;
 
-        public StackTraceAttributesForLine(int line, int start, int end, Map<AttributedCharacterIterator.Attribute, Object> attributes) {
+        public StackTraceAttributesForLine(int line, int start, int end, Map<Attribute, Object> attributes) {
             this.line = line;
             this.start = start;
             this.end = end;
@@ -388,6 +392,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         }
     }
 
+    /** a renderer for a stack-trace lines */
     public static class ExceptionStackTraceRenderer extends TextCellRenderer<GuiLogEntryException> {
         protected StackTraceAttributeSet topSet;
         protected StackTraceAttributeSet middleSet;
@@ -407,7 +412,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         }
 
         protected void initAttributes() {
-            Map<AttributedCharacterIterator.Attribute,Object> defaultSet = new HashMap<>();
+            Map<Attribute,Object> defaultSet = new HashMap<>();
             defaultSet.put(TextAttribute.FONT, GuiSwingLogManager.getFont());
             setFont(GuiSwingLogManager.getFont());
 
@@ -518,7 +523,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         protected Map<Integer, List<StackTraceAttributesForLine>> lineAttrs = new HashMap<>();
         protected StringBuilder line = new StringBuilder();
 
-        public void append(String str, Map<AttributedCharacterIterator.Attribute,Object> attrs) {
+        public void append(String str, Map<Attribute,Object> attrs) {
             int start = line.length();
             for (char c : str.toCharArray()) {
                 if (c == '\n') {
@@ -715,17 +720,17 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
      * a set of attributes for stack traces
      */
     public static class StackTraceAttributeSet {
-        public Map<AttributedCharacterIterator.Attribute, Object> defaultStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> timeStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> messageStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> moduleStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> packageStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> classNameStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> innerClassNameStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> methodStyle;
-        public Map<AttributedCharacterIterator.Attribute, Object> fileNameStyle;
+        public Map<Attribute, Object> defaultStyle;
+        public Map<Attribute, Object> timeStyle;
+        public Map<Attribute, Object> messageStyle;
+        public Map<Attribute, Object> moduleStyle;
+        public Map<Attribute, Object> packageStyle;
+        public Map<Attribute, Object> classNameStyle;
+        public Map<Attribute, Object> innerClassNameStyle;
+        public Map<Attribute, Object> methodStyle;
+        public Map<Attribute, Object> fileNameStyle;
 
-        public void set(Map<AttributedCharacterIterator.Attribute, Object> base,
+        public void set(Map<Attribute, Object> base,
                         Color time, Color message, Color module, Color pack,
                         Color className, Color innerClass, Color method, Color fileName) {
             defaultStyle = new HashMap<>(base);

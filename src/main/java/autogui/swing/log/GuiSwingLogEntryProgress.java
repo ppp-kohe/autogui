@@ -82,7 +82,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         return interruptCount;
     }
 
-
+    /** a renderer for a progress entry */
     public static class GuiSwingLogProgressRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
         protected ContainerType containerType;
@@ -103,8 +103,6 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         protected GuiLogEntryProgress lastValue;
         protected GuiSwingLogEntryProgress stopPressedValue;
         protected GuiLogEntryProgress previousState = new GuiSwingLogEntryProgress();
-
-        protected JList lastList;
 
         public GuiSwingLogProgressRenderer(GuiSwingLogManager manager, ContainerType containerType) {
             this.manager = manager;
@@ -373,7 +371,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
     }
 
-
+    /** a renderer for a progress message */
     public static class ProgressMessageRenderer extends TextCellRenderer<GuiLogEntryProgress> {
         protected GuiSwingLogManager manager;
         protected ContainerType containerType;
@@ -428,6 +426,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
     }
 
+    /** a renderer for progress status */
     public static class ProgressStatusRenderer extends TextCellRenderer<GuiLogEntryProgress> {
         protected GuiSwingLogManager manager;
         protected ContainerType containerType;

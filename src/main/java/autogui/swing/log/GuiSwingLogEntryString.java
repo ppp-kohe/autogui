@@ -316,6 +316,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         }
     }
 
+    /** line info. with the header end position */
     public static class LineInfoHead extends TextCellRenderer.LineInfo  {
         public int headerEnd;
 

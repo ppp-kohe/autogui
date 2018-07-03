@@ -545,7 +545,7 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
-     * an auxiliary information for specifying an property value.
+     * an auxiliary information for specifying a property value.
      *  An typical example is an index of a list.
      *  <p>
      *  For regular properties, {@link GuiReprValue#NONE} is sufficient.
