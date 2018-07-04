@@ -75,6 +75,13 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         this.columnMapperSet = columnMapperSet;
     }
 
+    /**
+     * create a {@link DynamicColumnFactoryList} and add it to the model by {@link TableColumnHost#addColumnDynamic(DynamicColumnFactory)}
+     * @param context the context of the sub-list, associated with a collection-table
+     * @param model the adding target
+     * @param rowSpecifier the table root row-specifier
+     * @param parentSpecifier the parent specifier factory of the context
+     */
     @Override
     public void createColumnDynamic(GuiMappingContext context,
                                             TableColumnHost model,
@@ -219,6 +226,9 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             return actionContexts;
         }
 
+        /**
+         * @return compose parent's specifiers and {@link #getElementIndex()}
+         */
         public List<SpecifierManagerIndex> getIndexSpecifiers() {
             if (indexSet == null) {
                 indexSet = new ArrayList<>();
@@ -239,6 +249,15 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             }
         }
 
+        /**
+         *
+         * @param sender the self factory
+         * @param children children of the factory
+         * @param selection a regular table selection which will be wrapped by
+         *                  a sub-list based selection such as {@link TableSelectionSourceDynamicForList}
+         * @return created actions from {@link #getActionContexts()} and
+         *     aggregation of recursive results of children
+         */
         public List<Action> getActions(DynamicColumnFactory sender, List<DynamicColumnFactory> children,
                                        TableTargetCell selection) {
             return Stream.concat(
@@ -269,6 +288,23 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                         new TableSelectionSourceDynamic(getModel(), selection, sender, getTargetName(this.context)));
         }
 
+        /**
+         * collect sub-factories as arguments and
+         *  create an aggregated action which takes all selection items of lists of collected factories.
+         *  the result action executes the action method in multiple times for each lists.
+         *  <pre>
+         *     List&lt;E&gt; a,b;
+         *     //a click of the button of the action might cause 2 executions of the method with "a" and "b"
+         *     void action(List&lt;E&gt; s, String n) {
+         *         if (n.equals("a")) ... else ...
+         *     }
+         *  </pre>
+         * @param actionContext a context associated with an action
+         * @param sender the self factory
+         * @param children children of the sender
+         * @param selection the regular section of a table
+         * @return a created action or null
+         */
         public TableSelectionListAction toActionForList(GuiMappingContext actionContext, DynamicColumnFactory sender,
                                       List<DynamicColumnFactory> children,
                                       TableTargetCell selection) {
@@ -296,6 +332,22 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             return null;
         }
 
+        /**
+         * collect argument-factories from a child-factory.
+         * <pre>
+         *     class Tbl {
+         *         List&lt;C&gt; table;
+         *     }
+         *     class C {   //associated with a {@link DynamicColumnFactoryList}
+         *         List&lt;E&gt; a; //childFactory 1 : each property associated with {@link DynamicColumnFactoryComposite}
+         *         List&lt;E&gt; b; //childFactory 2
+         *         void action(List&lt;E&gt; s, String name) {...} //associated with the actionContext
+         *     }
+         * </pre>
+         * @param actionContext a context associated with an action
+         * @param childFactory the tested factory whether elements can be the argument of the action
+         * @return  matched factories
+         */
         public List<DynamicColumnFactoryList> collectListActions(GuiMappingContext actionContext, DynamicColumnFactory childFactory) {
             List<DynamicColumnFactoryList> result = new ArrayList<>();
             if (childFactory instanceof DynamicColumnFactoryList) {
@@ -321,17 +373,28 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             return result;
         }
 
+        /**
+         * @param indexInjection indices for the value, including a row index
+         * @return the column item with setting the indices.
+         *   So, the specifier managers for the factory must be same instances contained in the indexInjection
+         */
         public Object getValue(Map<SpecifierManagerIndex, Integer> indexInjection) {
             try {
                 indexInjection.forEach(SpecifierManagerIndex::setIndex);
                 GuiMappingContext context = getContext();
                 return context.getReprValue().getUpdatedValueWithoutNoUpdate(context,
-                        getSpecifierManager().getSpecifier());
+                        getSpecifierManager().getSpecifier()); //the created specifier is an immutable path, and can be passed to the task executed in another thread
             } catch (Throwable ex) {
                 throw new RuntimeException(ex);
             }
         }
 
+        /**
+         * @param parent a parent object
+         * @return obtains a value by the representation of the context.
+         *    the representation will be a some property object (instead of a list).
+         *    Then the upper index injections can be ignored because the upper value is supplied as parent.
+         */
         public Object getValueAsMember(Object parent) {
             try {
                 GuiMappingContext context = getContext();
@@ -408,6 +471,10 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             }
         }
 
+        /**
+         * @param c a list object
+         * @return the size of the list
+         */
         public int getValueSize(Object c) {
             if (context.isReprCollectionTable()) {
                 try {
@@ -489,6 +556,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             }
         }
 
+        /**
+         * @param c a concrete value such as a primitive.
+         *         so it will be ignored as creating (a column x the size of the list)  for the value.
+         * @return an {@link ObjectTableColumnSize}
+         */
         public ObjectTableColumnSize getColumnSizeForConcrete(Object c) {
             ObjectTableColumnSize size = elementFactory.getColumnSize(null);
             size.setSize(getValueSize(c));
@@ -496,6 +568,12 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             return size;
         }
 
+        /**
+         * @param c a list object
+         * @return a {@link ObjectTableColumnSizeComposite} with
+         *    children created by {@link #getElementFactory()}.{@link #getColumnSize(Object)} for each element in the list c.
+         *    Currently the children are expanded by the size of the list
+         */
         public ObjectTableColumnSize getColumnSizeForObjectList(Object c) {
             ObjectTableColumnSizeComposite size = new ObjectTableColumnSizeComposite(new ArrayList<>(getValueSize(c)));
             forEachValue(c, e -> size.add(
@@ -564,6 +642,12 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             super(tableContext, specifierManager, model, rowSpecifier);
         }
 
+        /**
+         * @param c the root list
+         * @return an {@link ObjectTableColumnSizeComposite}
+         *   with a single child which is combined by
+         *     {@link ObjectTableColumnSizeComposite#set(ObjectTableColumnSize)} for elements of the list
+         */
         @Override
         public ObjectTableColumnSize getColumnSize(Object c) {
             ObjectTableColumnSizeComposite root = new ObjectTableColumnSizeComposite(new ArrayList<>(1));
@@ -599,6 +683,17 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             rootActions.add(actionContext);
         }
 
+        /**
+         * <pre>
+         *     class Tbl { //tableOwner: the target of the action
+         *         List&lt;List&lt;E&gt;&gt; table;
+         *         void action(List&lt;List&lt;E&gt;&gt; l) { ... }
+         *     }
+         * </pre>
+         * @param selection selection for cells
+         * @param tableSource the regular selection of the table, used for selection-updating
+         * @return actions from registered rootActions
+         */
         @GuiIncluded
         public List<Action> getRootActions(TableTargetCell selection, TableSelectionSource tableSource) {
             GuiMappingContext tableOwner = context.getParent();
@@ -687,8 +782,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                     .collect(Collectors.toList()));
         }
 
-        public ObjectTableColumnSize getColumnSizeForMember(Object obj,
-                                                                                    DynamicColumnFactory memberFactory) {
+        public ObjectTableColumnSize getColumnSizeForMember(Object obj, DynamicColumnFactory memberFactory) {
             return memberFactory.getColumnSize(memberFactory.getValueAsMember(obj));
         }
 
@@ -730,12 +824,22 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
     }
 
-
+    /**
+     * a {@link ObjectTableColumnSize} of a concrete value.
+     * the class is also a {@link DynamicColumnFactory}, as a prototype of each size.
+     */
     public static class ObjectTableColumnSizeConcrete extends ObjectTableColumnSize implements DynamicColumnFactory, Cloneable {
         protected GuiSwingTableColumn column;
-        protected DynamicColumnFactoryBase factoryBase;
+        protected DynamicColumnFactoryBase factoryBase; //shared by clone
         protected SpecifierManager parentSpecifier;
 
+        /**
+         * @param size the size of the column. 1 for the prototype
+         * @param context the context of the column
+         * @param column a (static) column factory for the value
+         * @param parentSpecifier the parent specifier factory
+         * @param model a column host. usually a parent factory
+         */
         public ObjectTableColumnSizeConcrete(int size, GuiMappingContext context, GuiSwingTableColumn column,
                                              SpecifierManager parentSpecifier,
                                              TableColumnHost model) {
@@ -752,6 +856,10 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             factoryBase.setParentFactory(parent);
         }
 
+        /**
+         * create columns up to {@link #size()}. removes existing columns in the container if it overs {@link #size()}
+         * @param targetContainer the adding target
+         */
         @Override
         public void create(DynamicColumnContainer targetContainer) {
             targetContainer.moveExistingColumns();
@@ -767,6 +875,12 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             }
         }
 
+        /**
+         * create a column from the static column factory and wraps
+         *   the returned {@link ObjectTableColumnWithContext} with {@link ObjectTableColumnCollectionWrapper}
+         * @param targetContainer the adding target
+         * @param indexInSize the index of the created column in the target container
+         */
         public void createSingle(DynamicColumnContainer targetContainer, int indexInSize) {
             ObjectTableColumn c = column.createColumn(factoryBase.getContext(), null, parentSpecifier);
             if (c instanceof ObjectTableColumnWithContext) {
@@ -884,6 +998,9 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
     }
 
+    /**
+     * a dynamic version of column
+     */
     public static class ObjectTableColumnCollectionWrapper extends ObjectTableColumn
         implements ObjectTableColumnWithContext {
         protected ObjectTableColumn column;
@@ -952,6 +1069,13 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             columnWithContext().loadSwingPreferences(prefs);
         }
 
+        /**
+         *
+         * @param rowIndex the row index
+         * @param columnIndex the column index. ignored
+         * @return  a created specifier with setting the row index and indexInjection.
+         *    the row index can be variable, and the column index (sub-indices except for the row index) is fixed as a dynamically created column.
+         */
         @Override
         public GuiReprValue.ObjectSpecifier getSpecifier(int rowIndex, int columnIndex) {
             rowSpecifier.setIndex(rowIndex);
@@ -1076,6 +1200,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
     }
 
+    /** the base class for dynamic table-selection-sources */
     public static class TableSelectionSourceDynamicBase {
         protected TableColumnHost model;
         protected TableTargetCell selection;
@@ -1093,7 +1218,13 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
          *    If the column is a {@link ObjectTableColumnCollectionWrapper}, then it was created as a dynamic column.
          *     The column has indexSpecifiers for obtaining the column value: {rowSpecifier,columnSpecifier,index1,index2, ...}.
          *       The action's target or arguments only requires the former part of of the specs.
-         *        e.g. List&lt;List&lt;E&gt;&gt; and class E { List&lt;Float&gt; fs;}  act(List&lt;List&lt;E&gt;&gt;) },
+         *        e.g. <pre>
+         *            class Tbl {
+         *              List&lt;List&lt;E&gt;&gt; table;
+         *              void act(List&lt;List&lt;E&gt;&gt; s) {...}
+         *            }
+         *            class E { List&lt;Float&gt; fs;}
+         *        </pre>
          *           then the specifier of the column "fs[n]" is {rowSpec,colSpec,indexSpecOfFs},
          *               but the action "act" requires only {rowSpec}. //not {rowSpec,ColSpec}. currently, it is recognized as just act(List&lt;X&gt;)
          *  <p>
@@ -1101,9 +1232,12 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
          *     The column's specifier becomes {rowSpecifier}.
          *
          * @param factory    source of required specifiers :
-         *                    For List&lt;E&gt; and action(List&lt;E&gt;), {rowSpecifier} become the required specifiers.
-         *                    For List&lt;List&lt;E&gt;&gt; and class E{ action() }, {rowSpecifier,columnSpecifier} become the required specs.
-         * @param targetName name of the target field. for List&lt;V&gt; f1; List&lt;V&gt; f2; and action(List&lt;V&gt;,String targetName)
+         *                    <ul>
+         *                      <li>For List&lt;E&gt; and action(List&lt;E&gt;), {rowSpecifier} become the required specifiers.</li>
+         *                      <li>For List&lt;List&lt;E&gt;&gt; and class E{ action() }, {rowSpecifier,columnSpecifier} become the required specs.</li>
+         *                    </ul>
+         *
+         * @param targetName name of the target field. for List&lt;V&gt; f1; List&lt;V&gt; f2; and action(List&lt;V&gt;,String targetName), the name is "f1" or "f2"
          * @param occurrences a set for ignoring duplicated entries
          * @param resultGen   action for each occurrence
          */
@@ -1187,7 +1321,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
      */
     public static class TableSelectionSourceDynamic extends TableSelectionSourceDynamicBase
             implements TableSelectionSource {
-        protected DynamicColumnFactory targetFactory;
+        protected DynamicColumnFactory targetFactory; //factory of a nested list
         protected String targetName;
 
         public TableSelectionSourceDynamic(TableColumnHost model,
@@ -1246,7 +1380,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
     public static class TableSelectionSourceDynamicForList extends TableSelectionSourceDynamicBase
             implements TableSelectionSource {
         protected DynamicColumnFactory targetFactory;
-        protected List<DynamicColumnFactoryList> argumentFactories;
+        protected List<DynamicColumnFactoryList> argumentFactories; //factories of field candiddates
 
         public TableSelectionSourceDynamicForList(TableColumnHost model,
                                                   TableTargetCell selection,
@@ -1325,6 +1459,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             return argSpecs;
         }
 
+        //in the class, it returns an element value
         public Object getIndexValue(DynamicColumnFactoryList argumentFactory, TargetAndSpecifierMap t, List<SpecifierManagerIndex> cellSpecs) {
             if (argumentFactory.getElementFactory() == null) {
                 //for non-dynamic column
@@ -1337,6 +1472,9 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
     }
 
+    /**
+     * a selected target field name and specifiers as an intermediate state of {@link TableSelectionSourceDynamicForList}.
+     */
     public static class TargetAndSpecifierMap {
         public String targetName;
         public Map<SpecifierManagerIndex, Integer> specMap;
@@ -1376,6 +1514,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
     }
 
+    /** a result value of {@link TableSelectionSourceDynamicForList} with additional information */
     public static class TargetAndArgumentList {
         public Object target;
         public List<Object> argument;
@@ -1393,6 +1532,9 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
     }
 
+    /**
+     * an action using selection of dynamic columns
+     */
     public static class TableSelectionListDynamicAction extends TableSelectionListAction  {
         public TableSelectionListDynamicAction(GuiMappingContext context, TableSelectionSourceDynamicForList source) {
             super(context, source);

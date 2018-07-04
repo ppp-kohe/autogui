@@ -542,7 +542,7 @@ public class GuiTypeBuilder {
     public static class GuiTypeBuilderRelaxed extends GuiTypeBuilder {
         @Override
         public boolean isExcludedType(Class<?> cls) {
-            return Modifier.isPrivate(cls.getModifiers()) &&
+            return Modifier.isPrivate(cls.getModifiers()) ||
                     (cls.getName().startsWith("java.") ||
                      cls.getName().startsWith("javax."));
         }

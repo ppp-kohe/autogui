@@ -29,13 +29,34 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
 
     /** the target for adding created columns. {@link ObjectTableModelColumns} becomes the top instance */
     interface TableColumnHost {
+        /** add a row index column as a static column: always delegate to the top */
         void addColumnRowIndex();
+
+        /**
+         * add a static column: always delegate to the top
+         * @param column the added column
+         */
         void addColumnStatic(ObjectTableColumn column);
+
+        /**
+         * add a dynamic factory as a child to the container
+         * @param columnFactory the added factory
+         */
         void addColumnDynamic(DynamicColumnFactory columnFactory);
+
+        /**
+         * add a menu composite: always delegate to the top
+         * @param rowComposite the added composite
+         */
         void addMenuRowComposite(TableMenuComposite rowComposite);
 
         boolean isNonEmpty();
 
+        /**
+         * obtains a column: always delegate to the top
+         * @param modelIndex a model index of the column (not a child index)
+         * @return  a column of the modelIndex in the table
+         */
         ObjectTableColumn getColumnAt(int modelIndex);
     }
 
@@ -66,6 +87,7 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
         void selectionActionFinished(boolean autoSelection, TableSelectionChange change);
     }
 
+    /** the root interface for selection change*/
     interface TableSelectionChange { }
 
     TableSelectionChangeNothing NO_CHANGE = new TableSelectionChangeNothing();

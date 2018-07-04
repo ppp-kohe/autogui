@@ -258,11 +258,9 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                     () -> actionPerformedBody(selection, targetName, targetSpec),
                     r -> {
                         running.set(false);
-                        if (!r.isPresentedWithDelay()) {
-                            r.executeIfPresent(
-                                    ret -> SwingUtilities.invokeLater(() ->
-                                            source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret))));
-                        }
+                        r.executeIfPresent(
+                                ret -> SwingUtilities.invokeLater(() ->
+                                        source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret))));
                     });
         }
 

@@ -431,6 +431,10 @@ public class ObjectTableModelColumns
     /**
      * a factory of size info. which becomes a set of factories of each concrete columns */
     public interface DynamicColumnFactory {
+        /**
+         * @param c an obtained list
+         * @return create a size info. for the actual object
+         */
         ObjectTableColumnSize getColumnSize(Object c);
 
         Object getValueAsMember(Object parent);
