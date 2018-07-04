@@ -279,6 +279,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
     }
 
 
+    /** a special value of history entry which has an image and it's source file path */
     public static class ImageHistoryEntry {
         protected Path path;
         protected Image image;

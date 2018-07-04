@@ -6,6 +6,14 @@ import java.awt.*;
 import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
 
+/** a support class with {@link UIManager}.
+ *  the main purpose of the class is providing default settings of UI resources and sizes
+ *      in order to support HiDPI environments.
+ *  <pre>
+ *          int size = UIManager.getInstance().getScaledSizeForInt(12);
+ *          ...
+ *  </pre>
+ *  */
 public class UIManagerUtil {
     static UIManagerUtil instance;
 

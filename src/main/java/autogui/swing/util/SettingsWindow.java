@@ -22,7 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/** a shared window manager for the setting panel */
+/** a shared window manager for the setting panel.
+ *   it needs to explicitly dispose once the instance obtained */
 public class SettingsWindow {
     protected static SettingsWindow instance;
 
@@ -129,6 +130,7 @@ public class SettingsWindow {
         show(sender);
     }
 
+    /** the callback interface for {@link SettingsWindow} in order to save and load preferences of the window */
     public interface SettingSupport {
         void resized(JFrame window);
         void moved(JFrame window);
@@ -215,7 +217,9 @@ public class SettingsWindow {
         return colorWindow;
     }
 
-    /** a window holder for the color chooser */
+    /** a window holder for the color chooser used by {@link ColorButton}.
+     *   it has a reference count and
+     *     a client needs to call {@link #retain()} and {@link #release()} for each instances. */
     public static class ColorWindow {
         protected JFrame window;
 
@@ -351,13 +355,14 @@ public class SettingsWindow {
         return fileDialogManager;
     }
 
+    /** a shared dialog, can be obtained by {@link #getFileDialogManager()}.
+     *   The dialog has an accessory which manages history of selected files */
     public static class FileDialogManager {
         protected JFileChooser fileChooser;
         protected JList<Path> historyList;
         protected FileListModel historyListModel;
         protected JPanel accessory;
         protected FileBackAction backAction;
-        protected FileListClearAction clearAction;
         protected FileListRemoveAction removeAction;
 
         protected boolean setDirByUser = true;
@@ -634,12 +639,14 @@ public class SettingsWindow {
         }
     }
 
+    /** the callback interface for {@link FileDialogManager} in order to save and load history of files to preferences */
     public interface FileDialogManagerListener {
         void updateFileList(FileListModel listModel);
         void updateCurrentDirectory(Path path);
         void updateBackButton(Path path);
     }
 
+    /** an action for changing the selected directory of {@link FileDialogManager} */
     public static class FileBackAction extends AbstractAction {
         protected JFileChooser fileChooser;
         protected Path path;
@@ -678,6 +685,7 @@ public class SettingsWindow {
         }
     }
 
+    /** a list renderer for history of files of {@link FileDialogManager} */
     public static class FileItemRenderer extends DefaultListCellRenderer {
         protected FileSystemView iconSource;
         protected Icon dummy;
@@ -750,6 +758,7 @@ public class SettingsWindow {
         }
     }
 
+    /** a list-model for history files of {@link FileDialogManager} */
     public static class FileListModel extends AbstractListModel<Path> {
         protected List<Path> paths;
         protected List<Path> initPaths;
@@ -822,6 +831,7 @@ public class SettingsWindow {
     }
 
 
+    /** an action for clearing history of files of {@link FileDialogManager} */
     public static class FileListClearAction extends AbstractAction {
         protected FileListModel listModel;
         protected JList<Path> list;
@@ -838,6 +848,7 @@ public class SettingsWindow {
         }
     }
 
+    /** an action for removing an item in history of files of {@link FileDialogManager} */
     public static class FileListRemoveAction extends AbstractAction {
         protected FileListModel listModel;
         protected JList<Path> list;
@@ -861,6 +872,7 @@ public class SettingsWindow {
         }
     }
 
+    /** an action for adding the selected file to history of files of {@link FileDialogManager} */
     public static class FileListAddAction extends AbstractAction {
         protected FileListModel listModel;
         protected JFileChooser chooser;

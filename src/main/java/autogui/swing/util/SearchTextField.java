@@ -829,6 +829,7 @@ public class SearchTextField extends JComponent {
         return a;
     }
 
+    /** an action for searching, filtering and selecting items */
     public static class DynamicItemAction extends AbstractAction {
         protected Supplier<List<PopupCategorized.CategorizedMenuItem>> currentSearchedItems;
         protected Predicate<PopupCategorized.CategorizedMenuItem> filter;

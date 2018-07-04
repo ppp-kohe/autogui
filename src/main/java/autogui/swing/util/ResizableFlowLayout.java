@@ -243,9 +243,10 @@ public class ResizableFlowLayout implements LayoutManager {
     }
 
     public <CT extends Container> LayoutAppender<CT> withContainer(CT parent) {
-        return new LayoutAppender<CT>(parent, this);
+        return new LayoutAppender<>(parent, this);
     }
 
+    /** a class for providing fluent interface for constructing {@link ResizableFlowLayout} */
     public static class LayoutAppender<ContainerType extends Container> {
         ContainerType parent;
         ResizableFlowLayout layout;

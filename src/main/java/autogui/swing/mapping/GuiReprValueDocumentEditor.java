@@ -554,6 +554,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
     }
 
+    /** a saved position for {@link ContentPosition}. it can restore the offset value to the position instance */
     public static class UndoContentPosition {
         protected ContentPosition position;
         protected int offset;
