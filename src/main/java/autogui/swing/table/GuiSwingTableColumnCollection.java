@@ -8,7 +8,6 @@ import autogui.base.type.GuiTypeCollection;
 import autogui.swing.GuiSwingElement;
 import autogui.swing.GuiSwingMapperSet;
 import autogui.swing.GuiSwingPreferences;
-import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingView.SpecifierManager;
 import autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import autogui.swing.table.GuiSwingTableColumn.ObjectTableColumnWithContext;
@@ -37,6 +36,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
+ * a factory of dynamic column factories for nested collections:
+ *   the instance will be registered as a factory of {@link GuiReprCollectionTable}
+ * <p>
  * there are various cases for table-compositions
  *  <pre>
  *      class T { List&lt;Float&gt; l; } //staticColumn,  no dynamic columns
@@ -119,6 +121,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         model.addColumnDynamic(col);
     }
 
+    /** another dynamic factory for supporting property values */
     public static class GuiSwingTableColumnProperty implements GuiSwingTableColumnDynamic {
         protected GuiSwingMapperSet columnMapperSet;
 
@@ -145,6 +148,9 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
     }
 
+    /** the base class for dynamic column factories:
+     *   the class provide implementations of methods defined in
+     *     {@link DynamicColumnFactory} and {@link DynamicColumnHost} */
     public static class DynamicColumnFactoryBase {
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;

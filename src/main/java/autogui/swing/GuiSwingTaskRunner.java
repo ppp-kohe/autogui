@@ -11,6 +11,18 @@ import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/** a task runner for deferring a task takes long time to complete.
+ * basically, the methods of GuiRepresentation need to be executed
+ *   under the thread of the task runner of {@link GuiMappingContext#getTaskRunner()}.
+ *  {@link #executeContextTask(Supplier, Consumer)} achieves this.
+ *  <pre>
+ *      new GuiSwingTaskRunner(context).executeContextTask(
+ *          () -&gt; context.getReprValue().getUpdatedValue(context, spec),
+ *          r  -&gt; r.executeIfPresented(v -&gt;
+ *                      SwingUtilities.invokeLater(() -&gt; setSwingViewValue(v))))
+ *  </pre>
+ *
+ *  */
 public class GuiSwingTaskRunner {
 
     protected GuiMappingContext context;
@@ -139,6 +151,9 @@ public class GuiSwingTaskRunner {
         return ret;
     }
 
+    /** the returned value for successfully obtaining a value
+     * @param <RetType> the type of the value
+     */
     public static class ContextTaskResult<RetType> {
         protected RetType value;
 
@@ -169,10 +184,18 @@ public class GuiSwingTaskRunner {
             return !isTimeout() && !isCancel() && !isPresentedWithDelay();
         }
 
+        /**
+         * executes the task with it's obtained value (both immediate and delayed cases)
+         * @param task to be executed with the value
+         */
         public void executeIfPresent(Consumer<RetType> task) {
             task.accept(value);
         }
 
+        /**
+         * executes the task if delayed (nothing happen with the class)
+         * @param task to be executed with the value
+         */
         public void executeIfPresentWithDelay(Consumer<RetType> task) {
             //nothing
         }
@@ -182,6 +205,10 @@ public class GuiSwingTaskRunner {
         }
     }
 
+    /**
+     * delayed result
+     * @param <RetType> the type of the value
+     */
     public static class ContextTaskResultWithDelay<RetType> extends ContextTaskResult<RetType> {
         public ContextTaskResultWithDelay(RetType value) {
             super(value);
@@ -192,17 +219,20 @@ public class GuiSwingTaskRunner {
             return true;
         }
 
-        @Override
-        public void executeIfPresent(Consumer<RetType> task) {
-            //nothing
-        }
-
+        /**
+         * executes the task with a obtained value with delay
+         * @param task to be executed with the value
+         */
         @Override
         public void executeIfPresentWithDelay(Consumer<RetType> task) {
             task.accept(value);
         }
     }
 
+    /**
+     * a task failure by delay
+     * @param <RetType> the type of the value
+     */
     public static class ContextTaskResultFail<RetType> extends ContextTaskResult<RetType> {
         protected boolean timeout;
 
@@ -221,17 +251,27 @@ public class GuiSwingTaskRunner {
             return timeout;
         }
 
+        /**
+         * the value is null and thus the method does nothing
+         * @param task to be executed with the value
+         */
         @Override
         public void executeIfPresent(Consumer<RetType> task) {
             //nothing
         }
 
+        /**
+         * @param cancelValue the value for cancellation
+         * @param timeoutValue  the value for timeout
+         * @return cancelValue or timeoutValue
+         */
         @Override
         public RetType getValueOr(RetType cancelValue, RetType timeoutValue) {
             return timeout ? timeoutValue : cancelValue;
         }
     }
 
+    /** a base class for actions */
     public static class ContextAction extends AbstractAction {
         protected GuiSwingTaskRunner taskRunner;
 

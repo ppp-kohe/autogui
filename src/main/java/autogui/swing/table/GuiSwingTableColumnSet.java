@@ -15,11 +15,19 @@ import java.util.List;
  * an interface of a set of {@link GuiSwingTableColumn}.
  */
 public interface GuiSwingTableColumnSet extends GuiSwingElement {
+    /**
+     * @param context the context, initially a collection element
+     * @param model the target for appending created columns
+     * @param rowSpecifier row-specifier for the table
+     * @param parentSpecifier the specifier manager of the parent
+     * @param specifierManager optional specifier given by the caller
+     */
     void createColumns(GuiMappingContext context, TableColumnHost model,
                        SpecifierManagerIndex rowSpecifier,
                        SpecifierManager parentSpecifier,
                        SpecifierManager specifierManager);
 
+    /** the target for adding created columns. {@link ObjectTableModelColumns} becomes the top instance */
     interface TableColumnHost {
         void addColumnRowIndex();
         void addColumnStatic(ObjectTableColumn column);
@@ -117,11 +125,19 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
         return new TableSelectionChangeValues((Collection<Object>) obj);
     }
 
+    /**
+     * the method is called for creating column factories under nested table structure
+     * @param context the source context
+     * @param collection the adding target of created columns and actions
+     * @param rowSpecifier a row specifier manager of the top table
+     * @param parentSpecifier a parent specifier given by the caller
+     */
     void createColumnsForDynamicCollection(GuiMappingContext context,
                                            DynamicColumnHost collection,
                                            SpecifierManagerIndex rowSpecifier,
                                            SpecifierManager parentSpecifier);
 
+    /** a sub-interface of {@link TableColumnHost} which can support adding action contexts */
     interface DynamicColumnHost extends TableColumnHost {
         void addActionContext(GuiMappingContext context);
     }

@@ -134,7 +134,9 @@ public class GuiReprValueImagePane extends GuiReprValue {
      *
      * @param context a context holds the representation
      * @param source  the converted object {@link Image} or {@link ImageHistoryEntry}
-     * @return image bytes encoded as PNG base64 String.
+     * @return image bytes encoded as PNG base64 String(<code>data:image/png;base64,...</code>), or
+     *     source file path (<code>file://...</code>) if the source is a {@link ImageHistoryEntry}.
+     *     The method does not check registered file paths by {@link #setImagePath(Image, Path)}.
      *   For non-RenderedImage, it temporally creates a BufferedImage and renders the source to the image.
      */
     @Override
@@ -158,6 +160,13 @@ public class GuiReprValueImagePane extends GuiReprValue {
 
     static Pattern dataPattern = Pattern.compile("data:(image/.+?)?(;.+?)?,(.*+)");
 
+    /***
+     * @param context the target context, ignored
+     * @param target the target object, ignored
+     * @param json a string with format of <code>data:...</code> or <code>file://...</code>
+     * @return an {@link Image} or an {@link ImageHistoryEntry} with lazy loading
+     *  (at the loading, {@link #setImagePath(Image, Path)} will be called and the path is stored).
+     */
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         if (json instanceof String) {

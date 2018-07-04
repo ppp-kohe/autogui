@@ -12,13 +12,17 @@ import autogui.swing.GuiSwingView.SpecifierManager;
 import java.util.function.Supplier;
 
 /**
- * a column factory
+ * the interface for a column factory
  */
 public interface GuiSwingTableColumn extends GuiSwingElement {
     ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                    SpecifierManager parentSpecifier);
 
-
+    /** a specifier factory for a list index: having a mutable index and creating {@link ObjectSpecifierIndex}.
+     *  For columns of nested lists, the managers are also nested.
+     *    In order to specify the indices Map&lt;SpecifierManagerIndex,Integer&gt; is used.
+     *     This means that instances of the class are created for each nested structure
+     *      and the identify of them are used. */
     class SpecifierManagerIndex implements SpecifierManager {
         protected Supplier<ObjectSpecifier> tableSpecifier;
         protected int index;

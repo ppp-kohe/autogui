@@ -21,6 +21,18 @@ import java.util.function.Supplier;
  *         return comp;
  *     }
  * </pre>
+ * <p>
+ *     the class executes obtaining and updating a target value under the event dispatching thread
+ *      via {@link SwingDeferredRunner}.
+ * <p>
+ *      For the case of updating from GUI,
+ *      an UI event (in the event thread) -&gt;
+ *       executeContextTask
+ *         and it observes that {@link #isTaskRunnerUsedFor(Supplier)} returns false and directly invoke the given task
+ *       -&gt;
+ *        updateFromGui -&gt; update -&gt;
+ *         {@link SwingDeferredRunner#run(SwingDeferredRunner.Task)} with super.update (it directly invoke the task as in the event thread)
+ *          -&gt; the method of the target object is invoked under the event thread.
  */
 public class GuiReprEmbeddedComponent extends GuiReprValue {
     @Override
@@ -54,6 +66,13 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
         }
     }
 
+    /**
+     * @param context the context of the repr.
+     * @param value the current value
+     * @return obtains a {@link JComponent} value, or if the value is a deferred future,
+     *    then get the done value or null if it is not completed.
+     *    To support the delayed completion, use {@link #toUpdateValue(GuiMappingContext, Object, Consumer)} instead.
+     */
     @Override
     public JComponent toUpdateValue(GuiMappingContext context, Object value) {
         return toUpdateValue(context, value, null);

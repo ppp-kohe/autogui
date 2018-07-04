@@ -37,6 +37,7 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
         return column;
     }
 
+    /** a property-check-box for column renderer and editor */
     public static class ColumnCheckBox extends PropertyCheckBox {
         public ColumnCheckBox(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
