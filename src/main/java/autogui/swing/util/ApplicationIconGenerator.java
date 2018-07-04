@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/** generating an icon image from the name of the app */
 public class ApplicationIconGenerator {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new ApplicationIconGenerator()::runDemo);
@@ -179,6 +180,7 @@ public class ApplicationIconGenerator {
         return ((float) sum) / 300f;
     }
 
+    /** bounds of words with a graphics context */
     public static class NameWordBounds {
         public List<String> names;
         public List<Rectangle2D> bounds;
@@ -224,6 +226,8 @@ public class ApplicationIconGenerator {
         return pats.get(0);
     }
 
+    /** a pattern of line wrapping in order to find optimal layout:
+     *     indices are word indices of lines e.g. [[0,1,2], [3,4], ...] */
     public static class NameLinePattern {
         List<List<Integer>> indices = new ArrayList<>();
         double width;

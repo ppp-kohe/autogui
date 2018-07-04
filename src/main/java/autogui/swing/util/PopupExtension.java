@@ -106,6 +106,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         }
     }
 
+    /** the empty builder  */
     public static class PopupMenuBuilderEmpty implements PopupMenuBuilder {
         @Override
         public void build(PopupMenuFilter filter, Consumer<Object> menu) {
@@ -114,6 +115,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         }
     }
 
+    /** the function interface for menu filtering */
     public interface PopupMenuFilter {
         /**
          * @param item a converted item, one of {@link JComponent} (including {@link JMenuItem}), {@link Action},
@@ -146,6 +148,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     public static PopupMenuFilterAsIs MENU_FILTER_IDENTITY = new PopupMenuFilterAsIs();
 
+    /** a filter for accepting any items as is */
     public static class PopupMenuFilterAsIs implements PopupMenuFilter {
         @Override
         public Object convert(Object item) {
@@ -446,6 +449,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         return action;
     }
 
+    /** an action for displaying a popup menu */
     public static class PopupExtensionDisplayAction extends AbstractAction {
         protected PopupExtension extension;
 

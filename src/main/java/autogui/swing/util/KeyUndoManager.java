@@ -165,6 +165,7 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
         endEdits();
     }
 
+    /** the action for undo or redo */
     public static class UndoAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
         protected UndoManager manager;
@@ -233,6 +234,7 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
         }
     }
 
+    /** a composition of undoable-edits */
     public static class DynamicCompoundEdit extends AbstractUndoableEdit {
         protected List<UndoableEdit> edits = new ArrayList<>();
 

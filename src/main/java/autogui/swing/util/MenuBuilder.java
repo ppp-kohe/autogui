@@ -109,6 +109,7 @@ public class MenuBuilder {
         }
     }
 
+    /** intermediate state for constructing menus */
     public static class AddingProcess {
         protected Consumer<Object> menu;
         protected int count;
@@ -172,6 +173,7 @@ public class MenuBuilder {
         return new MenuLabel(name, subCategory);
     }
 
+    /** a label menu-item component  */
     public static class MenuLabel extends JPanel implements PopupCategorized.CategorizedMenuItemComponent {
         protected String subCategory = "";
         protected JLabel label;
@@ -263,6 +265,7 @@ public class MenuBuilder {
         return new MenuAppender(menu);
     }
 
+    /** an appender of menu-items: supporting {@link JMenu}, {@link Action}, {@link JPopupMenu}, {@link JMenuItem} and {@link JComponent} */
     public static class MenuAppender implements Consumer<Object> {
         protected JComponent menu;
 

@@ -102,14 +102,11 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     ////////////////////
 
 
-    /** a {@link PopupExtension.PopupMenuBuilder} which has typical actions for the text component
-     * @param component the target component
-     * @return a new menu
-     */
     public static TextServiceDefaultMenu getServiceDefaultMenu(JTextComponent component) {
         return new TextServiceDefaultMenu(component);
     }
 
+    /** a {@link PopupExtension.PopupMenuBuilder} which has typical actions for the text component */
     public static class TextServiceDefaultMenu implements PopupMenuBuilder {
         protected List<JComponent> editActions;
 

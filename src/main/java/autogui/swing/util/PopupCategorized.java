@@ -307,6 +307,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
         }
     }
 
+    /** intermediate state for building items */
     public static class PopupCategorizedBuildingItems {
         public List<Object> beforeItems;
         public List<CategorizedMenuItem> categorizedItems;
@@ -486,6 +487,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
         }
     }
 
+    /** a {@link CategorizedMenuItemLabel} with custom category and subCategory */
     public static class CategorizedMenuItemLabelDelegate implements CategorizedMenuItemLabel {
         protected CategorizedMenuItemLabel label;
         protected String category;
@@ -529,6 +531,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
         }
     }
 
+    /** a {@link CategorizedMenuItemComponent} with custom category and subCategory */
     public static class CategorizedMenuItemComponentDelegate implements CategorizedMenuItemComponent  {
         protected CategorizedMenuItemComponent component;
         protected String category = "";
@@ -577,6 +580,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
         }
     }
 
+    /** the default impl. of {@link CategorizedMenuItemComponent} */
     public static class CategorizedMenuItemComponentDefault implements CategorizedMenuItemComponent  {
         protected JComponent component;
         protected String category = "";
@@ -696,6 +700,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
         }
     }
 
+    /** a check-box menu item version of {@link CategorizedMenuItemActionDelegate} */
     public static class CategorizedMenuItemActionCheckDelegate extends CategorizedMenuItemActionDelegate {
         public CategorizedMenuItemActionCheckDelegate(Action action) {
             super(action);
