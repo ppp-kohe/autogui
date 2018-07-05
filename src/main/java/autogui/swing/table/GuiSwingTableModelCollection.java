@@ -115,7 +115,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
     }
 
-
+    /** a sub-class of {@link ObjectTableModelColumns} with supporting settings and preferences */
     public static class GuiSwingTableModelColumns extends ObjectTableModelColumns
             implements PreferencesUpdateSupport, SettingsWindowClient {
 
@@ -328,12 +328,18 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
     }
 
+    /**
+     * preferences for ordering of non-context table columns, attached to a list
+     * <pre>
+     *    "$columnOrder": { "0": { "modelIndex":m, "viewIndex":i},... }
+     * </pre>
+     */
     public static class PreferencesForTableColumnOrderStatic implements GuiSwingPreferences.PreferencesByJsonEntry {
         protected Map<Integer, PreferencesForTableColumnOrder> modelIndexToOrder = new LinkedHashMap<>();
 
         @Override
         public String getKey() {
-            return "$columnWidth";
+            return "$columnOrder";
         }
 
         public void put(int modelIndex, PreferencesForTableColumnOrder w) {
@@ -382,6 +388,12 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
     }
 
+    /**
+     * an ordering index of a column
+     * <pre>
+     *     "$columnOrder": { "modelIndex":m, "viewIndex":v}
+     * </pre>
+     */
     public static class PreferencesForTableColumnOrder implements GuiSwingPreferences.PreferencesByJsonEntry {
         protected int modelIndex;
         protected int viewIndex;
@@ -436,6 +448,12 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
     }
 
+    /**
+     * preferences for width of non-context table columns, attached to a list
+     * <pre>
+     *     "$columnWidth": {"0":{ "width":w },... }
+     * </pre>
+     */
     public static class PreferencesForTableColumnWidthStatic implements GuiSwingPreferences.PreferencesByJsonEntry {
         protected Map<Integer, PreferencesForTableColumnWidth> modelIndexToWidth = new LinkedHashMap<>();
 
@@ -483,6 +501,12 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
     }
 
+    /**
+     * a width info. of a column
+     * <pre>
+     *     "$columnWidth": {"width":w}
+     * </pre>
+     */
     public static class PreferencesForTableColumnWidth implements GuiSwingPreferences.PreferencesByJsonEntry {
         protected int width;
 
@@ -523,7 +547,9 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
     }
 
-
+    /**
+     * a row-index column with a actions including toString and JSON
+     */
     public static class ObjectTableColumnRowIndexWithActions
             extends ObjectTableColumn.ObjectTableColumnRowIndex implements ObjectTableColumn.PopupMenuBuilderSource {
         public ObjectTableColumnRowIndexWithActions() {

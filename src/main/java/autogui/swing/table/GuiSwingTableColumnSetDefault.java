@@ -31,6 +31,39 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         this.columnMappingSet = columnMappingSet;
     }
 
+    /**
+     * the class supports 2 cases:
+     * <ul>
+     *     <li>for a collection-element under a table: <code>class Tbl { List&lt;E&gt; table; }</code>.
+     *            it supposes the root element directly called from {@link GuiSwingViewCollectionTable},
+     *              and then specifierManager is given as the specifier factory for the element (== rowSpecifier).
+     *            it creates a {@link DynamicColumnFactoryCollectionRoot} and
+     *             use specifierManager as the parent specifier for sub-columns or sub-lists</li>
+     *     <li> for an object-composition under a table: <code>List&lt;E&gt; table; class E { ... }</code>.
+     *            this is the case of recursive call.
+     *            it creates a sub-specifier manager with the parentSpecifier and a {@link DynamicColumnFactoryComposite}.
+     *            Note the nested cases are not treated because a sub-object is composed by a property-pane: property(obj)
+     *            </li>
+     * </ul>
+     * for both cases, sub-contexts are tested with {@link GuiSwingMapperSet}.
+     * <ul>
+     *     <li>{@link GuiSwingTableColumn}: a static column. <code>V of List&lt;V&gt; or List&lt;E&gt; and class E { V fld; }</code>.
+     *       it calls {@link GuiSwingTableColumn#createColumn(GuiMappingContext, SpecifierManagerIndex, SpecifierManager)}
+     *         and adds the column as a static column</li>
+     *     <li>{@link GuiSwingTableColumnDynamic}: a dynamic column, a nested collection, or a property-pane.
+     *            <code>List&lt;List&lt;E&gt;&gt;</code> or <code>List&lt;E&gt; class E { C prop; }</code>.
+     *       it calls {@link GuiSwingTableColumnDynamic#createColumnDynamic(GuiMappingContext, TableColumnHost, SpecifierManagerIndex, SpecifierManager)}</li>
+     *     <li>{@link GuiSwingTableColumnSet}: a composition of static columns. <code>List&lt;E&gt; and class E {...}</code>
+     *         it causes a recursive call as the above 2nd case</li>
+     *     <li>a list action: <code>act(List&lt;E&gt;)</code>. it add the context as an action.
+     *          Note other actions are treated by {@link #createColumnActions(GuiMappingContext, TableSelectionSource)}</li>
+     * </ul>
+     * @param context the context, initially a collection element
+     * @param parentModel the target of adding columns, passed by sender
+     * @param rowSpecifier row-specifier for the table
+     * @param parentSpecifier the specifier manager of the parent
+     * @param specifierManager optional specifier given by the caller
+     */
     @Override
     public void createColumns(GuiMappingContext context, TableColumnHost parentModel,
                               SpecifierManagerIndex rowSpecifier,
@@ -92,6 +125,18 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         return comps;
     }
 
+    /**
+     * support actions of an element object:
+     *  <pre>
+     *      List&lt;E&gt;
+     *      class E { C obj; void action1() {...} }
+     *      class C {        void action2() {...} }
+     *   </pre>
+     * @param context the context usually associated with {@link autogui.base.mapping.GuiReprCollectionElement}
+     * @param source the table source for actions.
+     *               the selected items will become targets of returned actions.
+     * @return list of created actions
+     */
     @Override
     public List<Action> createColumnActions(GuiMappingContext context, TableSelectionSource source) {
         List<Action> actions = new ArrayList<>();
@@ -121,6 +166,19 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         return tableContext;
     }
 
+    /**
+     * <ul>
+     *     <li>a collection element in a nested list called from {@link GuiSwingTableColumnCollection}:
+     *         it uses the collection as a parent</li>
+     *     <li>a composition: <code>List&lt;List&lt;E&gt;&gt;</code>.
+     *         it creates a {@link DynamicColumnFactoryComposite} as a parent and add it to the collection</li>
+     * </ul>
+     *
+     * @param context the source context
+     * @param collection the adding target of created columns and actions
+     * @param rowSpecifier a row specifier manager of the top table
+     * @param parentSpecifier a parent specifier given by the caller
+     */
     @Override
     public void createColumnsForDynamicCollection(GuiMappingContext context,
                                         DynamicColumnHost collection,

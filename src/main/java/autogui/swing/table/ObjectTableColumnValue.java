@@ -151,12 +151,19 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     /**
-     * an updater holder for renderer component: the component of {@link ObjectTableCellRenderer} may implement the interface
+     * an updater holder for renderer component:
+     *   the component of {@link ObjectTableCellRenderer} may implement the interface.
+     *    if the component updates a visual property, then it can notify the change by calling the updater
      */
     public interface ColumnViewUpdateSource {
         void setColumnViewUpdater(Runnable updater);
     }
 
+    /**
+     * an updating target for renderer component:
+     *   the component of {@link ObjectTableCellRenderer} may implement the interface.
+     *   once a visual property of related columns is updated, the method of the interface will be invoked.
+     */
     public interface ColumnViewUpdateTarget {
         void columnViewUpdateAsDynamic(ObjectTableColumn source);
     }
@@ -188,6 +195,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * @param rowObject the row object at rowIndex
      * @param rowIndex   the row index in the list
      * @param columnIndex the column index of the view table-model of the column
+     * @param specifier the specifier for the column value, can be obtained by {@link #getSpecifier(int, int)}
      * @return the column value
      */
     @Override
@@ -208,6 +216,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * @param rowIndex  the row index in the list
      * @param columnIndex the column index of the view table-model of the column
      * @param newColumnValue the new value to be set
+     * @param specifier the specifier for the column value, can be obtained by {@link #getSpecifier(int, int)}
      * @return null
      */
     @Override
@@ -626,6 +635,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         }
     }
 
+    /** a base class for wrapping an action */
     public static class ActionDelegate<TargetActionType extends Action> extends AbstractAction {
         protected TargetActionType action;
         protected Map<String, Object> values;

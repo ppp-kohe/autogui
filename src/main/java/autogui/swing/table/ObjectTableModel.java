@@ -87,8 +87,7 @@ public class ObjectTableModel extends AbstractTableModel
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-        Class<?> c = columns.getColumnAt(columnIndex).getValueType();
-        return c;
+        return columns.getColumnAt(columnIndex).getValueType();
     }
 
     public ObjectTableModelColumns getColumns() {
@@ -202,6 +201,7 @@ public class ObjectTableModel extends AbstractTableModel
 
     //////////// values
 
+    /** the return value of {@link #buildDataArray(Runnable)} */
     public enum BuildResult {
         Updated, NoUpdate, Delayed
     }
@@ -314,8 +314,7 @@ public class ObjectTableModel extends AbstractTableModel
     public Object taskValueFromSourceAfter(Object[] rowData, int rowIndex, int columnIndex, Object cellObject) {
         if (cellObject instanceof Future<?>) {
             rowData[columnIndex] = NULL_CELL;
-            Object v = cellObject;
-            futureWaiter.accept(() -> takeValueFromSourceFuture(rowData, rowIndex, columnIndex, (Future<?>) v));
+            futureWaiter.accept(() -> takeValueFromSourceFuture(rowData, rowIndex, columnIndex, (Future<?>) cellObject));
             return rowData[columnIndex];
         } else if (cellObject == null) {
             rowData[columnIndex] = NULL_CELL;
@@ -517,6 +516,7 @@ public class ObjectTableModel extends AbstractTableModel
                 getBuildersForRowsOrCells(table, cols, row));
     }
 
+    /** a menu builder for table items */
     public static class PopupCategorizedForRowsOrCells extends PopupCategorized {
         public PopupCategorizedForRowsOrCells(Supplier<? extends Collection<CategorizedMenuItem>> itemSupplier) {
             super(itemSupplier, null, new MenuBuilderForRowsOrCells());
@@ -546,6 +546,7 @@ public class ObjectTableModel extends AbstractTableModel
         }
     }
 
+    /** a menu builder without adding titles */
     public static class MenuBuilderForRowsOrCells extends MenuBuilderWithEmptySeparator {
         @Override
         public boolean addMenuTitle(AddingProcess process, String title) {
@@ -586,7 +587,7 @@ public class ObjectTableModel extends AbstractTableModel
 
     }
 
-
+    /** a menu builder with empty separators */
     public static class MenuBuilderWithEmptySeparator extends MenuBuilder {
         @Override
         public boolean addMenuSeparator(AddingProcess process, boolean nonEmpty) {

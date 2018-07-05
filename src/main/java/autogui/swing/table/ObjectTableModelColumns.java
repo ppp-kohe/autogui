@@ -33,6 +33,7 @@ public class ObjectTableModelColumns
     protected ObjectTableModelColumnsListener updater;
     protected int viewUpdating;
 
+    /** a listener interface for dynamic column changes */
     public interface ObjectTableModelColumnsListener {
         void columnAdded(ObjectTableColumn column);
         void columnViewUpdate(ObjectTableColumn column);
@@ -230,7 +231,19 @@ public class ObjectTableModelColumns
         getColumns().forEach(ObjectTableColumn::shutdown);
     }
 
-
+    /** a container of dynamic columns. it constructs a tree.
+     *   each node has an associated {@link DynamicColumnFactory} and
+     *      {@link ObjectTableColumn}s created from the factory.
+     *    <ul>
+     *        <li>{@link ObjectTableModelColumns#addColumnDynamic(DynamicColumnFactory)} creates a container.
+     *              At the time, sub-containers are not created.</li>
+     *        <li>By refreshing columns,  {@link #getColumnSize(Object)} is invoked with a raw list object.
+     *             The tree of {@link DynamicColumnFactory} traverses the object and constructs a tree of {@link ObjectTableColumnSize}</li>
+     *        <li>Next, {@link #update(int, ObjectTableColumnSize)} of the root is called.
+     *             it starts {@link ObjectTableColumnSize#create(DynamicColumnContainer)} from the root size with the root container.
+     *              The create method traverses children and then the sub-containers are created on-demand</li>
+     *    </ul>
+     *      */
     public static class DynamicColumnContainer {
         protected ObjectTableModelColumns columns;
         protected DynamicColumnFactory factory;
@@ -393,6 +406,9 @@ public class ObjectTableModelColumns
         }
     }
 
+    /**
+     * a row-sorter for dynamic columns
+     */
     public static class TableRowSorterDynamic extends TableRowSorter<ObjectTableModel> {
         public TableRowSorterDynamic(ObjectTableModel model) {
             super(model);
@@ -458,6 +474,15 @@ public class ObjectTableModelColumns
         String getDisplayName();
     }
 
+    /**
+     * a factory with supporting root-actions: actions defined in the owner of a list.
+     *  <pre>
+     *      class Tbl {
+     *         List&lt;List&lt;E&gt;&gt; table;
+     *         void action(List&lt;List&lt;E&gt;&gt; s) {...}
+     *      }
+     *  </pre>
+     */
     public interface DynamicColumnFactoryRoot {
         void addRootAction(GuiMappingContext actionContext);
 
@@ -638,6 +663,7 @@ public class ObjectTableModelColumns
         }
     }
 
+    /** a composite of other sizes */
     public static class ObjectTableColumnSizeComposite extends ObjectTableColumnSize {
         protected List<ObjectTableColumnSize> children;
         protected Map<SpecifierManagerIndex, Integer> injectionMapPrototype;
