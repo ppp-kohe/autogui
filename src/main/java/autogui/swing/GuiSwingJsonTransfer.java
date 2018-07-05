@@ -415,7 +415,6 @@ public class GuiSwingJsonTransfer {
     /** an action for copying JSON values of target table-rows:
      *    each JSON values are converted from selected-rows by the context of the table */
     public static class JsonCopyRowsAction extends GuiSwingTaskRunner.ContextAction implements TableTargetCellAction {
-        protected GuiMappingContext context;
 
         public JsonCopyRowsAction(GuiMappingContext context) {
             super(context);
@@ -438,7 +437,7 @@ public class GuiSwingJsonTransfer {
 
         public Object getJson(List<Object> values) {
             return getContext().getRepresentation()
-                    .toJson(context, values);
+                    .toJson(getContext(), values);
         }
 
         @Override
