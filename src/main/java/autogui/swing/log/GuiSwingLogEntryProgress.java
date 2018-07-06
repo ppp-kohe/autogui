@@ -104,6 +104,8 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         protected GuiSwingLogEntryProgress stopPressedValue;
         protected GuiLogEntryProgress previousState = new GuiSwingLogEntryProgress();
 
+        protected int lastWidth = 0;
+
         public GuiSwingLogProgressRenderer(GuiSwingLogManager manager, ContainerType containerType) {
             this.manager = manager;
             this.containerType = containerType;
@@ -219,7 +221,23 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
 
         @Override
+        public void setBounds(int x, int y, int width, int height) {
+            if (lastWidth > 0) {
+                width = lastWidth;
+            }
+            super.setBounds(x, y, width, height);
+        }
+
+        public void setLastWidthFromVisibleSize(JComponent comp) {
+            if (comp != null && !containerType.equals(ContainerType.StatusBar)) {
+                Rectangle rect = comp.getVisibleRect();
+                lastWidth = (int) rect.getWidth();
+            }
+        }
+
+        @Override
         public Component getListCellRendererComponent(JList<? extends GuiLogEntry> list, GuiLogEntry value, int index, boolean isSelected, boolean cellHasFocus) {
+            setLastWidthFromVisibleSize(list);
             message.setProperty(list);
             message2.setProperty(list);
             return getTableCellRendererComponent(null, value, isSelected, cellHasFocus, index, 0);
@@ -227,6 +245,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setLastWidthFromVisibleSize(table);
             message.setProperty(table);
             message2.setProperty(table);
             selected = isSelected;
