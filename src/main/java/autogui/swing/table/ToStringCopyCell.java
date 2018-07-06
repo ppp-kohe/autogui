@@ -101,8 +101,8 @@ public class ToStringCopyCell {
             super(context);
             putValue(NAME, onlyApplyingSelectedColumns ? "Copy Cells as Text" : "Copy Row Cells as Text");
             if (onlyApplyingSelectedColumns) {
-                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_C,
+                        PopupExtension.getMenuShortcutKeyMask()));
             }
             this.activatedColumns = activatedColumns;
             this.onlyApplyingSelectedColumns = onlyApplyingSelectedColumns;
@@ -205,8 +205,8 @@ public class ToStringCopyCell {
             super(context, activatedColumns, onlyApplyingSelectedColumns);
             putValue(NAME, onlyApplyingSelectedColumns ? "Save Cells as Text..." : "Save Row Cells as Text...");
             if (onlyApplyingSelectedColumns) {
-                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S,
-                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_S,
+                        PopupExtension.getMenuShortcutKeyMask()));
             }
             this.table = table;
         }
@@ -285,8 +285,8 @@ public class ToStringCopyCell {
             runner = new GuiSwingTaskRunner(context);
             putValue(NAME, onlyApplyingSelectedColumns ? "Paste Text to Cells" : "Paste Text to Row Cells");
             if (onlyApplyingSelectedColumns) {
-                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_V,
+                        PopupExtension.getMenuShortcutKeyMask()));
             } else {
                 putValue(ACCELERATOR_KEY, null);
             }
@@ -372,8 +372,8 @@ public class ToStringCopyCell {
             super(context, activeComposites, onlyApplyingSelectedColumns);
             putValue(NAME, onlyApplyingSelectedColumns ? "Load Text to Cells..." : "Load Text to Row Cells...");
             if (onlyApplyingSelectedColumns) {
-                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O,
-                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_O,
+                        PopupExtension.getMenuShortcutKeyMask()));
             } else {
                 putValue(ACCELERATOR_KEY, null);
             }

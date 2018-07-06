@@ -212,7 +212,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public void initSelectionClear() {
             UnSelectAction unSelectAction = new UnSelectAction(this);
-            getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), unSelectAction.getValue(Action.NAME));
+            getInputMap().put(PopupExtension.getKeyStroke(KeyEvent.VK_ESCAPE, 0), unSelectAction.getValue(Action.NAME));
             getActionMap().put(unSelectAction.getValue(Action.NAME), unSelectAction);
         }
 
@@ -1062,8 +1062,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             putValue(NAME, "Select All");
 
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_A,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_A,
+                            PopupExtension.getMenuShortcutKeyMask()));
             this.table = table;
         }
 
@@ -1380,8 +1380,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             super("Clear Selection");
 
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_A,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() |
+                    PopupExtension.getKeyStroke(KeyEvent.VK_A,
+                            PopupExtension.getMenuShortcutKeyMask(),
                                     InputEvent.SHIFT_DOWN_MASK));
             this.table = table;
         }

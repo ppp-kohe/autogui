@@ -553,8 +553,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             putValue(NAME, inc ? "Increment" : "Decrement");
 
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(inc ? KeyEvent.VK_I : KeyEvent.VK_D,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(inc ? KeyEvent.VK_I : KeyEvent.VK_D,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
         }
 
         @Override
@@ -908,8 +908,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             putValue(NAME, "Settings...");
 
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_COMMA,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_COMMA,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
             this.client = client;
             pane = new NumberSettingPane(model);
             contentPane = new JPanel(new BorderLayout());

@@ -266,8 +266,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             this.component = component;
             putValue(NAME, "Open URL in Browser");
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_B,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_B,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
 
         }
 
@@ -336,8 +336,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextCutAction(JTextComponent field) {
             putValue(NAME, "Cut");
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_X,
-                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_X,
+                        PopupExtension.getMenuShortcutKeyMask()));
             this.field = field;
         }
 
@@ -371,8 +371,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextCopyAction(JTextComponent field) {
             putValue(NAME, "Copy");
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_C,
+                        PopupExtension.getMenuShortcutKeyMask()));
             this.field = field;
         }
 
@@ -405,8 +405,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextPasteAction(JTextComponent field) {
             putValue(NAME, "Paste");
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_V,
+                            PopupExtension.getMenuShortcutKeyMask()));
             this.field = field;
         }
 
@@ -439,8 +439,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextCopyAllAction(JTextComponent field) {
             putValue(NAME, "Copy Value");
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | InputEvent.SHIFT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_C,
+                            PopupExtension.getMenuShortcutKeyMask(), InputEvent.SHIFT_DOWN_MASK));
             this.field = field;
         }
 
@@ -480,8 +480,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextPasteAllAction(JTextComponent field) {
             putValue(NAME, "Paste Value");
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() |
+                    PopupExtension.getKeyStroke(KeyEvent.VK_V,
+                            PopupExtension.getMenuShortcutKeyMask() |
                             InputEvent.SHIFT_DOWN_MASK));
             this.field = field;
         }
@@ -532,8 +532,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextSelectAllAction(JTextComponent field) {
             putValue(NAME, "Select All");
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_A,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_A,
+                            PopupExtension.getMenuShortcutKeyMask()));
             this.field = field;
         }
 
@@ -618,7 +618,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextDeleteToLineEndAction(JTextComponent field) {
             super("delete-line-end", field);
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_K,
+                    PopupExtension.getKeyStroke(KeyEvent.VK_K,
                             InputEvent.CTRL_DOWN_MASK));
         }
 
@@ -654,7 +654,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextDeleteNextWordAction(JTextComponent field) {
             super("delete-next-word", field);
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_DELETE,
+                    PopupExtension.getKeyStroke(KeyEvent.VK_DELETE,
                             InputEvent.ALT_DOWN_MASK));
         }
 
@@ -693,7 +693,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextDeletePreviousWordAction(JTextComponent field) {
             super("delete-previous-word", field);
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE,
+                    PopupExtension.getKeyStroke(KeyEvent.VK_BACK_SPACE,
                             InputEvent.ALT_DOWN_MASK));
         }
 
@@ -732,7 +732,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextPasteHistoryAction(JTextComponent field) {
             super("yank", field);
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_Y,
+                    PopupExtension.getKeyStroke(KeyEvent.VK_Y,
                             InputEvent.CTRL_DOWN_MASK));
         }
 
@@ -843,8 +843,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
         public TextLoadAction(JTextComponent field) {
             putValue(NAME, "Load...");
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_O,
+                    PopupExtension.getMenuShortcutKeyMask()));
             this.field = field;
         }
 
@@ -894,8 +894,8 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         public TextSaveAction(JTextComponent component) {
             super(component);
             putValue(NAME, "Save...");
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_S,
+                    PopupExtension.getMenuShortcutKeyMask()));
         }
 
         @Override

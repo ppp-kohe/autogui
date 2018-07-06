@@ -176,15 +176,14 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
         public UndoAction(UndoManager manager, boolean undo) {
             this.manager = manager;
             this.undo = undo;
-            int mask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+            int mask = PopupExtension.getMenuShortcutKeyMask();
             if (undo) {
                 putValue(NAME, "Undo");
-                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z,
-                        mask));
+                putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_Z, mask));
             } else {
                 putValue(NAME, "Redo");
-                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z,
-                        mask | KeyEvent.SHIFT_DOWN_MASK));
+                putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_Z,
+                        mask, KeyEvent.SHIFT_DOWN_MASK));
             }
             lastEnabled = isEnabled();
         }

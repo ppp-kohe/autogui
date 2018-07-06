@@ -2,6 +2,7 @@ package autogui.swing.log;
 
 import autogui.base.log.*;
 import autogui.swing.icons.GuiSwingIcons;
+import autogui.swing.util.PopupExtension;
 import autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
@@ -276,9 +277,9 @@ public class GuiSwingLogManager extends GuiLogManager {
         public LogWindowShowAction(JFrame frame) {
             putValue(NAME, "Show");
             putValue(ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_L,
-                            KeyEvent.SHIFT_DOWN_MASK |
-                                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_L,
+                            KeyEvent.SHIFT_DOWN_MASK,
+                                    PopupExtension.getMenuShortcutKeyMask()));
             GuiSwingIcons icons = GuiSwingIcons.getInstance();
 
             int size = UIManagerUtil.getInstance().getScaledSizeInt(25);

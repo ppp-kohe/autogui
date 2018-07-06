@@ -120,8 +120,8 @@ public class GuiSwingJsonTransfer {
             this.component = component;
             putValue(NAME, "Copy as JSON");
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_C,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.ALT_DOWN_MASK));
         }
 
         @Override
@@ -172,8 +172,8 @@ public class GuiSwingJsonTransfer {
             this.component = component;
             putValue(NAME, "Paste JSON");
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_V,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.ALT_DOWN_MASK));
         }
 
         @Override
@@ -219,8 +219,8 @@ public class GuiSwingJsonTransfer {
             super(component, context);
             putValue(NAME, "Export JSON...");
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_S,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_S,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.ALT_DOWN_MASK));
         }
 
         @Override
@@ -256,8 +256,8 @@ public class GuiSwingJsonTransfer {
             super(component, context);
             putValue(NAME, "Import JSON...");
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_O,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_O,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.ALT_DOWN_MASK));
         }
 
         @Override
@@ -481,8 +481,8 @@ public class GuiSwingJsonTransfer {
         public JsonCopyCellsAction(GuiMappingContext contextOptional, List<TableMenuCompositeJsonCopy> activatedColumns) {
             super(contextOptional);
             putValue(NAME, "Copy Cells as JSON");
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
+            putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_C,
+                    PopupExtension.getMenuShortcutKeyMask(), KeyEvent.ALT_DOWN_MASK));
             this.activatedColumns = activatedColumns;
         }
 
@@ -557,8 +557,8 @@ public class GuiSwingJsonTransfer {
         public JsonSaveCellsAction(GuiMappingContext contextOptional, List<TableMenuCompositeJsonCopy> activatedColumns, JComponent table) {
             super(contextOptional, activatedColumns);
             putValue(NAME, "Export Cells as JSON...");
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
+            putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_S,
+                    PopupExtension.getMenuShortcutKeyMask(), KeyEvent.ALT_DOWN_MASK));
             this.table = table;
         }
 
@@ -683,8 +683,8 @@ public class GuiSwingJsonTransfer {
                     ? "Paste JSON to Rows"
                     : "Paste JSON to Cells");
             if (!allCells) {
-                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
+                putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_V,
+                        PopupExtension.getMenuShortcutKeyMask(), KeyEvent.ALT_DOWN_MASK));
             }
             rows = allCells;
             this.activeComposite = activeComposite;
@@ -873,8 +873,8 @@ public class GuiSwingJsonTransfer {
                     ? "Import JSON to Rows..."
                     : "Import JSON to Cells...");
             if (!allCells) {
-                putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O,
-                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.ALT_DOWN_MASK));
+                putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_O,
+                        PopupExtension.getMenuShortcutKeyMask(), KeyEvent.ALT_DOWN_MASK));
             }
         }
 

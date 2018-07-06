@@ -256,10 +256,10 @@ public class SearchTextField extends JComponent {
         Action paste = TransferHandler.getPasteAction();
         component.getActionMap().put(paste.getValue(Action.NAME), paste);
 
-        component.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), copy.getValue(Action.NAME));
-        component.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), paste.getValue(Action.NAME));
+        component.getInputMap().put(PopupExtension.getKeyStroke(KeyEvent.VK_C,
+                PopupExtension.getMenuShortcutKeyMask()), copy.getValue(Action.NAME));
+        component.getInputMap().put(PopupExtension.getKeyStroke(KeyEvent.VK_V,
+                PopupExtension.getMenuShortcutKeyMask()), paste.getValue(Action.NAME));
     }
 
     protected int getEditingRunnerDelay() {

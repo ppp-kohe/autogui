@@ -357,8 +357,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
             super(null);
 
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_V,
+                            PopupExtension.getMenuShortcutKeyMask()));
             this.view = view;
         }
 

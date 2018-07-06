@@ -548,8 +548,8 @@ public interface GuiSwingView extends GuiSwingElement {
 
         public ContextRefreshAction(GuiMappingContext context, ValuePane<?> pane) {
             putValue(NAME, "Refresh");
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_R,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+            putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_R,
+                    PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
             this.pane = pane;
             this.context = context;
         }
@@ -580,8 +580,8 @@ public interface GuiSwingView extends GuiSwingElement {
         public ToStringCopyAction(ValuePane<?> pane, GuiMappingContext context) {
             super(context);
             putValue(NAME, "Copy as Text");
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_C,
+                    PopupExtension.getMenuShortcutKeyMask()));
             this.pane = pane;
         }
 
@@ -656,10 +656,10 @@ public interface GuiSwingView extends GuiSwingElement {
         Action paste = TransferHandler.getPasteAction();
         component.getActionMap().put(paste.getValue(Action.NAME), paste);
 
-        component.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), copy.getValue(Action.NAME));
-        component.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), paste.getValue(Action.NAME));
+        component.getInputMap().put(PopupExtension.getKeyStroke(KeyEvent.VK_C,
+                PopupExtension.getMenuShortcutKeyMask()), copy.getValue(Action.NAME));
+        component.getInputMap().put(PopupExtension.getKeyStroke(KeyEvent.VK_V,
+                PopupExtension.getMenuShortcutKeyMask()), paste.getValue(Action.NAME));
     }
 
     interface SpecifierManager {

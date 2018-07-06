@@ -658,8 +658,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             putValue(NAME, "Settings...");
 
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_COMMA,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_COMMA,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
             this.pane = settingPane;
             this.editorPane = editorPane;
             contentPane = new JPanel(new BorderLayout());

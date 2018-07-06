@@ -281,7 +281,15 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     }
 
     public static KeyStroke getDefaultKeyStroke() {
-        return KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK);
+        return getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK);
+    }
+
+    public static KeyStroke getKeyStroke(int key, int... mask) {
+        int mod = 0;
+        for (int m : mask) {
+            mod |= m;
+        }
+        return KeyStroke.getKeyStroke(key, mod);
     }
 
     @SuppressWarnings("deprecation")

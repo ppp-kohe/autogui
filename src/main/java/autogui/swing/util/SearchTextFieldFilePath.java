@@ -52,8 +52,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
     public void initPopup() {
         super.initPopup();
 
-        getDynamicItemAction("parent", KeyStroke.getKeyStroke(KeyEvent.VK_UP,
-                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), true);
+        getDynamicItemAction("parent", PopupExtension.getKeyStroke(KeyEvent.VK_UP,
+                PopupExtension.getMenuShortcutKeyMask()), true);
     }
 
     public void initTransferHandler() {
@@ -238,8 +238,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
         public FilePasteAction(SearchTextFieldFilePath component) {
             super("Paste Value", component);
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_V,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_V,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
         }
 
         @Override
@@ -325,8 +325,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
             super("Copy Value", component);
 
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_C,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
         }
 
         @Override
@@ -400,8 +400,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
         public DesktopOpenAction(SearchTextFieldFilePath component) {
             super("Open in Desktop", component);
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_B,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_B,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
 
         }
 
@@ -442,8 +442,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
         public DesktopRevealAction(SearchTextFieldFilePath component) {
             super("Reveal in Desktop", component);
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_D,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_D,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
             initCommand();
         }
 
@@ -510,8 +510,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
         public OpenDialogAction(SearchTextFieldFilePath component) {
             super("Select...", component);
             putValue(Action.ACCELERATOR_KEY,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_O,
-                            Toolkit.getDefaultToolkit().getMenuShortcutKeyMask() | KeyEvent.SHIFT_DOWN_MASK));
+                    PopupExtension.getKeyStroke(KeyEvent.VK_O,
+                            PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
         }
 
         @Override
@@ -632,8 +632,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 if (Files.exists(p)) {
                     FileItem item = getFileItem(p, MENU_CATEGORY_FILE_PARENT, false);
                     if (items.isEmpty()) {
-                        item = item.withKey(KeyStroke.getKeyStroke(KeyEvent.VK_UP,
-                                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+                        item = item.withKey(PopupExtension.getKeyStroke(KeyEvent.VK_UP,
+                                PopupExtension.getMenuShortcutKeyMask()));
                     }
                     items.add(item);
                 }

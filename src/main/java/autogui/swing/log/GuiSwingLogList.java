@@ -3,10 +3,7 @@ package autogui.swing.log;
 import autogui.base.log.GuiLogEntry;
 import autogui.base.log.GuiLogManagerConsole;
 import autogui.swing.icons.GuiSwingIcons;
-import autogui.swing.util.ResizableFlowLayout;
-import autogui.swing.util.SearchTextField;
-import autogui.swing.util.SettingsWindow;
-import autogui.swing.util.UIManagerUtil;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -861,8 +858,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
         public LogListSaveAction(GuiSwingLogList list) {
             this.list = list;
             putValue(NAME, "Save...");
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_S,
+                    PopupExtension.getMenuShortcutKeyMask()));
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("save"));
             putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("save"));
         }
@@ -895,8 +892,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         public LogListClearAction(GuiSwingLogList list) {
             putValue(NAME, "Clear");
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_K,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_K,
+                    PopupExtension.getMenuShortcutKeyMask()));
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("clear"));
             putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("clear"));
             this.list = list;
@@ -941,8 +938,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         public LogListCopyTextAction(GuiSwingLogList list) {
             putValue(NAME, "Copy");
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_C,
+                    PopupExtension.getMenuShortcutKeyMask()));
             this.list = list;
         }
 

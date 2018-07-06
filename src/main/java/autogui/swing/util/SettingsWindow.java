@@ -70,7 +70,7 @@ public class SettingsWindow {
             System.err.printf("created: %x\n", System.identityHashCode(window));
         }
         window.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "window-close");
+                .put(PopupExtension.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "window-close");
         window.getRootPane().getActionMap()
                 .put("window-close", new AbstractAction() {
                     @Override

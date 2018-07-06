@@ -2,6 +2,7 @@ package autogui.swing;
 
 import autogui.swing.util.NamedPane;
 import autogui.swing.util.PopupCategorized;
+import autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +35,8 @@ public class GuiSwingKeyBinding {
                 System.err.println("could not obtain key-stroke for \"" + key + "\"");
                 return null;
             } else {
-                return copyWithModifiers(s, s.getModifiers() | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+                return copyWithModifiers(s, s.getModifiers() |
+                        PopupExtension.getMenuShortcutKeyMask());
             }
         }
     }
@@ -55,7 +57,7 @@ public class GuiSwingKeyBinding {
     }
 
     public void addDefaultExcluded() {
-        int mod = getMenuShortcutKeyMask();
+        int mod = PopupExtension.getMenuShortcutKeyMask();
         int[] vk = {
                 KeyEvent.VK_Q, //quit
                 KeyEvent.VK_W, //close
@@ -557,34 +559,13 @@ public class GuiSwingKeyBinding {
                         InputEvent.ALT_DOWN_MASK));
                         //,InputEvent.META_DOWN_MASK)); //meta is invalid for generic keyboards in Win/Linux, for mac getMenuShortcutKeyMask() returns it
                 //InputEvent.ALT_GRAPH_DOWN_MASK);
-                modifiers.remove((Object) getMenuShortcutKeyMask());
+                modifiers.remove((Object) PopupExtension.getMenuShortcutKeyMask());
                 // for Linux Desktop (GNOME only?): (Alt|Ctrl[+Alt])[+Shift] [+key]
                 // for Windows: Ctrl[+Alt][+Shift] [+key]
                 // for macOS:  Cmd=Meta, Opt=Alt, Meta[+Ctrl][+Alt][+Shift] [+key]
             }
             return modifiers;
         }
-    }
-
-    @SuppressWarnings("deprecation")
-    public static int getMenuShortcutKeyMask() {
-        int menuMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-        int menuDownMask = menuMask;
-        switch (menuMask) {
-            case InputEvent.SHIFT_MASK:
-                menuDownMask = InputEvent.SHIFT_DOWN_MASK;
-                break;
-            case InputEvent.CTRL_MASK:
-                menuDownMask = InputEvent.CTRL_DOWN_MASK;
-                break;
-            case InputEvent.ALT_MASK:
-                menuDownMask = InputEvent.ALT_DOWN_MASK;
-                break;
-            case InputEvent.META_MASK:
-                menuDownMask = InputEvent.META_DOWN_MASK;
-                break;
-        }
-        return menuDownMask;
     }
 
     @SuppressWarnings("deprecation")

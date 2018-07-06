@@ -418,8 +418,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
         public ShowPreferencesAction(Supplier<GuiSwingPreferences> preferences, JComponent sender) {
             putValue(NAME, "Preferences...");
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_COMMA,
-                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_COMMA,
+                    PopupExtension.getMenuShortcutKeyMask()));
             this.preferences = preferences;
             this.sender = sender;
         }
@@ -504,7 +504,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     public static class WindowMenuMinimizeAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         public WindowMenuMinimizeAction() {
             putValue(NAME, "Minimize");
-            ///putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_M, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+            ///putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_M,
+            // PopupExtension.getMenuShortcutKeyMask()));
         }
 
         @Override
@@ -593,7 +594,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         public WindowCloseAction(JComponent pane) {
             this.pane = pane;
             putValue(NAME, "Close Window");
-            keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+            keyStroke = PopupExtension.getKeyStroke(KeyEvent.VK_W, PopupExtension.getMenuShortcutKeyMask());
             putValue(ACCELERATOR_KEY, keyStroke);
         }
 
