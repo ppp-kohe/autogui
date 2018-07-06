@@ -530,7 +530,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     /**
      * a menu filter for converting an action to another action which supports a selected rows.
      * <ul>
-     *  <li>{@link TableTargetMenu#convert(TableTargetColumn)}</li>
+     *  <li>{@link TableTargetMenu#convert(GuiReprCollectionTable.TableTargetColumn)}</li>
      *  <li>the class currently explicitly handles actions in {@link PopupExtensionText} and in {@link SearchTextFieldFilePath}.</li>
      *  <li>a {@link TableTargetCellAction} is converted to a {@link TableTargetExecutionAction}.</li>
      * </ul>

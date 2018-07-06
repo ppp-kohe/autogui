@@ -333,7 +333,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
 
         /**
          * @param c an empty content: DefaultStyleDocument seems to require an empty content at initialization.
-         *          To satisfy this, use {@link #create(Content)} which do removing, creating, and re-inserting
+         *          To satisfy this, use {@link ContentWrappingDocument#create(AbstractDocument.Content)} which do removing, creating, and re-inserting
          */
         public ContentWrappingDocument(Content c) {
             super(c, new StyleContext());

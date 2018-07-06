@@ -170,7 +170,7 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
-     * call {@link #getValue(GuiMappingContext, GuiSourceValue, ObjectSpecifier, GuiSourceValue)}
+     * call {@link #getValue(GuiMappingContext, GuiMappingContext.GuiSourceValue, GuiReprValue.ObjectSpecifier, GuiMappingContext.GuiSourceValue)}
      * and never return NO_UPDATE
      * @param context the context
      * @param parentSource the property owner. if null then nothing will happen for properties
@@ -194,8 +194,8 @@ public class GuiReprValue implements GuiRepresentation {
     /**
      * obtain the current value of the context.
      *  This is called from {@link #checkAndUpdateSource(GuiMappingContext)},
-     *   and invoke {@link #getParentSource(GuiMappingContext, ObjectSpecifier)}
-     *   and {@link #getValue(GuiMappingContext, GuiSourceValue, ObjectSpecifier, GuiSourceValue)}
+     *   and invoke {@link #getParentSource(GuiMappingContext, GuiReprValue.ObjectSpecifier)}
+     *   and {@link #getValue(GuiMappingContext, GuiMappingContext.GuiSourceValue, GuiReprValue.ObjectSpecifier, GuiMappingContext.GuiSourceValue)}
      * @param context  target context,
      * @param specifier the specifier of the value
      * @return the current value (nullable) or {@link GuiUpdatedValue#NO_UPDATE}
@@ -335,13 +335,13 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
-     * obtain the parent source by {@link #getUpdatedSource(GuiMappingContext, ObjectSpecifier)} and
-     *   call {@link #update(GuiMappingContext, GuiSourceValue, Object, ObjectSpecifier)}
+     * obtain the parent source by {@link #getUpdatedSource(GuiMappingContext, GuiReprValue.ObjectSpecifier)} and
+     *   call {@link #update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, GuiReprValue.ObjectSpecifier)}
      * @param context the target context
      * @param newValue a new value to be set to the property
      * @param specifier the specifier of the value
      * @return the returned value by updating
-     * @throws Throwable an error while getParentSource or udpate
+     * @throws Throwable an error while getParentSource or update
      */
     public Object updateWithParentSource(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) throws Throwable {
         GuiSourceValue src = getParentSource(context, specifier.getParent());

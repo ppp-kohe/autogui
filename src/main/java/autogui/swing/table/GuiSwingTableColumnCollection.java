@@ -76,7 +76,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
     }
 
     /**
-     * create a {@link DynamicColumnFactoryList} and add it to the model by {@link TableColumnHost#addColumnDynamic(DynamicColumnFactory)}
+     * create a {@link DynamicColumnFactoryList} and add it to the model by {@link TableColumnHost#addColumnDynamic(ObjectTableModelColumns.DynamicColumnFactory)}
      * @param context the context of the sub-list, associated with a collection-table
      * @param model the adding target
      * @param rowSpecifier the table root row-specifier
@@ -646,7 +646,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
          * @param c the root list
          * @return an {@link ObjectTableColumnSizeComposite}
          *   with a single child which is combined by
-         *     {@link ObjectTableColumnSizeComposite#set(ObjectTableColumnSize)} for elements of the list
+         *     {@link ObjectTableColumnSizeComposite#set(ObjectTableModelColumns.ObjectTableColumnSize)} for elements of the list
          */
         @Override
         public ObjectTableColumnSize getColumnSize(Object c) {

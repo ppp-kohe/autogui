@@ -48,15 +48,15 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      * for both cases, sub-contexts are tested with {@link GuiSwingMapperSet}.
      * <ul>
      *     <li>{@link GuiSwingTableColumn}: a static column. <code>V of List&lt;V&gt; or List&lt;E&gt; and class E { V fld; }</code>.
-     *       it calls {@link GuiSwingTableColumn#createColumn(GuiMappingContext, SpecifierManagerIndex, SpecifierManager)}
+     *       it calls {@link GuiSwingTableColumn#createColumn(GuiMappingContext, GuiSwingTableColumn.SpecifierManagerIndex, GuiSwingView.SpecifierManager)}
      *         and adds the column as a static column</li>
      *     <li>{@link GuiSwingTableColumnDynamic}: a dynamic column, a nested collection, or a property-pane.
      *            <code>List&lt;List&lt;E&gt;&gt;</code> or <code>List&lt;E&gt; class E { C prop; }</code>.
-     *       it calls {@link GuiSwingTableColumnDynamic#createColumnDynamic(GuiMappingContext, TableColumnHost, SpecifierManagerIndex, SpecifierManager)}</li>
+     *       it calls {@link GuiSwingTableColumnDynamic#createColumnDynamic(GuiMappingContext, GuiSwingTableColumnSet.TableColumnHost, GuiSwingTableColumn.SpecifierManagerIndex, GuiSwingView.SpecifierManager)}</li>
      *     <li>{@link GuiSwingTableColumnSet}: a composition of static columns. <code>List&lt;E&gt; and class E {...}</code>
      *         it causes a recursive call as the above 2nd case</li>
      *     <li>a list action: <code>act(List&lt;E&gt;)</code>. it add the context as an action.
-     *          Note other actions are treated by {@link #createColumnActions(GuiMappingContext, TableSelectionSource)}</li>
+     *          Note other actions are treated by {@link #createColumnActions(GuiMappingContext, GuiSwingTableColumnSet.TableSelectionSource)}</li>
      * </ul>
      * @param context the context, initially a collection element
      * @param parentModel the target of adding columns, passed by sender

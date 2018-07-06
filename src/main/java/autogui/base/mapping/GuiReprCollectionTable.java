@@ -100,11 +100,11 @@ import java.util.stream.StreamSupport;
  *    A concrete GUI component for the repr., like GuiSwingViewCollectionTable,
  *       can partially obtains properties of an element of a collection as on-demand cells.
  *
- *    A GUI column obtains its model value via {@link GuiReprValue#getUpdatedValue(GuiMappingContext, ObjectSpecifier)} ,
+ *    A GUI column obtains its model value via {@link GuiReprValue#getUpdatedValue(GuiMappingContext, GuiReprValue.ObjectSpecifier)} ,
  *      and then the repr. obtains a parent value which is an element in a list.
  *    A parent {@link GuiReprCollectionElement} provides an element value by
- *        the special {@link #getValueCollectionElement(GuiMappingContext, GuiSourceValue,
- *                          ObjectSpecifier, GuiSourceValue)} .
+ *        the special {@link #getValueCollectionElement(GuiMappingContext, GuiMappingContext.GuiSourceValue,
+ *                          GuiReprValue.ObjectSpecifier, GuiMappingContext.GuiSourceValue)} .
  *
  * <h3>examples</h3>
  *   <pre>
@@ -165,7 +165,7 @@ import java.util.stream.StreamSupport;
  *
  *                  <li><code>ObjectTableModel#getValueAt(int,int)</code> obtains a row object from the obtained source list</li>
  *                  <li>and call  <code>ObjectTableColumnValue#getCellValue(rowObject,ri,ci)</code>,
- *                              which causes {@link GuiReprValue#getValueWithoutNoUpdate(GuiMappingContext, GuiSourceValue, ObjectSpecifier)}
+ *                              which causes {@link GuiReprValue#getValueWithoutNoUpdate(GuiMappingContext, GuiMappingContext.GuiSourceValue, GuiReprValue.ObjectSpecifier)}
  *                                  with the rowObject and a row-indexed specifier.
  *              </ul>
  *       </li>
@@ -188,13 +188,13 @@ import java.util.stream.StreamSupport;
  *          <ul>
  *            <li><code>ObjectTableModel#setValueAt(v,ri,ci)</code> causes
  *             <code>ObjectTableColumnValue#setCellValue(rowObj,ri,ci,v)</code></li>
- *            <li>the repr's update is {@link GuiReprValue#update(GuiMappingContext, GuiSourceValue, Object, ObjectSpecifier)}
+ *            <li>the repr's update is {@link GuiReprValue#update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, GuiReprValue.ObjectSpecifier)}
  *              and it matches the case of the parent context is a collection-element,
- *                then it calls parent's {@link GuiReprValue#updateWithParentSource(GuiMappingContext, Object, ObjectSpecifier)}</li>
+ *                then it calls parent's {@link GuiReprValue#updateWithParentSource(GuiMappingContext, Object, GuiReprValue.ObjectSpecifier)}</li>
  *            <li>the method of the parent obtains the source of the parent of the parent, which is a list, and
- *                 call {@link GuiReprCollectionElement#update(GuiMappingContext, GuiSourceValue, Object, ObjectSpecifier)}
+ *                 call {@link GuiReprCollectionElement#update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, GuiReprValue.ObjectSpecifier)}
  *                 as the parent update.
- *                 the method delegates {@link GuiReprCollectionTable#updateCollectionElement(GuiMappingContext, GuiSourceValue, Object, ObjectSpecifier)}</li>
+ *                 the method delegates {@link GuiReprCollectionTable#updateCollectionElement(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, GuiReprValue.ObjectSpecifier)}</li>
  *
  *          </ul>
  *        </li>

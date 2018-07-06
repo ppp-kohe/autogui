@@ -235,12 +235,12 @@ public class ObjectTableModelColumns
      *   each node has an associated {@link DynamicColumnFactory} and
      *      {@link ObjectTableColumn}s created from the factory.
      *    <ul>
-     *        <li>{@link ObjectTableModelColumns#addColumnDynamic(DynamicColumnFactory)} creates a container.
+     *        <li>{@link ObjectTableModelColumns#addColumnDynamic(ObjectTableModelColumns.DynamicColumnFactory)} creates a container.
      *              At the time, sub-containers are not created.</li>
      *        <li>By refreshing columns,  {@link #getColumnSize(Object)} is invoked with a raw list object.
      *             The tree of {@link DynamicColumnFactory} traverses the object and constructs a tree of {@link ObjectTableColumnSize}</li>
-     *        <li>Next, {@link #update(int, ObjectTableColumnSize)} of the root is called.
-     *             it starts {@link ObjectTableColumnSize#create(DynamicColumnContainer)} from the root size with the root container.
+     *        <li>Next, {@link #update(int, ObjectTableModelColumns.ObjectTableColumnSize)} of the root is called.
+     *             it starts {@link ObjectTableColumnSize#create(ObjectTableModelColumns.DynamicColumnContainer)} from the root size with the root container.
      *              The create method traverses children and then the sub-containers are created on-demand</li>
      *    </ul>
      *      */

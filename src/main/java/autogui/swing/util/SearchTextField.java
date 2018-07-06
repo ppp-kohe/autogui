@@ -95,13 +95,13 @@ public class SearchTextField extends JComponent {
          */
         List<PopupCategorized.CategorizedMenuItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher);
 
-        /** <strike>The method is executed under the event dispatching thread.</strike>
+        /** The method is executed under the event dispatching thread.
          *   The user selects the item from a menu and then this method will be called.
          * @param item the selected item
          */
         void select(PopupCategorized.CategorizedMenuItem item);
 
-        /** After {@link #getCandidates(String, boolean, SearchTextFieldPublisher)},
+        /** After {@link #getCandidates(String, boolean, SearchTextField.SearchTextFieldPublisher)},
          *    an exact matching item might be found, and then the method returns the item.
          *    Otherwise returns null.
          *    The method is executed under the event dispatching thread.
@@ -503,8 +503,6 @@ public class SearchTextField extends JComponent {
     /** the user selects the item from the menu.
      * update selection in the model and also GUI display.
      * It will stop the current running task if exists, and starts a new task.
-     * <strike>This is the task using an item supplied by the model.
-     *  So, it does not cause a further update that leads to a background task </strike>
      *
      * @param item the selected item
      */

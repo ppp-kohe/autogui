@@ -19,6 +19,8 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <compilerArgs>
                         <arg>-Xlint</arg>
                     </compilerArgs>
@@ -38,6 +40,7 @@
                     <links>
                         <link>https://docs.oracle.com/javase/10/docs/api</link>
                     </links>
+                    <locale>en</locale>
                 </configuration>
             </plugin>
         </plugins>

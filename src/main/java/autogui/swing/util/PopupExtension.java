@@ -28,7 +28,8 @@ import java.util.regex.Pattern;
  *     <li>{@link KeyListener}  with {@link #keyMatcher}, can be {@link #getDefaultKeyMatcher()}</li>
  *     <li>{@link ActionListener} caused by {@link #getAction()} </li>
  * </ul>
- * {@link #menuBuilder} determines menu items in the popup menu via {@link PopupMenuBuilder#buildWithClear(PopupMenuFilter, JPopupMenu)}.
+ * {@link #menuBuilder} determines menu items in the popup menu via
+ * {@link PopupMenuBuilder#buildWithClear(PopupExtension.PopupMenuFilter, JPopupMenu)}.
  *
  */
 public class PopupExtension implements MouseListener, KeyListener, ActionListener {
@@ -94,7 +95,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
          */
         void build(PopupMenuFilter filter, Consumer<Object> menu);
 
-        /** the default behavior reconstruct entire items by {@link #build(PopupMenuFilter, Consumer)}.
+        /** the default behavior reconstruct entire items by {@link #build(PopupExtension.PopupMenuFilter, Consumer)}.
          *    The Consumer can append an item to the menu.
          * @param filter an item filter
          * @param menu the target for appending menus
