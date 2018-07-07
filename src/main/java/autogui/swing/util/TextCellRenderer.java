@@ -406,8 +406,12 @@ public class TextCellRenderer<ValueType> extends JPanel
         if (pressInit) {
             ranges.clear();
         }
+        Arrays.stream(rs)
+                .forEach(r -> r.setValue(value, true));
+        pointComponent.invalidate();
+        pointComponent.validate(); //update layout of the parent component
+
         for (TextCellRenderer<V> r : rs) {
-            r.setValue(value, true);
             int idx = r.getIndex(SwingUtilities.convertPoint(pointComponent, point, r));
             int[] range = ranges.computeIfAbsent(r, v -> new int[2]);
             if (pressInit) {

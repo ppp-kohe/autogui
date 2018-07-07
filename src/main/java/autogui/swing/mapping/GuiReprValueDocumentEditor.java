@@ -167,7 +167,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
             Object ret = SwingDeferredRunner.run(() -> toJsonInEvent(source));
             if (ret instanceof SwingDeferredRunner.TaskResultFuture) {
                 Future<Object> v = ((SwingDeferredRunner.TaskResultFuture) ret).getFuture();
-                return v.get(1, TimeUnit.SECONDS);
+                return v.get(2, TimeUnit.SECONDS);
             } else {
                 return ret;
             }
@@ -371,7 +371,12 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     /**
-     *  a content for {@link StringBuilder}
+     *  a content for {@link StringBuilder}:
+     *   wraps a buffer and manages any changes to the buffer.
+     *   Other changes to the buffer outside of the class will cause unexpected behavior.
+     *   Thus, the client code must not modify contents of the buffer.
+     *   Also, when the class modified the buffer (usually in the event thread),
+     *    it acquires the monitor of the buffer by synchronized.
      */
     public static class StringBuilderContent implements AbstractDocument.Content, Serializable {
         protected final StringBuilder buffer;

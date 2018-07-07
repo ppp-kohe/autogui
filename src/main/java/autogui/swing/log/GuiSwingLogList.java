@@ -145,6 +145,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
     }
 
     public void addLogEntryInEvent(GuiLogEntry entry, boolean lowPriority) {
+        Rectangle beforeScrollTarget = getTargetEntryRectForScroll(getRowCount() - 1);
+
         GuiSwingLogListModel model = getLogListModel();
         int index = model.indexOfElement(entry);
         if (index >= 0) {
@@ -154,18 +156,35 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             model.fireRowChangedAt(index);
             return;
         }
-        index = model.addLogEntry(entry, lowPriority);
-        int first = getFirstVisibleIndex(); //TODO the operation is slow?
-        int last = getLastVisibleIndex();
+        LogListInsertResult res = model.addLogEntry(entry, lowPriority);
 
-        if (isRowSelected(index)) {
-            removeRowSelectionInterval(index, index);
+        if (res.hasSelectionChange()) {
+            getSelectionModel().setValueIsAdjusting(true);
+            res.changedNonSelectedItems.forEach(i -> {
+                if (isRowSelected(i)) {
+                    getSelectionModel().removeSelectionInterval(i, i);
+                }
+            });
+            res.changedSelectedItems.forEach(i -> {
+                if (!isRowSelected(i)) {
+                    getSelectionModel().addSelectionInterval(i, i);
+                }
+            });
+            getSelectionModel().setValueIsAdjusting(false);
         }
 
-        if (!(first <= index && index <= last + 1) || index == getRowCount() - 1) { //invisible or last item
-            int target = Math.max(model.getRowCount() - 1, last + 1);
-            scrollRectToVisible(getTargetEntryRectForScroll(target));
+        Rectangle scrollTarget = getTargetEntryRectForScroll(getRowCount() - 1);
+        Rectangle visibleRect = getVisibleRect();
+        if (!visibleRect.contains(scrollTarget) && visibleRect.contains(beforeScrollTarget)) {
+            scrollRectToVisible(scrollTarget);
         }
+
+//        int first = getFirstVisibleIndex(); //the operation is slow?
+//        int last = getLastVisibleIndex();
+//        if (!(first <= index && index <= last + 1) || index >= getRowCount() - res.newHighPriorityActives) { //invisible or last item
+//            int target = Math.max(model.getRowCount() - 1, last + 1);
+//            scrollRectToVisible(getTargetEntryRectForScroll(target));
+//        }
     }
 
     public void updateSelectionToSelectionModel(GuiSwingLogEntry e, int index) {
@@ -276,6 +295,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
     public static class GuiSwingLogListModel extends AbstractListModel<GuiLogEntry> {
         protected int entryLimit = -1;
         protected java.util.List<GuiLogEntry> entries = new ArrayList<>();
+        protected int highPriorityActives = 0;
 
         public int getEntryLimit() {
             return entryLimit;
@@ -341,7 +361,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             return entries.contains(entry);
         }
 
-        public int addLogEntry(GuiLogEntry entry, boolean lowPriority) {
+        public LogListInsertResult addLogEntry(GuiLogEntry entry, boolean lowPriority) {
             if (entryLimit > 0 && entries.size() >= entryLimit) {
                 int removeIndex = -1;
                 for (int i = 0, s = entries.size(); i < s; ++i) {
@@ -356,26 +376,54 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                 entries.remove(removeIndex);
                 fireIntervalRemoved(this, removeIndex, removeIndex);
             }
-            int index = 0;
-            if (entry.isActive() && !lowPriority) {
-                index = entries.size();
-            } else {
-                for (int i = entries.size() - 1;  i >= 0; --i) {
-                    if (!entries.get(i).isActive()) {
-                        index = i + 1;
-                        break;
+            //collect finished items of added as !lowPriority
+            List<GuiLogEntry> movedActives = new ArrayList<>(highPriorityActives);
+            int highPriorityActivesStart = Math.max(0, entries.size() - highPriorityActives);
+            for (int i = highPriorityActivesStart, l = entries.size(); i < l; ++i) {
+                GuiLogEntry e = entries.get(i);
+                if (e.isActive()) {
+                    movedActives.add(e);
+                }
+            }
+            LogListInsertResult res = new LogListInsertResult();
+            int endOfNonActive = entries.size() - movedActives.size();
+            if (movedActives.size() != highPriorityActives) { //there are finished entries
+                entries.removeAll(movedActives); //remove and
+                entries.addAll(movedActives);    //add to back
+                fireContentsChanged(this, highPriorityActivesStart, entries.size() - 1);
+
+                //collect information about selection changes
+                res.changedSelectedItems = new ArrayList<>(highPriorityActives);
+                res.changedNonSelectedItems = new ArrayList<>(highPriorityActives);
+                for (int i = highPriorityActivesStart, l = entries.size(); i < l; ++i) {
+                    GuiLogEntry e = entries.get(i);
+                    if (e instanceof GuiSwingLogEntry) {
+                        if (((GuiSwingLogEntry) e).isSelected()) {
+                            res.changedSelectedItems.add(i);
+                        } else {
+                            res.changedNonSelectedItems.add(i);
+                        }
                     }
                 }
+                highPriorityActives = movedActives.size();
+            }
+            int index;
+            if (entry.isActive() && !lowPriority) {
+                index = entries.size();
+                highPriorityActives++;
+            } else {
+                index = endOfNonActive;
             }
             entries.add(index, entry);
             fireTableRowsInserted(index, entries.size() - 1);
-            return index;
+            res.index = index;
+            res.newHighPriorityActives = highPriorityActives;
+            return res;
         }
 
         public void fireTableRowsInserted(int from, int to) {
             fireIntervalAdded(this, from, to);
         }
-
 
         public void removeInactiveEntries() {
             boolean removingRange = false;
@@ -401,6 +449,23 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             if (removingRange) {
                 fireIntervalRemoved(this, removingStart, i - 1);
             }
+        }
+    }
+
+    /** result information of an addition */
+    public static class LogListInsertResult {
+        /**
+         * inserted index
+         */
+        public int index;
+
+        public int newHighPriorityActives;
+
+        public List<Integer> changedSelectedItems = Collections.emptyList();
+        public List<Integer> changedNonSelectedItems = Collections.emptyList();
+
+        public boolean hasSelectionChange() {
+            return !changedSelectedItems.isEmpty() || !changedNonSelectedItems.isEmpty();
         }
     }
 

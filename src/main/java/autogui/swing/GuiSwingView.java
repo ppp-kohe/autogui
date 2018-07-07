@@ -25,6 +25,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * the interface for regular pane factory, creating a {@link GuiSwingView.ValuePane}.
+ */
 public interface GuiSwingView extends GuiSwingElement {
     JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier);
 
@@ -32,32 +35,52 @@ public interface GuiSwingView extends GuiSwingElement {
         return false;
     }
 
+    /**
+     * the base mixin interface to a {@link JComponent} bound to an object or a property via a context ({@link #getSwingViewContext()}).
+     * <p>
+     *     a pane will need to manage a {@link GuiTaskClock} as the view-clock.
+     * @param <ValueType> the type of the bound value
+     */
     interface ValuePane<ValueType> {
         /** @return basically, the source value of the context, held by the component without touching the context.  */
         ValueType getSwingViewValue();
 
         /** update GUI display,
          *   and it does NOT update the target model value.
-         * processed under the event thread
+         * processed under the event thread.
+         *  also increment the view-clock.
          * @param value the new value
          * */
         void setSwingViewValue(ValueType value);
 
         /**
-         *  update if the clock is newer than the current clock of the pane.
+         *  update if the clock is newer than the current view-clock of the pane.
+         *  the view-clock becomes the given clock.
          *  Note: instead, {@link #setSwingViewValue(Object)} increments the current clock
          * @param value the new value
-         * @param clock the clock of the value: if the clock is newer than the current clock of the pane, it can update
+         * @param clock the clock of the value: if the clock is newer than the current view-clock of the pane, it can update
          */
         void setSwingViewValue(ValueType value, GuiTaskClock clock);
 
-        /** update the GUI display and the model. processed under the event thread
+        /** update the GUI display and the model. processed under the event thread.
+         * also increment the view-clock
          * @param value the new value
          * */
         void setSwingViewValueWithUpdate(ValueType value);
 
+        /**
+         * update the GUI display and the model if the clock is newer than the current view-clock of the pane.
+         * the view-clock becomes the given clock.
+         * @param value the new value
+         * @param clock the clock of the value
+         */
         void setSwingViewValueWithUpdate(ValueType value, GuiTaskClock clock);
 
+        /**
+         * the method is used for table cell-editors, in order to observe the completion of editing.
+         * the default impl. is empty.
+         * @param eventHandler the handler called when the editing is finished
+         */
         default void addSwingEditFinishHandler(Runnable eventHandler) { }
 
         /**
@@ -86,12 +109,21 @@ public interface GuiSwingView extends GuiSwingElement {
          */
         PopupExtension.PopupMenuBuilder getSwingMenuBuilder();
 
+        /**
+         *
+         * @param verticalAlways the flag of showing the vertical scroll-bar
+         * @param horizontalAlways the flag of showing the horizontal scroll-bar
+         * @return a {@link GuiSwingViewWrapper.ValueScrollPane} which wraps the pane
+         */
         default GuiSwingViewWrapper.ValueScrollPane<ValueType> wrapSwingScrollPane(boolean verticalAlways, boolean horizontalAlways) {
             return new GuiSwingViewWrapper.ValueScrollPane<>(asSwingViewComponent(),
                     verticalAlways ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     horizontalAlways ? ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         }
 
+        /**
+         * @return a {@link GuiSwingViewWrapper.ValueWrappingPane} which wraps the pane
+         */
         default GuiSwingViewWrapper.ValueWrappingPane<ValueType> wrapSwingPane() {
             return new GuiSwingViewWrapper.ValueWrappingPane<>(asSwingViewComponent());
         }
@@ -107,6 +139,9 @@ public interface GuiSwingView extends GuiSwingElement {
                     asSwingViewComponent(), getSwingMenuBuilder());
         }
 
+        /**
+         * @return this
+         */
         default JComponent asSwingViewComponent() {
             return (JComponent) this;
         }
@@ -142,6 +177,9 @@ public interface GuiSwingView extends GuiSwingElement {
             return !context.isReprValue() || context.getReprValue().isEditable(context);
         }
 
+        /**
+         * @return creates a key-stroke from it's context. for wrapping panes, returns null
+         */
         default KeyStroke getSwingFocusKeyStroke() {
             return GuiSwingKeyBinding.getKeyStroke(getSwingViewContext().getAcceleratorKeyStroke());
         }
@@ -187,6 +225,11 @@ public interface GuiSwingView extends GuiSwingElement {
                             Objects.equals(p.getSwingViewContext().getName(), name));
         }
 
+        /**
+         * @param name the context name of the action
+         * @return an action defined in the context of the pane. as the default implementation,
+         *    it searches {@link #getSwingStaticMenuItems()}
+         */
         default GuiSwingActionDefault.ExecutionAction getActionByName(String name) {
             return getActionDefault(this,
                     e ->  e.getContext() != null && e.getContext().getName().equals(name));
@@ -200,14 +243,25 @@ public interface GuiSwingView extends GuiSwingElement {
             return findNonNullByFunction(asSwingViewComponent(), p -> getActionByContext(context));
         }
 
+        /**
+         * @return the specifier for the context value, typically obtained from {@link GuiSwingView.SpecifierManager}
+         */
         GuiReprValue.ObjectSpecifier getSpecifier();
 
         default void requestSwingViewFocus() {
             asSwingViewComponent().requestFocusInWindow();
         }
 
+        /**
+         * set the key-stroke info. to the pane as a guide
+         * @param keyStrokeString the key stroke info to be set.
+         */
         default void setKeyStrokeString(String keyStrokeString) { }
 
+        /**
+         * called from a value history menu. the default impl. just calls {@link #setSwingViewValueWithUpdate(Object)}.
+         * @param value the new value. usually a ValueType.
+         */
         @SuppressWarnings("unchecked")
         default void setSwingViewHistoryValue(Object value) {
             setSwingViewValueWithUpdate((ValueType) value);
@@ -222,6 +276,13 @@ public interface GuiSwingView extends GuiSwingElement {
             return getSwingViewContext().isHistoryValueSupported();
         }
 
+        /**
+         *
+         * @param task the task
+         * @param afterTask the task executed for deferred value
+         * @param <RetType> the value type
+         * @return {@link GuiSwingTaskRunner#executeContextTask(Supplier, Consumer)}
+         */
         default <RetType> ContextTaskResult<RetType> executeContextTask(Supplier<RetType> task,
                                                                         Consumer<ContextTaskResult<RetType>> afterTask) {
             return new GuiSwingTaskRunner(getSwingViewContext()).executeContextTask(task, afterTask);
@@ -231,6 +292,13 @@ public interface GuiSwingView extends GuiSwingElement {
 
     ///////////////////////////////
 
+    /**
+     * send the value to the context of the pane by {@link GuiReprValue#updateFromGui(GuiMappingContext, Object, GuiReprValue.ObjectSpecifier, GuiTaskClock)},
+     *    with copying the clock and the specifier of the pane in the caller's thread.
+     * @param pane the source pane
+     * @param value the new value to be sent
+     * @param viewClock the view-clock of the value
+     */
     static void updateFromGui(ValuePane<?> pane, Object value, GuiTaskClock viewClock) {
         GuiMappingContext context = pane.getSwingViewContext();
         GuiReprValue repr = context.getReprValue();
@@ -252,6 +320,9 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
+    /**
+     * the interface for a client of {@link SettingsWindow} implemented by a {@link GuiSwingView.ValuePane}.
+     */
     interface SettingsWindowClient {
         /**
          * at initialization of the root-pane, the method will be called for existing sub-panes.
@@ -262,6 +333,13 @@ public interface GuiSwingView extends GuiSwingElement {
         SettingsWindow getSettingsWindow();
     }
 
+    /**
+     * recursively traverses components and if a component is an instance of the type, call f.
+     * @param type type for a component
+     * @param comp the searched component
+     * @param f a process for each found component
+     * @param <T> any type a component might belong to
+     */
     static <T> void forEach(Class<T> type, Component comp, Consumer<T> f) {
         if (type.isInstance(comp)) {
             f.accept(type.cast(comp));
@@ -273,6 +351,16 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
+    /**
+     * obtain {@link GuiPreferences#getCurrentValue()}
+     *   or a last value of {@link GuiPreferences#getHistoryValues()}
+     *      (only when the context {@link GuiMappingContext#isHistoryValueStored(Object)} with null),
+     *   and set the value by {@link GuiSwingView.ValuePane#setSwingViewHistoryValue(Object)}.
+     *   <p>
+     *  {@link GuiSwingView#loadPreferencesDefault(JComponent, GuiPreferences)} automatically calls the method.
+     * @param prefs the source preferences
+     * @param pane the target pane
+     */
     static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane) {
         if (!pane.isSwingEditable() || !pane.isSwingCurrentValueSupported()) {
             return;
@@ -291,6 +379,12 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
+    /**
+     * traverse descendant components and call {@link GuiSwingView.ValuePane#saveSwingPreferences(GuiPreferences)} for each component.
+     * the root pane calls the method.
+     * @param prefs the preferences for the comp
+     * @param comp the top component
+     */
     static void saveChildren(GuiPreferences prefs, JComponent comp) {
         forEach(ValuePane.class, comp, e -> {
             GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) e;
@@ -305,6 +399,11 @@ public interface GuiSwingView extends GuiSwingElement {
         });
     }
 
+    /**
+     * save the current value and history values of the pane to given preferences
+     * @param pane a {@link GuiSwingView.ValuePane}
+     * @param prefs a target preferences
+     */
     @SuppressWarnings("unchecked")
     static void savePreferencesDefault(JComponent pane, GuiPreferences prefs) {
         if (pane instanceof ValuePane<?>) {
@@ -324,6 +423,11 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
+    /**
+     * load the current value and history values of the prefs to the pane
+     * @param pane a target {@link GuiSwingView.ValuePane}
+     * @param prefs a source preferences
+     */
     @SuppressWarnings("unchecked")
     static void loadPreferencesDefault(JComponent pane, GuiPreferences prefs) {
         try {
@@ -346,6 +450,11 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
+    /**
+     * traverses descendant components and call {@link GuiSwingView.ValuePane#loadPreferencesDefault(JComponent, GuiPreferences)}
+     * @param prefs a top prefs
+     * @param comp  a top component
+     */
     static void loadChildren(GuiPreferences prefs, JComponent comp) {
         forEach(ValuePane.class, comp, c -> {
             if (c != comp) { //skip top
@@ -541,7 +650,13 @@ public interface GuiSwingView extends GuiSwingElement {
                 .forEach(si -> setupKeyBindingsForStaticJMenuSubItems(pane, si, overwrite));
     }
 
-
+    /** an action for refreshing the value of the context of the pane.
+     * <p>
+     *  first it calls {@link GuiSwingView#prepareForRefresh(GuiSwingView.ValuePane)}
+     *      which traverses the target pane and calls {@link GuiSwingView.ValuePane#prepareForRefresh(GuiSwingView.ValuePane)} for each component.
+     * <p>
+     *  next clears values by {@link GuiMappingContext#clearSourceSubTree()} and calls {@link GuiMappingContext#updateSourceSubTree()}
+     *     */
     class ContextRefreshAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         protected GuiMappingContext context;
         protected ValuePane<?> pane;
@@ -574,6 +689,9 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
+    /**
+     * a general to-string copy action by using {@link GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}
+     */
     class ToStringCopyAction extends GuiSwingTaskRunner.ContextAction implements TableTargetColumnAction {
         protected ValuePane<?> pane;
 
@@ -626,8 +744,6 @@ public interface GuiSwingView extends GuiSwingElement {
         }
     }
 
-    ///////////////////////////
-
 
     ///////////////////////////
 
@@ -662,10 +778,16 @@ public interface GuiSwingView extends GuiSwingElement {
                 PopupExtension.getMenuShortcutKeyMask()), paste.getValue(Action.NAME));
     }
 
+    /////////////////////////////////
+
+    /** a factory interface for {@link GuiReprValue.ObjectSpecifier} */
     interface SpecifierManager {
         GuiReprValue.ObjectSpecifier getSpecifier();
     }
 
+    /** a default implementation of specifier-manager:
+     *   it creates a {@link GuiReprValue.ObjectSpecifier} with the parent specifier and caches it.
+     *    if the parent factory returns a same specifier to the parent of the cache, it reuses the cache */
     class SpecifierManagerDefault implements SpecifierManager {
         protected Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier;
         protected GuiReprValue.ObjectSpecifier specifierCache;

@@ -36,6 +36,19 @@ import java.util.function.Supplier;
  * {@link Document},  {@link AbstractDocument.Content}, {@link StringBuilder},
  *    or {@link autogui.swing.util.SwingDeferredRunner.TaskResultFuture} handled by
  *        {@link GuiReprValueDocumentEditor#toUpdateValue(GuiMappingContext, Object, Consumer)}
+ *      <ul>
+ *       <li>setting to the value is processed by
+ *          {@link #setSwingViewValue(JEditorPane, GuiSwingView.SpecifierManager, GuiMappingContext, Object, boolean, GuiTaskClock)}.
+ *          it calls {@link GuiReprValueDocumentEditor#toUpdateValue(GuiMappingContext, Object, Consumer)}.
+ *              if the given value is a {@link autogui.swing.util.SwingDeferredRunner.TaskResultFuture},.
+ *            it immediately obtains the result value as a Document by re-run toUpdateValue with the value of the future, or
+ *               returns null with runs a delayed task.</li>
+ *       <li>For another non-Document value, toUpdateValue returns a Document wrapping the value</li>
+ *       <li>As the delayed task,
+ *       {@link #setSwingViewValueDocument(JEditorPane, GuiSwingView.SpecifierManager, GuiMappingContext, Object, Document, boolean, GuiTaskClock)}.
+ *          is used. the method updates Document of the pane by {@link JEditorPane#setDocument(Document)}
+ *             and calls {@link autogui.swing.GuiSwingView.ValuePane#updateFromGui(GuiSwingView.ValuePane, Object, GuiTaskClock)} (if contextUpdate=true) </li>
+ *      </ul>
  *
  * <h3>history-value</h3>
  * TODO unsupported yet
