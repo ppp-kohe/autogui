@@ -11,12 +11,15 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.DefaultFormatterFactory;
+import javax.swing.text.JTextComponent;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -40,7 +43,8 @@ import java.util.stream.Collectors;
  *     it includes {@link autogui.base.mapping.GuiReprValueNumberSpinner.Infinity}.
  *  <p>
  *     updating is caused by
- *       {@link PropertyNumberSpinner#setValue(Object)} -&gt; change-listener -&gt; taskRunner -&gt;
+ *       ({@link PropertyNumberSpinner#setValue(Object)} -&gt; change-listener,
+ *         focus-lost or action-performed) -&gt; taskRunner -&gt;
  *        {@link PropertyNumberSpinner#updateNumber(List)}
  *
  *
@@ -243,6 +247,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             editingRunner = new EditingRunner(500, this::updateNumber);
             addChangeListener(editingRunner);
             getEditorField().addActionListener(editingRunner);
+            getEditorField().addFocusListener(editingRunner);
         }
 
         public void initPopup() {
@@ -290,7 +295,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                         PopupExtensionText.getEditActions(field).stream()
                                 .filter(e -> !(e instanceof PopupExtensionText.TextOpenBrowserAction) &&
                                              !(e instanceof PopupExtensionText.TextSaveAction) &&
-                                             !(e instanceof PopupExtensionText.TextLoadAction))
+                                             !(e instanceof PopupExtensionText.TextLoadAction) &&
+                                             !(e instanceof PopupExtensionText.TextPasteAllAction))
                                 .collect(Collectors.toList()),
                         Arrays.asList(
                                 infoLabel,
@@ -300,6 +306,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                                 new NumberIncrementAction(true, this),
                                 new NumberIncrementAction(false, this),
                                 new GuiSwingHistoryMenu<>(this, context),
+                                new NumberTextPasteAllAction(this),
                                 settingAction),
                         GuiSwingJsonTransfer.getActions(this, context));
             }
@@ -518,6 +525,26 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         @Override
         public String getCategory() {
             return PopupExtension.MENU_CATEGORY_SET;
+        }
+    }
+
+    public static class NumberTextPasteAllAction extends PopupExtensionText.TextPasteAllAction {
+        protected PropertyNumberSpinner spinner;
+        public NumberTextPasteAllAction(PropertyNumberSpinner spinner) {
+            super(spinner.getEditorField());
+            this.spinner = spinner;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            paste(str -> {
+                field.setText(str);
+                try {
+                    spinner.commitEdit();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
         }
     }
 
