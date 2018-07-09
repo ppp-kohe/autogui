@@ -537,14 +537,16 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            paste(str -> {
-                field.setText(str);
-                try {
-                    spinner.commitEdit();
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-            });
+            paste(this::pasteNumber);
+        }
+
+        public void pasteNumber(String str) {
+            try {
+                Object val = spinner.getEditorField().getFormatter().stringToValue(str);
+                spinner.setSwingViewValueWithUpdate(val);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -559,6 +561,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             super(spinner, model);
             this.max = max;
             putValue(NAME, max ? "Set Maximum" : "Set Minimum");
+        }
+
+        public boolean isMax() {
+            return max;
         }
 
         @Override
@@ -582,6 +588,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             putValue(Action.ACCELERATOR_KEY,
                     PopupExtension.getKeyStroke(inc ? KeyEvent.VK_I : KeyEvent.VK_D,
                             PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
+        }
+
+        public boolean isInc() {
+            return inc;
         }
 
         @Override

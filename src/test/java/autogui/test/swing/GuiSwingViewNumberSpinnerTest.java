@@ -181,6 +181,13 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
         runWait(500);
         Assert.assertEquals("after value set bigDec",
                 new BigDecimal(Long.MAX_VALUE + "012345.678"), obj.numBigDec);
+
+        i.getEditorField().setText(Long.MAX_VALUE + "012345");
+        i.commitEdit();
+        run(() -> runWait(500));
+        runWait(500);
+        Assert.assertEquals("after value set bigDec",
+                new BigDecimal(Long.MAX_VALUE + "012345"), obj.numBigDec);
     }
 
     @Test
@@ -199,13 +206,66 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
 
 
     @Test
-    public void testViewMax() {
+    public void testViewMaxBigInt() {
         GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropBigInt));
         i.getModelTyped().setMaximum(128);
-        i.getModelTyped().setMinimum(120);
-        Assert.assertNull("custom max: return null by over the max", i.getModelTyped().getNextValue(127));
+        i.getModelTyped().setMinimum(100);
+        Assert.assertNull("custom max: return null by over the max", i.getModelTyped().getNextValue(BigInteger.valueOf(127)));
         Assert.assertEquals("custom max: return the max (-1)", BigInteger.valueOf(127), i.getModelTyped().getNextValue(BigInteger.valueOf(126)));
-        Assert.assertNull("custom min: return null by over the min", i.getModelTyped().getPreviousValue(120));
-        Assert.assertEquals("custom min: return the max", BigInteger.valueOf(120), i.getModelTyped().getPreviousValue(BigInteger.valueOf(121)));
+        Assert.assertNull("custom min: return null by over the min", i.getModelTyped().getPreviousValue(BigInteger.valueOf(100)));
+        Assert.assertEquals("custom min: return the max", BigInteger.valueOf(100), i.getModelTyped().getPreviousValue(BigInteger.valueOf(101)));
+        i.getModelTyped().setStepSize(11);
+        Assert.assertEquals("custom step size: next", BigInteger.valueOf(121), i.getModelTyped().getNextValue(BigInteger.valueOf(110)));
+        Assert.assertEquals("custom step size: prev", BigInteger.valueOf(100), i.getModelTyped().getPreviousValue(BigInteger.valueOf(111)));
+    }
+
+    @Test
+    public void testViewPasteAllInt() {
+        GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropInt));
+        setClipboardText("1234");
+        GuiSwingViewNumberSpinner.NumberTextPasteAllAction a = findMenuItemAction(i.getSwingStaticMenuItems(), GuiSwingViewNumberSpinner.NumberTextPasteAllAction.class);
+        a.actionPerformed(null);
+        Assert.assertEquals("after paste-all", "1,234", i.getEditorField().getText());
+        Assert.assertEquals("after paste-all", 1234, obj.numInt);
+    }
+
+    @Test
+    public void testViewSetMaxInt() {
+        GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropInt));
+        GuiSwingViewNumberSpinner.NumberMaximumAction a = findMenuItem(i.getSwingStaticMenuItems(),
+                GuiSwingViewNumberSpinner.NumberMaximumAction.class,
+                null, null, null, GuiSwingViewNumberSpinner.NumberMaximumAction::isMax);
+        a.actionPerformed(null);
+        Assert.assertEquals("set-maximum action", Integer.MAX_VALUE, obj.numInt);
+    }
+
+    @Test
+    public void testViewSetMinInt() {
+        GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropInt));
+        GuiSwingViewNumberSpinner.NumberMaximumAction a = findMenuItem(i.getSwingStaticMenuItems(),
+                GuiSwingViewNumberSpinner.NumberMaximumAction.class,
+                null, null, null, act -> !act.isMax());
+        a.actionPerformed(null);
+        Assert.assertEquals("set-minimum action", Integer.MIN_VALUE, obj.numInt);
+    }
+
+    @Test
+    public void testViewIncInt() {
+        GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropInt));
+        GuiSwingViewNumberSpinner.NumberIncrementAction a = findMenuItem(i.getSwingStaticMenuItems(),
+                GuiSwingViewNumberSpinner.NumberIncrementAction.class,
+                null, null, null, GuiSwingViewNumberSpinner.NumberIncrementAction::isInc);
+        a.actionPerformed(null);
+        Assert.assertEquals("increment action", 1, obj.numInt);
+    }
+
+    @Test
+    public void testViewDecInt() {
+        GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropInt));
+        GuiSwingViewNumberSpinner.NumberIncrementAction a = findMenuItem(i.getSwingStaticMenuItems(),
+                GuiSwingViewNumberSpinner.NumberIncrementAction.class,
+                null, null, null, act -> !act.isInc());
+        a.actionPerformed(null);
+        Assert.assertEquals("decrement action", -1, obj.numInt);
     }
 }
