@@ -565,11 +565,11 @@ public class GuiMappingContext {
 
     public static boolean isNameCharUpper(char c, int i, int len, String name, boolean forDisplay) {
         if (forDisplay) {
-            return (Character.isUpperCase(c) &&
-                    (i > 0 && Character.isLowerCase(name.charAt(i - 1)) ||  // a[A]
-                   (i + 1 < len && Character.isLowerCase(name.charAt(i + 1))))); //[.]a
+            return ((Character.isUpperCase(c) || Character.isDigit(c)) &&
+                    ((i > 0 && Character.isLowerCase(name.charAt(i - 1))) ||  // a[A]
+                     (i + 1 < len && Character.isLowerCase(name.charAt(i + 1))))); //[A]a
         } else {
-            return Character.isUpperCase(c);
+            return Character.isUpperCase(c) || Character.isDigit(c);
         }
     }
 

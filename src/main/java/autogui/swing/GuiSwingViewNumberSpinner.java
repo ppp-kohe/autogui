@@ -969,6 +969,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             actionPerformed(e);
         }
 
+        public NumberSettingPane getPane() {
+            return pane;
+        }
+
         public GuiSwingPreferences.WindowPreferencesUpdater getPreferencesUpdater() {
             return preferencesUpdater;
         }
@@ -1176,6 +1180,38 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             } catch (Exception ex){
                 return false;
             }
+        }
+
+        public TypedSpinnerNumberModel getModel() {
+            return model;
+        }
+
+        public JCheckBox getMinCheckBox() {
+            return minCheckBox;
+        }
+
+        public JCheckBox getMaxCheckBox() {
+            return maxCheckBox;
+        }
+
+        public JSpinner getMinSpinner() {
+            return minSpinner;
+        }
+
+        public JSpinner getMaxSpinner() {
+            return maxSpinner;
+        }
+
+        public JSpinner getStepSpinner() {
+            return stepSpinner;
+        }
+
+        public JCheckBox getFormatCheckBox() {
+            return formatCheckBox;
+        }
+
+        public JTextField getFormatField() {
+            return formatField;
         }
     }
 

@@ -1117,10 +1117,14 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         @Override
         protected Transferable createTransferable(JComponent c) {
             Image img = imagePane.getImage();
-            int s = UIManagerUtil.getInstance().getScaledSizeInt(100);
-            Dimension size = imagePane.getImageScaleDefault().getScaledImageSize(imagePane.getImageSize(), new Dimension(s, s));
-            setDragImage(img.getScaledInstance(size.width , size.height, Image.SCALE_DEFAULT));
-            return new ImageSelection(img, imagePane.getSwingViewContext());
+            if (img == null) {
+                return null;
+            } else {
+                int s = UIManagerUtil.getInstance().getScaledSizeInt(100);
+                Dimension size = imagePane.getImageScaleDefault().getScaledImageSize(imagePane.getImageSize(), new Dimension(s, s));
+                setDragImage(img.getScaledInstance(size.width, size.height, Image.SCALE_DEFAULT));
+                return new ImageSelection(img, imagePane.getSwingViewContext());
+            }
         }
 
     }

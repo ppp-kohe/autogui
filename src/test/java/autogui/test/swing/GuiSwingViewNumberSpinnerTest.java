@@ -2,11 +2,12 @@ package autogui.test.swing;
 
 import autogui.GuiIncluded;
 import autogui.base.mapping.GuiMappingContext;
+import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValue;
-import autogui.base.mapping.GuiReprValueNumberSpinner;
 import autogui.base.type.GuiTypeBuilder;
 import autogui.base.type.GuiTypeObject;
 import autogui.swing.GuiSwingMapperSet;
+import autogui.swing.GuiSwingPreferences;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewNumberSpinner;
 import org.junit.Assert;
@@ -267,5 +268,106 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
                 null, null, null, act -> !act.isInc());
         a.actionPerformed(null);
         Assert.assertEquals("decrement action", -1, obj.numInt);
+    }
+
+    @Test
+    public void testViewLoadSettings() {
+        GuiPreferences parentPrefs = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
+        GuiPreferences prefs = parentPrefs.getChild(contextPropInt);
+        prefs.getValueStore().putString("maximum", "1000000");
+        prefs.getValueStore().putString("minimum", "100");
+        prefs.getValueStore().putString("stepSize", "3");
+        prefs.getValueStore().putString("format", "0000.0");
+        prefs.getValueStore().putString("$value", "500");
+        GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropInt));
+        run(() -> i.loadSwingPreferences(prefs));
+
+        boolean hasMin = runGet(() -> i.getSettingAction().getPane().getMinCheckBox().isSelected());
+        Assert.assertTrue("after prefs load: minimum", hasMin);
+
+        boolean hasMax = runGet(() -> i.getSettingAction().getPane().getMaxCheckBox().isSelected());
+        Assert.assertTrue("after prefs load: maximum", hasMax);
+
+        Object min = runGet(() -> i.getSettingAction().getPane().getMinSpinner().getValue());
+        Assert.assertEquals("after prefs load: minimum value", 100, min);
+        Object modelMin = runGet(() -> i.getModelTyped().getMinimum());
+        Assert.assertEquals("after prefs load: minimum value", 100, modelMin);
+
+        Object max = runGet(() -> i.getSettingAction().getPane().getMaxSpinner().getValue());
+        Assert.assertEquals("after prefs load: maximum value", 1000_000, max);
+        Object modelMax = runGet(() -> i.getModelTyped().getMaximum());
+        Assert.assertEquals("after prefs load: maximum value", 1000_000, modelMax);
+
+        Object step = runGet(() -> i.getSettingAction().getPane().getStepSpinner().getValue());
+        Assert.assertEquals("after prefs load: step value", 3, step);
+        Object modelStep = runGet(() -> i.getModelTyped().getStepSize());
+        Assert.assertEquals("after prefs load: step value", 3, modelStep);
+
+        String str = runGet(() -> i.getEditorField().getText());
+        Assert.assertEquals("after prefs load: format and $value", "0500.0", str);
+
+        Object val = runGet(i::getValue);
+        Assert.assertEquals("after prefs load: value", 500, val);
+
+        boolean hasFmt = runGet(() -> i.getSettingAction().getPane().getFormatCheckBox().isSelected());
+        Assert.assertTrue("after prefs load: format", hasFmt);
+        String fmt = runGet(() -> i.getSettingAction().getPane().getFormatField().getText());
+        Assert.assertEquals("after prefs load: format", "0000.0", fmt);
+    }
+
+    @Test
+    public void testViewSaveSettings() {
+        GuiPreferences parentPrefs = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
+        context.setPreferences(parentPrefs);
+
+        GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropInt));
+        i.setPreferencesUpdater(GuiSwingPreferences.PreferencesUpdateEvent::save);
+
+        run(() -> i.getSettingAction().getPane().getMinCheckBox().setSelected(true));
+        run(() -> i.getSettingAction().getPane().getMinSpinner().setValue(123));
+
+        run(() -> i.getSettingAction().getPane().getMaxCheckBox().setSelected(true));
+        run(() -> i.getSettingAction().getPane().getMaxSpinner().setValue(123_123_123));
+
+        run(() -> i.getSettingAction().getPane().getStepSpinner().setValue(4));
+
+        run(() -> i.getSettingAction().getPane().getFormatCheckBox().setSelected(true));
+        run(() -> i.getSettingAction().getPane().getFormatField().setText("##.0"));
+
+        run(() -> i.setSwingViewValueWithUpdate(123_123));
+
+        run(() -> runWait(500));
+        run(this::runWait);
+
+        GuiPreferences targetPrefs = parentPrefs.getDescendant(contextPropInt);
+        String max = targetPrefs.getValueStore().getString("maximum", "");
+        String min = targetPrefs.getValueStore().getString("minimum", "");
+        String step = targetPrefs.getValueStore().getString("stepSize", "");
+        String fmt = targetPrefs.getValueStore().getString("format", "");
+        String val = targetPrefs.getValueStore().getString("$value", "");
+
+        Assert.assertEquals("after prefs update: maximum", "123123123", max);
+        Assert.assertEquals("after prefs update: minimum", "123", min);
+        Assert.assertEquals("after prefs update: stepSize", "4", step);
+        Assert.assertEquals("after prefs update: format", "##.0", fmt);
+        Assert.assertEquals("after prefs update: $value", "123123", val);
+
+        GuiPreferences savePrefs = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
+        run(() -> i.saveSwingPreferences(savePrefs));
+
+        GuiPreferences savedTarget = savePrefs.getDescendant(contextPropInt);
+        max = savedTarget.getValueStore().getString("maximum", "");
+        min = savedTarget.getValueStore().getString("minimum", "");
+        step = savedTarget.getValueStore().getString("stepSize", "");
+        fmt = savedTarget.getValueStore().getString("format", "");
+        val = savedTarget.getValueStore().getString("$value", "");
+
+        Assert.assertEquals("after prefs update: maximum", "123123123", max);
+        Assert.assertEquals("after prefs update: minimum", "123", min);
+        Assert.assertEquals("after prefs update: stepSize", "4", step);
+        Assert.assertEquals("after prefs update: format", "##.0", fmt);
+        Assert.assertEquals("after prefs update: $value", "123123", val);
+
+
     }
 }
