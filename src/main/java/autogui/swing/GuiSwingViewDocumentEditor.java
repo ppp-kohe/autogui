@@ -64,8 +64,8 @@ import java.util.function.Supplier;
  *         "fontSize": Number,
  *         "bold": Boolean,
  *         "italic": Boolean,
- *         "backgroundColor": ...,
- *         "foregroundColor": ...,
+ *         "backgroundColor": "[intR, intG, intB, intA]",
+ *         "foregroundColor": "[intR, intG, intB, intA]",
  *         "wrapText": Boolean
  *     }
  * </pre>
@@ -694,6 +694,10 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public String getSubCategory() {
             return PopupExtension.MENU_SUB_CATEGORY_PREFS_WINDOW;
         }
+
+        public DocumentSettingPane getPane() {
+            return pane;
+        }
     }
 
     public static class DocumentSettingPane extends JPanel implements ItemListener, ChangeListener,
@@ -706,8 +710,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected JPopupMenu fontStyleMenu;
         protected JSpinner lineSpacing;
 
-        protected Action styleItalic;
-        protected Action styleBold;
+        protected StyleSetAction styleItalic;
+        protected StyleSetAction styleBold;
         protected TextWrapTextAction wrapText;
         protected boolean updateDisabled;
 
@@ -925,9 +929,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             if (o != null) {
                 List<?> list = (List<?>) o;
                 int r = list.size() >= 1 ? ((Number) list.get(0)).intValue() : 0;
-                int g = list.size() >= 2 ? ((Number) list.get(1)).intValue() : 1;
-                int b = list.size() >= 3 ? ((Number) list.get(2)).intValue() : 2;
-                int a = list.size() >= 4 ? ((Number) list.get(3)).intValue() : 3;
+                int g = list.size() >= 2 ? ((Number) list.get(1)).intValue() : 0;
+                int b = list.size() >= 3 ? ((Number) list.get(2)).intValue() : 0;
+                int a = list.size() >= 4 ? ((Number) list.get(3)).intValue() : 0;
                 return new Color(r, g, b, a);
             } else {
                 return null;
@@ -1001,6 +1005,42 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 }
             }
         }
+
+        public JComboBox<String> getFontFamily() {
+            return fontFamily;
+        }
+
+        public JSpinner getFontSize() {
+            return fontSize;
+        }
+
+        public JPopupMenu getFontStyleMenu() {
+            return fontStyleMenu;
+        }
+
+        public JSpinner getLineSpacing() {
+            return lineSpacing;
+        }
+
+        public SettingsWindow.ColorButton getBackgroundColor() {
+            return backgroundColor;
+        }
+
+        public SettingsWindow.ColorButton getForegroundColor() {
+            return foregroundColor;
+        }
+
+        public StyleSetAction getStyleItalic() {
+            return styleItalic;
+        }
+
+        public StyleSetAction getStyleBold() {
+            return styleBold;
+        }
+
+        public TextWrapTextAction getWrapText() {
+            return wrapText;
+        }
     }
 
     public static class PopupButtonListener implements ActionListener, PopupMenuListener {
@@ -1056,6 +1096,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public String getSubCategory() {
             return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
+        }
+
+        public void change(boolean v) {
+            putValue(SELECTED_KEY, v);
+            actionPerformed(null);
         }
     }
 

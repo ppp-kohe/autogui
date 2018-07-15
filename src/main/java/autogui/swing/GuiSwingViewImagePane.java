@@ -430,6 +430,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             ((GuiReprValueImagePane) getSwingViewContext().getRepresentation()).setImagePath(image, path);
         }
 
+        public Path getImagePath(Image image) {
+            return ((GuiReprValueImagePane) getSwingViewContext().getRepresentation()).getImagePath(image);
+        }
+
         @Override
         public void setSwingViewHistoryValue(Object value) {
             if (value instanceof GuiReprValueImagePane.ImageHistoryEntry) {
