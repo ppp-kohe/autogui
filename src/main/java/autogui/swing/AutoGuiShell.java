@@ -3,6 +3,8 @@ package autogui.swing;
 import autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
+import java.awt.*;
+import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -94,8 +96,19 @@ public class AutoGuiShell {
 
     public static GuiSwingWindow showLive(Object o) {
         GuiSwingWindow w = get().createWindowRelaxed(o);
-        SwingUtilities.invokeLater(() -> w.setVisible(true));
+        SwingUtilities.invokeLater(() -> displayLiveWindow(w));
         return w;
+    }
+
+    public static void displayLiveWindow(JFrame w) {
+        w.setVisible(true);
+        w.toFront();
+        try { //jdk9
+            Method requestForeground = Desktop.class.getMethod("requestForeground", boolean.class);
+            requestForeground.invoke(Desktop.getDesktop(), false);
+        } catch (Exception ex) {
+            //
+        }
     }
 
     public GuiSwingWindow createWindowRelaxed(Object o) {
