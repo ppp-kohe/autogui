@@ -85,6 +85,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
     protected void init() {
         initTitle();
+        initToolTipManager();
         initViewComponent();
         initPrefs(); //read context, viewComponent
         initKeyBinding();
@@ -99,6 +100,11 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
     protected void initTitle() {
         setTitle(context.getDisplayName());
+    }
+
+    protected void initToolTipManager() {
+        ToolTipManager tm = ToolTipManager.sharedInstance();
+        tm.setDismissDelay(20_000);
     }
 
     protected void initViewComponent() {
