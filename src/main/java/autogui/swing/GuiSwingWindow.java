@@ -26,6 +26,16 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
                 new GuiTypeBuilder.GuiTypeBuilderRelaxed().get(o.getClass()), o));
     }
 
+    public static GuiSwingWindow createForObject(Object o, GuiSwingKeyBinding keyBinding) {
+        return new GuiSwingWindow(new GuiMappingContext(
+                new GuiTypeBuilder().get(o.getClass()), o), keyBinding);
+    }
+
+    public static GuiSwingWindow createForObjectRelaxed(Object o, GuiSwingKeyBinding keyBinding) {
+        return new GuiSwingWindow(new GuiMappingContext(
+                new GuiTypeBuilder.GuiTypeBuilderRelaxed().get(o.getClass()), o), keyBinding);
+    }
+
     public GuiSwingWindow(GuiMappingContext context) {
         contextRootPane = new GuiSwingRootPane(context);
         init();
@@ -33,6 +43,16 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
 
     public GuiSwingWindow(GuiMappingContext context, GuiSwingView view) throws HeadlessException {
         contextRootPane = new GuiSwingRootPane(context, view);
+        init();
+    }
+
+    public GuiSwingWindow(GuiMappingContext context, GuiSwingKeyBinding keyBinding) throws HeadlessException {
+        contextRootPane = new GuiSwingRootPane(context, keyBinding);
+        init();
+    }
+
+    public GuiSwingWindow(GuiMappingContext context, GuiSwingView view, GuiSwingKeyBinding keyBinding) throws HeadlessException {
+        contextRootPane = new GuiSwingRootPane(context, view, keyBinding);
         init();
     }
 
