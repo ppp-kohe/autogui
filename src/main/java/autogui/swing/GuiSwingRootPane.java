@@ -48,28 +48,46 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
 
     public static GuiSwingRootPane createForObject(Object o) {
-        return new GuiSwingRootPane(new GuiMappingContext(
-                new GuiTypeBuilder().get(o.getClass()), o));
+        return createForObject(o, GuiSwingKeyBinding.createWithDefaultExcluded());
     }
 
     public static GuiSwingRootPane createForObjectRelaxed(Object o) {
+        return createForObjectRelaxed(o, GuiSwingKeyBinding.createWithDefaultExcluded());
+    }
+
+    public static GuiSwingRootPane createForObject(Object o, GuiSwingKeyBinding keyBinding) {
         return new GuiSwingRootPane(new GuiMappingContext(
-                new GuiTypeBuilder.GuiTypeBuilderRelaxed().get(o.getClass()), o));
+                new GuiTypeBuilder().get(o.getClass()), o), keyBinding);
+    }
+
+    public static GuiSwingRootPane createForObjectRelaxed(Object o, GuiSwingKeyBinding keyBinding) {
+        return new GuiSwingRootPane(new GuiMappingContext(
+                new GuiTypeBuilder.GuiTypeBuilderRelaxed().get(o.getClass()), o), keyBinding);
     }
 
     public GuiSwingRootPane(GuiMappingContext context) {
+        this(context, GuiSwingKeyBinding.createWithDefaultExcluded());
+    }
+
+    public GuiSwingRootPane(GuiMappingContext context, GuiSwingKeyBinding keyBinding) {
         setLayout(new BorderLayout());
         this.context = context;
         if (context.getRepresentation() == null) {
             GuiSwingMapperSet.getReprDefaultSet().match(context);
         }
         this.view = (GuiSwingView) GuiSwingMapperSet.getDefaultMapperSet().view(context);
+        this.keyBinding = keyBinding;
         init();
     }
 
     public GuiSwingRootPane(GuiMappingContext context, GuiSwingView view) throws HeadlessException {
+        this(context, view, GuiSwingKeyBinding.createWithDefaultExcluded());
+    }
+
+    public GuiSwingRootPane(GuiMappingContext context, GuiSwingView view, GuiSwingKeyBinding keyBinding) throws HeadlessException {
         this.context = context;
         this.view = view;
+        this.keyBinding = keyBinding;
         init();
     }
 
@@ -115,8 +133,6 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
                 closeAction.getKeyStroke(),
                 closeAction);
         getActionMap().put(closeAction, closeAction);
-
-        keyBinding = new GuiSwingKeyBinding();
         keyBinding.bind(viewComponent);
     }
 

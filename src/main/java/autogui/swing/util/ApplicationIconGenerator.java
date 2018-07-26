@@ -58,6 +58,35 @@ public class ApplicationIconGenerator {
         this.names = names;
     }
 
+    public void setWidth(float width) {
+        this.width = width;
+    }
+
+    public void setHeight(float height) {
+        this.height = height;
+    }
+
+    public void setNames(List<String> names) {
+        this.names = names;
+    }
+
+    public float getWidth() {
+        return width;
+    }
+
+    public float getHeight() {
+        return height;
+    }
+
+    public List<String> getNames() {
+        return names;
+    }
+
+    public void setAppIcon(JFrame frame, String name) {
+        setNames(Arrays.asList(name.split("\\s+")));
+        setAppIcon(frame);
+    }
+
     public void setAppIcon(JFrame frame) {
         BufferedImage img = getImage();
         frame.setIconImage(img);

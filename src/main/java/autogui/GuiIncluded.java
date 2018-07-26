@@ -89,9 +89,9 @@ public @interface GuiIncluded {
      *  then, users can focus to the field "prop" by typing Cmd or Ctrl +K.
      *  For an action method, users can invoke the method by typing the specified key.
      *  <p>
-     *  The string will be passed to KeyStroke.getStroke(String) or "".
+     *  The string will be passed to KeyStroke.getStroke(String), "none" or "".
      *    <pre>
-     *        control* key
+     *        "none" | control* key
      *
      *        control ::= "shift" | "alt"        //lower cases ("meta" or "control" is automatically appended)
      *        key  ::= "0" | "1" | ... | "9" | "A" | "B" | ... | "Z"  //upper cases
@@ -103,7 +103,7 @@ public @interface GuiIncluded {
      *    </pre>
      *    for properties, selects one of field(high-precedence), getter or setter.
      *    if the stroke is empty (default), then the first character of the name will be used.
-     *
+     *    if the stroke is "none", then key-binding will be skipped for the target.
      *    <p>
      *  Some keys are reserved with combination of Meta(Command) or Ctrl.
      *  <ul>
