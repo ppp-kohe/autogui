@@ -18,14 +18,23 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+/**
+ * the root-pane for object binding panes.
+ * <p>
+ *  The pane can be created by {@link #createForObject(Object)}, {@link #createForObject(Object)},
+ *    or {@link GuiSwingRootPaneCreator} obtained by {@link #creator()}.
+ */
 public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.RootView {
     protected GuiMappingContext context;
     protected GuiSwingView view;
     protected GuiSwingPreferences preferences;
     protected GuiSwingLogManager.GuiSwingLogWindow logWindow;
+    protected boolean logStatus = true;
 
     protected JComponent viewComponent;
     protected JMenu objectMenu;
@@ -47,47 +56,213 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     protected WindowCloseAction closeAction;
 
 
+    /**
+     * @param o the root bound object
+     * @return a root-pane with strict member binding
+     */
     public static GuiSwingRootPane createForObject(Object o) {
-        return createForObject(o, GuiSwingKeyBinding.createWithDefaultExcluded());
+        return creator()
+                .create(o);
     }
 
+    /**
+     * @param o the root bound object
+     * @return a root-pane with relaxed member binding by {@link GuiSwingRootPaneCreator#withTypeBuilderRelaxed()}
+     */
     public static GuiSwingRootPane createForObjectRelaxed(Object o) {
-        return createForObjectRelaxed(o, GuiSwingKeyBinding.createWithDefaultExcluded());
+        return creator()
+                .withTypeBuilderRelaxed()
+                .create(o);
     }
 
-    public static GuiSwingRootPane createForObject(Object o, GuiSwingKeyBinding keyBinding) {
-        return new GuiSwingRootPane(new GuiMappingContext(
-                new GuiTypeBuilder().get(o.getClass()), o), keyBinding);
+    /**
+     * <pre>
+     *     GuiSwingRootPane.creator()
+     *       .withTypeBuilderRelaxed()
+     *       .create(o);
+     * </pre>
+     * @return a new creator
+     */
+    public static GuiSwingRootPaneCreator creator() {
+        return new GuiSwingRootPaneCreator();
     }
 
-    public static GuiSwingRootPane createForObjectRelaxed(Object o, GuiSwingKeyBinding keyBinding) {
-        return new GuiSwingRootPane(new GuiMappingContext(
-                new GuiTypeBuilder.GuiTypeBuilderRelaxed().get(o.getClass()), o), keyBinding);
+    /**
+     * a creator of {@link GuiSwingRootPane},
+     *   can be obtained by {@link GuiSwingRootPane#creator()}.
+     *   <p>
+     *   the default settings:
+     *   <ul>
+     *       <li>{@link GuiSwingKeyBinding}: obtained by {@link GuiSwingKeyBinding#createWithDefaultExcluded()}</li>
+     *       <li>{@link GuiTypeBuilder}: the strict-mode obtained by new GuiTypeBuilder()</li>
+     *       <li>logStatus: true, which means it installs a {@link GuiSwingLogManager} with redirecting consoles
+     *                         (by {@link GuiSwingRootPane#updateSwingLogManager()}),
+     *                      and inserts a status-bar for displaying log-messages</li>
+     *       <li>{@link GuiSwingView}: obtained by {@link GuiSwingMapperSet#getDefaultMapperSet()}</li>
+     *       <li>{@link SettingsWindow}: a new window</li>
+     *       <li>{@link GuiPreferences}: nothing, which means automatically sets preferences backed by java.util.prefs. </li>
+     *   </ul>
+     */
+    public static class GuiSwingRootPaneCreator {
+        protected GuiSwingKeyBinding keyBinding;
+        protected GuiTypeBuilder typeBuilder;
+        protected boolean logStatus = true;
+        protected SettingsWindow settingsWindow;
+        protected GuiSwingView view;
+        protected Function<GuiMappingContext, GuiPreferences> prefsCreator;
+
+        /**
+         * set a {@link GuiSwingKeyBinding} without automatic bindings created
+         *   from {@link GuiSwingKeyBinding#createWithoutAutomaticBindings()}.
+         *   This means that it does not traverse created panes for searching default key-bindings.
+         *   <p>
+         *    It can manually set key-bindings by {@link GuiSwingKeyBinding} methods
+         *      such as {@link GuiSwingKeyBinding#putTraverseHighPrecedence(Class, Predicate, KeyStroke, Consumer)} ,
+         *         {@link GuiSwingKeyBinding#putTraverseHighPrecedenceAction(Class, Predicate, KeyStroke, Action)} ,
+         *         and {@link GuiSwingKeyBinding#putTraverseHighPrecedencePaneFocus(Class, Predicate, KeyStroke)}.
+         * @return this
+         */
+        public GuiSwingRootPaneCreator withKeyBindingWithoutAutomaticBindings() {
+            return withKeyBinding(GuiSwingKeyBinding.createWithoutAutomaticBindings());
+        }
+
+        public GuiSwingRootPaneCreator withKeyBinding(GuiSwingKeyBinding keyBinding) {
+            this.keyBinding = keyBinding;
+            return this;
+        }
+
+        /**
+         * set a type builder of {@link autogui.base.type.GuiTypeBuilder.GuiTypeBuilderRelaxed}
+         * @return this
+         */
+        public GuiSwingRootPaneCreator withTypeBuilderRelaxed() {
+            return withTypeBuilder(new GuiTypeBuilder.GuiTypeBuilderRelaxed());
+        }
+
+        public GuiSwingRootPaneCreator withTypeBuilder(GuiTypeBuilder typeBuilder) {
+            this.typeBuilder = typeBuilder;
+            return this;
+        }
+
+        /**
+         * disable overwriting log-manager and no-insertion of status-bar for displaying logs
+         * @return this
+         */
+        public GuiSwingRootPaneCreator withLogStatusDisabled() {
+            return withLogStatus(false);
+        }
+
+        public GuiSwingRootPaneCreator withLogStatus(boolean enableLog) {
+            this.logStatus = enableLog;
+            return this;
+        }
+
+        /**
+         * set preferences setting function to storing values on memory by {@link autogui.base.mapping.GuiPreferences.GuiValueStoreOnMemory}
+         * @return this
+         */
+        public GuiSwingRootPaneCreator withPreferencesOnMemory() {
+            return withPreferences(c ->
+                    new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), c));
+        }
+
+        public GuiSwingRootPaneCreator withPreferences(Function<GuiMappingContext, GuiPreferences> prefsCreator) {
+            this.prefsCreator = prefsCreator;
+            return this;
+        }
+
+        public GuiSwingRootPaneCreator withSettingWindow(SettingsWindow settingsWindow) {
+            this.settingsWindow = settingsWindow;
+            return this;
+        }
+
+        public GuiSwingRootPaneCreator withView(GuiSwingView view) {
+            this.view = view;
+            return this;
+        }
+
+        public GuiSwingRootPane create(Object o) {
+            if (typeBuilder == null) {
+                typeBuilder = new GuiTypeBuilder();
+            }
+            return createWithContext(
+                    new GuiMappingContext(typeBuilder.get(o.getClass()), o));
+        }
+
+        public GuiSwingRootPane createWithContext(GuiMappingContext context) {
+            if (context.getRepresentation() == null) {
+                GuiSwingMapperSet.getReprDefaultSet().match(context);
+            }
+
+            if (prefsCreator != null) {
+                GuiPreferences prefs = prefsCreator.apply(context);
+                if (prefs != null) {
+                    context.setPreferences(prefs);
+                }
+            }
+
+            GuiSwingView view = this.view;
+            if (view == null) {
+                view = (GuiSwingView) GuiSwingMapperSet.getDefaultMapperSet().view(context);
+            }
+
+            GuiSwingKeyBinding keyBinding = this.keyBinding;
+            if (keyBinding == null) {
+                keyBinding = GuiSwingKeyBinding.createWithDefaultExcluded();
+            }
+
+            SettingsWindow settingsWindow = this.settingsWindow;
+            if (settingsWindow == null) {
+                settingsWindow = new SettingsWindow();
+            }
+
+            return new GuiSwingRootPane(context, view, keyBinding, logStatus, settingsWindow);
+        }
+
+        public GuiSwingKeyBinding getKeyBinding() {
+            return keyBinding;
+        }
+
+        public GuiTypeBuilder getTypeBuilder() {
+            return typeBuilder;
+        }
+
+        public boolean isLogStatus() {
+            return logStatus;
+        }
+
+        public SettingsWindow getSettingsWindow() {
+            return settingsWindow;
+        }
+
+        public GuiSwingView getView() {
+            return view;
+        }
+
+        public Function<GuiMappingContext, GuiPreferences> getPrefsCreator() {
+            return prefsCreator;
+        }
     }
 
     public GuiSwingRootPane(GuiMappingContext context) {
-        this(context, GuiSwingKeyBinding.createWithDefaultExcluded());
-    }
-
-    public GuiSwingRootPane(GuiMappingContext context, GuiSwingKeyBinding keyBinding) {
         setLayout(new BorderLayout());
         this.context = context;
         if (context.getRepresentation() == null) {
             GuiSwingMapperSet.getReprDefaultSet().match(context);
         }
         this.view = (GuiSwingView) GuiSwingMapperSet.getDefaultMapperSet().view(context);
-        this.keyBinding = keyBinding;
+        this.keyBinding = GuiSwingKeyBinding.createWithDefaultExcluded();
         init();
     }
 
-    public GuiSwingRootPane(GuiMappingContext context, GuiSwingView view) throws HeadlessException {
-        this(context, view, GuiSwingKeyBinding.createWithDefaultExcluded());
-    }
-
-    public GuiSwingRootPane(GuiMappingContext context, GuiSwingView view, GuiSwingKeyBinding keyBinding) throws HeadlessException {
+    public GuiSwingRootPane(GuiMappingContext context, GuiSwingView view, GuiSwingKeyBinding keyBinding,
+                            boolean logStatus, SettingsWindow settingsWindow) throws HeadlessException {
+        setLayout(new BorderLayout());
         this.context = context;
         this.view = view;
         this.keyBinding = keyBinding;
+        this.logStatus = logStatus;
+        this.settingsWindow = settingsWindow;
         init();
     }
 
@@ -192,15 +367,21 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
 
     protected void initLog() {
-        logWindow = initSwingLogManager().createWindow();
-        logPreferencesUpdater = new GuiSwingPreferences.WindowPreferencesUpdater(logWindow, context, "$logWindow");
-        logPreferencesUpdater.setUpdater(preferences.getUpdateRunner());
-        logWindow.addComponentListener(logPreferencesUpdater);
+        if (logStatus) {
+            logWindow = initSwingLogManager().createWindow();
+            logPreferencesUpdater = new GuiSwingPreferences.WindowPreferencesUpdater(logWindow, context, "$logWindow");
+            logPreferencesUpdater.setUpdater(preferences.getUpdateRunner());
+            logWindow.addComponentListener(logPreferencesUpdater);
 
-        setContentPane(logWindow.getPaneWithStatusBar(getContentPane()));
+            setContentPane(logWindow.getPaneWithStatusBar(getContentPane()));
+        }
     }
 
     protected GuiSwingLogManager initSwingLogManager() {
+        return updateSwingLogManager();
+    }
+
+    public static GuiSwingLogManager updateSwingLogManager() {
         GuiSwingLogManager logManager;
         synchronized (GuiLogManager.class) {
             GuiLogManager m = GuiLogManager.get();
@@ -235,7 +416,9 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     protected void initSettingWindow() {
-        settingsWindow = new SettingsWindow();
+        if (settingsWindow == null) {
+            settingsWindow = new SettingsWindow();
+        }
         preferences.setSettingsWindow(settingsWindow);
         GuiSwingView.forEach(GuiSwingView.SettingsWindowClient.class, viewComponent,
                 c -> c.setSettingsWindow(settingsWindow));
@@ -312,12 +495,15 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         this.applicationRoot = applicationRoot;
     }
 
+    @SuppressWarnings("rawtypes")
     public void cleanUp() {
         context.shutdownTaskRunner();
         GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
                 GuiSwingView.ValuePane::shutdownSwingView);
         preferences.shutdown();
-        logWindow.dispose();
+        if (logWindow != null) {
+            logWindow.dispose();
+        }
         settingsWindow.dispose();
         keyBinding.unbind();
         fileDialogPreferencesUpdater.removeFromDialogManager();

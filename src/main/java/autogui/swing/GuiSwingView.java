@@ -578,6 +578,38 @@ public interface GuiSwingView extends GuiSwingElement {
         forEach(ValuePane.class, pane.asSwingViewComponent(), ValuePane::prepareForRefresh);
     }
 
+
+    /////////////////////////
+
+    static <T extends Component> T findComponent(Component component, Class<T> type, Predicate<T> predicate) {
+        if (type.isInstance(component) && predicate.test(type.cast(component))) {
+            return type.cast(component);
+        }
+        if (component instanceof Container) {
+            for (Component sub : ((Container) component).getComponents()) {
+                T t = findComponent(sub, type, predicate);
+                if (t != null) {
+                    return t;
+                }
+            }
+        }
+        return null;
+    }
+
+    static <T extends Component> List<T> collectComponents(Component component, Class<T> type, Predicate<T> predicate) {
+        List<T> ts = new ArrayList<>();
+        if (type.isInstance(component) && predicate.test(type.cast(component))) {
+            ts.add(type.cast(component));
+        }
+        if (component instanceof Container) {
+            for (Component sub : ((Container) component).getComponents()) {
+                ts.addAll(collectComponents(sub, type, predicate));
+            }
+        }
+        return ts;
+    }
+
+
     /////////////////////////
 
     /**

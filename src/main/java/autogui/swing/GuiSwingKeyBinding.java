@@ -11,26 +11,118 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * a class for automatic key-stroke assignments.
+ *  It relies on {@link KeyboardFocusManager} which can steel key-events globally.
+ */
 public class GuiSwingKeyBinding {
+    protected List<BiConsumer<GuiSwingKeyBinding, Component>> traverseFunctions = new ArrayList<>();
     protected Map<KeyStroke, Map<KeyPrecedenceSet,List<KeyStrokeAction>>> keyToPrecToActions = new HashMap<>();
     protected List<KeyStrokeAction> assigned = new ArrayList<>();
     protected Set<KeyStroke> assignedKeys = new HashSet<>();
     protected KeyBindDispatcher dispatcher;
 
+    /**
+     * @return a default key-binding with excluding some keys by {@link #addDefaultExcluded()}
+     * and with default traversing function by {@link #addTraverseFunctionDefault()}.
+     */
     public static GuiSwingKeyBinding createWithDefaultExcluded() {
         GuiSwingKeyBinding b = new GuiSwingKeyBinding();
         b.addDefaultExcluded();
+        b.addTraverseFunctionDefault();
         return b;
     }
 
+    /**
+     * @return a key-binding without automatic traversing and bindings
+     */
     public static GuiSwingKeyBinding createWithoutAutomaticBindings() {
-        return new GuiSwingKeyBindingWithoutAutoBindings();
+        return new GuiSwingKeyBinding();
     }
 
     /////////////////////////// for manual construction
+
+    /**
+     * append a traversal function for setting focus action with a key-stroke for a specific component.
+     * <pre>
+     *     GuiSwingKeyBinding.createWithoutAutomaticBindings()
+     *        .putTraverseHighPrecedencePaneFocus(ValuePane.class, vp -&gt; vp.getSwingViewContext().getName().equals("prop"),
+     *                    GuiSwingKeyBinding.getKeyStroke("shift X"))
+     * </pre>
+     * @param type  the component type
+     * @param predicate predicate for specifying the component
+     * @param keyStroke the key-stroke for focusing
+     * @param <CompType> the component type
+     * @return this
+     */
+    public <CompType extends JComponent> GuiSwingKeyBinding putTraverseHighPrecedencePaneFocus(Class<CompType> type, Predicate<CompType> predicate,
+                                                                                               KeyStroke keyStroke) {
+        return putTraverse(type, predicate, (self, c) ->
+            putKeyStroke(new KeyStrokeActionForComponent(c, PRECEDENCE_SET_INPUT_MAP, keyStroke)));
+    }
+
+    /**
+     * append a traversal function for setting an action with a key-stroke for a specific component.
+     * <pre>
+     *     GuiSwingKeyBinding.createWithoutAutomaticBindings()
+     *        .putTraverseHighPrecedenceAction(ValuePane.class, vp -&gt; vp.getSwingViewContext().getName().equals("prop"),
+     *                    GuiSwingKeyBinding.getKeyStroke("shift X"), action)
+     * </pre>
+     * @param type the component type
+     * @param predicate predicate for specifying the component
+     * @param keyStroke the key-stroke for the action
+     * @param action the action executed by the key-stroke
+     * @param <CompType> the component type
+     * @return this
+     */
+    public <CompType extends JComponent> GuiSwingKeyBinding putTraverseHighPrecedenceAction(Class<CompType> type, Predicate<CompType> predicate,
+                                                                                            KeyStroke keyStroke, Action action) {
+        return putTraverse(type, predicate, (self, c) ->
+            putKeyStroke(new KeyStrokeActionForAction(c, PRECEDENCE_SET_INPUT_MAP, keyStroke, action)));
+    }
+
+    /**
+     * append a traversal function for setting a function with a key-stroke for a specific component.
+     * <pre>
+     *     GuiSwingKeyBinding.createWithoutAutomaticBindings()
+     *        .putTraverseHighPrecedence(ValuePane.class, vp -&gt; vp.getSwingViewContext().getName().equals("prop"),
+     *                    GuiSwingKeyBinding.getKeyStroke("shift X"), comp -&gt; System.out.println(comp))
+     * </pre>
+     * @param type the component type
+     * @param predicate predicate for specifying the component
+     * @param keyStroke the key-stroke for the function
+     * @param f the function executed by the key-stroke
+     * @param <CompType> the component type
+     * @return this
+     */
+    public <CompType extends JComponent> GuiSwingKeyBinding putTraverseHighPrecedence(Class<CompType> type, Predicate<CompType> predicate,
+                                                                                      KeyStroke keyStroke, Consumer<CompType> f) {
+        return putTraverse(type, predicate, (self, c) ->
+            putKeyStroke(new KeyStrokeActionForFunction<>(c, PRECEDENCE_SET_INPUT_MAP, keyStroke, f)));
+    }
+
+    /**
+     * append a traversal function for setting key-strokes for a specified component  by a given function.
+     *  the binding will be happen only the first component matched by the predicate.
+     * @param type the component type
+     * @param predicate predicate for specifying the component
+     * @param put a function for setting up key-strokes for the component
+     * @param <T> the component type
+     * @return this
+     */
+    public <T extends Component> GuiSwingKeyBinding putTraverse(Class<T> type, Predicate<T> predicate, BiConsumer<GuiSwingKeyBinding, T> put) {
+        return addTraverseFunction((self, comp) -> {
+            T t = GuiSwingView.findComponent(comp, type, predicate);
+            if (t != null) {
+                put.accept(self, t);
+            }
+        });
+    }
 
     public GuiSwingKeyBinding putHighPrecedencePaneFocus(JComponent c, KeyStroke keyStroke) {
         return putKeyStroke(new KeyStrokeActionForComponent(c, PRECEDENCE_SET_INPUT_MAP, keyStroke));
@@ -45,6 +137,15 @@ public class GuiSwingKeyBinding {
     }
 
     ///////////////////////////
+
+    public GuiSwingKeyBinding addTraverseFunctionDefault() {
+        return addTraverseFunction((self, comp) -> traverseKeyBinding(comp, 0));
+    }
+
+    public GuiSwingKeyBinding addTraverseFunction(BiConsumer<GuiSwingKeyBinding, Component> f) {
+        traverseFunctions.add(f);
+        return this;
+    }
 
     interface RecommendedKeyStroke {
         KeyStroke getRecommendedKeyStroke();
@@ -107,7 +208,8 @@ public class GuiSwingKeyBinding {
     }
 
     public GuiSwingKeyBinding addKeyBindingForComponentTree(Component c) {
-        return traverseKeyBinding(c, 0);
+        traverseFunctions.forEach(f -> f.accept(this, c));
+        return this;
     }
 
     public GuiSwingKeyBinding traverseKeyBinding(Component c, int depth) {
@@ -794,6 +896,16 @@ public class GuiSwingKeyBinding {
         return assigned;
     }
 
+    public List<KeyStrokeAction> getAssignedFromDispatcher() {
+        if (dispatcher == null) {
+            return Collections.emptyList();
+        } else {
+            return getDispatcher().getInputMap().values().stream()
+                    .sorted(Comparator.comparingInt(a -> assigned.indexOf(a)))
+                    .collect(Collectors.toList());
+        }
+    }
+
     public static int PRECEDENCE_TYPE_FLAG_HIGH = 1;
     public static int PRECEDENCE_TYPE_FLAG_USER_SPECIFIED = 10;
     public static int PRECEDENCE_TYPE_DEPTH = 1000;
@@ -1016,15 +1128,6 @@ public class GuiSwingKeyBinding {
         @Override
         public boolean equals(Object obj) {
             return equalsDefault(obj);
-        }
-    }
-
-
-    public static class GuiSwingKeyBindingWithoutAutoBindings extends GuiSwingKeyBinding {
-        @Override
-        public void bind(JComponent component) {
-            assign();
-            setDispatcher();
         }
     }
 }
