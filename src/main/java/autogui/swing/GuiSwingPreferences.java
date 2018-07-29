@@ -367,6 +367,7 @@ public class GuiSwingPreferences {
     /////////////
 
     public static class PreferencesListModel extends AbstractTableModel {
+        private static final long serialVersionUID = 1L;
         protected Supplier<GuiMappingContext> rootContext;
         protected List<GuiPreferences> list;
         protected List<GuiPreferences> savedPrefsList;
@@ -551,6 +552,7 @@ public class GuiSwingPreferences {
     }
 
     public static class PreferencesNameRenderer extends DefaultTableCellRenderer {
+        private static final long serialVersionUID = 1L;
         protected PreferencesListModel listModel;
 
         public PreferencesNameRenderer(PreferencesListModel listModel) {
@@ -569,6 +571,7 @@ public class GuiSwingPreferences {
     }
 
     public static class PreferencesNameEditor extends DefaultCellEditor {
+        private static final long serialVersionUID = 1L;
         protected PreferencesListModel listModel;
 
         public PreferencesNameEditor(PreferencesListModel listModel) {
@@ -587,6 +590,7 @@ public class GuiSwingPreferences {
     }
 
     public static class PreferencesLaunchApplyRenderer extends JCheckBox implements TableCellRenderer {
+        private static final long serialVersionUID = 1L;
         protected PreferencesListModel listModel;
 
         public PreferencesLaunchApplyRenderer(PreferencesListModel listModel) {
@@ -613,6 +617,7 @@ public class GuiSwingPreferences {
     }
 
     public static class PreferencesLaunchApplyEditor extends DefaultCellEditor {
+        private static final long serialVersionUID = 1L;
         protected PreferencesListModel listModel;
 
         public PreferencesLaunchApplyEditor(PreferencesListModel listModel) {
@@ -633,6 +638,7 @@ public class GuiSwingPreferences {
     ///////////////////
 
     public static class NewPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
         public NewPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Save");
@@ -668,6 +674,7 @@ public class GuiSwingPreferences {
     }
 
     public static class DeletePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
         public DeletePrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Delete");
@@ -698,6 +705,7 @@ public class GuiSwingPreferences {
     }
 
     public static class SavePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
 
         public SavePrefsAction(GuiSwingPreferences owner) {
@@ -747,6 +755,7 @@ public class GuiSwingPreferences {
     }
 
     public static class LoadPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
 
         public LoadPrefsAction(GuiSwingPreferences owner) {
@@ -780,6 +789,7 @@ public class GuiSwingPreferences {
     }
 
     public static class ApplyPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction  {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
 
         public ApplyPrefsAction(GuiSwingPreferences owner) {
@@ -820,6 +830,7 @@ public class GuiSwingPreferences {
     }
 
     public static class ResetPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
 
         public ResetPrefsAction(GuiSwingPreferences owner) {
@@ -1268,6 +1279,7 @@ public class GuiSwingPreferences {
     }
 
     public static class PrefsApplyMenu extends JMenu {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences preferences;
 
         public PrefsApplyMenu(GuiSwingPreferences preferences) {
@@ -1304,6 +1316,7 @@ public class GuiSwingPreferences {
     }
 
     public static class ApplySpecifiedPrefsAction extends ApplyPrefsAction {
+        private static final long serialVersionUID = 1L;
         protected GuiPreferences targetPrefs;
 
         public ApplySpecifiedPrefsAction(GuiSwingPreferences owner, GuiPreferences targetPrefs) {

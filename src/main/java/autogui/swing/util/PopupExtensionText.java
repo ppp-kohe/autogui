@@ -261,6 +261,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** the action for opening selection as an URL in a browser */
     public static class TextOpenBrowserAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected JComponent component;
         public TextOpenBrowserAction(JComponent component) {
             this.component = component;
@@ -557,6 +558,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** an abstract action for interacting with the history-buffer (kill-buffer) */
     public abstract static class TextAbstractHistoryAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected JTextComponent field;
 
         public TextAbstractHistoryAction(String name, JTextComponent field) {
@@ -614,6 +616,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** an delete-to-line-end action */
     public static class TextDeleteToLineEndAction extends TextAbstractHistoryAction
         implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
 
         public TextDeleteToLineEndAction(JTextComponent field) {
             super("delete-line-end", field);
@@ -651,6 +654,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** an delete-next-word action */
     public static class TextDeleteNextWordAction extends TextAbstractHistoryAction
         implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         public TextDeleteNextWordAction(JTextComponent field) {
             super("delete-next-word", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -690,6 +694,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** an delete-previous-word action */
     public static class TextDeletePreviousWordAction extends TextAbstractHistoryAction
         implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         public TextDeletePreviousWordAction(JTextComponent field) {
             super("delete-previous-word", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -729,6 +734,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** an paste the history-buffer action (yank) */
     public static class TextPasteHistoryAction extends TextAbstractHistoryAction
         implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         public TextPasteHistoryAction(JTextComponent field) {
             super("yank", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -839,6 +845,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** a file loading action */
     public static class TextLoadAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected JTextComponent field;
 
         public TextLoadAction(JTextComponent field) {
@@ -891,6 +898,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** a file saving action */
     public static class TextSaveAction extends TextLoadAction
         implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         public TextSaveAction(JTextComponent component) {
             super(component);
             putValue(NAME, "Save...");

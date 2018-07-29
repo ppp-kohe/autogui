@@ -77,6 +77,7 @@ public class GuiSwingViewEmbeddedComponentTest extends GuiSwingTestCase {
     }
 
     public static class TestPane extends JComponent {
+        private static final long serialVersionUID = 1L;
         public int paintCount;
         public String label;
         public TestPane(String label) {

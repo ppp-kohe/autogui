@@ -27,6 +27,7 @@ import java.util.List;
  */
 public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValuePane<ValueType>> extends JMenu implements TableTargetMenu,
         PopupCategorized.CategorizedMenuItemComponent {
+    private static final long serialVersionUID = 1L;
     protected PaneType component;
     protected GuiMappingContext context;
     protected GuiSwingTaskRunner.ContextAction runner;
@@ -137,6 +138,7 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
      * @param <PaneType>  the column component
      */
     public static class HistoryMenuForTableColumn<ValueType, PaneType extends GuiSwingView.ValuePane<ValueType>> extends GuiSwingHistoryMenu<ValueType, PaneType> {
+        private static final long serialVersionUID = 1L;
         protected GuiReprCollectionTable.TableTargetColumn target;
         public HistoryMenuForTableColumn(PaneType component, GuiMappingContext context, GuiReprCollectionTable.TableTargetColumn target) {
             super(component, context);
@@ -160,6 +162,7 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
      * @param <ValueType> the value type of the target component
      */
     public static class HistorySetAction<ValueType> extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected ValueType value;
         protected GuiSwingView.ValuePane<ValueType> component;
 
@@ -185,6 +188,7 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
      * @param <ValueType> the value type of the target column
      */
     public static class HistorySetForColumnAction<ValueType> extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected ValueType value;
         protected GuiReprCollectionTable.TableTargetColumn target;
 
@@ -203,7 +207,9 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
     /**
      * the clear menu item for histories
      */
+    @SuppressWarnings("rawtypes")
     public static class HistoryClearAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingHistoryMenu menu;
 
         public HistoryClearAction(GuiSwingHistoryMenu menu) {

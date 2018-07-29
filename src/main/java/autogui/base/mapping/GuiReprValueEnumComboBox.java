@@ -100,6 +100,7 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
      * @param nameOrIndex {@link Enum#name()} or {@link Enum#ordinal()}
      * @return a Enum member or null if not found
      */
+    @SuppressWarnings("rawtypes")
     public Object getEnumValue(GuiMappingContext context, String nameOrIndex) {
         Object[] es = getEnumConstants(context);
         if (numPattern.matcher(nameOrIndex).matches()) {

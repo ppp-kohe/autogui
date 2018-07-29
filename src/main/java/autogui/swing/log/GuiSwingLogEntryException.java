@@ -89,6 +89,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
     /** a renderer for exception stack-traces */
     public static class GuiSwingLogExceptionRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
+        private static final long serialVersionUID = 1L;
         protected ContainerType containerType;
         protected GuiSwingLogManager manager;
         protected TextCellRenderer<GuiLogEntryException> message;
@@ -97,6 +98,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         protected ExceptionExpandAction expandAction;
         protected JButton expandButton;
         protected JPanel messageLinePane;
+        @SuppressWarnings("rawtypes")
         protected JList lastList;
 
         protected boolean selected;
@@ -307,6 +309,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
     /** a renderer for an exception message */
     public static class ExceptionMessageRenderer extends TextCellRenderer<GuiLogEntryException> {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingLogManager manager;
         protected ContainerType containerType;
         protected Map<Attribute, Object> messageTimeAttributes;
@@ -394,6 +397,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
     /** a renderer for a stack-trace lines */
     public static class ExceptionStackTraceRenderer extends TextCellRenderer<GuiLogEntryException> {
+        private static final long serialVersionUID = 1L;
         protected StackTraceAttributeSet topSet;
         protected StackTraceAttributeSet middleSet;
         protected StackTraceAttributeSet lastSet;
@@ -687,6 +691,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
      * an action for expanding stack-trace of an exception entry
      */
     public static class ExceptionExpandAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingLogExceptionRenderer renderer;
 
         public ExceptionExpandAction(GuiSwingLogExceptionRenderer renderer) {

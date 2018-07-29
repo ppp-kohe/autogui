@@ -47,6 +47,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
 
     public static class PropertyFilePathPane extends SearchTextFieldFilePath
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> { //ValuePane<File|Path>
+        private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
@@ -275,6 +276,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
     }
 
     public static class HistoryMenuFilePath extends GuiSwingHistoryMenu<Object, PropertyFilePathPane> {
+        private static final long serialVersionUID = 1L;
         public HistoryMenuFilePath(PropertyFilePathPane component, GuiMappingContext context) {
             super(component, context);
         }

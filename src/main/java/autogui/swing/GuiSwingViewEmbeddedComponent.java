@@ -48,6 +48,8 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
 
     public static class PropertyEmbeddedPane extends JComponent
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
+        private static final long serialVersionUID = 1L;
+
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
 

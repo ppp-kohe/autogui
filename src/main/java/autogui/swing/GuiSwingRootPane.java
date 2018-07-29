@@ -30,6 +30,7 @@ import java.util.function.Supplier;
  *    or {@link GuiSwingRootPaneCreator} obtained by {@link #creator()}.
  */
 public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.RootView {
+    private static final long serialVersionUID = 1L;
     protected GuiMappingContext context;
     protected GuiSwingView view;
     protected GuiSwingPreferences preferences;
@@ -516,7 +517,11 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     @Override
     public void loadPreferences(GuiPreferences prefs) {
         withError(() -> preferences.getPrefsWindowUpdater().apply(prefs));
-        withError(() -> logPreferencesUpdater.apply(prefs));
+        withError(() -> {
+            if (logPreferencesUpdater != null) {
+                logPreferencesUpdater.apply(prefs);
+            }
+        });
         withError(() -> fileDialogPreferencesUpdater.apply(prefs));
 
         if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
@@ -536,7 +541,11 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     @Override
     public void savePreferences(GuiPreferences prefs) {
         withError(() -> preferences.getPrefsWindowUpdater().getPrefs().saveTo(prefs));
-        withError(() -> logPreferencesUpdater.getPrefs().saveTo(prefs));
+        withError(() -> {
+            if (logPreferencesUpdater != null) {
+                logPreferencesUpdater.getPrefs().saveTo(prefs);
+            }
+        });
         withError(() -> fileDialogPreferencesUpdater.getPrefs().saveTo(prefs));
 
         if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
@@ -621,6 +630,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
 
     public static class ShowPreferencesAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected Supplier<GuiSwingPreferences> preferences;
         protected JComponent sender;
 
@@ -710,6 +720,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     public static class WindowMenuMinimizeAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         public WindowMenuMinimizeAction() {
             putValue(NAME, "Minimize");
             ///putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_M,
@@ -736,6 +747,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     public static class WindowMenuZoomAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         public WindowMenuZoomAction() {
             putValue(NAME, "Zoom");
         }
@@ -765,6 +777,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     public static class WindowMenuToFromAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected Frame frame;
 
         public WindowMenuToFromAction(Frame frame) {
@@ -796,6 +809,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     public static class WindowCloseAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected JComponent pane;
         protected KeyStroke keyStroke;
 

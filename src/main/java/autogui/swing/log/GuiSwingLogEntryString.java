@@ -141,6 +141,8 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
      */
     public static class GuiSwingLogStringRenderer extends TextCellRenderer<GuiLogEntry>
             implements LogEntryRenderer {
+        private static final long serialVersionUID = 1L;
+
         protected GuiLogManager manager;
 
         protected ContainerType containerType;

@@ -32,7 +32,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         this.getter = getter;
         this.setter = setter;
     }
-
+    @SuppressWarnings("rawtypes")
     public LambdaProperty(Class<? extends java.util.List> listType, Class<?> elementType, Supplier<T> getter, Consumer<T> setter) {
         super("_");
         setType(new GuiTypeCollection(listType, new GuiTypeValue(elementType)));
@@ -63,6 +63,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         return context;
     }
 
+    @SuppressWarnings("rawtypes")
     public static <T> GuiMappingContext createList(Class<? extends java.util.List> listType, Class<?> elementType, Supplier<T> getter, Consumer<T> setter, GuiRepresentation repr) {
         GuiMappingContext context = new GuiMappingContext(new LambdaProperty<>(listType, elementType, getter, setter), repr);
 
@@ -91,6 +92,8 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     ////////////
 
     public static class LambdaTextPane extends GuiSwingViewStringField.PropertyStringPane {
+        private static final long serialVersionUID = 1L;
+
         public LambdaTextPane(Supplier<String> getter, Consumer<String> setter) {
             super(create(String.class, getter, setter, new GuiReprValueStringField()), NONE);
             setPreferredSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(100), getPreferredSize().height ));
@@ -98,12 +101,16 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     }
 
     public static class LambdaNumberSpinner extends GuiSwingViewNumberSpinner.PropertyNumberSpinner {
+        private static final long serialVersionUID = 1L;
+
         public <T extends Number> LambdaNumberSpinner(Class<T> type, Supplier<T> getter, Consumer<T> setter) {
             super(create(type, getter, setter, new GuiReprValueNumberSpinner()), NONE);
         }
     }
 
     public static class LambdaLabel extends GuiSwingViewLabel.PropertyLabel {
+        private static final long serialVersionUID = 1L;
+
         public LambdaLabel(Supplier<?> getter) {
             super(create(Object.class, getter, null, new GuiReprValueLabel()), NONE);
             addMouseListener(new MouseAdapter() {
@@ -121,6 +128,8 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     }
 
     public static class LambdaImagePane extends GuiSwingViewImagePane.PropertyImagePane {
+        private static final long serialVersionUID = 1L;
+
         public <T extends Image> LambdaImagePane(Supplier<T> getter, Consumer<T> setter) {
             this(BufferedImage.class, getter, setter);
         }
@@ -131,6 +140,8 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     }
 
     public static class LambdaFilePathPane extends GuiSwingViewFilePathField.PropertyFilePathPane {
+        private static final long serialVersionUID = 1L;
+
         public LambdaFilePathPane(Supplier<Path> getter, Consumer<Path> setter) {
             super(create(Path.class, getter, setter, new GuiReprValueFilePathField()), NONE);
             setPreferredSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(200), getPreferredSize().height ));
@@ -138,12 +149,16 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     }
 
     public static class LambdaEnumComboBox extends GuiSwingViewEnumComboBox.PropertyEnumComboBox {
+        private static final long serialVersionUID = 1L;
+
         public <T extends Enum<?>> LambdaEnumComboBox(Class<T> enumType, Supplier<T> getter, Consumer<T> setter) {
             super(create(enumType, getter, setter, new GuiReprValueEnumComboBox()), NONE);
         }
     }
 
     public static class LambdaBooleanCheckBox extends GuiSwingViewBooleanCheckBox.PropertyCheckBox {
+        private static final long serialVersionUID = 1L;
+
         public LambdaBooleanCheckBox(String label, Supplier<Boolean> getter, Consumer<Boolean> setter) {
             super(create(Boolean.class, getter, setter, new GuiReprValueBooleanCheckBox()), NONE);
             setText(label);
@@ -151,12 +166,16 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     }
 
     public static class LambdaDocumentPlainEditorPane extends GuiSwingViewDocumentEditor.PropertyDocumentEditorPane {
+        private static final long serialVersionUID = 1L;
+
         public LambdaDocumentPlainEditorPane(Supplier<? extends Document> getter) {
             super(create(Document.class, getter, null, new GuiReprValueDocumentEditor()), NONE);
         }
     }
 
     public static class LambdaDocumentTextPane extends GuiSwingViewDocumentEditor.PropertyDocumentTextPane {
+        private static final long serialVersionUID = 1L;
+
         /** @param getter the getter returns {@link StringBuilder},
          *  {@link javax.swing.text.AbstractDocument.Content}, or {@link StyledDocument} */
         public LambdaDocumentTextPane(Supplier<?> getter) {
@@ -166,6 +185,8 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
 
 
     public static class LambdaCollectionTable extends GuiSwingViewCollectionTable.CollectionTable {
+        private static final long serialVersionUID = 1L;
+
         public <E> LambdaCollectionTable(Class<E> elementType, Supplier<java.util.List<E>> getter) {
             super(createList(List.class, elementType, getter, null,
                     new GuiReprCollectionTable(GuiRepresentation.getDefaultSet())), NONE);
@@ -301,6 +322,8 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             context.addToParent();
 
             GuiSwingTableColumnSetDefault.TableSelectionListAction a = new GuiSwingTableColumnSetDefault.TableSelectionListAction(context, this) {
+                private static final long serialVersionUID = 1L;
+
                 @SuppressWarnings("unchecked")
                 @Override
                 public void actionPerformed(ActionEvent e) {

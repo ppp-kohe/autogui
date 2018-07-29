@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
  * a table-model with {@link GuiMappingContext}
  */
 public class GuiSwingTableModelCollection extends ObjectTableModel {
+    private static final long serialVersionUID = 1L;
     protected GuiMappingContext elementContext;
     protected Supplier<ObjectSpecifier> tableSpecifier;
     protected SpecifierManagerIndex rowSpecifierManager;
@@ -599,6 +600,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
      */
     public static class NumberCopyAction extends PopupExtensionText.TextCopyAllAction
             implements TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
 
         public NumberCopyAction() {
             super(null);

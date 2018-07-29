@@ -48,6 +48,8 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
      */
     public static class ColumnEditImagePane extends PropertyImagePane
             implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget {
+        private static final long serialVersionUID = 1L;
+
         protected ColumnEditImagePane scaleTarget;
         protected int updating;
         protected boolean editor;

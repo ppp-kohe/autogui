@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 
 /** a text-field with background searching file-items */
 public class SearchTextFieldFilePath extends SearchTextField {
+    private static final long serialVersionUID = 1L;
 
     public static String MENU_CATEGORY_FILE_DEFAULT = "Default";
     public static String MENU_CATEGORY_FILE_CHILD = "Child";
@@ -141,6 +142,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** a transfer-handler for copying and pasting a file-list */
     public static class FileTransferHandler extends TransferHandler {
+        private static final long serialVersionUID = 1L;
         protected SearchTextFieldFilePath component;
 
         public FileTransferHandler(SearchTextFieldFilePath component) {
@@ -212,6 +214,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** the action for completing a searched file-item */
     public static abstract class FileListEditAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected SearchTextFieldFilePath component;
 
         public FileListEditAction(String name, SearchTextFieldFilePath component) {
@@ -234,6 +237,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** the action for text paste */
     public static class FilePasteAction extends FileListEditAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
 
         public FilePasteAction(SearchTextFieldFilePath component) {
             super("Paste Value", component);
@@ -295,6 +299,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** an abstract definition of a file-list */
     public static abstract class FileListAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected SearchTextFieldFilePath component;
 
         public FileListAction(String name, SearchTextFieldFilePath component) {
@@ -320,6 +325,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** copying the selected file */
     public static class FileCopyAllAction extends FileListAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
 
         public FileCopyAllAction(SearchTextFieldFilePath component) {
             super("Copy Value", component);
@@ -396,6 +402,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** the action for opening files */
     public static class DesktopOpenAction extends FileListAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
 
         public DesktopOpenAction(SearchTextFieldFilePath component) {
             super("Open in Desktop", component);
@@ -436,6 +443,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** the action for showing files in Finder or Explorer */
     public static class DesktopRevealAction extends FileListAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected Consumer<Path> command;
 
 
@@ -506,6 +514,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** an action for selecting a file item from an open dialog */
     public static class OpenDialogAction extends FileListEditAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
 
         public OpenDialogAction(SearchTextFieldFilePath component) {
             super("Select...", component);

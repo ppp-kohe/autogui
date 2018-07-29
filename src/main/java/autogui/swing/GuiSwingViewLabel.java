@@ -49,6 +49,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
     public static class PropertyLabel extends JLabel
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
+        private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected Object value;
@@ -335,6 +336,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
     }
 
     public static class LabelToStringCopyAction extends ToStringCopyAction {
+        private static final long serialVersionUID = 1L;
         protected PropertyLabel label;
         public LabelToStringCopyAction(PropertyLabel label) {
             super(label, label.getSwingViewContext());
@@ -349,6 +351,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
     /** special handling for any type of value as string */
     public static class LabelJsonCopyAction extends GuiSwingJsonTransfer.JsonCopyAction {
+        private static final long serialVersionUID = 1L;
         public LabelJsonCopyAction(ValuePane<?> component, GuiMappingContext context) {
             super(component, context);
         }
@@ -364,6 +367,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
     }
 
     public static class LabelJsonSaveAction extends GuiSwingJsonTransfer.JsonSaveAction {
+        private static final long serialVersionUID = 1L;
         public LabelJsonSaveAction(ValuePane<?> component, GuiMappingContext context) {
             super(component, context);
         }
@@ -379,6 +383,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
     }
 
     public static class LabelTransferHandler extends  TransferHandler {
+        private static final long serialVersionUID = 1L;
         protected PropertyLabel pane;
 
         public LabelTransferHandler(PropertyLabel pane) {
@@ -402,6 +407,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
     }
 
     public static class LabelTextSaveAction extends PopupExtensionText.TextSaveAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingViewLabel.PropertyLabel label;
 
         public LabelTextSaveAction(GuiSwingViewLabel.PropertyLabel label) {

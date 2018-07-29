@@ -217,6 +217,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
 
 
     @SafeVarargs
+    @SuppressWarnings("rawtypes")
     public static Supplier<? extends Collection<CategorizedMenuItem>> getMenuItemsSupplier(
             Supplier<? extends Collection<CategorizedMenuItem>>... itemsList) {
         return () ->
@@ -437,6 +438,8 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
      * an action for selecting a {@link CategorizedMenuItem}
      */
     public static class SearchPopupAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+
         protected PopupCategorized popup;
         protected CategorizedMenuItem item;
 

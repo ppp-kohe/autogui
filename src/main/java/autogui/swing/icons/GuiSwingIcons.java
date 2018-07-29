@@ -219,6 +219,7 @@ public class GuiSwingIcons {
 
     /** an action button with the customized border */
     public static class ActionButton extends JButton {
+        private static final long serialVersionUID = 1L;
         protected Instant lastDisabledWithFocusTime = Instant.EPOCH;
 
         public ActionButton(Action a) {

@@ -18,6 +18,7 @@ import java.util.function.Predicate;
  * a root window wrapping a {@link GuiSwingRootPane}.
  */
 public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootView {
+    private static final long serialVersionUID = 1L;
     protected GuiSwingRootPane contextRootPane;
     protected GuiSwingPreferences.WindowPreferencesUpdater preferencesUpdater;
 

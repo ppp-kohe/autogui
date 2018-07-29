@@ -73,6 +73,7 @@ public class SettingsWindow {
                 .put(PopupExtension.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "window-close");
         window.getRootPane().getActionMap()
                 .put("window-close", new AbstractAction() {
+                    private static final long serialVersionUID = 1L;
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         window.setVisible(false);
@@ -81,6 +82,7 @@ public class SettingsWindow {
     }
 
     public class SettingsFrame extends JFrame {
+        private static final long serialVersionUID = 1L;
         protected boolean shown;
 
         public void setShown(boolean shown) {
@@ -287,6 +289,7 @@ public class SettingsWindow {
 
     /** a color well can be changed by a shared color-panel */
     public static class ColorButton extends JButton implements ActionListener {
+        private static final long serialVersionUID = 1L;
         protected Color color;
         protected Consumer<Color> callback;
         protected ColorWindow window;
@@ -648,6 +651,7 @@ public class SettingsWindow {
 
     /** an action for changing the selected directory of {@link FileDialogManager} */
     public static class FileBackAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected JFileChooser fileChooser;
         protected Path path;
         protected FileSystemView iconSource;
@@ -687,6 +691,7 @@ public class SettingsWindow {
 
     /** a list renderer for history of files of {@link FileDialogManager} */
     public static class FileItemRenderer extends DefaultListCellRenderer {
+        private static final long serialVersionUID = 1L;
         protected FileSystemView iconSource;
         protected Icon dummy;
 
@@ -760,6 +765,7 @@ public class SettingsWindow {
 
     /** a list-model for history files of {@link FileDialogManager} */
     public static class FileListModel extends AbstractListModel<Path> {
+        private static final long serialVersionUID = 1L;
         protected List<Path> paths;
         protected List<Path> initPaths;
 
@@ -833,6 +839,7 @@ public class SettingsWindow {
 
     /** an action for clearing history of files of {@link FileDialogManager} */
     public static class FileListClearAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected FileListModel listModel;
         protected JList<Path> list;
 
@@ -850,6 +857,7 @@ public class SettingsWindow {
 
     /** an action for removing an item in history of files of {@link FileDialogManager} */
     public static class FileListRemoveAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected FileListModel listModel;
         protected JList<Path> list;
 
@@ -874,6 +882,7 @@ public class SettingsWindow {
 
     /** an action for adding the selected file to history of files of {@link FileDialogManager} */
     public static class FileListAddAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected FileListModel listModel;
         protected JFileChooser chooser;
 

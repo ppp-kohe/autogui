@@ -208,6 +208,7 @@ public class GuiSwingLogManager extends GuiLogManager {
      * a window for displaying log-list
      */
     public static class GuiSwingLogWindow extends JFrame {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingLogList list;
         protected JToolBar toolbar;
         protected GuiSwingLogStatusBar statusBar;
@@ -272,6 +273,7 @@ public class GuiSwingLogManager extends GuiLogManager {
      * an action for showing the log-list, displayed on a status-bar
      */
     public static class LogWindowShowAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected JFrame frame;
         protected boolean first = true;
         public LogWindowShowAction(JFrame frame) {

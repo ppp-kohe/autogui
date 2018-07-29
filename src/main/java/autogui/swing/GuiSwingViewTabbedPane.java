@@ -47,6 +47,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
     }
 
     public static class ObjectTabbedPane extends GuiSwingViewObjectPane.ObjectPane {
+        private static final long serialVersionUID = 1L;
         protected JTabbedPane tabbedPane;
         protected TabPreferencesUpdater tabPreferencesUpdater;
 

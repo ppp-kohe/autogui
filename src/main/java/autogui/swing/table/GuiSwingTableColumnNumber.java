@@ -56,6 +56,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
 
     public static class ColumnNumberPane extends GuiSwingViewNumberSpinner.PropertyLabelNumber
             implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget {
+        private static final long serialVersionUID = 1L;
         protected PropertyNumberSpinner editor;
 
         protected Runnable updater;
@@ -168,6 +169,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
     }
 
     public static class ColumnEditNumberSpinner extends PropertyNumberSpinner {
+        private static final long serialVersionUID = 1L;
         public ColumnEditNumberSpinner(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);

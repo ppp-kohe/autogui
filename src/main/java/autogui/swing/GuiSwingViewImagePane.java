@@ -56,6 +56,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     public static class PropertyImagePane extends JComponent
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Image> {
+        private static final long serialVersionUID = 1L;
+
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected Image image;
@@ -543,6 +545,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     public static class ImageScaleSwitchFitAction extends AbstractAction
             implements PopupCategorized.CategorizedMenuItemActionCheck, TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyImagePane pane;
 
         public ImageScaleSwitchFitAction(PropertyImagePane pane) {
@@ -586,6 +590,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     public static class ImageScaleOriginalSizeAction extends AbstractAction
             implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyImagePane pane;
 
         public ImageScaleOriginalSizeAction(PropertyImagePane pane) {
@@ -616,6 +622,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageScaleSizeAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyImagePane pane;
         protected float n;
 
@@ -639,6 +647,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageScaleAutoSwitchByMouseWheel extends AbstractAction implements PopupCategorized.CategorizedMenuItemActionCheck {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyImagePane pane;
 
         public ImageScaleAutoSwitchByMouseWheel(PropertyImagePane pane) {
@@ -668,6 +678,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageScaleIncreaseAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyImagePane pane;
         protected float n;
 
@@ -705,6 +717,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     ///////////////////////
 
     public static class HistoryMenuImage extends GuiSwingHistoryMenu<Image, PropertyImagePane> {
+        private static final long serialVersionUID = 1L;
+
         public HistoryMenuImage(PropertyImagePane component, GuiMappingContext context) {
             super(component, context);
         }
@@ -757,6 +771,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class HistoryMenuItemForTableColumn extends HistoryMenuImage {
+        private static final long serialVersionUID = 1L;
+
         protected GuiReprCollectionTable.TableTargetColumn target;
         public HistoryMenuItemForTableColumn(PropertyImagePane component, GuiMappingContext context, GuiReprCollectionTable.TableTargetColumn target) {
             super(component, context);
@@ -770,6 +786,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageCopyAction extends AbstractAction implements TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
+
         protected Supplier<Image> image;
         protected GuiMappingContext context;
 
@@ -821,6 +839,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImagePasteAction extends AbstractAction implements TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyImagePane pane;
 
         public ImagePasteAction(PropertyImagePane pane) {
@@ -880,6 +900,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageSaveAction extends ImageCopyAction {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyImagePane pane;
         public ImageSaveAction(PropertyImagePane pane) {
             super(pane::getImage, pane.getSwingViewContext());
@@ -923,6 +945,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageLoadAction extends ImagePasteAction {
+        private static final long serialVersionUID = 1L;
 
         public ImageLoadAction(PropertyImagePane pane) {
             super(pane);
@@ -1019,6 +1042,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
 
     public static class ImageTransferHandler extends TransferHandler {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyImagePane imagePane;
 
         public ImageTransferHandler(PropertyImagePane imagePane) {

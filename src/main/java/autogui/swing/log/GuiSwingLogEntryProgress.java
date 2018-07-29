@@ -85,6 +85,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
     /** a renderer for a progress entry */
     public static class GuiSwingLogProgressRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
+        private static final long serialVersionUID = 1L;
         protected ContainerType containerType;
         protected GuiSwingLogManager manager;
 
@@ -375,6 +376,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
      * an action for terminating a progress bar entry
      */
     public static class ProgressStopAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingLogProgressRenderer renderer;
         public ProgressStopAction(GuiSwingLogProgressRenderer renderer) {
             putValue(NAME, "Stop");
@@ -392,6 +394,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
     /** a renderer for a progress message */
     public static class ProgressMessageRenderer extends TextCellRenderer<GuiLogEntryProgress> {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingLogManager manager;
         protected ContainerType containerType;
 
@@ -447,6 +450,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
     /** a renderer for progress status */
     public static class ProgressStatusRenderer extends TextCellRenderer<GuiLogEntryProgress> {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingLogManager manager;
         protected ContainerType containerType;
         protected boolean finish = false;

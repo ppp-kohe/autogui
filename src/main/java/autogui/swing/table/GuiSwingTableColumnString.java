@@ -40,6 +40,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     }
 
     public static class ColumnTextPane extends PropertyLabel {
+        private static final long serialVersionUID = 1L;
         public ColumnTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setOpaque(true);
@@ -65,6 +66,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     public static class LabelTextPasteAllAction extends PopupExtensionText.TextPasteAllAction
         implements TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
         protected PropertyLabel label;
 
         public LabelTextPasteAllAction(PropertyLabel label) {
@@ -94,6 +96,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     public static class LabelTextLoadAction extends PopupExtensionText.TextLoadAction
             implements TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
         protected PropertyLabel label;
 
         public LabelTextLoadAction(PropertyLabel label) {
@@ -139,6 +142,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     public static class ColumnLabelTextSaveAction extends GuiSwingViewLabel.LabelTextSaveAction
         implements TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
 
         public ColumnLabelTextSaveAction(PropertyLabel label) {
             super(label);
@@ -158,6 +162,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     /** a component for editor and renderer */
     public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyStringPane {
+        private static final long serialVersionUID = 1L;
         public ColumnEditTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);

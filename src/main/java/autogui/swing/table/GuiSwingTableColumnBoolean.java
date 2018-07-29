@@ -39,6 +39,8 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
 
     /** a property-check-box for column renderer and editor */
     public static class ColumnCheckBox extends PropertyCheckBox {
+        private static final long serialVersionUID = 1L;
+
         public ColumnCheckBox(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
@@ -58,6 +60,8 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
      * an editor for a boolean value
      */
     public static class CheckBoxEditor extends ObjectTableColumnValue.ObjectTableCellEditor {
+        private static final long serialVersionUID = 1L;
+
         public CheckBoxEditor(JComponent component, boolean skipShutDown, SpecifierManagerIndex specifierIndex) {
             super(component, skipShutDown, specifierIndex);
             setClickCount(0);

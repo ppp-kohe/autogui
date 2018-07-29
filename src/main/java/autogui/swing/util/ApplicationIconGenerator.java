@@ -20,6 +20,7 @@ public class ApplicationIconGenerator {
         JFrame frame = new JFrame("App Icon");
         {
             JPanel pane = new JPanel() {
+                private static final long serialVersionUID = 1L;
                 @Override
                 public void paintComponent(Graphics g) {
                     g.clearRect(0, 0, getWidth(), getHeight());

@@ -305,6 +305,6 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
 
     /** an exception thrown by checking-interruption */
     public static class GuiLogEntryProgressInterruptedException extends RuntimeException {
-
+        private static final long serialVersionUID = 1L;
     }
 }

@@ -243,6 +243,8 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      * </pre>
      */
     public static class TableSelectionListAction extends GuiSwingActionDefault.ExecutionAction {
+        private static final long serialVersionUID = 1L;
+
         protected TableSelectionSource source;
         protected Function<Object, TableSelectionChange> selectionChangeFactory;
         protected boolean selectionChange;
@@ -385,6 +387,8 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      * </pre>
      * */
     public static class TableSelectionAction extends TableSelectionListAction {
+        private static final long serialVersionUID = 1L;
+
         public TableSelectionAction(GuiMappingContext context, TableSelectionSource source) {
             super(context, source);
         }

@@ -120,6 +120,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<List<?>>,
                         GuiSwingTableColumnSet.TableSelectionSource, GuiSwingPreferences.PreferencesUpdateSupport,
                         SettingsWindowClient {
+        private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected List<?> source;
@@ -277,14 +278,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (actions.isEmpty()) {
                 return initTableScrollPane();
             } else {
-                JPanel pane = new GuiSwingViewWrapper.ValueWrappingPane(initTableScrollPane());
+                JPanel pane = new GuiSwingViewWrapper.ValueWrappingPane<>(initTableScrollPane());
                 pane.add(initActionToolBar(actions), BorderLayout.PAGE_START);
                 return pane;
             }
         }
 
-        public GuiSwingViewWrapper.ValueScrollPane initTableScrollPane() {
-            GuiSwingViewWrapper.ValueScrollPane scrollPane = new GuiSwingViewWrapper.ValueScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        public GuiSwingViewWrapper.ValueScrollPane<?> initTableScrollPane() {
+            GuiSwingViewWrapper.ValueScrollPane<?> scrollPane = new GuiSwingViewWrapper.ValueScrollPane<>(this, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             initTableScrollPane(scrollPane);
             return scrollPane;
         }
@@ -1056,6 +1057,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class SelectAllAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected JTable table;
 
         public SelectAllAction(JTable table) {
@@ -1328,6 +1330,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class ToStringCollectionTransferHandler extends TransferHandler {
+        private static final long serialVersionUID = 1L;
         protected CollectionTable pane;
 
         public ToStringCollectionTransferHandler(CollectionTable pane) {
@@ -1374,6 +1377,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class UnSelectAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected JTable table;
 
         public UnSelectAction(JTable table) {
@@ -1403,6 +1407,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class TableCompositesAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected CollectionTable table;
         protected ObjectTableColumn.TableMenuCompositeShared shared;
         protected String category;
@@ -1497,6 +1502,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     public static String CATEGORY_COLUMN_ORDER = MenuBuilder.getCategoryImplicit("Column Order");
 
     public static class ColumnFitAllWidthAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected JTable table;
         protected Supplier<TableColumn> targetColumn;
         protected Runnable afterRunner;
@@ -1529,6 +1535,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class ColumnResizeModeSwitchAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemActionCheck {
+        private static final long serialVersionUID = 1L;
         protected JTable table;
 
         public ColumnResizeModeSwitchAction(JTable table) {
@@ -1563,6 +1570,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class ColumnOrderResetAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected JTable table;
 
         public ColumnOrderResetAction(JTable table) {

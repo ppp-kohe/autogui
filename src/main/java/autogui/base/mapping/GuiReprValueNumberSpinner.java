@@ -609,7 +609,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
         @Override
         public Object next(Object previous, Number step, int direction) {
-            return (long) (toLong(previous) + step.longValue() * direction);
+            return (toLong(previous) + step.longValue() * direction);
         }
 
         @Override
@@ -648,7 +648,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
         @Override
         public Object next(Object previous, Number step, int direction) {
-            return (float) (toFloat(previous) + step.floatValue() * direction);
+            return (toFloat(previous) + step.floatValue() * direction);
         }
 
         @Override
@@ -691,7 +691,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
         @Override
         public Object next(Object previous, Number step, int direction) {
-            return (double) (toDouble(previous) + step.doubleValue() * direction);
+            return (toDouble(previous) + step.doubleValue() * direction);
         }
 
         @Override

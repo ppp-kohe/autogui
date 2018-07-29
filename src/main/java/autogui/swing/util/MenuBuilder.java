@@ -175,6 +175,7 @@ public class MenuBuilder {
 
     /** a label menu-item component  */
     public static class MenuLabel extends JPanel implements PopupCategorized.CategorizedMenuItemComponent {
+        private static final long serialVersionUID = 1L;
         protected String subCategory = "";
         protected JLabel label;
         protected String name;

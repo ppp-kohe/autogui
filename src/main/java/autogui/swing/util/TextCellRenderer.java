@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
  */
 public class TextCellRenderer<ValueType> extends JPanel
     implements TableCellRenderer, ListCellRenderer<ValueType> {
+    private static final long serialVersionUID = 1L;
     protected boolean selected;   //cell selection
     protected int selectionStart; //text selection range
     protected int selectionEnd;
@@ -993,7 +994,7 @@ public class TextCellRenderer<ValueType> extends JPanel
          */
         public int range;
 
-        public LineInfoMatch(int line, int range, TextCellRenderer r, Object v) {
+        public LineInfoMatch(int line, int range, TextCellRenderer<?> r, Object v) {
             this.renderer = r;
             this.value = v;
             this.line = line;

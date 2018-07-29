@@ -6,6 +6,7 @@ import javax.swing.*;
  * a wrapper pane with a label
  */
 public class NamedPane extends JComponent {
+    private static final long serialVersionUID = 1L;
     protected String displayName;
     protected JLabel label;
     protected JComponent contentPane;

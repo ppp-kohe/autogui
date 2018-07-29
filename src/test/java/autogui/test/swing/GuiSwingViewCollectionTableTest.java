@@ -20,7 +20,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
     public static void main(String[] args) {
         GuiSwingViewCollectionTableTest test = new GuiSwingViewCollectionTableTest();
         test.setUp();
-        test.testViewCollectionUpdateObjMatrix();
+        test.testViewCollectionSelectAction();
     }
 
     GuiTypeBuilder builder;
@@ -96,8 +96,6 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
         objMatrixContext = new GuiMappingContext(typeObjMatrix, objMatrix);
         GuiSwingMapperSet.getReprDefaultSet().match(objMatrixContext);
         objMatrixPropContext = objMatrixContext.getChildByName("value").getChildByName("List");
-
-
     }
 
     @GuiIncluded
@@ -310,6 +308,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
                 runGet(btn2::isEnabled));
 
         run(() -> colTable.setRowSelectionInterval(1, 2));
+        run(() -> colTable.setColumnSelectionInterval(1, 2));
 
         Assert.assertTrue("selected and enabled",
                 runGet(btn::isEnabled));
@@ -332,9 +331,11 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
                 0,
                 obj.value.get(3).actionCount);
 
+        run(btn2::doClick);
+
         Assert.assertEquals("selection cause second action",
                 new HashSet<>(Arrays.asList(obj.value.get(1), obj.value.get(2))),
-                obj.selectedItems);
+                runGet(() -> obj.selectedItems));
 
     }
 
@@ -372,17 +373,16 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
         ));
         run(() -> colTable.setSwingViewValueWithUpdate(rs));
         run(() -> colTable.setRowSelectionInterval(1, 2));
+        run(() -> colTable.setColumnSelectionInterval(0, 2));
 
         Assert.assertFalse("has selection",
                 runGet(() -> colTable.getSelectionSourceForRowAndColumnIndices().isSelectionEmpty()));
 
         List<?> items = runGet(() -> colTable.getSelectionSourceForRowAndColumnIndices().getSelectedItems());
-        Assert.assertArrayEquals("1st row, idx col", new int[] {1, 0}, (int[]) items.get(0));
-        Assert.assertArrayEquals("1st row, 2nd col", new int[] {1, 1}, (int[]) items.get(1));
-        Assert.assertArrayEquals("1st row, 3rd col", new int[] {1, 2}, (int[]) items.get(2));
-        Assert.assertArrayEquals("2nd row, idx col", new int[] {2, 0}, (int[]) items.get(3));
-        Assert.assertArrayEquals("2nd row, 2nd col", new int[] {2, 1}, (int[]) items.get(4));
-        Assert.assertArrayEquals("2nd row, 3rd col", new int[] {2, 2}, (int[]) items.get(5));
+        Assert.assertArrayEquals("1st row, 2nd col", new int[] {1, 1}, (int[]) items.get(0));
+        Assert.assertArrayEquals("1st row, 3rd col", new int[] {1, 2}, (int[]) items.get(1));
+        Assert.assertArrayEquals("2nd row, 2nd col", new int[] {2, 1}, (int[]) items.get(2));
+        Assert.assertArrayEquals("2nd row, 3rd col", new int[] {2, 2}, (int[]) items.get(3));
     }
 
     //////////////////////////

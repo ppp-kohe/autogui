@@ -132,6 +132,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public void shutdown() {
         super.shutdown();
         setForComponents(ValuePane.class,
@@ -374,6 +375,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * a cell-editor with {@link ValuePane}
      */
     public static class ObjectTableCellEditor extends AbstractCellEditor implements TableCellEditor, ObjectTableColumnCellView {
+        private static final long serialVersionUID = 1L;
         protected JComponent component;
         protected int clickCount = 2;
         protected boolean skipShutDown;
@@ -501,6 +503,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * an action for selecting cells of a target column and all rows
      */
     public static class ColumnSelectionAction extends AbstractAction implements CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected JTable table;
         protected int column;
 
@@ -637,6 +640,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
     /** a base class for wrapping an action */
     public static class ActionDelegate<TargetActionType extends Action> extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected TargetActionType action;
         protected Map<String, Object> values;
         protected static Object NULL = new Object();
@@ -693,6 +697,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      */
     public static class TableTargetExecutionAction extends ActionDelegate<TableTargetColumnAction>
             implements CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected TableTargetColumn target;
 
         public TableTargetExecutionAction(TableTargetColumnAction action, TableTargetColumn target) {
@@ -735,6 +740,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      */
     public static class TableTargetInvocationAction extends ActionDelegate<Action>
             implements CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected TableTargetColumn target;
         protected BiConsumer<ActionEvent, TableTargetColumn> invoker;
 
@@ -783,6 +789,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      *   this action iterates over the selected rows and changing the target column value with the each row value.
      */
     public static class TableRowsRepeatAction extends ActionDelegate<Action> implements CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected JTable table;
         protected ObjectTableColumn column;
 

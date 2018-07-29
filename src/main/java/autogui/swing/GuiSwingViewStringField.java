@@ -53,6 +53,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
     public static class PropertyStringPane extends SearchTextField
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<String> {
+        private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
@@ -261,6 +262,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
     /** handle entire text */
     public static class StringTransferHandler extends TransferHandler {
+        private static final long serialVersionUID = 1L;
         protected PropertyStringPane pane;
 
         public StringTransferHandler(PropertyStringPane pane) {

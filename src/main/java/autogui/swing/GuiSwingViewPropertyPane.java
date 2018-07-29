@@ -76,6 +76,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
     }
 
     public static class PropertyPane extends NamedPropertyPane {
+        private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected PopupExtension popup;
@@ -221,6 +222,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
     }
 
     public static class PropertyWrapperPane extends PropertyPane {
+        private static final long serialVersionUID = 1L;
         public PropertyWrapperPane(GuiMappingContext context, boolean showName, ValuePane<?> content) {
             super(context, showName, null, content.asSwingViewComponent());
         }
@@ -232,6 +234,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
     }
 
     public static class NamedPropertyPane extends NamedPane implements GuiSwingViewWrapper.ValuePaneWrapper<Object> {
+        private static final long serialVersionUID = 1L;
         protected PopupExtension popup;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
 

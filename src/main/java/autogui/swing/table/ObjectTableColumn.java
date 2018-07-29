@@ -291,6 +291,7 @@ public class ObjectTableColumn {
      * a renderer for index numbers
      */
     public static class NumberRenderer extends DefaultTableCellRenderer {
+        private static final long serialVersionUID = 1L;
 
         public NumberRenderer() {
             setHorizontalAlignment(JLabel.RIGHT);

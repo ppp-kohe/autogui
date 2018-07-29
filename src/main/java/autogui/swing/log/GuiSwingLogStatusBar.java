@@ -14,6 +14,7 @@ import java.util.function.Consumer;
  * a status-bar for displaying a last log-entry
  */
 public class GuiSwingLogStatusBar extends JComponent {
+    private static final long serialVersionUID = 1L;
     protected GuiSwingLogManager manager;
     protected GuiLogEntry entry;
     protected Component entryComponent;
@@ -40,6 +41,7 @@ public class GuiSwingLogStatusBar extends JComponent {
         renderer = new GuiSwingLogManager.GuiSwingLogRenderer(manager, GuiSwingLogEntry.ContainerType.StatusBar);
         cellRendererPane = new CellRendererPane();
         centerPane = new JPanel() {
+            private static final long serialVersionUID = 1L;
             @Override
             protected void paintComponent(Graphics g) {
                 paintCell(g, this);

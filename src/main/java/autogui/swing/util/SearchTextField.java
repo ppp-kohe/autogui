@@ -51,6 +51,7 @@ import java.util.function.Supplier;
  *         and registers it to the field as document listener, action listener and focus listener .
  */
 public class SearchTextField extends JComponent {
+    private static final long serialVersionUID = 1L;
     protected SearchTextFieldModel model;
     protected JButton icon;
     protected JTextField field;
@@ -206,6 +207,7 @@ public class SearchTextField extends JComponent {
     public void initField() {
         editingRunner = new EditingRunner(getEditingRunnerDelay(), this::updateField);
         field = new JTextField() {
+            private static final long serialVersionUID = 1L;
             @Override
             public Dimension getPreferredSize() {
                 Dimension dim = super.getPreferredSize();
@@ -829,6 +831,7 @@ public class SearchTextField extends JComponent {
 
     /** an action for searching, filtering and selecting items */
     public static class DynamicItemAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected Supplier<List<PopupCategorized.CategorizedMenuItem>> currentSearchedItems;
         protected Predicate<PopupCategorized.CategorizedMenuItem> filter;
         protected Consumer<PopupCategorized.CategorizedMenuItem> selector;

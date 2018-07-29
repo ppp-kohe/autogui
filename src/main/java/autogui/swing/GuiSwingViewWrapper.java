@@ -75,6 +75,7 @@ public class GuiSwingViewWrapper {
     }
 
     public static class ValueScrollPane<ValueType> extends JScrollPane implements ValuePaneWrapper<ValueType> {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingView.ValuePane<ValueType> pane;
 
         @SuppressWarnings("unchecked")
@@ -164,6 +165,7 @@ public class GuiSwingViewWrapper {
     }
 
     public static class ValueWrappingPane<ValueType> extends JPanel implements ValuePaneWrapper<ValueType> {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingView.ValuePane<ValueType> pane;
 
         public ValueWrappingPane(Component view) {

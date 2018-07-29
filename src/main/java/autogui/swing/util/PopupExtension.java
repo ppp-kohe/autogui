@@ -460,6 +460,8 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     /** an action for displaying a popup menu */
     public static class PopupExtensionDisplayAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+
         protected PopupExtension extension;
 
         public PopupExtensionDisplayAction(PopupExtension extension) {

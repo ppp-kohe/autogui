@@ -94,6 +94,7 @@ public class ToStringCopyCell {
      * the action defined by composition of selected columns; it joins cell strings by new-lines (for row) and tabs (for columns).
      */
     public static class ToStringCopyForCellsAction extends GuiSwingTaskRunner.ContextAction implements TableTargetCellAction {
+        private static final long serialVersionUID = 1L;
         protected List<TableMenuCompositeToStringCopy> activatedColumns;
         protected boolean onlyApplyingSelectedColumns;
 
@@ -198,6 +199,7 @@ public class ToStringCopyCell {
     }
 
     public static class ToStringSaveForCellsAction extends ToStringCopyForCellsAction {
+        private static final long serialVersionUID = 1L;
         protected JComponent table;
 
         public ToStringSaveForCellsAction(GuiMappingContext context, List<TableMenuCompositeToStringCopy> activatedColumns, boolean onlyApplyingSelectedColumns,
@@ -273,6 +275,7 @@ public class ToStringCopyCell {
     }
 
     public static class ToStringPasteForCellsAction extends PopupExtensionText.TextPasteAllAction implements TableTargetCellAction {
+        private static final long serialVersionUID = 1L;
         protected List<TableMenuCompositeToStringPaste> activeComposites;
         protected String lineSeparator = "\\n"; //regex
         protected String columnSeparator = "\\t"; //regex
@@ -365,6 +368,7 @@ public class ToStringCopyCell {
     }
 
     public static class ToStringLoadForCellsAction extends ToStringPasteForCellsAction {
+        private static final long serialVersionUID = 1L;
         protected JComponent table;
         protected PopupExtensionText.TextLoadAction loader;
 
@@ -379,6 +383,7 @@ public class ToStringCopyCell {
             }
             this.table = table;
             loader = new PopupExtensionText.TextLoadAction(null) {
+                private static final long serialVersionUID = 1L;
                 @Override
                 protected JComponent getComponent() {
                     return table;

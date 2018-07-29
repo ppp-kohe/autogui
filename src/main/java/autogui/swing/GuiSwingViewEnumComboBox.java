@@ -56,6 +56,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
     public static class PropertyEnumComboBox extends JComboBox<Object>
             implements GuiMappingContext.SourceUpdateListener, ItemListener, GuiSwingView.ValuePane<Object> { //Enum
+        private static final long serialVersionUID = 1L;
+
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected boolean listenerEnabled = true;
@@ -273,6 +275,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     }
 
     public static class PropertyEnumListRenderer extends DefaultListCellRenderer {
+        private static final long serialVersionUID = 1L;
+
         protected GuiMappingContext context;
         protected Color disabledForeground;
 
@@ -300,6 +304,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     }
 
     public static class EnumTransferHandler extends TransferHandler {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyEnumComboBox pane;
 
         public EnumTransferHandler(PropertyEnumComboBox pane) {
@@ -338,6 +344,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         }
 
         @Override
+        @SuppressWarnings("rawtypes")
         protected Transferable createTransferable(JComponent c) {
             Enum e= (Enum) pane.getSwingViewValue();
             if (e != null) {
@@ -351,6 +358,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
     public static class EnumPasteAction extends PopupExtensionText.TextPasteAllAction
             implements TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyEnumComboBox view;
 
         public EnumPasteAction(PropertyEnumComboBox view) {
@@ -387,6 +396,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     }
 
     public static class EnumSetMenu extends JMenu implements PopupCategorized.CategorizedMenuItemComponent {
+        private static final long serialVersionUID = 1L;
+
         protected ValuePane<Object> pane;
 
         public EnumSetMenu(ValuePane<Object> pane) {
@@ -421,6 +432,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
     public static class EnumSetAction extends AbstractAction implements
             PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
+
         protected Object value;
         protected ValuePane<Object> pane;
 
@@ -451,6 +464,8 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     }
 
     public static class PropertyLabelEnum extends GuiSwingViewLabel.PropertyLabel {
+        private static final long serialVersionUID = 1L;
+
         public PropertyLabelEnum(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
         }

@@ -46,6 +46,8 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     }
 
     public static class ColumnEnumPane extends PropertyLabelEnum {
+        private static final long serialVersionUID = 1L;
+
         public ColumnEnumPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setOpaque(true);
@@ -70,6 +72,8 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     }
 
     public static class ColumnEditEnumComboBox extends PropertyEnumComboBox {
+        private static final long serialVersionUID = 1L;
+
         public ColumnEditEnumComboBox(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
@@ -84,6 +88,8 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     }
 
     public static class ColumnEnumSetMenu extends GuiSwingViewEnumComboBox.EnumSetMenu implements TableTargetMenu {
+        private static final long serialVersionUID = 1L;
+
         public ColumnEnumSetMenu(GuiSwingView.ValuePane<Object> pane) {
             super(pane);
         }
@@ -95,6 +101,8 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     }
 
     public static class ColumnEnumSetMenuForTableColumn extends GuiSwingViewEnumComboBox.EnumSetMenu {
+        private static final long serialVersionUID = 1L;
+
         protected GuiReprCollectionTable.TableTargetColumn target;
 
         public ColumnEnumSetMenuForTableColumn(GuiSwingView.ValuePane<Object> pane, GuiReprCollectionTable.TableTargetColumn target) {
@@ -118,6 +126,8 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     }
 
     public static class ColumnEnumSetAction extends GuiSwingViewEnumComboBox.EnumSetAction {
+        private static final long serialVersionUID = 1L;
+
         protected GuiReprCollectionTable.TableTargetColumn target;
 
         public ColumnEnumSetAction(GuiSwingView.ValuePane<Object> pane, Object value, GuiReprCollectionTable.TableTargetColumn target) {

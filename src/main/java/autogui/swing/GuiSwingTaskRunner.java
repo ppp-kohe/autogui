@@ -273,6 +273,8 @@ public class GuiSwingTaskRunner {
 
     /** a base class for actions */
     public static class ContextAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+
         protected GuiSwingTaskRunner taskRunner;
 
         public ContextAction(GuiMappingContext context) { //context may be null

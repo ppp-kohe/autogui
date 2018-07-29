@@ -91,6 +91,8 @@ public class GuiSwingActionDefault implements GuiSwingAction {
      */
     public static class ExecutionAction extends GuiSwingTaskRunner.ContextAction implements PopupCategorized.CategorizedMenuItemAction,
             GuiSwingKeyBinding.RecommendedKeyStroke {
+        private static final long serialVersionUID = 1L;
+
         protected Consumer<Object> resultTarget;
         protected AtomicBoolean running = new AtomicBoolean(false);
         protected GuiSwingView.SpecifierManager targetSpecifier;

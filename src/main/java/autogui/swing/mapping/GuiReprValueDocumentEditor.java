@@ -310,6 +310,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
      * a styled-document impl. for {@link javax.swing.text.AbstractDocument.Content}
      */
     public static class ContentWrappingDocument extends DefaultStyledDocument {
+        private static final long serialVersionUID = 1L;
         protected Content value;
 
         public static ContentWrappingDocument create(Content c) {
@@ -379,6 +380,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
      *    it acquires the monitor of the buffer by synchronized.
      */
     public static class StringBuilderContent implements AbstractDocument.Content, Serializable {
+        private static final long serialVersionUID = 1L;
         protected final StringBuilder buffer;
         transient protected char[] array;
         transient protected List<WeakReference<ContentPosition>> positions = new ArrayList<>();
@@ -583,6 +585,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
      * an undoable insertion operation for {@link StringBuilderContent}
      */
     public static class ContentInsertEdit extends AbstractUndoableEdit {
+        private static final long serialVersionUID = 1L;
         protected StringBuilderContent content;
         protected int offset;
         protected int length;
@@ -624,6 +627,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
      * an undoable removing operation for {@link StringBuilderContent}
      */
     public static class ContentRemoveEdit extends AbstractUndoableEdit {
+        private static final long serialVersionUID = 1L;
         protected StringBuilderContent content;
         protected int offset;
         protected int length;

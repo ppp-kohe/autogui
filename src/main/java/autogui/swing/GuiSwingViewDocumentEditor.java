@@ -157,6 +157,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public void initHighlight() {
             pane.setCaret(new DefaultCaret() {
+                private static final long serialVersionUID = 1L;
                 SelectionHighlightPainter painter = new SelectionHighlightPainter();
                 @Override
                 protected Highlighter.HighlightPainter getSelectionPainter() {
@@ -283,6 +284,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static class PropertyDocumentEditorPane extends JEditorPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
                 SettingsWindowClient { //ValuePane<StringBuilder|Content|Document>
+        private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected PopupExtension popup;
@@ -417,6 +419,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static class PropertyDocumentTextPane extends JTextPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
             SettingsWindowClient, GuiSwingPreferences.PreferencesUpdateSupport   { //ValuePane<StringBuilder|Content|Document>
+        private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected PopupExtension popup;
@@ -604,6 +607,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     }
 
     public static class TextWrapTextAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected JTextComponent field;
 
         public TextWrapTextAction(JTextComponent field) {
@@ -664,6 +668,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
 
     public static class DocumentSettingAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected DocumentSettingPane pane;
         protected JPanel contentPane;
         protected SettingsWindowClient editorPane;
@@ -702,6 +707,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
     public static class DocumentSettingPane extends JPanel implements ItemListener, ChangeListener,
             GuiSwingPreferences.Preferences {
+        private static final long serialVersionUID = 1L;
         protected JEditorPane pane;
         protected Map<String, Font> nameFonts = new HashMap<>();
 
@@ -747,6 +753,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
             fontFamily = new JComboBox<>(env.getAvailableFontFamilyNames());
             fontFamily.setRenderer(new DefaultListCellRenderer() {
+                private static final long serialVersionUID = 1L;
                 @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -1076,6 +1083,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     }
 
     public static class StyleSetAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected Consumer<StyleSetAction> callback;
         public StyleSetAction(String name, boolean initVal, Consumer<StyleSetAction> callback) {
             putValue(NAME, name);

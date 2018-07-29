@@ -51,6 +51,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     }
 
     public static class ColumnFilePathPane extends PropertyLabel {
+        private static final long serialVersionUID = 1L;
+
         protected Graphics tester;
         protected TableColumn tableColumn;
         protected SearchTextFieldModelFilePathEmpty filePathModel;
@@ -132,6 +134,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     }
 
     public static class ColumnFileCopyAction extends SearchTextFieldFilePath.FileCopyAllAction {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyLabel view;
         public ColumnFileCopyAction(PropertyLabel view) {
             super(null);
@@ -148,6 +152,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     }
 
     public static class ColumnDesktopOpenAction extends SearchTextFieldFilePath.DesktopOpenAction {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyLabel view;
         public ColumnDesktopOpenAction(PropertyLabel view) {
             super(null);
@@ -164,6 +170,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     }
 
     public static class ColumnDesktopRevealAction extends SearchTextFieldFilePath.DesktopRevealAction {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyLabel view;
         public ColumnDesktopRevealAction(PropertyLabel view) {
             super(null);
@@ -180,6 +188,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     }
 
     public static class ColumnOpenDialogAction extends SearchTextFieldFilePath.OpenDialogAction {
+        private static final long serialVersionUID = 1L;
+
         protected PropertyLabel view;
         public ColumnOpenDialogAction(PropertyLabel view) {
             super(null);
@@ -198,6 +208,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     }
 
     public static class ColumnHistoryMenuFilePath extends GuiSwingHistoryMenu<Object, ColumnFilePathPane> {
+        private static final long serialVersionUID = 1L;
 
         public ColumnHistoryMenuFilePath(ColumnFilePathPane view) {
             super(view, view.getSwingViewContext());
@@ -226,6 +237,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
     }
 
     public static class ColumnHistoryMenuFilePathForTableColumn extends ColumnHistoryMenuFilePath {
+        private static final long serialVersionUID = 1L;
+
         protected GuiReprCollectionTable.TableTargetColumn target;
 
         public ColumnHistoryMenuFilePathForTableColumn(ColumnFilePathPane view, GuiReprCollectionTable.TableTargetColumn target) {
@@ -243,6 +256,8 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
      * an editor for a file-path
      */
     public static class ColumnEditFilePathPane extends GuiSwingViewFilePathField.PropertyFilePathPane {
+        private static final long serialVersionUID = 1L;
+
         public ColumnEditFilePathPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager, new SearchTextFieldModelFilePath());
             setCurrentValueSupported(false);

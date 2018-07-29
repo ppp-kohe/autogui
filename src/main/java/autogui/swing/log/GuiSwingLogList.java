@@ -28,6 +28,7 @@ import java.util.function.Consumer;
  * a list component for displaying log entries
  */
 public class GuiSwingLogList extends JList<GuiLogEntry> {
+    private static final long serialVersionUID = 1L;
     protected GuiSwingLogManager manager;
     protected Timer activePainter;
     protected GuiSwingLogEventDispatcher eventDispatcher;
@@ -293,6 +294,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
     /** the list model for the log-list component */
     public static class GuiSwingLogListModel extends AbstractListModel<GuiLogEntry> {
+        private static final long serialVersionUID = 1L;
         protected int entryLimit = -1;
         protected java.util.List<GuiLogEntry> entries = new ArrayList<>();
         protected int highPriorityActives = 0;
@@ -871,6 +873,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
 
         JComponent findPane = new JComponent() {
+            private static final long serialVersionUID = 1L;
             SearchTextField.SearchBackgroundPainterBordered p = new SearchTextField.SearchBackgroundPainterBordered(this);
             {
                 setLayout(new BorderLayout());
@@ -917,6 +920,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
     /** the action for saving a log list to a file */
     public static class LogListSaveAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingLogList list;
         protected DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd-HH-mm");
 
@@ -953,6 +957,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
      * the action for clearing the log-list
      */
     public static class LogListClearAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingLogList list;
 
         public LogListClearAction(GuiSwingLogList list) {
@@ -999,6 +1004,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
      * the action for copying texts of log-entries
      */
     public static class LogListCopyTextAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
         protected GuiSwingLogList list;
 
         public LogListCopyTextAction(GuiSwingLogList list) {

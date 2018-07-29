@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
  */
 public class ObjectTableModel extends AbstractTableModel
         implements ObjectTableModelColumns.ObjectTableModelColumnsListener {
+    private static final long serialVersionUID = 1L;
     protected JTable table;
     protected Supplier<Object> source;
 
@@ -640,6 +641,7 @@ public class ObjectTableModel extends AbstractTableModel
      */
     public static class TableTargetCellExecutionAction extends ObjectTableColumnValue.ActionDelegate<TableTargetCellAction>
             implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
         protected TableTargetCell target;
 
         public TableTargetCellExecutionAction(TableTargetCellAction action, TableTargetCell target) {

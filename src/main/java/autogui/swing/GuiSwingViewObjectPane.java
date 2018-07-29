@@ -141,6 +141,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
      */
     public static class ObjectPane extends JPanel implements GuiMappingContext.SourceUpdateListener, ValuePane<Object>,
         GuiSwingPreferences.PreferencesUpdateSupport {
+        private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected JToolBar actionToolBar;
@@ -452,6 +453,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
     }
 
     public static class ToStringTransferHandler extends TransferHandler {
+        private static final long serialVersionUID = 1L;
         protected ValuePane<?> pane;
 
         public ToStringTransferHandler(ValuePane<?> pane) {

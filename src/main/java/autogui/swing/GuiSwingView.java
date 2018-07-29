@@ -574,6 +574,7 @@ public interface GuiSwingView extends GuiSwingElement {
      * a refresh-action calls the method in order to clear view-clocks of sub-panes
      * @param pane a root component
      */
+    @SuppressWarnings("rawtypes")
     static void prepareForRefresh(ValuePane<?> pane) {
         forEach(ValuePane.class, pane.asSwingViewComponent(), ValuePane::prepareForRefresh);
     }
@@ -690,6 +691,8 @@ public interface GuiSwingView extends GuiSwingElement {
      *  next clears values by {@link GuiMappingContext#clearSourceSubTree()} and calls {@link GuiMappingContext#updateSourceSubTree()}
      *     */
     class ContextRefreshAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
+
         protected GuiMappingContext context;
         protected ValuePane<?> pane;
 
@@ -725,6 +728,8 @@ public interface GuiSwingView extends GuiSwingElement {
      * a general to-string copy action by using {@link GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}
      */
     class ToStringCopyAction extends GuiSwingTaskRunner.ContextAction implements TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
+
         protected ValuePane<?> pane;
 
         public ToStringCopyAction(ValuePane<?> pane, GuiMappingContext context) {

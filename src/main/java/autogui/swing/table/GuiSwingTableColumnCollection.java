@@ -1536,6 +1536,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
      * an action using selection of dynamic columns
      */
     public static class TableSelectionListDynamicAction extends TableSelectionListAction  {
+        private static final long serialVersionUID = 1L;
+
         public TableSelectionListDynamicAction(GuiMappingContext context, TableSelectionSourceDynamicForList source) {
             super(context, source);
         }

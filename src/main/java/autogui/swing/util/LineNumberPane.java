@@ -17,6 +17,7 @@ import java.util.ListIterator;
  * </pre>
  */
 public class LineNumberPane extends JComponent implements DocumentListener {
+    private static final long serialVersionUID = 1L;
     protected JTextComponent field;
 
     /** line-starting positions excluding 0 */
