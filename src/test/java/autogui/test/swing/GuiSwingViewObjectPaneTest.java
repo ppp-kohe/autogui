@@ -53,7 +53,10 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
 
     @After
     public void tearDown() {
-        frame.dispose();
+        if (frame != null) {
+            frame.dispose();
+            frame = null;
+        }
     }
 
 

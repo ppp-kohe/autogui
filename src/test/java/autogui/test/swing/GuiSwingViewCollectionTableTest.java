@@ -9,6 +9,7 @@ import autogui.base.type.GuiTypeObject;
 import autogui.swing.GuiSwingMapperSet;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewCollectionTable;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -96,6 +97,14 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
         objMatrixContext = new GuiMappingContext(typeObjMatrix, objMatrix);
         GuiSwingMapperSet.getReprDefaultSet().match(objMatrixContext);
         objMatrixPropContext = objMatrixContext.getChildByName("value").getChildByName("List");
+    }
+
+    @After
+    public void tearDown() {
+        if (frame != null) {
+            frame.dispose();
+            frame = null;
+        }
     }
 
     @GuiIncluded

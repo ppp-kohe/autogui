@@ -402,6 +402,7 @@ public class TextCellRenderer<ValueType> extends JPanel
      * @param <V> the type of cell values
      */
     @SafeVarargs
+    @SuppressWarnings({"unchecked", "varargs"})
     public static <V> void mouseUpdateForComposition(V value, Map<TextCellRenderer<?>,int[]> ranges, boolean pressInit,
                                                      Component pointComponent, Point point, TextCellRenderer<V>... rs) {
         if (pressInit) {
@@ -426,6 +427,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     }
 
     @SafeVarargs
+    @SuppressWarnings({"unchecked", "varargs"})
     public static <V> boolean updateFindPatternForComposition(String findKeyword, TextCellRenderer<V>... rs) {
         List<Boolean> bs = Arrays.stream(rs)
             .map(r -> r.updateFindPattern(findKeyword))
@@ -440,6 +442,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     }
 
     @SafeVarargs
+    @SuppressWarnings({"unchecked", "varargs"})
     public static <V> int findTextForComposition(V value, String findKeyword, TextCellRenderer<V>... rs) {
         for (TextCellRenderer<V> r : rs) {
             r.setValue(value, false);
@@ -451,7 +454,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     }
 
     @SafeVarargs
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "varargs"})
     public static <V> Object getFocusNextFoundForComposition(V value, Object prevIndex, boolean forward, TextCellRenderer<V>... rs) {
         List<TextCellRenderer<V>> list = Arrays.asList(rs);
         int idx;
@@ -490,6 +493,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     }
 
     @SafeVarargs
+    @SuppressWarnings({"unchecked", "varargs"})
     public static <V> String getSelectedTextForComposition(V value, boolean entireText,
                                                            Map<TextCellRenderer<?>,int[]> rangesOpt,
                                                            TextCellRenderer<V>... rs) {

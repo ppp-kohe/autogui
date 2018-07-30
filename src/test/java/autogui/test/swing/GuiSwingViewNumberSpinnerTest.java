@@ -10,6 +10,7 @@ import autogui.swing.GuiSwingMapperSet;
 import autogui.swing.GuiSwingPreferences;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewNumberSpinner;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,6 +72,14 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
         contextPropObj = context.getChildByName("numObj");
 
         spinner = new GuiSwingViewNumberSpinner();
+    }
+
+    @After
+    public void tearDown() {
+        if (frame != null) {
+            frame.dispose();
+            frame = null;
+        }
     }
 
     public GuiSwingViewNumberSpinner.PropertyNumberSpinner create(GuiMappingContext contextProp) {

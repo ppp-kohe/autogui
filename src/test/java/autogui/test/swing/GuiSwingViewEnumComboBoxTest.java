@@ -54,7 +54,10 @@ public class GuiSwingViewEnumComboBoxTest extends GuiSwingTestCase {
 
     @After
     public void tearDown() {
-        frame.dispose();
+        if (frame != null) {
+            frame.dispose();
+            frame = null;
+        }
     }
 
     @GuiIncluded

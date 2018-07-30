@@ -73,6 +73,7 @@ public class GuiSwingViewImagePaneTest extends GuiSwingTestCase {
     public void tearDown() {
         if (frame != null) {
             frame.dispose();
+            frame = null;
         }
         if (imageFile != null) {
             try {

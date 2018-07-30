@@ -8,6 +8,7 @@ import autogui.base.type.GuiTypeObject;
 import autogui.swing.GuiSwingMapperSet;
 import autogui.swing.GuiSwingView;
 import autogui.swing.GuiSwingViewFilePathField;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,6 +53,14 @@ public class GuiSwingViewFilePathFieldTest extends GuiSwingTestCase {
 
         field = new GuiSwingViewFilePathField();
         homePath = Paths.get(System.getProperty("user.home", "/"));
+    }
+
+    @After
+    public void tearDown() {
+        if (frame != null) {
+            frame.dispose();
+            frame = null;
+        }
     }
 
     public GuiSwingViewFilePathField.PropertyFilePathPane create(GuiMappingContext contextProp) {

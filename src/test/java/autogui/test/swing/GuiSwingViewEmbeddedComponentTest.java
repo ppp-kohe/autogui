@@ -49,6 +49,7 @@ public class GuiSwingViewEmbeddedComponentTest extends GuiSwingTestCase {
     public void tearDown() {
         if (frame != null) {
             frame.dispose();
+            frame = null;
         }
     }
 

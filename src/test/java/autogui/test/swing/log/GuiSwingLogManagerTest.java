@@ -45,7 +45,10 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
 
     @After
     public void tearDown() {
-        window.dispose();
+        if (window != null) {
+            window.dispose();
+            window = null;
+        }
 
         if (progress1Thread != null && progress1Thread.isAlive()) {
             progress1Thread.interrupt();

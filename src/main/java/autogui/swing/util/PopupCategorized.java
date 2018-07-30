@@ -217,7 +217,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
 
 
     @SafeVarargs
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"unchecked", "varargs", "rawtypes"})
     public static Supplier<? extends Collection<CategorizedMenuItem>> getMenuItemsSupplier(
             Supplier<? extends Collection<CategorizedMenuItem>>... itemsList) {
         return () ->
