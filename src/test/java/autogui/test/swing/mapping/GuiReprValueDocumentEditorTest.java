@@ -3,6 +3,7 @@ package autogui.test.swing.mapping;
 import autogui.test.swing.GuiSwingTestCase;
 import autogui.swing.mapping.GuiReprValueDocumentEditor;
 import autogui.swing.util.KeyUndoManager;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,12 +19,22 @@ public class GuiReprValueDocumentEditorTest extends GuiSwingTestCase {
     StringContent referenceImpl;
 
     KeyUndoManager undoManager;
+    JFrame frame;
+
     @Before
     public void setUp() {
         content = new GuiReprValueDocumentEditor.StringBuilderContent(new StringBuilder());
         referenceImpl = new StringContent();
 
         undoManager = new KeyUndoManager();
+    }
+
+    @After
+    public void tearDown() {
+        if (frame != null) {
+            frame.dispose();
+            frame = null;
+        }
     }
 
     @Test
@@ -310,7 +321,7 @@ public class GuiReprValueDocumentEditorTest extends GuiSwingTestCase {
     public JTextPane create() {
         JTextPane pane = new JTextPane(GuiReprValueDocumentEditor.ContentWrappingDocument.create(content));
         undoManager.putListenersAndActionsTo(pane);
-        JFrame frame = createFrame(pane);
+        frame = createFrame(pane);
         frame.setSize(400, 400);
         return pane;
     }
