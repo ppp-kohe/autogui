@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>ppp-kohe</groupId>
+    <groupId>org.autogui</groupId>
     <artifactId>autogui</artifactId>
     <version>1.0-SNAPSHOT</version>
 
@@ -55,4 +55,31 @@
         </dependency>
     </dependencies>
 
+
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Autogui is a library for automatically creating Java/Swing GUI apps from plain-old Java objects.</description>
+    <url>http://www.autogui.org/</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>ppp-kohe</id>
+            <name>Kohei SAKURAI</name>
+            <email>k_sakurai@acm.org</email>
+            <url>https://github.com/ppp-kohe</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/ppp-kohe/autogui.git</connection>
+        <developerConnection>scm:git:ssh://github.com:ppp-kohe/autogui.git</developerConnection>
+        <url>https://github.com/ppp-kohe/autogui</url>
+    </scm>
 </project>
