@@ -1,4 +1,4 @@
-# autogui: An automaic GUI binding library
+# Autogui: An automatic GUI binding library
 
 * Java 8 or later
 * Maven for building
