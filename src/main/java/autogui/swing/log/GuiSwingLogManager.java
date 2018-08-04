@@ -198,6 +198,11 @@ public class GuiSwingLogManager extends GuiLogManager {
             nullLabel.setText(Objects.toString(value));
             return nullLabel;
         }
+
+        public void clearRendererList() {
+            rendererMap.forEach((k,v) -> v.close());
+            rendererMap.clear();
+        }
     }
 
     public GuiSwingLogWindow createWindow() {

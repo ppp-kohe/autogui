@@ -62,6 +62,14 @@ public class GuiSwingLogStatusBar extends JComponent {
 
     public void removeFromManager() {
         manager.removeView(managerKey);
+        setEntry(null);
+        if (renderer != null) {
+            renderer.clearRendererList();
+        }
+        if (activePainter != null) {
+            activePainter.stop();
+            activePainter = null;
+        }
     }
 
     public void setEntry(GuiLogEntry entry) {

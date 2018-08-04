@@ -6,10 +6,7 @@ import autogui.base.mapping.GuiPreferences;
 import autogui.base.mapping.GuiReprValue;
 import autogui.base.type.GuiTypeBuilder;
 import autogui.swing.log.GuiSwingLogManager;
-import autogui.swing.util.MenuBuilder;
-import autogui.swing.util.PopupCategorized;
-import autogui.swing.util.PopupExtension;
-import autogui.swing.util.SettingsWindow;
+import autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;

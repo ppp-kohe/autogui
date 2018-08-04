@@ -36,18 +36,30 @@ public class SwingDeferredRunner {
 
     public static ExecutorService getDefaultService() {
         synchronized (SwingDeferredRunner.class) {
-            defaultService = Executors.newCachedThreadPool(new ThreadFactory() {
-                ThreadFactory defaultFactory = Executors.defaultThreadFactory();
-                @Override
-                public Thread newThread(Runnable r) {
-                    Thread th = defaultFactory.newThread(r);
-                    th.setDaemon(true);
-                    th.setName(SwingDeferredRunner.class.getSimpleName() + "-" + th.getName());
-                    return th;
-                }
-            });
+            if (defaultService == null) {
+                defaultService = Executors.newCachedThreadPool(new ThreadFactory() {
+                    ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread th = defaultFactory.newThread(r);
+                        th.setDaemon(true);
+                        th.setName(SwingDeferredRunner.class.getSimpleName() + "-" + th.getName());
+                        return th;
+                    }
+                });
+            }
         }
         return defaultService;
+    }
+
+    public static void cleanDefaultService() {
+        synchronized (SwingDeferredRunner.class) { //there is a possibility that get().submit(t) in run() causes positing t to a shutting-down-service
+            if (defaultService != null) {
+                defaultService.shutdown();
+                defaultService = null;
+            }
+        }
     }
 
     public static Object run(Task task) throws Throwable {

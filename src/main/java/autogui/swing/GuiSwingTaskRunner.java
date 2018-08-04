@@ -203,6 +203,13 @@ public class GuiSwingTaskRunner {
         public RetType getValueOr(RetType cancelValue, RetType timeoutValue) {
             return value;
         }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "(value=" + value +
+                    ",cancel=" + isCancel() + ",timeout=" + isTimeout() + ",presentedWithDelay=" + isPresentedWithDelay() +
+                    ",presented=" + isPresented() + ")";
+        }
     }
 
     /**

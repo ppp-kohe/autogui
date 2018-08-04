@@ -80,6 +80,17 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
     public void removeFromManager() {
         manager.removeView(managerKey);
+        getLogListModel().clearEntries();
+
+        ListCellRenderer<? super GuiLogEntry> r = getCellRenderer();
+        if (r instanceof GuiSwingLogManager.GuiSwingLogRenderer) {
+            ((GuiSwingLogManager.GuiSwingLogRenderer) r).clearRendererList();
+        }
+
+        if (activePainter != null) {
+            activePainter.stop();
+            activePainter = null;
+        }
     }
 
     public LogListSaveAction getSaveAction() {
@@ -451,6 +462,11 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
             if (removingRange) {
                 fireIntervalRemoved(this, removingStart, i - 1);
             }
+        }
+
+        public void clearEntries() {
+            entries.clear();
+            fireTableDataChanged();
         }
     }
 

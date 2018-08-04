@@ -89,7 +89,7 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
                 }
             } else {
                 if (delayed != null) {
-                    SwingDeferredRunner.defaultService.execute(() -> {
+                    SwingDeferredRunner.getDefaultService().execute(() -> {
                         try {
                             delayed.accept(toUpdateValue(context, f.get()));
                         } catch (Exception ex) {

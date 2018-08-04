@@ -69,6 +69,8 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
         default String getSelectedText(GuiSwingLogEntry entry, boolean entireText) {
             return "";
         }
+
+        default void close() {}
     }
 
     default void clearSelection() {

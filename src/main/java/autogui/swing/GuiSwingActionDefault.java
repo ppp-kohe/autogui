@@ -26,8 +26,9 @@ public class GuiSwingActionDefault implements GuiSwingAction {
 
         List<TableSelectionConversion> conversions = getTableConversions(context, tables);
         ExecutionAction a = new ExecutionAction(context, pane::getSpecifier);
-        a.setResultTarget(r ->
-                conversions.forEach(c -> c.run(r)));
+        a.setResultTarget(r -> {
+            conversions.forEach(c -> c.run(r));
+        });
         return a;
     }
 
@@ -135,8 +136,9 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             executeContextTask(() -> executeAction(specifier),
                     r -> {
                         running.set(false);
-                        if (r.isPresented() && resultTarget != null) {
-                            SwingUtilities.invokeLater(() -> resultTarget.accept(r.getValue()));
+                        if (resultTarget != null) {
+                            r.executeIfPresent(res ->
+                                SwingUtilities.invokeLater(() -> resultTarget.accept(res)));
                         }
                     });
         }
