@@ -117,7 +117,7 @@
 
     <scm>
         <connection>scm:git:git://github.com/ppp-kohe/autogui.git</connection>
-        <developerConnection>scm:git:ssh://github.com:ppp-kohe/autogui.git</developerConnection>
+        <developerConnection>scm:git:ssh://github.com/ppp-kohe/autogui.git</developerConnection>
         <url>https://github.com/ppp-kohe/autogui</url>
     </scm>
 </project>
