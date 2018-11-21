@@ -27,10 +27,10 @@ public class ValuePaneDemo {
         immutable.setFlag(true);
         immutable.setNum(123.456f);
         immutable.setSelection(EnumVal.Hello);
-        immutable.setPath(Paths.get("src/main/resources/autogui/swing/icons"));
+        immutable.setPath(Paths.get("src/main/resources/org/autogui/swing/icons"));
         try {
             immutable.setImage(
-                    ImageIO.read(Paths.get("src/main/resources/autogui/swing/icons/action@4x.png").toFile()));
+                    ImageIO.read(Paths.get("src/main/resources/org/autogui/swing/icons/action@4x.png").toFile()));
         } catch (Exception ex) {
             ex.printStackTrace();
         }

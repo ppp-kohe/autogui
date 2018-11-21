@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  *
  *   <pre>
  *        pack/Type/  //root-context, in a case of {@link GuiReprObjectPane}(pack.Type)
- *                    //otherwise, "autogui/base/mapping/pack_Type"
+ *                    //otherwise, "org/autogui/base/mapping/pack_Type"
  *            "$default"/
  *               propName = value... //regular preferences entries
  *               ...

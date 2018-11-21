@@ -19,7 +19,7 @@ public class EmbeddedTreeDemo {
     DefaultTreeModel treeModel;
     MutableTreeNode root;
 
-    @GuiIncluded(description = "prefs package path separated by '/'. e.g. '/autogui/demo'")
+    @GuiIncluded(description = "prefs package path separated by '/'. e.g. '/org/autogui/demo'")
     public String name = getClass().getPackage().getName().replace('.', '/');
 
     @GuiIncluded
