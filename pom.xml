@@ -121,12 +121,13 @@
             <name>Kohei SAKURAI</name>
             <email>k_sakurai@acm.org</email>
             <url>https://github.com/ppp-kohe</url>
+            <timezone>+9</timezone>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/ppp-kohe/autogui.git</connection>
-        <developerConnection>scm:git:ssh://github.com/ppp-kohe/autogui.git</developerConnection>
-        <url>https://github.com/ppp-kohe/autogui</url>
+        <connection>scm:git:git@github.com:ppp-kohe/autogui.git</connection>
+        <developerConnection>scm:git:git@github.com:ppp-kohe/autogui.git</developerConnection>
+        <url>scm:git:git@github.com:ppp-kohe/autogui.git</url>
     </scm>
 </project>
