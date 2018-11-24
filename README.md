@@ -144,7 +144,7 @@ open module your.module { //adds the "open" modifier to the your module, or...
   * Image pane: a sub-type of `java.awt.Image`
   * Document editor: `java.lang.StringBuilder` or `javax.swing.text.Document`
   * Embedded component: a sub-type of `JComponent`
-* Object pane: an user-defiend object type with composition of properties and actions
+* Object pane: a user-defiend object type with composition of properties and actions
   * Object properties: `T getP() {...}`, `void setP(T) {...}` or `T p;`
       * if all members are other user-defined objects, then the enclosing object will be bound to a tabbed-pane
   * Action methods: `void m() {...}`
@@ -156,7 +156,7 @@ open module your.module { //adds the "open" modifier to the your module, or...
       * Boolean column: `boolean` or `java.lang.Boolean`
       * Enum column: a sub-type of `java.lang.Enum`
       * Image column: a sub-type of `java.awt.Image`
-  * An user-defined object-type composing columns from it's properties and actions
+  * A user-defined object-type composing columns from it's properties and actions
   * Dynamic Collection table: a nested `Collection<Collection<E>>` or a multi-dimentional array `E[][]`
 
 ### String text-field
@@ -304,7 +304,7 @@ the user can change it's (global) style by settings from the context menu.
 
 ### Object pane
 
-A property of an user-defined object class will be bound to a pane composing members of the class.
+A property of a user-defined object class will be bound to a pane composing members of the class.
 
 ```java
   class Hello {
@@ -335,7 +335,7 @@ Such action-method can read and write properties of the object. If the action-me
 
 #### Property definition 
 
-An user-defined object class has properties which are bound as sub-components.
+A user-defined object class has properties which are bound as sub-components.
 A *property* can be defiend as 1) an accessible field definition or 2) a pair of getter and setter methods. 
 
 ```java
@@ -369,10 +369,14 @@ If a property is defined only a getter method, then the property value becomes *
 In the setter method, the user code can cause modification of some other properties.
 The created UI automatically specifies changed properties of the object pane. In order to achieve the UI updateing, a getter method will be called abruptly and frequently.
 
+#### AutoCloseable support
+
+If a user-defined object class implements `java.lang.AutoCloseable`,
+ then `close()` of objects of the class will be called at closing of owner window of those objects.
 
 ### Object tabbed-pane
 
-An user-defined object which has only properties of sub user-defined objects without other value properties will be bound to a tabbed-pane. Components of each tab in the tabbed-pane become the pane created from the sub objects.
+A user-defined object which has only properties of sub user-defined objects without other value properties will be bound to a tabbed-pane. Components of each tab in the tabbed-pane become the pane created from the sub objects.
 
 ```java
   class Hello {
@@ -421,7 +425,7 @@ A property of `javax.swing.JComponent` or it's sub-type will be bound to a pane 
 
 <img src="docs/images/image-component-h.png" srcset="docs/images/image-component-h.png 1x, docs/images/image-component.png 2x" alt="Embedded component">
 
-To create an user-defined UI component, you will need to follow the rule of Swing components that the code for the component must be executed within the event-dispatching thread.
+To create a user-defined UI component, you will need to follow the rule of Swing components that the code for the component must be executed within the event-dispatching thread.
 And initialization of a field will be executed under a non event-dispatching thread such as the main-thread.  
 
 Thus the user code of the property for an embedded component should be defined as *a getter method that caches the returned component as a field*. 
@@ -453,7 +457,7 @@ The column of the table will be created from the type-argument `E`.
 
 #### Object composition in Collection table
 
-If the type-argument`E` of `Collection<E>` is an user-defined object class, then collumns of the  table are created from properties of the class.
+If the type-argument`E` of `Collection<E>` is a user-defined object class, then collumns of the  table are created from properties of the class.
 
 ```java
    import java.util.*;

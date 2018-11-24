@@ -704,6 +704,27 @@ public class GuiMappingContext {
         return taskRunner;
     }
 
+    /**
+     * call {@link #shutdownTaskRunner()} and
+     *  also close the target if the target is an {@link AutoCloseable}
+     */
+    public void shutdown() {
+        shutdownAutoCloseable();
+        shutdownTaskRunner();
+    }
+
+    public void shutdownAutoCloseable() {
+        GuiMappingContext root = getRoot();
+        root.shutdownAutoCloseableSubTree();
+    }
+
+    protected void shutdownAutoCloseableSubTree() {
+        getRepresentation().shutdown(this, getSource().getValue());
+        for (GuiMappingContext child : getChildren()) {
+            child.shutdownAutoCloseableSubTree();
+        }
+    }
+
     public void shutdownTaskRunner() {
         GuiMappingContext root = getRoot();
         root.shutdownTaskRunnerSubTree();

@@ -189,4 +189,11 @@ public class GuiTypeValue implements GuiTypeElement {
             return null;
         }
     }
+
+    /**
+     * @return true if the type implements {@link AutoCloseable}
+     */
+    public boolean isAutoCloseable() {
+        return AutoCloseable.class.isAssignableFrom(getType());
+    }
 }

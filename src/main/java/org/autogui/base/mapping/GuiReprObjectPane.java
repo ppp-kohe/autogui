@@ -299,6 +299,16 @@ public class GuiReprObjectPane extends GuiReprValue {
         return target;
     }
 
+    @Override
+    public void shutdown(GuiMappingContext context, Object source) {
+        if (context.getTypeElementValue().isAutoCloseable() && source != null) {
+            try {
+                ((AutoCloseable) source).close();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
 
     @Override
     public String toString() {
