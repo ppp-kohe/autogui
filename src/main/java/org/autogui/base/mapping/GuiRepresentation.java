@@ -185,4 +185,11 @@ public interface GuiRepresentation {
     default boolean isTaskRunnerUsedFor(Supplier<?> task) {
         return true;
     }
+
+    /**
+     * do shutdown process if the target object is an AutoCloseable.
+     * @param context the context of the repr.
+     * @param target the target object, obtained from source value of the context
+     */
+    default void shutdown(GuiMappingContext context, Object target) { }
 }

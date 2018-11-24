@@ -498,7 +498,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
     @SuppressWarnings("rawtypes")
     public void cleanUp() {
-        context.shutdownTaskRunner();
+        context.shutdown();
         GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
                 GuiSwingView.ValuePane::shutdownSwingView);
         preferences.shutdown();
