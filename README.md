@@ -11,7 +11,7 @@ and composes Swing-based components for each types of properties and actions def
 
 ## Building from source
 
-[GitHub Project Page](https://github.com/ppp-kohe/autogui)
+[GitHub Project Page](https://github.com/ppp-kohe/autogui.git)
 
 ```bash
 $ git clone https://github.com/ppp-kohe/autogui.git
@@ -28,6 +28,19 @@ The project uses [apache-maven](http://maven.apache.org) and depends on Java 8 o
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
 So you can manually compile source files placed in `src/main/java` (also `src/main/resources` for resources).
 
+## Maven Usage
+
+To use the library in your apaceh-maven project, you can insert the following `dependency` section into `pom.xml`.
+
+```xml
+    <dependency>
+        <groupId>org.autogui</groupId>
+        <artifactId>autogui</artifactId>
+        <version>1.0</version>
+    </dependency>
+```
+
+The library jar is available from Maven Central Repository.
 
 ## A tiny example with jshell
 
