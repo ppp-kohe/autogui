@@ -381,7 +381,7 @@ A *property* can be defiend as 1) an accessible field definition or 2) a pair of
   AutoGuiShell.showLive(new Hello())
 ```
 
-<img src="/Users/kohe/Documents/misc/autogui-doc/docs/images/image-prop-h.png" srcset="docs/images/image-prop-h.png 1x, docs/images/image-prop.png 2x" alt="Properties">
+<img src="docs/images/image-prop-h.png" srcset="docs/images/image-prop-h.png 1x, docs/images/image-prop.png 2x" alt="Properties">
 
 A *getter* method is a method whose name starts with `get` or `is` for booleans and which does not take any arguments with returning a value of the type of the property.
 A *setter* method is a method whose name starts with `set` and which does takes only 1 argument of the type of the property value.
