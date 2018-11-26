@@ -22,7 +22,7 @@ The project uses [apache-maven](http://maven.apache.org) and depends on Java 8 o
 
 ```bash
   $ mvn package
-   # the command will generates target/autogui-1.0-SNAPSHOT.jar
+   # the command will generates target/autogui-1.0.jar
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
@@ -42,26 +42,35 @@ To use the library in your apaceh-maven project, you can insert the following `d
 
 The library jar is available from Maven Central Repository.
 
-## A tiny example with jshell
+## Quick tutorial: A tiny example with jshell
 
 The library can be used with `jshell` which is the offical REPL-tool bundled with JDK since Java 9.
 To use the library, you first need to include the jar file of the library to your class-path.
 In `jshell`, you can do that by `/env --add-class-path <path/to/jar>`.
 After launch the tool by the command `jshell`, you can paste the following code.
 
-```java
-    class Hello {
-       String value;
-       void action() {
-          System.out.println(value);
-       }
-    }
 ```
-```
-  /env --add-class-path target/autogui-1.0-SNAPSHOT.jar
-  import org.autogui.swing.*
-  Hello h = new Hello();
-  AutoGuiShell.showLive(h)
+$ git clone https://github.com/ppp-kohe/autogui.git
+$ cd autogui
+$ mvn package
+$ jshell
+|  Welcome to JShell -- Version 11.0.1
+|  For an introduction type: /help intro
+ 
+jshell> 
+class Hello {
+   String value;
+   void action() {
+      System.out.println(value);
+   }
+}
+
+/env -class-path target/autogui-1.0.jar
+
+import org.autogui.swing.*
+Hello h = new Hello();
+AutoGuiShell.showLive(h)
+
 ```
 
 The above code defines the class `Hello` with an instance field and a method.
@@ -86,9 +95,9 @@ You can execute the code in the directory, by `mvn test-compile exec:java  -Dexe
 For example:
 
 ```bash
- mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.FileImagePreviewDemo
+ mvn test-compile exec:java -Dexec.classpathScope=test \
+    -Dexec.mainClass=org.autogui.demo.FileImagePreviewDemo
 ```
-
 
 
 ## Strict mode with @GuiIncluded
