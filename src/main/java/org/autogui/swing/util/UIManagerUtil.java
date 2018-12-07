@@ -37,13 +37,14 @@ public class UIManagerUtil {
 
             if (os.contains("mac")) {
                 f = new Font("Menlo", Font.PLAIN, size); //macOS Sierra introduced "SF Mono" font but it seems not available
-            } else if (os.contains("windows")) {
-                f = new Font("Consolas", Font.PLAIN, size); //from Vista
+                //Windows and Linux seems not to support font-fallback
+//            } else if (os.contains("windows")) {
+//                f = new Font("Consolas", Font.PLAIN, size); //from Vista
+//            }
+//            if (f == null || f.getFamily().equals(Font.DIALOG)) { //free font
+//                f = new Font("DejaVu Sans Mono", Font.PLAIN, size);
             }
-            if (f == null || f.getFamily().equals(Font.DIALOG)) { //free font
-                f = new Font("DejaVu Sans Mono", Font.PLAIN, size);
-            }
-            if (f.getFamily().equals(Font.DIALOG)) { //if the font didn't find, the family becomes "Dialog"
+            if (f == null || f.getFamily().equals(Font.DIALOG)) { //if the font didn't find, the family becomes "Dialog"
                 f = new Font(Font.MONOSPACED, Font.PLAIN, size);
             }
             consoleFont = f;

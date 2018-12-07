@@ -117,24 +117,56 @@ public class GuiLogManager {
      *      because the manager usually outputs an entry to the original System.err.
      *   System.out will be replaced with a manager stream with original System.out.
      *   those replaced streams are instances of {@link LogPrintStream}
-     *   @param replaceError if true, it will replace {@link System#err}
-     *   @param replaceOutput  if true, it will replace {@link System#out}
+     *   @param replaceError if true, it will replace with a new {@link LogPrintStream}.
+     *   @param replaceOutput  if true, it will replace with a new {@link LogPrintStream}.
      *   */
     public void replaceConsole(boolean replaceError, boolean replaceOutput) {
         if (replaceError) {
             PrintStream exErr = System.err;
             if (exErr instanceof LogPrintStream) {
-                System.setErr(new LogPrintStream(this, exErr));
+                System.setErr(new LogPrintStream(this, exErr, exErr, LogStreamType.Stderr));
             } else {
                 //err -> logString -> original err
-                System.setErr(new LogPrintStream(this));
+                System.setErr(new LogPrintStream(this, exErr, null, LogStreamType.Stderr));
             }
         }
         if (replaceOutput) {
             PrintStream exOut = System.out;
             //out -> {original out, logString -> original err }
-            System.setOut(new LogPrintStream(this, exOut));
+            System.setOut(new LogPrintStream(this, exOut, exOut, LogStreamType.Stdout));
         }
+    }
+
+    /**
+     * @since 1.1
+     */
+    public void resetErr() {
+        PrintStream exOut = System.err;
+        while (exOut instanceof LogPrintStream) {
+            LogPrintStream lp = (LogPrintStream) exOut;
+            if (lp.getOutType().equals(LogStreamType.Stderr) && lp.getManager().equals(this)) {
+                exOut = lp.getOriginal();
+            } else {
+                break;
+            }
+        }
+        System.setErr(exOut);
+    }
+
+    /**
+     * @since 1.1
+     */
+    public void resetOut() {
+        PrintStream exOut = System.out;
+        while (exOut instanceof LogPrintStream) {
+            LogPrintStream lp = (LogPrintStream) exOut;
+            if (lp.getOutType().equals(LogStreamType.Stdout) && lp.getManager().equals(this)) {
+                exOut = lp.getOriginal();
+            } else {
+                break;
+            }
+        }
+        System.setOut(exOut);
     }
 
     /** replace the default uncaught handler with {@link LogUncaughtHandler}
@@ -144,11 +176,25 @@ public class GuiLogManager {
      * */
     public void replaceUncaughtHandler() {
         Thread.UncaughtExceptionHandler h = Thread.getDefaultUncaughtExceptionHandler();
-        if (h != null && h instanceof LogUncaughtHandler) {
+        if (h instanceof LogUncaughtHandler) {
             Thread.setDefaultUncaughtExceptionHandler(new LogUncaughtHandler(this, h));
         } else {
             Thread.setDefaultUncaughtExceptionHandler(new LogUncaughtHandler(this, null));
         }
+    }
+
+    /**
+     * @since 1.1
+     */
+    public void resetUncaughtHandler() {
+        Thread.UncaughtExceptionHandler h = Thread.getDefaultUncaughtExceptionHandler();
+        while (h instanceof LogUncaughtHandler) {
+            LogUncaughtHandler lh = (LogUncaughtHandler) h;
+            if (lh.getManager().equals(this)) {
+                h = lh.getHandler();
+            }
+        }
+        Thread.setDefaultUncaughtExceptionHandler(h);
     }
 
     /** @return  obtains the original {@link System#err} from wrapped System.err
@@ -156,11 +202,7 @@ public class GuiLogManager {
     public PrintStream getSystemErr() {
         PrintStream err = System.err;
         if (err instanceof LogPrintStream) {
-            GuiLogManager manager = ((LogPrintStream) err).getManager();
-            PrintStream mErr = manager.getErr();
-            if (mErr != null) {
-                err = mErr;
-            }
+            err = ((LogPrintStream) err).getOriginal();
         }
         return err;
     }
@@ -169,11 +211,22 @@ public class GuiLogManager {
         return null;
     }
 
-    /** create a string entry and show it.
+    /** create a string entry and show it. call {@link #logString(String, boolean)} with fromStdout=false
      * @param str the string for the entry
      * @return the created log entry */
     public GuiLogEntryString logString(String str) {
-        return new GuiLogEntryString(str);
+        return logString(str, false);
+    }
+
+    /**
+     * create a string entry and show it.
+     * @param str the string for the entry
+     * @param fromStandard whether the string come from the standard output (or error) redirection
+     * @return the created log entry
+     * @since 1.1
+     */
+    public GuiLogEntryString logString(String str, boolean fromStandard) {
+        return new GuiLogEntryString(str, fromStandard);
     }
 
     /**
@@ -326,12 +379,32 @@ public class GuiLogManager {
         return String.join(" ", parts);
     }
 
+    /**
+     * @since 1.1
+     */
+    public enum LogStreamType {
+        Stdout(true),
+        Stderr(true),
+        Other(false);
+
+        private boolean std;
+
+        LogStreamType(boolean std) {
+            this.std = std;
+        }
+
+        public boolean isStandard() {
+            return std;
+        }
+    }
+
     /** a console-wrapper stream, with supporting printing exceptions */
     public static class LogPrintStream extends PrintStream {
         private GuiLogManager manager;
+        protected PrintStream original;
 
         public LogPrintStream(GuiLogManager manager) {
-            this(manager, null);
+            this(manager, null, null, LogStreamType.Other);
         }
 
         public LogPrintStream(GuiLogManager manager, OutputStream out) {
@@ -339,12 +412,44 @@ public class GuiLogManager {
             this.manager = manager;
         }
 
+        /**
+         * @param manager the manager
+         * @param out the wrapped out
+         * @param outType the type of out
+         * @since 1.1
+         */
+        public LogPrintStream(GuiLogManager manager, PrintStream original, OutputStream out, LogStreamType outType) {
+            super(new LogOutputStream(manager, out, outType));
+            this.original = original;
+            this.manager = manager;
+        }
+
         public GuiLogManager getManager() {
             return manager;
         }
 
+        /**
+         * @return the wrapped stream
+         * @since 1.1
+         */
+        public PrintStream getOriginal() {
+            return original;
+        }
+
         public OutputStream getOut() {
             return out;
+        }
+
+        /**
+         * @return if out is {@link LogOutputStream}, it's outType, or Other
+         * @since 1.1
+         */
+        public LogStreamType getOutType() {
+            if (out instanceof LogOutputStream) {
+                return ((LogOutputStream) out).getOutType();
+            } else {
+                return LogStreamType.Other;
+            }
         }
 
         @Override
@@ -379,6 +484,22 @@ public class GuiLogManager {
                 handler.uncaughtException(t, e);
             }
         }
+
+        /**
+         * @return owner manager
+         * @since 1.1
+         */
+        public GuiLogManager getManager() {
+            return manager;
+        }
+
+        /**
+         * @return wrapped handler
+         * @since 1.1
+         */
+        public Thread.UncaughtExceptionHandler getHandler() {
+            return handler;
+        }
     }
 
     /** a stream wrapper with writing to a log-manager, used by {@link LogPrintStream} */
@@ -387,16 +508,45 @@ public class GuiLogManager {
         protected ByteBuffer buffer;
         protected GuiLogManager manager;
         protected Charset defaultCharset;
+        /** @since 1.1 */
+        protected LogStreamType outType;
 
         public LogOutputStream(GuiLogManager manager) {
-            this(manager, null);
+            this(manager, null, LogStreamType.Other);
         }
 
         public LogOutputStream(GuiLogManager manager, OutputStream out) {
+            this(manager, out, LogStreamType.Other);
+        }
+
+        /**
+         * @param manager the manager
+         * @param out the wrapped output
+         * @param outType the out is stdout, err or another
+         * @since 1.1
+         */
+        public LogOutputStream(GuiLogManager manager, OutputStream out, LogStreamType outType) {
             this.manager = manager;
             this.out = out;
+            this.outType = outType;
             buffer = ByteBuffer.allocateDirect(4096);
             defaultCharset = Charset.defaultCharset(); //PrintStream always encodes by default encoding
+        }
+
+        /**
+         * @return the type of wrapped output
+         * @since  1.1
+         */
+        public LogStreamType getOutType() {
+            return outType;
+        }
+
+        /**
+         * @return wrapped output
+         * @since 1.1
+         */
+        public OutputStream getOut() {
+            return out;
         }
 
         @Override
@@ -486,10 +636,12 @@ public class GuiLogManager {
                         data = data.substring(0, data.length() - 1);
                     }
                     if (manager != null) {
-                        manager.logString(data);
+                        manager.logString(data, outType.equals(LogStreamType.Stdout));
                     }
                 } catch (Exception ex) {
-                    manager.logString("data...");
+                    if (manager != null) {
+                        manager.logString("data...");
+                    }
                 }
             }
             ((Buffer) buffer).clear();

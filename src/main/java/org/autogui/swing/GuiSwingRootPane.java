@@ -383,22 +383,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     public static GuiSwingLogManager updateSwingLogManager() {
-        GuiSwingLogManager logManager;
-        synchronized (GuiLogManager.class) {
-            GuiLogManager m = GuiLogManager.get();
-            if (m instanceof GuiSwingLogManager) {
-                logManager = (GuiSwingLogManager) m;
-            } else {
-                logManager = new GuiSwingLogManager();
-                logManager.setupConsole(
-                        GuiSwingLogManager.replaceErr,
-                        GuiSwingLogManager.replaceOut,
-                        GuiSwingLogManager.replaceExceptionHandler,
-                        GuiSwingLogManager.redirectToConsole);
-                GuiLogManager.setManager(logManager);
-            }
-        }
-        return logManager;
+        return GuiSwingLogManager.getOrSetSwingLogManager();
     }
 
     protected void initFileDialogPrefsUpdater() {

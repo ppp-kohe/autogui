@@ -6,9 +6,21 @@ import java.time.Instant;
 public class GuiLogEntryString implements GuiLogEntry {
     protected Instant time;
     protected String data;
+    /** @since 1.1 */
+    protected boolean fromStandard;
 
     public GuiLogEntryString(String data) {
+        this(data, false);
+    }
+
+    /**
+     * @param data the entry string
+     * @param fromStandard whether data comes from System.out
+     * @since 1.1
+     */
+    public GuiLogEntryString(String data, boolean fromStandard) {
         this(Instant.now(), data);
+        this.fromStandard = fromStandard;
     }
 
     public GuiLogEntryString(Instant time, String data) {
@@ -22,6 +34,14 @@ public class GuiLogEntryString implements GuiLogEntry {
 
     public String getData() {
         return data;
+    }
+
+    /**
+     * @return indicates that the entry is created from standard output redirection. default is false
+     * @since 1.1
+     */
+    public boolean isFromStandard() {
+        return fromStandard;
     }
 
     @Override

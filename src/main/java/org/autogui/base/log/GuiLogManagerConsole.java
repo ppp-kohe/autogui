@@ -11,6 +11,8 @@ public class GuiLogManagerConsole extends GuiLogManager {
     protected PrintStream out;
     protected GuiLogEntry lastEntry;
     protected boolean controlSequence = true;
+    /** @since 1.1 */
+    protected boolean showStandard = true;
 
     public static int barWidth = 50;
 
@@ -40,20 +42,38 @@ public class GuiLogManagerConsole extends GuiLogManager {
         return controlSequence;
     }
 
+    /**
+     * @return showing string entries created by stdout redirection. default is true
+     * @since 1.1
+     */
+    public boolean isShowStandard() {
+        return showStandard;
+    }
+
+    /**
+     * @param showStandard if true, showing string entries created by stdout redirection
+     * @since 1.1
+     */
+    public void setShowStandard(boolean showStandard) {
+        this.showStandard = showStandard;
+    }
+
     @Override
     public PrintStream getErr() {
         return out;
     }
 
     @Override
-    public GuiLogEntryString logString(String str) {
-        GuiLogEntryString s = super.logString(str);
+    public GuiLogEntryString logString(String str, boolean fromStandard) {
+        GuiLogEntryString s = super.logString(str, fromStandard);
         showString(s);
         return s;
     }
 
     public void showString(GuiLogEntryString s) {
-        out.format("%s %s\n", formatTime(s.getTime()), s.getData());
+        if (!s.isFromStandard() || showStandard) { //non-stdout-entry or stdout-entry with showStdout
+            out.format("%s %s\n", formatTime(s.getTime()), s.getData());
+        }
         lastEntry = s;
     }
 

@@ -23,7 +23,8 @@ import java.util.function.Consumer;
  *               GuiSwingLogManager.replaceErr,
  *               GuiSwingLogManager.replaceOut,
  *               GuiSwingLogManager.replaceExceptionHandler,
- *               GuiSwingLogManager.redirectToConsole);
+ *               GuiSwingLogManager.redirectToConsole,
+ *               GuiSwingLogManager.suppressOutputRedirection);
  *     GuiLogManager.setManager(m);
  *     ...
  *     frame.setContentPane(m.createWindow().getPaneWithStatusBar(frame.getContentPane()));
@@ -39,6 +40,8 @@ public class GuiSwingLogManager extends GuiLogManager {
     public static boolean replaceOut = true;
     public static boolean replaceExceptionHandler = true;
     public static boolean redirectToConsole = true;
+    /** @since 1.1 */
+    public static boolean suppressOutputRedirection = true;
 
     public static void setDefaultReplace(boolean flag) {
         replaceErr = flag;
@@ -48,6 +51,14 @@ public class GuiSwingLogManager extends GuiLogManager {
 
     public static void setRedirectToConsole(boolean flag) {
         redirectToConsole = flag;
+    }
+
+    /**
+     * @param flag flag for {@link #suppressOutputRedirection}
+     * @since 1.1
+     */
+    public static void setSuppressOutputRedirection(boolean flag) {
+        suppressOutputRedirection = flag;
     }
 
     /**
@@ -74,12 +85,121 @@ public class GuiSwingLogManager extends GuiLogManager {
         return console;
     }
 
+    /**
+     * @return existing manager from {@link #get()} or a new manager
+     * @since 1.1
+     */
+    public static GuiSwingLogManager getOrSetSwingLogManager() {
+        GuiSwingLogManager logManager;
+        synchronized (GuiLogManager.class) {
+            GuiLogManager m = GuiLogManager.get();
+            if (m instanceof GuiSwingLogManager) {
+                logManager = (GuiSwingLogManager) m;
+            } else {
+                logManager = new GuiSwingLogManager();
+                logManager.setupConsoleWithDefaultFlags();
+                GuiLogManager.setManager(logManager);
+            }
+        }
+        return logManager;
+    }
+
+    /**
+     * the method calls {@link #setupConsole(boolean, boolean, boolean, boolean, boolean)}
+     *  with reading following properties with conjunction of static fields.
+     *  those properties take "true" (default) or "false".
+     * <ul>
+     *  <li>autogui.log.replaceErr </li>
+     *  <li>autogui.log.replaceOut </li>
+     *  <li>autogui.log.replaceExceptionHandler </li>
+     *  <li>autogui.log.redirectToConsole </li>
+     *  <li>autogui.log.suppressOutputRedirection </li>
+     * </ul>
+     * @return this
+     * @since 1.1
+     */
+    public GuiLogManager setupConsoleWithDefaultFlags() {
+        boolean replaceErr = getPropertyFlag("autogui.log.replaceErr");
+        boolean replaceOut = getPropertyFlag("autogui.log.replaceOut");
+        boolean replaceExceptionHandler = getPropertyFlag("autogui.log.replaceExceptionHandler");
+        boolean redirectToConsole = getPropertyFlag("autogui.log.redirectToConsole");
+        boolean suppressOutputRedirection = getPropertyFlag("autogui.log.suppressOutputRedirection");
+        return setupConsole(
+                replaceErr && GuiSwingLogManager.replaceErr,
+                replaceOut && GuiSwingLogManager.replaceOut,
+                replaceExceptionHandler && GuiSwingLogManager.replaceExceptionHandler,
+                redirectToConsole && GuiSwingLogManager.redirectToConsole,
+                suppressOutputRedirection && GuiSwingLogManager.suppressOutputRedirection);
+    }
+
+    private static boolean getPropertyFlag(String name) {
+        return System.getProperty(name, "true").equals("true");
+    }
+
     public GuiLogManager setupConsole(boolean replaceError, boolean replaceOutput, boolean uncaughtHandler,
                                       boolean redirectToConsole) {
+        return setupConsole(replaceError, replaceOutput, uncaughtHandler, redirectToConsole, true);
+    }
+
+    /**
+     * controls logging redirection.
+     *
+     * <pre>
+     *     setupConsole(true, true, true, true, true);
+     *     //default: redirect to console and GUI-list
+     *      System.err.print("msg"); // =&gt; stderr: "[Time...] msg",  GUI-list: "[Time...] msg"
+     *      System.out.print("msg"); // =&gt; stdout: "msg",            GUI-list: "[Time...] msg"
+     *      logString("msg");        // =&gt; stderr: "[Time...] msg",  GUI-list: "[Time...] msg"
+     *
+     *     setupConsole(false, false, true, true, true);
+     *     //no stdout/stderr replacement.
+     *      System.err.print("msg"); // =&gt; stderr: "msg"
+     *      System.out.print("msg"); // =&gt; stdout: "msg"
+     *      logString("msg");        // =&gt; stderr: "[Time...] msg",  GUI-list: "[Time...] msg"
+     *
+     *     setupConsole(true, true, true, false, true);
+     *     //no console redirection: only stdout directly write message to the console as outputs
+     *      System.err.print("msg"); // =&gt;                           GUI-list: "[Time...] msg"
+     *      System.out.print("msg"); // =&gt; stdout: "msg",            GUI-list: "[Time...] msg"
+     *      logString("msg");        // =&gt;                           GUI-list: "[Time...] msg"
+     *
+     *     setupConsole(false, false, true, false, true);
+     *     //no stdout/stderr replacement, and no console redirection: stdout/stderr just work as original
+     *      System.err.print("msg"); // =&gt;  stderr: "msg"
+     *      System.out.print("msg"); // =&gt;  stdout: "msg"
+     *      logString("msg");        // =&gt;                           GUI-list: "[Time...] msg"
+     *
+     *     setupConsole(true, true, true, true, false);
+     *     //full redirection: stdout also writes to stderr
+     *      System.err.print("msg"); // =&gt;  stderr: "[Time...] msg",                GUI-list: "[Time...] msg"
+     *      System.out.print("msg"); // =&gt;  stderr: "[Time...] msg", stdout: "msg", GUI-list: "[Time...] msg"
+     *      logString("msg");        // =&gt;  stderr: "[Time...] msg",                GUI-list: "[Time...] msg"
+     *
+     * </pre>
+     * @param replaceError replace System.err for redirection to the GUI list
+     * @param replaceOutput replace System.out for redirection to the GUI list
+     * @param uncaughtHandler replace the uncaught-handler for redirection to the GUI list
+     * @param redirectToConsole adding {@link GuiLogManagerConsole} to the manager: this means that the GUI list redirects to the console (original System.err)
+     * @param suppressOutputRedirection avoiding redirection of redirectToConsole
+     *                                  from replaced System.out. So work only if replaceOutput=true and redirectToConsole=true
+     * @return this
+     * @since 1.1
+     */
+    public GuiLogManager setupConsole(boolean replaceError, boolean replaceOutput, boolean uncaughtHandler,
+                                      boolean redirectToConsole, boolean suppressOutputRedirection) {
         if (redirectToConsole) {
-            setConsole(new GuiLogManagerConsole(getSystemErr()));
+            GuiLogManagerConsole console = new GuiLogManagerConsole(getSystemErr());
+            console.setShowStandard(!suppressOutputRedirection);
+            setConsole(console);
+        } else {
+            setConsole(null);
         }
+
+        resetOut();
+        resetErr();
         replaceConsole(replaceError, replaceOutput);
+
+        resetUncaughtHandler();
         if (uncaughtHandler) {
             replaceUncaughtHandler();
         }
@@ -97,8 +217,8 @@ public class GuiSwingLogManager extends GuiLogManager {
     }
 
     @Override
-    public GuiLogEntryString logString(String str) {
-        GuiLogEntryString e = new GuiSwingLogEntryString(str);
+    public GuiLogEntryString logString(String str, boolean fromStandard) {
+        GuiLogEntryString e = new GuiSwingLogEntryString(str, fromStandard);
         if (console != null) {
             console.showString(e);
         }
@@ -214,11 +334,13 @@ public class GuiSwingLogManager extends GuiLogManager {
      */
     public static class GuiSwingLogWindow extends JFrame {
         private static final long serialVersionUID = 1L;
+        protected GuiSwingLogManager manager;
         protected GuiSwingLogList list;
         protected JToolBar toolbar;
         protected GuiSwingLogStatusBar statusBar;
 
         public GuiSwingLogWindow(GuiSwingLogManager manager) {
+            this.manager = manager;
             setTitle("Log");
             setType(Type.UTILITY);
             JPanel pane = new JPanel(new BorderLayout());
@@ -245,6 +367,14 @@ public class GuiSwingLogManager extends GuiLogManager {
             setContentPane(pane);
             pack();
             setSize(ui.getScaledSizeInt(400), ui.getScaledSizeInt(600));
+        }
+
+        /**
+         * @return the log-manager
+         * @since  1.1
+         */
+        public GuiSwingLogManager getManager() {
+            return manager;
         }
 
         @Override

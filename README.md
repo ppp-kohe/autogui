@@ -22,7 +22,7 @@ The project uses [apache-maven](http://maven.apache.org) and depends on Java 8 o
 
 ```bash
   $ mvn package
-   # the command will generates target/autogui-1.0.jar
+   # the command will generates target/autogui-1.1-SNAPSHOT.jar
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
@@ -36,11 +36,15 @@ To use the library in your apaceh-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.0</version>
+        <version>1.1-SNAPSHOT</version>
     </dependency>
 ```
 
 The library jar is available from Maven Central Repository.
+
+## API documents
+
+* [latest](https://www.autogui.org/docs/apidocs/latest/index.html)
 
 ## Quick tutorial: A tiny example with jshell
 
@@ -65,7 +69,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.0.jar
+/env -class-path target/autogui-1.1-SNAPSHOT.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
@@ -74,7 +78,7 @@ AutoGuiShell.showLive(h)
 ```
 
 The above code defines the class `Hello` with an instance field and a method.
-After that, `org.autogui.swing.AutoGuiShell.showLine(Object)` starts creating a GUI window from the given object and shows the window.
+After that, [`org.autogui.swing.AutoGuiShell.showLine(Object)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html#showLive(java.lang.Object)) starts creating a GUI window from the given object and shows the window.
 
 The created window will contain a text field labelled as "Value" and a button on the tool-bar labelled as "Action". 
 You can fill the text field with the string "hello, world" by typing the keybord and click the button, then you will see "hello, world" on the console of `jshell`.
@@ -88,7 +92,7 @@ Also, the method `action` is bound to the action of the button on the tool-bar. 
 
 ## Example applications
 
-See `src/test/java/autogui/demo`. 
+See [`src/test/java/autogui/demo`](https://github.com/ppp-kohe/autogui/tree/master/src/test/java/org/autogui/demo). 
 
 You can execute the code in the directory, by `mvn test-compile exec:java  -Dexec.classpathScope=test -Dexec.mainClass=...`.
 
@@ -104,7 +108,13 @@ For example:
 
 To create an application which can be executed from the `main` method, 
 it is reasonable to restrict GUI aware members in the specified object.
-`@GuiIncluded` and `AutGuiShell.get().showWindow(o)` satisfies the restriction.
+[`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html) and 
+[`AutGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html) satisfies the restriction.
+
+The strict mode ...
+
+*  can be started by [`AutoGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html#showWindow(java.lang.Object))
+*  targets on[`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html) and `public` classes, properties and members
 
 ```java
   import org.autogui.GuiIncluded;
@@ -136,8 +146,8 @@ it is reasonable to restrict GUI aware members in the specified object.
 
 <img src="docs/images/image-strict-h.png" srcset="docs/images/image-strict-h.png 1x, docs/images/image-strict.png 2x" alt="Strict mode">
 
-The `showWindow` instance method of `AutGuiShell` restrcts members to 
-public ones with the annotation `org.autogui.GuiIncluded` attached. 
+The [`showWindow`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html#showWindow(java.lang.Object)) instance method of `AutGuiShell` restrcts members to 
+public ones with the annotation [`org.autogui.GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html) attached. 
 With `AutoGuiShell.get().showWindow(o)`, you will need to attach the annotation to all members (classes, fields, getters, setters and actions) you want to include GUI.
 
 
@@ -158,52 +168,76 @@ open module your.module { //adds the "open" modifier to the your module, or...
 ## Supported types and components
 
 * Basic value types
-  * String text-field: `java.lang.String`
-  * File text-field: `java.nio.file.Path` or `java.io.File`
-  * Number spinner: a primitive numeric(`byte`, `short`, `int`, `long`, `float` or `double`) or a sub-type of `java.lang.Number`
-  * Boolean check-box: `boolean` or `java.lang.Boolean`
-  * Enum pull-down menu: a sub-type of `java.lang.Enum`
-  * Image pane: a sub-type of `java.awt.Image`
-  * Document editor: `java.lang.StringBuilder` or `javax.swing.text.Document`
-  * Embedded component: a sub-type of `JComponent`
+  * String text-field: 
+    [`java.lang.String`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html)
+  * File text-field: 
+    [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Path.html) or 
+    [`java.io.File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html)
+  * Number spinner: a primitive numeric(`byte`, `short`, `int`, `long`, `float` or `double`) or a sub-type of
+    [`java.lang.Number`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Number.html)
+  * Boolean check-box: `boolean` or 
+    [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html)
+  * Enum pull-down menu: a sub-type of 
+    [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html)
+  * Image pane: a sub-type of 
+    [`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html)
+  * Document editor: 
+    [`java.lang.StringBuilder`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/StringBuilder.html) or 
+    [`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/Document.html)
+  * Embedded component: a sub-type of 
+    [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/JComponent.html)
 * Object pane: a user-defiend object type with composition of properties and actions
   * Object properties: `T getP() {...}`, `void setP(T) {...}` or `T p;`
       * if all members are other user-defined objects, then the enclosing object will be bound to a tabbed-pane
   * Action methods: `void m() {...}`
-* Collection table: a sub-type of `java.util.Collection<E>` or an array `E[]` with columns based `E`
+* Collection table: a sub-type of 
+  [`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Collection.html)
+  or an array `E[]` with columns based `E`
   * Value columns for `E`
-      * String column: `java.lang.String` 
-      * File column: `java.nio.file.Path` or `java.io.File`
-      * Number column: a primitive numeric or a sub-type `java.lang.Number`
-      * Boolean column: `boolean` or `java.lang.Boolean`
-      * Enum column: a sub-type of `java.lang.Enum`
-      * Image column: a sub-type of `java.awt.Image`
+      * String column: 
+        [`java.lang.String`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html)
+      * File column: 
+        [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Path.html) or 
+        [`java.io.File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html)
+      * Number column: a primitive numeric or a sub-type of 
+        [`java.lang.Number`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Number.html)
+      * Boolean column: `boolean` or 
+        [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html)
+      * Enum column: a sub-type of
+        [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html)
+      * Image column: a sub-type of 
+        [`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html)
   * A user-defined object-type composing columns from it's properties and actions
   * Dynamic Collection table: a nested `Collection<Collection<E>>` or a multi-dimentional array `E[][]`
 
 ### String text-field
 
-A property of `java.lang.String` will be bound to a text field.
+A property of 
+[`java.lang.String`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html) 
+will be bound to a text field.
 
 ```java
   class Hello {
       String prop;
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-string-h.png" srcset="docs/images/image-string-h.png 1x, docs/images/image-string.png 2x" alt="String text-field">
 
 ### File text-field
 
-A property of `java.io.File` or `java.nio.file.Path` will be bound to a text field with exnteion for file operations.
+A property of 
+[`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Path.html) or 
+[`java.io.File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html) 
+will be bound to a text field with exnteion for file operations.
 
 ```java
   import java.io.File;
   class Hello {
       File prop;  
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-file-h.png" srcset="docs/images/image-file-h.png 1x, docs/images/image-file.png 2x" alt="File text-field">
@@ -211,33 +245,39 @@ A property of `java.io.File` or `java.nio.file.Path` will be bound to a text fie
 ### Number spinner
 
 A property of a numerical type will be bound to a number spinner. 
-Numrical types includes primitve types (`byte`, `short`, `int`, `long`, `float` and `double`) and sub-types of `java.lang.Number` including `BigInteger` and `BigDecimal`.
+Numrical types includes primitve types (`byte`, `short`, `int`, `long`, `float` and `double`) and sub-types of 
+[`java.lang.Number`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Number.html) including 
+[`java.math.BigInteger`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/math/BigInteger.html) and  [`java.math.BigDecimal`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/math/BigDecimal.html) 
 
 ```java
   class Hello {
       int prop;
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-number-h.png" srcset="docs/images/image-number-h.png 1x, docs/images/image-number.png 2x" alt="Number spinner">
 
 ### Boolean check-box
 
-A property of `boolean` or `java.lang.Boolean` will be bound to a check-box.
+A property of `boolean` or 
+[`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html) 
+ will be bound to a check-box.
 
 ```java
   class Hello {
       boolean prop;
   } 
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-boolean-h.png" srcset="docs/images/image-boolean-h.png 1x, docs/images/image-boolean.png 2x" alt="Boolean check-box">
 
 ### Enum pull-down menu
 
-A property of an `enum` type (a sub-type of `java.lang.Enum`) will be bound to a pull-down menu (non editable combo-box).
+A property of an `enum` type (a sub-type of 
+[`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html) 
+) will be bound to a pull-down menu (non editable combo-box).
 Members of the enum becomes items of the menu.
 
 ```java
@@ -247,29 +287,35 @@ Members of the enum becomes items of the menu.
   class Hello {
       HelloEnum prop = HelloEnum.Hello;
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-enum-h.png" srcset="docs/images/image-enum-h.png 1x, docs/images/image-enum.png 2x" alt="Enum combo-box">
 
 ### Image pane
 
-A property of `java.awt.Image` or it's sub-type will be bound to a pane for image previewing.
+A property of 
+[`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html) 
+ or it's sub-type will be bound to a pane for image previewing.
 
 ```java
   import java.awt.*;
   class Hello {
       Image prop;
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-image-h.png" srcset="docs/images/image-image-h.png 1x, docs/images/image-image.png 2x" alt="Image pane">
 
 The pane supports drag & drop and zooming by the mouse wheel.
-For handling images in code, `java.awt.image.BufferedImage` and `javax.imageio.ImageIO` are useful.
+For handling images in code, 
+[`java.awt.image.BufferedImage`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/image/BufferedImage.html) and 
+[`javax.imageio.ImageIO`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/imageio/ImageIO.html)
+are useful.
 
 ```java
+  import java.io.File;
   import java.awt.image.*;
   import javax.imageio.*;
   class Hello {
@@ -287,20 +333,24 @@ For handling images in code, `java.awt.image.BufferedImage` and `javax.imageio.I
           return prop == null ? 0 : prop.getHeight();
       }
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-image-file-h.png" srcset="docs/images/image-image-file-h.png 1x, docs/images/image-image-file.png 2x" alt="Image dragging">
 
 ### Document editor
 
-A property of `java.lang.StringBuilder` or `javax.swing.text.Document` and it's sub-type will be bound to a text-edit pane.
+A property of 
+[`java.lang.StringBuilder`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/StringBuilder.html)
+or 
+[`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/Document.html) 
+and it's sub-type will be bound to a text-edit pane.
 
 ```java
   class Hello {
       StringBuilder prop = new StringBuilder();
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-document-h.png" srcset="docs/images/image-document-h.png 1x, docs/images/image-document.png 2x" alt="Document editor">
@@ -319,7 +369,9 @@ So it might not be suitable for editing large sized texts.
 Note that the documents and text-edit components in Swing seem to have designed as that any changes to the document must be happen within the text-edit component.
 So, **the user code should not modify contents of `StringBuilder` or `Document` of the property value**. 
 
-When the type of the property is `javax.swing.text.StyledDocument`, it's sub-type or `StringBuiilder`, 
+When the type of the property is 
+[`javax.swing.text.StyledDocument`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/StyledDocument.html) 
+, it's sub-type or `StringBuiilder`, 
 the user can change it's (global) style by settings from the context menu.
 
 <img src="docs/images/image-document-styled-h.png" srcset="docs/images/image-document-styled-h.png 1x, docs/images/image-document-styled.png 2x" alt="Document editor with styles">
@@ -343,7 +395,7 @@ A property of a user-defined object class will be bound to a pane composing memb
           System.out.printf("E: %s\n", prop);
       }
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-object-h.png" srcset="docs/images/image-object-h.png 1x, docs/images/image-object.png 2x" alt="Object pane">
@@ -378,7 +430,7 @@ A *property* can be defiend as 1) an accessible field definition or 2) a pair of
       boolean isFlag() { return flag; } //is...() for boolean
       void setFlag(boolean b) { flag = b; } 
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-prop-h.png" srcset="docs/images/image-prop-h.png 1x, docs/images/image-prop.png 2x" alt="Properties">
@@ -393,8 +445,11 @@ The created UI automatically specifies changed properties of the object pane. In
 
 #### AutoCloseable support
 
-If a user-defined object class implements `java.lang.AutoCloseable`,
- then `close()` of objects of the class will be called at closing of owner window of those objects.
+If a user-defined object class implements 
+[`java.lang.AutoCloseable`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/AutoCloseable.html), 
+then 
+[`close()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/AutoCloseable.html#close())
+of objects of the class will be called at closing of owner window of those objects.
 
 ### Object tabbed-pane
 
@@ -411,7 +466,7 @@ A user-defined object which has only properties of sub user-defined objects with
   class Tab2 {
       int prop;
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-tab-h.png" srcset="docs/images/image-tab-h.png 1x, docs/images/image-tab.png 2x" alt="Object tabbed-pane">
@@ -420,7 +475,9 @@ A user-defined object which has only properties of sub user-defined objects with
 
 ### Embedded component
 
-A property of `javax.swing.JComponent` or it's sub-type will be bound to a pane for embedding the property value as sub-component.
+A property of 
+[`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/JComponent.html)
+or it's sub-type will be bound to a pane for embedding the property value as sub-component.
 
 ```java
   import java.awt.*;
@@ -442,7 +499,7 @@ A property of `javax.swing.JComponent` or it's sub-type will be bound to a pane 
           return value;
       }
   }
-  AutoGuiShell.showLive(new Hello());
+  org.autogui.swing.AutoGuiShell.showLive(new Hello());
 ```
 
 <img src="docs/images/image-component-h.png" srcset="docs/images/image-component-h.png 1x, docs/images/image-component.png 2x" alt="Embedded component">
@@ -455,9 +512,19 @@ For a property of the embedded component, the library executes the method within
 An returned embedded component will be set to as the sub-compoennt of the owner object-pane.
 
 
+#### Embedding component to your Swing applications
+
+To embed object GUI created by Autogui into your Swing applications, you can use 
+[`org.autogui.swing.GuiSwingRootPane.createForObject(o)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/GuiSwingRootPane.html#createForObject(java.lang.Object)).
+
+Please see 
+[`src/test/java/org/autogui/demo/ObjectEmbeddedDemo.java`](https://github.com/ppp-kohe/autogui/tree/master/src/test/java/org/autogui/demo/ObjectEmbeddedDemo.java).
+
 ### Collection table
 
-A property for `java.util.Collection<E>`,  it's sub-type or an array type `E[]`  will be bound to a table pane.
+A property for 
+[`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Collection.html),
+it's sub-type or an array type `E[]`  will be bound to a table pane.
 The column of the table will be created from the type-argument `E`.
 
 ```java
@@ -470,7 +537,7 @@ The column of the table will be created from the type-argument `E`.
           prop = new ArrayList<>(prop); 
       }
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-collection-h.png" srcset="docs/images/image-collection-h.png 1x, docs/images/image-collection.png 2x" alt="Collection table">
@@ -495,16 +562,18 @@ If the type-argument`E` of `Collection<E>` is a user-defined object class, then 
        int num;
        Item(String n, int i) { this.name = n; this.num = i; }
    }
-   AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-collection-column-h.png" srcset="docs/images/image-collection-column-h.png 1x, docs/images/image-collection-column.png 2x" alt="Collection table with property columns">
 
 #### Actions for selected rows of Collection table
 
-If a method of the property-owner takes the element-type `E` of  `java.util.List `, then the table has a button of a tool-bar for the method. The button executes the method with a list containing objects of selected rows in the table.
+If a method of the property-owner takes the element-type `E` of  
+[`java.util.List<E>`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html),
+then the table has a button of a tool-bar for the method. The button executes the method with a list containing objects of selected rows in the table.
 
-If the element object in the collection has an action-method, then the table has a button of a tool-bar for hte method. The button executes the method for each objects of selected rows in the table.
+If the element object in the collection has an action-method, then the table has a button of a tool-bar for the method. The button executes the method for each objects of selected rows in the table.
 
 ```java
    import java.util.*;
@@ -525,7 +594,7 @@ If the element object in the collection has an action-method, then the table has
        Item(String n, int i) { this.name = n; this.num = i; }
        void update() { ++num; }
    }
-   AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-collection-action-h.png" srcset="docs/images/image-collection-action-h.png 1x, docs/images/image-collection-action.png 2x" alt="Collection table with actions">
@@ -542,7 +611,7 @@ Display-names of properties, actions and type-names are generated from their ide
   }
 ```
 
-The name can be customized by the annotation `@GuiIncluded(name=...)`.
+The name can be customized by the annotation [`@GuiIncluded(name=...)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html#name()).
 
 ```java
   class Hello {
@@ -552,7 +621,9 @@ The name can be customized by the annotation `@GuiIncluded(name=...)`.
 
 ### Layout order by @GuiIncluded(index=...)
 
-Order of layout of components can be controlled by  the annotation`@GuiIncluded(index=...)`. The default order is determined by names of the properties. 
+Order of layout of components can be controlled by  the annotation
+[`@GuiIncluded(index=...)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html#index()). 
+The default order is determined by names of the properties. 
 
 ```java
   import org.autogui.GuiIncluded;
@@ -564,7 +635,7 @@ Order of layout of components can be controlled by  the annotation`@GuiIncluded(
       @GuiIncluded(index=1) String getProp3() { return prop3; } 
       void setProp3(String p) { prop3 = p; }
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-order-h.png" srcset="docs/images/image-order-h.png 1x, docs/images/image-order.png 2x" alt="Order of members">
@@ -572,6 +643,10 @@ Order of layout of components can be controlled by  the annotation`@GuiIncluded(
 For a pair of getter and setter, one of annotations attached to the members is adopted.
 
 ### Component description by @GuiIncluded(description=...)
+
+To display a tool-tip message for a member, you can use
+[`@GuiIncluded(description=...)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html#description()). 
+
 
 ```java
    import org.autogui.GuiIncluded;
@@ -584,10 +659,13 @@ For a pair of getter and setter, one of annotations attached to the members is a
 
 ### Key binding by @GuiIncluded(keyStroke=...)
 
+The library automatically sets shortcut keys for members based on their names.
+[`@GuiIncluded(keyStroke=...)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html#keyStroke()) can controle binding keys. 
+
 * `keyStroke="none"`: avoid binding
 * `keyStroke="<control>... <key>"`
   * `control ::= shift | alt`
-  * `key : A | B | C |... | Z | 0 | 1 ... | 9  `
+  * `key ::= A | B | C |... | Z | 0 | 1 ... | 9  `
 * Reserved keys: Those keys are combined with Command (macOS) or Control.
   * `Q`: Quit, `W`: Window close
   * `shift R`: Refresh
@@ -611,19 +689,25 @@ For a pair of getter and setter, one of annotations attached to the members is a
            System.out.println("action2");
        }
    }
-   AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 <img src="docs/images/image-keystroke-h.png" srcset="docs/images/image-keystroke-h.png 1x, docs/images/image-keystroke.png 2x" alt="Key-binding">
+
+For actions, shortcut keys cause execution of the target action.
+For properties, shortcut keys cause UI to focus on the target compoennt.
+Also, *Control + Enter* will display the context menu for the focusing component.
 
 ## Preferences management
 
 The created window has ability to save and reuse a set of property-values of It's binding sub-components.
+This feature relies on 
+[`java.util.prefs`](https://docs.oracle.com/en/java/javase/11/docs/api/java.prefs/java/util/prefs/package-summary.html).
 
 ```java
    class Hello {
        String prop;
    }
-   AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-prefs-h.png" srcset="docs/images/image-prefs-h.png 1x, docs/images/image-prefs.png 2x" alt="Preferences">
@@ -642,9 +726,12 @@ The created window has a status-bar and a list of displaying logging entries. An
 
 ### Logging string messages
 
-The created window will replace `System.err` and `System.out ` with redirecting it's outputs to a status-view and a list-window  on the created window. 
+The created window will replace 
+[`System.err`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#err) and 
+[`System.out`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#out) with redirecting it's outputs to a status-view and a list-window  on the created window. 
 
-Also, the user-code can directly show messages via `GuiLogManager`.
+Also, the user-code can directly show messages via 
+[`GuiLogManager`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogManager.html).
 
   ```java
      import org.autogui.base.log.*;
@@ -656,14 +743,25 @@ Also, the user-code can directly show messages via `GuiLogManager`.
              GuiLogManager.get().logFormat("format message %d", 2);
          }
      }
-     AutoGuiShell.showLive(new Hello());
+     org.autogui.swing.AutoGuiShell.showLive(new Hello());
   ```
 
 <img src="docs/images/image-log-string-h.png" srcset="docs/images/image-log-string-h.png 1x, docs/images/image-log-string.png 2x" alt="String message">
 
 ### Logging progress
 
-`GuiLogEntryProgress` created by `GuiLogManager ` can show and control a progress-bar.  The factory method `logProgress(n)` creates an instance of the entry with the max count `n`. It can update the current count by `addValue(i)` or `addValueP(p)` with taking 0...1.0. The progress-bar can also show a message by `setMessage(s)`.
+[`GuiLogEntryProgress`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogEntryProgress.html)
+created by 
+[`GuiLogManager`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogManager.html)
+can show and control a progress-bar.  The factory method 
+[`logProgress(n)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogManager.html#logProgress(int))
+creates an instance of the entry with the max count `n`. 
+It can update the current count by 
+[`addValue(i)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogEntryProgress.html#addValue(int)) or 
+[`addValueP(p)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogEntryProgress.html#addValueP(double))
+with taking 0...1.0. 
+The progress-bar can also show a message by 
+[`setMessage(s)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogEntryProgress.html#setMessage(java.lang.String)).
 
 ```java
      import org.autogui.base.log.*;
@@ -682,16 +780,27 @@ Also, the user-code can directly show messages via `GuiLogManager`.
              }
          }
      }
-     AutoGuiShell.showLive(new Hello());
+     org.autogui.swing.AutoGuiShell.showLive(new Hello());
 ```
 
 <img src="docs/images/image-log-progress-h.png" srcset="docs/images/image-log-progress-h.png 1x, docs/images/image-log-progress.png 2x" alt="Progress">
 
-The button attached to the right side of the progress-bar causes an interruption of `Thread` of calling `logProgress()`.  The interruption causes an `InterruptedException` while thread-blocking caused by some APIs such as `Thread.sleep(n)`. For running code without blocking, `Thread.interrupted()` can explicitly check the interruption.
+The button attached to the right side of the progress-bar causes an interruption of 
+[`Thread`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html)
+of calling `logProgress()`.  
+The interruption causes an 
+[`InterruptedException`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/InterruptedException.html)
+while thread-blocking caused by some APIs such as 
+[`Thread.sleep(n)`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#sleep(long)). 
+For running code without blocking, 
+[`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#interrupted())
+can explicitly check the interruption.
 
 ### Logging exceptions
 
-The created window sets an unchaught exception-handler for displaying the exception in the logging list. Also `GuiLogManager#logError(e)` can explicitly display the given exception. The displayed exception becomes an item in the logging list with expandable stack-traces.
+The created window sets an unchaught exception-handler for displaying the exception in the logging list. Also 
+[`GuiLogManager.get().logError(e)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogManager.html#logError(java.lang.Throwable))
+can explicitly display the given exception. The displayed exception becomes an item in the logging list with expandable stack-traces.
 
 ```java
    import org.autogui.base.log.*;
@@ -701,14 +810,16 @@ The created window sets an unchaught exception-handler for displaying the except
            throw new RuntimeException("error2");
        }
    }
-   AutoGuiShell.showLive(new Hello());
+   org.autogui.swing.AutoGuiShell.showLive(new Hello());
 ```
 
 <img src="docs/images/image-log-exception-h.png" srcset="docs/images/image-log-exception-h.png 1x, docs/images/image-log-exception.png 2x" alt="Progress">
 
 ### Long running action and progress-bars	
 
-A long running action will be an independent task with displaying an indeterminate progress-bar. The stop button can cause an interrupution resulting in `InterruptedException` or `Thread.interrupted()`. 
+A long running action will be an independent task with displaying an indeterminate progress-bar. The stop button can cause an interrupution resulting in 
+[`InterruptedException`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/InterruptedException.html) or 
+[`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#interrupted()). 
 
 ```java
   class Hello {
@@ -720,7 +831,7 @@ A long running action will be an independent task with displaying an indetermina
           System.err.println("finish");
       }
   }
-  AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 <img src="docs/images/image-log-longrunning-h.png" srcset="docs/images/image-log-longrunning-h.png 1x, docs/images/image-log-longrunning.png 2x" alt="Progress">

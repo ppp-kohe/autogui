@@ -29,6 +29,15 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         super(data);
     }
 
+    /**
+     * @param data the string data
+     * @param fromStdout whether stdout redirection
+     * @since 1.1
+     */
+    public GuiSwingLogEntryString(String data, boolean fromStdout) {
+        super(data, fromStdout);
+    }
+
     public GuiSwingLogEntryString(Instant time, String data) {
         super(time, data);
     }

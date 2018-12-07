@@ -28,7 +28,7 @@ import java.util.function.Supplier;
  * <p>
  * for jshell: the static method {@link #showLive(Object)} relaxes accessibility and annotations
  * <pre>
- *     jshell&gt; /env --add-class-path target/autogui-1.0-SNAPSHOT.jar
+ *     jshell&gt; /env -class-path target/autogui-1.0-SNAPSHOT.jar
  *     jshell&gt; class Hello {
  *        ...&gt;   String value;
  *        ...&gt;   void action() {
