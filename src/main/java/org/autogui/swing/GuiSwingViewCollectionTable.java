@@ -257,7 +257,23 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public JComponent setupAfterAddingColumns(List<Action> actions) {
             this.actions.addAll(actions);
 
-            actions.stream()
+            setupAfterAddingColumns();
+
+            if (this.actions.isEmpty()) {
+                return initTableScrollPane();
+            } else {
+                JPanel pane = new GuiSwingViewWrapper.ValueWrappingPane<>(initTableScrollPane());
+                pane.add(initActionToolBar(this.actions), BorderLayout.PAGE_START);
+                return pane;
+            }
+        }
+
+        /**
+         * setup related components for the table and actions
+         * @since 1.1
+         */
+        public void setupAfterAddingColumns() {
+            this.actions.stream()
                     .filter(GuiSwingTableColumnSetDefault.TableSelectionListAction.class::isInstance)
                     .map(GuiSwingTableColumnSetDefault.TableSelectionListAction.class::cast)
                     .filter(GuiSwingTableColumnSetDefault.TableSelectionListAction::isAutomaticSelectionAction)
@@ -274,14 +290,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     new PopupCategorized(this::getColumnHeaderMenuItems));
 
             getPopup().setupCompositeKeyMap();
-
-            if (actions.isEmpty()) {
-                return initTableScrollPane();
-            } else {
-                JPanel pane = new GuiSwingViewWrapper.ValueWrappingPane<>(initTableScrollPane());
-                pane.add(initActionToolBar(actions), BorderLayout.PAGE_START);
-                return pane;
-            }
         }
 
         public GuiSwingViewWrapper.ValueScrollPane<?> initTableScrollPane() {

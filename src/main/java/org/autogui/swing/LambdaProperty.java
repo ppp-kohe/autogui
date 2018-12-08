@@ -16,6 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -96,9 +97,13 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         listContext.setRepresentation(repr);
         listContext.addToParent();
 
-        GuiMappingContext subContext = listContext.createChildCandidate(listContext.getTypeElement().getChildren().get(0));
-        subContext.setRepresentation(new GuiReprCollectionElement(null));
-        subContext.addToParent();
+        GuiMappingContext elementContext = listContext.createChildCandidate(listContext.getTypeElement().getChildren().get(0));
+        elementContext.setRepresentation(new GuiReprCollectionElement(null));
+        elementContext.addToParent();
+
+        GuiMappingContext elemObjContext = elementContext.createChildCandidate(elementContext.getTypeElement()); //same type as parent
+        elemObjContext.setRepresentation(new GuiReprValue());
+        elemObjContext.addToParent();
 
         context.updateSourceSubTree();
         return listContext;
@@ -218,6 +223,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
 
     public static class LambdaCollectionTable extends GuiSwingViewCollectionTable.CollectionTable {
         private static final long serialVersionUID = 1L;
+        private boolean finishAdding = false;
 
         public <E> LambdaCollectionTable(Class<E> elementType, Supplier<java.util.List<E>> getter) {
             super(createList(List.class, elementType, getter, null,
@@ -238,7 +244,8 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         public <E,T> GuiMappingContext addColumnContext(String name, Class<?> type,
                                                       Function<E, T> getter, BiConsumer<E, T> setter,
                                                       GuiRepresentation representation) {
-            GuiMappingContext columnContext = context.getChildren().get(0)
+            GuiMappingContext columnContext = context.getChildren().get(0) // table -> collectionElement
+                    .getChildren().get(0)   // -> value
                     .createChildCandidate(new LambdaElementProperty<>(name, type, getter, setter));
             columnContext.setRepresentation(representation);
             columnContext.addToParent();
@@ -372,11 +379,41 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             return this;
         }
 
+        /**
+         * after adding columns and actions, this method sets up relating components for the table
+         *   by calling {@link #setupAfterAddingColumns()}.
+         *  The method will be automatically called by {@link #wrapPane(boolean, boolean)}.
+         * @return this
+         * @since 1.1
+         */
+        public LambdaCollectionTable finishAdding() {
+            if (!finishAdding) {
+                setupAfterAddingColumns();
+                finishAdding = true;
+            }
+            return this;
+        }
+
+        /**
+         * @return wrapping pane for the table with scroll-bars and tool-bar. call {@link #wrapPane(boolean, boolean)} with (true, true)
+         */
         public GuiSwingViewWrapper.ValueWrappingPane<List<?>> wrapSwingPane() {
             return wrapPane(true, true);
         }
 
+        /**
+         * calls {@link #finishAdding()}, if not yet.
+         *
+         * calls {@link #initTableScrollPane()} and {@link #initActionToolBar(List)}.
+         *
+         * @param verticalAlways flag for always displaying vertical scroll-bar
+         * @param horizontalAlways flag for always displaying horizontal scroll-bar
+         * @return wrapping pane with scroll-bars and tool-bar.
+         */
         public GuiSwingViewWrapper.ValueWrappingPane<List<?>> wrapPane(boolean verticalAlways, boolean horizontalAlways) {
+            if (!finishAdding) {
+                finishAdding();
+            }
             GuiSwingViewWrapper.ValueScrollPane<List<?>> s = new GuiSwingViewWrapper.ValueScrollPane<>(this,
                     verticalAlways ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     horizontalAlways ? ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);

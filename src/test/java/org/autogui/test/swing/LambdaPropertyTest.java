@@ -17,6 +17,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -527,7 +528,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
                 .addColumnImage("img", Image.class, TestElem::getImg, TestElem::setImg)
                 .<TestElem>addAction("action", es -> es.forEach(TestElem::action));
 
-        frame = createFrame(t.wrapSwingScrollPane(true, false));
+        frame = createFrame(t.wrapSwingPane());
         return t;
     }
 
