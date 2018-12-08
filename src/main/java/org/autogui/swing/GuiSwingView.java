@@ -77,6 +77,27 @@ public interface GuiSwingView extends GuiSwingElement {
         void setSwingViewValueWithUpdate(ValueType value, GuiTaskClock clock);
 
         /**
+         * notifies property update to the component.
+         * getter will be called and GUI display will be updated.
+         *  the method just calls {@link GuiMappingContext#updateSourceSubTree()}.
+         * @since 1.1
+         */
+        default void updateSwingViewSource() {
+            getSwingViewContext().updateSourceSubTree();
+        }
+
+        /**
+         * notifies property update to the component and enclosing other components.
+         * For single case, {@link #updateSwingViewSource()} is sufficient.
+         * If the component is part of tree of value-panes, the method will be effective.
+         *  the method just calls {@link GuiMappingContext#updateSourceFromRoot()}.
+         * @since 1.1
+         */
+        default void updateSwingViewSourceFromRoot() {
+            getSwingViewContext().updateSourceFromRoot();
+        }
+
+        /**
          * the method is used for table cell-editors, in order to observe the completion of editing.
          * the default impl. is empty.
          * @param eventHandler the handler called when the editing is finished

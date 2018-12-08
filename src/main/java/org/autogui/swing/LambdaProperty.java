@@ -22,6 +22,31 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * Lambda-based property panes.
+ * The LambdaProperty class itself is a property for a pair of {@link Supplier} and {@link Consumer}, and
+ * member types of the class are concrete property panes.
+ *
+ * Example:
+ *  <pre>
+ *      public class StrObj {
+ *          private String str;
+ *          public void setStr(String s) { str = s; }
+ *          public String getStr() { return str; }
+ *      }
+ *
+ *      StrObj s = new StrObj();
+ *      LambdaStringPane strPane = new LambdaStringPane(s::getStr, s::setStr);
+ *                     //a pane creating holding a LambdaProperty with Supplier and Consumer
+ *
+ *      strPane.setText("update1"); //this will cause s.setStr("update")
+ *
+ *      s.setStr("update2");
+ *      strPane.updateSwingViewSource(); //update the pane with s.getStr()
+ *  </pre>
+ *
+ * @param <T> the value type
+ */
 public class LambdaProperty<T> extends GuiTypeMemberProperty {
     protected Supplier<T> getter;
     protected Consumer<T> setter;
@@ -65,14 +90,18 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
 
     @SuppressWarnings("rawtypes")
     public static <T> GuiMappingContext createList(Class<? extends java.util.List> listType, Class<?> elementType, Supplier<T> getter, Consumer<T> setter, GuiRepresentation repr) {
-        GuiMappingContext context = new GuiMappingContext(new LambdaProperty<>(listType, elementType, getter, setter), repr);
+        GuiMappingContext context = new GuiMappingContext(new LambdaProperty<>(listType, elementType, getter, setter), new GuiReprPropertyPane(repr));
 
-        GuiMappingContext subContext = context.createChildCandidate(context.getTypeElement().getChildren().get(0));
+        GuiMappingContext listContext = context.createChildCandidate(context.getTypeElementAsProperty().getType());
+        listContext.setRepresentation(repr);
+        listContext.addToParent();
+
+        GuiMappingContext subContext = listContext.createChildCandidate(listContext.getTypeElement().getChildren().get(0));
         subContext.setRepresentation(new GuiReprCollectionElement(null));
         subContext.addToParent();
 
         context.updateSourceSubTree();
-        return context;
+        return listContext;
     }
 
     public static SpecifierManagerNone NONE = new SpecifierManagerNone();
@@ -91,10 +120,13 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
 
     ////////////
 
-    public static class LambdaTextPane extends GuiSwingViewStringField.PropertyStringPane {
+    /**
+     * @since 1.1
+     */
+    public static class LambdaStringPane extends GuiSwingViewStringField.PropertyStringPane {
         private static final long serialVersionUID = 1L;
 
-        public LambdaTextPane(Supplier<String> getter, Consumer<String> setter) {
+        public LambdaStringPane(Supplier<String> getter, Consumer<String> setter) {
             super(create(String.class, getter, setter, new GuiReprValueStringField()), NONE);
             setPreferredSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(100), getPreferredSize().height ));
         }
@@ -317,7 +349,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         public <E> LambdaCollectionTable addAction(String name, Consumer<List<E>> action) {
             GuiMappingContext context = getSwingViewContext().createChildCandidate(new GuiTypeMemberActionList(name,
                     new GuiTypeValue(void.class),
-                    ((GuiTypeCollection) getSwingViewContext().getTypeElementAsProperty().getType()).getElementType(), (String) null, false));
+                    getSwingViewContext().getTypeElementCollection().getElementType(), (String) null, false));
             context.setRepresentation(new GuiReprActionList());
             context.addToParent();
 
