@@ -117,6 +117,8 @@ public class GuiSwingLogManager extends GuiLogManager {
      * </ul>
      * @return this
      * @since 1.1
+     *
+     * @see #setupConsole(boolean, boolean, boolean, boolean, boolean)
      */
     public GuiLogManager setupConsoleWithDefaultFlags() {
         boolean replaceErr = getPropertyFlag("autogui.log.replaceErr");

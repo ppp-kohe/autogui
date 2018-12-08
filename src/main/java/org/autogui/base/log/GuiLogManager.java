@@ -116,85 +116,104 @@ public class GuiLogManager {
      *   System.err will be completely replaced with the manager,
      *      because the manager usually outputs an entry to the original System.err.
      *   System.out will be replaced with a manager stream with original System.out.
-     *   those replaced streams are instances of {@link LogPrintStream}
+     *   those replaced streams are instances of {@link LogPrintStream}.
+     * <p>
+     *   synchronized with System.class
      *   @param replaceError if true, it will replace with a new {@link LogPrintStream}.
      *   @param replaceOutput  if true, it will replace with a new {@link LogPrintStream}.
      *   */
     public void replaceConsole(boolean replaceError, boolean replaceOutput) {
-        if (replaceError) {
-            PrintStream exErr = System.err;
-            if (exErr instanceof LogPrintStream) {
-                System.setErr(new LogPrintStream(this, exErr, exErr, LogStreamType.Stderr));
-            } else {
-                //err -> logString -> original err
-                System.setErr(new LogPrintStream(this, exErr, null, LogStreamType.Stderr));
+        synchronized (System.class) {
+            if (replaceError) {
+                PrintStream exErr = System.err;
+                if (exErr instanceof LogPrintStream) {
+                    System.setErr(new LogPrintStream(this, exErr, exErr, LogStreamType.Stderr));
+                } else {
+                    //err -> logString -> original err
+                    System.setErr(new LogPrintStream(this, exErr, null, LogStreamType.Stderr));
+                }
             }
-        }
-        if (replaceOutput) {
-            PrintStream exOut = System.out;
-            //out -> {original out, logString -> original err }
-            System.setOut(new LogPrintStream(this, exOut, exOut, LogStreamType.Stdout));
+            if (replaceOutput) {
+                PrintStream exOut = System.out;
+                //out -> {original out, logString -> original err }
+                System.setOut(new LogPrintStream(this, exOut, exOut, LogStreamType.Stdout));
+            }
         }
     }
 
     /**
+     * synchronized with System.class
      * @since 1.1
      */
     public void resetErr() {
-        PrintStream exOut = System.err;
-        while (exOut instanceof LogPrintStream) {
-            LogPrintStream lp = (LogPrintStream) exOut;
-            if (lp.getOutType().equals(LogStreamType.Stderr) && lp.getManager().equals(this)) {
-                exOut = lp.getOriginal();
-            } else {
-                break;
+        synchronized (System.class) {
+            PrintStream exOut = System.err;
+            while (exOut instanceof LogPrintStream) {
+                LogPrintStream lp = (LogPrintStream) exOut;
+                if (lp.getOutType().equals(LogStreamType.Stderr) && lp.getManager().equals(this)) {
+                    exOut = lp.getOriginal();
+                } else {
+                    break;
+                }
             }
+            System.setErr(exOut);
         }
-        System.setErr(exOut);
     }
 
     /**
+     * synchronized with System.class
      * @since 1.1
      */
     public void resetOut() {
-        PrintStream exOut = System.out;
-        while (exOut instanceof LogPrintStream) {
-            LogPrintStream lp = (LogPrintStream) exOut;
-            if (lp.getOutType().equals(LogStreamType.Stdout) && lp.getManager().equals(this)) {
-                exOut = lp.getOriginal();
-            } else {
-                break;
+        synchronized (System.class) {
+            PrintStream exOut = System.out;
+            while (exOut instanceof LogPrintStream) {
+                LogPrintStream lp = (LogPrintStream) exOut;
+                if (lp.getOutType().equals(LogStreamType.Stdout) && lp.getManager().equals(this)) {
+                    exOut = lp.getOriginal();
+                } else {
+                    break;
+                }
             }
+            System.setOut(exOut);
         }
-        System.setOut(exOut);
     }
 
     /** replace the default uncaught handler with {@link LogUncaughtHandler}
      * by calling {@link Thread#setDefaultUncaughtExceptionHandler(Thread.UncaughtExceptionHandler)}.
      *
      * this makes the uncaught exception will be sent to the manager.
+     * <p>
+     * synchronized with System.class
      * */
     public void replaceUncaughtHandler() {
-        Thread.UncaughtExceptionHandler h = Thread.getDefaultUncaughtExceptionHandler();
-        if (h instanceof LogUncaughtHandler) {
-            Thread.setDefaultUncaughtExceptionHandler(new LogUncaughtHandler(this, h));
-        } else {
-            Thread.setDefaultUncaughtExceptionHandler(new LogUncaughtHandler(this, null));
+        synchronized (System.class) {
+            Thread.UncaughtExceptionHandler h = Thread.getDefaultUncaughtExceptionHandler();
+            if (h instanceof LogUncaughtHandler) {
+                Thread.setDefaultUncaughtExceptionHandler(new LogUncaughtHandler(this, h));
+            } else {
+                Thread.setDefaultUncaughtExceptionHandler(new LogUncaughtHandler(this, null));
+            }
         }
     }
 
     /**
+     * synchronized with System.class
      * @since 1.1
      */
     public void resetUncaughtHandler() {
-        Thread.UncaughtExceptionHandler h = Thread.getDefaultUncaughtExceptionHandler();
-        while (h instanceof LogUncaughtHandler) {
-            LogUncaughtHandler lh = (LogUncaughtHandler) h;
-            if (lh.getManager().equals(this)) {
-                h = lh.getHandler();
+        synchronized (System.class) {
+            Thread.UncaughtExceptionHandler h = Thread.getDefaultUncaughtExceptionHandler();
+            while (h instanceof LogUncaughtHandler) {
+                LogUncaughtHandler lh = (LogUncaughtHandler) h;
+                if (lh.getManager().equals(this)) {
+                    h = lh.getHandler();
+                } else {
+                    break;
+                }
             }
+            Thread.setDefaultUncaughtExceptionHandler(h);
         }
-        Thread.setDefaultUncaughtExceptionHandler(h);
     }
 
     /** @return  obtains the original {@link System#err} from wrapped System.err

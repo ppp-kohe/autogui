@@ -2,6 +2,7 @@ package org.autogui.test.swing.log;
 
 import org.autogui.base.log.GuiLogEntry;
 import org.autogui.base.log.GuiLogEntryProgress;
+import org.autogui.base.log.GuiLogEntryString;
 import org.autogui.swing.log.GuiSwingLogEntryException;
 import org.autogui.swing.log.GuiSwingLogEntryString;
 import org.autogui.swing.log.GuiSwingLogManager;
@@ -18,30 +19,58 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.text.AttributedString;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class GuiSwingLogManagerTest extends GuiSwingTestCase {
+    /*
     public static void main(String[] args) {
         GuiSwingLogManagerTest t = new GuiSwingLogManagerTest();
         t.setUp();
         t.testLogProgress();
-    }
+    }*/
 
     GuiSwingLogManager manager;
 
     GuiSwingLogManager.GuiSwingLogWindow window;
+
+    TestPrint out;
+    TestPrint err;
+    TestOut outOut;
+    TestOut errOut;
 
     @Before
     public void setUp() {
         manager = new GuiSwingLogManager();
 
         window = runGet(manager::createWindow);
+
+        synchronized (GuiSwingLogManagerTest.class) {
+            outOut = new TestOut(System.out);
+            out = new TestPrint(outOut);
+            System.setOut(out);
+
+            errOut = new TestOut(System.err);
+            err = new TestPrint(errOut);
+            System.setErr(err);
+        }
     }
+
+
 
     @After
     public void tearDown() {
@@ -55,6 +84,86 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
         }
         if (progress2Thread != null && progress2Thread.isAlive()) {
             progress2Thread.interrupt();
+        }
+
+        synchronized (GuiSwingLogManagerTest.class) {
+            removeSaved(System.out, out, System::setOut);
+            removeSaved(System.err, err, System::setErr);
+        }
+    }
+
+    private void removeSaved(PrintStream top, TestPrint saved, Consumer<PrintStream> setter) {
+        TestOut parent = null;
+        PrintStream next = top;
+        while (next != null && next != saved) {
+            if (next instanceof TestPrint) {
+                OutputStream out = ((TestPrint) next).getOut();
+                if (out instanceof TestOut) {
+                    parent = (TestOut) out;
+                    next = parent.out;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        if (parent != null && next == saved) {
+            parent.out = ((TestOut) out.getOut()).out;
+        } else if (parent == null && next == saved) {
+            setter.accept(((TestOut) out.getOut()).out);
+        }
+    }
+
+    public static class TestPrint extends PrintStream {
+        TestPrint(OutputStream out) {
+            super(out);
+        }
+
+        public OutputStream getOut() {
+            return out;
+        }
+    }
+
+    public static class TestOut extends OutputStream {
+        ByteBuffer buffer;
+        public List<String> lines;
+        public PrintStream out;
+
+        public TestOut(PrintStream out) {
+            this.out = out;
+            lines = new ArrayList<>();
+            buffer = ByteBuffer.allocate(1000_000);
+        }
+
+        @Override
+        public void write(int b) {
+            buffer.put((byte) b);
+            if (out != null) {
+                out.write(b);
+            }
+        }
+
+        @Override
+        public void flush() throws IOException {
+            buffer.flip();
+            String data = StandardCharsets.UTF_8.decode(buffer).toString();
+            lines.addAll(Arrays.asList(data.trim().split("\\n")));
+            buffer.clear();
+            if (out != null) {
+                out.flush();
+            }
+        }
+
+        public List<String> getLines() {
+            if (buffer.position() != 0) {
+                try {
+                    flush();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+            return lines;
         }
     }
 
@@ -290,4 +399,202 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
             return new Point((int) clickX, (int) clickY);
         });
     }
+
+    Pattern logPat = Pattern.compile("\\[(.*?)] (.*)");
+
+    private String logData(String msg) {
+        Matcher m = logPat.matcher(msg);
+        if (m.find()) {
+            return m.group(2);
+        } else {
+            throw new RuntimeException("error: not a log message: " + msg);
+        }
+    }
+
+    String flagReplaceOut = "autogui.log.replaceOut";
+    String flagReplaceErr = "autogui.log.replaceErr";
+    String flagReplaceExceptionHandler = "autogui.log.replaceExceptionHandler";
+    String flagRedirectToConsole = "autogui.log.redirectToConsole";
+    String flagSuppressOutputRedirection = "autogui.log.suppressOutputRedirection";
+
+    @Test
+    public void testSetupConsole() {
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        run(() -> {
+                window.setSize(new Dimension(ui.getScaledSizeInt(800), ui.getScaledSizeInt(300)));
+                window.setVisible(true);
+
+                System.setProperty(flagReplaceOut, "true");
+                System.setProperty(flagReplaceErr, "true");
+                System.setProperty(flagReplaceExceptionHandler, "true");
+                System.setProperty(flagRedirectToConsole, "true");
+                System.setProperty(flagSuppressOutputRedirection, "true");
+                manager.setupConsoleWithDefaultFlags();
+
+
+                System.out.println("message1");
+                System.err.println("message2");
+                manager.logString("message3");
+            });
+
+        List<GuiLogEntry> es = runGet(() -> window.getList().getLogListModel().getEntries());
+        Assert.assertEquals(3, es.size());
+        GuiLogEntryString m1 = (GuiLogEntryString) es.get(0);
+        GuiLogEntryString m2 = (GuiLogEntryString) es.get(1);
+        GuiLogEntryString m3 = (GuiLogEntryString) es.get(2);
+
+        Assert.assertEquals("message1", m1.getData());
+        Assert.assertEquals("message2", m2.getData());
+        Assert.assertEquals("message3", m3.getData());
+
+        Assert.assertEquals(1, outOut.getLines().size());
+        Assert.assertEquals(2, errOut.getLines().size());
+
+        Assert.assertEquals("message1", outOut.getLines().get(0));
+        Assert.assertEquals("message2", logData(errOut.getLines().get(0)));
+        Assert.assertEquals("message3", logData(errOut.getLines().get(1)));
+    }
+
+    @Test
+    public void testSetupConsoleNoReplace() {
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        run(() -> {
+            window.setSize(new Dimension(ui.getScaledSizeInt(800), ui.getScaledSizeInt(300)));
+            window.setVisible(true);
+
+            System.setProperty(flagReplaceOut, "false");
+            System.setProperty(flagReplaceErr, "false");
+            System.setProperty(flagReplaceExceptionHandler, "true");
+            System.setProperty(flagRedirectToConsole, "true");
+            System.setProperty(flagSuppressOutputRedirection, "true");
+            manager.setupConsoleWithDefaultFlags();
+
+
+            System.out.println("message1");
+            System.err.println("message2");
+            manager.logString("message3");
+        });
+
+        List<GuiLogEntry> es = runGet(() -> window.getList().getLogListModel().getEntries());
+        Assert.assertEquals(1, es.size());
+        GuiLogEntryString m1 = (GuiLogEntryString) es.get(0);
+
+        Assert.assertEquals("message3", m1.getData());
+
+        Assert.assertEquals(1, outOut.getLines().size());
+        Assert.assertEquals(2, errOut.getLines().size());
+        Assert.assertEquals("message1", outOut.getLines().get(0));
+        Assert.assertEquals("message2", errOut.getLines().get(0));
+        Assert.assertEquals("message3", logData(errOut.getLines().get(1)));
+    }
+
+    @Test
+    public void testSetupConsoleNoRedirect() {
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        run(() -> {
+            window.setSize(new Dimension(ui.getScaledSizeInt(800), ui.getScaledSizeInt(300)));
+            window.setVisible(true);
+
+            System.setProperty(flagReplaceOut, "true");
+            System.setProperty(flagReplaceErr, "true");
+            System.setProperty(flagReplaceExceptionHandler, "true");
+            System.setProperty(flagRedirectToConsole, "false");
+            System.setProperty(flagSuppressOutputRedirection, "true");
+            manager.setupConsoleWithDefaultFlags();
+
+
+            System.out.println("message1");
+            System.err.println("message2");
+            manager.logString("message3");
+        });
+
+        List<GuiLogEntry> es = runGet(() -> window.getList().getLogListModel().getEntries());
+        Assert.assertEquals(3, es.size());
+        GuiLogEntryString m1 = (GuiLogEntryString) es.get(0);
+        GuiLogEntryString m2 = (GuiLogEntryString) es.get(1);
+        GuiLogEntryString m3 = (GuiLogEntryString) es.get(2);
+
+        Assert.assertEquals("message1", m1.getData());
+        Assert.assertEquals("message2", m2.getData());
+        Assert.assertEquals("message3", m3.getData());
+
+        Assert.assertEquals(1, outOut.getLines().size());
+        Assert.assertEquals(0, errOut.getLines().size());
+
+        Assert.assertEquals("message1", outOut.getLines().get(0));
+
+    }
+
+    @Test
+    public void testSetupConsoleNoReplaceNoRedirect() {
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        run(() -> {
+            window.setSize(new Dimension(ui.getScaledSizeInt(800), ui.getScaledSizeInt(300)));
+            window.setVisible(true);
+
+            System.setProperty(flagReplaceOut, "false");
+            System.setProperty(flagReplaceErr, "false");
+            System.setProperty(flagReplaceExceptionHandler, "true");
+            System.setProperty(flagRedirectToConsole, "false");
+            System.setProperty(flagSuppressOutputRedirection, "true");
+            manager.setupConsoleWithDefaultFlags();
+
+
+            System.out.println("message1");
+            System.err.println("message2");
+            manager.logString("message3");
+        });
+
+        List<GuiLogEntry> es = runGet(() -> window.getList().getLogListModel().getEntries());
+        Assert.assertEquals(1, es.size());
+        GuiLogEntryString m1 = (GuiLogEntryString) es.get(0);
+
+        Assert.assertEquals("message3", m1.getData());
+
+        Assert.assertEquals(1, outOut.getLines().size());
+        Assert.assertEquals(1, errOut.getLines().size());
+
+        Assert.assertEquals("message1", outOut.getLines().get(0));
+        Assert.assertEquals("message2", errOut.getLines().get(0));
+    }
+
+    @Test
+    public void testSetupConsoleOutputRedirection() {
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        run(() -> {
+            window.setSize(new Dimension(ui.getScaledSizeInt(800), ui.getScaledSizeInt(300)));
+            window.setVisible(true);
+
+            System.setProperty(flagReplaceOut, "true");
+            System.setProperty(flagReplaceErr, "true");
+            System.setProperty(flagReplaceExceptionHandler, "true");
+            System.setProperty(flagRedirectToConsole, "true");
+            System.setProperty(flagSuppressOutputRedirection, "false");
+            manager.setupConsoleWithDefaultFlags();
+
+
+            System.out.println("message1");
+            System.err.println("message2");
+            manager.logString("message3");
+        });
+
+        List<GuiLogEntry> es = runGet(() -> window.getList().getLogListModel().getEntries());
+        Assert.assertEquals(3, es.size());
+        GuiLogEntryString m1 = (GuiLogEntryString) es.get(0);
+        GuiLogEntryString m2 = (GuiLogEntryString) es.get(1);
+        GuiLogEntryString m3 = (GuiLogEntryString) es.get(2);
+
+        Assert.assertEquals("message1", m1.getData());
+        Assert.assertEquals("message2", m2.getData());
+        Assert.assertEquals("message3", m3.getData());
+
+        Assert.assertEquals(1, outOut.getLines().size());
+        Assert.assertEquals(3, errOut.getLines().size());
+
+        Assert.assertEquals("message1", outOut.getLines().get(0));
+        Assert.assertEquals("message1", logData(errOut.getLines().get(0)));
+        Assert.assertEquals("message2", logData(errOut.getLines().get(1)));
+        Assert.assertEquals("message3", logData(errOut.getLines().get(2)));
+    }
+
 }

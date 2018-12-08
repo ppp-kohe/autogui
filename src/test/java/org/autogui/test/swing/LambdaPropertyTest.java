@@ -550,6 +550,52 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         Assert.assertEquals(getPropList(), runGet(pane::getSwingViewValue));
         runWait();
 
+        Path p1 = Paths.get(System.getProperty("user.home") + File.separator + "update1");
+        Path p2 = Paths.get(System.getProperty("user.home") + File.separator + "update2");
+        Image i2 = createImage2();
+        Image i3 = createImage3();
+        getPropList().get(0).setStr("update1");
+        getPropList().get(1).setBool(false);
+        getPropList().get(2).setNum(100);
+        getPropList().get(3).setPath(p1);
+        getPropList().get(4).setSelect(TestEnum.Update1);
+        getPropList().get(5).setLabel("updateLabel1");
+        getPropList().get(6).setImg(i2);
 
+        pane.updateSwingViewSourceFromRoot();
+
+        runWait();
+        Assert.assertEquals("update1", runGet(() -> pane.getValueAt(0, 1)));
+        Assert.assertEquals(Boolean.FALSE, runGet(() -> pane.getValueAt(1, 2)));
+        Assert.assertEquals(100, runGet(() -> pane.getValueAt(2, 3)));
+        Assert.assertEquals(p1, runGet(() -> pane.getValueAt(3, 4)));
+        Assert.assertEquals(TestEnum.Update1, runGet(() -> pane.getValueAt(4, 5)));
+        Assert.assertEquals("updateLabel1", runGet(() -> pane.getValueAt(5, 6)));
+        Assert.assertEquals(i2, runGet(() -> pane.getValueAt(6, 7)));
+
+        Assert.assertEquals("s" + 3, runGet(() -> pane.getValueAt(3, 1)));
+        Assert.assertEquals(Boolean.TRUE, runGet(() -> pane.getValueAt(4, 2)));
+        Assert.assertEquals(5, runGet(() -> pane.getValueAt(5, 3)));
+
+        run(() -> pane.setValueAt("update2", 0, 1));
+        run(() -> pane.setValueAt(true, 1, 2));
+        run(() -> pane.setValueAt(200, 2, 3));
+        run(() -> pane.setValueAt(p2, 3, 4));
+        run(() -> pane.setValueAt(TestEnum.Update2, 4, 5));
+        //run(() -> pane.setValueAt("updateLabel2", 5, 6)); //label is immutable
+        run(() -> pane.setValueAt(i3, 6, 7));
+        runWait();
+
+        Assert.assertEquals("update2", runGet(() -> getPropList().get(0).getStr()));
+        Assert.assertEquals(Boolean.TRUE, runGet(() -> getPropList().get(1).isBool()));
+        Assert.assertEquals(200, (int) runGet(() -> getPropList().get(2).getNum()));
+        Assert.assertEquals(p2, runGet(() -> getPropList().get(3).getPath()));
+        Assert.assertEquals(TestEnum.Update2, runGet(() -> getPropList().get(4).getSelect()));
+        //Assert.assertEquals("updateLabel2", runGet(() -> getPropList().get(5).getLabel()));
+        Assert.assertEquals(i3, runGet(() -> getPropList().get(6).getImg()));
+
+        Assert.assertEquals("s" + 3, runGet(() -> getPropList().get(3).getStr()));
+        Assert.assertEquals(Boolean.TRUE, runGet(() -> getPropList().get(4).isBool()));
+        Assert.assertEquals(5, (int) runGet(() -> getPropList().get(5).getNum()));
     }
 }

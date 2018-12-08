@@ -613,6 +613,15 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         return GuiSwingView.findNonNullByFunction(getViewComponent(), p -> p.getActionByContext(context));
     }
 
+    /**
+     * notify changes of source values to sub-components the pane and update display,
+     *   by {@link GuiMappingContext#updateSourceFromRoot()} .
+     * @since 1.1
+     */
+    public void updateSwingViewSourceFromRoot() {
+        getContext().updateSourceFromRoot();
+    }
+
 
     public static class ShowPreferencesAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         private static final long serialVersionUID = 1L;

@@ -711,6 +711,26 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public int convertColumnIndexToView(int modelColumnIndex) {
             return getObjectTableModel().getColumns().convertColumnModelToView(modelColumnIndex);
         }
+
+        /**
+         * update by context and refresh by {@link ObjectTableModel#refreshData()}
+         * @since 1.1
+         */
+        @Override
+        public void updateSwingViewSource() {
+            ValuePane.super.updateSwingViewSource();
+            SwingUtilities.invokeLater(getObjectTableModel()::refreshData);
+        }
+
+        /**
+         * update by context and refresh by {@link ObjectTableModel#refreshData()}
+         * @since 1.1
+         */
+        @Override
+        public void updateSwingViewSourceFromRoot() {
+            ValuePane.super.updateSwingViewSourceFromRoot();
+            SwingUtilities.invokeLater(getObjectTableModel()::refreshData);
+        }
     }
 
     /**

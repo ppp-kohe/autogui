@@ -65,7 +65,7 @@ public class ObjectEmbeddedDemo {
             JButton clearButton = new JButton("Clear");
             clearButton.addActionListener(e -> {
                 hello.file = null;
-                helloPane.getContext().updateSourceFromRoot();
+                helloPane.updateSwingViewSourceFromRoot();
                  //notifies change of the property to GUI components
             });
             pane.add(clearButton, BorderLayout.SOUTH);
