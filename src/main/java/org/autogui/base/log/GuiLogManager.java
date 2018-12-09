@@ -433,6 +433,7 @@ public class GuiLogManager {
 
         /**
          * @param manager the manager
+         * @param original the original wrapped stream (typically System.err or System.out)
          * @param out the wrapped out
          * @param outType the type of out
          * @since 1.1

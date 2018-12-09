@@ -6,6 +6,8 @@ import org.autogui.swing.GuiSwingView;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.Objects;
@@ -71,6 +73,14 @@ public class ObjectEmbeddedDemo {
             pane.add(clearButton, BorderLayout.SOUTH);
 
             frame.add(pane);
+
+            frame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    helloPane.cleanUp();
+                    frame.dispose();
+                }
+            });
         }
         frame.pack();
         frame.setVisible(true);

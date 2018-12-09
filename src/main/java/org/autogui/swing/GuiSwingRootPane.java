@@ -77,6 +77,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     /**
+     * create and return a creator of root-pane
      * <pre>
      *     GuiSwingRootPane.creator()
      *       .withTypeBuilderRelaxed()
@@ -481,6 +482,10 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         this.applicationRoot = applicationRoot;
     }
 
+    /**
+     * cleaning up the pane and related components.
+     * the owner window should call the method before closing (disposing) the window.
+     */
     @SuppressWarnings("rawtypes")
     public void cleanUp() {
         context.shutdown();
