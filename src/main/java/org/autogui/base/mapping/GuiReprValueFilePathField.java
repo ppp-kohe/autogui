@@ -39,8 +39,10 @@ public class GuiReprValueFilePathField extends GuiReprValue {
     public Path toUpdateValue(GuiMappingContext context, Object value) {
         if (value instanceof File) {
             return ((File) value).toPath();
-        } else {
+        } else if (value instanceof Path) {
             return (Path) value;
+        } else {
+            return null;
         }
     }
 
@@ -53,7 +55,12 @@ public class GuiReprValueFilePathField extends GuiReprValue {
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
         if (source != null) {
-            return toUpdateValue(context, source).toString();
+            Path p = toUpdateValue(context, source);
+            if (p != null) {
+                return p.toString();
+            } else {
+                return null;
+            }
         } else {
             return null;
         }

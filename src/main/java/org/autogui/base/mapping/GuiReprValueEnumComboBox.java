@@ -1,6 +1,7 @@
 package org.autogui.base.mapping;
 
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -33,7 +34,7 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
-        if (source != null) {
+        if (source instanceof Enum<?>) {
             return ((Enum<?>) source).name();
         } else {
             return null;
@@ -105,7 +106,11 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
         Object[] es = getEnumConstants(context);
         if (numPattern.matcher(nameOrIndex).matches()) {
             int ord = Integer.parseInt(nameOrIndex);
-            return (ord >= 0 && ord < es.length) ? es[ord] : null;
+            return Arrays.stream(es)
+                    .map(Enum.class::cast)
+                    .filter(e -> e.ordinal() == ord)
+                    .findFirst()
+                    .orElse(null);
         } else {
             List<String> names = Arrays.stream(es)
                     .map(Enum.class::cast)

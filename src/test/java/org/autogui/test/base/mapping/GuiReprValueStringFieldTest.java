@@ -9,6 +9,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.HashMap;
+
 public class GuiReprValueStringFieldTest {
 
     GuiReprValueStringField fld;
@@ -254,4 +256,112 @@ public class GuiReprValueStringFieldTest {
         Assert.assertFalse("isEditable returns false for read-only prop",
                 fld.isEditable(contextReadOnly));
     }
+
+    //////////
+
+    @Test
+    public void testValueToJson() {
+        Assert.assertEquals("toJson returns same value as arg",
+                value,
+                fld.toJson(contextValue, value));
+    }
+
+    @Test
+    public void testValueToJsonIllegal() {
+        Assert.assertNull("toJson returns null for illegal arg",
+                fld.toJson(contextValue, 123));
+    }
+
+    @Test
+    public void testValueToJsonWithNamed() {
+        HashMap<String,Object> map = new HashMap<>();
+        map.put("hello", value);
+        Assert.assertEquals("toJsonWithNamed returns value of NamedValue arg",
+                map,
+                fld.toJsonWithNamed(contextValue,
+                        new GuiReprValue.NamedValue("hello", value)));
+    }
+
+    @Test
+    public void testValueToJsonWithNamedNonNamedValue() {
+        Assert.assertEquals("toJsonWithNamed returns same value as non NamedValue arg",
+                value,
+                fld.toJsonWithNamed(contextValue, value));
+    }
+
+    @Test
+    public void testValueFromJson() {
+        Assert.assertFalse("isJsonSetter is false for String",
+                fld.isJsonSetter());
+        Assert.assertEquals("fromJson returns same value as arg",
+                value,
+                fld.fromJson(contextValue, null, value));
+    }
+
+    @Test
+    public void testValueFromJsonIllegal() {
+        Assert.assertNull("fromJson returns null for illegal arg",
+                fld.fromJson(contextValue, null, 123));
+    }
+
+    @Test
+    public void testValueFromJsonWithNamed() {
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("value", value);
+        Assert.assertEquals("fromJson returns NamedValue for NamedValue target and Map value",
+                new GuiReprValue.NamedValue("value", value),
+                fld.fromJsonWithNamed(contextProp,
+                    new GuiReprValue.NamedValue("value", "?"),
+                    map));
+    }
+
+    @Test
+    public void testValueFromJsonWithNamedNonNamedValue() {
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("value", value);
+        Assert.assertEquals("fromJson returns non NamedValue for non NamedValue target and Map value",
+                value,
+                fld.fromJsonWithNamed(contextProp,
+                        "hello",
+                        map));
+    }
+
+
+    @Test
+    public void testValueFromJsonWithNamedNonMapTarget() {
+        Assert.assertNull("fromJson returns null for non Map value",
+                fld.fromJsonWithNamed(contextProp,
+                        "hello",
+                        "hello"));
+    }
+
+
+    @Test
+    public void testValueToHumanReadableString() {
+        Assert.assertEquals("toHumanReadableString returns same value as arg",
+                value,
+                fld.toHumanReadableString(contextValue, value));
+    }
+
+    @Test
+    public void testValueToHumanReadableStringNull() {
+        Assert.assertEquals("toHumanReadableString returns null for null",
+                "null",
+                fld.toHumanReadableString(contextValue, null));
+    }
+
+    @Test
+    public void testValueFromHumanReadableString() {
+        Assert.assertEquals("fromHumanReadableString returns same value as args",
+                value,
+                fld.fromHumanReadableString(contextValue, value));
+    }
+
+    @Test
+    public void testValueFromHumanReadableStringNull() {
+        Assert.assertNull("fromHumanReadableString returns null for null",
+                fld.fromHumanReadableString(contextValue, null));
+    }
+
+
 }

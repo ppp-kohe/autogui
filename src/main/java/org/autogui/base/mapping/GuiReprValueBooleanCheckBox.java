@@ -79,10 +79,12 @@ public class GuiReprValueBooleanCheckBox extends GuiReprValue {
             return null;
         } else {
             data = data.toLowerCase();
-            if (data.equals("false") || data.equals("0")) {
+            if (data.equals("false")) {
                 return false;
-            } else if (data.equals("true") || numPattern.matcher(data).matches()) {
+            } else if (data.equals("true")) {
                 return true;
+            } else if  (numPattern.matcher(data).matches()) {
+                return Integer.parseInt(data) != 0;
             } else {
                 return null;
             }
