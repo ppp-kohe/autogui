@@ -143,6 +143,9 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         if (fmt == null) {
             fmt = type.getFormat();
         }
+        if (str.equals("null")) {
+            return null;
+        }
         try {
             return type.parse(fmt, str);
         } catch (Exception ex) {
@@ -269,6 +272,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
     }
 
     /**
+     * obtains a common type for given 2 number types
      * <table>
      *     <caption>domains and range</caption>
      * <tr><th>l,r</th>	<th>byte</th>	<th>short</th>	<th>int</th>	<th>long</th>	<th>float</th>	<th>double</th>	<th>bigInteger</th>	<th>bigDecimal</th></tr>
@@ -401,8 +405,17 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         public int compareTo(Object o) {
             if (o.equals(this)) {
                 return 0;
+            } else if (o instanceof Infinity) {
+                if (upper == ((Infinity) o).upper) {
+                    return 0;
+                } else if (upper) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            } else {
+                return upper ? 1 : -1;
             }
-            return upper ? 1 : 0;
         }
 
         @Override
@@ -520,6 +533,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             df.setMaximumFractionDigits(0);
             return df;
         }
+
+        @Override
+        public Object parse(NumberFormat format, String source) {
+            Object v = super.parse(format, source);
+            if (v instanceof Number) {
+                return toInt(v);
+            } else {
+                return v;
+            }
+        }
     }
 
     /** the number type for byte */
@@ -558,6 +581,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             df.setParseIntegerOnly(true);
             df.setMaximumFractionDigits(0);
             return df;
+        }
+
+        @Override
+        public Object parse(NumberFormat format, String source) {
+            Object v = super.parse(format, source);
+            if (v instanceof Number) {
+                return toByte(v);
+            } else {
+                return v;
+            }
         }
     }
 
@@ -599,6 +632,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             df.setMaximumFractionDigits(0);
             return df;
         }
+
+        @Override
+        public Object parse(NumberFormat format, String source) {
+            Object v = super.parse(format, source);
+            if (v instanceof Number) {
+                return toShort(v);
+            } else {
+                return v;
+            }
+        }
     }
 
     /** the number type for long */
@@ -637,6 +680,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             df.setParseIntegerOnly(true);
             df.setMaximumFractionDigits(0);
             return df;
+        }
+
+        @Override
+        public Object parse(NumberFormat format, String src) {
+            Object v = super.parse(format, src);
+            if (v instanceof Number) {
+                return toLong(v);
+            } else {
+                return v;
+            }
         }
     }
 
@@ -681,6 +734,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             df.setMaximumFractionDigits(6);
             return df;
         }
+
+        @Override
+        public Object parse(NumberFormat format, String source) {
+            Object v = super.parse(format, source);
+            if (v instanceof Number) {
+                return toFloat(v);
+            } else {
+                return v;
+            }
+        }
     }
 
     /** the number type for double */
@@ -724,6 +787,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             //df.setMaximumFractionDigits(Short.MAX_VALUE);
             df.setMaximumFractionDigits(8);
             return df;
+        }
+
+        @Override
+        public Object parse(NumberFormat format, String source) {
+            Object v = super.parse(format, source);
+            if (v instanceof Number) {
+                return toDouble(v);
+            } else {
+                return v;
+            }
         }
     }
 
@@ -773,6 +846,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             df.setParseBigDecimal(true);
             return df;
         }
+
+        @Override
+        public Object parse(NumberFormat format, String source) {
+            Object v = super.parse(format, source);
+            if (v instanceof Number) {
+                return toBigInteger(v);
+            } else {
+                return v;
+            }
+        }
     }
 
     /** the number type for {@link BigDecimal} */
@@ -821,6 +904,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             df.setMaximumFractionDigits(16);
             df.setParseBigDecimal(true);
             return df;
+        }
+
+        @Override
+        public Object parse(NumberFormat format, String source) {
+            Object v = super.parse(format, source);
+            if (v instanceof Number) {
+                return toBigDecimal(v);
+            } else {
+                return v;
+            }
         }
     }
 
