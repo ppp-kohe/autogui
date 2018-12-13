@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -240,19 +241,40 @@ public class JsonReader {
                 buf.append(eatNext());
             }
         }
+        String numStr = buf.toString();
         if (!floating && !exp) {
             if (width > 18) {
-                return new BigInteger(buf.toString());
+                return new BigInteger(numStr);
             } else if (width > 9) {
-                return Long.parseLong(buf.toString());
+                try {
+                    return Long.parseLong(numStr);
+                } catch (NumberFormatException nfe) {
+                    return new BigInteger(numStr);
+                }
             } else {
-                return Integer.parseInt(buf.toString());
+                try {
+                    return Integer.parseInt(numStr);
+                } catch (NumberFormatException nfe) {
+                    return Long.parseLong(numStr);
+                }
             }
         } else {
-            if (width > 6) {
-                return Double.parseDouble(buf.toString());
+            if (width > 15) {
+                return new BigDecimal(numStr);
+            } else if (width > 6) {
+                double d = Double.parseDouble(numStr);
+                if (Double.isFinite(d)) {
+                    return new BigDecimal(numStr);
+                } else {
+                    return d;
+                }
             } else {
-                return Float.parseFloat(buf.toString());
+                float f = Float.parseFloat(numStr);
+                if (Float.isFinite(f)) {
+                    return new BigDecimal(numStr);
+                } else {
+                    return f;
+                }
             }
         }
     }

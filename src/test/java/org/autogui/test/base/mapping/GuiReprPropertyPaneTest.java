@@ -1,14 +1,18 @@
 package org.autogui.test.base.mapping;
 
 import org.autogui.GuiIncluded;
+import org.autogui.base.mapping.*;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.base.type.GuiTypeMemberProperty;
 import org.autogui.base.type.GuiTypeObject;
 import org.autogui.base.type.GuiUpdatedValue;
-import org.autogui.base.mapping.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 public class GuiReprPropertyPaneTest {
     GuiReprPropertyPane prop;
@@ -21,6 +25,8 @@ public class GuiReprPropertyPaneTest {
     GuiMappingContext contextObj;
     GuiMappingContext contextProp;
     GuiMappingContext contextValue;
+
+    GuiMappingContext contextNum;
 
     GuiMappingContext contextReadOnly;
 
@@ -51,6 +57,8 @@ public class GuiReprPropertyPaneTest {
         contextValue = contextProp.getChildByName("String");
 
         contextReadOnly = contextObj.getChildByName("readOnly").getChildByName("String");
+
+        contextNum = contextObj.getChildByName("num");
     }
 
     @GuiIncluded
@@ -62,6 +70,9 @@ public class GuiReprPropertyPaneTest {
         public String getReadOnly() {
             return "read-only";
         }
+
+        @GuiIncluded
+        public BigInteger num;
     }
 
     @Test
@@ -108,4 +119,59 @@ public class GuiReprPropertyPaneTest {
                 contextReadOnly.getReprValue().isEditable(contextReadOnly));
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testValueToJson() {
+        Object p = contextNum.getRepresentation()
+                    .toJson(contextNum, new GuiReprValue.NamedValue("anything", new BigInteger("1234567890123")));
+        Map<String,Object> m = (Map<String,Object>) p;
+        Assert.assertEquals("toJson with NamedValue", "1234567890123", m.get(contextNum.getName()));
+
+        Object p2 = contextNum.getRepresentation()
+                .toJson(contextNum, new GuiReprValue.NamedValue("anything", new BigInteger("1234567890123")));
+        Map<String,Object> m2 = (Map<String,Object>) p2;
+        Assert.assertEquals("toJson with value", "1234567890123", m2.get(contextNum.getName()));
+
+        Map<String,Object> m3 = (Map<String,Object>) contextNum.getRepresentation().toJson(contextNum, null);
+        Assert.assertNull("toJson null returns {p:null}", m3.get("num")); //null for BigIngger is null
+    }
+
+    @Test
+    public void testValueToHumanReadableString() {
+        String s = contextNum.getRepresentation()
+                .toHumanReadableString(contextNum, new GuiReprValue.NamedValue("anything", new BigInteger("1234567890123")));
+        Assert.assertEquals("toHRS with NamedValue returns formatted value", "1,234,567,890,123", s);
+
+        String s2 = contextNum.getRepresentation()
+                .toHumanReadableString(contextNum, new BigInteger("1234567890123"));
+        Assert.assertEquals("toHRS with value", "1,234,567,890,123", s2);
+    }
+
+    @Test
+    public void testValueFromJson() {
+        Assert.assertTrue("isJsonSetter", contextNum.getRepresentation().isJsonSetter());
+        Assert.assertTrue("isFromJsonTakingMapWithContextNameEntry",
+                ((GuiReprPropertyPane) contextNum.getRepresentation()).isFromJsonTakingMapWithContextNameEntry(contextNum));
+
+        Map<String,Object> json = new HashMap<>();
+        json.put("num", "1234567890123");
+        Object val = contextNum.getRepresentation()
+                .fromJson(contextNum, new GuiReprValue.NamedValue("anything", new BigInteger("1234")), json);
+
+        Assert.assertEquals("fromJson with NamedValue target returns NamedValue(propName,v)",
+                new GuiReprValue.NamedValue("num", new BigInteger("1234567890123")), val);
+
+        Object val2 = contextNum.getRepresentation()
+                .fromJson(contextNum, new BigInteger("1234"), json);
+
+        Assert.assertEquals("fromJson with value target returns value",
+                new BigInteger("1234567890123"), val2);
+    }
+
+    @Test
+    public void testValueFromHumanReadableString() {
+        Object obj = contextNum.getRepresentation()
+                .fromHumanReadableString(contextNum, "1,234,567,890,123");
+        Assert.assertEquals("fromHRS", new BigInteger("1234567890123"), obj);
+    }
 }

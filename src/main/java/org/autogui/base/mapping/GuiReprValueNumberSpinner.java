@@ -94,12 +94,19 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
      *
      * @param context a context holds the representation
      * @param source  the converted object
-     * @return Number or String (for BigInteger and BigDecimal)
+     * @return Number or String (for BigInteger and BigDecimal). For null and primitive, 0. For null and object, null.
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
-        NumberType numType = getType(getValueType(context));
-        if (numType instanceof NumberTypeBigDecimal || numType instanceof NumberTypeBigInteger) {
+        Class<?> type = getValueType(context);
+        NumberType numType = getType(type);
+        if (source == null) {
+            if (type.isPrimitive()) {
+                return numType.getZero();
+            } else {
+                return null;
+            }
+        } else if (numType instanceof NumberTypeBigDecimal || numType instanceof NumberTypeBigInteger) {
             return numType.toString((Comparable<?>) source);
         } else {
             if (source instanceof BigInteger || source instanceof BigDecimal) {
@@ -350,6 +357,8 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
     public static float toFloat(Object n) {
         if (n instanceof Number) {
             return ((Number) n).floatValue();
+        } else if (n instanceof Infinity) {
+            return ((Infinity) n).isUpper() ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY;
         } else {
             throw new RuntimeException("illegal: " + n);
         }
@@ -358,6 +367,8 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
     public static double toDouble(Object n) {
         if (n instanceof Number) {
             return ((Number) n).doubleValue();
+        } else if (n instanceof Infinity) {
+            return ((Infinity) n).isUpper() ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
         } else {
             throw new RuntimeException("illegal: " + n);
         }
@@ -389,7 +400,10 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
-    /** a comparable infinity representation, which is not a Number type, but comparable to any other types */
+    /** a comparable infinity representation, which is not a Number type, but comparable to any other types.
+     * Note: the compareTo method of the class is not reflexive. This means the method is incorrect implementation.
+     *  The class is intended to use just for an undefined setting of upper or lower bound of a property.
+     *   */
     public static class Infinity implements Comparable<Object> {
         protected boolean upper;
 
@@ -407,6 +421,24 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
                 return 0;
             } else if (o instanceof Infinity) {
                 if (upper == ((Infinity) o).upper) {
+                    return 0;
+                } else if (upper) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            } else if (o instanceof Double && ((Double) o).isInfinite()) {
+                Double d = (Double) o;
+                if (upper == (d > 0)) {
+                    return 0;
+                } else if (upper) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            } else if (o instanceof Float && ((Float) o).isInfinite()) {
+                Float d = (Float) o;
+                if (upper == (d > 0)) {
                     return 0;
                 } else if (upper) {
                     return 1;

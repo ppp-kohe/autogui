@@ -981,6 +981,8 @@ public class GuiReprValueNumberSpinnerTest {
         Assert.assertEquals("toFloat", 1234567.45f, GuiReprValueNumberSpinner.toFloat(1234567.45), 0.001f);
         Assert.assertEquals("toFloat", 1234567f, GuiReprValueNumberSpinner.toFloat(BigInteger.valueOf(1234567)), 0.001f);
         Assert.assertEquals("toFloat", 1234567.45f, GuiReprValueNumberSpinner.toFloat(BigDecimal.valueOf(1234567.45)), 0.001f);
+        Assert.assertEquals("toFloat", Float.NEGATIVE_INFINITY, GuiReprValueNumberSpinner.toFloat(GuiReprValueNumberSpinner.MINIMUM), 0);
+        Assert.assertEquals("toFloat", Float.POSITIVE_INFINITY, GuiReprValueNumberSpinner.toFloat(GuiReprValueNumberSpinner.MAXIMUM), 0);
 
         Assert.assertEquals("toDouble", 123, GuiReprValueNumberSpinner.toDouble((byte) 123), 0.001);
         Assert.assertEquals("toDouble", 12345, GuiReprValueNumberSpinner.toDouble((short) 12345), 0.001);
@@ -990,6 +992,8 @@ public class GuiReprValueNumberSpinnerTest {
         Assert.assertEquals("toDouble", 1234567.45, GuiReprValueNumberSpinner.toDouble(1234567.45), 0.001);
         Assert.assertEquals("toDouble", 1234567, GuiReprValueNumberSpinner.toDouble(BigInteger.valueOf(1234567)), 0.001);
         Assert.assertEquals("toDouble", 1234567.45, GuiReprValueNumberSpinner.toDouble(BigDecimal.valueOf(1234567.45)), 0.001);
+        Assert.assertEquals("toDouble", Double.NEGATIVE_INFINITY, GuiReprValueNumberSpinner.toDouble(GuiReprValueNumberSpinner.MINIMUM), 0);
+        Assert.assertEquals("toDouble", Double.POSITIVE_INFINITY, GuiReprValueNumberSpinner.toDouble(GuiReprValueNumberSpinner.MAXIMUM), 0);
 
         Assert.assertEquals("toBigInteger", BigInteger.valueOf(123L), GuiReprValueNumberSpinner.toBigInteger((byte) 123));
         Assert.assertEquals("toBigInteger", BigInteger.valueOf(12345L), GuiReprValueNumberSpinner.toBigInteger((short) 12345));
@@ -1026,6 +1030,11 @@ public class GuiReprValueNumberSpinnerTest {
         Assert.assertEquals("Inifity vs -Infinity", 1, GuiReprValueNumberSpinner.MAXIMUM.compareTo(GuiReprValueNumberSpinner.MINIMUM));
         Assert.assertEquals("-Inifity vs -Infinity", 0, GuiReprValueNumberSpinner.MINIMUM.compareTo(GuiReprValueNumberSpinner.MINIMUM));
         Assert.assertEquals("-Inifity vs Infinity", -1, GuiReprValueNumberSpinner.MINIMUM.compareTo(GuiReprValueNumberSpinner.MAXIMUM));
+
+        Assert.assertEquals("Inifity vs Float.Infinity", 0, GuiReprValueNumberSpinner.MAXIMUM.compareTo(Float.POSITIVE_INFINITY));
+        Assert.assertEquals("Inifity vs -Float.Infinity", 1, GuiReprValueNumberSpinner.MAXIMUM.compareTo(Float.NEGATIVE_INFINITY));
+        Assert.assertEquals("-Inifity vs -Double.Infinity", 0, GuiReprValueNumberSpinner.MINIMUM.compareTo(Double.NEGATIVE_INFINITY));
+        Assert.assertEquals("-Inifity vs Double.Infinity", -1, GuiReprValueNumberSpinner.MINIMUM.compareTo(Double.POSITIVE_INFINITY));
     }
 
     ///////////
