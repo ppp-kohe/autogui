@@ -161,14 +161,20 @@ public class GuiReprObjectPane extends GuiReprValue {
                         try {
                             GuiReprValue reprValue = subContext.getReprValue();
                             Object jsonEntry = jsonMap;
+
+                            boolean hasKey = true;
                             if (!reprValue.isFromJsonTakingMapWithContextNameEntry(subContext)) {
-                                jsonEntry = jsonMap.get(subContext.getName());
+                                String key = subContext.getName();
+                                hasKey = jsonMap.containsKey(key);
+                                jsonEntry = jsonMap.get(key);
                             }
-                            Object subNewValue = reprValue.fromJson(subContext,
-                                    reprValue.getValueWithoutNoUpdate(subContext,
-                                            GuiMappingContext.GuiSourceValue.of(target), GuiReprValue.NONE.child(false)), jsonEntry);
-                            reprValue.update(subContext, GuiMappingContext.GuiSourceValue.of(target),
-                                    subNewValue, GuiReprValue.NONE.child(false));
+                            if (hasKey) {
+                                Object subNewValue = reprValue.fromJson(subContext,
+                                        reprValue.getValueWithoutNoUpdate(subContext,
+                                                GuiMappingContext.GuiSourceValue.of(target), GuiReprValue.NONE.child(false)), jsonEntry);
+                                reprValue.update(subContext, GuiMappingContext.GuiSourceValue.of(target),
+                                        subNewValue, GuiReprValue.NONE.child(false));
+                            }
                         } catch (Throwable ex) {
                             subContext.errorWhileJson(ex);
                         }

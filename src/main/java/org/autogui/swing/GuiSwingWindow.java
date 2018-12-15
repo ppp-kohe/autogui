@@ -21,6 +21,8 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     private static final long serialVersionUID = 1L;
     protected GuiSwingRootPane contextRootPane;
     protected GuiSwingPreferences.WindowPreferencesUpdater preferencesUpdater;
+    /** @since 1.1 */
+    protected boolean exitAfterDispose;
 
     public static GuiSwingWindow createForObject(Object o) {
         return creator()
@@ -190,9 +192,33 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
         contextRootPane.setApplicationRoot(applicationRoot);
     }
 
+    /**
+     * @param exitAfterDispose if true, {@link System#exit(int)} with 0 after disposing the window.
+     * @since 1.1
+     */
+    public void setExitAfterDispose(boolean exitAfterDispose) {
+        this.exitAfterDispose = exitAfterDispose;
+    }
+
+    /**
+     * @return the current flag
+     * @since 1.1
+     */
+    public boolean isExitAfterDispose() {
+        return exitAfterDispose;
+    }
+
     public void cleanUp() {
         contextRootPane.cleanUp();
         dispose();
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        if (exitAfterDispose) {
+            System.exit(0);
+        }
     }
 
     public GuiSwingPreferences getPreferences() {

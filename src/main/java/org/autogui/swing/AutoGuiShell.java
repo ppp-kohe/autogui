@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -46,6 +47,11 @@ public class AutoGuiShell {
         return new AutoGuiShell();
     }
 
+    /**
+     * create a window for the object o as the application root and display it.
+     *  before creating the window, it sets LookAndFeel as the value of {@link #lookAndFeelClass} by {@link #setLookAndFeel()}.
+     * @param o the target object
+     */
     public void showWindow(Object o) {
         showWindow(o, this::setLookAndFeel);
     }
@@ -55,6 +61,11 @@ public class AutoGuiShell {
         return this;
     }
 
+    /**
+     * set the look-and-feel of {@link UIManager} from {@link #lookAndFeelClass}.
+     *   the field specifies the class name of LookAndFeel.
+     *  if the value of the field is "#system" then, it uses system-look-and-feel.
+     */
     public void setLookAndFeel() {
         try {
 //            boolean sysLafIsGtk = false;
@@ -74,9 +85,20 @@ public class AutoGuiShell {
     }
 
     public void showWindow(Object o, Runnable beforeActionInEvent) {
+        showWindow(o, beforeActionInEvent, null);
+    }
+
+    /**
+     * create a window for the object o as the application root and display it.
+     * @param o the target object
+     * @param beforeActionInEvent action executed before creating the window within the event dispatching thread. nullable
+     * @param afterActionInEvent action executed after creating the window within the event dispatching thread. nullable
+     * @since 1.1
+     */
+    public void showWindow(Object o, Runnable beforeActionInEvent, Consumer<GuiSwingWindow> afterActionInEvent) {
         SwingUtilities.invokeLater(() -> {
             beforeActionInEvent.run();
-            createWindow(o, true).setVisible(true);
+            createWindow(o, true, afterActionInEvent).setVisible(true);
         });
     }
 
@@ -88,9 +110,27 @@ public class AutoGuiShell {
      * @return the created window for o, with default component-set
      */
     public GuiSwingWindow createWindow(Object o, boolean appRoot) {
+        return createWindow(o, appRoot, null);
+    }
+
+    /**
+     *
+     * if the current thread is the event dispatching thread, it will immediately create a window for o and return it.
+     * otherwise, it invoke the same task to the event dispatching thread and waits it.
+     *  the afterActionInEvent will be executed within in the event dispatching thread after creating the window.
+     * @param o the target object
+     * @param appRoot if true, the returned window will clean-up windows and task-runners at closing of the window
+     * @param afterActionInEvent null or an action with the created window, executed within the event dispatching thread
+     * @return the created window for o, with default component-set
+     * @since 1.1
+     */
+    public GuiSwingWindow createWindow(Object o, boolean appRoot, Consumer<GuiSwingWindow> afterActionInEvent) {
         return invokeAndWait(() -> {
             GuiSwingWindow w = GuiSwingWindow.createForObject(o);
             w.setApplicationRoot(appRoot);
+            if (afterActionInEvent != null) {
+                afterActionInEvent.accept(w);
+            }
             return w;
         });
     }
@@ -112,10 +152,25 @@ public class AutoGuiShell {
         }
     }
 
+
     public GuiSwingWindow createWindowRelaxed(Object o) {
+        return createWindowRelaxed(o, null);
+    }
+
+    /**
+     *
+     * @param o the target object
+     * @param afterActionInEvent  null or an action with the created window, executed within the event dispatching thread
+     * @return the created window for o, with relaxed component-set. Note that the created window does not become application root.
+     * @since 1.1
+     */
+    public GuiSwingWindow createWindowRelaxed(Object o, Consumer<GuiSwingWindow> afterActionInEvent) {
         return invokeAndWait(() -> {
             GuiSwingWindow w = GuiSwingWindow.createForObjectRelaxed(o);
             w.setApplicationRoot(false);
+            if (afterActionInEvent != null) {
+                afterActionInEvent.accept(w);
+            }
             return w;
         });
     }

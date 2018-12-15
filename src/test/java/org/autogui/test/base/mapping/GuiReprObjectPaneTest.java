@@ -7,9 +7,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 public class GuiReprObjectPaneTest {
@@ -180,5 +178,75 @@ public class GuiReprObjectPaneTest {
         Assert.assertEquals("after updateFromGui, no changed values notify nothing",
                 Collections.emptyList(),
                 testUpdater.newValues);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testValueToJson() {
+        Object json = contextObj.getRepresentation().toJson(contextObj, objRepr);
+        Map<String,Object> map = (Map<String,Object>) json;
+        Assert.assertEquals("toJson obj key for str", "hello", map.get("value"));
+        Assert.assertEquals("toJson obj key for int", 123, map.get("x"));
+        Assert.assertEquals("toJson obj entries", 2, map.size());
+
+        Object json2 = contextObj.getRepresentation().toJson(contextObj, null);
+        Map<String,Object> map2 = (Map<String,Object>) json2;
+        Assert.assertNull("toJson null for str: toJson str returns null, then the map skips putting", map2.get("value"));
+        Assert.assertEquals("toJson null for int: toJson int returns 0, so the map puts the entry", 0, map2.get("x"));
+        Assert.assertEquals("toJson null entries", 1, map2.size());
+    }
+
+    @Test
+    public void testValueFromJson() {
+        Map<String,Object> json = new HashMap<>();
+        json.put("value", "!!!");
+        json.put("x", 456);
+        Object obj = contextObj.getRepresentation().fromJson(contextObj, null, json);
+        TestReprObjPane newVal = (TestReprObjPane) obj;
+        Assert.assertNotNull("fromJson null returns new obj", newVal);
+        Assert.assertEquals("fromJson str prop", "!!!", newVal.value);
+        Assert.assertEquals("fromJson int prop", 456, newVal.x);
+
+        Assert.assertTrue("obj is jsonSetter", contextObj.getRepresentation().isJsonSetter());
+        obj = contextObj.getRepresentation().fromJson(contextObj, objRepr, json);
+        Assert.assertEquals("fromJson obj returns target", objRepr, obj);
+        Assert.assertEquals("fromJson str prop", "!!!", objRepr.value);
+        Assert.assertEquals("fromJson int prop", 456, objRepr.x);
+    }
+
+    @Test
+    public void testValueFromJsonIncomplete() {
+        Map<String,Object> json = new HashMap<>();
+        json.put("value", "!!!");
+        Object obj = contextObj.getRepresentation().fromJson(contextObj, null, json);
+        TestReprObjPane newVal = (TestReprObjPane) obj;
+        Assert.assertNotNull("fromJson null returns new obj", newVal);
+        Assert.assertEquals("fromJson str prop", "!!!", newVal.value);
+        Assert.assertEquals("fromJson int prop", 0, newVal.x);
+
+    }
+
+    @Test
+    public void testValueToHumanReadableString() {
+        String str = contextObj.getRepresentation().toHumanReadableString(contextObj, objRepr);
+        Assert.assertEquals("toHRS", "hello\t123", str);
+    }
+
+    @Test
+    public void testValueFromHumanReadableString() {
+        Object obj = contextObj.getRepresentation().fromHumanReadableString(contextObj, "!!!\t456");
+        Assert.assertNotNull("fromHRS new obj", obj);
+        TestReprObjPane newVal = (TestReprObjPane) obj;
+        Assert.assertEquals("fromHRS str", "!!!", newVal.value);
+        Assert.assertEquals("fromHRS int", 456, newVal.x);
+    }
+
+    @Test
+    public void testValueFromHumanReadableStringIncomplete() {
+        Object obj = contextObj.getRepresentation().fromHumanReadableString(contextObj, "!!!");
+        Assert.assertNotNull("fromHRS new obj", obj);
+        TestReprObjPane newVal = (TestReprObjPane) obj;
+        Assert.assertEquals("fromHRS str", "!!!", newVal.value);
+        Assert.assertEquals("fromHRS int", 0, newVal.x);
     }
 }

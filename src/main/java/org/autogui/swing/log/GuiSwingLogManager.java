@@ -347,28 +347,45 @@ public class GuiSwingLogManager extends GuiLogManager {
             setType(Type.UTILITY);
             JPanel pane = new JPanel(new BorderLayout());
 
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+
+            initList(pane);
+            initStatusBar();
+
+            setContentPane(pane);
+            pack();
+            setSize(ui.getScaledSizeInt(400), ui.getScaledSizeInt(600));
+        }
+
+        /**
+         * @param pane the content pane of the window
+         * @since 1.1
+         */
+        protected void initList(JPanel pane) {
+            UIManagerUtil ui = UIManagerUtil.getInstance();
             //list
             list = new GuiSwingLogList(manager);
             list.setEntryLimit(10000);
             JScrollPane scrollPane = new JScrollPane(list,
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            UIManagerUtil ui = UIManagerUtil.getInstance();
             scrollPane.getVerticalScrollBar().setUnitIncrement(ui.getScaledSizeInt(16));
             pane.add(scrollPane, BorderLayout.CENTER);
 
             //tool bar
             toolbar = list.createToolBar();
             pane.add(toolbar, BorderLayout.NORTH);
+        }
 
+        /**
+         * @since 1.1
+         */
+        protected void initStatusBar() {
             //status bar
             statusBar = new GuiSwingLogStatusBar(manager);
             JButton showButton = new GuiSwingIcons.ActionButton(new LogWindowShowAction(this));
             showButton.setHideActionText(true);
             showButton.setBorderPainted(false);
             statusBar.add(showButton, BorderLayout.WEST);
-            setContentPane(pane);
-            pack();
-            setSize(ui.getScaledSizeInt(400), ui.getScaledSizeInt(600));
         }
 
         /**
@@ -381,8 +398,12 @@ public class GuiSwingLogManager extends GuiLogManager {
 
         @Override
         public void dispose() {
-            list.removeFromManager();
-            statusBar.removeFromManager();
+            if (list != null) {
+                list.removeFromManager();
+            }
+            if (statusBar != null) {
+                statusBar.removeFromManager();
+            }
             super.dispose();
         }
 

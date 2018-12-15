@@ -370,6 +370,12 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 stopPressedValue.interrupt();
             }
         }
+
+        @Override
+        public void close() {
+            progressBar.getUI().uninstallUI(progressBar);
+             //to stop animator: a timer thread will be stop and then the application can stop.
+        }
     }
 
     /**
