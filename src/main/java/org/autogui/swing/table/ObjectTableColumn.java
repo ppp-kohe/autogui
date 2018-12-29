@@ -1,5 +1,6 @@
 package org.autogui.swing.table;
 
+import org.autogui.base.mapping.GuiReprCollectionTable;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifier;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupExtension;
@@ -19,6 +20,7 @@ import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * a table-column with additional info.
@@ -110,6 +112,25 @@ public class ObjectTableColumn {
     public int[] columnIndexToValueIndex(int columnIndex) {
         return new int[] {columnIndex};
     }
+
+    /**
+     * @param value an element value obtained from {@link org.autogui.base.mapping.GuiReprCollectionTable.TableTarget}
+     * @return a value which an action can accept
+     * @since 1.1
+     */
+    public Object toActionValue(Object value) {
+        return value;
+    }
+
+    /**
+     * @param value an element value
+     * @return a value supplied to a setter of {@link org.autogui.base.mapping.GuiReprCollectionTable.TableTarget}
+     * @since 1.1
+     */
+    public Object fromActionValue(Object value) {
+        return value;
+    }
+
 
     //////////////// setter for table column
 
@@ -367,6 +388,88 @@ public class ObjectTableColumn {
         }
     }
 
+    //////////////
 
+    /**
+     * @since 1.1
+     */
+    public static class TableTargetColumnForObjectColumn implements GuiReprCollectionTable.TableTargetColumn {
+        protected ObjectTableColumn column;
+        protected GuiReprCollectionTable.TableTargetColumn target;
+
+        public TableTargetColumnForObjectColumn(ObjectTableColumn column, GuiReprCollectionTable.TableTargetColumn target) {
+            this.column = column;
+            this.target = target;
+        }
+
+        @Override
+        public boolean isSelectionEmpty() {
+            return target.isSelectionEmpty();
+        }
+
+        @Override
+        public int[] getSelectedRows() {
+            return target.getSelectedRows();
+        }
+
+        @Override
+        public List<Object> getSelectedRowValues() {
+            return target.getSelectedRowValues()
+                    .stream()
+                    .map(column::toActionValue)
+                    .collect(Collectors.toList());
+        }
+
+        @Override
+        public List<GuiReprCollectionTable.CellValue> getSelectedCells() {
+            return target.getSelectedCells()
+                    .stream()
+                    .map(c -> c.withValue(column.toActionValue(c.getValue())))
+                    .collect(Collectors.toList());
+        }
+
+        @Override
+        public Iterable<int[]> getSelectedCellIndices() {
+            return target.getSelectedCellIndices();
+        }
+
+        @Override
+        public List<int[]> getSelectedCellIndicesAsList() {
+            return target.getSelectedCellIndicesAsList();
+        }
+
+        @Override
+        public List<Object> getSelectedCellValues() {
+            return target.getSelectedCellValues()
+                    .stream()
+                    .map(column::toActionValue)
+                    .collect(Collectors.toList());
+        }
+
+        @Override
+        public void setCellValues(List<GuiReprCollectionTable.CellValue> values) {
+            target.setCellValues(values.stream()
+                .map(c -> c.withValue(column.fromActionValue(c.getValue())))
+                .collect(Collectors.toList()));
+        }
+
+        @Override
+        public void setCellValues(Iterable<int[]> pos, Function<int[], Object> posToValue) {
+            target.setCellValues(pos,
+                    idx -> column.fromActionValue(posToValue.apply(idx)));
+        }
+
+        @Override
+        public Object getSelectedCellValue() {
+            return column.toActionValue(target.getSelectedCellValue());
+        }
+
+        @Override
+        public void setSelectedCellValuesLoop(List<?> rowValues) {
+            target.setSelectedCellValuesLoop(rowValues.stream()
+                .map(column::fromActionValue)
+                .collect(Collectors.toList()));
+        }
+    }
 
 }

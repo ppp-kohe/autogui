@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -258,6 +260,28 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             context.errorWhileUpdateSource(ex);
         }
         return null;
+    }
+
+    @Override
+    public Object toActionValue(Object value) {
+        try {
+            return context.getReprValue().toUpdateValue(context, value);
+        } catch (Throwable ex) {
+            context.errorWhileUpdateSource(ex);
+        }
+        return null;
+    }
+
+    @Override
+    public Object fromActionValue(Object value) {
+        //special handling for FilePath
+        if (context.getRepresentation() instanceof GuiReprValueFilePathField &&
+            value instanceof Path) {
+            return ((GuiReprValueFilePathField) context.getRepresentation())
+                    .toValueFromPath(context, (Path) value);
+        } else {
+            return super.fromActionValue(value);
+        }
     }
 
     /** interface for renderer and editor, in order to setting up some properties like preferences and setting-windows */
@@ -530,6 +554,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         }
     }
 
+
     /**
      * a menu filter for converting an action to another action which supports a selected rows.
      * <ul>
@@ -549,7 +574,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             this.table = table;
             this.column = column;
             this.filter = filter;
-            target = new TableTargetColumnForJTable(table, column.getTableColumn().getModelIndex());
+            target = new TableTargetColumnForObjectColumn(column,
+                    new TableTargetColumnForJTable(table, column.getTableColumn().getModelIndex()));
         }
 
         @Override

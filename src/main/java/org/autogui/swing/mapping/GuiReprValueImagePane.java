@@ -3,6 +3,7 @@ package org.autogui.swing.mapping;
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.mapping.GuiTaskClock;
+import org.autogui.swing.GuiSwingMapperSet;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -34,6 +35,53 @@ import java.util.regex.Pattern;
  * */
 public class GuiReprValueImagePane extends GuiReprValue {
     protected Map<Image,Path> imageToReference = new WeakHashMap<>();
+
+    /**
+     * the global instance set by {@link #GuiReprValueImagePane(boolean)} with true
+     * @since 1.1
+     */
+    protected static GuiReprValueImagePane instance;
+
+    /**
+     * return the default global instance of the class, useful for {@link #getImagePath(Image)}.
+     * <pre>
+     *     void setImage(Image img) {
+     *        ...
+     *        Path p = GuiReprValueImagePane.getInstance().getImagePath(img);
+     *        if (p != null) {
+     *          ... //if the user drag an image file to the associated pane, p will be the path of the file.
+     *        }
+     *     }
+     * </pre>
+     * @return the global instance.
+     * @since 1.1
+     */
+    public static GuiReprValueImagePane getInstance() {
+        synchronized (GuiReprValueImagePane.class) {
+            GuiSwingMapperSet.getReprDefaultSet(); //the method will cause construction of the global instance
+            return instance;
+        }
+    }
+
+    /**
+     * the created instance will not be the global instance
+     */
+    public GuiReprValueImagePane() {
+        this(false);
+    }
+
+    /**
+     * @param processGlobal if true, the instance will be held by the static field of the class,
+     *                       which can be obtained by {@link #getInstance()}. This is useful for obtaining image paths
+     * @since 1.1
+     */
+    public GuiReprValueImagePane(boolean processGlobal) {
+        if (processGlobal) {
+            synchronized (GuiReprValueImagePane.class) {
+                instance = this;
+            }
+        }
+    }
 
     @Override
     public boolean matchValueType(Class<?> cls) {
@@ -284,7 +332,6 @@ public class GuiReprValueImagePane extends GuiReprValue {
                 super.addHistoryValue(context, value);
             }
         }
-
     }
 
 

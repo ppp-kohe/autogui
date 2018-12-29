@@ -6,7 +6,9 @@ import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.base.type.GuiTypeObject;
 import org.autogui.swing.GuiSwingMapperSet;
+import org.autogui.swing.GuiSwingViewLabel;
 import org.autogui.swing.table.*;
+import org.autogui.swing.util.PopupExtension;
 import org.autogui.test.swing.GuiSwingTestCase;
 import org.junit.After;
 import org.junit.Assert;
@@ -17,16 +19,17 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
 public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
-
-    public static void main(String[] args) {
-        GuiSwingTableColumnStringTest t = new GuiSwingTableColumnStringTest();
-        t.setUp();
-        t.testCreateAndGet();
-    }
+//
+//    public static void main(String[] args) {
+//        GuiSwingTableColumnStringTest t = new GuiSwingTableColumnStringTest();
+//        t.setUp();
+//        t.testCreateAndGet();
+//    }
     GuiSwingTableColumnString column;
 
     GuiTypeBuilder builder;
@@ -44,6 +47,8 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
 
     Supplier<GuiReprValue.ObjectSpecifier> spec;
     GuiSwingTableColumn.SpecifierManagerIndex specIndex;
+
+    ObjectTableColumn objColumn;
 
     @Before
     public void setUp() {
@@ -86,11 +91,11 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
     }
 
     JScrollPane createTable() {
-        ObjectTableColumn col = column.createColumn(strContext, specIndex, specIndex);
+        objColumn = column.createColumn(strContext, specIndex, specIndex);
 
         model = new ObjectTableModel();
         model.setSource(() -> obj.values);
-        model.getColumns().addColumnStatic(col);
+        model.getColumns().addColumnStatic(objColumn);
 
         JScrollPane scroll = model.initTableWithScroll();
         table = (JTable) scroll.getViewport().getView();
@@ -120,7 +125,20 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
         run(model::refreshData);
         runWait();
         Assert.assertEquals("hello", runGet(() -> table.getValueAt(0, 0)));
-        Assert.assertEquals("WORLD", runGet(() -> table.getValueAt(1, 0)));
+        Assert.assertEquals("reflects model update by refreshData",
+                "WORLD", runGet(() -> table.getValueAt(1, 0)));
+    }
+
+    @Test
+    public void testSort() {
+        runGet(this::createTable);
+        run(() -> table.getRowSorter().setSortKeys(Collections.singletonList(new RowSorter.SortKey(0, SortOrder.DESCENDING))));
+        runWait();
+
+        Assert.assertEquals("world", runGet(() -> table.getValueAt(0, 0)));
+        Assert.assertEquals("hello", runGet(() -> table.getValueAt(1, 0)));
+        Assert.assertEquals("!!!!", runGet(() -> table.getValueAt(2, 0)));
+        Assert.assertEquals(3, (int) runGet(table::getRowCount));
     }
 
     @Test
@@ -128,28 +146,68 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
         runGet(this::createTable);
         run(() -> table.editCellAt(1, 0));
 
-        TableCellEditor editor = runGet(() -> model.getColumnAt(0).getTableColumn().getCellEditor());
+        TableCellEditor editor = runGet(() -> objColumn.getTableColumn().getCellEditor());
         Assert.assertTrue(editor instanceof ObjectTableColumnValue.ObjectTableCellEditor);
 
         ObjectTableColumnValue.ObjectTableCellEditor objEditor = (ObjectTableColumnValue.ObjectTableCellEditor) editor;
         Assert.assertEquals("world", runGet(objEditor::getCellEditorValue));
 
-        Component component = runGet(table::getEditorComponent);
-        run(() -> ((GuiSwingTableColumnString.ColumnEditTextPane) component).getField().setText("EDIT"));
+        GuiSwingTableColumnString.ColumnEditTextPane component = (GuiSwingTableColumnString.ColumnEditTextPane) runGet(table::getEditorComponent);
+        run(() -> component.setBackground(Color.black));
+        run(() -> component.setForeground(Color.gray));
+
+        Assert.assertEquals("editorPane.setBackground also sets field background", Color.black, runGet(() -> component.getField().getBackground()));
+        Assert.assertEquals("editorPane.setForeground also sets field foreground", Color.gray, runGet(() -> component.getField().getForeground()));
+
+        run(() -> component.getField().setText("EDIT"));
         runWait();
         run(objEditor::stopCellEditing);
 
         Assert.assertEquals("hello", obj.values.get(0));
-        Assert.assertEquals("EDIT", obj.values.get(1));
+        Assert.assertEquals("setText affects the target cell", "EDIT", obj.values.get(1));
         Assert.assertEquals("!!!!", obj.values.get(2));
         Assert.assertEquals(3, obj.values.size());
     }
 
+    public Action convertRowsAction(Object menu) {
+        return (Action) new ObjectTableColumnValue.CollectionRowsActionBuilder(table, objColumn, PopupExtension.MENU_FILTER_IDENTITY).convert(menu);
+    }
+
     @Test
-    public void testAction() {
+    public void testActionToStringCopy() {
         runGet(this::createTable);
 
-        GuiSwingTableColumnString.ColumnTextPane pane = (GuiSwingTableColumnString.ColumnTextPane) runGet(() -> model.getColumns().getColumnAt(0).getTableColumn().getCellRenderer());
-        run(() -> pane.getSwingStaticMenuItems().get(0));
+        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                runGet(() -> objColumn.getTableColumn().getCellRenderer());
+        GuiSwingTableColumnString.ColumnTextPane pane = (GuiSwingTableColumnString.ColumnTextPane) renderer.getComponent();
+        Action action = convertRowsAction(
+                findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelToStringCopyAction.class));
+
+        run(() -> table.addRowSelectionInterval(0, 0));
+        run(() -> table.addRowSelectionInterval(2, 2));
+        run(() -> action.actionPerformed(null));
+        Assert.assertEquals("only copies selected rows",
+                "hello\n!!!!", getClipboardText());
+    }
+
+    @Test
+    public void testActionPasteAll() {
+        runGet(this::createTable);
+
+        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                runGet(() -> objColumn.getTableColumn().getCellRenderer());
+        GuiSwingTableColumnString.ColumnTextPane pane = (GuiSwingTableColumnString.ColumnTextPane) renderer.getComponent();
+
+        Action action = convertRowsAction(findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingTableColumnString.LabelTextPasteAllAction.class));
+        setClipboardText("HELLO\nWORLD");
+        run(() -> table.addRowSelectionInterval(0, 0));
+        run(() -> table.addRowSelectionInterval(2, 2));
+        run(() -> action.actionPerformed(null));
+
+        Assert.assertEquals("paste 1st line to 1st selected row",
+                "HELLO", runGet(() -> table.getValueAt(0, 0)));
+        Assert.assertEquals("world", runGet(() -> table.getValueAt(1, 0)));
+        Assert.assertEquals("paste 2nd line to 2nd selected row",
+                "WORLD", runGet(() -> table.getValueAt(2, 0)));
     }
 }

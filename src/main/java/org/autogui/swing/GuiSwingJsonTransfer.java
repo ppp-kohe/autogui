@@ -191,17 +191,27 @@ public class GuiSwingJsonTransfer {
 
         @SuppressWarnings("unchecked")
         public void set(Object json) {
-            Object v = component.getSwingViewValue();
-            GuiMappingContext context = getContext();
-            executeContextTask(() -> {
-                        if (context.isTypeElementProperty()) {
-                            return context.getRepresentation().fromJsonWithNamed(context, v, json);
-                        } else {
-                            return context.getRepresentation().fromJson(context, v, json);
-                        }},
+            executeContextTask(() -> toValueFromJson(json),
                     r -> r.executeIfPresent(
                         ret -> SwingUtilities.invokeLater(() ->
                             ((GuiSwingView.ValuePane<Object>) component).setSwingViewValueWithUpdate(ret))));
+        }
+
+        /**
+         * check whether the json is a map containing the context-key and selectively calls a fromJson method.
+         * @param json json for pasting
+         * @return the value updated by the json
+         * @since 1.1
+         */
+        public Object toValueFromJson(Object json) {
+            Object v = component.getSwingViewValue();
+            GuiMappingContext context = getContext();
+            if (context.isTypeElementProperty() &&
+                    json instanceof Map<?,?> && ((Map<?,?>) json).containsKey(context.getName())) {
+                return context.getRepresentation().fromJsonWithNamed(context, v, json);
+            } else {
+                return context.getRepresentation().fromJson(context, v, json);
+            }
         }
 
         @Override
@@ -677,6 +687,11 @@ public class GuiSwingJsonTransfer {
     public static class CellValueRowSpecified extends CellValue {
         public CellValueRowSpecified(int row, int column, Object value) {
             super(row, column, value);
+        }
+
+        @Override
+        public CellValueRowSpecified withValue(Object v) {
+            return new CellValueRowSpecified(row, column, value);
         }
     }
 

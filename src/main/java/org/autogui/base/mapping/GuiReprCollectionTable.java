@@ -661,5 +661,14 @@ public class GuiReprCollectionTable extends GuiReprValue {
         public Object getValue() {
             return value;
         }
+
+        /**
+         * @param v a new value
+         * @return a new cell-value with v and same row and column
+         * @since 1.1
+         */
+        public CellValue withValue(Object v) {
+            return new CellValue(row, column, v);
+        }
     }
 }

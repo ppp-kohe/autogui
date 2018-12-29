@@ -199,7 +199,7 @@ public class GuiSwingMapperSet {
 
         reprSet.add(new GuiReprEmbeddedComponent(),
                 new GuiReprValueDocumentEditor(),
-                new GuiReprValueImagePane());
+                new GuiReprValueImagePane(true));
 
         reprSet.add(new GuiReprCollectionTable(reprSet),
                 new GuiReprObjectTabbedPane(reprSet),

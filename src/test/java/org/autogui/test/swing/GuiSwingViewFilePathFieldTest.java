@@ -115,4 +115,16 @@ public class GuiSwingViewFilePathFieldTest extends GuiSwingTestCase {
         Assert.assertEquals("after set text", homePath.toString(),
                 runGet(() -> p.getField().getText()));
     }
+
+    @Test
+    public void testViewUpdateFileSetFile() {
+        GuiSwingViewFilePathField.PropertyFilePathPane p = runGet(() -> create(contextPropFile));
+        run(() -> p.setFile(homePath));
+
+        run(this::runWait);
+        Assert.assertEquals("after set value", homePath.toFile(), obj.file);
+        Assert.assertEquals("after set value", homePath.toString(),
+                runGet(() -> p.getField().getText()));
+
+    }
 }

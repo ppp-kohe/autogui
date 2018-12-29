@@ -36,6 +36,46 @@ public class GuiReprValueFilePathField extends GuiReprValue {
         super.updateFromGui(context, newValue, specifier, viewClock);
     }
 
+    @Override
+    public Object updateCollectionElement(GuiMappingContext context, GuiMappingContext.GuiSourceValue collection, Object newValue, ObjectSpecifier elementSpecifier) throws Throwable {
+        if (newValue instanceof Path) {
+            newValue = toValueFromPath(context, (Path) newValue);
+        }
+        return super.updateCollectionElement(context, collection, newValue, elementSpecifier);
+    }
+
+    @Override
+    public Object updateWithParentSource(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) throws Throwable {
+        if (newValue instanceof Path) {
+            newValue = toValueFromPath(context, (Path) newValue);
+        }
+        return super.updateWithParentSource(context, newValue, specifier);
+    }
+
+    @Override
+    public Object update(GuiMappingContext context, GuiMappingContext.GuiSourceValue parentSource, Object newValue, ObjectSpecifier specifier) throws Throwable {
+        if (newValue instanceof Path) {
+            newValue = toValueFromPath(context, (Path) newValue);
+        }
+        return super.update(context, parentSource, newValue, specifier);
+    }
+
+    @Override
+    public void addHistoryValue(GuiMappingContext context, Object value) {
+        if (value instanceof Path) {
+            value = toValueFromPath(context, (Path) value);
+        }
+        super.addHistoryValue(context, value);
+    }
+
+    @Override
+    public void setSource(GuiMappingContext context, Object value) {
+        if (value instanceof Path) {
+            value = toValueFromPath(context, (Path) value);
+        }
+        super.setSource(context, value);
+    }
+
     public Path toUpdateValue(GuiMappingContext context, Object value) {
         if (value instanceof File) {
             return ((File) value).toPath();

@@ -1,9 +1,6 @@
 package org.autogui.swing.table;
 
-import org.autogui.base.mapping.GuiMappingContext;
-import org.autogui.base.mapping.GuiPreferences;
-import org.autogui.base.mapping.GuiReprCollectionTable;
-import org.autogui.base.mapping.GuiTaskClock;
+import org.autogui.base.mapping.*;
 import org.autogui.swing.*;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingView.SpecifierManagerDefault;
@@ -24,8 +21,8 @@ import java.awt.event.ActionEvent;
 import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * a column factory for {@link java.io.File} or {@link Path}.
@@ -43,11 +40,42 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         ObjectTableColumn column = new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableCellRenderer(renderPane, rowSpecifier),
                 new ObjectTableCellEditor(new ColumnEditFilePathPane(context, valueSpecifier), false, rowSpecifier))
-                .withComparator(Comparator.comparing(Path.class::cast))
+                .withComparator(new FilePathComparator(context))
                 .withValueType(Path.class)
                 .withRowHeight(UIManagerUtil.getInstance().getScaledSizeInt(28));
         renderPane.setTableColumn(column.getTableColumn());
         return column;
+    }
+
+    /**
+     * comparator supporting both File and Path
+     * @since 1.1
+     */
+    public static class FilePathComparator implements Comparator<Object> {
+        protected GuiMappingContext context;
+        protected GuiReprValueFilePathField filePathField;
+
+        public FilePathComparator(GuiMappingContext context) {
+            this.context = context;
+            if (context.getRepresentation() instanceof GuiReprValueFilePathField) {
+                this.filePathField = (GuiReprValueFilePathField) context.getRepresentation();
+            } else {
+                this.filePathField = new GuiReprValueFilePathField();
+            }
+        }
+
+        @Override
+        public int compare(Object o1, Object o2) {
+            Path p1 = filePathField.toUpdateValue(context, o1);
+            Path p2 = filePathField.toUpdateValue(context, o2);
+            if (p1 == null) {
+                return p2 == null ? 0 : -1;
+            } else if (p2 == null) {
+                return 1;
+            } else {
+                return p1.compareTo(p2);
+            }
+        }
     }
 
     public static class ColumnFilePathPane extends PropertyLabel {
