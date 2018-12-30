@@ -6,7 +6,9 @@ import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.base.type.GuiTypeObject;
 import org.autogui.swing.GuiSwingMapperSet;
+import org.autogui.swing.GuiSwingViewNumberSpinner;
 import org.autogui.swing.table.*;
+import org.autogui.swing.util.PopupExtension;
 import org.autogui.test.swing.GuiSwingTestCase;
 import org.junit.After;
 import org.junit.Assert;
@@ -141,4 +143,29 @@ public class GuiSwingTableColumnNumberTest extends GuiSwingTestCase {
                 "####", numberPane.getModelTyped().getFormatPattern());
     }
 
+    @Test
+    public void testEditIncrementAction() {
+        runGet(this::createTable);
+
+        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                runGet(() -> objColumn.getTableColumn().getCellRenderer());
+
+        GuiSwingTableColumnNumber.ColumnNumberPane component = (GuiSwingTableColumnNumber.ColumnNumberPane)
+                runGet(renderer::getComponent);
+        Action action = convertRowsAction(findMenuItem(component.getSwingStaticMenuItems(), GuiSwingViewNumberSpinner.NumberIncrementAction.class,
+                null, null, null, GuiSwingViewNumberSpinner.NumberIncrementAction::isInc));
+
+        run(() -> table.setRowSelectionInterval(0, 0));
+        run(() -> table.addRowSelectionInterval(2, 2));
+        run(() -> action.actionPerformed(null));
+
+        Assert.assertEquals(1231, runGet(() -> table.getValueAt(0, 0)));
+        Assert.assertEquals(4560, runGet(() -> table.getValueAt(1, 0)));
+        Assert.assertEquals(7891, runGet(() -> table.getValueAt(2, 0)));
+    }
+
+
+    public Action convertRowsAction(Object menu) {
+        return (Action) new ObjectTableColumnValue.CollectionRowsActionBuilder(table, objColumn, PopupExtension.MENU_FILTER_IDENTITY).convert(menu);
+    }
 }

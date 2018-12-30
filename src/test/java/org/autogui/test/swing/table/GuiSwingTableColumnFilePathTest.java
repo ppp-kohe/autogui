@@ -508,6 +508,101 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
         Assert.assertEquals(p.toFile(), obj.files.get(2));
     }
 
+
+    @Test
+    public void testEditFilePasteStringAction() {
+        run(() -> createTable(fileContext, () -> obj.files));
+
+        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                runGet(() -> objColumn.getTableColumn().getCellRenderer());
+        GuiSwingTableColumnFilePath.ColumnFilePathPane pane = (GuiSwingTableColumnFilePath.ColumnFilePathPane) renderer.getComponent();
+
+        //JsonPaste action is not included in column actions. instead, use cell actions.
+        List<PopupCategorized.CategorizedMenuItem> items = runGet(() -> model.getBuildersForRowsOrCells(table, Collections.singletonList(objColumn), false));
+        ToStringCopyCell.ToStringPasteForCellsAction item = findMenuItemAction(items, ToStringCopyCell.ToStringPasteForCellsAction.class);
+
+        Action action = new ObjectTableModel.TableTargetCellExecutionAction(item, new TableTargetCellForJTable(table));
+
+        File file1 = new File("folder" + File.separator + "a.txt");
+        File ex = obj.files.get(1);
+
+        String data = file1.toString();
+        setClipboardText(data);
+
+        run(() -> table.addColumnSelectionInterval(0, 0)); //it needs to explicitly select a column
+        run(() -> table.addRowSelectionInterval(0, 0));
+        run(() -> table.addRowSelectionInterval(2, 2));
+        System.out.println(runGet(() -> table.getSelectedColumn()));
+        runWait();
+        run(() -> action.actionPerformed(null));
+        runWait();
+
+        Assert.assertEquals(file1, obj.files.get(0));
+        Assert.assertEquals(ex, obj.files.get(1));
+        Assert.assertEquals(file1, obj.files.get(2));
+    }
+
+    @Test
+    public void testEditFileCopyStringAction() {
+        run(() -> createTable(fileContext, () -> obj.files));
+
+        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                runGet(() -> objColumn.getTableColumn().getCellRenderer());
+        GuiSwingTableColumnFilePath.ColumnFilePathPane pane = (GuiSwingTableColumnFilePath.ColumnFilePathPane) renderer.getComponent();
+
+        //JsonPaste action is not included in column actions. instead, use cell actions.
+        List<PopupCategorized.CategorizedMenuItem> items = runGet(() -> model.getBuildersForRowsOrCells(table, Collections.singletonList(objColumn), false));
+        ToStringCopyCell.ToStringCopyForCellsAction item = findMenuItemAction(items, ToStringCopyCell.ToStringCopyForCellsAction.class);
+
+        Action action = new ObjectTableModel.TableTargetCellExecutionAction(item, new TableTargetCellForJTable(table));
+
+        run(() -> table.addColumnSelectionInterval(0, 0)); //it needs to explicitly select a column
+        run(() -> table.addRowSelectionInterval(0, 0));
+        run(() -> table.addRowSelectionInterval(2, 2));
+        System.out.println(runGet(() -> table.getSelectedColumn()));
+        runWait();
+        run(() -> action.actionPerformed(null));
+        runWait();
+
+        String text = getClipboardText();
+        Assert.assertEquals(obj.files.get(0).getPath() + "\n" +
+                    obj.files.get(2).getPath(), text);
+    }
+
+
+    @Test
+    public void testEditFileJsonCopyAction() {
+        run(() -> createTable(fileContext, () -> obj.files));
+
+        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                runGet(() -> objColumn.getTableColumn().getCellRenderer());
+        GuiSwingTableColumnFilePath.ColumnFilePathPane pane = (GuiSwingTableColumnFilePath.ColumnFilePathPane) renderer.getComponent();
+
+        //JsonPaste action is not included in column actions. instead, use cell actions.
+        List<PopupCategorized.CategorizedMenuItem> items = runGet(() -> model.getBuildersForRowsOrCells(table, Collections.singletonList(objColumn), false));
+        GuiSwingJsonTransfer.JsonCopyCellsAction item = findMenuItemAction(items, GuiSwingJsonTransfer.JsonCopyCellsAction.class);
+
+        Action action = new ObjectTableModel.TableTargetCellExecutionAction(item, new TableTargetCellForJTable(table));
+
+        run(() -> table.addColumnSelectionInterval(0, 0)); //it needs to explicitly select a column
+        run(() -> table.setRowSelectionInterval(0, 0));
+        run(() -> table.addRowSelectionInterval(2, 2));
+        System.out.println(runGet(() -> table.getSelectedColumn()));
+        runWait();
+        run(() -> action.actionPerformed(null));
+        String text = getClipboardText();
+
+        Map<String,Object> json1 = new HashMap<>();
+        json1.put("File", obj.files.get(0).getPath());
+        Map<String,Object> json2 = new HashMap<>();
+        json2.put("File", obj.files.get(2).getPath());
+
+        String json = JsonWriter.create().write(Arrays.asList(json1, json2)).toSource();
+
+        Assert.assertEquals(json, text);
+    }
+
+
     public Action convertRowsAction(Object menu) {
         return (Action) new ObjectTableColumnValue.CollectionRowsActionBuilder(table, objColumn, PopupExtension.MENU_FILTER_IDENTITY).convert(menu);
     }

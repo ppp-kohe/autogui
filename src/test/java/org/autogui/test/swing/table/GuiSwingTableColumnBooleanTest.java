@@ -6,7 +6,9 @@ import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.base.type.GuiTypeObject;
 import org.autogui.swing.GuiSwingMapperSet;
+import org.autogui.swing.GuiSwingViewBooleanCheckBox;
 import org.autogui.swing.table.*;
+import org.autogui.swing.util.PopupExtension;
 import org.autogui.test.swing.GuiSwingTestCase;
 import org.junit.After;
 import org.junit.Assert;
@@ -163,6 +165,55 @@ public class GuiSwingTableColumnBooleanTest extends GuiSwingTestCase {
         runWait();
         Assert.assertEquals("editor click change",
                 false, obj.values.get(0));
+    }
+
+    @Test
+    public void testBooleanSetAction() {
+        runGet(this::createTable);
+        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                runGet(() -> objColumn.getTableColumn().getCellRenderer());
+
+        GuiSwingTableColumnBoolean.ColumnCheckBox component = (GuiSwingTableColumnBoolean.ColumnCheckBox) runGet(renderer::getComponent);
+        GuiSwingViewBooleanCheckBox.BooleanSetValueAction valueAct =
+                findMenuItemAction(component.getSwingStaticMenuItems(), GuiSwingViewBooleanCheckBox.BooleanSetValueAction.class);
+        Boolean v = valueAct.getValue((Object) null); //not getValue(String key)
+        Action action = convertRowsAction(valueAct);
+
+        System.err.println(v);
+        run(() -> table.setRowSelectionInterval(1, 1));
+        run(() -> table.addRowSelectionInterval(2, 2));
+        run(() -> action.actionPerformed(null));
+
+
+        Assert.assertEquals(true, runGet(() -> table.getValueAt(0, 0)));
+        Assert.assertEquals(v, runGet(() -> table.getValueAt(1, 0)));
+        Assert.assertEquals(v, runGet(() -> table.getValueAt(2, 0)));
+    }
+
+    @Test
+    public void testBooleanPasteAction() {
+        runGet(this::createTable);
+        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                runGet(() -> objColumn.getTableColumn().getCellRenderer());
+
+        GuiSwingTableColumnBoolean.ColumnCheckBox component = (GuiSwingTableColumnBoolean.ColumnCheckBox) runGet(renderer::getComponent);
+        GuiSwingViewBooleanCheckBox.BooleanPasteAction valueAct =
+                findMenuItemAction(component.getSwingStaticMenuItems(), GuiSwingViewBooleanCheckBox.BooleanPasteAction.class);
+        Action action = convertRowsAction(valueAct);
+
+        setClipboardText("true\nfalse");
+
+        run(() -> table.setRowSelectionInterval(1, 1));
+        run(() -> table.addRowSelectionInterval(2, 2));
+        run(() -> action.actionPerformed(null));
+
+        Assert.assertEquals(true, runGet(() -> table.getValueAt(0, 0)));
+        Assert.assertEquals(true, runGet(() -> table.getValueAt(1, 0)));
+        Assert.assertEquals(false, runGet(() -> table.getValueAt(2, 0)));
+    }
+
+    public Action convertRowsAction(Object menu) {
+        return (Action) new ObjectTableColumnValue.CollectionRowsActionBuilder(table, objColumn, PopupExtension.MENU_FILTER_IDENTITY).convert(menu);
     }
 }
 

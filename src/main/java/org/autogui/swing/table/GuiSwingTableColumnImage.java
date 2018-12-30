@@ -40,8 +40,14 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
             protected TableCellEditor editorForColumn() {
                 return editor; //always apply the editor
             }
-        }.withRowHeight(UIManagerUtil.getInstance().getScaledSizeInt(64));
+        }.withRowHeight(img.getPreferredSize().height);
     }
+
+    /**
+     * the default value of each row-height of image-column
+     * @since 1.1
+     */
+    public static float defaultCellSize = 64;
 
     /**
      * a component for column editor
@@ -59,8 +65,7 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
             super(context, specifierManager);
             this.editor = editor;
             setOpaque(true);
-            int size = UIManagerUtil.getInstance().getScaledSizeInt(64);
-            setPreferredSize(new Dimension(size, size));
+            setPreferredSizeFromImageSize(); //fixed size
             setCurrentValueSupported(false);
         }
 
@@ -109,7 +114,7 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
 
         @Override
         public void setPreferredSizeFromImageSize() {
-            int size = UIManagerUtil.getInstance().getScaledSizeInt(64);
+            int size = (int) UIManagerUtil.getInstance().getScaledSizeFloat(defaultCellSize);
             setPreferredSize(new Dimension(size, size));
         }
 

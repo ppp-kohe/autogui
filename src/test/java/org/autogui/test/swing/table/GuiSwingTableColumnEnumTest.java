@@ -2,12 +2,10 @@ package org.autogui.test.swing.table;
 
 import org.autogui.GuiIncluded;
 import org.autogui.base.mapping.GuiMappingContext;
-import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.base.type.GuiTypeObject;
 import org.autogui.swing.GuiSwingMapperSet;
-import org.autogui.swing.GuiSwingViewLabel;
 import org.autogui.swing.table.*;
 import org.autogui.swing.util.PopupExtension;
 import org.autogui.test.swing.GuiSwingTestCase;
@@ -18,7 +16,6 @@ import org.junit.Test;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -172,6 +169,33 @@ public class GuiSwingTableColumnEnumTest extends GuiSwingTestCase {
         Assert.assertEquals("set sub-menu action applied to selected rows",
                 TestEnum.Again, obj.values.get(2));
     }
+
+
+    @Test
+    public void testPasteAction() {
+        runGet(this::createTable);
+        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                runGet(() -> objColumn.getTableColumn().getCellRenderer());
+        GuiSwingTableColumnEnum.ColumnEnumPane pane = (GuiSwingTableColumnEnum.ColumnEnumPane) renderer.getComponent();
+        Action menu = (Action) convertRowsAction(
+                findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingTableColumnString.LabelTextPasteAllAction.class));
+
+        setClipboardText(TestEnum.World.name() + "\n" + TestEnum.Hello.name());
+
+        run(() -> table.setRowSelectionInterval(0, 0));
+        run(() -> table.addRowSelectionInterval(2, 2));
+        run(() -> menu.actionPerformed(null));
+
+        System.err.println(obj.values);
+        Assert.assertEquals("set paste action applied to selected rows",
+                TestEnum.World, obj.values.get(0));
+        Assert.assertEquals("set paste action applied to selected rows",
+                TestEnum.World, obj.values.get(1));
+        Assert.assertEquals("set paste action applied to selected rows",
+                TestEnum.Hello, obj.values.get(2));
+    }
+
+
 
     public Object convertRowsAction(Object menu) {
         return new ObjectTableColumnValue.CollectionRowsActionBuilder(table, objColumn, PopupExtension.MENU_FILTER_IDENTITY).convert(menu);
