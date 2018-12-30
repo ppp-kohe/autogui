@@ -22,7 +22,7 @@ The project uses [apache-maven](http://maven.apache.org) and depends on Java 8 o
 
 ```bash
   $ mvn package
-   # the command will generates target/autogui-1.1-SNAPSHOT.jar
+   # the command will generates target/autogui-1.1.jar
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
@@ -36,7 +36,7 @@ To use the library in your apaceh-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.1</version>
     </dependency>
 ```
 
@@ -69,7 +69,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.1-SNAPSHOT.jar
+/env -class-path target/autogui-1.1.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
@@ -162,6 +162,7 @@ open module your.module { //adds the "open" modifier to the your module, or...
                                   //you can also use "opens your.pack to autogui;"
     
     requires autogui;   //allows your code to access the library.
+    //Note that autogui depends on JDK's java.desktop, java.datatransfer and java.prefs
 }
 ```
 
@@ -514,11 +515,18 @@ An returned embedded component will be set to as the sub-compoennt of the owner 
 
 #### Embedding component to your Swing applications
 
-To embed object GUI created by Autogui into your Swing applications, you can use 
+To embed object GUI created by the library into your Swing applications, you can use 
 [`org.autogui.swing.GuiSwingRootPane.createForObject(o)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/GuiSwingRootPane.html#createForObject(java.lang.Object)).
 
 Please see 
 [`src/test/java/org/autogui/demo/ObjectEmbeddedDemo.java`](https://github.com/ppp-kohe/autogui/tree/master/src/test/java/org/autogui/demo/ObjectEmbeddedDemo.java).
+
+To run the example:
+
+```bash
+ mvn test-compile exec:java -Dexec.classpathScope=test \
+    -Dexec.mainClass=org.autogui.demo.ObjectEmbeddedDemo
+```
 
 ### Collection table
 
