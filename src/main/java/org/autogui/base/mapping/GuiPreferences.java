@@ -741,11 +741,23 @@ public class GuiPreferences {
                 String v = store.getString("value", "null");
                 this.value = fromJsonSource(v);
 
-                String timeVal = store.getString("time", "null");
-                Object timeJson = JsonReader.create(timeVal).parseValue();
-                if (timeJson != null) {
+                String timeVal = store.getString("time", null);
+                //Note: the time is stored directly as a string created by Instant#toString()
+                 //  thus the following code is probably needless and as a precaution.
+                if (timeVal != null && timeVal.startsWith("\"")) { //it seems that the string is a JSON string.
                     try {
-                        this.time = Instant.parse((String) timeJson);
+                        Object timeJson = JsonReader.create(timeVal).parseValue();
+                        if (timeJson instanceof String) {
+                            timeVal = ((String) timeJson);
+                        }
+                    } catch (Exception ex) {
+                        //
+                    }
+                }
+
+                if (timeVal != null) {
+                    try {
+                        this.time = Instant.parse(timeVal);
                     } catch (Exception ex) {
                         //
                     }
@@ -780,6 +792,7 @@ public class GuiPreferences {
             if (index != -1) {
                 store.putInt("index", index);
             }
+
             store.putString("time", time.toString());
         }
 
