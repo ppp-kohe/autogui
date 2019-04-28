@@ -671,12 +671,12 @@ public class GuiMappingContext {
 
     public boolean isHistoryValueSupported() {
         return isReprValue()
-                && getReprValue().isHistoryValueSupported();
+                && getReprValue().isHistoryValueSupported(this);
     }
 
     public boolean isHistoryValueStored(Object value) {
         return isReprValue()
-                && getReprValue().isHistoryValueStored(value);
+                && getReprValue().isHistoryValueStored(this, value);
     }
 
     //////////////////////

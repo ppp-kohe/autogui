@@ -52,6 +52,7 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
             @Override
             public void menuCanceled(MenuEvent e) { }
         });
+        setEnabled(context.isHistoryValueSupported());
     }
 
     @Override
@@ -70,6 +71,10 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
 
     public void loadItems() {
         removeAll();
+        if (!isEnabled()) {
+            return;
+        }
+
         boolean added = false;
         List<GuiPreferences.HistoryValueEntry> prefEs = context.getPreferences().getHistoryValues();
         List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefEs);

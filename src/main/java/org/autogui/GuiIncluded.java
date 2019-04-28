@@ -126,4 +126,9 @@ public @interface GuiIncluded {
      *  </ul>
      */
     String keyStroke() default "";
+
+    /**
+     * @return if true, enables history-saving for the target property
+     */
+    boolean history() default true;
 }

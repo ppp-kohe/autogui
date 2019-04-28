@@ -78,7 +78,7 @@ public class GuiReprValue implements GuiRepresentation {
 
     public void addHistoryValue(GuiMappingContext context, Object value) {
         try {
-            if (isHistoryValueSupported()) {
+            if (isHistoryValueSupported(context)) {
                 context.getPreferences().addHistoryValue(value);
                 context.getPreferences().setCurrentValue(value);
             }
@@ -412,6 +412,19 @@ public class GuiReprValue implements GuiRepresentation {
      */
     public boolean isHistoryValueStored(Object value) {
         return isHistoryValueSupported();
+    }
+
+    public boolean isHistoryValueStored(GuiMappingContext context, Object value) {
+        return isHistoryValueSupported(context);
+    }
+
+    public boolean isHistoryValueSupported(GuiMappingContext context) {
+        if (context.isTypeElementProperty() &&
+            !context.getTypeElementAsProperty().isHistoryValueSupported()) {
+            return false;
+        } else {
+            return isHistoryValueSupported();
+        }
     }
 
     /**

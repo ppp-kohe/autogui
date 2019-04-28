@@ -41,6 +41,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
 
     protected String description;
     protected String keyStroke;
+    protected Boolean history;
 
     public GuiTypeMemberProperty(String name) {
         super(name);
@@ -299,5 +300,30 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         return e != null && e.isAnnotationPresent(GuiIncluded.class) ?
                 e.getAnnotation(GuiIncluded.class).keyStroke() :
                 "";
+    }
+
+    public boolean isHistoryValueSupported() {
+        if (history == null) {
+            history = select(
+                    history(getField()),
+                    history(getGetter()),
+                    history(getSetter()));
+        }
+        return history;
+    }
+
+    private boolean select(Boolean... bs) {
+        for (Boolean b : bs) {
+            if (b != null) {
+                return b;
+            }
+        }
+        return true;
+    }
+
+    private Boolean history(AnnotatedElement e) {
+        return e != null && e.isAnnotationPresent(GuiIncluded.class) ?
+                e.getAnnotation(GuiIncluded.class).history() :
+                null;
     }
 }

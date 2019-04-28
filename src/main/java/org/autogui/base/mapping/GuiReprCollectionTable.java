@@ -268,7 +268,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
 
     public List<?> toUpdateValue(GuiMappingContext context, Object newValue) {
         if (newValue == null) {
-            return Collections.emptyList();
+            return listConverter.toList(null); //appropriate empty-list for each listConverter
         } else {
             return (List<?>) newValue;
         }
