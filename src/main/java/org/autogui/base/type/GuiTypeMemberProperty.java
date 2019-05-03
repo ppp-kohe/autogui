@@ -276,27 +276,27 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         return keyStroke;
     }
 
-    private String select(String... ss) {
+    protected String select(String... ss) {
         for (String s : ss) {
-            if (!s.isEmpty()) {
+            if (s != null && !s.isEmpty()) {
                 return s;
             }
         }
         return "";
     }
 
-    private String join(String a, String b) {
+    protected String join(String a, String b) {
         return a.isEmpty() ? b :
                 (b.isEmpty() ? a : a + "\t" + b);
     }
 
-    private String description(AnnotatedElement e) {
+    protected String description(AnnotatedElement e) {
         return e != null && e.isAnnotationPresent(GuiIncluded.class) ?
                 e.getAnnotation(GuiIncluded.class).description() :
                 "";
     }
 
-    private String keyStroke(AnnotatedElement e) {
+    protected String keyStroke(AnnotatedElement e) {
         return e != null && e.isAnnotationPresent(GuiIncluded.class) ?
                 e.getAnnotation(GuiIncluded.class).keyStroke() :
                 "";
@@ -312,7 +312,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         return history;
     }
 
-    private boolean select(Boolean... bs) {
+    protected boolean select(Boolean... bs) {
         for (Boolean b : bs) {
             if (b != null) {
                 return b;
@@ -321,7 +321,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         return true;
     }
 
-    private Boolean history(AnnotatedElement e) {
+    protected Boolean history(AnnotatedElement e) {
         return e != null && e.isAnnotationPresent(GuiIncluded.class) ?
                 e.getAnnotation(GuiIncluded.class).history() :
                 null;

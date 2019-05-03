@@ -41,7 +41,7 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
     public static void main(String[] args) {
         GuiSwingLogManagerTest t = new GuiSwingLogManagerTest();
         t.setUp();
-        t.testLogProgress();
+        t.testLogErrorExpand();
     }*/
 
     GuiSwingLogManager manager;

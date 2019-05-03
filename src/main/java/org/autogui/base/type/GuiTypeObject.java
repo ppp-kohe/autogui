@@ -14,17 +14,20 @@ import java.util.stream.Stream;
 public class GuiTypeObject extends GuiTypeValue {
     protected List<GuiTypeMemberProperty> properties;
     protected List<GuiTypeMemberAction> actions;
+    protected List<GuiTypeMemberPropertyNotifier> notifiers;
 
     public GuiTypeObject(Class<?> type) {
         super(type);
         this.properties = new ArrayList<>();
         this.actions = new ArrayList<>();
+        this.notifiers = new ArrayList<>();
     }
 
     public GuiTypeObject(String name) {
         super(name);
         this.properties = new ArrayList<>();
         this.actions = new ArrayList<>();
+        this.notifiers = new ArrayList<>();
     }
 
     /** @return property members */
@@ -35,6 +38,11 @@ public class GuiTypeObject extends GuiTypeValue {
     /** @return action members */
     public List<GuiTypeMemberAction> getActions() {
         return actions;
+    }
+
+    /** @return notifier setters */
+    public List<GuiTypeMemberPropertyNotifier> getNotifiers() {
+        return notifiers;
     }
 
     /**
@@ -53,6 +61,10 @@ public class GuiTypeObject extends GuiTypeValue {
 
     public void setActions(List<GuiTypeMemberAction> actions) {
         this.actions = actions;
+    }
+
+    public void setNotifiers(List<GuiTypeMemberPropertyNotifier> notifiers) {
+        this.notifiers = notifiers;
     }
 
     /** @return properties and actions */
@@ -80,6 +92,17 @@ public class GuiTypeObject extends GuiTypeValue {
         this.actions.addAll(Arrays.asList(actions));
         for (GuiTypeMemberAction action : actions) {
             action.setOwner(this);
+        }
+        return this;
+    }
+
+    public GuiTypeObject addNotifiers(GuiTypeMemberPropertyNotifier... notifiers) {
+        if (this.notifiers == null) {
+            this.notifiers = new ArrayList<>();
+        }
+        this.notifiers.addAll(Arrays.asList(notifiers));
+        for (GuiTypeMemberPropertyNotifier property : notifiers) {
+            property.setOwner(this);
         }
         return this;
     }

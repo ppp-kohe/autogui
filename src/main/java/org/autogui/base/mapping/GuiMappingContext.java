@@ -1,14 +1,18 @@
 package org.autogui.base.mapping;
 
+import org.autogui.GuiNotifierSetter;
 import org.autogui.base.log.GuiLogManager;
 import org.autogui.base.type.*;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -198,7 +202,7 @@ public class GuiMappingContext {
         this.typeElement = typeElement;
         this.representation = representation;
         this.parent = parent;
-        this.source = source;
+        setSource(source);
     }
 
     public GuiTaskClock getContextClock() {
@@ -367,13 +371,20 @@ public class GuiMappingContext {
         return (GuiTypeValue) typeElement;
     }
 
+    public GuiTypeObject getTypeElementObject() {
+        return (GuiTypeObject) typeElement;
+    }
 
     ///////////////////////
 
     /** only set the source value
      * @param source  the source */
     public void setSource(GuiSourceValue source) {
+        boolean eq = Objects.equals(this.source, source);
         this.source = source;
+        if (!eq && !source.isNone()) {
+            setNotifiers(source.getValue());
+        }
     }
 
     /**
@@ -853,6 +864,73 @@ public class GuiMappingContext {
             return getReprAction().executeAction(this, targetSpecifier);
         } else {
             throw new UnsupportedOperationException("" + getRepresentation());
+        }
+    }
+
+    ////////////////////////
+
+    /**
+     * set appropriate notifiers to the target if defined
+     * @param target the target object obtained from the source of the context. nullable
+     */
+    public void setNotifiers(Object target) {
+        if (target != null && isTypeElementObject()) {
+            GuiTypeObject obj = getTypeElementObject();
+            obj.getNotifiers()
+                    .forEach(n -> setNotifier(target, n));
+        }
+    }
+
+    public void setNotifier(Object target, GuiTypeMemberPropertyNotifier notifier) {
+        try {
+            if (notifier.isTargetSelf()) {
+                Runnable r = getNotifierForTarget(false);
+                execute(() -> notifier.executeSet(target, r));
+            } else if (notifier.isTargetRoot()) {
+                Runnable r = getNotifierForTarget(true);
+                execute(() -> notifier.executeSet(target, r));
+            } else {
+                GuiMappingContext child = getChildByName(notifier.getTargetName());
+                if (child != null) {
+                    Runnable r = child.getNotifierForTarget(false);
+                    execute(() -> notifier.executeSet(target, r));
+                }
+            }
+        } catch (Throwable ex) {
+            errorWhileUpdateSource(ex);
+        }
+    }
+
+    public Runnable getNotifierForTarget(boolean fromRoot) {
+        return new ContextNotifier(this, fromRoot);
+    }
+
+    /**
+     * a runnable callback passed to the target object.
+     *  the run method of the class clears and updates the associated context
+     */
+    public static class ContextNotifier implements Runnable {
+        protected GuiMappingContext context;
+        protected boolean root;
+
+        public ContextNotifier(GuiMappingContext context, boolean root) {
+            this.context = context;
+            this.root = root;
+        }
+
+        public GuiMappingContext getContext() {
+            return context;
+        }
+
+        @Override
+        public void run() {
+            if (root) {
+                context.getRoot().clearSourceSubTree();
+                context.updateSourceFromRoot();
+            } else {
+                context.clearSourceSubTree();
+                context.updateSourceSubTree();
+            }
         }
     }
 }

@@ -333,7 +333,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         @Override
         public GuiLogEntry getElementAt(int index) {
-            return entries.get(index);
+            return index < entries.size() ? entries.get(index) : null;
         }
 
         public int getRowCount() {

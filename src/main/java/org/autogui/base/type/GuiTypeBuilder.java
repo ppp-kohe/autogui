@@ -1,6 +1,7 @@
 package org.autogui.base.type;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiNotifierSetter;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -196,8 +197,13 @@ public class GuiTypeBuilder {
                         .fields.add(f));
 
         listMethods(cls).stream()
-                .filter(this::isMemberMethod)
+                .filter(m -> isMemberMethod(m) && !isNotifierSetterMethod(m))
                 .forEachOrdered(m -> definitionsMap.computeIfAbsent(getMemberNameFromMethod(m), MemberDefinitions::new)
+                        .methods.add(m));
+
+        listMethods(cls).stream()
+                .filter(this::isNotifierSetterMethod)
+                .forEachOrdered(m -> definitionsMap.computeIfAbsent(getMemberNameFromMethod(m), MemberDefinitionsForNotifier::new)
                         .methods.add(m));
 
         definitionsMap.values()
@@ -205,9 +211,11 @@ public class GuiTypeBuilder {
 
         objType.getProperties().sort(Comparator.comparing(GuiTypeMember::getOrdinal));
         objType.getActions().sort(Comparator.comparing(GuiTypeMember::getOrdinal));
+        objType.getNotifiers().sort(Comparator.comparing(GuiTypeMember::getOrdinal));
 
         ((ArrayList<?>) objType.getProperties()).trimToSize();
         ((ArrayList<?>) objType.getActions()).trimToSize();
+        ((ArrayList<?>) objType.getNotifiers()).trimToSize();
 
         return objType;
     }
@@ -243,7 +251,6 @@ public class GuiTypeBuilder {
             }
             return g;
         }
-
     }
 
     protected void put(Type type, GuiTypeElement e) {
@@ -274,7 +281,11 @@ public class GuiTypeBuilder {
         Method setter = definitions.getLast(this::isSetterMethod);
         if (fld != null || setter != null || getter != null) {
             //property
-            createMemberProperty(objType, definitions.name, fld, getter, setter);
+            if (definitions instanceof MemberDefinitionsForNotifier) {
+                createMemberPropertyNotifier(objType, definitions.name, fld, getter, setter);
+            } else {
+                createMemberProperty(objType, definitions.name, fld, getter, setter);
+            }
         } else {
             for (Method method : definitions.methods) {
                 if (isActionMethod(method)) {
@@ -286,9 +297,21 @@ public class GuiTypeBuilder {
         }
     }
 
+
     public void createMemberProperty(GuiTypeObject objType, String name, Field fld, Method getter, Method setter) {
-        //property
         GuiTypeMemberProperty property = new GuiTypeMemberProperty(name);
+        createMemberProperty(objType, name, fld, getter, setter, property);
+        objType.getProperties().add(property);
+    }
+
+    public void createMemberPropertyNotifier(GuiTypeObject objType, String name, Field fld, Method getter, Method setter) {
+        GuiTypeMemberPropertyNotifier notifier = new GuiTypeMemberPropertyNotifier(name);
+        createMemberProperty(objType, name, fld, getter, setter, notifier);
+        objType.getNotifiers().add(notifier);
+    }
+
+    public void createMemberProperty(GuiTypeObject objType, String name, Field fld, Method getter, Method setter, GuiTypeMemberProperty property) {
+        //property
         property.setOwner(objType);
 
         Type type = null;
@@ -317,8 +340,6 @@ public class GuiTypeBuilder {
                 indices.stream()
                         .mapToInt(Integer::intValue)
                         .min().orElse(Short.MAX_VALUE), name));
-
-        objType.getProperties().add(property);
     }
 
     public OptionalInt getMemberOrdinalIndex(Method m) {
@@ -532,6 +553,22 @@ public class GuiTypeBuilder {
             return Object[].class; //do not support
         } else {
             return Object.class;
+        }
+    }
+
+    /**
+     * @param m the tested method
+     * @return true if the method is non-static and has {@link GuiNotifierSetter} with taking a {@link Runnable} argument
+     */
+    public boolean isNotifierSetterMethod(Method m) {
+        return m.isAnnotationPresent(GuiNotifierSetter.class) && !Modifier.isStatic(m.getModifiers()) &&
+                m.getParameterCount() == 1 &&
+                m.getParameterTypes()[0].equals(Runnable.class);
+    }
+
+    public static class MemberDefinitionsForNotifier extends MemberDefinitions {
+        public MemberDefinitionsForNotifier(String name) {
+            super(name);
         }
     }
 
