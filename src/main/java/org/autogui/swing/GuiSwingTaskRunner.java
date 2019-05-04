@@ -72,7 +72,7 @@ public class GuiSwingTaskRunner {
         if (context == null || !context.getRepresentation().isTaskRunnerUsedFor(task)) {
             return executeContextTaskWithContext(task, afterTask);
         } else {
-            ScheduledExecutorService taskRunner = context.getTaskRunner();
+            GuiMappingContext.ContextExecutorService taskRunner = context.getTaskRunner();
             Future<RetType> ret = taskRunner.submit(taskWithThreadFlag(task));
             try {
                 RetType value = ret.get(2, TimeUnit.SECONDS);

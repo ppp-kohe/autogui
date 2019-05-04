@@ -62,6 +62,16 @@ public class BackgroundUpdateDemo {
     }
 
     @GuiIncluded
+    public void startBlocking() throws Exception {
+        for (int i = 0; i < 10; ++i) {
+            System.err.println("blocking " + i);
+            update();
+            Thread.sleep(1000);
+        }
+        System.err.println("finish");
+    }
+
+    @GuiIncluded
     public static class BackgroundRun implements Runnable {
         AtomicInteger count = new AtomicInteger();
         Instant time = Instant.now();

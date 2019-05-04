@@ -1,18 +1,13 @@
 package org.autogui.base.mapping;
 
-import org.autogui.GuiNotifierSetter;
 import org.autogui.base.log.GuiLogManager;
 import org.autogui.base.type.*;
 
-import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -64,7 +59,7 @@ public class GuiMappingContext {
     protected GuiSourceValue source;
     protected List<SourceUpdateListener> listeners = Collections.emptyList();
 
-    protected ScheduledExecutorService taskRunner;
+    protected ContextExecutorService taskRunner;
     protected GuiPreferences preferences;
     protected ScheduledTaskRunner<DelayedTask> delayedTaskRunner;
 
@@ -692,24 +687,27 @@ public class GuiMappingContext {
 
     //////////////////////
 
+    /**
+     * flag for changing the type of {@link #taskRunner}:
+     *  the default is false and then {@link ContextExecutorServiceForNotifier} is used.
+     *  If the flag is set to true before the first call of {@link #getTaskRunner()},
+     *    then {@link ContextExecutorServiceSingleThread} is used.
+     */
+    public static boolean taskRunnerSingleThread = false;
+
     /** @return taskRunner taken from parent context or single thread executor in the root.
      *   */
-    public ScheduledExecutorService getTaskRunner() {
+    public ContextExecutorService getTaskRunner() {
         if (taskRunner == null) {
             GuiMappingContext parent = getParent();
             if (parent != null) {
                 taskRunner = parent.getTaskRunner();
             } else {
-                taskRunner = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-                    ThreadFactory defaultFactory = Executors.defaultThreadFactory();
-                    @Override
-                    public Thread newThread(Runnable r) {
-                        Thread th = defaultFactory.newThread(r);
-                        th.setDaemon(true);
-                        th.setName(GuiMappingContext.class.getSimpleName() + "-" + th.getName());
-                        return th;
-                    }
-                });
+                if (taskRunnerSingleThread) {
+                    taskRunner = new ContextExecutorServiceSingleThread();
+                } else {
+                    taskRunner = new ContextExecutorServiceForNotifier();
+                }
             }
         }
         return taskRunner;
@@ -924,6 +922,11 @@ public class GuiMappingContext {
 
         @Override
         public void run() {
+            context.getTaskRunner()
+                    .submit(() -> {runBody(); return (Void) null;});
+        }
+
+        public void runBody() {
             if (root) {
                 context.getRoot().clearSourceSubTree();
                 context.updateSourceFromRoot();
@@ -931,6 +934,216 @@ public class GuiMappingContext {
                 context.clearSourceSubTree();
                 context.updateSourceSubTree();
             }
+        }
+    }
+
+    /**
+     * a sub-set of {@link ExecutorService} as the returned type of {@link #getTaskRunner()}
+     */
+    public interface ContextExecutorService {
+        /**
+         * submit a task v
+         * @param v submitted task
+         * @param <V> the returned type of the task
+         * @return future of the task
+         * @see ExecutorService#submit(Callable)
+         */
+        <V> Future<V> submit(Callable<V> v);
+
+        /**
+         * shut down the service
+         * @see ExecutorService#shutdown()
+         */
+        void shutdown();
+    }
+
+    /**
+     * a simple executor-service wrapping single-thread executor
+     *  by {@link Executors#newSingleThreadScheduledExecutor(ThreadFactory)}
+     */
+    public static class ContextExecutorServiceSingleThread implements ContextExecutorService {
+        protected ExecutorService service;
+
+        public ContextExecutorServiceSingleThread(ExecutorService service) {
+            this.service = service;
+        }
+
+        public ContextExecutorServiceSingleThread() {
+            this(Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+                ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread th = defaultFactory.newThread(r);
+                    th.setDaemon(true);
+                    th.setName(GuiMappingContext.class.getSimpleName() + "-" + th.getName());
+                    return th;
+                }
+            }));
+        }
+
+        @Override
+        public <V> Future<V> submit(Callable<V> v) {
+            return service.submit(v);
+        }
+
+        @Override
+        public void shutdown() {
+            service.shutdown();
+        }
+    }
+
+    /**
+     * an executor-service that always executes only one submitted task and
+     *    last one has high-priority.
+     *    It manages a series of single threaded executors by a linked-list {@link ContextExecutorCell},
+     *      and when a new task is submitted, a new executor is pushed to the list and
+     *        a previous executor running an existing task is suspended by {@link Thread#suspend()}.
+     *       After the task is finished, the suspended executor is resumed by {@link Thread#resume()}.
+     *     Those suspend and resume are deprecated by danger of deadlock.
+     *     To support submitting a new task from an existing task, it also manages a cached thread-pool executor.
+     *
+     */
+    public static class ContextExecutorServiceForNotifier implements ContextExecutorService {
+        protected ContextExecutorCell service;
+        protected ExecutorService launcher;
+        protected AtomicInteger running = new AtomicInteger(0);
+
+        public ContextExecutorServiceForNotifier() {
+            synchronized (this) {
+                service = new ContextExecutorCell(null);
+            }
+            launcher = Executors.newCachedThreadPool();
+        }
+
+        @Override
+        public synchronized <V> Future<V> submit(Callable<V> v) {
+            if (running.get() > 0) { //there is a running task
+                if (service.isUnderCurrentThread()) { //suspending the existing task means stopping the current thread
+                    return launcher.submit(() -> submitNext(v).get());
+                } else {
+                    return submitNext(v);
+                }
+            } else {
+                return service.submit(convertTask(v));
+            }
+        }
+
+        protected <V> Future<V> submitNext(Callable<V> v) {
+            synchronized (this) {
+                service.suspend(); //suspend the last task
+                service = service.getNext(); //spawn a new thread
+            }
+            return service.submit(convertTask(v));
+        }
+
+        protected <V> Callable<V> convertTask(Callable<V> task) {
+            return () -> {
+                try {
+                    running.incrementAndGet();
+                    return task.call();
+                } finally {
+                    synchronized (ContextExecutorServiceForNotifier.this) {
+                        running.decrementAndGet();
+                        if (service.hasPrevious()) { //there is a suspended task
+                            service = service.getPrevious();  //go back
+                            service.resume();
+                        }
+                    }
+                }
+            };
+        }
+
+        @Override
+        public void shutdown() {
+            service.shutdown();
+            launcher.shutdown();
+        }
+    }
+
+    /**
+     * a cell of single-thread executor list
+     */
+    public static class ContextExecutorCell implements ContextExecutorService {
+        protected ContextExecutorCell previous;
+        protected ContextExecutorCell next;
+        protected ExecutorService service;
+        protected AtomicReference<Thread> thread = new AtomicReference<>();
+
+        public ContextExecutorCell(ContextExecutorCell previous) {
+            this.previous = previous;
+            service = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread th = Executors.defaultThreadFactory().newThread(r);
+                    th.setDaemon(true);
+                    th.setName(GuiMappingContext.class.getSimpleName() + "-" + th.getName());
+                    thread.set(th);
+                    return th;
+                }
+            });
+            service.execute(() -> {}); //obtains the thread
+            try {
+                while (thread.get() == null) {
+                    Thread.sleep(10);
+                }
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        public boolean isUnderCurrentThread() {
+            return thread.get() == Thread.currentThread();
+        }
+
+        public boolean hasPrevious() {
+            return previous != null;
+        }
+
+        public ContextExecutorCell getPrevious() {
+            if (previous == null) {
+                return this;
+            } else {
+                return previous;
+            }
+        }
+
+        public ContextExecutorCell getNext() {
+            if (next == null) {
+                next = new ContextExecutorCell(this);
+            }
+            return next;
+        }
+
+        @Override
+        public <V> Future<V> submit(Callable<V> v) {
+            return service.submit(v);
+        }
+
+        @SuppressWarnings("deprecation")
+        public void suspend() {
+            thread.get().suspend();
+        }
+
+        @SuppressWarnings("deprecation")
+        public void resume() {
+            thread.get().resume();
+        }
+
+        @Override
+        public void shutdown() {
+            ContextExecutorCell cell = this;
+            List<ContextExecutorCell> cells = new ArrayList<>();
+            while (cell != null) {
+                cells.add(cell);
+                cell = cell.previous;
+            }
+            Collections.reverse(cells);
+            cell = next;
+            while (cell != null) {
+                cells.add(cell);
+                cell = cell.next;
+            }
+            cells.forEach(c -> c.service.shutdown());
         }
     }
 }
