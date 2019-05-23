@@ -81,7 +81,12 @@ public class GuiTypeBuilder {
                 return createFromClass(rawType, pType);
             }
         } else {
-            return null;
+            Class<?> rawType = getClass(type);
+            if (rawType != null) {
+                return createFromClass(rawType, type);
+            } else {
+                return null;
+            }
         }
     }
 
