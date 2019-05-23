@@ -1028,27 +1028,27 @@ public class GuiMappingContext {
             }
         }
 
-        protected <V> Future<V> submitNext(Callable<V> v) {
-            synchronized (this) {
-                service.suspend(); //suspend the last task
-                service = service.getNext(); //spawn a new thread
-            }
+        protected synchronized <V> Future<V> submitNext(Callable<V> v) {
+            service.suspend(); //suspend the last task
+            service = service.getNext(); //spawn a new thread
             return service.submit(convertTask(v));
         }
 
+        protected synchronized void resumePrevious() {
+            running.decrementAndGet();
+            if (service.hasPrevious()) { //there is a suspended task
+                service = service.getPrevious();  //go back
+                service.resume();
+            }
+        }
+
         protected <V> Callable<V> convertTask(Callable<V> task) {
+            running.incrementAndGet();
             return () -> {
                 try {
-                    running.incrementAndGet();
                     return task.call();
                 } finally {
-                    synchronized (ContextExecutorServiceForNotifier.this) {
-                        running.decrementAndGet();
-                        if (service.hasPrevious()) { //there is a suspended task
-                            service = service.getPrevious();  //go back
-                            service.resume();
-                        }
-                    }
+                    resumePrevious();
                 }
             };
         }
