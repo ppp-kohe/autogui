@@ -586,14 +586,16 @@ public class GuiTypeBuilder {
         public boolean isExcludedType(Class<?> cls) {
             return Modifier.isPrivate(cls.getModifiers()) ||
                     (cls.getName().startsWith("java.") ||
-                     cls.getName().startsWith("javax."));
+                     cls.getName().startsWith("javax.") ||
+                     cls.getName().startsWith("sun.") ||
+                     cls.getName().startsWith("com.sun."));
         }
 
         @Override
         public List<Field> listFields(Class<?> cls) {
             Class<?> p = cls;
             List<Field> fs = new ArrayList<>(Arrays.asList(p.getFields()));
-            while (p != null && !p.equals(Object.class)) {
+            while (p != null && !p.equals(Object.class) && !isExcludedType(p)) {
                 Arrays.stream(p.getDeclaredFields())
                         .filter(f -> fs.stream()
                                         .noneMatch(parent -> parent.getName().equals(f.getName())))
@@ -608,7 +610,7 @@ public class GuiTypeBuilder {
         public List<Method> listMethods(Class<?> cls) {
             Class<?> p = cls;
             List<Method> ms = new ArrayList<>(Arrays.asList(cls.getMethods()));
-            while (p != null && !p.equals(Object.class)) {
+            while (p != null && !p.equals(Object.class) && !isExcludedType(p)) {
                 Arrays.stream(p.getDeclaredMethods())
                     .filter(m -> ms.stream()
                             .noneMatch(parent -> match(parent, m)))

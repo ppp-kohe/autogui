@@ -1,5 +1,6 @@
 package org.autogui.base.mapping;
 
+import org.autogui.base.log.GuiLogManager;
 import org.autogui.base.mapping.GuiMappingContext.GuiSourceValue;
 import org.autogui.base.type.GuiTypeMemberProperty;
 import org.autogui.base.type.GuiTypeValue;
@@ -83,6 +84,18 @@ public class GuiReprValue implements GuiRepresentation {
                 context.getPreferences().setCurrentValue(value);
             }
         } catch (Throwable ex) {
+            errorWhileAddHistoryValue(context, value, ex);
+        }
+    }
+
+    public void errorWhileAddHistoryValue(GuiMappingContext context, Object value, Throwable ex) {
+        if (ex instanceof IllegalArgumentException) {
+            String str = "" + ex.getMessage();
+            if (str.length() > 100) {
+                str = str.substring(0, 100) + "...";
+            }
+            GuiLogManager.get().logFormat("ignore addHistoryValue: %s", str);
+        } else {
             context.errorWhileUpdateSource(ex);
         }
     }

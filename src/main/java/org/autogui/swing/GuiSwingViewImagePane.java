@@ -494,6 +494,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
+    public static final int SCALE_MAX_WIDTH = 30_000;
+    public static final int SCALE_MAX_HEIGHT = 30_000;
+
     public static class ImageScaleMouseWheel implements MouseWheelListener, ImageScale {
         protected PropertyImagePane pane;
         protected float currentZoom = 1.0f;
@@ -507,6 +510,12 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         public void setCurrentZoom(float currentZoom) {
+            Dimension imageSize = pane.getImageSize();
+            if (imageSize != null) {
+                double toMaxW = SCALE_MAX_WIDTH / imageSize.getWidth();
+                double toMaxH = SCALE_MAX_HEIGHT / imageSize.getHeight();
+                currentZoom = (float) Math.min(Math.min(toMaxW, toMaxH), currentZoom);
+            }
             this.currentZoom = currentZoom;
             pane.updateScale();
         }
