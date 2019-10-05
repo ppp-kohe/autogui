@@ -73,7 +73,7 @@ public class GuiTypeMemberPropertyNotifier extends GuiTypeMemberProperty {
 
     public String getNamePrefix(String tail, String name) {
         if (name != null && name.endsWith(tail)) {
-            String s = name.substring(0, tail.length());
+            String s = name.substring(0, name.length() - tail.length());
             if (s.length() > 1) {
                 return Character.toLowerCase(s.charAt(0)) + s.substring(1);
             } else if (s.length() == 1) {

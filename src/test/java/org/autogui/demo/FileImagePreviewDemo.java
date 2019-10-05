@@ -95,7 +95,7 @@ public class FileImagePreviewDemo {
             this.image = image;
         }
 
-        @GuiIncluded
+        @GuiIncluded(history = false)
         public Image getImage() {
             return image;
         }
@@ -117,7 +117,7 @@ public class FileImagePreviewDemo {
             return path;
         }
 
-        @GuiIncluded
+        @GuiIncluded(history = false)
         public Image getThumb() {
             if (thumb == null) {
                 String fn = path.getFileName().toString();

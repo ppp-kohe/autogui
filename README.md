@@ -18,11 +18,14 @@ $ git clone https://github.com/ppp-kohe/autogui.git
 $ cd autogui
 ```
 
-The project uses [apache-maven](http://maven.apache.org) and depends on Java 8 or later. 
+The project uses [apache-maven](http://maven.apache.org) and depends on a recent version of Java. 
+
+* -1.1.x : Java 8 or later
+* 1.2- : java 11 or later
 
 ```bash
-  $ mvn package
-   # the command will generates target/autogui-1.1.jar
+$ mvn package
+  # the command will generate target/autogui-1.2-SNAPSHOT.jar
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
@@ -36,7 +39,7 @@ To use the library in your apaceh-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.1</version>
+        <version>1.2-SNAPSHOT</version>
     </dependency>
 ```
 
@@ -69,7 +72,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.1.jar
+/env -class-path target/autogui-1.2-SNAPSHOT.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
@@ -100,9 +103,59 @@ For example:
 
 ```bash
  mvn test-compile exec:java -Dexec.classpathScope=test \
-    -Dexec.mainClass=org.autogui.demo.FileImagePreviewDemo
+    -Dexec.mainClass=org.autogui.demo.ImageFlipDemo
 ```
 
+ `ImageFlipDemo.java` is a bit interesting and useful example:
+
+```java
+package org.autogui.demo;
+
+import org.autogui.swing.AutoGuiShell;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+
+public class ImageFlipDemo {
+    public static void main(String[] args) {
+        AutoGuiShell.showLive(new ImageFlipDemo());
+    }
+    BufferedImage image;
+    File output = new File("output.png");
+    
+    void flipY() {
+        int w = image.getWidth();
+        int h = image.getHeight();
+        BufferedImage newImage = new BufferedImage(w, h, image.getType());
+        for (int y = 0; y < h; ++y) {
+            for (int x = 0; x < w; ++x) {
+                newImage.setRGB(x, h - y - 1, image.getRGB(x, y));
+            }
+        }
+        image = newImage;
+    }
+    
+    void save() throws Exception {
+        if (output.exists()) {
+            System.err.println("File already exists: " + output);
+            return;
+        } else {
+            ImageIO.write(image, "png", output);
+        }
+    }
+}
+```
+
+The program will show a GUI window like the following image:
+
+<img src="docs/images/image-flip-demo-h.png" srcset="docs/images/image-flip-demo-h.png 1x, docs/images/image-flip-deom.png 2x" alt="ImageFlipDemo">
+
+The displayed window has the following GUI components:
+
+* The image pane *Image* created from the field `BufferedImage image` : You can drag & drop an image file in order to supply an input image data. The dropped image will be automatically loaded as an `BufferedImage` object and displayed in the pane, and assigned to the field.
+* The action button *Flip Y*  craeted from the method `void flipY()` : After drop an image, you can click the button in order to flip Y corrdinate  of the image. The created `newImage` will be assigned to the `image` field. After the execution of the method, the image pane will show the flipped image.
+* The file name field *Output*  created from `File output` : You can put a name of saving the flipped image. The field Initially displays "output.png" as the initial value of the field. User input for the text field will change the field value to a new `File` object.
+* The action button *Save*  created from `void save()` : The action can write the flipped image as a new file specified by the Output field in the working directory.
 
 ## Strict mode with @GuiIncluded
 
@@ -115,6 +168,8 @@ The strict mode ...
 
 *  can be started by [`AutoGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html#showWindow(java.lang.Object))
 *  targets on[`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html) and `public` classes, properties and members
+
+The `ImageFlipDemo.java` is the following Java program:
 
 ```java
   import org.autogui.GuiIncluded;
@@ -153,18 +208,27 @@ With `AutoGuiShell.get().showWindow(o)`, you will need to attach the annotation 
 
 ## Using from modules
 
-If your code for binding with the library is defined as a member of a module which is introduced since Java 9, you will need open your code to the library. This is because the library relies on reflection APIs for accessing to your code. In a named module, the reflection APIs are restricted to *open* members.
+If your code for binding with the library is defined as a member of a module which is introduced since Java 9, you will need to open your code to the library. This is because the library relies on reflection APIs for accessing to your code. In a named module, the reflection APIs are restricted to *open* members. 
+
+The module name of the library is `org.autogui`.
+
+1. add the `open` modifier to your module declaration, or `exports` (or `opens`) your packages  ` to org.autogui;`
+2. `requires org.autogui;`
 
 ```java
 //your module-info.java
 open module your.module { //adds the "open" modifier to the your module, or...
-    exports your.pack to autogui; //exports your package to the library.
+    exports your.pack to org.autogui; //exports your package to the library.
                                   //you can also use "opens your.pack to autogui;"
     
-    requires autogui;   //allows your code to access the library.
-    //Note that autogui depends on JDK's java.desktop, java.datatransfer and java.prefs
+    requires org.autogui;   //allows your code to access the library.
+    //Note that org.autogui depends on JDK's java.desktop, java.datatransfer and java.prefs
 }
 ```
+
+The earlier versions (-1.1) of the library was an *automatic module*, which does not contain `module-info.class` becase of supporting Java 8. You can add the jar of the libarry to both the class-path and the module-path. But, an automatic module cannot be included in jlink's modules.
+
+The recent versions (1.2-) has the `module-info.class` and requires Java 11 or later. It can still be added to both the class-path and the module-path, and can also be assembled as a custom runtime image generated by jlink. (But the library still relies on reflection APIs, so you should carefully consider when adopting it in your practical products.)
 
 ## Supported types and components
 
@@ -437,7 +501,7 @@ A *property* can be defiend as 1) an accessible field definition or 2) a pair of
 <img src="docs/images/image-prop-h.png" srcset="docs/images/image-prop-h.png 1x, docs/images/image-prop.png 2x" alt="Properties">
 
 A *getter* method is a method whose name starts with `get` or `is` for booleans and which does not take any arguments with returning a value of the type of the property.
-A *setter* method is a method whose name starts with `set` and which does takes only 1 argument of the type of the property value.
+A *setter* method is a method whose name starts with `set` and which takes only one argument of the type of the property value.
 
 If a property is defined only a getter method, then the property value becomes *read-only*.
 
@@ -510,7 +574,7 @@ And initialization of a field will be executed under a non event-dispatching thr
 
 Thus the user code of the property for an embedded component should be defined as *a getter method that caches the returned component as a field*. 
 For a property of the embedded component, the library executes the method within the event-dispatching thread.
-An returned embedded component will be set to as the sub-compoennt of the owner object-pane.
+An returned embedded component will be added as a sub-compoennt of the owner object-pane.
 
 
 #### Embedding component to your Swing applications
