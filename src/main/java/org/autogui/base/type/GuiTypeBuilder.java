@@ -270,7 +270,12 @@ public class GuiTypeBuilder {
     }
 
     public boolean isExcludedType(Class<?> cls) {
-        return !cls.isAnnotationPresent(GuiIncluded.class);
+        return !isGuiIncludedEnabled(cls);
+    }
+
+    public boolean isGuiIncludedEnabled(AnnotatedElement e) {
+        return e.isAnnotationPresent(GuiIncluded.class) &&
+                e.getAnnotation(GuiIncluded.class).value();
     }
 
     /** if the definitions has a field, a getter or a setter, create a property.
@@ -383,7 +388,7 @@ public class GuiTypeBuilder {
      * @param f the tested field
      * @return true if {@link GuiIncluded} is attached and non-static */
     public boolean isMemberField(Field f) {
-        return f.isAnnotationPresent(GuiIncluded.class) && !Modifier.isStatic(f.getModifiers());
+        return isGuiIncludedEnabled(f) && !Modifier.isStatic(f.getModifiers());
     }
 
     /**
@@ -402,7 +407,7 @@ public class GuiTypeBuilder {
      * @param m the tested method
      * @return true if {@link GuiIncluded} attached and non-static */
     public boolean isMemberMethod(Method m) {
-        return m.isAnnotationPresent(GuiIncluded.class) && !Modifier.isStatic(m.getModifiers());
+        return isGuiIncludedEnabled(m) && !Modifier.isStatic(m.getModifiers());
     }
 
     /**
@@ -609,16 +614,36 @@ public class GuiTypeBuilder {
         @Override
         public List<Method> listMethods(Class<?> cls) {
             Class<?> p = cls;
-            List<Method> ms = new ArrayList<>(Arrays.asList(cls.getMethods()));
-            while (p != null && !p.equals(Object.class) && !isExcludedType(p)) {
-                Arrays.stream(p.getDeclaredMethods())
-                    .filter(m -> ms.stream()
-                            .noneMatch(parent -> match(parent, m)))
-                    .filter(this::setAccessible)
-                    .forEach(ms::add);
+            List<Method> ms = new ArrayList<>();
+            while (p != null && !p.equals(Object.class)) {
+                if (isExcludedType(p)) {
+                    listMethodExcludeLibraryOverride(p, ms);
+                } else {
+                    listMethodsDeclared(p, ms);
+                }
+                Arrays.stream(p.getInterfaces())
+                        .flatMap(c -> Arrays.stream(c.getMethods()))
+                        .forEach(im ->
+                                ms.removeIf(em -> match(im, em) && !isGuiIncludedEnabled(em)));
                 p = p.getSuperclass();
             }
             return ms;
+        }
+
+        public void listMethodExcludeLibraryOverride(Class<?> p, List<Method> ms) {
+            Arrays.stream(p.getDeclaredMethods())
+                    .filter(m -> isMemberModifiers(m.getModifiers()))
+                    .forEach(im ->
+                            ms.removeIf(em -> match(im, em) && !isGuiIncludedEnabled(em)));
+        }
+
+        public void listMethodsDeclared(Class<?> p, List<Method> ms) {
+            Arrays.stream(p.getDeclaredMethods())
+                    .filter(m -> isMemberModifiers(m.getModifiers()))
+                    .filter(m -> ms.stream()
+                            .noneMatch(ex -> match(ex, m)))
+                    .filter(this::setAccessible)
+                    .forEach(ms::add);
         }
 
         public boolean setAccessible(AccessibleObject a) {
@@ -642,16 +667,26 @@ public class GuiTypeBuilder {
 
         @Override
         public boolean isMemberMethod(Method m) {
-            return isMemberModifiers(m.getModifiers()) && !m.getDeclaringClass().equals(Object.class);
+            return (isMemberModifiers(m.getModifiers()) && !m.getDeclaringClass().equals(Object.class)
+                    && !isGuiIncludedDisabled(m))
+                    || isGuiIncludedEnabled(m);
+        }
+
+        public boolean isGuiIncludedDisabled(AnnotatedElement e) {
+            return e.isAnnotationPresent(GuiIncluded.class) &&
+                    !e.getAnnotation(GuiIncluded.class).value();
         }
 
         @Override
         public boolean isMemberField(Field f) {
-            return isMemberModifiers(f.getModifiers()) && !f.getDeclaringClass().equals(Object.class);
+            return (isMemberModifiers(f.getModifiers()) && !f.getDeclaringClass().equals(Object.class)
+                    && !isGuiIncludedDisabled(f))
+                    || isGuiIncludedEnabled(f);
         }
 
         public boolean isMemberModifiers(int mod){
-            return !Modifier.isStatic(mod) && !Modifier.isPrivate(mod) && !Modifier.isProtected(mod);
+            return !Modifier.isStatic(mod) && !Modifier.isPrivate(mod) && !Modifier.isProtected(mod) &&
+                    !Modifier.isSynchronized(mod);
         }
     }
 }
