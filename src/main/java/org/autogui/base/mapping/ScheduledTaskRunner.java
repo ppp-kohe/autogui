@@ -20,9 +20,8 @@ public class ScheduledTaskRunner<EventType> {
     /** msec */
     protected long delay;
     protected ScheduledExecutorService executor;
+    protected boolean executorIsShared;
     protected Consumer<List<EventType>> consumer;
-
-    protected boolean shutdown;
 
     protected List<EventType> accumulatedEvents = new ArrayList<>();
     protected ScheduledFuture<?> scheduledTask;
@@ -35,7 +34,7 @@ public class ScheduledTaskRunner<EventType> {
 
     public ScheduledTaskRunner(long delay, Consumer<List<EventType>> consumer) {
         this.delay = delay;
-        executor = getSharedExecutor();
+        setExecutor(getSharedExecutor());
         this.consumer = consumer;
         debugInit();
     }
@@ -61,27 +60,58 @@ public class ScheduledTaskRunner<EventType> {
 
     public ScheduledTaskRunner(long delay, Consumer<List<EventType>> consumer, ScheduledExecutorService executor) {
         this.delay = delay;
-        this.executor = executor;
+        setExecutor(executor);
         this.consumer = consumer;
         debugInit();
     }
 
+    /**
+     * init the executor to the runner.
+     * if the executor is {@link #sharedExecutor}, {@link #executorIsShared} becomes true.
+     * Basically the executor will not be changed, but {@link #shutdown()} might cause renewal of {@link #sharedExecutor}.
+     *  Then {@link #schedule(Object, long)} will call the method again for obtaining a new {@link #sharedExecutor}.
+     * @param executor the executor to be set
+     * @since 1.2
+     */
+    protected void setExecutor(ScheduledExecutorService executor) {
+        runForShared(() -> {
+            this.executor = executor;
+            executorIsShared = (executor == sharedExecutor);
+        });
+    }
 
+    /**
+     * execute a task with synchronization for handling {@link #sharedExecutor}
+     * @param task a task with synchronization
+     * @since 1.2
+     */
+    public static void runForShared(Runnable task) {
+        synchronized (ScheduledTaskRunner.class) {
+            task.run();
+        }
+    }
 
     public static ScheduledExecutorService getSharedExecutor() {
-        if (sharedExecutor == null) {
-            sharedExecutor = Executors.newScheduledThreadPool(4, new ThreadFactory() {
-                ThreadFactory defaultFactory = Executors.defaultThreadFactory();
-                @Override
-                public Thread newThread(Runnable r) {
-                    Thread th = defaultFactory.newThread(r);
-                    th.setDaemon(true);
-                    th.setName(ScheduledTaskRunner.class.getSimpleName() + "-" + th.getName());
-                    return th;
-                }
-            });
-        }
-        sharedCount.incrementAndGet();
+        runForShared(() -> {
+            if (sharedExecutor != null && sharedExecutor.isShutdown()) {
+                sharedCount.set(0);
+                sharedExecutor = null;
+            }
+            if (sharedExecutor == null) {
+                sharedExecutor = Executors.newScheduledThreadPool(4, new ThreadFactory() {
+                    ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread th = defaultFactory.newThread(r);
+                        th.setDaemon(true);
+                        th.setName(ScheduledTaskRunner.class.getSimpleName() + "-" + th.getName());
+                        return th;
+                    }
+                });
+            }
+            sharedCount.incrementAndGet();
+        });
         return sharedExecutor;
     }
 
@@ -107,13 +137,33 @@ public class ScheduledTaskRunner<EventType> {
         schedule(event, delay);
     }
 
+    /**
+     * if {@link #enabled}, schedules a task for processing the event.
+     *  if another task is already scheduled, then the old task will be canceled.
+     *  So, subsequent tasks cause extending the delayed time.
+     *  <p>
+     *  If the {@link #executor} have been shutdown and the executor is the {@link #sharedExecutor},
+     *    then it will obtain a new shared executor by {@link #getSharedExecutor()}.
+     *    This means the method causes reincarnation of the shared executor.
+     * @param event an accumulated event processed by a delayed task
+     * @param delayMSec delaying milliseconds
+     */
     public synchronized void schedule(EventType event, long delayMSec) {
         if (enabled) {
             accumulatedEvents.add(event);
             if (scheduledTask != null) {
                 scheduledTask.cancel(false);
             }
-            scheduledTask = executor.schedule(this::run, delayMSec, TimeUnit.MILLISECONDS);
+            try {
+                scheduledTask = executor.schedule(this::run, delayMSec, TimeUnit.MILLISECONDS);
+            } catch (RejectedExecutionException re) {
+                if (executorIsShared) {
+                    setExecutor(getSharedExecutor()); //if shutdown, sharedCount is 0
+                    scheduledTask = executor.schedule(this::run, delayMSec, TimeUnit.MILLISECONDS);
+                } else {
+                    throw re;
+                }
+            }
         }
     }
 
@@ -148,10 +198,9 @@ public class ScheduledTaskRunner<EventType> {
     }
 
     public void shutdown() {
-        if (executor == sharedExecutor) {
-            if (!shutdown && sharedCount.decrementAndGet() <= 0) {
+        if (executorIsShared) {
+            if (sharedCount.decrementAndGet() <= 0 && !executor.isShutdown()) {
                 executor.shutdown();
-                shutdown = true;
             }
             debugShutdown();
         } else {

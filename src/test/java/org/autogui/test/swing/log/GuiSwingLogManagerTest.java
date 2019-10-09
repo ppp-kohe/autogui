@@ -22,6 +22,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.AttributedString;
@@ -146,10 +147,10 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
 
         @Override
         public void flush() throws IOException {
-            buffer.flip();
+            ((Buffer)buffer).flip();
             String data = StandardCharsets.UTF_8.decode(buffer).toString();
             lines.addAll(Arrays.asList(data.trim().split("\\n")));
-            buffer.clear();
+            ((Buffer)buffer).clear();
             if (out != null) {
                 out.flush();
             }

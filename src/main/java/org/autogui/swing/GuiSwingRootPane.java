@@ -485,6 +485,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     /**
      * cleaning up the pane and related components.
      * the owner window should call the method before closing (disposing) the window.
+     * <p>
+     * The method does not intend to reuse the pane after cleaning up.
      */
     @SuppressWarnings("rawtypes")
     public void cleanUp() {

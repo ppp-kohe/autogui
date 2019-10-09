@@ -36,7 +36,7 @@ import java.util.function.Supplier;
  *        ...&gt;     System.out.println(value);
  *        ...&gt;   }
  *        ...&gt; }
- *     jshell&gt; import autogui.swing.*
+ *     jshell&gt; import org.autogui.swing.*
  *     jshell&gt; AutoGuiShell.showLive(new Hello())
  * </pre>
  */
@@ -116,8 +116,8 @@ public class AutoGuiShell {
     /**
      *
      * if the current thread is the event dispatching thread, it will immediately create a window for o and return it.
-     * otherwise, it invoke the same task to the event dispatching thread and waits it.
-     *  the afterActionInEvent will be executed within in the event dispatching thread after creating the window.
+     * otherwise, it invokes the same task to the event dispatching thread and waits it.
+     *  the afterActionInEvent will be executed within the event dispatching thread after creating the window.
      * @param o the target object
      * @param appRoot if true, the returned window will clean-up windows and task-runners at closing of the window
      * @param afterActionInEvent null or an action with the created window, executed within the event dispatching thread
@@ -135,6 +135,15 @@ public class AutoGuiShell {
         });
     }
 
+    /**
+     * creates a window for o with relaxed type-binding,
+     * i.e. binding public and package-private members without {@link GuiIncluded} annotations.
+     * The created window is NOT app-root ({@link GuiSwingWindow#isApplicationRoot()}==false), thus
+     *    closing the window will not call {@link AutoCloseable#close()} to o.
+     *    In order to cause the close method, you can directly call {@link GuiSwingWindow#cleanUp()}.
+     * @param o the target object
+     * @return the created window for o
+     */
     public static GuiSwingWindow showLive(Object o) {
         GuiSwingWindow w = get().createWindowRelaxed(o);
         SwingUtilities.invokeLater(() -> displayLiveWindow(w));
