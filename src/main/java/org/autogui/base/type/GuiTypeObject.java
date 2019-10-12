@@ -67,7 +67,7 @@ public class GuiTypeObject extends GuiTypeValue {
 
     /**
      * set the notifiers
-     * @param notifiers
+     * @param notifiers the notifiers to be set
      * @since 1.2
      */
     public void setNotifiers(List<GuiTypeMemberPropertyNotifier> notifiers) {

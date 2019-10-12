@@ -306,7 +306,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
 
     /**
      * @return true if a member for the property returns true by {@link #history(AnnotatedElement)}.
-     * @sine 1.2
+     * @since 1.2
      */
     public boolean isHistoryValueSupported() {
         if (history == null) {

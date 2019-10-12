@@ -51,7 +51,7 @@ The library jar is available from Maven Central Repository.
 
 ## Quick tutorial: A tiny example with jshell
 
-The library can be used with `jshell` which is the offical REPL-tool bundled with JDK since Java 9.
+The library can be used with `jshell` which is the official REPL-tool bundled with JDK since Java 9.
 To use the library, you first need to include the jar file of the library to your class-path.
 In `jshell`, you can do that by `/env -class-path <path/to/jar>`.
 After launch the tool by the command `jshell`, you can paste the following code.
@@ -84,7 +84,7 @@ The above code defines the class `Hello` with an instance field and a method.
 After that, [`org.autogui.swing.AutoGuiShell.showLine(Object)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html#showLive(java.lang.Object)) starts creating a GUI window from the given object and shows the window.
 
 The created window will contain a text field labelled as "Value" and a button on the tool-bar labelled as "Action". 
-You can fill the text field with the string "hello, world" by typing the keybord and click the button, then you will see "hello, world" on the console of `jshell`.
+You can fill the text field with the string "hello, world" by typing the keyboard and click the button, then you will see "hello, world" on the console of `jshell`.
 
 <img src="docs/images/image-hello-h.png" srcset="docs/images/image-hello-h.png 1x, docs/images/image-hello.png 2x" alt="Hello">
 
@@ -152,9 +152,13 @@ The program will show a GUI window like the following image:
 
 The displayed window has the following GUI components:
 
-* The image pane *Image* created from the field `BufferedImage image` : You can drag & drop an image file in order to supply an input image data. The dropped image will be automatically loaded as an `BufferedImage` object and displayed in the pane, and assigned to the field.
-* The action button *Flip Y*  craeted from the method `void flipY()` : After drop an image, you can click the button in order to flip Y corrdinate  of the image. The created `newImage` will be assigned to the `image` field. After the execution of the method, the image pane will show the flipped image.
-* The file name field *Output*  created from `File output` : You can put a name of saving the flipped image. The field Initially displays "output.png" as the initial value of the field. User input for the text field will change the field value to a new `File` object.
+* The image pane *Image* created from the field `BufferedImage image` : You can drag & drop an image file in order to supply an input image data. The dropped image will be automatically loaded as an 
+  [`BufferedImage`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/image/BufferedImage.html) 
+  object and displayed in the pane, and assigned to the field.
+
+* The action button *Flip Y*  created from the method `void flipY()` : After drop an image, you can click the button in order to flip Y coordinate  of the image. The created `newImage` will be assigned to the `image` field. After the execution of the method, the image pane will show the flipped image.
+* The file name field *Output*  created from the field `File output` : You can put a name of saving the flipped image. The field Initially displays "output.png" as the initial value of the field. User input for the text field will change the field value to a new
+[`File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html)   object.
 * The action button *Save*  created from `void save()` : The action can write the flipped image as a new file specified by the Output field in the working directory.
 
 ## Strict mode with @GuiIncluded
@@ -201,7 +205,7 @@ The `ImageFlipDemo.java` is the following Java program:
 
 <img src="docs/images/image-strict-h.png" srcset="docs/images/image-strict-h.png 1x, docs/images/image-strict.png 2x" alt="Strict mode">
 
-The [`showWindow`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html#showWindow(java.lang.Object)) instance method of `AutGuiShell` restrcts members to 
+The [`showWindow`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html#showWindow(java.lang.Object)) instance method of `AutGuiShell` restricts members to 
 public ones with the annotation [`org.autogui.GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html) attached. 
 With `AutoGuiShell.get().showWindow(o)`, you will need to attach the annotation to all members (classes, fields, getters, setters and actions) you want to include GUI.
 
@@ -210,7 +214,7 @@ With `AutoGuiShell.get().showWindow(o)`, you will need to attach the annotation 
 
 If your code for binding with the library is defined as a member of a module which is introduced since Java 9, you will need to open your code to the library. This is because the library relies on reflection APIs for accessing to your code. In a named module, the reflection APIs are restricted to *open* members. 
 
-The module name of the library is `org.autogui`.
+The module name of the library is `org.autogui`. You will need to do the following steps in your `module-info.java` :
 
 1. add the `open` modifier to your module declaration, or `exports` (or `opens`) your packages  ` to org.autogui;`
 2. `requires org.autogui;`
@@ -295,7 +299,7 @@ will be bound to a text field.
 A property of 
 [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Path.html) or 
 [`java.io.File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html) 
-will be bound to a text field with exnteion for file operations.
+will be bound to a text field with extension for file operations.
 
 ```java
   import java.io.File;
@@ -310,7 +314,7 @@ will be bound to a text field with exnteion for file operations.
 ### Number spinner
 
 A property of a numerical type will be bound to a number spinner. 
-Numrical types includes primitve types (`byte`, `short`, `int`, `long`, `float` and `double`) and sub-types of 
+Numerical types includes primitive types (`byte`, `short`, `int`, `long`, `float` and `double`) and sub-types of 
 [`java.lang.Number`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Number.html) including 
 [`java.math.BigInteger`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/math/BigInteger.html) and  [`java.math.BigDecimal`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/math/BigDecimal.html) 
 
@@ -428,7 +432,7 @@ So the proeprty needs to hold/return a consistent value for maintaining the edit
 The text-edit pane will reflect modifications of text contents to the bound property value. 
 
 For `StringBuilder`, it automatically creates a `Document` wrapping the builder object.
-The current algortihm for modications of the document is naiive. 
+The current algorithm for modifications of the document is naive. 
 So it might not be suitable for editing large sized texts.
 
 Note that the documents and text-edit components in Swing seem to have designed as that any changes to the document must be happen within the text-edit component.
@@ -516,6 +520,10 @@ then
 [`close()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/AutoCloseable.html#close())
 of objects of the class will be called at closing of owner window of those objects.
 
+ (A returned window by `AutoGuiShell.showLive(o)` does not automatically call the method by window closing. Use 
+[`cleanUp()`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/GuiSwingWindow.html#cleanUp())
+for completely closing the window.)
+
 ### Object tabbed-pane
 
 A user-defined object which has only properties of sub user-defined objects without other value properties will be bound to a tabbed-pane. Components of each tab in the tabbed-pane become the pane created from the sub objects.
@@ -574,7 +582,7 @@ And initialization of a field will be executed under a non event-dispatching thr
 
 Thus the user code of the property for an embedded component should be defined as *a getter method that caches the returned component as a field*. 
 For a property of the embedded component, the library executes the method within the event-dispatching thread.
-An returned embedded component will be added as a sub-compoennt of the owner object-pane.
+A returned embedded component will be added as a sub-compoennt of the owner object-pane.
 
 
 #### Embedding component to your Swing applications
@@ -671,6 +679,52 @@ If the element object in the collection has an action-method, then the table has
 
 <img src="docs/images/image-collection-action-h.png" srcset="docs/images/image-collection-action-h.png 1x, docs/images/image-collection-action.png 2x" alt="Collection table with actions">
 
+#### Managing table item selection
+
+The created table for lists has ability to control selection of item cells.
+
+There are two types of bindings:
+
+* Special methods for actions of changing selected items in the table by returning a list of the items : sepcified by [`@GuiListSelectionUpdater`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiListSelectionUpdater.html)
+* Special methods for callbacks of user item selection from the table UI: specified by [`@GuiListSelectionCallback`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiListSelectionCallback.html)
+
+```java
+import java.util.*;
+import org.autogui.*;
+class Hello {
+    List<Item> prop = new ArrayList<>();
+    void add() {
+        prop.add(new Item("Hello " + prop.size()));
+        prop = new ArrayList<>(prop);
+    }
+    @GuiListSelectionUpdater
+    List<Item> selectTop() {
+        return Arrays.asList(prop.get(0));
+    }
+    @GuiListSelectionCallback
+    void selected(List<Item> items) {
+        System.out.println("selected: " + items);
+    }
+}
+class Item {
+    String name;
+    Item(String n) { this.name = n; }
+    public String toString() { return "Item(" + this.name + ")"; }
+}
+org.autogui.swing.AutoGuiShell.showLive(new Hello())
+```
+
+<img src="docs/images/image-collection-select-h.png" srcset="docs/images/image-collection-select-h.png 1x, docs/images/image-collection-select.png 2x" alt="Collection table with selection actions">
+
+In the above example, `List<Item>selectTop()` has `@GuiListSelectionUpdater`. The method becomes the action button "Select Top" and it causes changing the selection in the table of `prop ` as selecting the top item in the list, which is returned by the method. 
+
+And, `void selected(List<Item> items)` has `@GuiListSelectionCallback` and takes a list of items. The method also becomes the action button "*Selected", but the action of the button is automatically executed  by a selection change of the table of `prop`.
+
+The target table of those special methods are specified by the item type, i.e. the type argument `E` of  `List<E>` . If two or more tables has the same item type of those methods, then all of the tables are affected by the methods.
+
+As another special feature, both annotation types have the boolean argument `index`. The default value of the flag is false, and if it is specified as true, then the return or argument type of the target methods becomes  `List<Integer>` and it means the index numbers of rows instead of the item type `E`. Moreover,  `List<int[]>`  means list of {row,column}. 
+
+
 
 ### Naming rule and @GuiIncluded(name=...)
 
@@ -741,7 +795,7 @@ The library automatically sets shortcut keys for members based on their names.
 * Reserved keys: Those keys are combined with Command (macOS) or Control.
   * `Q`: Quit, `W`: Window close
   * `shift R`: Refresh
-  * `A`: Select all `shift A`: Un-select
+  * `A`: Select all, `shift A`: Un-select
   * `Z`: Undo, `shift Z`: Redo
   * `O`: Open, `S`: Save
   * `X`: Cut, `C`: Copy, `V`: Paste
@@ -766,8 +820,62 @@ The library automatically sets shortcut keys for members based on their names.
 <img src="docs/images/image-keystroke-h.png" srcset="docs/images/image-keystroke-h.png 1x, docs/images/image-keystroke.png 2x" alt="Key-binding">
 
 For actions, shortcut keys cause execution of the target action.
-For properties, shortcut keys cause UI to focus on the target compoennt.
+For properties, shortcut keys cause UI to focus on the target component.
 Also, *Control + Enter* will display the context menu for the focusing component.
+
+## Active Updating of UI Elements
+
+As default, GUIs generated by the library automatically updates it's display, i.e. it notices changes that requires redisplaying by accessing their properties after some actions happened.
+
+The feature of 
+[`@GuiNotifierSetter`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiNotifierSetter.html)
+enables you to explicitly update a specified GUI element by calling given a 
+[`Runnable`](https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/lang/Runnable.html)
+object. The annotation can be attached to a setter method taking a `Runnable` argument. In your code, you can call the `run()` method of the given `Runnable`  object in order to cause redisplaying of the target GUI element on demand. The target GUI element can be specified by the signature  `set<YourPropertyName>Notifier(Runnable r)`  or by using the annotation parameter `@GuiNotifierSetter(target="yourPropertyName")`.
+
+```java
+import java.util.concurrent.*;
+import org.autogui.*;
+import java.time.*;
+
+class Hello implements AutoCloseable {
+   private ScheduledExecutorService service;
+   private ScheduledFuture<?> task;
+   
+   String prop;
+   
+   private Runnable updater;
+   @GuiNotifierSetter 
+   void setPropUpdater(Runnable r) { updater = r; }
+   
+   Hello() {
+      service = Executors.newScheduledThreadPool(1);
+      task = service.scheduleWithFixedDelay(this::update, 0, 3, TimeUnit.SECONDS);
+   }
+   private void update() {
+      prop = Instant.now().toString();
+      if (updater != null) {
+          updater.run();
+      }
+   }
+   public void close() {
+       task.cancel(true);
+       service.shutdownNow();
+   }
+}
+org.autogui.swing.AutoGuiShell.showLive(new Hello())
+```
+
+The above example will show a text field that periodically updates it's text as the current time every 3 seconds. 
+
+The updating is done by the `update()` method; it rewrites `prop`  with the time string ( 
+[`Instant.now().toString()`](https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/time/Instant.html#now()) 
+) and  notifies the change of the field to the text field by explicitly calling `Runnable#run()`  to the updater set by `setPropUpdater(Runnable)`. The setter name specifies the `prop` field as the target of the updater by following the nameing rule `set<YourPropertyName>Updater`.
+
+The constructor of the class the `update()` method will be scheduled by 
+[`ScheduledExecutorService#scheduleWithFixedDelay(this::update, ...)` ](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html#scheduleWithFixedDelay(java.lang.Runnable,long,long,java.util.concurrent.TimeUnit))
+method as a `ScheduledFuture` task.
+
 
 ## Preferences management
 
@@ -864,9 +972,9 @@ The interruption causes an
 [`InterruptedException`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/InterruptedException.html)
 while thread-blocking caused by some APIs such as 
 [`Thread.sleep(n)`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#sleep(long)). 
-For running code without blocking, 
+For running code without blocking, you will need to insert
 [`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#interrupted())
-can explicitly check the interruption.
+in order to explicitly check the interruption.
 
 ### Logging exceptions
 

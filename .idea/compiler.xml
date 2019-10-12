@@ -10,7 +10,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="autogui" target="1.8" />
+      <module name="autogui" target="11" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">

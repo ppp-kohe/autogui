@@ -693,7 +693,7 @@ public class GuiMappingContext {
 
     /**
      * flag for changing the type of {@link #taskRunner}:
-     *  the default is false and then {@link ContextExecutorServiceForNotifier} is used.
+     *  the default is false and then {@link ContextExecutorServiceForkJoin} is used.
      *  If the flag is set to true before the first call of {@link #getTaskRunner()},
      *    then {@link ContextExecutorServiceSingleThread} is used.
      * @since 1.2
@@ -712,7 +712,7 @@ public class GuiMappingContext {
                 if (taskRunnerSingleThread) {
                     taskRunner = new ContextExecutorServiceSingleThread();
                 } else {
-                    taskRunner = new ContextExecutorServiceForNotifier();
+                    taskRunner = new ContextExecutorServiceForkJoin();
                 }
             }
         }
@@ -1014,158 +1014,42 @@ public class GuiMappingContext {
     }
 
     /**
-     * an executor-service that always executes only one submitted task and
-     *    last one has high-priority.
-     *    It manages a series of single threaded executors by a linked-list {@link ContextExecutorCell},
-     *      and when a new task is submitted, a new executor is pushed to the list and
-     *        a previous executor running an existing task is suspended by {@link Thread#suspend()}.
-     *       After the task is finished, the suspended executor is resumed by {@link Thread#resume()}.
-     *     Those suspend and resume are deprecated by danger of deadlock.
-     *     To support submitting a new task from an existing task, it also manages a cached thread-pool executor.
+     * a {@link ForkJoinPool} based executor:
+     *   the fork-join pool have ability of work-stealing:
+     *      i.e. a running task in the pool can invoke another new task
+     *          which immediately runs in the same context to the caller task of the pool
+     *           with "stealing" the running of the caller task.
      * @since 1.2
      */
-    public static class ContextExecutorServiceForNotifier implements ContextExecutorService {
-        protected ContextExecutorCell service;
-        protected ExecutorService launcher;
-        protected AtomicInteger running = new AtomicInteger(0);
+    public static class ContextExecutorServiceForkJoin implements ContextExecutorService {
+        protected ForkJoinPool pool;
 
-        public ContextExecutorServiceForNotifier() {
-            synchronized (this) {
-                service = new ContextExecutorCell(null);
-            }
-            launcher = Executors.newCachedThreadPool();
+        public ContextExecutorServiceForkJoin(ForkJoinPool pool) {
+            this.pool = pool;
         }
 
-        @Override
-        public synchronized <V> Future<V> submit(Callable<V> v) {
-            if (running.get() > 0) { //there is a running task
-                if (service.isUnderCurrentThread()) { //suspending the existing task means stopping the current thread
-                    return launcher.submit(() -> submitNext(v).get());
-                } else {
-                    return submitNext(v);
-                }
-            } else {
-                return service.submit(convertTask(v));
-            }
-        }
+        public ContextExecutorServiceForkJoin() {
+            this(new ForkJoinPool(1, new ForkJoinPool.ForkJoinWorkerThreadFactory() {
+                ForkJoinPool.ForkJoinWorkerThreadFactory defaultFactory = ForkJoinPool.defaultForkJoinWorkerThreadFactory;
 
-        protected synchronized <V> Future<V> submitNext(Callable<V> v) {
-            service.suspend(); //suspend the last task
-            service = service.getNext(); //spawn a new thread
-            return service.submit(convertTask(v));
-        }
-
-        protected synchronized void resumePrevious() {
-            running.decrementAndGet();
-            if (service.hasPrevious()) { //there is a suspended task
-                service = service.getPrevious();  //go back
-                service.resume();
-            }
-        }
-
-        protected <V> Callable<V> convertTask(Callable<V> task) {
-            running.incrementAndGet();
-            return () -> {
-                try {
-                    return task.call();
-                } finally {
-                    resumePrevious();
-                }
-            };
-        }
-
-        @Override
-        public void shutdown() {
-            service.shutdown();
-            launcher.shutdown();
-        }
-    }
-
-    /**
-     * a cell of single-thread executor list
-     * @since 1.2
-     */
-    public static class ContextExecutorCell implements ContextExecutorService {
-        protected ContextExecutorCell previous;
-        protected ContextExecutorCell next;
-        protected ExecutorService service;
-        protected AtomicReference<Thread> thread = new AtomicReference<>();
-
-        public ContextExecutorCell(ContextExecutorCell previous) {
-            this.previous = previous;
-            service = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
                 @Override
-                public Thread newThread(Runnable r) {
-                    Thread th = Executors.defaultThreadFactory().newThread(r);
+                public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
+                    ForkJoinWorkerThread th = defaultFactory.newThread(pool);
                     th.setDaemon(true);
                     th.setName(GuiMappingContext.class.getSimpleName() + "-" + th.getName());
-                    thread.set(th);
                     return th;
                 }
-            });
-            service.execute(() -> {}); //obtains the thread
-            try {
-                while (thread.get() == null) {
-                    Thread.sleep(10);
-                }
-            } catch (InterruptedException ex) {
-                ex.printStackTrace();
-            }
-        }
-
-        public boolean isUnderCurrentThread() {
-            return thread.get() == Thread.currentThread();
-        }
-
-        public boolean hasPrevious() {
-            return previous != null;
-        }
-
-        public ContextExecutorCell getPrevious() {
-            if (previous == null) {
-                return this;
-            } else {
-                return previous;
-            }
-        }
-
-        public ContextExecutorCell getNext() {
-            if (next == null) {
-                next = new ContextExecutorCell(this);
-            }
-            return next;
+            }, null, false));
         }
 
         @Override
         public <V> Future<V> submit(Callable<V> v) {
-            return service.submit(v);
-        }
-
-        @SuppressWarnings("deprecation")
-        public void suspend() {
-            thread.get().suspend();
-        }
-
-        @SuppressWarnings("deprecation")
-        public void resume() {
-            thread.get().resume();
+            return pool.submit(v);
         }
 
         @Override
         public void shutdown() {
-            ContextExecutorCell cell = this;
-            List<ContextExecutorCell> cells = new ArrayList<>();
-            while (cell != null) {
-                cells.add(cell);
-                cell = cell.previous;
-            }
-            Collections.reverse(cells);
-            cell = next;
-            while (cell != null) {
-                cells.add(cell);
-                cell = cell.next;
-            }
-            cells.forEach(c -> c.service.shutdown());
+            pool.shutdown();
         }
     }
 }
