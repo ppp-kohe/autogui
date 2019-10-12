@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 /**
  * a status-bar for displaying a last log-entry
  */
-public class GuiSwingLogStatusBar extends JComponent {
+public class GuiSwingLogStatusBar extends JComponent implements GuiSwingLogManager.GuiSwingLogView {
     private static final long serialVersionUID = 1L;
     protected GuiSwingLogManager manager;
     protected GuiLogEntry entry;
@@ -163,11 +163,21 @@ public class GuiSwingLogStatusBar extends JComponent {
         }
     }
 
+    @Override
     public void addLogEntry(GuiLogEntry entry) {
         SwingUtilities.invokeLater(() -> {
             this.entry = entry;
             repaint();
         });
+    }
+
+    /**
+     * set null to the entry
+     * @since 1.2
+     */
+    @Override
+    public void clearLogEntries() {
+        addLogEntry(null);
     }
 
     public void startActivePainter() {

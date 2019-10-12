@@ -61,7 +61,8 @@ public class GuiTypeBuilder {
      * check it is a {@link Collection} with a type arg &lt;T&gt;.
      * then, {@link #createCollectionFromType(ParameterizedType)},
      * otherwise {@link #createFromClass(Class)} for the raw type</li>
-     * <li>otherwise null</li>
+     * <li>otherwise obtains the raw-type of the type, and {@link #createFromClass(Class, Type)}</li>
+     * <li>if no raw-type, returns null</li>
      * </ul>
      *
      * @param type for creation
@@ -202,7 +203,7 @@ public class GuiTypeBuilder {
                         .fields.add(f));
 
         listMethods(cls).stream()
-                .filter(m -> isMemberMethod(m) && !isNotifierSetterMethod(m))
+                .filter(this::isMemberMethod)
                 .forEachOrdered(m -> definitionsMap.computeIfAbsent(getMemberNameFromMethod(m), MemberDefinitions::new)
                         .methods.add(m));
 
@@ -273,6 +274,11 @@ public class GuiTypeBuilder {
         return !isGuiIncludedEnabled(cls);
     }
 
+    /**
+     * @param e the target member
+     * @return true if e has the annotation {@link GuiIncluded#value()}==true
+     * @since 1.2
+     */
     public boolean isGuiIncludedEnabled(AnnotatedElement e) {
         return e.isAnnotationPresent(GuiIncluded.class) &&
                 e.getAnnotation(GuiIncluded.class).value();
@@ -405,9 +411,9 @@ public class GuiTypeBuilder {
 
     /**
      * @param m the tested method
-     * @return true if {@link GuiIncluded} attached and non-static */
+     * @return true if {@link GuiIncluded} attached and non-static with exluding {@link #isNotifierSetterMethod(Method)} */
     public boolean isMemberMethod(Method m) {
-        return isGuiIncludedEnabled(m) && !Modifier.isStatic(m.getModifiers());
+        return isGuiIncludedEnabled(m) && !Modifier.isStatic(m.getModifiers()) && !isNotifierSetterMethod(m);
     }
 
     /**
@@ -667,26 +673,32 @@ public class GuiTypeBuilder {
 
         @Override
         public boolean isMemberMethod(Method m) {
-            return (isMemberModifiers(m.getModifiers()) && !m.getDeclaringClass().equals(Object.class)
-                    && !isGuiIncludedDisabled(m))
-                    || isGuiIncludedEnabled(m);
+            return isMemberModifiers(m.getModifiers()) &&
+                   ((!m.getDeclaringClass().equals(Object.class) && isGuiIncludedEnabledRelaxed(m))
+                    || isGuiIncludedEnabled(m))
+                     && !isNotifierSetterMethod(m);
         }
 
-        public boolean isGuiIncludedDisabled(AnnotatedElement e) {
-            return e.isAnnotationPresent(GuiIncluded.class) &&
-                    !e.getAnnotation(GuiIncluded.class).value();
+        /**
+         * @param e the target member
+         * @return true
+         *     if {@link GuiIncluded#value()}==true or the annotation is not presented.
+         * @since 1.2
+         */
+        public boolean isGuiIncludedEnabledRelaxed(AnnotatedElement e) {
+            boolean presented = e.isAnnotationPresent(GuiIncluded.class);
+            return !presented || e.getAnnotation(GuiIncluded.class).value();
         }
 
         @Override
         public boolean isMemberField(Field f) {
-            return (isMemberModifiers(f.getModifiers()) && !f.getDeclaringClass().equals(Object.class)
-                    && !isGuiIncludedDisabled(f))
-                    || isGuiIncludedEnabled(f);
+            return isMemberModifiers(f.getModifiers()) &&
+                    ((!f.getDeclaringClass().equals(Object.class) && isGuiIncludedEnabledRelaxed(f))
+                     || isGuiIncludedEnabled(f));
         }
 
         public boolean isMemberModifiers(int mod){
-            return !Modifier.isStatic(mod) && !Modifier.isPrivate(mod) && !Modifier.isProtected(mod) &&
-                    !Modifier.isSynchronized(mod);
+            return !Modifier.isStatic(mod) && !Modifier.isPrivate(mod) && !Modifier.isProtected(mod);
         }
     }
 }

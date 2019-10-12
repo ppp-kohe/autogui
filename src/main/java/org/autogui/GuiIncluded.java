@@ -129,6 +129,7 @@ public @interface GuiIncluded {
 
     /**
      * @return if true, enables history-saving for the target property
+     * @since 1.2
      */
     boolean history() default true;
 }

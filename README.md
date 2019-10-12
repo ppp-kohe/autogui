@@ -148,7 +148,7 @@ public class ImageFlipDemo {
 
 The program will show a GUI window like the following image:
 
-<img src="docs/images/image-flip-demo-h.png" srcset="docs/images/image-flip-demo-h.png 1x, docs/images/image-flip-deom.png 2x" alt="ImageFlipDemo">
+<img src="docs/images/image-flip-demo-h.png" srcset="docs/images/image-flip-demo-h.png 1x, docs/images/image-flip-demo.png 2x" alt="ImageFlipDemo">
 
 The displayed window has the following GUI components:
 

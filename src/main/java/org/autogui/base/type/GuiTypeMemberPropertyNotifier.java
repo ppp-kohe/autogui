@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
  *           there are 3 special names, {@link GuiNotifierSetter#TARGET_FROM_NAME} (default, and then above <i>Target</i> is used),
  *                 {@link GuiNotifierSetter#TARGET_SELF} and {@link GuiNotifierSetter#TARGET_ROOT}.
  *   </p>
+ * @since 1.2
  */
 public class GuiTypeMemberPropertyNotifier extends GuiTypeMemberProperty {
     protected String targetName;

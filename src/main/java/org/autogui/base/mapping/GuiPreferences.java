@@ -731,6 +731,7 @@ public class GuiPreferences {
         /** load the "$history/index" value,
          *   and if the value is not -1, then also load "$history/value" and
          *   decode it as JSON and {@link GuiRepresentation#fromJson(GuiMappingContext, Object, Object)}.
+         *   Also, when the value is not -1, load "$history/time" and decode it as a {@link Instant} string.
          *  {@link #getValue()} will be null if it failed.
          *    */
         public void load() {
@@ -792,7 +793,6 @@ public class GuiPreferences {
             if (index != -1) {
                 store.putInt("index", index);
             }
-
             store.putString("time", time.toString());
         }
 

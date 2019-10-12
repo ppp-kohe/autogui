@@ -20,6 +20,8 @@ public class ScheduledTaskRunner<EventType> {
     /** msec */
     protected long delay;
     protected ScheduledExecutorService executor;
+    /** true if the {@link #executor} is {@link #sharedExecutor}.
+     * @since 1.2 */
     protected boolean executorIsShared;
     protected Consumer<List<EventType>> consumer;
 
@@ -32,6 +34,11 @@ public class ScheduledTaskRunner<EventType> {
     public static AtomicInteger sharedCount = new AtomicInteger();
     static boolean debug = System.getProperty("autogui.base.debug", "false").equals("true");
 
+    /**
+     * creates a new task-runner with {@link #sharedExecutor}.
+     * @param delay the delay milli-seconds for launching a task
+     * @param consumer the actual task runner as taking accumulated events
+     */
     public ScheduledTaskRunner(long delay, Consumer<List<EventType>> consumer) {
         this.delay = delay;
         setExecutor(getSharedExecutor());

@@ -494,7 +494,11 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
+    /** the max size of image-scaling
+     * @since 1.2 */
     public static final int SCALE_MAX_WIDTH = 30_000;
+    /** the max size of image-scaling
+     * @since 1.2 */
     public static final int SCALE_MAX_HEIGHT = 30_000;
 
     public static class ImageScaleMouseWheel implements MouseWheelListener, ImageScale {

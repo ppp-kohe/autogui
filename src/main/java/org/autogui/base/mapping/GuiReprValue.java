@@ -88,11 +88,20 @@ public class GuiReprValue implements GuiRepresentation {
         }
     }
 
+    /**
+     * called from {@link #addHistoryValue(GuiMappingContext, Object)}
+     *  and special handling for {@link IllegalAccessException}
+     *      which means an addition of a large object to the prefs store
+     * @param context the context object
+     * @param value the added value
+     * @param ex   the exception caught
+     * @since 1.2
+     */
     public void errorWhileAddHistoryValue(GuiMappingContext context, Object value, Throwable ex) {
         if (ex instanceof IllegalArgumentException) {
             String str = "" + ex.getMessage();
-            if (str.length() > 100) {
-                str = str.substring(0, 100) + "...";
+            if (str.length() > 32) {
+                str = str.substring(0, 32) + "...";
             }
             GuiLogManager.get().logFormat("ignore addHistoryValue: %s", str);
         } else {
@@ -427,10 +436,24 @@ public class GuiReprValue implements GuiRepresentation {
         return isHistoryValueSupported();
     }
 
+    /**
+     * currently checked by {@link #isHistoryValueSupported(GuiMappingContext)}
+     * @param context the context object
+     * @param value stored value
+     * @return true if the context supports storing the value as a history
+     * @since 1.2
+     */
     public boolean isHistoryValueStored(GuiMappingContext context, Object value) {
         return isHistoryValueSupported(context);
     }
 
+    /**
+     * checks whether the context supports the value history feature or not.
+     *  it can be controlled by the annotation parameter  "history".
+     * @param context the context object
+     * @return true if the context supports storing history values
+     * @since 1.2
+     */
     public boolean isHistoryValueSupported(GuiMappingContext context) {
         if (context.isTypeElementProperty() &&
             !context.getTypeElementAsProperty().isHistoryValueSupported()) {

@@ -41,6 +41,8 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
 
     protected String description;
     protected String keyStroke;
+    /** true if the history value storing is supported
+     * @since 1.2 */
     protected Boolean history;
 
     public GuiTypeMemberProperty(String name) {
@@ -302,6 +304,10 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
                 "";
     }
 
+    /**
+     * @return true if a member for the property returns true by {@link #history(AnnotatedElement)}.
+     * @sine 1.2
+     */
     public boolean isHistoryValueSupported() {
         if (history == null) {
             history = select(
@@ -312,6 +318,11 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         return history;
     }
 
+    /**
+     * @param bs nullable booleans
+     * @return first non-null item in bs
+     * @since 1.2
+     */
     protected boolean select(Boolean... bs) {
         for (Boolean b : bs) {
             if (b != null) {
@@ -321,6 +332,11 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         return true;
     }
 
+    /**
+     * @param e the tested annotation, nullable
+     * @return true e has {@link GuiIncluded#history()}==true
+     * @since 1.2
+     */
     protected Boolean history(AnnotatedElement e) {
         return e != null && e.isAnnotationPresent(GuiIncluded.class) ?
                 e.getAnnotation(GuiIncluded.class).history() :

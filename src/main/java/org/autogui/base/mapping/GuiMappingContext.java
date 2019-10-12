@@ -366,6 +366,10 @@ public class GuiMappingContext {
         return (GuiTypeValue) typeElement;
     }
 
+    /**
+     * @return typeElement as type-object
+     * @since 1.2
+     */
     public GuiTypeObject getTypeElementObject() {
         return (GuiTypeObject) typeElement;
     }
@@ -692,10 +696,12 @@ public class GuiMappingContext {
      *  the default is false and then {@link ContextExecutorServiceForNotifier} is used.
      *  If the flag is set to true before the first call of {@link #getTaskRunner()},
      *    then {@link ContextExecutorServiceSingleThread} is used.
+     * @since 1.2
      */
     public static boolean taskRunnerSingleThread = false;
 
     /** @return taskRunner taken from parent context or single thread executor in the root.
+     * @see #taskRunnerSingleThread
      *   */
     public ContextExecutorService getTaskRunner() {
         if (taskRunner == null) {
@@ -870,6 +876,7 @@ public class GuiMappingContext {
     /**
      * set appropriate notifiers to the target if defined
      * @param target the target object obtained from the source of the context. nullable
+     * @since 1.2
      */
     public void setNotifiers(Object target) {
         if (target != null && isTypeElementObject()) {
@@ -879,6 +886,12 @@ public class GuiMappingContext {
         }
     }
 
+    /**
+     * set notifier to the target member of the target object, determined from the parameter of the annotation
+     * @param target the target object obtained from the source of the context
+     * @param notifier the notifier property
+     * @since 1.2
+     */
     public void setNotifier(Object target, GuiTypeMemberPropertyNotifier notifier) {
         try {
             if (notifier.isTargetSelf()) {
@@ -899,6 +912,11 @@ public class GuiMappingContext {
         }
     }
 
+    /**
+     * @param fromRoot true if the entire pane of the context
+     * @return a {@link ContextNotifier}
+     * @since 1.2
+     */
     public Runnable getNotifierForTarget(boolean fromRoot) {
         return new ContextNotifier(this, fromRoot);
     }
@@ -906,6 +924,7 @@ public class GuiMappingContext {
     /**
      * a runnable callback passed to the target object.
      *  the run method of the class clears and updates the associated context
+     * @since 1.2
      */
     public static class ContextNotifier implements Runnable {
         protected GuiMappingContext context;
@@ -939,6 +958,7 @@ public class GuiMappingContext {
 
     /**
      * a sub-set of {@link ExecutorService} as the returned type of {@link #getTaskRunner()}
+     * @since 1.2
      */
     public interface ContextExecutorService {
         /**
@@ -960,6 +980,7 @@ public class GuiMappingContext {
     /**
      * a simple executor-service wrapping single-thread executor
      *  by {@link Executors#newSingleThreadScheduledExecutor(ThreadFactory)}
+     * @since 1.2
      */
     public static class ContextExecutorServiceSingleThread implements ContextExecutorService {
         protected ExecutorService service;
@@ -1001,7 +1022,7 @@ public class GuiMappingContext {
      *       After the task is finished, the suspended executor is resumed by {@link Thread#resume()}.
      *     Those suspend and resume are deprecated by danger of deadlock.
      *     To support submitting a new task from an existing task, it also manages a cached thread-pool executor.
-     *
+     * @since 1.2
      */
     public static class ContextExecutorServiceForNotifier implements ContextExecutorService {
         protected ContextExecutorCell service;
@@ -1062,6 +1083,7 @@ public class GuiMappingContext {
 
     /**
      * a cell of single-thread executor list
+     * @since 1.2
      */
     public static class ContextExecutorCell implements ContextExecutorService {
         protected ContextExecutorCell previous;

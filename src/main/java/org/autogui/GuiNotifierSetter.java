@@ -49,6 +49,7 @@ import java.lang.annotation.Target;
  *         ...
  *     }
  * </pre>
+ * @since 1.2
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

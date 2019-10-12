@@ -27,7 +27,7 @@ import java.util.function.Consumer;
 /**
  * a list component for displaying log entries
  */
-public class GuiSwingLogList extends JList<GuiLogEntry> {
+public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogManager.GuiSwingLogView {
     private static final long serialVersionUID = 1L;
     protected GuiSwingLogManager manager;
     protected Timer activePainter;
@@ -152,6 +152,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
     //////////
 
+    @Override
     public void addLogEntry(GuiLogEntry entry) {
         SwingUtilities.invokeLater(() -> addLogEntryInEvent(entry, !entry.isActive()));
     }
@@ -209,6 +210,26 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
                 selModel.removeSelectionInterval(index, index);
             }
         }
+    }
+
+    /**
+     * clear entries in the list
+     * @since 1.2
+     */
+    @Override
+    public void clearLogEntries() {
+        SwingUtilities.invokeLater(() ->
+            getLogListModel().removeInactiveEntries());
+    }
+
+    /**
+     * call {@link GuiSwingLogManager#clear()} to {@link #manager}.
+     * it will leads to not only this doing {@link #clearLogEntries()},
+     *            but also other views including status bars.
+     * @since 1.2
+     */
+    public void clearLogEntriesToManager() {
+        manager.clear();
     }
 
     //// JList vs JTable
@@ -987,7 +1008,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            list.getLogListModel().removeInactiveEntries();
+            list.clearLogEntriesToManager();
         }
     }
 

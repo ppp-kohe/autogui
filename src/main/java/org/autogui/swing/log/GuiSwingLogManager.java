@@ -33,7 +33,7 @@ import java.util.function.Consumer;
  * </pre>
  */
 public class GuiSwingLogManager extends GuiLogManager {
-    protected List<Consumer<GuiLogEntry>> views = new ArrayList<>();
+    protected List<GuiSwingLogView> views = new ArrayList<>();
     protected GuiLogManagerConsole console;
 
     public static boolean replaceErr = true;
@@ -42,6 +42,22 @@ public class GuiSwingLogManager extends GuiLogManager {
     public static boolean redirectToConsole = true;
     /** @since 1.1 */
     public static boolean suppressOutputRedirection = true;
+
+    /**
+     * methods of the interface might happen outside of the event thread
+     * @since 1.2
+     */
+    public interface GuiSwingLogView {
+        /**
+         * @param entry added entry for displaying in the view
+         */
+        void addLogEntry(GuiLogEntry entry);
+
+        /**
+         * clear added views
+         */
+        void clearLogEntries();
+    }
 
     public static void setDefaultReplace(boolean flag) {
         replaceErr = flag;
@@ -66,14 +82,31 @@ public class GuiSwingLogManager extends GuiLogManager {
      * @return key object for removing, currently view itself
      */
     public Object addView(Consumer<GuiLogEntry> view) {
+        views.add(new GuiSwingLogView() {
+            @Override
+            public void addLogEntry(GuiLogEntry entry) {
+                view.accept(entry);
+            }
+
+            @Override
+            public void clearLogEntries() { }
+        });
+        return view;
+    }
+
+    /**
+     * @param view a view for log entries, might accept same entries
+     * @return key object for removing, currently view itself
+     * @since 1.2
+     */
+    public Object addView(GuiSwingLogView view) {
         views.add(view);
         return view;
     }
 
-    @SuppressWarnings("unchecked")
     public void removeView(Object v) {
-        if (v instanceof Consumer<?>) {
-            views.remove((Consumer<GuiLogEntry>) v);
+        if (v instanceof GuiSwingLogView) {
+            views.remove((GuiSwingLogView) v);
         }
     }
 
@@ -259,7 +292,15 @@ public class GuiSwingLogManager extends GuiLogManager {
 
     @Override
     public synchronized void show(GuiLogEntry e) {
-        views.forEach(v -> v.accept(e));
+        views.forEach(v -> v.addLogEntry(e));
+    }
+
+    /**
+     * call {@link GuiSwingLogView#clearLogEntries()} to views
+     * @since 1.2
+     */
+    public synchronized void clear() {
+        views.forEach(GuiSwingLogView::clearLogEntries);
     }
 
     public static Font getFont() {

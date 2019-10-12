@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 public class GuiTypeObject extends GuiTypeValue {
     protected List<GuiTypeMemberProperty> properties;
     protected List<GuiTypeMemberAction> actions;
+    /** notifiers for the type @since 1.2 */
     protected List<GuiTypeMemberPropertyNotifier> notifiers;
 
     public GuiTypeObject(Class<?> type) {
@@ -40,7 +41,8 @@ public class GuiTypeObject extends GuiTypeValue {
         return actions;
     }
 
-    /** @return notifier setters */
+    /** @return notifier setters
+     * @since 1.2 */
     public List<GuiTypeMemberPropertyNotifier> getNotifiers() {
         return notifiers;
     }
@@ -63,6 +65,11 @@ public class GuiTypeObject extends GuiTypeValue {
         this.actions = actions;
     }
 
+    /**
+     * set the notifiers
+     * @param notifiers
+     * @since 1.2
+     */
     public void setNotifiers(List<GuiTypeMemberPropertyNotifier> notifiers) {
         this.notifiers = notifiers;
     }
@@ -96,6 +103,13 @@ public class GuiTypeObject extends GuiTypeValue {
         return this;
     }
 
+    /**
+     * add notifiers. if the {@link #notifiers} is null, it creates a new list.
+     *  items of notifiers will be set {@link GuiTypeMemberPropertyNotifier#setOwner(GuiTypeObject)} with this.
+     * @param notifiers the added notifiers
+     * @return this
+     * @since 1.2
+     */
     public GuiTypeObject addNotifiers(GuiTypeMemberPropertyNotifier... notifiers) {
         if (this.notifiers == null) {
             this.notifiers = new ArrayList<>();
