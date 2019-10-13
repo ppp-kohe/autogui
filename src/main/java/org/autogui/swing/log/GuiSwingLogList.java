@@ -74,7 +74,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
 
         this.manager = manager;
         if (addManagerAsView) {
-            managerKey = manager.addView(this::addLogEntry);
+            managerKey = manager.addView(this);
         }
     }
 

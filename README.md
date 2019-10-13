@@ -25,7 +25,7 @@ The project uses [apache-maven](http://maven.apache.org) and depends on a recent
 
 ```bash
 $ mvn package
-  # the command will generate target/autogui-1.1.3.jar
+  # the command will generate target/autogui-1.2-SNAPSHOT.jar
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
@@ -39,7 +39,7 @@ To use the library in your apaceh-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.1.3</version>
+        <version>1.2-SNAPSHOT</version>
     </dependency>
 ```
 
@@ -72,7 +72,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.1.3.jar
+/env -class-path target/autogui-1.2-SNAPSHOT.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
@@ -152,7 +152,7 @@ The program will show a GUI window like the following image:
 
 The displayed window has the following GUI components:
 
-* The image pane *Image* created from the field `BufferedImage image` : You can drag & drop an image file in order to supply an input image data. The dropped image will be automatically loaded as an 
+* The image pane *Image* created from the field `BufferedImage image` : You can drag & drop an image file in order to supply an input image data. The dropped image will be automatically loaded as a 
   [`BufferedImage`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/image/BufferedImage.html) 
   object and displayed in the pane, and assigned to the field.
 
@@ -173,7 +173,7 @@ The strict mode ...
 *  can be started by [`AutoGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html#showWindow(java.lang.Object))
 *  targets on[`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html) and `public` classes, properties and members
 
-The `ImageFlipDemo.java` is the following Java program:
+The following Java program is an example application with the struct mode:
 
 ```java
   import org.autogui.GuiIncluded;

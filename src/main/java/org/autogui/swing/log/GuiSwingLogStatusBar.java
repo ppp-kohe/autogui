@@ -52,7 +52,7 @@ public class GuiSwingLogStatusBar extends JComponent implements GuiSwingLogManag
 
         this.manager = manager;
         if (addManagerAsView) {
-            managerKey = manager.addView(this::addLogEntry);
+            managerKey = manager.addView(this);
         }
 
         EventDispatcher e = new EventDispatcher(this);
