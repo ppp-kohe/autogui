@@ -752,8 +752,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             Action a = createActionBase(name, img);
 
             int size = UIManagerUtil.getInstance().getScaledSizeInt(16);
-            Image icon = img.getScaledInstance(size, size, Image.SCALE_DEFAULT);
-            a.putValue(Action.SMALL_ICON, new ImageIcon(icon));
+            if (img != null) {
+                Image icon = img.getScaledInstance(size, size, Image.SCALE_DEFAULT);
+                a.putValue(Action.SMALL_ICON, new ImageIcon(icon));
+            }
             return a;
         }
 

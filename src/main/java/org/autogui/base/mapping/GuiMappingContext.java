@@ -1044,12 +1044,65 @@ public class GuiMappingContext {
 
         @Override
         public <V> Future<V> submit(Callable<V> v) {
-            return pool.submit(v);
+            return pool.submit(new ContextExecutorForkJoinTask<>(v));
         }
 
         @Override
         public void shutdown() {
             pool.shutdown();
+        }
+    }
+
+    /**
+     * a task wrapper for {@link ContextExecutorServiceForkJoin},
+     *   which enables to interrupt tasks by {@link #cancel(boolean)}
+     * @param <V> the returning type of the task
+     * @since 1.2
+     */
+    public static class ContextExecutorForkJoinTask<V> extends ForkJoinTask<V> {
+        protected Callable<V> task;
+        protected V value;
+        protected AtomicReference<Thread> runnerThread = new AtomicReference<>();
+
+        public ContextExecutorForkJoinTask(Callable<V> task) {
+            this.task = task;
+        }
+
+        @Override
+        public V getRawResult() {
+            return value;
+        }
+
+        @Override
+        protected void setRawResult(V value) {
+            this.value = value;
+        }
+
+        @Override
+        protected boolean exec() {
+            try {
+                runnerThread.set(Thread.currentThread());
+                task.call();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            } finally {
+                runnerThread.set(null);
+            }
+            return false;
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            Thread t = runnerThread.get();
+            if (t != null) {
+                t.interrupt();
+            }
+            return super.cancel(mayInterruptIfRunning);
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "(" + task + ")";
         }
     }
 }

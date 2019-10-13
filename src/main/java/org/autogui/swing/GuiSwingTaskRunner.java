@@ -118,9 +118,10 @@ public class GuiSwingTaskRunner {
                 afterTask.accept(new ContextTaskResultWithDelay<>(value));
             }
         } catch (InterruptedException ie) {
+            GuiLogManager.get().logString("cancelling...");
+            p.setMessage("cancelling...");
             ret.cancel(true);
             fail(false, afterTask);
-            p.setMessage("cancelling...");
         } catch (Throwable ex) {
             throw new RuntimeException(ex);
         } finally {
