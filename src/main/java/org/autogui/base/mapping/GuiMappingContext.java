@@ -1044,7 +1044,7 @@ public class GuiMappingContext {
 
         @Override
         public <V> Future<V> submit(Callable<V> v) {
-            return pool.submit(new ContextExecutorForkJoinTask<>(v));
+            return pool.submit((ForkJoinTask<V>) new ContextExecutorForkJoinTask<>(v));
         }
 
         @Override
@@ -1059,7 +1059,8 @@ public class GuiMappingContext {
      * @param <V> the returning type of the task
      * @since 1.2
      */
-    public static class ContextExecutorForkJoinTask<V> extends ForkJoinTask<V> {
+    public static class ContextExecutorForkJoinTask<V> extends ForkJoinTask<V>
+        implements RunnableFuture<V> {
         protected Callable<V> task;
         protected V value;
         protected AtomicReference<Thread> runnerThread = new AtomicReference<>();
@@ -1079,16 +1080,23 @@ public class GuiMappingContext {
         }
 
         @Override
+        public void run() {
+            invoke();
+        }
+
+        @Override
         protected boolean exec() {
             try {
                 runnerThread.set(Thread.currentThread());
-                task.call();
+                value = task.call();
+            } catch (RuntimeException re) {
+                throw re;
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             } finally {
                 runnerThread.set(null);
             }
-            return false;
+            return true;
         }
 
         @Override
