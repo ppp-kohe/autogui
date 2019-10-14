@@ -207,7 +207,7 @@ public class TextCellRenderer<ValueType> extends JPanel
         int lineIndex = 0;
         LineInfo prev = null;
         for (String line : text.split("\\n")) {
-            LineInfo info = createLine(prev, lineIndex, i, line);
+            LineInfo info = createLine(prev, lineIndex, i, buildLinePreProcess(line));
             lines.add(info);
             prev = info;
             i += line.length() + 1;
@@ -215,6 +215,16 @@ public class TextCellRenderer<ValueType> extends JPanel
             maxWidth = Math.max(maxWidth, info.getWidth());
         }
         return maxWidth;
+    }
+
+    /**
+     * remove tabs from the line; for avoiding displaying tofu by AttributedString
+     * @param line a line string without newlines
+     * @return remove tabs
+     * @since 1.2
+     */
+    public String buildLinePreProcess(String line) {
+        return line.replaceAll("\\t", "    ");
     }
 
     /**
