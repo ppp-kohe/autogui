@@ -1061,6 +1061,7 @@ public class GuiMappingContext {
      */
     public static class ContextExecutorForkJoinTask<V> extends ForkJoinTask<V>
         implements RunnableFuture<V> {
+        public static final long serialVersionUID = 1L;
         protected Callable<V> task;
         protected V value;
         protected AtomicReference<Thread> runnerThread = new AtomicReference<>();

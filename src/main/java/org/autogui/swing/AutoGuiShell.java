@@ -97,7 +97,9 @@ public class AutoGuiShell {
      */
     public void showWindow(Object o, Runnable beforeActionInEvent, Consumer<GuiSwingWindow> afterActionInEvent) {
         SwingUtilities.invokeLater(() -> {
-            beforeActionInEvent.run();
+            if (beforeActionInEvent != null) {
+                beforeActionInEvent.run();
+            }
             createWindow(o, true, afterActionInEvent).setVisible(true);
         });
     }

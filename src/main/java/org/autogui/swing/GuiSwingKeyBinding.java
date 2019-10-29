@@ -147,7 +147,7 @@ public class GuiSwingKeyBinding {
         return this;
     }
 
-    interface RecommendedKeyStroke {
+    public interface RecommendedKeyStroke {
         KeyStroke getRecommendedKeyStroke();
         default GuiSwingKeyBinding.KeyPrecedenceSet getRecommendedKeyPrecedence() {
             return new KeyPrecedenceSet();
