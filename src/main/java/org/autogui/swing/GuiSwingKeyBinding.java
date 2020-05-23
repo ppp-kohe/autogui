@@ -678,6 +678,21 @@ public class GuiSwingKeyBinding {
         public void assigned() {
             this.assigned = true;
             getBase().setAssignedToChild(assigned);
+            putAsPaneInputAction();
+        }
+
+        protected void putAsPaneInputAction() {
+            if (action != null) {
+                InputMap inputMap = pane.asSwingViewComponent().getInputMap();
+                ActionMap actionMap = pane.asSwingViewComponent().getActionMap();
+                KeyStroke stroke = getStroke();
+                Object name = action.getValue(Action.NAME);
+                if (inputMap.get(stroke) == null &&
+                        (actionMap.get(name) == null || actionMap.get(name).equals(action))) {
+                    inputMap.put(stroke, name);
+                    actionMap.put(name, action);
+                }
+            }
         }
 
         public KeyStrokeActionForValuePane getBase() {
