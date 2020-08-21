@@ -16,6 +16,8 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
@@ -140,10 +142,17 @@ public class GuiReprValueImagePane extends GuiReprValue {
                 this.height.set(height);
             }
 
-            if (width <= 1 || height <= 1) {
+            if (width < 0 || height < 0) {
+                Instant start = Instant.now();
+                Duration limit = Duration.ofSeconds(10);
                 try {
                     while (!finish.get()) {
                         Thread.sleep(10);
+                        if (Duration.between(start, Instant.now()).compareTo(limit) >= 0) {
+                            System.err.printf("%s: getWithWait timeout width=%,d height=%,d%n",
+                                    this, this.width.get(), this.height.get());
+                            break;
+                        }
                     }
                 } catch (Exception ex) {
                     error(ex);
