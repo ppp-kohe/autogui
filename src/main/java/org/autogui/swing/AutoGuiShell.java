@@ -2,12 +2,14 @@ package org.autogui.swing;
 
 import org.autogui.swing.util.SwingDeferredRunner;
 import org.autogui.GuiIncluded;
+import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -43,6 +45,18 @@ import java.util.function.Supplier;
 public class AutoGuiShell {
     public String lookAndFeelClass = "#system";
 
+    /**
+     * @since 1.2
+     */
+    protected Function<Object, GuiSwingWindow> windowCreator = GuiSwingWindow.creator();
+    /**
+     * @since 1.2
+     */
+    protected Function<Object, GuiSwingWindow> windowCreatorRelaxed = GuiSwingWindow.creator().withTypeBuilderRelaxed();
+
+    /**
+     * @return a new instance
+     */
     public static AutoGuiShell get() {
         return new AutoGuiShell();
     }
@@ -67,21 +81,7 @@ public class AutoGuiShell {
      *  if the value of the field is "#system" then, it uses system-look-and-feel.
      */
     public void setLookAndFeel() {
-        try {
-//            boolean sysLafIsGtk = false;
-//            if (UIManager.getSystemLookAndFeelClassName().contains("GTKLookAndFeel")) {
-//                sysLafIsGtk = true;
-//            }
-            String laf = lookAndFeelClass;
-            if (laf != null && laf.equals("#system")) {
-                laf = UIManager.getSystemLookAndFeelClassName();
-            }
-            if (laf != null) {
-                UIManager.setLookAndFeel(laf);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        UIManagerUtil.getInstance().setLookAndFeel(lookAndFeelClass);
     }
 
     public void showWindow(Object o, Runnable beforeActionInEvent) {
@@ -128,7 +128,7 @@ public class AutoGuiShell {
      */
     public GuiSwingWindow createWindow(Object o, boolean appRoot, Consumer<GuiSwingWindow> afterActionInEvent) {
         return invokeAndWait(() -> {
-            GuiSwingWindow w = GuiSwingWindow.createForObject(o);
+            GuiSwingWindow w = createWindowInEvent(o);
             w.setApplicationRoot(appRoot);
             if (afterActionInEvent != null) {
                 afterActionInEvent.accept(w);
@@ -155,12 +155,7 @@ public class AutoGuiShell {
     public static void displayLiveWindow(JFrame w) {
         w.setVisible(true);
         w.toFront();
-        try { //jdk9
-            Method requestForeground = Desktop.class.getMethod("requestForeground", boolean.class);
-            requestForeground.invoke(Desktop.getDesktop(), false);
-        } catch (Exception ex) {
-            //
-        }
+        Desktop.getDesktop().requestForeground(false);
     }
 
 
@@ -177,7 +172,7 @@ public class AutoGuiShell {
      */
     public GuiSwingWindow createWindowRelaxed(Object o, Consumer<GuiSwingWindow> afterActionInEvent) {
         return invokeAndWait(() -> {
-            GuiSwingWindow w = GuiSwingWindow.createForObjectRelaxed(o);
+            GuiSwingWindow w = createWindowRelaxedInEvent(o);
             w.setApplicationRoot(false);
             if (afterActionInEvent != null) {
                 afterActionInEvent.accept(w);
@@ -198,5 +193,63 @@ public class AutoGuiShell {
             }
             return res.get();
         }
+    }
+
+    /**
+     * calling the creator, within the event-dispatching thread
+     * @param o the binding object
+     * @return a created window
+     * @since 1.2
+     */
+    protected GuiSwingWindow createWindowInEvent(Object o) {
+        return windowCreator.apply(o);
+    }
+
+    /**
+     * calling the relaxed-creator, within the event-dispatching thread
+     * @param o the binding object
+     * @return a created window
+     * @since 1.2
+     */
+    protected GuiSwingWindow createWindowRelaxedInEvent(Object o) {
+        return windowCreatorRelaxed.apply(o);
+    }
+
+    /**
+     * customizing the creator for {@link #createWindowInEvent(Object)}
+     * @param windowCreator the creator. the default creator is {@link GuiSwingWindow#creator()}
+     * @return this
+     * @since 1.2
+     */
+    public AutoGuiShell withWindowCreator(Function<Object, GuiSwingWindow> windowCreator) {
+        this.windowCreator = windowCreator;
+        return this;
+    }
+
+    /**
+     * customizing the creator for {@link #createWindowRelaxedInEvent(Object)}
+     * @param windowCreatorRelaxed the creator.
+     *        the default creator is {@link GuiSwingWindow#creator()}
+     *              with {@link GuiSwingWindow.GuiSwingWindowCreator#withTypeBuilderRelaxed()}
+     * @return this
+     * @since 1.2
+     */
+    public AutoGuiShell withWindowCreatorRelaxed(Function<Object, GuiSwingWindow> windowCreatorRelaxed) {
+        this.windowCreatorRelaxed = windowCreatorRelaxed;
+        return this;
+    }
+
+    /**
+     * clear the {@link #lookAndFeelClass} and call the init
+     * @param init the user init process for installing LAF by custom mechanism with receiving this
+     * @return this
+     * @since 1.2
+     */
+    public AutoGuiShell withClearLookAndFeelClass(Consumer<AutoGuiShell> init) {
+        this.lookAndFeelClass = null;
+        if (init != null) {
+            init.accept(this);
+        }
+        return this;
     }
 }

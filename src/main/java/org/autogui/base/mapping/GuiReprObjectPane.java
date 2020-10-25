@@ -282,7 +282,7 @@ public class GuiReprObjectPane extends GuiReprValue {
             throw new RuntimeException(ex);
         }
 
-        String[] cols = str.split("\\t");
+        String[] cols = str.split("\\t", -1);
 
         List<GuiMappingContext> subs = context.getChildren();
         int i = 0;

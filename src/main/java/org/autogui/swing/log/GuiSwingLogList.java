@@ -914,7 +914,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
             SearchTextField.SearchBackgroundPainterBordered p = new SearchTextField.SearchBackgroundPainterBordered(this);
             {
                 setLayout(new BorderLayout());
-                setBackground(Color.white);
+                setBackground(UIManagerUtil.getInstance().getTextPaneBackground());
             }
 
             @Override
@@ -938,7 +938,9 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         JButton icon = new JButton();
         UIManagerUtil ui = UIManagerUtil.getInstance();
         int size = ui.getScaledSizeInt(16);
-        icon.setIcon(GuiSwingIcons.getInstance().getPressedIcon("log-", "find", size, size));
+        icon.setBorder(BorderFactory.createEmptyBorder());
+        icon.setMargin(new Insets(0, 0, 0, 0));
+        icon.setIcon(GuiSwingIcons.getInstance().getIcon("log-", "find", size, size));
         icon.setBorderPainted(false);
         icon.setContentAreaFilled(false);
         findPane.add(icon, BorderLayout.WEST);

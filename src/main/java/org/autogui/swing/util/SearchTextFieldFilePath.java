@@ -168,7 +168,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
             } else if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 try {
                     String str = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-                    String line = str.split("\\n")[0];
+                    String line = str.split("\\n", -1)[0];
                     return select(Collections.singletonList(Paths.get(line.trim()).toFile()));
                 } catch (Exception ex) {
                     return false;
@@ -463,15 +463,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
             if (Desktop.isDesktopSupported()) {
                 try {
                     Desktop desk = Desktop.getDesktop();
-                    //TODO replace: command = path -> desk.browseFileDirectory(path.toFile());
-                    Method method = Desktop.class.getMethod("browseFileDirectory", File.class);
-                    command = path -> {
-                        try {
-                            method.invoke(desk, path.toFile());
-                        } catch (Exception ex) {
-                            throw new RuntimeException(ex);
-                        }
-                    };
+                    command = path -> desk.browseFileDirectory(path.toFile());
                 } catch (Exception ex) {
                     Function<Path,List<String>> commandGenerator;
                     String name = System.getProperty("os.name", "?").toLowerCase();
@@ -879,16 +871,14 @@ public class SearchTextFieldFilePath extends SearchTextField {
         public String getName() {
             if (path != null && !path.toString().isEmpty() && Files.exists(path)) {
                 try {
-                    String str = Stream.of(
+                    String str = String.join("\n",
                             getNameTime(),
                             join(getNameSize(),
-                                    getNamePermission()))
-                        .collect(Collectors.joining("\n"));
+                                    getNamePermission()));
 
                     if (str.contains("\n")) {
                         return "<html><pre>" +
-                                Arrays.stream(str.split("\\n"))
-                                    .collect(Collectors.joining("<br>"))
+                                String.join("<br>", str.split("\\n", -1))
                                 + "</pre></html>";
                     } else {
                         return str;
@@ -911,8 +901,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
             } catch (Exception ex) {
                 //nothing
             }
-            return times.stream()
-                    .collect(Collectors.joining("\n"));
+            return String.join("\n", times);
         }
 
         public String toFileTime(FileTime time) {

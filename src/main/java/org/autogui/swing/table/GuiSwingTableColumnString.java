@@ -133,7 +133,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             String str = load();
             if (str != null) {
                 target.setSelectedCellValuesLoop(
-                        Arrays.stream(str.split("\\n"))
+                        Arrays.stream(str.split("\\n", 0))
                                 .map(label::getValueFromString)
                                 .collect(Collectors.toList()));
             }

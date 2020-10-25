@@ -303,9 +303,26 @@ public class ObjectTableColumn {
 
         int iw = ui.getScaledSizeInt(5);
         cell.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(h, leftEnd ? w : 0, h * 2, rightEnd ? w : 0, table.getBackground()),
+                BorderFactory.createMatteBorder(h, leftEnd ? w : 0, h * 2, rightEnd ? w : 0, getTableBackground(table, row)),
                 BorderFactory.createMatteBorder(h, iw * 2, h, iw, cell.getBackground())));
+    }
 
+    /**
+     *
+     * @param table the table
+     * @param row the row index
+     * @return  background color for the row
+     * @since 1.2
+     */
+    public static Color getTableBackground(JTable table, int row) {
+        Color back = table.getBackground();
+        if ((row % 2) != 0) {
+            Color alternateColor = UIManager.getColor("Table.alternateRowColor");
+            if (alternateColor != null) {
+                back = alternateColor;
+            }
+        }
+        return back;
     }
 
     /**

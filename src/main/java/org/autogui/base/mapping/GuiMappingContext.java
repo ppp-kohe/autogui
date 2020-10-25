@@ -381,7 +381,7 @@ public class GuiMappingContext {
     public void setSource(GuiSourceValue source) {
         boolean eq = Objects.equals(this.source, source);
         this.source = source;
-        if (!eq && !source.isNone()) {
+        if (!eq && !source.isNone() && getRepresentation() != null) { //only updates the notifiers if the representation is set, which means there are sub-contexts
             setNotifiers(source.getValue());
         }
     }

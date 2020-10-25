@@ -206,7 +206,7 @@ public class TextCellRenderer<ValueType> extends JPanel
         int maxWidth = 0;
         int lineIndex = 0;
         LineInfo prev = null;
-        for (String line : text.split("\\n")) {
+        for (String line : text.split("\\n", -1)) {
             LineInfo info = createLine(prev, lineIndex, i, buildLinePreProcess(line));
             lines.add(info);
             prev = info;
@@ -246,11 +246,11 @@ public class TextCellRenderer<ValueType> extends JPanel
      * @return {width, height}
      */
     public float[] buildSize() {
-        int[] bs = getBorderSize();
-        float[] baseSize = getBaseSize();
-        return new float[] {
-                Math.max(1, maxWidth) * baseSize[0] + bs[0],
-                Math.max(1, lines.size()) * baseSize[1] + bs[1] };
+        getBaseSize(); //obtains testImage
+        Graphics2D g = testImage.createGraphics();
+        float[] size = paintOrLayoutComponentLines(g, false);
+        g.dispose();
+        return size;
     }
 
     //////////////////
@@ -527,13 +527,18 @@ public class TextCellRenderer<ValueType> extends JPanel
         if (testImage == null) {
             testImage = new BufferedImage(32, 32, BufferedImage.TYPE_3BYTE_BGR);
             Graphics2D g = testImage.createGraphics();
+            for (char c : "abcdefghijklmnopqrstuvwxyz".toCharArray()) {
+                for (char x : new char[] {c, Character.toUpperCase(c)}) {
+                    AttributedString a = new AttributedString(Character.toString(x));
+                    setDefaultAttributes(a, 1);
 
-            AttributedString a = new AttributedString("M");
-            setDefaultAttributes(a, 1);
-
-            TextLayout l = new TextLayout(a.getIterator(), g.getFontRenderContext());
-            baseWidth = l.getAdvance();
-            baseHeight = l.getAscent() + l.getDescent() + l.getLeading();
+                    TextLayout l = new TextLayout(a.getIterator(), g.getFontRenderContext());
+                    float nextWidth = l.getAdvance();
+                    float nextHeight = l.getAscent() + l.getDescent() + l.getLeading();
+                    baseWidth = Math.max(baseWidth, nextWidth);
+                    baseHeight = Math.max(baseHeight, nextHeight);
+                }
+            }
             g.dispose();
         }
         return new float[] {baseWidth, baseHeight};
@@ -581,9 +586,16 @@ public class TextCellRenderer<ValueType> extends JPanel
 
     protected Map<Color, Map<Color, Color>> textToBackToColor = new HashMap<>();
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        getBorder().paintBorder(this, g, 0, 0, getWidth(), getHeight());
+    /**
+     * @param g the target graphics
+     * @param paint if true, do drawing. if false, it just calculate the size
+     * @return width and height
+     * @since 1.2
+     */
+    protected float[] paintOrLayoutComponentLines(Graphics g, boolean paint) {
+        if (paint) {
+            getBorder().paintBorder(this, g, 0, 0, getWidth(), getHeight());
+        }
         Insets insets = getBorder().getBorderInsets(this);
 
         Graphics2D g2 = (Graphics2D) g;
@@ -591,21 +603,26 @@ public class TextCellRenderer<ValueType> extends JPanel
         FontRenderContext frc = g2.getFontRenderContext();
         float x = insets.left;
         float y = insets.top;
-        Color findColor = getLineFindColor();
-        Color findMatchColor = getLineFindMatchColor();
 
-        Color selectionColor = getSelectionBackground();
-        Color selectionTextColor = getSelectionForeground();
-        Color backgroundColor = getBackground();
-        Color foregroundColor = getForeground();
+        Color foregroundColor = paint ? getForeground() : Color.black;
+        Color backgroundColor = paint ? getBackground() : Color.white;
+
+        Color findColor = paint ? getLineFindColor() : foregroundColor;
+        Color findMatchColor = paint ? getLineFindMatchColor() : backgroundColor;
+
+        Color selectionTextColor = paint ? getSelectionForeground() : foregroundColor;
+        Color selectionColor = paint ? getSelectionBackground() : backgroundColor;
 
         int lineIndex = 0;
         LineInfo prev = null;
         float lineX = 0;
+        float lineWidthMax = 0;
         g2.translate(x, y);
         for (LineInfo line : lines) {
-            TextLayout l = line.getLayout(frc, this.selectionStart, this.selectionEnd,
-                    foregroundColor, backgroundColor, selectionTextColor, selectionColor, textToBackToColor);
+            TextLayout l = paint ?
+                    line.getLayout(frc, this.selectionStart, this.selectionEnd,
+                        foregroundColor, backgroundColor, selectionTextColor, selectionColor, textToBackToColor) :
+                    new TextLayout(line.attributedString.getIterator(), frc);
 //            TextLayout l = line.getLayout(frc);
 
             float ascent = l.getAscent();
@@ -613,13 +630,14 @@ public class TextCellRenderer<ValueType> extends JPanel
             g2.translate(0, ascent);
 
             lineX = paintStartX(lineIndex, prev, lineX, line, l, frc);
+            if (paint) {
+                paintLineSelection(g2, line, l, selectionColor, lineX);
+                paintLineFinds(g2, line, l, lineIndex, findColor, findMatchColor, lineX);
+                g2.setPaint(foregroundColor);
+                l.draw(g2, lineX, 0);
+            }
 
-            paintLineSelection(g2, line, l, selectionColor, lineX);
-            paintLineFinds(g2, line, l, lineIndex, findColor, findMatchColor, lineX);
-
-            g2.setPaint(foregroundColor);
-
-            l.draw(g2, lineX, 0);
+            lineWidthMax = Math.max(lineWidthMax, lineX + l.getAdvance());
 
             float descent = l.getDescent() + l.getLeading();
             y += descent;
@@ -629,9 +647,14 @@ public class TextCellRenderer<ValueType> extends JPanel
             prev = line;
         }
         g2.translate(-x, -y);
+        return new float[] { x + lineWidthMax + insets.right, y + insets.bottom};
+    }
 
+    @Override
+    protected void paintComponent(Graphics g) {
+        paintOrLayoutComponentLines(g, true);
         if (selected) {
-            paintCellSelection(g2, selectionColor);
+            paintCellSelection(g, getSelectionBackground());
         }
     }
 
@@ -776,7 +799,7 @@ public class TextCellRenderer<ValueType> extends JPanel
         protected List<int[]> findRanges;
 
         public LineInfo(AttributedString attributedString, int start, int end) {
-            if (attributedString.getIterator().next() == CharacterIterator.DONE) {
+            if (attributedString.getIterator().current() == CharacterIterator.DONE) {
                 //empty string cause an error at creating TextLayout
                 attributedString = new AttributedString(" ");
             }

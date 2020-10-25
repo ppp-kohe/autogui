@@ -84,14 +84,12 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
-    @SuppressWarnings("deprecation")
     public static Rectangle textComponentModelToView(JTextComponent textComponent, int sel) throws BadLocationException {
-        return textComponent.modelToView(sel); //TODO in JDK9, replaced by modelToView2D
+        return textComponent.modelToView2D(sel).getBounds();
     }
 
-    @SuppressWarnings("deprecation")
     public static int textComponentViewToModel(JTextComponent textComponent, Point p) {
-        return textComponent.viewToModel(p); //TODO in JDK9, replaced by viewToModel2D
+        return textComponent.viewToModel2D(p);
     }
 
     protected void error(Exception ex) {
@@ -498,7 +496,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
 
         public void pasteLines(Consumer<List<String>> setter) {
-            paste(s -> setter.accept(Arrays.asList(s.split("\\n"))));
+            paste(s -> setter.accept(Arrays.asList(s.split("\\n", -1))));
         }
 
         public void paste(Consumer<String> setter) {

@@ -16,6 +16,37 @@ public interface GuiRepresentation {
      */
     boolean match(GuiMappingContext context);
 
+    /**
+     * {@link #match(GuiMappingContext)} and {@link #setNotifiersTree(GuiMappingContext)} as initialization process
+     * @param context the context of the repr.
+     * @return the matching result
+     * @since 1.2
+     */
+    default boolean matchAndSetNotifiersAsInit(GuiMappingContext context) {
+        if (context.getRepresentation() == null) {
+            boolean r = match(context);
+            if (r) {
+                setNotifiersTree(context);
+            }
+            return r;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * sets notifiers for the entire tree by {@link GuiMappingContext#setNotifiers(Object)}
+     * @param context the context of the repr.
+     * @since 1.2
+     */
+    default void setNotifiersTree(GuiMappingContext context) {
+        GuiMappingContext.GuiSourceValue src = context.getSource();
+        if (!src.isNone()) {
+            context.setNotifiers(src.getValue());
+        }
+        context.getChildren().forEach(this::setNotifiersTree);
+    }
+
     /** invoke the associated method and check the returned value whether it is updated or not.
      *   if updated, set the source of context to the value.
      *   This is non-recursive operation; {@link GuiMappingContext} recursively calls this method.

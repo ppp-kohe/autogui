@@ -169,7 +169,7 @@ public class GuiReprPropertyPane extends GuiReprValue {
 
     @Override
     public Object fromHumanReadableString(GuiMappingContext context, String str) {
-        String[] cols = str.split("\\t");
+        String[] cols = str.split("\\t", -1);
         int i = 0;
         Object result = null;
         List<GuiMappingContext> cs = context.getChildren();

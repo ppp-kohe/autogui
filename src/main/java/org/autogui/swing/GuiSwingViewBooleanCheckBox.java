@@ -410,7 +410,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
             String str = load();
             if (str != null) {
                 target.setSelectedCellValuesLoop(
-                        Arrays.stream(str.split("\\n"))
+                        Arrays.stream(str.split("\\n", 0))
                                 .map(checkBox::getValueFromString)
                                 .collect(Collectors.toList()));
             }

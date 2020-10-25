@@ -656,7 +656,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             float[] baseSize = getBaseSize();
             return new float[] {
                     Math.max(1, maxWidth) * baseSize[0] + bs[0],
-                    baseSize[1] + bs[1] };
+                    baseSize[1] + bs[1] + bs[1] };
         }
 
         public void setExpanded(boolean expanded) {

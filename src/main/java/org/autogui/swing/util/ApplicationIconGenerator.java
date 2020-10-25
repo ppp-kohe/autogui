@@ -33,7 +33,7 @@ public class ApplicationIconGenerator {
             JPanel mainPane = new JPanel(new BorderLayout());
             JTextField nameField = new JTextField(30);
             nameField.addActionListener(e -> {
-                this.names = Arrays.asList(nameField.getText().split("\\s+"));
+                this.names = Arrays.asList(nameField.getText().split("\\s+", 0));
                 pane.repaint();
             });
             mainPane.add(nameField, BorderLayout.NORTH);
@@ -45,8 +45,8 @@ public class ApplicationIconGenerator {
 
     }
 
-    protected float width = 128;
-    protected float height = 128;
+    protected float width = 512;
+    protected float height = 512;
 
     protected List<String> names;
 
@@ -84,31 +84,20 @@ public class ApplicationIconGenerator {
     }
 
     public void setAppIcon(JFrame frame, String name) {
-        setNames(Arrays.asList(name.split("\\s+")));
+        setNames(Arrays.asList(name.split("\\s+", 0)));
         setAppIcon(frame);
     }
 
     public void setAppIcon(JFrame frame) {
         BufferedImage img = getImage();
         frame.setIconImage(img);
-        try {
-            Class<?> taskBarType = Class.forName("java.awt.Taskbar");
-            Object taskBar = taskBarType.getMethod("getTaskbar").invoke(null);
-            taskBarType.getMethod("setIconImage", Image.class).invoke(taskBar, img);
-        } catch (Exception ex) {
-            //java8 on macOS?
-            setMacApplicationIcon(frame, img);
-        }
+        Taskbar.getTaskbar().setIconImage(img);
     }
 
-
+    @Deprecated
     public void setMacApplicationIcon(JFrame frame, Image image) {
-        try {
-            Class<?> appType = Class.forName("com.apple.eawt.Application");
-            Object app = appType.getMethod("getApplication").invoke(null);
-            appType.getMethod("setDockIconImage", Image.class).invoke(app, image);
-        } catch (Exception e) {
-        }
+        frame.setIconImage(image);
+        Taskbar.getTaskbar().setIconImage(image);
     }
 
     public BufferedImage getImage() {
@@ -124,6 +113,7 @@ public class ApplicationIconGenerator {
 
         Rectangle2D.Float iconFrame = new Rectangle2D.Float(0, 0, width, height);
 
+        float arcP = 0.4f;
         float hue = 0.57f;
         if (names != null) {
             hue = getNameColorHue(String.join(" ", names));
@@ -133,8 +123,8 @@ public class ApplicationIconGenerator {
         Paint fillPaint = buildRadialGradientPaint(outerRect.x + outerRect.width * 0.2f, outerRect.y + outerRect.height * 0.2f,
                 (outerRect.width + outerRect.height) / 2.0f, hue, 0.35f, 0.9f, 0.3f, 0.85f);
         {
-            Path2D outerRectPath = buildRoundRect(true, true, true, true, outerRect, 0.15f);
-            drawShadow(g, 7, outerRectPath, 0.4f);
+            Path2D outerRectPath = buildRoundRect(true, true, true, true, outerRect, arcP);
+            drawShadow(g, 20, outerRectPath, 0.05f);
 
             g.setPaint(fillPaint);
             g.fill(outerRectPath);
@@ -142,7 +132,7 @@ public class ApplicationIconGenerator {
 
         Rectangle2D.Float interRect = buildRectSmaller(outerRect, outerRect.width * 0.015f, outerRect.height * 0.015f);
         {
-            Path2D interRectPath = buildRoundRect(true, true, true, true, interRect, 0.15f);
+            Path2D interRectPath = buildRoundRect(true, true, true, true, interRect, arcP);
 
             g.setPaint(Color.white);
             g.fill(interRectPath);
@@ -154,7 +144,7 @@ public class ApplicationIconGenerator {
                 fillRect.width, fillRect.height * (1 - fillRectHeightP));
         {
 
-            Path2D.Float fillRect2Path = buildFill(fillRect2.x, fillRect2.y, fillRect2.width, fillRect2.height, fillRect2.width * 0.15f);
+            Path2D.Float fillRect2Path = buildFill(fillRect2.x, fillRect2.y, fillRect2.width, fillRect2.height, fillRect2.width * arcP);
 
             float curvePointX = fillRect2.x + fillRect2.width * 0.7f;
             float curvePointY = fillRect2.y - fillRect2.height * 0.3f;

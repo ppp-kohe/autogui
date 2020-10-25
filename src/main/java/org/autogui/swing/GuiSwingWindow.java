@@ -39,7 +39,13 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
         return new GuiSwingWindowCreator();
     }
 
-    public static class GuiSwingWindowCreator extends GuiSwingRootPane.GuiSwingRootPaneCreator {
+    public static class GuiSwingWindowCreator extends GuiSwingRootPane.GuiSwingRootPaneCreator
+            implements Function<Object, GuiSwingWindow> {
+        @Override
+        public GuiSwingWindow apply(Object o) {
+            return createWindow(o);
+        }
+
         public GuiSwingWindow createWindow(Object o) {
             return new GuiSwingWindow(create(o));
         }
@@ -147,7 +153,19 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     }
 
     protected void initMenu() {
+        initMenuScreen();
         setJMenuBar(contextRootPane.getMenuBar());
+    }
+
+    /**
+     * setting up the menu property
+     * @since 1.2
+     */
+    protected void initMenuScreen() {
+        String macOSMenuName = "apple.laf.useScreenMenuBar";
+        if (System.getProperty(macOSMenuName) == null) {
+            System.setProperty(macOSMenuName, "true");
+        }
     }
 
     protected void initIcon() {

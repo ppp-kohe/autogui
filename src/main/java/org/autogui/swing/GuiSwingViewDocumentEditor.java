@@ -721,6 +721,10 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected TextWrapTextAction wrapText;
         protected boolean updateDisabled;
 
+        /** @since 1.2 */
+        protected JCheckBox backgroundCustom;
+        /** @since 1.2 */
+        protected JCheckBox foregroundCustom;
         protected SettingsWindow.ColorButton backgroundColor;
         protected SettingsWindow.ColorButton foregroundColor;
 
@@ -799,16 +803,29 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             updater = new EditingRunner(500, l -> updateStyle());
 
             //color
-            backgroundColor = new SettingsWindow.ColorButton(Color.white, updater::schedule);
-            foregroundColor = new SettingsWindow.ColorButton(Color.black, updater::schedule);
+            JPanel backgroundColorPane = new JPanel();
+            JPanel foregroundColorPane = new JPanel();
+            backgroundCustom = new JCheckBox();
+            foregroundCustom = new JCheckBox();
+            backgroundCustom.addActionListener(e -> updateStyle());
+            foregroundCustom.addActionListener(e -> updateStyle());
+            backgroundColor = new SettingsWindow.ColorButton(getDefaultBackground(), updater::schedule);
+            foregroundColor = new SettingsWindow.ColorButton(getDefaultForeground(), updater::schedule);
+            backgroundColor.setEnabled(false);
+            foregroundColor.setEnabled(false);
+
+            backgroundColorPane.add(backgroundCustom);
+            backgroundColorPane.add(backgroundColor);
+            foregroundColorPane.add(foregroundCustom);
+            foregroundColorPane.add(foregroundColor);
 
             new SettingsWindow.LabelGroup(this)
                 .addRow("Font:", fontFamily)
                 .addRow("Font Size:", fontSize)
                 .addRow("Style:", styleButton)
                 .addRow("Line Spacing:", lineSpacing)
-                .addRowFixed("Font Color:", foregroundColor)
-                .addRowFixed("Background:", backgroundColor)
+                .addRowFixed("Font Color:", foregroundColorPane)
+                .addRowFixed("Background:", backgroundColorPane)
                 .fitWidth();
 
             updateFromStyle();
@@ -843,13 +860,41 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 StyleConstants.setFontSize(style, ((Number) fontSize.getValue()).intValue());
                 StyleConstants.setBold(style, (Boolean) styleBold.getValue(Action.SELECTED_KEY));
                 StyleConstants.setItalic(style, (Boolean) styleItalic.getValue(Action.SELECTED_KEY));
-                pane.setBackground(backgroundColor.getColor());
-                pane.setCaretColor(foregroundColor.getColor());
-                StyleConstants.setForeground(style, foregroundColor.getColor());
+                if (backgroundCustom.isSelected()) {
+                    pane.setBackground(backgroundColor.getColor());
+                } else {
+                    pane.setBackground(getDefaultBackground());
+                }
+                backgroundColor.setEnabled(backgroundCustom.isSelected());
+                if (foregroundCustom.isSelected()) {
+                    StyleConstants.setForeground(style, foregroundColor.getColor());
+                } else {
+                    Color c = getDefaultForeground();
+                    StyleConstants.setForeground(style, c);
+                    pane.setForeground(c);
+                }
+                foregroundColor.setEnabled(foregroundCustom.isSelected());
+
                 doc.setParagraphAttributes(0, doc.getLength(), style, true);
                 sendPreferences();
             }
             pane.repaint();
+        }
+
+        /**
+         * @return the default color for background
+         * @since 1.2
+         */
+        protected Color getDefaultBackground() {
+            return UIManagerUtil.getInstance().getTextPaneBackground();
+        }
+
+        /**
+         * @return the default color for foreground
+         * @since 1.2
+         */
+        protected Color getDefaultForeground() {
+            return UIManagerUtil.getInstance().getTextPaneForeground();
         }
 
         public void updateFromStyle() {
@@ -865,6 +910,18 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                     fontSize.setValue(StyleConstants.getFontSize(style));
                     styleBold.putValue(Action.SELECTED_KEY, StyleConstants.isBold(style));
                     styleItalic.putValue(Action.SELECTED_KEY, StyleConstants.isItalic(style));
+
+                    Color foreground = StyleConstants.getForeground(style);
+                    boolean foregroundFlag = !(foreground == null || Objects.equals(foreground, getDefaultForeground()));
+                    foregroundCustom.setSelected(foregroundFlag);
+
+                    Color background = StyleConstants.getForeground(style);
+                    boolean backgroundFlag = !(background == null || Objects.equals(background, getDefaultBackground()));
+                    backgroundCustom.setSelected(backgroundFlag);
+
+                    foregroundColor.setEnabled(foregroundFlag);
+                    backgroundColor.setEnabled(backgroundFlag);
+
                     backgroundColor.setColorWithoutUpdate(pane.getBackground());
                     foregroundColor.setColorWithoutUpdate(StyleConstants.getForeground(style));
                 }
@@ -907,6 +964,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 if (c != null) {
                     foregroundColor.setColor(c);
                 }
+                jsonSet(map, "backgroundCustom", Boolean.class, backgroundCustom::setSelected);
+                jsonSet(map, "foregroundCustom", Boolean.class, foregroundCustom::setSelected);
                 jsonSet(map, "wrapText", Boolean.class, wrapText::change);
                 updateStyle();
             }
@@ -921,6 +980,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             json.put("italic", (Boolean) styleItalic.getValue(Action.SELECTED_KEY));
             json.put("backgroundColor", toJsonColor(backgroundColor.getColor()));
             json.put("foregroundColor", toJsonColor(foregroundColor.getColor()));
+            json.put("backgroundCustom", (Boolean) backgroundCustom.isSelected());
+            json.put("foregroundCustom", (Boolean) foregroundCustom.isSelected());
             json.put("wrapText", (Boolean) wrapText.getValue(Action.SELECTED_KEY));
             return json;
         }
@@ -1031,6 +1092,22 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public SettingsWindow.ColorButton getBackgroundColor() {
             return backgroundColor;
+        }
+
+        /**
+         * @return the backgroundCustom checkbox
+         * @since 1.2
+         */
+        public JCheckBox getBackgroundCustom() {
+            return backgroundCustom;
+        }
+
+        /**
+         * @return the foregroundCustom checkbox
+         * @since 1.2
+         */
+        public JCheckBox getForegroundCustom() {
+            return foregroundCustom;
         }
 
         public SettingsWindow.ColorButton getForegroundColor() {

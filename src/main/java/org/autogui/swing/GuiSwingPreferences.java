@@ -605,7 +605,7 @@ public class GuiSwingPreferences {
             } else if (value instanceof GuiPreferences) {
                 setSelected(listModel.isLaunchPrefs((GuiPreferences) value));
             }
-            ObjectTableColumnValue.setTableColor(table, this, isSelected);
+            ObjectTableColumnValue.setTableColor(table, this, isSelected, row, column);
             return this;
         }
     }

@@ -134,7 +134,6 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
     public void shutdown() {
         super.shutdown();
         setForComponents(ValuePane.class,
@@ -345,7 +344,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
                 specifierIndex.setIndex(row);
             }
 
-            setTableColor(table, component, isSelected);
+            setTableColor(table, component, isSelected, row, column);
             Consumer<Object> valuePane = getMenuTargetPane();
             if (valuePane != null) {
                 valuePane.accept(value);
@@ -383,15 +382,52 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     public static void setTableColor(JTable table, JComponent component, boolean isSelected) {
-        if (isSelected) {
-            component.setForeground(table.getSelectionForeground());
-            component.setBackground(table.getSelectionBackground());
-        } else {
-            component.setForeground(table.getForeground());
-            component.setBackground(table.getBackground());
+        setTableColor(table, component, isSelected, 0, 0);
+    }
+
+    /**
+     * @param table the table
+     * @param component the cell component
+     * @param isSelected the row is selected if true
+     * @param row        the row index
+     * @param column     the column index
+     * @since 1.2
+     */
+    public static void setTableColor(JTable table, JComponent component, boolean isSelected, int row, int column) {
+        if (!setDropTarget(table, component, row, column)) {
+            if (isSelected) {
+                component.setForeground(table.getSelectionForeground());
+                component.setBackground(table.getSelectionBackground());
+            } else {
+                component.setForeground(table.getForeground());
+                Color back = getTableBackground(table, row);
+                component.setBackground(back);
+            }
         }
         if (component instanceof PropertyLabel) {
             ((PropertyLabel) component).setSelected(isSelected);
+        }
+    }
+
+    /**
+     * @param table the table
+     * @param component the cell component
+     * @param row the row index
+     * @param column the column index
+     * @return true if drop target
+     */
+    public static boolean setDropTarget(JTable table, JComponent component, int row, int column) {
+        JTable.DropLocation loc = table.getDropLocation();
+        if (loc != null &&
+                !loc.isInsertRow() && !loc.isInsertColumn() &&
+                loc.getRow() == row && loc.getColumn() == column) {
+            Color back = UIManager.getColor("Table.dropCellBackground");
+            Color text = UIManager.getColor("Table.dropCellForeground");
+            component.setBackground(back);
+            component.setForeground(text);
+            return true;
+        } else {
+            return false;
         }
     }
 

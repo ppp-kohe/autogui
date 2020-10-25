@@ -294,6 +294,9 @@ public class GuiTypeBuilder {
     public void createMember(GuiTypeObject objType, MemberDefinitions definitions) {
         Field fld = definitions.getLastField();
         Method getter = definitions.getLast(this::isGetterMethod);
+        if (getter == null) {
+            getter = definitions.getLast(this::isAccessorMethod); //accessor T prop() of record
+        }
         Method setter = definitions.getLast(this::isSetterMethod);
         if (fld != null || setter != null || getter != null) {
             //property
@@ -477,8 +480,16 @@ public class GuiTypeBuilder {
     public boolean isGetterMethod(Method m) {
         return ((m.getName().startsWith("is") && m.getReturnType().equals(boolean.class)) ||
                     m.getName().startsWith("get")) &&
-                m.getParameterCount() == 0 &&
-                !m.getReturnType().equals(void.class);
+                isAccessorMethod(m);
+    }
+
+    /**
+     * @param m the tested method
+     * @return true if T m()
+     * @since 1.2
+     */
+    public boolean isAccessorMethod(Method m) {
+        return m.getParameterCount() == 0 && !m.getReturnType().equals(void.class);
     }
 
     /**
@@ -488,7 +499,9 @@ public class GuiTypeBuilder {
         return m.getName().startsWith("set") && m.getParameterCount() == 1;
     }
 
-    /** @param m the tested method
+    /**
+     * Note: it might conflict with {@link #isAccessorMethod(Method)}
+     * @param m the tested method
      * @return true if m() */
     public boolean isActionMethod(Method m) {
         return m.getParameterCount() == 0;

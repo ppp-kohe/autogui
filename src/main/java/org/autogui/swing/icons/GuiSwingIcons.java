@@ -36,6 +36,30 @@ public class GuiSwingIcons {
         initSynonyms();
     }
 
+    /**
+     * manually sets the icon for the name
+     * @param prefix a prefix of he name
+     * @param name the name of the icon
+     * @param icon the icon instance
+     * @return this
+     * @since 1.2
+     */
+    public GuiSwingIcons putIcon(String prefix, String name, Icon icon) {
+        iconMap.put(prefix + name, icon);
+        return this;
+    }
+
+    /**
+     * manually sets the icon for "action-" + name
+     * @param name the name of the icon
+     * @param icon the icon instance
+     * @return this
+     * @since 1.2
+     */
+    public GuiSwingIcons putIconAction(String name, Icon icon) {
+        return putIcon("action-", name, icon);
+    }
+
     public Icon getIcon(String name) {
         return iconMap.computeIfAbsent("action-" + name, k -> loadIconOrDefault(name));
     }

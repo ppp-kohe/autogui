@@ -319,7 +319,7 @@ public class ToStringCopyCell {
             runner.executeContextTask(() -> {
                         int rowIndex = 0;
                         GuiSwingJsonTransfer.JsonFillLoop fillLoop = new GuiSwingJsonTransfer.JsonFillLoop();
-                        for (String line : str.split(lineSeparator)) {
+                        for (String line : str.split(lineSeparator, -1)) {
                             if (fillLoop.addRow(runLine(line, rowIndex))) {
                                 ++rowIndex;
                             }
@@ -336,7 +336,7 @@ public class ToStringCopyCell {
             boolean rowSpecified = false;
             int rowIndex = targetRow;
             int c = 0;
-            for (String col : line.split(columnSeparator)) {
+            for (String col : line.split(columnSeparator, -1)) {
                 TableMenuCompositeToStringPaste composite = activeComposites.get(c % activeComposites.size());
                 if (composite.isIndexColumn()) { //specify the row index
                     targetRow = Integer.valueOf(col);

@@ -423,7 +423,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
 
     @Override
     public Object fromHumanReadableString(GuiMappingContext context, String str) {
-        String[] lines = str.split("\\n");
+        String[] lines = str.split("\\n", 0);
         GuiMappingContext elementContext = getElementContext(context);
         List<Object> res = new ArrayList<>(lines.length);
         for (String line : lines) {

@@ -81,7 +81,7 @@ public class SettingsWindow {
                 });
     }
 
-    public class SettingsFrame extends JFrame {
+    public static class SettingsFrame extends JFrame {
         private static final long serialVersionUID = 1L;
         protected boolean shown;
 
@@ -340,7 +340,7 @@ public class SettingsWindow {
             int minW = UIManagerUtil.getInstance().getScaledSizeInt(32);
             int minH = UIManagerUtil.getInstance().getScaledSizeInt(14);
             Dimension size = new Dimension(Math.min(minW, getWidth() - margin), Math.min(minH, getHeight() - margin));
-            Rectangle2D.Float rect = new Rectangle2D.Float(getWidth() / 2 - size.width / 2, getHeight() / 2 - size.height / 2,
+            Rectangle2D.Float rect = new Rectangle2D.Float(getWidth() / 2f - size.width / 2f, getHeight() / 2f - size.height / 2f,
                     size.width, size.height);
 
             g2.fill(rect);

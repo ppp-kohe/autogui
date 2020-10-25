@@ -217,7 +217,6 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
 
         @Override
         public LineInfo createLine(LineInfo prevLine, int lineIndex, int start, String line) {
-            AttributedString a = new AttributedString(line);
             if (lineIndex == 0) {
                 return createLineHead(start, line, "]", timeStyle, followingLineStyle);
             } else {

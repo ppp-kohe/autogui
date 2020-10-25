@@ -5,6 +5,11 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** a support class with {@link UIManager}.
  *  the main purpose of the class is providing default settings of UI resources and sizes
@@ -20,6 +25,11 @@ public class UIManagerUtil {
     protected Font consoleFont;
     protected int iconSize = -1;
 
+    /**
+     * @since 1.2
+     */
+    protected OsVersion osVersion = initOsVersion();
+
     public static UIManagerUtil getInstance() {
         if (instance == null) {
             instance = new UIManagerUtil();
@@ -29,13 +39,12 @@ public class UIManagerUtil {
 
     public Font getConsoleFont() {
         if (consoleFont == null) {
-            String os = System.getProperty("os.name", "").toLowerCase();
             Font base = UIManager.getFont("List.font");
             int size = (base == null ? 12 : base.getSize());
 
             Font f = null;
 
-            if (os.contains("mac")) {
+            if (getOsVersion() instanceof OsVersionMac) {
                 f = new Font("Menlo", Font.PLAIN, size); //macOS Sierra introduced "SF Mono" font but it seems not available
                 //Windows and Linux seems not to support font-fallback
 //            } else if (os.contains("windows")) {
@@ -118,7 +127,29 @@ public class UIManagerUtil {
         return color;
     }
 
+    /**
+     * @return the text pane foreground
+     * @since 1.2
+     */
+    public Color getTextPaneForeground() {
+        Color color = UIManager.getColor("TextPane.foreground");
+        if (color == null) {
+            color = Color.black;
+        }
+        return color;
+    }
 
+    /**
+     * @return the text pane background
+     * @since 1.2
+     */
+    public Color getTextPaneBackground() {
+        Color color = UIManager.getColor("TextPane.background");
+        if (color == null) {
+            color = Color.white;
+        }
+        return color;
+    }
 
     public Color getFocusColor() {
         Color color = UIManager.getColor("Focus.color");
@@ -170,4 +201,162 @@ public class UIManagerUtil {
         return ((float) getIconSize()) / 32f * n;
     }
 
+    /**
+     * @param lookAndFeelClass the LAF class name
+     *                          or special name <code>"#system"</code> for {@link UIManager#getSystemLookAndFeelClassName()}
+     * @since 1.2
+     */
+    public void setLookAndFeel(String lookAndFeelClass) {
+        try {
+//            boolean sysLafIsGtk = false;
+//            if (UIManager.getSystemLookAndFeelClassName().contains("GTKLookAndFeel")) {
+//                sysLafIsGtk = true;
+//            }
+            String laf = lookAndFeelClass;
+            if (laf != null && laf.equals("#system")) {
+                laf = UIManager.getSystemLookAndFeelClassName();
+            }
+            if (laf != null) {
+                UIManager.setLookAndFeel(laf);
+            }
+            if (laf != null && Objects.equals(UIManager.getSystemLookAndFeelClassName(), laf)) {
+                setLookAndFeelSystemFix();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    /**
+     * called from {@link #setLookAndFeel(String)} and apply some customization
+     * @since 1.2
+     */
+    public void setLookAndFeelSystemFix() {
+        if (getOsVersion() instanceof OsVersionMac &&
+                ((OsVersionMac) getOsVersion()).isBigSurOrLater()) {
+            //fix BigSur tabbed-pane tab title
+            UIDefaults defaults = UIManager.getDefaults();
+            Color black = UIManager.getColor("TabbedPane.foreground");
+            Color clear = new Color(200, 200, 200, 0);
+            defaults.put("TabbedPane.selectedTabTitleNormalColor", black);
+            defaults.put("TabbedPane.selectedTabTitlePressedColor", black);
+            defaults.put("TabbedPane.selectedTabTitleShadowNormalColor", clear);
+            defaults.put("TabbedPane.selectedTabTitleShadowDisabledColor", clear);
+        }
+    }
+
+    /**
+     * @return a created OS version of the runtime
+     * @since 1.2
+     */
+    public static OsVersion initOsVersion() {
+        String os = System.getProperty("os.name", "").toLowerCase();
+        if (os.startsWith("mac")) {
+            return new OsVersionMac();
+        } else {
+            return new OsVersion();
+        }
+    }
+
+    /**
+     * @return the OS version of the runtime
+     * @since 1.2
+     */
+    public OsVersion getOsVersion() {
+        return osVersion;
+    }
+
+    /**
+     * representing the OS version number
+     * @since 1.2
+     */
+    public static class OsVersion {
+        protected String arch;
+        protected String name;
+        protected String version;
+
+        public OsVersion(String arch, String name, String version) {
+            this.arch = arch;
+            this.name = name;
+            this.version = version;
+        }
+
+        public OsVersion() {
+            this(System.getProperty("os.arch", ""),
+                    System.getProperty("os.name", ""),
+                    System.getProperty("os.version", ""));
+        }
+
+        public String getArch() {
+            return arch;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public int versionNumber(String n) {
+            Matcher m = Pattern.compile("(\\d+)").matcher(n);
+            if (m.find()) {
+                return Integer.parseInt(m.group(1));
+            } else {
+                return 0;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "{" +
+                    "arch='" + arch + '\'' +
+                    ", name='" + name + '\'' +
+                    ", version='" + version + '\'' +
+                    '}';
+        }
+    }
+
+    /**
+     * an OS version subclass for macOS
+     * @since 1.2
+     */
+    public static class OsVersionMac extends OsVersion {
+        protected int versionTop; //10 : 11.0==10.16
+        protected int versionMajor; //15, 16, ...
+        protected int versionMinor;
+        public OsVersionMac(String arch, String name, String version) {
+            super(arch, name, version);
+            initMac();
+        }
+
+        public OsVersionMac() {
+            super();
+        }
+
+        protected void initMac() {
+            List<String> version = Arrays.asList(System.getProperty(getVersion(), "")
+                    .split("\\.", -1));
+            versionTop = (version.size() >= 1 ? versionNumber(version.get(0)) : 10);
+            versionMajor = (version.size() >= 2 ? versionNumber(version.get(1)) : 0);
+            versionMinor = (version.size() >= 3 ? versionNumber(version.get(2)) : 0);
+        }
+
+        public int getVersionTop() {
+            return versionTop;
+        }
+
+        public int getVersionMajor() {
+            return versionMajor;
+        }
+
+        public int getVersionMinor() {
+            return versionMinor;
+        }
+
+        public boolean isBigSurOrLater() {
+            return versionTop >= 11 || (versionTop == 10 && versionMajor >= 16);
+        }
+    }
 }

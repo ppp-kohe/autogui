@@ -182,6 +182,8 @@ public class SearchTextField extends JComponent {
 
     public void initIcon() {
         icon = new JButton(getEmptyIcon());
+        icon.setBorder(BorderFactory.createEmptyBorder());
+        icon.setMargin(new Insets(0, 0, 0, 0));
         int size = UIManagerUtil.getInstance().getScaledSizeInt(16);
         icon.setPreferredSize(new Dimension(size, size));
         icon.setBorderPainted(false);
@@ -277,6 +279,8 @@ public class SearchTextField extends JComponent {
         PopupExtensionText.putUnregisteredEditActions(field);
         popup = new PopupExtensionText(field, PopupExtensionText.getDefaultKeyMatcher(), categorized);
         popupButton = new JButton(popup.getAction());
+        popupButton.setBorder(BorderFactory.createEmptyBorder());
+        popupButton.setMargin(new Insets(0, 0, 0, 0));
         popupButton.setContentAreaFilled(false);
         popupButton.setFocusable(false);
         addSearchItemsListener(getPopupUpdateListener(popup, categorized));
@@ -329,7 +333,7 @@ public class SearchTextField extends JComponent {
     }
 
     public void initLayout() {
-        setBackgroundWithoutInit(Color.white);
+        setBackgroundWithoutInit(UIManagerUtil.getInstance().getTextPaneBackground());
         initBackgroundPainter();
 
         setLayout(new BorderLayout());

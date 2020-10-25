@@ -192,9 +192,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         }
 
         public GuiSwingRootPane createWithContext(GuiMappingContext context) {
-            if (context.getRepresentation() == null) {
-                GuiSwingMapperSet.getReprDefaultSet().match(context);
-            }
+            GuiSwingMapperSet.getReprDefaultSet().matchAndSetNotifiersAsInit(context);
 
             if (prefsCreator != null) {
                 GuiPreferences prefs = prefsCreator.apply(context);
@@ -249,9 +247,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     public GuiSwingRootPane(GuiMappingContext context) {
         setLayout(new BorderLayout());
         this.context = context;
-        if (context.getRepresentation() == null) {
-            GuiSwingMapperSet.getReprDefaultSet().match(context);
-        }
+        GuiSwingMapperSet.getReprDefaultSet().matchAndSetNotifiersAsInit(context);
         this.view = (GuiSwingView) GuiSwingMapperSet.getDefaultMapperSet().view(context);
         this.keyBinding = GuiSwingKeyBinding.createWithDefaultExcluded();
         init();
