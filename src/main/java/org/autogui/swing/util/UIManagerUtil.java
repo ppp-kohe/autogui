@@ -333,11 +333,11 @@ public class UIManagerUtil {
 
         public OsVersionMac() {
             super();
+            initMac();
         }
 
         protected void initMac() {
-            List<String> version = Arrays.asList(System.getProperty(getVersion(), "")
-                    .split("\\.", -1));
+            List<String> version = Arrays.asList(getVersion().split("\\.", -1));
             versionTop = (version.size() >= 1 ? versionNumber(version.get(0)) : 10);
             versionMajor = (version.size() >= 2 ? versionNumber(version.get(1)) : 0);
             versionMinor = (version.size() >= 3 ? versionNumber(version.get(2)) : 0);
