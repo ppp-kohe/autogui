@@ -79,7 +79,7 @@ public class FileImagePreviewDemo {
         @GuiIncluded
         public List<FileItem> up() {
             Path old = dir;
-            dir = dir.getParent();
+            dir = dir == null ? null : dir.getParent();
             update(dir);
             return items.stream()
                     .filter(p -> p.getPath().equals(old))

@@ -155,7 +155,9 @@ public class AutoGuiShell {
     public static void displayLiveWindow(JFrame w) {
         w.setVisible(true);
         w.toFront();
-        Desktop.getDesktop().requestForeground(false);
+        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_REQUEST_FOREGROUND)) {
+            Desktop.getDesktop().requestForeground(false);
+        }
     }
 
 

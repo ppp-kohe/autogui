@@ -1,6 +1,8 @@
 package org.autogui.base.type;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiListSelectionCallback;
+import org.autogui.GuiListSelectionUpdater;
 import org.autogui.GuiNotifierSetter;
 
 import java.lang.reflect.*;
@@ -485,11 +487,14 @@ public class GuiTypeBuilder {
 
     /**
      * @param m the tested method
-     * @return true if T m()
+     * @return true if T m(), no annotation {@link GuiListSelectionUpdater} and {@link GuiIncluded#action()}==false
      * @since 1.2
      */
     public boolean isAccessorMethod(Method m) {
-        return m.getParameterCount() == 0 && !m.getReturnType().equals(void.class);
+        return m.getParameterCount() == 0 && !m.getReturnType().equals(void.class)
+                && !m.isAnnotationPresent(GuiListSelectionUpdater.class)
+                && (m.isAnnotationPresent(GuiIncluded.class) &&
+                    !m.getAnnotation(GuiIncluded.class).action());
     }
 
     /**

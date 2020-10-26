@@ -295,6 +295,22 @@ public class ObjectTableColumn {
     }
 
     public static void setCellBorder(JTable table, JComponent cell, int row, int column) {
+        setCellBorder(table, cell, false, false, row, column);
+    }
+
+    /**
+     * @param table the table
+     * @param cell the target cell
+     * @param row the row index of the cell
+     * @param column the column index of the cell
+     * @param hasFocus true if the cell has focus
+     * @return true if succeeded
+     * @since 1.2
+     */
+    public static boolean setCellBorder(JTable table, JComponent cell, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (!UIManagerUtil.getInstance().isTableCustomHighlighting()) {
+            return false;
+        }
         boolean leftEnd = (column == 0);
         boolean rightEnd = (table.getColumnCount() == column + 1);
         UIManagerUtil ui = UIManagerUtil.getInstance();
@@ -305,6 +321,7 @@ public class ObjectTableColumn {
         cell.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(h, leftEnd ? w : 0, h * 2, rightEnd ? w : 0, getTableBackground(table, row)),
                 BorderFactory.createMatteBorder(h, iw * 2, h, iw, cell.getBackground())));
+        return true;
     }
 
     /**
@@ -317,7 +334,7 @@ public class ObjectTableColumn {
     public static Color getTableBackground(JTable table, int row) {
         Color back = table.getBackground();
         if ((row % 2) != 0) {
-            Color alternateColor = UIManager.getColor("Table.alternateRowColor");
+            Color alternateColor = UIManagerUtil.getInstance().getTableAlternateRowColor();
             if (alternateColor != null) {
                 back = alternateColor;
             }
@@ -341,7 +358,7 @@ public class ObjectTableColumn {
                                                        int column) {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus,
                     row, column);
-            setCellBorder(table, this, row, column);
+            setCellBorder(table, this, isSelected, hasFocus, row, column);
             return this;
         }
     }

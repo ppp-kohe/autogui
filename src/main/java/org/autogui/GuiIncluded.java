@@ -132,4 +132,11 @@ public @interface GuiIncluded {
      * @since 1.2
      */
     boolean history() default true;
+
+    /**
+     *
+     * @return if true and the target returns non-void type, the target is handled as an action, not an accessor
+     * @since 1.2
+     */
+    boolean action() default false;
 }

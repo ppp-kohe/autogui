@@ -19,6 +19,7 @@ import org.autogui.swing.util.PopupExtension.PopupMenuFilter;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -344,13 +345,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn
                 specifierIndex.setIndex(row);
             }
 
-            setTableColor(table, component, isSelected, row, column);
+            setTableColor(table, component, isSelected, hasFocus, row, column);
             Consumer<Object> valuePane = getMenuTargetPane();
             if (valuePane != null) {
                 valuePane.accept(value);
             }
-            ObjectTableColumn.setCellBorder(table, component, row, column);
-
+            if (!ObjectTableColumn.setCellBorder(table, component, isSelected, hasFocus, row, column)) {
+                setCellBorderDefault(table, component, isSelected, hasFocus, row, column);
+            }
             return component;
         }
 
@@ -381,19 +383,42 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         }
     }
 
+    /**
+     *
+     * @param table the table
+     * @param component the cell component
+     * @param isSelected the cell is selected
+     * @param hasFocus the cell has focus
+     * @param row the row index of the cell
+     * @param column the column index of the cell
+     * @since 1.2
+     */
+    public static void setCellBorderDefault(JTable table, JComponent component, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (hasFocus) {
+            Border b = (isSelected ? UIManager.getBorder("Table.focusSelectedCellHighlightBorder") : null);
+            b = (b == null ? UIManager.getBorder("Table.focusCellHighlightBorder") : b);
+            component.setBorder(b);
+        } else {
+            Border b = UIManager.getBorder("Table.cellNoFocusBorder");
+            b = (b == null ? BorderFactory.createEmptyBorder(1, 1, 1, 1) : b);
+            component.setBorder(b);
+        }
+    }
+
     public static void setTableColor(JTable table, JComponent component, boolean isSelected) {
-        setTableColor(table, component, isSelected, 0, 0);
+        setTableColor(table, component, isSelected, false, 0, 0);
     }
 
     /**
      * @param table the table
      * @param component the cell component
      * @param isSelected the row is selected if true
+     * @param hasFocus the row is focused if true
      * @param row        the row index
      * @param column     the column index
      * @since 1.2
      */
-    public static void setTableColor(JTable table, JComponent component, boolean isSelected, int row, int column) {
+    public static void setTableColor(JTable table, JComponent component, boolean isSelected, boolean hasFocus, int row, int column) {
         if (!setDropTarget(table, component, row, column)) {
             if (isSelected) {
                 component.setForeground(table.getSelectionForeground());
@@ -402,6 +427,17 @@ public class ObjectTableColumnValue extends ObjectTableColumn
                 component.setForeground(table.getForeground());
                 Color back = getTableBackground(table, row);
                 component.setBackground(back);
+            }
+        }
+        if (hasFocus && !isSelected && table.isCellEditable(row, column)) { //overwriting by non-null properties for focusCells
+            UIManagerUtil u = UIManagerUtil.getInstance();
+            Color c = u.getTableFocusCellForeground();
+            if (c != null) {
+                component.setForeground(c);
+            }
+            c = u.getTableFocusCellBackground();
+            if (c != null) {
+                component.setBackground(c);
             }
         }
         if (component instanceof PropertyLabel) {
@@ -421,8 +457,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         if (loc != null &&
                 !loc.isInsertRow() && !loc.isInsertColumn() &&
                 loc.getRow() == row && loc.getColumn() == column) {
-            Color back = UIManager.getColor("Table.dropCellBackground");
-            Color text = UIManager.getColor("Table.dropCellForeground");
+            UIManagerUtil u = UIManagerUtil.getInstance();
+            Color back = u.getTableDropCellBackground();
+            Color text = u.getTableDropCellForeground();
             component.setBackground(back);
             component.setForeground(text);
             return true;

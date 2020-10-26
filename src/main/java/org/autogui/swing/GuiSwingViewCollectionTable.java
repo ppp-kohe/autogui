@@ -116,6 +116,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         return true;
     }
 
+
     public static class CollectionTable extends JTable
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<List<?>>,
                         GuiSwingTableColumnSet.TableSelectionSource, GuiSwingPreferences.PreferencesUpdateSupport,
@@ -146,6 +147,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
         protected SettingsWindow settingsWindow;
+
+        protected boolean customHighlighting;
 
         public CollectionTable(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -196,8 +199,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initGrid() {
-            setGridColor(getBackground());
-            setShowGrid(false);
+            customHighlighting = UIManagerUtil.getInstance().isTableCustomHighlighting();
+            if (customHighlighting) {
+                setGridColor(getBackground());
+                setShowGrid(false);
+            }
         }
 
         public void initSelection() {
@@ -634,9 +640,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-
-            Graphics2D g2 = (Graphics2D) g;
-            paintSelectedRows(g2);
+            if (customHighlighting) {
+                Graphics2D g2 = (Graphics2D) g;
+                paintSelectedRows(g2);
+            }
         }
 
         protected void paintSelectedRows(Graphics2D g2) {

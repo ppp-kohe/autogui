@@ -70,7 +70,7 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             Component c = super.getTableCellEditorComponent(table, value, isSelected, row, column);
-            ObjectTableColumnValue.setTableColor(table, component, isSelected, row, column);
+            ObjectTableColumnValue.setTableColor(table, component, isSelected, false, row, column);
             return c;
         }
 

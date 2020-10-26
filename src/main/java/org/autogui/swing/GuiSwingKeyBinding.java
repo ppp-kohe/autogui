@@ -3,6 +3,7 @@ package org.autogui.swing;
 import org.autogui.swing.util.NamedPane;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupExtension;
+import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -628,7 +629,7 @@ public class GuiSwingKeyBinding {
             String meta = "Meta";
             String ctrl = "Ctrl";
             String shift = "Shift";
-            boolean mac = System.getProperty("os.name", "").contains("Mac OS");
+            boolean mac = UIManagerUtil.getInstance().getOsVersion().isMacOS();
             if (mac) {
                 alt = "\u2325";
                 meta = "\u2318";

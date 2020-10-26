@@ -24,6 +24,7 @@ public class UIManagerUtil {
 
     protected Font consoleFont;
     protected int iconSize = -1;
+    protected boolean systemLaf;
 
     /**
      * @since 1.2
@@ -168,6 +169,47 @@ public class UIManagerUtil {
     }
 
     /**
+     * @return Table.alternateRowColor or null
+     * @since 1.2
+     */
+    public Color getTableAlternateRowColor() {
+        return UIManager.getColor("Table.alternateRowColor");
+    }
+
+    /**
+     * @return Table.dropCellBackground or null
+     * @since 1.2
+     */
+    public Color getTableDropCellBackground() {
+        return UIManager.getColor("Table.dropCellBackground");
+    }
+
+    /**
+     * @return Table.dropCellForeground or null
+     * @since 1.2
+     */
+    public Color getTableDropCellForeground() {
+        return UIManager.getColor("Table.dropCellForeground");
+    }
+
+    /**
+     * @return Table.focusCellBackground or null
+     * @since 1.2
+     */
+    public Color getTableFocusCellBackground() {
+        return UIManager.getColor("Table.focusCellBackground");
+    }
+
+    /**
+     * @return Table.focusCellForeground or null
+     * @since 1.2
+     */
+    public Color getTableFocusCellForeground() {
+        return UIManager.getColor("Table.focusCellForeground");
+    }
+
+
+    /**
      * @return 32 or label font height x2.1
      */
     public int getIconSize() {
@@ -220,6 +262,7 @@ public class UIManagerUtil {
                 UIManager.setLookAndFeel(laf);
             }
             if (laf != null && Objects.equals(UIManager.getSystemLookAndFeelClassName(), laf)) {
+                systemLaf = true;
                 setLookAndFeelSystemFix();
             }
         } catch (Exception ex) {
@@ -243,6 +286,15 @@ public class UIManagerUtil {
             defaults.put("TabbedPane.selectedTabTitleShadowNormalColor", clear);
             defaults.put("TabbedPane.selectedTabTitleShadowDisabledColor", clear);
         }
+    }
+
+    /**
+     * @return if macOS native UI, true for enabling table-view custom highlighting
+     * @since 1.2
+     */
+    public boolean isTableCustomHighlighting() {
+        return getOsVersion().isMacOS() &&
+                systemLaf;
     }
 
     /**
@@ -316,6 +368,18 @@ public class UIManagerUtil {
                     ", version='" + version + '\'' +
                     '}';
         }
+
+        public boolean isMacOS() {
+            return getName().toLowerCase().startsWith("mac");
+        }
+
+        public boolean isWindows() {
+            return getName().toLowerCase().startsWith("windows");
+        }
+
+        public boolean isLinux() {
+            return getName().toLowerCase().startsWith("linux");
+        }
     }
 
     /**
@@ -357,6 +421,11 @@ public class UIManagerUtil {
 
         public boolean isBigSurOrLater() {
             return versionTop >= 11 || (versionTop == 10 && versionMajor >= 16);
+        }
+
+        @Override
+        public boolean isMacOS() {
+            return true;
         }
     }
 }

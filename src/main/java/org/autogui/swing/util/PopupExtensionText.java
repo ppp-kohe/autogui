@@ -271,6 +271,12 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
 
         @Override
+        public boolean isEnabled() {
+            return super.isEnabled() && Desktop.isDesktopSupported() &&
+                    Desktop.getDesktop().isSupported(Desktop.Action.BROWSE);
+        }
+
+        @Override
         public void actionPerformed(ActionEvent e) {
             String text = null;
             if (component instanceof JLabel) {

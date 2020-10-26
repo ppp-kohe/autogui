@@ -414,7 +414,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         @Override
         public boolean isEnabled() {
-            return super.isEnabled() && Desktop.isDesktopSupported();
+            return super.isEnabled() && Desktop.isDesktopSupported() &&
+                    Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
         }
 
         @Override
@@ -466,10 +467,10 @@ public class SearchTextFieldFilePath extends SearchTextField {
                     command = path -> desk.browseFileDirectory(path.toFile());
                 } catch (Exception ex) {
                     Function<Path,List<String>> commandGenerator;
-                    String name = System.getProperty("os.name", "?").toLowerCase();
-                    if (name.startsWith("mac")) {
+                    UIManagerUtil.OsVersion os = UIManagerUtil.getInstance().getOsVersion();
+                    if (os.isMacOS()) {
                         commandGenerator = (path) -> Arrays.asList("open", "-R", path.toString());
-                    } else if (name.startsWith("windows")) {
+                    } else if (os.isWindows()) {
                         commandGenerator = (path) -> Arrays.asList("explorer", "/select," + path.toString());
                     } else {
                         commandGenerator = (path) -> Arrays.asList("nautilus", path.toString());
