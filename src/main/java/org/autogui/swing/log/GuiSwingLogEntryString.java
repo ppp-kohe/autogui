@@ -88,6 +88,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
 
     public static Map<AttributedCharacterIterator.Attribute, Object> getBodyStyle() {
         Map<AttributedCharacterIterator.Attribute, Object> m = new HashMap<>();
+        m.put(TextAttribute.FOREGROUND, new Color(50, 100, 180));
         m.put(TextAttribute.FONT, GuiSwingLogManager.getFont());
         return m;
     }
@@ -228,9 +229,9 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         public String format(GuiLogEntry value) {
             if (value instanceof GuiLogEntryString) {
                 GuiLogEntryString str = (GuiLogEntryString) value;
-                return String.format("%s %s",
+                return formatPreProcess(String.format("%s %s",
                         manager.formatTime(str.getTime()),
-                        str.getData());
+                        str.getData()));
             } else {
                 return super.format(value);
             }

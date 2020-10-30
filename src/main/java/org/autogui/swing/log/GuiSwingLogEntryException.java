@@ -337,9 +337,9 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         @Override
         public String format(GuiLogEntryException value) {
             if (value != null) {
-                String msg = value.getException().toString();
+                String msg = formatPreProcess(value.getException().toString());
 
-                String time = manager.formatTime(value.getTime());
+                String time = formatPreProcess(manager.formatTime(value.getTime()));
                 timeEnd = time.length();
                 return time + " !!! " + (msg == null ? "" : msg);
             } else {
@@ -527,6 +527,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         protected StringBuilder line = new StringBuilder();
 
         public void append(String str, Map<Attribute,Object> attrs) {
+            str = formatPreProcess(str);
             int start = line.length();
             for (char c : str.toCharArray()) {
                 if (c == '\n') {

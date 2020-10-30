@@ -25,8 +25,10 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * a class cluster for JSON reading/writing
@@ -746,7 +748,12 @@ public class GuiSwingJsonTransfer {
         public void actionPerformedOnTableCell(ActionEvent e, GuiReprCollectionTable.TableTargetCell target) {
             Object json = getJson();
             if (json != null) {
-                Iterable<int[]> is = target.getSelectedCellIndices();
+                Iterable<int[]> is = rows ?
+                        target.getSelectedRowAllCellIndices() :
+                        target.getSelectedCellIndices();
+                Set<Integer> rows = IntStream.of(target.getSelectedRows())
+                        .boxed()
+                        .collect(Collectors.toSet());
                 executeContextTask(() -> {
                             JsonFillLoop fillLoop = new JsonFillLoop();
                             if (json instanceof List<?>) { //[ ... ]
@@ -761,6 +768,8 @@ public class GuiSwingJsonTransfer {
                                 List<CellValue> updatedRow = getCellsForRow(0, json); //single row
                                 fillLoop.addRow(updatedRow);
                             }
+                            //if specified rows that are not included in the selected rows, move them to freeRows
+                            fillLoop.moveSpecifiedToFree(r -> !rows.contains(r));
                             return fillLoop;
                         },
                         r -> r.executeIfPresent(
@@ -871,15 +880,38 @@ public class GuiSwingJsonTransfer {
                     .anyMatch(CellValueRowSpecified.class::isInstance); //all cells in the returned list has a same row
         }
 
+        /**
+         * @param movingRow move rows matched only the test to frees.
+         *                   the moved rows are sorted by their index
+         * @since 1.2
+         */
+        public void moveSpecifiedToFree(Predicate<Integer> movingRow) {
+            Map<Integer, List<CellValue>> moving = new HashMap<>();
+            List<Integer> movingRows = new ArrayList<>();
+            specifiedRows.forEach((row, vals) -> {
+                if (movingRow.test(row)) {
+                    movingRows.add(row);
+                    moving.put(row, vals);
+                }
+            });
+            movingRows.stream()
+                    .sorted()
+                    .forEach(r -> {
+                        freeRows.add(moving.get(r));
+                        specifiedRows.remove(r);
+                    });
+        }
+
         @Override
         public Object apply(int[] pos) {
             List<CellValue> row = specifiedRows.get(pos[0]);
 
-            if (row == null) {
+            if (row == null && !freeRows.isEmpty()) {
                 row = freeRows.get(rowToFreeIndex.computeIfAbsent(pos[0],
                         key -> rowToFreeIndex.size() % freeRows.size()));
             }
-            return row.stream()
+            return row == null ? null :
+                    row.stream()
                     .filter(c -> c.column == pos[1])
                     .findFirst()
                     .map(c -> c.value)

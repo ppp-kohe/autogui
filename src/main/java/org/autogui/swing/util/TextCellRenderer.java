@@ -1,6 +1,7 @@
 package org.autogui.swing.util;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -45,6 +46,8 @@ public class TextCellRenderer<ValueType> extends JPanel
 
     protected Color selectionForeground;
     protected Color selectionBackground;
+    /** @since 1.2 */
+    protected Color originalBackground = Color.white;
 
     public TextCellRenderer() {
         lines = new ArrayList<>();
@@ -109,7 +112,18 @@ public class TextCellRenderer<ValueType> extends JPanel
     @Override
     public Component getListCellRendererComponent(JList<? extends ValueType> list, ValueType value, int index, boolean isSelected, boolean cellHasFocus) {
         setProperty(list);
-        return getTableCellRendererComponent(null, value, isSelected, cellHasFocus, index, 0);
+        //setCellListColor(list, this,false, cellHasFocus, index); //selection is handled by selection range
+        boolean forMouseEvents = index <= -1;
+        if (!forMouseEvents) {
+            this.selected = isSelected;
+            clearSelectionRange();
+        }
+
+        setValue(value, forMouseEvents);
+//        if (!TextCellRenderer.setCellListBorder(list, this, isSelected, cellHasFocus, index)) {
+            //TextCellRenderer.setCellBorderDefault(true, this, isSelected, cellHasFocus);
+//        }
+        return this;
     }
 
     public void setProperty(JList<?> list) {
@@ -130,10 +144,197 @@ public class TextCellRenderer<ValueType> extends JPanel
         }
     }
 
+    @Override
+    public void setBackground(Color bg) {
+        super.setBackground(bg);
+        this.originalBackground = bg;
+    }
+    //////////////////////////////
+
+    /**
+     *
+     * @param list the target list, nullable
+     * @param component the cell component
+     * @param isSelected true if the cell is selected
+     * @param hasFocus true if the cell has focus
+     * @param row the row index of the cell
+     * @since 1.2
+     */
+    public static void setCellListColor(JList<?> list, JComponent component, boolean isSelected, boolean hasFocus, int row) {
+        if (!setCellListColorDropTarget(list, component, row) && list != null) {
+            if (isSelected) {
+                component.setForeground(list.getSelectionForeground());
+                component.setBackground(list.getSelectionBackground());
+            } else {
+                component.setForeground(list.getForeground());
+                Color back = getCellBackground(list, false, row);
+                component.setBackground(back);
+            }
+        }
+    }
+
+    /**
+     * @param list the list
+     * @param component the cell component
+     * @param row the row index
+     * @return true if drop target
+     * @since 1.2
+     */
+    public static boolean setCellListColorDropTarget(JList<?> list, JComponent component, int row) {
+        JList.DropLocation loc = (list == null ? null : list.getDropLocation());
+        if (loc != null &&
+                !loc.isInsert() &&
+                loc.getIndex() == row) {
+            UIManagerUtil u = UIManagerUtil.getInstance();
+            Color back = u.getListDropCellBackground();
+            Color text = u.getListDropCellForeground();
+            component.setBackground(back);
+            component.setForeground(text);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     *
+     * @param table the target table, nullable
+     * @param component the cell component
+     * @param isSelected true if the cell is selected
+     * @param hasFocus true if the cell has focus
+     * @param row the row index of the cell
+     * @param column the column index of the cell
+     * @since 1.2
+     */
+    public static void setCellTableColor(JTable table, JComponent component, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (!setCellTableColorDropTarget(table, component, row, column) && table != null) {
+            if (isSelected) {
+                component.setForeground(table.getSelectionForeground());
+                component.setBackground(table.getSelectionBackground());
+            } else {
+                component.setForeground(table.getForeground());
+                Color back = getCellBackground(table, true, row);
+                component.setBackground(back);
+            }
+        }
+        if (hasFocus && !isSelected && (table == null || table.isCellEditable(row, column))) { //overwriting by non-null properties for focusCells
+            UIManagerUtil u = UIManagerUtil.getInstance();
+            Color c = u.getTableFocusCellForeground();
+            if (c != null) {
+                component.setForeground(c);
+            }
+            c = u.getTableFocusCellBackground();
+            if (c != null) {
+                component.setBackground(c);
+            }
+        }
+    }
+
+    /**
+     * @param table the table
+     * @param component the cell component
+     * @param row the row index
+     * @param column the column index
+     * @return true if drop target
+     * @since 1.2
+     */
+    public static boolean setCellTableColorDropTarget(JTable table, JComponent component, int row, int column) {
+        JTable.DropLocation loc = (table == null ? null : table.getDropLocation());
+        if (loc != null &&
+                !loc.isInsertRow() && !loc.isInsertColumn() &&
+                loc.getRow() == row && loc.getColumn() == column) {
+            UIManagerUtil u = UIManagerUtil.getInstance();
+            Color back = u.getTableDropCellBackground();
+            Color text = u.getTableDropCellForeground();
+            component.setBackground(back);
+            component.setForeground(text);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+    /**
+     * @param table the table
+     * @param cell the target cell
+     * @param row the row index of the cell
+     * @param column the column index of the cell
+     * @param isSelected true if the cell is selected
+     * @param hasFocus true if the cell has focus
+     * @return true if succeeded
+     * @since 1.2
+     */
+    public static boolean setCellTableBorder(JTable table, JComponent cell, boolean isSelected, boolean hasFocus, int row, int column) {
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        if (!ui.isTableCustomHighlighting()) {
+            return false;
+        }
+        boolean leftEnd = (column == 0);
+        boolean rightEnd = (table == null ? true : (table.getColumnCount() == column + 1));
+        int h = Math.max(1, ui.getScaledSizeInt(1));
+        int w = Math.max(1, ui.getScaledSizeInt(2));
+
+        int iw = ui.getScaledSizeInt(5);
+        cell.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(h, leftEnd ? w : 0, h * 2, rightEnd ? w : 0, getCellBackground(table, true, row)),
+                BorderFactory.createMatteBorder(h, iw * 2, h, iw, cell.getBackground())));
+        return true;
+    }
+
+    /**
+     *
+     * @param component the table or list
+     * @param isTable true if the component is a table
+     * @param row the row index
+     * @return  background color for the row
+     * @since 1.2
+     */
+    public static Color getCellBackground(JComponent component, boolean isTable, int row) {
+        Color back = (component == null ? null : component.getBackground());
+        if ((row % 2) != 0) {
+            UIManagerUtil u = UIManagerUtil.getInstance();
+            Color alternateColor = u.getTableAlternateRowColor(); //(isTable ? u.getTableAlternateRowColor() : u.getListAlternateRowColor());
+            if (alternateColor != null) {
+                back = alternateColor;
+            }
+        }
+        return back;
+    }
+
+    /**
+     *
+     * @param isTable true if a table cell
+     * @param component the cell component
+     * @param isSelected the cell is selected
+     * @param hasFocus the cell has focus
+     * @since 1.2
+     */
+    public static void setCellBorderDefault(boolean isTable, JComponent component, boolean isSelected, boolean hasFocus) {
+        if (hasFocus) {
+            String selBorderName = (isTable ? "Table.focusSelectedCellHighlightBorder" :
+                                                "List.focusSelectedCellHighlightBorder");
+            String borderName = (isTable ? "Table.focusCellHighlightBorder" :
+                                            "List.focusCellHighlightBorder");
+            Border b = (isSelected ? UIManager.getBorder(selBorderName) : null);
+            b = (b == null ? UIManager.getBorder(borderName) : b);
+            component.setBorder(b);
+        } else {
+            Border b = UIManager.getBorder(isTable ?
+                    "Table.cellNoFocusBorder" :
+                    "List.cellNoFocusBorder");
+            b = (b == null ? BorderFactory.createEmptyBorder(1, 1, 1, 1) : b);
+            component.setBorder(b);
+        }
+    }
+
+    //////////////////////////////
+
     @SuppressWarnings("unchecked")
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        setProperty(table);
+    public Component getTableCellRendererComponent(JTable tableNullable, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        setProperty(tableNullable);
+        //setCellTableColor(tableNullable, this, false, hasFocus, row, column);
         boolean forMouseEvents = row <= -1;
         if (!forMouseEvents) {
             this.selected = isSelected;
@@ -141,6 +342,9 @@ public class TextCellRenderer<ValueType> extends JPanel
         }
 
         setValue((ValueType) value, forMouseEvents);
+//        if (!TextCellRenderer.setCellTableBorder(tableNullable, this, isSelected, hasFocus, row, column)) {
+//            TextCellRenderer.setCellBorderDefault(true, this, isSelected, hasFocus);
+//        }
         return this;
     }
 
@@ -176,11 +380,15 @@ public class TextCellRenderer<ValueType> extends JPanel
                 (this.forMouseEvents == forMouseEvents || !this.forMouseEvents); //non-mouseEvents includes mouseEvents
     }
 
+    /**
+     * @param value the source value
+     * @return the formatted line: should be processed by {@link #formatPreProcess(String)}
+     */
     public String format(ValueType value) {
         if (value == null) {
             return "";
         } else {
-            return Objects.toString(value);
+            return formatPreProcess(Objects.toString(value));
         }
     }
 
@@ -207,7 +415,7 @@ public class TextCellRenderer<ValueType> extends JPanel
         int lineIndex = 0;
         LineInfo prev = null;
         for (String line : text.split("\\n", -1)) {
-            LineInfo info = createLine(prev, lineIndex, i, buildLinePreProcess(line));
+            LineInfo info = createLine(prev, lineIndex, i, line);
             lines.add(info);
             prev = info;
             i += line.length() + 1;
@@ -223,7 +431,7 @@ public class TextCellRenderer<ValueType> extends JPanel
      * @return remove tabs
      * @since 1.2
      */
-    public String buildLinePreProcess(String line) {
+    public String formatPreProcess(String line) {
         return line.replaceAll("\\t", "    ");
     }
 
@@ -599,6 +807,14 @@ public class TextCellRenderer<ValueType> extends JPanel
         Insets insets = getBorder().getBorderInsets(this);
 
         Graphics2D g2 = (Graphics2D) g;
+        if (paint && isOpaque()) {
+            g2.setColor(originalBackground);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+        }
+        // super.paintComponent(g): do g.setColor(getBackground()) and g.fillRect(0, 0, w, h).
+        //   some UIs update the color for rendering highlighting or striping.
+        //   the code do not support the feature and try to implement custom highlighting
+
         paintSetUpGraphics(g2);
         FontRenderContext frc = g2.getFontRenderContext();
         float x = insets.left;

@@ -356,7 +356,7 @@ public class SearchTextField extends JComponent {
 
     @Override
     protected void paintComponent(Graphics g) {
-        backgroundPainter.paintComponent(g);
+        backgroundPainter.paintComponent(g, super::paintComponent);
     }
 
     @Override
@@ -642,6 +642,16 @@ public class SearchTextField extends JComponent {
         public void setChild(JComponent child) { }
         public void init() { }
         public void paintComponent(Graphics g) { }
+
+        /**
+         * @param g the graphics
+         * @param originalPainter the painting impl of the component : super.paintComponent(g)
+         * @since 1.2
+         */
+        public void paintComponent(Graphics g, Consumer<Graphics> originalPainter) {
+            originalPainter.accept(g);
+            this.paintComponent(g);
+        }
     }
 
     public static Color getFocusColor() {
@@ -746,6 +756,11 @@ public class SearchTextField extends JComponent {
         }
 
         /////////
+
+        @Override
+        public void paintComponent(Graphics g, Consumer<Graphics> originalPainter) {
+            this.paintComponent(g);
+        }
 
         public void paintComponent(Graphics g) {
             if (gradientColors == null) {

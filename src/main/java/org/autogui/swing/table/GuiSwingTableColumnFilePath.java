@@ -297,12 +297,17 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             setLayout(new BorderLayout());
             add(icon, BorderLayout.WEST);
             add(field, BorderLayout.CENTER);
+            icon.setOpaque(true);
+            field.setOpaque(true);
+            field.setBorder(BorderFactory.createEmptyBorder());
             setOpaque(true);
         }
 
         @Override
         public void initBackgroundPainter() {
             backgroundPainter = new SearchBackgroundPainter();
+            setBorder(BorderFactory.createEmptyBorder());
+            getInsets().set(0, 0, 0, 0);
         }
 
         @Override

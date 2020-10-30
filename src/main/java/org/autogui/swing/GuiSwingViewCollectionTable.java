@@ -11,6 +11,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.*;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
@@ -738,6 +739,27 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             ValuePane.super.updateSwingViewSourceFromRoot();
             SwingUtilities.invokeLater(getObjectTableModel()::refreshData);
         }
+
+        @Override
+        public void setCellEditor(TableCellEditor anEditor) {
+            TableCellEditor oldEditor = getCellEditor();
+            //suppose setCellEditor(null) at stopping and setCellEditor(nonNullEditor) at starting
+            if (oldEditor != null && anEditor == null) {
+                GuiSwingActionDefault.ActionPreparation.get(this).unregister(this);
+            } else if (oldEditor == null && anEditor != null) {
+                GuiSwingActionDefault.ActionPreparation.get(this).register(this, () -> {
+                    if (isEditing()) {
+                        getCellEditor().stopCellEditing();
+                    }
+                });
+            }
+            super.setCellEditor(anEditor);
+        }
+
+        @Override
+        public void selectionActionPrepare() {
+            GuiSwingActionDefault.ActionPreparation.prepareAction(this);
+        }
     }
 
     /**
@@ -783,6 +805,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void selectionActionFinished(boolean autoSelection, GuiSwingTableColumnSet.TableSelectionChange change) {
             table.selectionActionFinished(autoSelection, change);
+        }
+
+        @Override
+        public void selectionActionPrepare() {
+            table.selectionActionPrepare();
         }
     }
 
@@ -1106,6 +1133,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            GuiSwingActionDefault.ActionPreparation.prepareAction(table);
             table.selectAll();
         }
 
@@ -1487,19 +1515,19 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected TableColumn targetColumn;
 
         public PopupExtensionCollectionColumnHeader(JTable table, PopupMenuBuilder menuBuilder) {
-            super(table, PopupExtension.getDefaultKeyMatcher(), menuBuilder, new DefaultPopupGetter(table));
+            super(table, PopupExtension.getDefaultKeyMatcher(), menuBuilder, new DefaultPopupGetter(table.getTableHeader()));
         }
 
         public JTable getPaneTable() {
             return (JTable) getPane();
         }
 
-        @Override
-        public void addListenersTo(JComponent pane) {
-            if (pane instanceof JTable) {
-                ((JTable) pane).getTableHeader().addMouseListener(this);
-            }
-        }
+//        @Override
+//        public void addListenersTo(JComponent pane) {
+//            if (pane instanceof JTable) {
+//                ((JTable) pane).getTableHeader().addMouseListener(this);
+//            }
+//        }
 
         @Override
         public void mousePressed(MouseEvent e) {

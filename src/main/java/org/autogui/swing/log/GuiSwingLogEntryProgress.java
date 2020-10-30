@@ -120,6 +120,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             Font font = GuiSwingLogManager.getFont();
 
             progressBar = new JProgressBar(0, 1_000_000);
+            progressBar.setOpaque(false);
 
             stopButton = new GuiSwingIcons.ActionButton(new ProgressStopAction(this));
             {
@@ -419,9 +420,9 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         @Override
         public String format(GuiLogEntryProgress p) {
             if (p != null) {
-                return String.format("%s # %s",
+                return formatPreProcess(String.format("%s # %s",
                         manager.formatTime(p.getTime()),
-                        p.getMessage());
+                        p.getMessage()));
             } else {
                 return "";
             }
@@ -475,6 +476,10 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
         @Override
         public String format(GuiLogEntryProgress p) {
+            return formatPreProcess(formatBody(p));
+        }
+
+        private String formatBody(GuiLogEntryProgress p) {
             finish = false;
             if (p != null) {
                 Instant time = p.getTime();

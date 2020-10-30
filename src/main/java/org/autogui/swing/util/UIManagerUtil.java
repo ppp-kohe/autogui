@@ -201,11 +201,60 @@ public class UIManagerUtil {
     }
 
     /**
+     * @return Table.background or null
+     * @since 1.2
+     */
+    public Color getTableBackground() {
+        return UIManager.getColor("Table.background");
+    }
+
+    /**
      * @return Table.focusCellForeground or null
      * @since 1.2
      */
     public Color getTableFocusCellForeground() {
         return UIManager.getColor("Table.focusCellForeground");
+    }
+
+
+    /**
+     * @return List.alternateRowColor or null
+     * @since 1.2
+     */
+    public Color getListAlternateRowColor() {
+        return UIManager.getColor("List.alternateRowColor");
+    }
+
+    /**
+     * @return List.dropCellBackground or null
+     * @since 1.2
+     */
+    public Color getListDropCellBackground() {
+        return UIManager.getColor("List.dropCellBackground");
+    }
+
+    /**
+     * @return List.dropCellForeground or null
+     * @since 1.2
+     */
+    public Color getListDropCellForeground() {
+        return UIManager.getColor("List.dropCellForeground");
+    }
+
+    /**
+     * @return List.focusCellBackground or null
+     * @since 1.2
+     */
+    public Color getListFocusCellBackground() {
+        return UIManager.getColor("List.focusCellBackground");
+    }
+
+    /**
+     * @return List.focusCellForeground or null
+     * @since 1.2
+     */
+    public Color getListFocusCellForeground() {
+        return UIManager.getColor("List.focusCellForeground");
     }
 
 
@@ -230,6 +279,14 @@ public class UIManagerUtil {
             }
         }
         return iconSize;
+    }
+
+    /**
+     * @param iconSize the new icon size: font height x2.1
+     * @since 1.2
+     */
+    public void setIconSize(int iconSize) {
+        this.iconSize = iconSize;
     }
 
     public int getScaledSizeInt(int n) {
@@ -295,6 +352,14 @@ public class UIManagerUtil {
     public boolean isTableCustomHighlighting() {
         return getOsVersion().isMacOS() &&
                 systemLaf;
+    }
+
+    /**
+     * @return if macOS native UI, true for allowing transparent tab-component
+     * @since 1.2
+     */
+    public boolean isTabbedPaneAllowOpaqueComponent() {
+        return isTableCustomHighlighting();
     }
 
     /**

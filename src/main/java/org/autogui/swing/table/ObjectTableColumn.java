@@ -4,6 +4,7 @@ import org.autogui.base.mapping.GuiReprCollectionTable;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifier;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupExtension;
+import org.autogui.swing.util.TextCellRenderer;
 import org.autogui.swing.util.UIManagerUtil;
 import org.autogui.swing.GuiSwingView;
 
@@ -295,52 +296,10 @@ public class ObjectTableColumn {
     }
 
     public static void setCellBorder(JTable table, JComponent cell, int row, int column) {
-        setCellBorder(table, cell, false, false, row, column);
+        TextCellRenderer.setCellTableBorder(table, cell, false, false, row, column);
     }
 
-    /**
-     * @param table the table
-     * @param cell the target cell
-     * @param row the row index of the cell
-     * @param column the column index of the cell
-     * @param hasFocus true if the cell has focus
-     * @return true if succeeded
-     * @since 1.2
-     */
-    public static boolean setCellBorder(JTable table, JComponent cell, boolean isSelected, boolean hasFocus, int row, int column) {
-        if (!UIManagerUtil.getInstance().isTableCustomHighlighting()) {
-            return false;
-        }
-        boolean leftEnd = (column == 0);
-        boolean rightEnd = (table.getColumnCount() == column + 1);
-        UIManagerUtil ui = UIManagerUtil.getInstance();
-        int h = Math.max(1, ui.getScaledSizeInt(1));
-        int w = Math.max(1, ui.getScaledSizeInt(2));
 
-        int iw = ui.getScaledSizeInt(5);
-        cell.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(h, leftEnd ? w : 0, h * 2, rightEnd ? w : 0, getTableBackground(table, row)),
-                BorderFactory.createMatteBorder(h, iw * 2, h, iw, cell.getBackground())));
-        return true;
-    }
-
-    /**
-     *
-     * @param table the table
-     * @param row the row index
-     * @return  background color for the row
-     * @since 1.2
-     */
-    public static Color getTableBackground(JTable table, int row) {
-        Color back = table.getBackground();
-        if ((row % 2) != 0) {
-            Color alternateColor = UIManagerUtil.getInstance().getTableAlternateRowColor();
-            if (alternateColor != null) {
-                back = alternateColor;
-            }
-        }
-        return back;
-    }
 
     /**
      * a renderer for index numbers
@@ -358,7 +317,7 @@ public class ObjectTableColumn {
                                                        int column) {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus,
                     row, column);
-            setCellBorder(table, this, isSelected, hasFocus, row, column);
+            TextCellRenderer.setCellTableBorder(table, this, isSelected, hasFocus, row, column);
             return this;
         }
     }

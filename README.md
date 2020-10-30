@@ -81,7 +81,7 @@ AutoGuiShell.showLive(h)
 ```
 
 The above code defines the class `Hello` with an instance field and a method.
-After that, [`org.autogui.swing.AutoGuiShell.showLine(Object)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html#showLive(java.lang.Object)) starts creating a GUI window from the given object and shows the window.
+After that, [`org.autogui.swing.AutoGuiShell.showLine(Object)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html#showLive(java.lang.Object)) starts creating a GUI window from the given object and shows the window.
 
 The created window will contain a text field labeled as "Value" and a button on the tool-bar labeled as "Action". 
 You can fill the text field with the string "hello, world" by typing the keyboard and click the button, then you will see "hello, world" on the console of `jshell`.
@@ -165,13 +165,13 @@ The displayed window has the following GUI components:
 
 To create an application that can be executed from the `main` method, 
 it is reasonable to restrict GUI-aware members in the specified object.
-[`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html) and 
-[`AutGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html) satisfy the restriction.
+[`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html) and 
+[`AutGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html) satisfy the restriction.
 
 The strict mode ...
 
-*  can be started by [`AutoGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html#showWindow(java.lang.Object))
-*  targets on[`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html) and `public` classes, properties and members
+*  can be started by [`AutoGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html#showWindow(java.lang.Object))
+*  targets on[`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html) and `public` classes, properties and members
 
 The following Java program is an example application with the struct mode:
 
@@ -205,8 +205,8 @@ The following Java program is an example application with the struct mode:
 
 <img src="docs/images/image-strict-h.png" srcset="docs/images/image-strict-h.png 1x, docs/images/image-strict.png 2x" alt="Strict mode">
 
-The [`showWindow`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/AutoGuiShell.html#showWindow(java.lang.Object)) instance method of `AutGuiShell` restricts members to 
-public ones with the annotation [`org.autogui.GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html) attached. 
+The [`showWindow`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html#showWindow(java.lang.Object)) instance method of `AutGuiShell` restricts members to 
+public ones with the annotation [`org.autogui.GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html) attached. 
 With `AutoGuiShell.get().showWindow(o)`, you will need to attach the annotation to all members (classes, fields, getters, setters and actions) you want to include GUI.
 
 
@@ -506,7 +506,7 @@ A *property* can be defiend as 1) an accessible field definition or 2) a pair of
 
 A *getter* method is a method whose name starts with `get` or `is` for booleans and which does not take any arguments with returning a value of the type of the property.
 
-Since 1.2, the library also supports the `T prop()` method as a *getter*  like `String prop()`. This is due to supporting  [*record*](https://openjdk.java.net/jeps/359) constructs introduced since Java 14. This rule may unintentionally hide your action method that returns a non-void value and recognize it as a getter.  To back the recognition as an action method, you can use the annotation parameter `@GuiIncluded(action=true)` .
+Since 1.2, the library also supports the `T prop()` method as a *getter*  like `String prop()`. This is due to supporting  [*record*](https://openjdk.java.net/jeps/359) constructs introduced since Java 14. This rule may unintentionally hide your action method that returns a non-void value and recognize it as a getter.  To back the recognition as an action method, you can use the annotation parameter [`@GuiIncluded(action=true)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html#action()).
 
 A *setter* method is a method whose name starts with `set` and which takes only one argument of the type of the property value.
 
@@ -526,7 +526,7 @@ then
 of objects of the class will be called at closing of owner window of those objects.
 
  (A returned window by `AutoGuiShell.showLive(o)` does not automatically call the method by window closing. Use 
-[`cleanUp()`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/GuiSwingWindow.html#cleanUp())
+[`cleanUp()`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/GuiSwingWindow.html#cleanUp())
 for completely closing the window.)
 
 ### Object tabbed-pane
@@ -593,7 +593,7 @@ A returned embedded component will be added as a sub-compoennt of the owner obje
 #### Embedding component to your Swing applications
 
 To embed object GUI created by the library into your Swing applications, you can use 
-[`org.autogui.swing.GuiSwingRootPane.createForObject(o)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/swing/GuiSwingRootPane.html#createForObject(java.lang.Object)).
+[`org.autogui.swing.GuiSwingRootPane.createForObject(o)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/GuiSwingRootPane.html#createForObject(java.lang.Object)).
 
 Please see 
 [`src/test/java/org/autogui/demo/ObjectEmbeddedDemo.java`](https://github.com/ppp-kohe/autogui/tree/master/src/test/java/org/autogui/demo/ObjectEmbeddedDemo.java).
@@ -690,8 +690,8 @@ The created table for lists has ability to control selection of item cells.
 
 There are two types of bindings:
 
-* Special methods for actions of changing selected items in the table by returning a list of the items : sepcified by [`@GuiListSelectionUpdater`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiListSelectionUpdater.html)
-* Special methods for callbacks of user item selection from the table UI: specified by [`@GuiListSelectionCallback`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiListSelectionCallback.html)
+* Special methods for actions of changing selected items in the table by returning a list of the items : sepcified by [`@GuiListSelectionUpdater`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiListSelectionUpdater.html)
+* Special methods for callbacks of user item selection from the table UI: specified by [`@GuiListSelectionCallback`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiListSelectionCallback.html)
 
 ```java
 import java.util.*;
@@ -742,7 +742,7 @@ Display-names of properties, actions and type-names are generated from their ide
   }
 ```
 
-The name can be customized by the annotation [`@GuiIncluded(name=...)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html#name()).
+The name can be customized by the annotation [`@GuiIncluded(name=...)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html#name()).
 
 ```java
   class Hello {
@@ -753,7 +753,7 @@ The name can be customized by the annotation [`@GuiIncluded(name=...)`](https://
 ### Layout order by @GuiIncluded(index=...)
 
 Order of layout of components can be controlled by  the annotation
-[`@GuiIncluded(index=...)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html#index()). 
+[`@GuiIncluded(index=...)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html#index()). 
 The default order is determined by names of the properties. 
 
 ```java
@@ -776,7 +776,7 @@ For a pair of getter and setter, one of annotations attached to the members is a
 ### Component description by @GuiIncluded(description=...)
 
 To display a tool-tip message for a member, you can use
-[`@GuiIncluded(description=...)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html#description()). 
+[`@GuiIncluded(description=...)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html#description()). 
 
 
 ```java
@@ -791,7 +791,7 @@ To display a tool-tip message for a member, you can use
 ### Key binding by @GuiIncluded(keyStroke=...)
 
 The library automatically sets shortcut keys for members based on their names.
-[`@GuiIncluded(keyStroke=...)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiIncluded.html#keyStroke()) can controle binding keys. 
+[`@GuiIncluded(keyStroke=...)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html#keyStroke()) can controle binding keys. 
 
 * `keyStroke="none"`: avoid binding
 * `keyStroke="<control>... <key>"`
@@ -833,7 +833,7 @@ Also, *Control + Enter* will display the context menu for the focusing component
 As default, GUIs generated by the library automatically updates its display, i.e. it notices changes that requires redisplaying by accessing their properties after some actions happened.
 
 The feature of 
-[`@GuiNotifierSetter`](https://www.autogui.org/docs/apidocs/latest/org/autogui/GuiNotifierSetter.html)
+[`@GuiNotifierSetter`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiNotifierSetter.html)
 enables you to explicitly update a specified GUI element by calling given a 
 [`Runnable`](https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/lang/Runnable.html)
 object. The annotation can be attached to a setter method taking a `Runnable` argument. In your code, you can call the `run()` method of the given `Runnable`  object in order to cause redisplaying of the target GUI element on demand. The target GUI element can be specified by the signature  `set<YourPropertyName>Notifier(Runnable r)`  or by using the annotation parameter `@GuiNotifierSetter(target="yourPropertyName")`.
@@ -916,7 +916,7 @@ The created window will replace
 [`System.out`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#out) with redirecting its outputs to a status-view and a list-window  on the created window. 
 
 Also, the user-code can directly show messages via 
-[`GuiLogManager`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogManager.html).
+[`GuiLogManager`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/log/GuiLogManager.html).
 
   ```java
      import org.autogui.base.log.*;
@@ -935,18 +935,18 @@ Also, the user-code can directly show messages via
 
 ### Logging progress
 
-[`GuiLogEntryProgress`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogEntryProgress.html)
+[`GuiLogEntryProgress`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/log/GuiLogEntryProgress.html)
 created by 
-[`GuiLogManager`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogManager.html)
+[`GuiLogManager`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/log/GuiLogManager.html)
 can show and control a progress-bar.  The factory method 
-[`logProgress(n)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogManager.html#logProgress(int))
+[`logProgress(n)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/log/GuiLogManager.html#logProgress(int))
 creates an instance of the entry with the max count `n`. 
 It can update the current count by 
-[`addValue(i)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogEntryProgress.html#addValue(int)) or 
-[`addValueP(p)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogEntryProgress.html#addValueP(double))
+[`addValue(i)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/log/GuiLogEntryProgress.html#addValue(int)) or 
+[`addValueP(p)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/log/GuiLogEntryProgress.html#addValueP(double))
 with taking 0...1.0. 
 The progress-bar can also show a message by 
-[`setMessage(s)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogEntryProgress.html#setMessage(java.lang.String)).
+[`setMessage(s)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/log/GuiLogEntryProgress.html#setMessage(java.lang.String)).
 
 ```java
      import org.autogui.base.log.*;
@@ -984,7 +984,7 @@ in order to explicitly check the interruption.
 ### Logging exceptions
 
 The created window sets an unchaught exception-handler for displaying the exception in the logging list. Also 
-[`GuiLogManager.get().logError(e)`](https://www.autogui.org/docs/apidocs/latest/org/autogui/base/log/GuiLogManager.html#logError(java.lang.Throwable))
+[`GuiLogManager.get().logError(e)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/log/GuiLogManager.html#logError(java.lang.Throwable))
 can explicitly display the given exception. The displayed exception becomes an item in the logging list with expandable stack-traces.
 
 ```java

@@ -73,7 +73,6 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
         return getSelectedRowsView()
                 .boxed()
                 .flatMap(r -> IntStream.range(0, table.getColumnCount())
-                        .filter(c -> table.isCellSelected(r, c))
                         .mapToObj(c -> convertViewToData(r, c)))
                         .filter(Objects::nonNull)
                 .collect(Collectors.toList());

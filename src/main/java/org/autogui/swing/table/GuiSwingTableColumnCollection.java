@@ -1294,6 +1294,15 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         public void setTableSource(TableSelectionSource tableSource) {
             this.tableSource = tableSource;
         }
+
+        /**
+         * @since 1.2
+         */
+        public void selectionActionPrepare() {
+            if (tableSource != null) {
+                tableSource.selectionActionPrepare();
+            }
+        }
     }
 
     /**

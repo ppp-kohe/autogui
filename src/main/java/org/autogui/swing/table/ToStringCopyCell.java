@@ -23,12 +23,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * classes for copying string description of selected cells and rows
@@ -218,7 +217,7 @@ public class ToStringCopyCell {
         public void actionPerformedOnTableCell(ActionEvent e, TableTargetCell target) {
             String name = "selection";
             if (table instanceof ValuePane<?>) {
-                name = ((ValuePane) table).getSwingViewContext().getName();
+                name = ((ValuePane<?>) table).getSwingViewContext().getName();
             }
             List<CellValue> cells = getSelectedCells(target);
             save(this, () -> getString(cells), table, name);
@@ -315,7 +314,12 @@ public class ToStringCopyCell {
         }
 
         public void run(String str, TableTargetCell target) {
-            Iterable<int[]> is = target.getSelectedRowAllCellIndices();
+            Iterable<int[]> is = onlyApplyingSelectedColumns ?
+                    target.getSelectedCellIndices() :
+                    target.getSelectedRowAllCellIndices();
+            Set<Integer> rows = IntStream.of(target.getSelectedRows())
+                    .boxed()
+                    .collect(Collectors.toSet());
             runner.executeContextTask(() -> {
                         int rowIndex = 0;
                         GuiSwingJsonTransfer.JsonFillLoop fillLoop = new GuiSwingJsonTransfer.JsonFillLoop();
@@ -324,6 +328,9 @@ public class ToStringCopyCell {
                                 ++rowIndex;
                             }
                         }
+
+                        //if specified rows that are not included in the selected rows, move them to freeRows
+                        fillLoop.moveSpecifiedToFree(r -> !rows.contains(r));
                         return fillLoop;
                     },
                     r -> r.executeIfPresent(
@@ -339,8 +346,12 @@ public class ToStringCopyCell {
             for (String col : line.split(columnSeparator, -1)) {
                 TableMenuCompositeToStringPaste composite = activeComposites.get(c % activeComposites.size());
                 if (composite.isIndexColumn()) { //specify the row index
-                    targetRow = Integer.valueOf(col);
-                    rowSpecified = true;
+                    try {
+                        targetRow = Integer.parseInt(col);
+                        rowSpecified = true;
+                    } catch (NumberFormatException ne) {
+                        //
+                    }
                 } else {
                     updatedRow.add(new CellValue(targetRow, composite.getIndex(),
                             composite.toValueFromString(col)));

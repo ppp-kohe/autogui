@@ -51,8 +51,21 @@ import java.lang.annotation.Target;
  *         &#64;{@link GuiIncluded}
  *         public void actionForSelectedRow() { ... }
  *     }
- *
  *     public enum EnumVal { ... }
+ *
+ *     &#64;{@link GuiIncluded} //record support
+ *     public record R(
+ *               &#64;{@link GuiIncluded} int f1, //field
+ *               String f2) {
+ *         //getter
+ *         &#64;{@link GuiIncluded} String f2() { return f2; }
+ *
+ *         //action
+ *         &#64;{@link GuiIncluded}(action=true) String a() { ... }
+ *
+ *         //getter
+ *         &#64;{@link GuiIncluded}(action=false) String g() { ... }
+ *     }
  * </pre>
  */
 @Retention(RetentionPolicy.RUNTIME)

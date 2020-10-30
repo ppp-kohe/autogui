@@ -729,6 +729,9 @@ public interface GuiSwingView extends GuiSwingElement {
         public void actionPerformed(ActionEvent e) {
             if (pane != null) {
                 GuiSwingView.prepareForRefresh(pane);
+                GuiSwingActionDefault.ActionPreparation.prepareAction(pane.asSwingViewComponent());
+            } else {
+                GuiSwingActionDefault.ActionPreparation.prepareAction(e);
             }
             context.clearSourceSubTree();
             context.updateSourceSubTree();

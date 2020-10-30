@@ -682,7 +682,11 @@ public class GuiSwingPreferences {
             putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("delete"));
             this.owner = owner;
             owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
+        }
 
+        @Override
+        public boolean isEnabled() {
+            return !owner.getSelectedSavedPreferencesList().isEmpty();
         }
 
         @Override
@@ -714,6 +718,11 @@ public class GuiSwingPreferences {
             putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("save"));
             this.owner = owner;
             owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return owner.getSelectedSavedPreferences() != null;
         }
 
         @Override

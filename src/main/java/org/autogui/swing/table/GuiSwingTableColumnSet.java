@@ -78,6 +78,12 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
         List<?> getSelectedItems();
 
         /**
+         * the preparation for the action: the table stops editing
+         * @since 1.2
+         */
+        void selectionActionPrepare();
+
+        /**
          * the finisher for the action: the table implements the method in order to refresh
          *  selected rows.
          *  However, naive executions of the action by list selection changes will cause infinite loop.

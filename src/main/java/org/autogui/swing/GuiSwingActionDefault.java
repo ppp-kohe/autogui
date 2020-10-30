@@ -9,8 +9,9 @@ import org.autogui.swing.util.PopupCategorized;
 import org.autogui.GuiListSelectionUpdater;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -133,6 +134,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         }
 
         public void actionPerformedWithoutCheckingRunning(ActionEvent e) {
+            ActionPreparation.prepareAction(e);
             GuiReprValue.ObjectSpecifier specifier = targetSpecifier.getSpecifier();
             executeContextTask(() -> executeAction(specifier),
                     r -> {
@@ -178,6 +180,54 @@ public class GuiSwingActionDefault implements GuiSwingAction {
                 return new GuiSwingKeyBinding.KeyPrecedenceSet(GuiSwingKeyBinding.PRECEDENCE_FLAG_USER_SPECIFIED);
             } else {
                 return new GuiSwingKeyBinding.KeyPrecedenceSet();
+            }
+        }
+    }
+
+    /**
+     * the action that may lead to
+     *      refreshing data or discarding cell-editor of table
+     *      needs to call {@link #prepareAction(AWTEvent)} or {@link #prepareAction(Component)}.
+     *       The menu action might have no parent components, so it needs to call the component version.
+     * @since 1.2
+     */
+    public static class ActionPreparation {
+        protected Map<Object, Runnable> editingTables = new WeakHashMap<>();
+
+        public void register(Object key, Runnable task) {
+            editingTables.put(key, task);
+        }
+
+        public void unregister(Object key) {
+            editingTables.remove(key);
+        }
+
+        public void prepareAction() {
+            new ArrayList<>(editingTables.values())
+                    .forEach(Runnable::run);
+        }
+
+        static Map<Component, ActionPreparation> finisher = new HashMap<>();
+
+        public static ActionPreparation get(Component component) {
+            Container c = component.getParent();
+            if (c != null) {
+                return get(c);
+            } else {
+                return finisher.computeIfAbsent(component,
+                        _c -> new ActionPreparation());
+            }
+        }
+
+        public static void prepareAction(AWTEvent e) {
+            if (e != null && e.getSource() instanceof Component) {
+                get((Component) e.getSource()).prepareAction();
+            }
+        }
+
+        public static void prepareAction(Component c) {
+            if (c != null) {
+                get(c).prepareAction();
             }
         }
     }

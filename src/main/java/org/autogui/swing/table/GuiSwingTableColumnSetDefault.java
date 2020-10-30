@@ -305,6 +305,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
         protected Object actionPerformedAround(boolean autoSelection, GuiReprValue.ObjectSpecifier targetSpec) {
             if (!running.getAndSet(true)) {
+                source.selectionActionPrepare();
                 return actionPerformedAroundWithoutCheckingRunning(autoSelection, targetSpec);
             } else {
                 System.err.printf("already running action \"%s\" \n", getValue(NAME));

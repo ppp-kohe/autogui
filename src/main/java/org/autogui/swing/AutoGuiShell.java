@@ -71,8 +71,27 @@ public class AutoGuiShell {
     }
 
     public AutoGuiShell withCrossPlatformLookAndFeel() {
-        lookAndFeelClass = UIManager.getCrossPlatformLookAndFeelClassName();
+        return withLookAndFeelClass(UIManager.getCrossPlatformLookAndFeelClassName());
+    }
+
+    /**
+     * @param lookAndFeelClass the LAF class name or "#system"
+     * @return this
+     * @since 1.2
+     */
+    public AutoGuiShell withLookAndFeelClass(String lookAndFeelClass) {
+        this.lookAndFeelClass = lookAndFeelClass;
         return this;
+    }
+
+    /**
+     * @param init the user init process for installing LAF by custom mechanism with receiving this.
+     *             the returned string will be passed to {@link #withLookAndFeelClass(String)}
+     * @return this
+     * @since 1.2
+     */
+    public AutoGuiShell withLookAndFeelClassFromFunction(Function<AutoGuiShell,String> init) {
+        return withLookAndFeelClass(init == null ? null : init.apply(this));
     }
 
     /**
@@ -241,17 +260,4 @@ public class AutoGuiShell {
         return this;
     }
 
-    /**
-     * clear the {@link #lookAndFeelClass} and call the init
-     * @param init the user init process for installing LAF by custom mechanism with receiving this
-     * @return this
-     * @since 1.2
-     */
-    public AutoGuiShell withClearLookAndFeelClass(Consumer<AutoGuiShell> init) {
-        this.lookAndFeelClass = null;
-        if (init != null) {
-            init.accept(this);
-        }
-        return this;
-    }
 }

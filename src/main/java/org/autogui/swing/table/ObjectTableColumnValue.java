@@ -19,22 +19,17 @@ import org.autogui.swing.util.PopupExtension.PopupMenuFilter;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -350,8 +345,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             if (valuePane != null) {
                 valuePane.accept(value);
             }
-            if (!ObjectTableColumn.setCellBorder(table, component, isSelected, hasFocus, row, column)) {
-                setCellBorderDefault(table, component, isSelected, hasFocus, row, column);
+            if (!TextCellRenderer.setCellTableBorder(table, component, isSelected, hasFocus, row, column)) {
+                TextCellRenderer.setCellBorderDefault(true, component, isSelected, hasFocus);
             }
             return component;
         }
@@ -383,27 +378,6 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         }
     }
 
-    /**
-     *
-     * @param table the table
-     * @param component the cell component
-     * @param isSelected the cell is selected
-     * @param hasFocus the cell has focus
-     * @param row the row index of the cell
-     * @param column the column index of the cell
-     * @since 1.2
-     */
-    public static void setCellBorderDefault(JTable table, JComponent component, boolean isSelected, boolean hasFocus, int row, int column) {
-        if (hasFocus) {
-            Border b = (isSelected ? UIManager.getBorder("Table.focusSelectedCellHighlightBorder") : null);
-            b = (b == null ? UIManager.getBorder("Table.focusCellHighlightBorder") : b);
-            component.setBorder(b);
-        } else {
-            Border b = UIManager.getBorder("Table.cellNoFocusBorder");
-            b = (b == null ? BorderFactory.createEmptyBorder(1, 1, 1, 1) : b);
-            component.setBorder(b);
-        }
-    }
 
     public static void setTableColor(JTable table, JComponent component, boolean isSelected) {
         setTableColor(table, component, isSelected, false, 0, 0);
@@ -419,52 +393,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * @since 1.2
      */
     public static void setTableColor(JTable table, JComponent component, boolean isSelected, boolean hasFocus, int row, int column) {
-        if (!setDropTarget(table, component, row, column)) {
-            if (isSelected) {
-                component.setForeground(table.getSelectionForeground());
-                component.setBackground(table.getSelectionBackground());
-            } else {
-                component.setForeground(table.getForeground());
-                Color back = getTableBackground(table, row);
-                component.setBackground(back);
-            }
-        }
-        if (hasFocus && !isSelected && table.isCellEditable(row, column)) { //overwriting by non-null properties for focusCells
-            UIManagerUtil u = UIManagerUtil.getInstance();
-            Color c = u.getTableFocusCellForeground();
-            if (c != null) {
-                component.setForeground(c);
-            }
-            c = u.getTableFocusCellBackground();
-            if (c != null) {
-                component.setBackground(c);
-            }
-        }
+        TextCellRenderer.setCellTableColor(table, component, isSelected, hasFocus, row, column);
         if (component instanceof PropertyLabel) {
             ((PropertyLabel) component).setSelected(isSelected);
-        }
-    }
-
-    /**
-     * @param table the table
-     * @param component the cell component
-     * @param row the row index
-     * @param column the column index
-     * @return true if drop target
-     */
-    public static boolean setDropTarget(JTable table, JComponent component, int row, int column) {
-        JTable.DropLocation loc = table.getDropLocation();
-        if (loc != null &&
-                !loc.isInsertRow() && !loc.isInsertColumn() &&
-                loc.getRow() == row && loc.getColumn() == column) {
-            UIManagerUtil u = UIManagerUtil.getInstance();
-            Color back = u.getTableDropCellBackground();
-            Color text = u.getTableDropCellForeground();
-            component.setBackground(back);
-            component.setForeground(text);
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -532,11 +463,19 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             }
             UIManagerUtil ui = UIManagerUtil.getInstance();
             component.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createEmptyBorder(0, ui.getScaledSizeInt(5), 0, ui.getScaledSizeInt(3)),
+                    border(ui, 0, 5, 0, 3),
                     BorderFactory.createCompoundBorder(
                             getTableFocusBorder(),
-                            BorderFactory.createEmptyBorder(ui.getScaledSizeInt(1), ui.getScaledSizeInt(5), ui.getScaledSizeInt(1), ui.getScaledSizeInt(2)))));
+                            border(ui, 1, 5, 1, 2))));
             return component;
+        }
+
+        private Border border(UIManagerUtil ui, int top, int left, int bottom, int right) {
+            Color back = ui.getTableBackground();
+            return BorderFactory.createMatteBorder(
+                    ui.getScaledSizeInt(top), ui.getScaledSizeInt(left),
+                    ui.getScaledSizeInt(bottom), ui.getScaledSizeInt(right),
+                    back);
         }
 
         @Override

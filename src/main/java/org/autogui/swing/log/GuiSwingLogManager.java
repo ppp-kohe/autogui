@@ -363,7 +363,7 @@ public class GuiSwingLogManager extends GuiLogManager {
         }
 
         public void clearRendererList() {
-            rendererMap.forEach((k,v) -> v.close());
+            getRendererList().forEach(GuiSwingLogEntry.LogEntryRenderer::close);
             rendererMap.clear();
         }
     }

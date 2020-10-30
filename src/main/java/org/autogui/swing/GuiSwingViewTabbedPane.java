@@ -5,10 +5,12 @@ import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.mapping.GuiReprObjectTabbedPane;
+import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -71,6 +73,12 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
 
         public void addSubComponent(GuiMappingContext subContext, JComponent component) {
             String desc = subContext.getDescription();
+            if (!component.isOpaque() && !UIManagerUtil.getInstance().isTabbedPaneAllowOpaqueComponent()) {
+                JComponent content = new JPanel(new BorderLayout());
+                content.setOpaque(true);
+                content.add(component);
+                component = content;
+            }
             if (desc.isEmpty()) {
                 tabbedPane.addTab(subContext.getDisplayName(), component);
             } else {
