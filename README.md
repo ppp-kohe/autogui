@@ -25,7 +25,7 @@ The project uses [apache-maven](http://maven.apache.org) and depends on a recent
 
 ```bash
 $ mvn package
-  # the command will generate target/autogui-1.2-SNAPSHOT.jar
+  # the command will generate target/autogui-1.2.jar
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
@@ -39,7 +39,7 @@ To use the library in your apaceh-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.2-SNAPSHOT</version>
+        <version>1.2</version>
     </dependency>
 ```
 
@@ -72,7 +72,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.2-SNAPSHOT.jar
+/env -class-path target/autogui-1.2.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
