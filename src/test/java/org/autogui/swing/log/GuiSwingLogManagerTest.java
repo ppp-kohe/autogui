@@ -90,6 +90,10 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
         }
     }
 
+    public static String fixOutputString(String str) {
+        return str.replaceAll("\\r", ""); //windows CRLF -> LF
+    }
+
     private void removeSaved(PrintStream top, TestPrint saved, Consumer<PrintStream> setter) {
         TestOut parent = null;
         PrintStream next = top;
@@ -441,15 +445,15 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
         GuiLogEntryString m2 = (GuiLogEntryString) es.get(1);
         GuiLogEntryString m3 = (GuiLogEntryString) es.get(2);
 
-        Assert.assertEquals("message1", m1.getData());
-        Assert.assertEquals("message2", m2.getData());
+        Assert.assertEquals("message1", fixOutputString(m1.getData()));
+        Assert.assertEquals("message2", fixOutputString(m2.getData()));
         Assert.assertEquals("message3", m3.getData());
 
         Assert.assertEquals(1, outOut.getLines().size());
         Assert.assertEquals(2, errOut.getLines().size());
 
-        Assert.assertEquals("message1", outOut.getLines().get(0));
-        Assert.assertEquals("message2", logData(errOut.getLines().get(0)));
+        Assert.assertEquals("message1", fixOutputString(outOut.getLines().get(0)));
+        Assert.assertEquals("message2", fixOutputString(logData(errOut.getLines().get(0))));
         Assert.assertEquals("message3", logData(errOut.getLines().get(1)));
     }
 
@@ -481,8 +485,8 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
 
         Assert.assertEquals(1, outOut.getLines().size());
         Assert.assertEquals(2, errOut.getLines().size());
-        Assert.assertEquals("message1", outOut.getLines().get(0));
-        Assert.assertEquals("message2", errOut.getLines().get(0));
+        Assert.assertEquals("message1", fixOutputString(outOut.getLines().get(0)));
+        Assert.assertEquals("message2", fixOutputString(errOut.getLines().get(0)));
         Assert.assertEquals("message3", logData(errOut.getLines().get(1)));
     }
 
@@ -512,14 +516,14 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
         GuiLogEntryString m2 = (GuiLogEntryString) es.get(1);
         GuiLogEntryString m3 = (GuiLogEntryString) es.get(2);
 
-        Assert.assertEquals("message1", m1.getData());
-        Assert.assertEquals("message2", m2.getData());
+        Assert.assertEquals("message1", fixOutputString(m1.getData()));
+        Assert.assertEquals("message2", fixOutputString(m2.getData()));
         Assert.assertEquals("message3", m3.getData());
 
         Assert.assertEquals(1, outOut.getLines().size());
         Assert.assertEquals(0, errOut.getLines().size());
 
-        Assert.assertEquals("message1", outOut.getLines().get(0));
+        Assert.assertEquals("message1", fixOutputString(outOut.getLines().get(0)));
 
     }
 
@@ -552,8 +556,8 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
         Assert.assertEquals(1, outOut.getLines().size());
         Assert.assertEquals(1, errOut.getLines().size());
 
-        Assert.assertEquals("message1", outOut.getLines().get(0));
-        Assert.assertEquals("message2", errOut.getLines().get(0));
+        Assert.assertEquals("message1", fixOutputString(outOut.getLines().get(0)));
+        Assert.assertEquals("message2", fixOutputString(errOut.getLines().get(0)));
     }
 
     @Test
@@ -582,16 +586,16 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
         GuiLogEntryString m2 = (GuiLogEntryString) es.get(1);
         GuiLogEntryString m3 = (GuiLogEntryString) es.get(2);
 
-        Assert.assertEquals("message1", m1.getData());
-        Assert.assertEquals("message2", m2.getData());
+        Assert.assertEquals("message1", fixOutputString(m1.getData()));
+        Assert.assertEquals("message2", fixOutputString(m2.getData()));
         Assert.assertEquals("message3", m3.getData());
 
         Assert.assertEquals(1, outOut.getLines().size());
         Assert.assertEquals(3, errOut.getLines().size());
 
-        Assert.assertEquals("message1", outOut.getLines().get(0));
-        Assert.assertEquals("message1", logData(errOut.getLines().get(0)));
-        Assert.assertEquals("message2", logData(errOut.getLines().get(1)));
+        Assert.assertEquals("message1", fixOutputString(outOut.getLines().get(0)));
+        Assert.assertEquals("message1", fixOutputString(logData(errOut.getLines().get(0))));
+        Assert.assertEquals("message2", fixOutputString(logData(errOut.getLines().get(1))));
         Assert.assertEquals("message3", logData(errOut.getLines().get(2)));
     }
 
