@@ -45,7 +45,8 @@ public class GuiReprAction implements GuiRepresentation {
         Object result = null;
         try {
             Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), targetSpecifier);
-            result = context.execute(() -> context.getTypeElementAsAction().execute(target));
+            result = (target == null ? null :
+                    context.execute(() -> context.getTypeElementAsAction().execute(target)));
             context.updateSourceFromRoot();
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
@@ -63,7 +64,8 @@ public class GuiReprAction implements GuiRepresentation {
         List<Object> results = new ArrayList<>(targets.size());
         try {
             for (Object target : targets) {
-                results.add(context.execute(() -> context.getTypeElementAsAction().execute(target)));
+                results.add(target == null ? null :
+                        context.execute(() -> context.getTypeElementAsAction().execute(target)));
             }
             context.updateSourceFromRoot();
             return results;

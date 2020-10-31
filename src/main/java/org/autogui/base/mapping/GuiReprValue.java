@@ -459,7 +459,7 @@ public class GuiReprValue implements GuiRepresentation {
             !context.getTypeElementAsProperty().isHistoryValueSupported()) {
             return false;
         } else {
-            return isHistoryValueSupported();
+            return isEditable(context) && isHistoryValueSupported();
         }
     }
 

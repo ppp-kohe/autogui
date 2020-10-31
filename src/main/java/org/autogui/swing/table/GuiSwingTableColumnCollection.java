@@ -657,7 +657,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 ObjectTableColumnSize next = elementFactory == null ? null : elementFactory.getColumnSize(e);
                 if (element[0] == null) {
                     element[0] = next;
-                } else {
+                } else if (next != null) {
                     element[0].set(next);
                 }
             });
@@ -1245,7 +1245,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                            Set<TargetAndSpecifierMap> occurrences, Consumer<TargetAndSpecifierMap> resultGen) {
             List<SpecifierManagerIndex> indexSpecifiers = factory == null ? Collections.emptyList() :
                     factory.getIndexSpecifiers();
-            selection.getSelectedRowAllCellIndices().forEach(cell -> {
+            selection.getSelectedCellIndices().forEach(cell -> {
                 ObjectTableColumn column = model.getColumnAt(cell[1]);
                 if (column instanceof ObjectTableColumnCollectionWrapper) {
                     ObjectTableColumnCollectionWrapper colWrapper = (ObjectTableColumnCollectionWrapper) column;
