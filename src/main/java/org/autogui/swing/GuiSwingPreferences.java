@@ -7,27 +7,26 @@ import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.ScheduledTaskRunner;
 import org.autogui.swing.icons.GuiSwingIcons;
-import org.autogui.swing.mapping.GuiReprValueDocumentEditor;
 import org.autogui.swing.table.ObjectTableColumnValue;
 import org.autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.text.Document;
-import javax.swing.text.StyledDocument;
+import javax.swing.table.*;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextAttribute;
+import java.awt.font.TextLayout;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.AttributedString;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -125,7 +124,10 @@ public class GuiSwingPreferences {
     protected JTable list;
     protected PreferencesListModel listModel;
 
+    @Deprecated
     protected JEditorPane contentTextPane;
+    /* @since 1.2.1 */
+    protected JTree contentTree;
     protected WindowPreferencesUpdater prefsWindowUpdater;
 
     protected SettingsWindow settingsWindow;
@@ -195,10 +197,9 @@ public class GuiSwingPreferences {
 
             JPanel viewPane = new JPanel(new BorderLayout());
             {
-                contentTextPane = new JTextPane();
-                contentTextPane.setEditable(false);
-                GuiReprValueDocumentEditor.setupStyle((StyledDocument) contentTextPane.getDocument());
-                viewPane.add(new JScrollPane(contentTextPane));
+                contentTree = new JTree(new DefaultMutableTreeNode(""));
+                contentTree.setCellRenderer(new PrefsTreeCellRenderer());
+                viewPane.add(new JScrollPane(contentTree));
             }
 
             JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listScroll, viewPane);
@@ -282,7 +283,7 @@ public class GuiSwingPreferences {
             rootPane.loadPreferences(rootContext.getPreferences());
         } else {
             if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane) rootComponent).loadSwingPreferences(
+                ((GuiSwingView.ValuePane<?>) rootComponent).loadSwingPreferences(
                         rootContext.getPreferences());
             }
             GuiSwingView.loadChildren(rootContext.getPreferences(), rootComponent);
@@ -294,7 +295,7 @@ public class GuiSwingPreferences {
             rootPane.savePreferences(prefs);
         } else {
             if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane) rootComponent).saveSwingPreferences(
+                ((GuiSwingView.ValuePane<?>) rootComponent).saveSwingPreferences(
                         prefs);
             }
             GuiSwingView.saveChildren(rootContext.getPreferences(), rootComponent);
@@ -320,24 +321,66 @@ public class GuiSwingPreferences {
         if (sels.length > 0) {
             lastSelection = sels;
         }
-        List<Object> list = new ArrayList<>();
-        for (GuiPreferences prefs : getSelectedSavedPreferencesList()) {
-            list.add(prefs.toJson());
-        }
+        List<GuiPreferences> list = new ArrayList<>(getSelectedSavedPreferencesList());
+        DefaultTreeModel model = new DefaultTreeModel(makeTreeNode(list));
+        contentTree.setModel(model);
+        expandTreeAll(model, (TreeNode) model.getRoot());
+    }
 
-        JsonWriter w = JsonWriter.create().withNewLines(true);
+    /**
+     * @param treeModel a model
+     * @param n a node in the model
+     * @since 1.2.1
+     */
+    public void expandTreeAll(DefaultTreeModel treeModel, TreeNode n) {
+        if (!n.isLeaf()) {
+            contentTree.expandPath(new TreePath(treeModel.getPathToRoot(n)));
+        }
+        for (int i = 0, c = n.getChildCount(); i < c; ++i) {
+            expandTreeAll(treeModel, n.getChildAt(i));
+        }
+    }
+
+    /**
+     *
+     * @param list list of prefs
+     * @return tree-model of list
+     * @since 1.2.1
+     */
+    public DefaultMutableTreeNode makeTreeNode(List<GuiPreferences> list) {
         if (list.size() == 1) {
-            w.write(list.get(0));
+            return makeTreeNode(list.get(0));
         } else {
-            w.write(list);
+            DefaultMutableTreeNode node = new DefaultMutableTreeNode(list.size() + " preferences");
+            list.forEach(p -> node.add(makeTreeNode(p)));
+            return node;
         }
-        Document doc = contentTextPane.getDocument();
-        try {
-            doc.remove(0, doc.getLength());
-            doc.insertString(0, w.toSource(), null);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
+    }
+
+    /**
+     * @param prefs a prefs
+     * @return the node for prefs
+     * @since 1.2.1
+     */
+    public DefaultMutableTreeNode makeTreeNode(GuiPreferences prefs) {
+        return makeTreeNode(prefs.getName(), prefs.copyOnMemoryAsRoot().getValueStore());
+    }
+
+    private DefaultMutableTreeNode makeTreeNode(String key, GuiPreferences.GuiValueStore store) {
+        DefaultMutableTreeNode node = new DefaultMutableTreeNode(new PrefsValueStoreEntry(key, store));
+        Map<String,Object> json = store instanceof GuiPreferences.GuiValueStoreOnMemory ?
+                ((GuiPreferences.GuiValueStoreOnMemory) store).toJson() : null;
+        store.getKeys().stream()
+                .filter(store::hasEntryKey)
+                .map(n -> new DefaultMutableTreeNode(new PrefsValueStoreEntry(n,
+                        json == null ? store.getString(n, "") : json.get(n))))
+                .forEach(node::add);
+
+        store.getKeys().stream()
+                .filter(store::hasNodeKey)
+                .map(n -> makeTreeNode(n, store.getChild(n)))
+                .forEach(node::add);
+        return node;
     }
 
     public void shutdown() {
@@ -686,7 +729,8 @@ public class GuiSwingPreferences {
 
         @Override
         public boolean isEnabled() {
-            return !owner.getSelectedSavedPreferencesList().isEmpty();
+            setEnabled(!owner.getSelectedSavedPreferencesList().isEmpty());
+            return enabled;
         }
 
         @Override
@@ -722,7 +766,8 @@ public class GuiSwingPreferences {
 
         @Override
         public boolean isEnabled() {
-            return owner.getSelectedSavedPreferences() != null;
+            setEnabled(owner.getSelectedSavedPreferences() != null);
+            return enabled;
         }
 
         @Override
@@ -1344,6 +1389,173 @@ public class GuiSwingPreferences {
         @Override
         public void actionPerformed(ActionEvent e) {
             apply(targetPrefs);
+        }
+    }
+
+    ////////////////////////
+
+    /**
+     * @since 1.2.1
+     */
+    public static class PrefsValueStoreEntry {
+        String key;
+        Object value;
+
+        public PrefsValueStoreEntry(String key, Object value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return "ValueStoreEntry{" +
+                    "key='" + key + '\'' +
+                    ", value=" + value +
+                    '}';
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+
+        public boolean isNode() {
+            return value instanceof GuiPreferences.GuiValueStore;
+        }
+    }
+
+    /**
+     * @since 1.2.1
+     */
+    public static class PrefsTreeCellRenderer extends DefaultTreeCellRenderer {
+        protected String name;
+        protected String entryValue;
+        protected TextCellRenderer.LineInfo nameInfo;
+        protected TextCellRenderer.LineInfo valueInfo;
+        protected Map<Color, Map<Color, Color>> colorMap = new HashMap<>();
+        protected boolean selected;
+        protected boolean node;
+
+        public void setValue(Object value) {
+            node = false;
+            if (value instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) value;
+                value = treeNode.getUserObject();
+                node = (treeNode.getChildCount() > 0);
+            }
+            name = "?";
+            entryValue = null;
+            if (value instanceof PrefsValueStoreEntry) {
+                PrefsValueStoreEntry e = (PrefsValueStoreEntry) value;
+                name = e.getKey();
+                if (e.isNode()) {
+                    node = true;
+                } else {
+                    node = false;
+                    entryValue = Objects.toString(e.getValue());
+                    if (entryValue.isEmpty()) {
+                        entryValue = " ";
+                    }
+                }
+            } else {
+                name = Objects.toString(value);
+            }
+            if (name.isEmpty()) {
+                name = " ";
+            }
+        }
+
+        @Override
+        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+            setValue(value);
+
+            super.getTreeCellRendererComponent(tree, value, sel, expanded, !node, row, hasFocus);
+
+            AttributedString aStr = new AttributedString(name);
+            aStr.addAttribute(TextAttribute.FOREGROUND, new Color(80, 80, 80));
+            nameInfo = new TextCellRenderer.LineInfo(aStr, 0, name.length());
+
+            if (entryValue != null) {
+                aStr = new AttributedString(entryValue);
+                aStr.addAttribute(TextAttribute.FOREGROUND, new Color(50, 50, 140));
+                valueInfo = new TextCellRenderer.LineInfo(aStr, 0, entryValue.length());
+            } else {
+                valueInfo = null;
+            }
+            selected = sel;
+
+            Graphics2D g = (Graphics2D) getGraphics();
+            if (g != null) {
+                paintOrLayout(g, false);
+            }
+            return this;
+        }
+
+        protected void paintOrLayout(Graphics2D g, boolean paint) {
+            Icon icon = getIcon();
+            int x = 0;
+            int h = 0;
+            if (icon != null) {
+                if (paint) {
+                    icon.paintIcon(this, g, 0, 0);
+                }
+                x += icon.getIconWidth();
+                h = Math.max(h, icon.getIconHeight());
+            }
+
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            Color foreground = getForeground();
+            Color background = ui.getLabelBackground();
+            Color selForeground = foreground; //ui.getTextPaneSelectionForeground();
+            Color selBackground = background; //ui.getTextPaneSelectionBackground();
+            if (paint) {
+                g.setColor(getForeground());
+            }
+            Font font = getFont();
+            g.setFont(font);
+            FontRenderContext frc = g.getFontRenderContext();
+            TextLayout layout;
+
+            x += ui.getScaledSizeInt(3);
+            if (paint) {
+                layout = nameInfo.getLayout(frc, 0, 0, foreground, background,
+                        selForeground, selBackground, colorMap);
+                layout.draw(g, x, layout.getAscent());
+            } else {
+                layout = nameInfo.getLayout(frc);
+            }
+            x += layout.getAdvance();
+            h = Math.max(h, (int) (layout.getAscent() + layout.getDescent()));
+
+            if (valueInfo != null) {
+                x += ui.getScaledSizeInt(10);
+
+                if (paint) {
+                    layout = valueInfo.getLayout(frc, 0, 0, foreground, background,
+                            selForeground, selBackground, colorMap);
+                    layout.draw(g, x, layout.getAscent());
+                } else {
+                    layout = valueInfo.getLayout(frc);
+                }
+                x += layout.getAdvance();
+                h = Math.max(h, (int) (layout.getAscent() + layout.getDescent()));
+            }
+            if (!paint) {
+                setPreferredSize(new Dimension(x, h));
+            }
+        }
+
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            if (isOpaque()) {
+                g.setColor(getBackground());
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+            paintOrLayout((Graphics2D) g, true);
         }
     }
 }
