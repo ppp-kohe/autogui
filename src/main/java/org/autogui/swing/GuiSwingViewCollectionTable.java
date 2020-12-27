@@ -151,6 +151,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected SettingsWindow settingsWindow;
 
         protected boolean customHighlighting;
+        /** @since 1.2.1 */
+        protected boolean customRowHeightByUser;
+        /** @since 1.2.1 */
+        protected int rowHeightByProgram;
+
 
         public CollectionTable(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -763,6 +768,39 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void selectionActionPrepare() {
             GuiSwingActionDefault.ActionPreparation.prepareAction(this);
         }
+
+        @Override
+        public void setRowHeight(int rowHeight) {
+            rowHeightByProgram = rowHeight;
+            customRowHeightByUser = false;
+            super.setRowHeight(rowHeight);
+        }
+
+        /**
+         * setting the custom row-height
+         * @param rowHeight the new row-height
+         * @since 1.2.1
+         */
+        public void setRowHeightByUser(int rowHeight) {
+            customRowHeightByUser = true;
+            super.setRowHeight(rowHeight);
+        }
+
+        /**
+         * @return true if it has the value set by {@link #setRowHeightByUser(int)}
+         * @since 1.2.1
+         */
+        public boolean hasCustomRowHeightByUser() {
+            return customRowHeightByUser;
+        }
+
+        /**
+         * @return the last row-height set by {@link #setRowHeight(int)}
+         * @since 1.2.1
+         */
+        public int getRowHeightByProgram() {
+            return rowHeightByProgram;
+        }
     }
 
     /**
@@ -782,11 +820,18 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             enabled = new JCheckBox("Row Height");
             enabled.addActionListener(this::update);
+            if (table instanceof CollectionTable) {
+                enabled.setSelected(((CollectionTable) table).hasCustomRowHeightByUser());
+            }
             add(enabled);
 
             numModel = new SpinnerNumberModel(table.getRowHeight(), 5, Short.MAX_VALUE, 1);
             numModel.addChangeListener(this::update);
             num = new JSpinner(numModel);
+            if (num.getEditor() instanceof JSpinner.NumberEditor) {
+                ((JSpinner.NumberEditor) num.getEditor()).getTextField()
+                        .addActionListener(this::updateBySpinnerAction);
+            }
             add(num);
         }
 
@@ -802,10 +847,24 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             updateHeight();
         }
 
+        public void updateBySpinnerAction(ActionEvent e) {
+            enabled.setSelected(true);
+            updateHeight();
+        }
+
         public void updateHeight() {
             if (enabled.isSelected()) {
                 int height = numModel.getNumber().intValue();
-                table.setRowHeight(height);
+                if (table instanceof CollectionTable) {
+                    ((CollectionTable) table).setRowHeightByUser(height);
+                } else {
+                    table.setRowHeight(height);
+                }
+            } else {
+                if (table instanceof CollectionTable) {
+                    CollectionTable colTable = (CollectionTable) table;
+                    colTable.setRowHeight(colTable.getRowHeightByProgram());
+                }
             }
         }
 
@@ -1048,7 +1107,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected List<PreferencesForTableRowSort> rowSort = new ArrayList<>();
         protected int sizeLimit = 100;
         /** @since 1.2.1 */
-        protected int rowHeight;
+        protected int rowHeight = -1;
 
         public void applyTo(JTable table) {
             TableColumnModel columnModel = table.getColumnModel();
@@ -1090,7 +1149,13 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
          * @since 1.2.1
          */
         public void applyRowHeightTo(JTable table) {
-            table.setRowHeight(rowHeight);
+            if (rowHeight > 0) {
+                if (table instanceof CollectionTable) {
+                    ((CollectionTable) table).setRowHeightByUser(rowHeight);
+                } else {
+                    table.setRowHeight(rowHeight);
+                }
+            }
         }
 
         public void setColumnOrderFrom(JTable table) {
@@ -1125,7 +1190,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
          * @since 1.2.1
          */
         public void setRowHeightFrom(JTable table) {
-            rowHeight = table.getRowHeight();
+            if (table instanceof CollectionTable) {
+                CollectionTable colTable = (CollectionTable) table;
+                if (colTable.hasCustomRowHeightByUser()) {
+                    rowHeight = colTable.getRowHeight();
+                } else {
+                    rowHeight = -1;
+                }
+            } else {
+                rowHeight = table.getRowHeight();
+            }
         }
 
         @Override
