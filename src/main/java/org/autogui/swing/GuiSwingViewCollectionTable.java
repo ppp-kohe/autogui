@@ -19,6 +19,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
+import java.beans.PropertyChangeEvent;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -709,8 +710,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                         new ColumnFitAllWidthAction(this, popupColumnHeader::getTargetColumn,
                                 switchAction::updateSelected),
                         switchAction,
-                        new ColumnOrderResetAction(this)
+                        new ColumnOrderResetAction(this),
+                        new RowHeightSetAction(this)
                 ));
+
             }
             return columnHeaderMenuItems;
         }
@@ -759,6 +762,56 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void selectionActionPrepare() {
             GuiSwingActionDefault.ActionPreparation.prepareAction(this);
+        }
+    }
+
+    /**
+     * @since 1.2.1
+     */
+    public static class RowHeightSetAction extends JPanel
+            implements PopupCategorized.CategorizedMenuItemComponent {
+        protected JTable table;
+        protected JCheckBox enabled;
+        protected SpinnerNumberModel numModel;
+        protected JSpinner num;
+
+        public RowHeightSetAction(JTable table) {
+            super(new FlowLayout(FlowLayout.LEADING, 3, 3));
+            this.table = table;
+            setOpaque(false);
+
+            enabled = new JCheckBox("Row Height");
+            enabled.addActionListener(this::update);
+            add(enabled);
+
+            numModel = new SpinnerNumberModel(table.getRowHeight(), 5, Short.MAX_VALUE, 1);
+            numModel.addChangeListener(this::update);
+            num = new JSpinner(numModel);
+            add(num);
+        }
+
+        @Override
+        public JComponent getMenuItem() {
+            return this;
+        }
+
+        public void update(ActionEvent e) {
+            updateHeight();
+        }
+        public void update(ChangeEvent e) {
+            updateHeight();
+        }
+
+        public void updateHeight() {
+            if (enabled.isSelected()) {
+                int height = numModel.getNumber().intValue();
+                table.setRowHeight(height);
+            }
+        }
+
+        @Override
+        public String getCategory() {
+            return CATEGORY_COLUMN_RESIZE;
         }
     }
 
@@ -852,6 +905,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void setUpListeners() {
             table.getRowSorter().addRowSorterListener(this);
+            setUpListenersRowHeight();
         }
 
         @Override
@@ -860,6 +914,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             try {
                 prefs.loadFrom(p);
                 prefs.applyRowSortTo(table);
+                prefs.applyRowHeightTo(table);
             } finally {
                 savingDisabled = false;
             }
@@ -871,6 +926,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             try {
                 prefs.setJson(json);
                 prefs.applyRowSortTo(table);
+                prefs.applyRowHeightTo(table);
             } finally {
                 savingDisabled = false;
             }
@@ -894,6 +950,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setUpListeners() {
             table.getColumnModel().addColumnModelListener(this);
             table.getRowSorter().addRowSorterListener(this);
+            setUpListenersRowHeight();
+        }
+
+        /**
+         * @since 1.2.1
+         */
+        public void setUpListenersRowHeight() {
+            table.addPropertyChangeListener("rowHeight", this::rowHeightChanged);
         }
 
         public void setPrefs(PreferencesForTable prefs) {
@@ -964,6 +1028,18 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 sendToUpdater();
             }
         }
+
+        /**
+         *
+         * @param e the event, can be null
+         * @since 1.2.1
+         */
+        public void rowHeightChanged(PropertyChangeEvent e) {
+            if (!savingDisabled) {
+                prefs.setRowHeightFrom(table);
+                sendToUpdater();
+            }
+        }
     }
 
     public static class PreferencesForTable implements GuiSwingPreferences.PreferencesByJsonEntry {
@@ -971,12 +1047,15 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected List<Integer> columnWidth = new ArrayList<>();
         protected List<PreferencesForTableRowSort> rowSort = new ArrayList<>();
         protected int sizeLimit = 100;
+        /** @since 1.2.1 */
+        protected int rowHeight;
 
         public void applyTo(JTable table) {
             TableColumnModel columnModel = table.getColumnModel();
             applyColumnWidthTo(table, columnModel);
             applyColumnOrderTo(table, columnModel);
             applyRowSortTo(table);
+            applyRowHeightTo(table);
         }
 
         public void applyColumnWidthTo(JTable table, TableColumnModel columnModel) {
@@ -1006,6 +1085,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             table.getRowSorter().setSortKeys(keys);
         }
 
+        /**
+         * @param table the target table
+         * @since 1.2.1
+         */
+        public void applyRowHeightTo(JTable table) {
+            table.setRowHeight(rowHeight);
+        }
+
         public void setColumnOrderFrom(JTable table) {
             TableColumnModel columnModel = table.getColumnModel();
             columnOrder.clear();
@@ -1033,6 +1120,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             }
         }
 
+        /**
+         * @param table the source table
+         * @since 1.2.1
+         */
+        public void setRowHeightFrom(JTable table) {
+            rowHeight = table.getRowHeight();
+        }
+
         @Override
         public String getKey() {
             return "$table";
@@ -1046,6 +1141,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             map.put("rowSort", rowSort.stream()
                                 .map(PreferencesForTableRowSort::toJson)
                                 .collect(Collectors.toList()));
+            map.put("rowHeight", rowHeight);
             return map;
         }
 
@@ -1074,6 +1170,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     ((List<?>) rowSortObj).stream()
                             .map(e -> new PreferencesForTableRowSort((Map<String, Object>) e))
                             .forEach(rowSort::add);
+                }
+
+                Object rowHeightObj = map.get("rowHeight");
+                if (rowHeightObj != null) {
+                    rowHeight = (Integer) rowHeightObj;
                 }
             }
         }
