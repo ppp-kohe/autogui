@@ -301,19 +301,39 @@ public class UIManagerUtil {
     }
 
     /**
-     * @param lookAndFeelClass the LAF class name
-     *                          or special name <code>"#system"</code> for {@link UIManager#getSystemLookAndFeelClassName()}
+     * <ol>
+     *     <li>#prop:p =&gt; {@link #selectLookAndFeelFromProperty(String, boolean)} with (p,true) </li>
+     *     <li>#default or default =&gt; {@link #selectLookAndFeelDefault(boolean)}</li>
+     *     <li>darklaf =&gt; {@link #installLookAndFeelDarkLaf()}</li>
+     *     <li>#none =&gt; nothing to do. it also clears the "swing.defaultlaf" property
+     *            for preventing changing LAF by the user</li>
+     *     <li>null =&gt; nothing to do </li>
+     *     <li>otherwise =&gt; treats the value as a LAF class-name </li>
+     * </ol>
+     * @param lookAndFeelClass the LAF class name or a special configuration name
+     *                          starting from <code>#prop:</code>,
+     *                          <code>#none</code> or
+     *                          <code>#default</code>
      * @since 1.2
      */
     public void setLookAndFeel(String lookAndFeelClass) {
         try {
-//            boolean sysLafIsGtk = false;
-//            if (UIManager.getSystemLookAndFeelClassName().contains("GTKLookAndFeel")) {
-//                sysLafIsGtk = true;
-//            }
             String laf = lookAndFeelClass;
-            if (laf != null && laf.equals("#system")) {
-                laf = UIManager.getSystemLookAndFeelClassName();
+            if (laf != null && laf.startsWith(LOOK_AND_FEEL_PROP_HEAD)) {
+                laf = selectLookAndFeelFromProperty(laf.substring(LOOK_AND_FEEL_PROP_HEAD.length()), true);
+            }
+            if (laf != null && (laf.equals(LOOK_AND_FEEL_DEFAULT) ||
+                                laf.equals(LOOK_AND_FEEL_VALUE_DEFAULT) ||
+                                laf.equals(LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF))) {
+                laf = selectLookAndFeelDefault(!laf.equals(LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF));
+            }
+            if (laf != null && laf.equals(LOOK_AND_FEEL_VALUE_DARKLAF)) {
+                installLookAndFeelDarkLaf();
+                laf = null;
+            }
+            if (laf != null && laf.equals(LOOK_AND_FEEL_NONE)) {
+                laf = null;
+                System.clearProperty(LOOK_AND_FEEL_PROP_DEFAULT);
             }
             if (laf != null) {
                 UIManager.setLookAndFeel(laf);
@@ -326,6 +346,165 @@ public class UIManagerUtil {
             ex.printStackTrace();
         }
     }
+
+    /**
+     *  process LAF resolution for "#prop:p".
+     *  it reads a LAF class-name from the system property "p".
+     *      The value of p can be a special name resolved by {@link #selectLookAndFeelFromSpecialName(String)}
+     *        or a concrete LAF class-name .
+     *  <p>
+     *   The default prop is "swing.defaultlaf".
+     *    This means that the system accepts the property with a special name like "-Dswing.defaultlaf=system"
+     *      and it can resolve the property with an actual class-name which will be read by the swing system.
+     * @param prop a nullable property name
+     * @param updateProp if true it updates the prop specified by the laf with the resolved concrete class-name
+     *                    For "darklaf", it clears the property
+     * @return  a resolved class-name from the property or null
+     * @since 1.2.1
+     */
+    public String selectLookAndFeelFromProperty(String prop, boolean updateProp) {
+        if (prop == null || prop.isEmpty()) {
+            return null;
+        } else {
+            String value = System.getProperty(prop);
+            String laf = selectLookAndFeelFromSpecialName(value);
+            if (updateProp) {
+                if (laf == null) {
+                    if (value != null && value.isEmpty()) {
+                        System.clearProperty(prop);
+                    }
+                } else if (isLookAndFeelSpecial(laf)) {
+                    System.clearProperty(prop);
+                } else {
+                    System.setProperty(prop, laf);
+                }
+            }
+            return laf;
+        }
+    }
+
+    private boolean isLookAndFeelSpecial(String laf) {
+        return laf != null &&
+                (LOOK_AND_FEEL_VALUE_METAL.equals(laf) ||
+                 LOOK_AND_FEEL_VALUE_NIMBUS.equals(laf) ||
+                 LOOK_AND_FEEL_VALUE_SYSTEM.equals(laf) ||
+                 LOOK_AND_FEEL_VALUE_DEFAULT.equals(laf) ||
+                 LOOK_AND_FEEL_VALUE_DARKLAF.equals(laf) ||
+                 LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF.equals(laf));
+    }
+
+    /**
+     * <ul>
+     * <li>"metal" =&gt; <code>MetalLookAndFeel</code> </li>
+     * <li> "nimbus" =&gt; <code>NimbusLookAndFeel</code> </li>
+     * <li> "system" =&gt; {@link UIManager#getSystemLookAndFeelClassName()} </li>
+     * <li> null, "" or "default"  =&gt; "default" for later processes by {@link #selectLookAndFeelDefault(boolean)} </li>
+     * <li> "darklaf"  =&gt; "darklaf" for later processes by {@link #installLookAndFeelDarkLaf()} </li>
+     * <li> "default-no-darklaf" =&gt; "default-no-darklaf" for later processes. same as "default" except for no darklaf installing </li>
+     * <li> otherwise =&gt; name as is </li>
+     * </ul>
+     * @param name a special name or a class-name
+     * @return resolved class name or still special name for some names
+     * @since 1.2.1
+     */
+    public String selectLookAndFeelFromSpecialName(String name) {
+        if (name == null || name.isEmpty()) {
+            return LOOK_AND_FEEL_VALUE_DEFAULT;
+        } else if (name.equals(LOOK_AND_FEEL_VALUE_METAL)) {
+            return "javax.swing.plaf.metal.MetalLookAndFeel";
+        } else if (name.equals(LOOK_AND_FEEL_VALUE_NIMBUS)) {
+            return "javax.swing.plaf.nimbus.NimbusLookAndFeel";
+        } else if (name.equals(LOOK_AND_FEEL_VALUE_SYSTEM)) {
+            return UIManager.getSystemLookAndFeelClassName();
+        } else if (name.equals(LOOK_AND_FEEL_VALUE_DEFAULT) ||
+                    name.equals(LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF) ||
+                    name.equals(LOOK_AND_FEEL_VALUE_DARKLAF)) {
+            return name;
+        } else {
+            return name;
+        }
+    }
+
+    /**
+     * process default behavior for the "#default" configuration
+     * <ol>
+     *     <li>try to load Darklaf by {@link #installLookAndFeelDarkLaf()}</li> if the parameter is true
+     *     <li>if non-Unix environment, use {@link UIManager#getSystemLookAndFeelClassName()}</li>
+     *     <li>if the GDK_SCALE env is set, use "metal" </li>
+     *     <li>otherwise, nothing to do</li>
+     * </ol>
+     * @param tryDarklaf if true, call {@link #installLookAndFeelDarkLaf()}
+     * @return a resolved LAF class-name or null
+     * @since 1.2.1
+     */
+    public String selectLookAndFeelDefault(boolean tryDarklaf) {
+        if (tryDarklaf && installLookAndFeelDarkLaf()) {
+            return null;
+        } else if (getOsVersion().isMacOS() || getOsVersion().isWindows()) {
+            return UIManager.getSystemLookAndFeelClassName();
+        } else if (System.getenv("GDK_SCALE") != null) { //for Unix GNOME with GDK_SCALE=...
+            return selectLookAndFeelFromSpecialName(LOOK_AND_FEEL_VALUE_METAL);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * do <code>com.github.weisj.darklaf.LafManager.install(LafManager.themeForPreferredStyle(LafManager.getPreferredThemeStyle()))</code>
+     *  by reflection.
+     * @return true if the darklaf is installed
+     * @since 1.2.1
+     */
+    public boolean installLookAndFeelDarkLaf() {
+        try {
+            String pack = "com.github.weisj.darklaf";
+            Class<?> lafManager = Class.forName(pack + ".LafManager");
+            Object style = lafManager.getMethod("getPreferredThemeStyle")
+                    .invoke(null);
+            Object theme = lafManager.getMethod("themeForPreferredStyle", Class.forName(pack + ".theme.info.PreferredThemeStyle"))
+                    .invoke(null, style);
+
+            lafManager.getMethod("install", Class.forName(pack + ".theme.Theme"))
+                    .invoke(null, theme);
+            return true;
+        } catch (Throwable ex) {
+            return false;
+        }
+    }
+
+    /** @since 1.2.1 */
+    public static final String LOOK_AND_FEEL_PROP_HEAD = "#prop:";
+    /** @since 1.2.1 */
+    public static final String LOOK_AND_FEEL_PROP_DEFAULT = "swing.defaultlaf";
+
+    /** @since 1.2.1 */
+    public static final String LOOK_AND_FEEL_VALUE_METAL = "metal";
+    /** @since 1.2.1 */
+    public static final String LOOK_AND_FEEL_VALUE_NIMBUS = "nimbus";
+    /** @since 1.2.1 */
+    public static final String LOOK_AND_FEEL_VALUE_SYSTEM = "system";
+    /** @since 1.2.1 */
+    public static final String LOOK_AND_FEEL_VALUE_DEFAULT = "default";
+    /** @since 1.2.1 */
+    public static final String LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF = "default-no-darklaf";
+    /** @since 1.2.1 */
+    public static final String LOOK_AND_FEEL_VALUE_DARKLAF = "darklaf";
+
+    /** @since 1.2.1 */
+    public static final String LOOK_AND_FEEL_DEFAULT = "#default";
+
+    /** @since 1.2.1 */
+    public static final String LOOK_AND_FEEL_NONE = "#none";
+
+    /**
+     * @param prop a property name
+     * @return "#prop:"+prop
+     * @since 1.2.1
+     */
+    public static String getLookAndFeelProp(String prop) {
+        return LOOK_AND_FEEL_PROP_HEAD + prop;
+    }
+
 
     /**
      * called from {@link #setLookAndFeel(String)} and apply some customization

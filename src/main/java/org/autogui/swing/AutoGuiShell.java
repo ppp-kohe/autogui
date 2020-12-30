@@ -41,9 +41,28 @@ import java.util.function.Supplier;
  *     jshell&gt; import org.autogui.swing.*
  *     jshell&gt; AutoGuiShell.showLive(new Hello())
  * </pre>
+ *
+ * <h3>Setting Look and Feel</h3>
+ * <p>
+ *  configured by the field {@link #lookAndFeelClass} which can be set withLookAndFeel... methods like {@link #withLookAndFeelClass(String)}.
+ *    The default value is <code>#prop:swing.defaultlaf</code>.
+ *   <ul>
+ *       <li>{@link #withLookAndFeelProperty(String)} : <code>#prop:</code><i>p</i>.
+ *         The value of the property <i>p</i> will be passed to {@link UIManagerUtil#selectLookAndFeelFromSpecialName(String)}.
+ *         The absence of the property is equivalent to the special name <code>"default"</code>
+ *       </li>
+ *       <li>{@link #withCrossPlatformLookAndFeel()} : <code>system</code></li>
+ *       <li>{@link #withLookAndFeelNone()} : <code>#none</code> </li>
+ *       <li>{@link #withLookAndFeelClassFromFunction(Function)} : the function will be invoked immediately.
+ *          It can be used for custom LAF installation.
+ *          The function can return a value for {@link #lookAndFeelClass} (nullable) </li>
+ *   </ul>
+ *  For example, the JVM option <code>-Dswing.defaultlaf=metal</code> with the default configuration
+ *    resets the property by the concrete MetalLookAndFeel class-name and sets to metal-laf thanks to {@link UIManagerUtil#setLookAndFeel(String)}.
+ *
  */
 public class AutoGuiShell {
-    public String lookAndFeelClass = "#system";
+    public String lookAndFeelClass = UIManagerUtil.getLookAndFeelProp(UIManagerUtil.LOOK_AND_FEEL_PROP_DEFAULT);
 
     /**
      * @since 1.2
@@ -75,7 +94,8 @@ public class AutoGuiShell {
     }
 
     /**
-     * @param lookAndFeelClass the LAF class name or "#system"
+     * @param lookAndFeelClass the LAF class name or a special name
+     *                         which can be acceptable by {@link UIManagerUtil#setLookAndFeel(String)}
      * @return this
      * @since 1.2
      */
@@ -92,6 +112,24 @@ public class AutoGuiShell {
      */
     public AutoGuiShell withLookAndFeelClassFromFunction(Function<AutoGuiShell,String> init) {
         return withLookAndFeelClass(init == null ? null : init.apply(this));
+    }
+
+    /**
+     * @param p a system property, like "swing.defaultlaf".
+     * @return this with setting "#prop:p"
+     * @since 1.2.1
+     */
+    public AutoGuiShell withLookAndFeelProperty(String p) {
+        return withLookAndFeelClass(UIManagerUtil.getLookAndFeelProp(p));
+    }
+
+    /**
+     * turning off the feature of the setting look-and-feel from some property
+     * @return this with setting "#none"
+     * @since 1.2.1
+     */
+    public AutoGuiShell withLookAndFeelNone() {
+        return withLookAndFeelClass(UIManagerUtil.LOOK_AND_FEEL_NONE);
     }
 
     /**
@@ -166,7 +204,17 @@ public class AutoGuiShell {
      * @return the created window for o
      */
     public static GuiSwingWindow showLive(Object o) {
-        GuiSwingWindow w = get().createWindowRelaxed(o);
+        return get().showWindowLive(o);
+    }
+
+    /**
+     * called from {@link #showLive(Object)}
+     * @param o the target object
+     * @return the created window for o
+     * @since 1.2.1
+     */
+    public GuiSwingWindow showWindowLive(Object o) {
+        GuiSwingWindow w = createWindowRelaxed(o);
         SwingUtilities.invokeLater(() -> displayLiveWindow(w));
         return w;
     }
