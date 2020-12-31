@@ -240,7 +240,22 @@ public class AutoGuiShell {
      * @since 1.1
      */
     public GuiSwingWindow createWindowRelaxed(Object o, Consumer<GuiSwingWindow> afterActionInEvent) {
+        return createWindowRelaxed(o, this::setLookAndFeel, afterActionInEvent);
+    }
+
+    /**
+     *
+     * @param o the target object
+     * @param beforeActionInEvent null or an action for pre-process before the creating window
+     * @param afterActionInEvent  null or an action with the created window, executed within the event dispatching thread
+     * @return the created window for o, with relaxed component-set. Note that the created window does not become application root.
+     * @since 1.2.1
+     */
+    public GuiSwingWindow createWindowRelaxed(Object o, Runnable beforeActionInEvent, Consumer<GuiSwingWindow> afterActionInEvent) {
         return invokeAndWait(() -> {
+            if (beforeActionInEvent != null) {
+                beforeActionInEvent.run();
+            }
             GuiSwingWindow w = createWindowRelaxedInEvent(o);
             w.setApplicationRoot(false);
             if (afterActionInEvent != null) {
