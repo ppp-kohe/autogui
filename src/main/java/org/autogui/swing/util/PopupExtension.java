@@ -268,9 +268,17 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     public void addListenersTo(JComponent pane) {
         //pane.addMouseListener(this);
             //starting showing the popup-menu by JComponent's default behavior, instead of the listener of this
-        getMenu().addPopupMenuListener(new PopupMenuListenerForSetup(this));
+        addListenersToAsPopupMenuListener(pane);
 
         pane.addKeyListener(this);
+    }
+
+    /**
+     * @param pane the target pane
+     * @since 1.2.1
+     */
+    protected void addListenersToAsPopupMenuListener(JComponent pane) {
+        getMenu().addPopupMenuListener(new PopupMenuListenerForSetup(this));
     }
 
     /**

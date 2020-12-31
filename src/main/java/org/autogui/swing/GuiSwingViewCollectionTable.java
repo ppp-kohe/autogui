@@ -1687,6 +1687,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class PopupExtensionCollectionColumnHeader extends PopupExtension implements MouseListener {
+        /** @since 1.2.1 */
+        protected Point targetPoint;
         protected TableColumn targetColumn;
 
         public PopupExtensionCollectionColumnHeader(JTable table, PopupMenuBuilder menuBuilder) {
@@ -1697,37 +1699,75 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             return (JTable) getPane();
         }
 
-//        @Override
-//        public void addListenersTo(JComponent pane) {
-//            if (pane instanceof JTable) {
-//                ((JTable) pane).getTableHeader().addMouseListener(this);
-//            }
-//        }
+        @Override
+        public void addListenersTo(JComponent pane) {
+            getMenu().addPopupMenuListener(new PopupMenuListenerForSetup(this) {
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    updateTargetPointSelectAndClear(); //clear the point: the action might be called later without mouse moving
+                    super.popupMenuWillBecomeVisible(e);
+                }
+            });
+            getPaneTable().getTableHeader().addMouseMotionListener(new MouseMotionAdapter() {
+                @Override
+                public void mouseMoved(MouseEvent e) {
+                    updateTargetPoint(e.getPoint());
+                }
+            });
+        }
+
+        private void updateTargetPointSelectAndClear() {
+            if (targetPoint != null && targetColumn == null) {
+                targetColumn = getTargetColumn(targetPoint);
+            }
+            targetPoint = null;
+        }
+
+        private void updateTargetPoint(Point p) {
+            targetPoint = p;
+            targetColumn = null;
+        }
 
         @Override
         public void mousePressed(MouseEvent e) {
-            targetColumn = getClickedColumn(e);
+            updateTargetPoint(e.getPoint());;
             super.mousePressed(e);
         }
 
         public TableColumn getTargetColumn() {
+            if (targetColumn == null) {
+                if (targetPoint == null) {
+                    JTable table = getPaneTable();
+                    int column = table.getSelectedColumn();
+                    if (0 <= column && column < table.getColumnCount()) {
+                        targetColumn = table.getColumnModel().getColumn(column);
+                    }
+                } else {
+                    targetColumn = getTargetColumn(targetPoint);
+                }
+            }
             return targetColumn;
         }
 
-        public TableColumn getClickedColumn(MouseEvent e) {
+        /**
+         * @param p the clicked point of source component
+         * @return the column under the point
+         * @since 1.2.1
+         */
+        public TableColumn getTargetColumn(Point p) {
             JTable table = getPaneTable();
             TableColumnModel model = table.getColumnModel();
             JTableHeader header = table.getTableHeader();
             int i = Math.min(model.getColumnCount() - 1,
-                    (int) (e.getX() / (header.getWidth() / (float) model.getColumnCount())));
+                    (int) (p.getX() / (header.getWidth() / (float) model.getColumnCount())));
             int inc = 0;
             int n = 0;
             while (0 <= i && i < model.getColumnCount() && n < model.getColumnCount()) {
                 Rectangle r = header.getHeaderRect(i);
-                if (r.contains(e.getPoint())) {
+                if (r.contains(p)) {
                     return model.getColumn(i);
                 } else if (inc == 0) {
-                    inc = r.getMaxX() < e.getX() ? 1 : -1;
+                    inc = r.getMaxX() < p.getX() ? 1 : -1;
                 }
                 i += inc;
                 ++n;
