@@ -124,37 +124,41 @@ public class GuiSwingViewEnumComboBoxTest extends GuiSwingTestCase {
 
     @Test
     public void testViewEnumValueCopyAsJson() {
-        GuiSwingViewEnumComboBox.PropertyEnumComboBox propBox = runGet(this::create);
+        withClipLock(() -> {
+            GuiSwingViewEnumComboBox.PropertyEnumComboBox propBox = runGet(this::create);
 
-        run(() -> propBox.setSelectedIndex(0));
+            run(() -> propBox.setSelectedIndex(0));
 
-        GuiSwingJsonTransfer.JsonCopyAction a = runGet(() ->
-                findMenuItemAction(propBox.getSwingStaticMenuItems(),
-                    GuiSwingJsonTransfer.JsonCopyAction.class));
-        run(() -> a.actionPerformed(null));
+            GuiSwingJsonTransfer.JsonCopyAction a = runGet(() ->
+                    findMenuItemAction(propBox.getSwingStaticMenuItems(),
+                            GuiSwingJsonTransfer.JsonCopyAction.class));
+            run(() -> a.actionPerformed(null));
 
-        Assert.assertEquals("copy as json",
-                "\"Hello\"",
-                runGet(this::getClipboardText));
+            Assert.assertEquals("copy as json",
+                    "\"Hello\"",
+                    runGet(this::getClipboardText));
+        });
     }
 
     @Test
     public void testViewEnumValuePasteJson() {
-        GuiSwingViewEnumComboBox.PropertyEnumComboBox propBox = runGet(this::create);
+        withClipLock(() -> {
+            GuiSwingViewEnumComboBox.PropertyEnumComboBox propBox = runGet(this::create);
 
-        run(() -> setClipboardText("{\"value\":\"Hello\"}"));
-        GuiSwingJsonTransfer.JsonPasteAction a = runGet(() ->
-            findMenuItemAction(propBox.getSwingStaticMenuItems(),
-                    GuiSwingJsonTransfer.JsonPasteAction.class));
-        run(() -> a.actionPerformed(null));
+            run(() -> setClipboardText("{\"value\":\"Hello\"}"));
+            GuiSwingJsonTransfer.JsonPasteAction a = runGet(() ->
+                    findMenuItemAction(propBox.getSwingStaticMenuItems(),
+                            GuiSwingJsonTransfer.JsonPasteAction.class));
+            run(() -> a.actionPerformed(null));
 
-        Assert.assertEquals("selected after paste {name:enumMemberName}",
-                TestEnum.Hello,
-                runGet(propBox::getSwingViewValue));
+            Assert.assertEquals("selected after paste {name:enumMemberName}",
+                    TestEnum.Hello,
+                    runGet(propBox::getSwingViewValue));
 
-        Assert.assertEquals("selected index",
-                0,
-                runGet(propBox::getSelectedIndex).intValue());
+            Assert.assertEquals("selected index",
+                    0,
+                    runGet(propBox::getSelectedIndex).intValue());
+        });
     }
 
     @Test
@@ -206,16 +210,18 @@ public class GuiSwingViewEnumComboBoxTest extends GuiSwingTestCase {
 
     @Test
     public void testViewEnumValueTransferHandlerExport() {
-        GuiSwingViewEnumComboBox.PropertyEnumComboBox propBox = runGet(this::create);
+        withClipLock(() -> {
+            GuiSwingViewEnumComboBox.PropertyEnumComboBox propBox = runGet(this::create);
 
-        run(() -> propBox.setSwingViewValueWithUpdate(TestEnum.World));
-        run(() ->
-                propBox.getTransferHandler()
-                    .exportToClipboard(propBox,
-                            Toolkit.getDefaultToolkit().getSystemClipboard(),
-                            TransferHandler.COPY));
-        Assert.assertEquals("exportData: name of enum",
-                "World",
-                runGet(this::getClipboardText));
+            run(() -> propBox.setSwingViewValueWithUpdate(TestEnum.World));
+            run(() ->
+                    propBox.getTransferHandler()
+                            .exportToClipboard(propBox,
+                                    Toolkit.getDefaultToolkit().getSystemClipboard(),
+                                    TransferHandler.COPY));
+            Assert.assertEquals("exportData: name of enum",
+                    "World",
+                    runGet(this::getClipboardText));
+        });
     }
 }

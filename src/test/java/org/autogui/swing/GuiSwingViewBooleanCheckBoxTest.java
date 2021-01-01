@@ -111,29 +111,30 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
 
     @Test
     public void testViewBooleanValuePopupCopy() {
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox propBox = runGet(this::create);
+        withClipLock(() -> {
+            GuiSwingViewBooleanCheckBox.PropertyCheckBox propBox = runGet(this::create);
 
-        GuiSwingView.ToStringCopyAction a = runGet(() -> findMenuItemAction(propBox.getSwingStaticMenuItems(),
-                GuiSwingView.ToStringCopyAction.class));
+            GuiSwingView.ToStringCopyAction a = runGet(() -> findMenuItemAction(propBox.getSwingStaticMenuItems(),
+                    GuiSwingView.ToStringCopyAction.class));
 
-        run(() -> {
-            a.actionPerformed(null);
+            run(() -> {
+                a.actionPerformed(null);
+            });
+
+            Assert.assertEquals("copy text",
+                    "false",
+                    runGet(this::getClipboardText));
+
+            run(() -> propBox.setSwingViewValue(true));
+
+            run(() -> {
+                a.actionPerformed(null);
+            });
+
+            Assert.assertEquals("copy text after update",
+                    "true",
+                    runGet(this::getClipboardText));
         });
-
-        Assert.assertEquals("copy text",
-                "false",
-                runGet(this::getClipboardText));
-
-        run(() -> propBox.setSwingViewValue(true));
-
-        run(() -> {
-            a.actionPerformed(null);
-        });
-
-        Assert.assertEquals("copy text after update",
-                "true",
-                runGet(this::getClipboardText));
-
     }
 
     @Test
@@ -161,15 +162,19 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
 
     @Test
     public void testViewBooleanValueTransferHandlerExport() {
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox propBox = runGet(this::create);
-
-        run(() ->
-                propBox.getTransferHandler()
-                        .exportToClipboard(propBox,
-                                Toolkit.getDefaultToolkit().getSystemClipboard(),
-                                TransferHandler.COPY));
-        Assert.assertEquals("exportData",
-                "false",
-                runGet(this::getClipboardText));
+        withClipLock(() -> {
+            System.err.println("beforeCreate");
+            GuiSwingViewBooleanCheckBox.PropertyCheckBox propBox = runGet(this::create);
+            System.err.println("beforeRun");
+            run(() ->
+                    propBox.getTransferHandler()
+                            .exportToClipboard(propBox,
+                                    Toolkit.getDefaultToolkit().getSystemClipboard(),
+                                    TransferHandler.COPY));
+            System.err.println("beforeRunGet");
+            Assert.assertEquals("exportData",
+                    "false",
+                    runGet(this::getClipboardText));
+        });
     }
 }

@@ -121,66 +121,74 @@ public class GuiSwingViewLabelTest extends GuiSwingTestCase {
 
     @Test
     public void testViewToStringCopy() {
-        GuiSwingViewLabel.PropertyLabel pane = runGet(this::create);
-        contextProp.updateSourceFromRoot();
-        runWait();
+        withClipLock(() -> {
+            GuiSwingViewLabel.PropertyLabel pane = runGet(this::create);
+            contextProp.updateSourceFromRoot();
+            runWait();
 
-        GuiSwingViewLabel.LabelToStringCopyAction a = runGet(() ->
-                findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelToStringCopyAction.class));
-        run(() -> a.actionPerformed(null));
+            GuiSwingViewLabel.LabelToStringCopyAction a = runGet(() ->
+                    findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelToStringCopyAction.class));
+            run(() -> a.actionPerformed(null));
 
-        String copied = runGet(this::getClipboardText);
-        Assert.assertEquals("copy toString",
-                "<hello>",
-                copied);
+            String copied = runGet(this::getClipboardText);
+            Assert.assertEquals("copy toString",
+                    "<hello>",
+                    copied);
+        });
     }
 
     @Test
     public void testViewToStringCopyJson() {
-        GuiSwingViewLabel.PropertyLabel pane = runGet(this::create);
-        contextProp.updateSourceFromRoot();
-        runWait();
+        withClipLock(() -> {
+            GuiSwingViewLabel.PropertyLabel pane = runGet(this::create);
+            contextProp.updateSourceFromRoot();
+            runWait();
 
-        GuiSwingViewLabel.LabelJsonCopyAction a = runGet(() ->
-                findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelJsonCopyAction.class));
-        run(() -> a.actionPerformed(null));
+            GuiSwingViewLabel.LabelJsonCopyAction a = runGet(() ->
+                    findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelJsonCopyAction.class));
+            run(() -> a.actionPerformed(null));
 
-        String copied = runGet(this::getClipboardText);
-        Assert.assertEquals("copy toString JSON as String",
-                "\"<hello>\"",
-                copied);
+            String copied = runGet(this::getClipboardText);
+            Assert.assertEquals("copy toString JSON as String",
+                    "\"<hello>\"",
+                    copied);
+        });
     }
 
     @Test
     public void testViewToStringSaveJson() {
-        GuiSwingViewLabel.PropertyLabel pane = runGet(this::create);
-        contextProp.updateSourceFromRoot();
-        runWait();
+        withClipLock(() -> {
+            GuiSwingViewLabel.PropertyLabel pane = runGet(this::create);
+            contextProp.updateSourceFromRoot();
+            runWait();
 
-        GuiSwingViewLabel.LabelJsonSaveAction a = runGet(() ->
-                findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelJsonSaveAction.class));
-        Object json = runGet(() -> a.toCopiedJson(pane.getSwingViewValue()));
+            GuiSwingViewLabel.LabelJsonSaveAction a = runGet(() ->
+                    findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelJsonSaveAction.class));
+            Object json = runGet(() -> a.toCopiedJson(pane.getSwingViewValue()));
 
-        String copied = runGet(this::getClipboardText);
-        Assert.assertEquals("save toString JSON as String",
-                "<hello>",
-                json);
+            String copied = runGet(this::getClipboardText);
+            Assert.assertEquals("save toString JSON as String",
+                    "<hello>",
+                    json);
+        });
     }
 
     @Test
     public void testViewTransferHandlerExport() {
-        GuiSwingViewLabel.PropertyLabel i = runGet(this::create);
-        contextProp.updateSourceFromRoot();
-        runWait();
+        withClipLock(() -> {
+            GuiSwingViewLabel.PropertyLabel i = runGet(this::create);
+            contextProp.updateSourceFromRoot();
+            runWait();
 
-        run(() ->
-                i.getTransferHandler()
-                        .exportToClipboard(i,
-                                Toolkit.getDefaultToolkit().getSystemClipboard(),
-                                TransferHandler.COPY));
+            run(() ->
+                    i.getTransferHandler()
+                            .exportToClipboard(i,
+                                    Toolkit.getDefaultToolkit().getSystemClipboard(),
+                                    TransferHandler.COPY));
 
-        Assert.assertEquals("after export",
-                "<hello>",
-                runGet(this::getClipboardText));
+            Assert.assertEquals("after export",
+                    "<hello>",
+                    runGet(this::getClipboardText));
+        });
     }
 }

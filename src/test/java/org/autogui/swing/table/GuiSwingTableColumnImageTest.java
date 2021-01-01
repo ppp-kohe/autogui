@@ -212,49 +212,55 @@ public class GuiSwingTableColumnImageTest extends GuiSwingTestCase {
 
     @Test
     public void testCopyAction() throws Exception {
+        withClipLock(() -> {
+            run(this::createTable);
 
-        run(this::createTable);
+            ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                    runGet(() -> objColumn.getTableColumn().getCellRenderer());
+            GuiSwingTableColumnImage.ColumnEditImagePane component = (GuiSwingTableColumnImage.ColumnEditImagePane) runGet(renderer::getComponent);
+            Action action = convertRowsAction(
+                    findMenuItemAction(component.getSwingStaticMenuItems(), GuiSwingViewImagePane.ImageCopyAction.class));
 
-        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
-                runGet(() -> objColumn.getTableColumn().getCellRenderer());
-        GuiSwingTableColumnImage.ColumnEditImagePane component = (GuiSwingTableColumnImage.ColumnEditImagePane) runGet(renderer::getComponent);
-        Action action = convertRowsAction(
-                findMenuItemAction(component.getSwingStaticMenuItems(), GuiSwingViewImagePane.ImageCopyAction.class));
+            run(() -> table.addRowSelectionInterval(2, 2));
+            run(() -> action.actionPerformed(null));
 
-        run(() -> table.addRowSelectionInterval(2, 2));
-        run(() -> action.actionPerformed(null));
-
-        Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
-        BufferedImage img = (BufferedImage) board.getData(DataFlavor.imageFlavor);
-        Assert.assertEquals(obj.values.get(2), img);
+            Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
+            try {
+                BufferedImage img = (BufferedImage) board.getData(DataFlavor.imageFlavor);
+                Assert.assertEquals(obj.values.get(2), img);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
     }
 
 
     @Test
     public void testPasteAction() throws Exception {
+        withClipLock(() -> {
+            run(this::createTable);
 
-        run(this::createTable);
+            ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                    runGet(() -> objColumn.getTableColumn().getCellRenderer());
+            GuiSwingTableColumnImage.ColumnEditImagePane component = (GuiSwingTableColumnImage.ColumnEditImagePane) runGet(renderer::getComponent);
+            Action action = convertRowsAction(
+                    findMenuItemAction(component.getSwingStaticMenuItems(), GuiSwingViewImagePane.ImagePasteAction.class));
 
-        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
-                runGet(() -> objColumn.getTableColumn().getCellRenderer());
-        GuiSwingTableColumnImage.ColumnEditImagePane component = (GuiSwingTableColumnImage.ColumnEditImagePane) runGet(renderer::getComponent);
-        Action action = convertRowsAction(
-                findMenuItemAction(component.getSwingStaticMenuItems(), GuiSwingViewImagePane.ImagePasteAction.class));
+            BufferedImage ex1 = obj.values.get(1);
 
-        BufferedImage ex1 = obj.values.get(1);
+            BufferedImage img = createImage(200);
+            Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
+            GuiSwingViewImagePane.ImageSelection sel = new GuiSwingViewImagePane.ImageSelection(img);
+            board.setContents(sel, sel);
 
-        BufferedImage img = createImage(200);
-        Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
-        GuiSwingViewImagePane.ImageSelection sel = new GuiSwingViewImagePane.ImageSelection(img);
-        board.setContents(sel, sel);
+            run(() -> table.setRowSelectionInterval(0, 0));
+            run(() -> table.addRowSelectionInterval(2, 2));
+            run(() -> action.actionPerformed(null));
 
-        run(() -> table.setRowSelectionInterval(0, 0));
-        run(() -> table.addRowSelectionInterval(2, 2));
-        run(() -> action.actionPerformed(null));
-
-        Assert.assertEquals(img, obj.values.get(0));
-        Assert.assertEquals(ex1, obj.values.get(1));
-        Assert.assertEquals(img, obj.values.get(2));
+            Assert.assertEquals(img, obj.values.get(0));
+            Assert.assertEquals(ex1, obj.values.get(1));
+            Assert.assertEquals(img, obj.values.get(2));
+        });
     }
 
     @Test

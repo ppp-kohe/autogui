@@ -229,12 +229,14 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
 
     @Test
     public void testViewPasteAllInt() {
-        GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropInt));
-        setClipboardText("1234");
-        GuiSwingViewNumberSpinner.NumberTextPasteAllAction a = findMenuItemAction(i.getSwingStaticMenuItems(), GuiSwingViewNumberSpinner.NumberTextPasteAllAction.class);
-        a.actionPerformed(null);
-        Assert.assertEquals("after paste-all", "1,234", i.getEditorField().getText());
-        Assert.assertEquals("after paste-all", 1234, obj.numInt);
+        withClipLock(() -> {
+            GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropInt));
+            setClipboardText("1234");
+            GuiSwingViewNumberSpinner.NumberTextPasteAllAction a = findMenuItemAction(i.getSwingStaticMenuItems(), GuiSwingViewNumberSpinner.NumberTextPasteAllAction.class);
+            a.actionPerformed(null);
+            Assert.assertEquals("after paste-all", "1,234", i.getEditorField().getText());
+            Assert.assertEquals("after paste-all", 1234, obj.numInt);
+        });
     }
 
     @Test

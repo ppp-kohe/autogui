@@ -189,76 +189,80 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
 
     @Test
     public void testViewObjCopyAsJson() {
-        GuiSwingViewObjectPane.ObjectPane pane = create();
+        withClipLock(() -> {
+            GuiSwingViewObjectPane.ObjectPane pane = create();
 
-        GuiSwingViewStringField.PropertyStringPane strPane = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
+            GuiSwingViewStringField.PropertyStringPane strPane = runGet(() ->
+                    GuiSwingView.findChildByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
 
-        GuiSwingViewBooleanCheckBox.PropertyCheckBox boolBox = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
+            GuiSwingViewBooleanCheckBox.PropertyCheckBox boolBox = runGet(() ->
+                    GuiSwingView.findChildByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
 
-        GuiSwingView.ValuePane<Object> subPane1 = GuiSwingView.findChild(pane,
-                v -> v.getSwingViewContext().getName().equals("obj1"));
-        GuiSwingView.ValuePane<Object> subPane2 = GuiSwingView.findChild(pane,
-                v -> v.getSwingViewContext().getName().equals("obj2"));
+            GuiSwingView.ValuePane<Object> subPane1 = GuiSwingView.findChild(pane,
+                    v -> v.getSwingViewContext().getName().equals("obj1"));
+            GuiSwingView.ValuePane<Object> subPane2 = GuiSwingView.findChild(pane,
+                    v -> v.getSwingViewContext().getName().equals("obj2"));
 
-        GuiSwingViewStringField.PropertyStringPane subStrPane1 = runGet(() ->
-                GuiSwingView.findChildByType(subPane1.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
+            GuiSwingViewStringField.PropertyStringPane subStrPane1 = runGet(() ->
+                    GuiSwingView.findChildByType(subPane1.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
 
-        GuiSwingViewStringField.PropertyStringPane subStrPane2 = runGet(() ->
-                GuiSwingView.findChildByType(subPane2.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
+            GuiSwingViewStringField.PropertyStringPane subStrPane2 = runGet(() ->
+                    GuiSwingView.findChildByType(subPane2.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
 
-        run(() -> boolBox.setSwingViewValueWithUpdate(true));
-        run(() -> strPane.setSwingViewValueWithUpdate("value1"));
-        run(() -> subStrPane1.setSwingViewValueWithUpdate("value2"));
-        run(() -> subStrPane2.setSwingViewValueWithUpdate("value3"));
-        runWait();
+            run(() -> boolBox.setSwingViewValueWithUpdate(true));
+            run(() -> strPane.setSwingViewValueWithUpdate("value1"));
+            run(() -> subStrPane1.setSwingViewValueWithUpdate("value2"));
+            run(() -> subStrPane2.setSwingViewValueWithUpdate("value3"));
+            runWait();
 
-        GuiSwingJsonTransfer.JsonCopyAction a = runGet(() -> findMenuItemAction(pane.getSwingStaticMenuItems(),
-                GuiSwingJsonTransfer.JsonCopyAction.class));
-        run(() -> a.actionPerformed(null));
+            GuiSwingJsonTransfer.JsonCopyAction a = runGet(() -> findMenuItemAction(pane.getSwingStaticMenuItems(),
+                    GuiSwingJsonTransfer.JsonCopyAction.class));
+            run(() -> a.actionPerformed(null));
 
 
-        Assert.assertEquals("copy as json",
-                "{" +
-                        "\"hello\":\"value1\"," +
-                        "\"world\":true," +
-                        "\"obj1\":{\"value\":\"value2\"}," +
-                        "\"obj2\":{\"value\":\"value3\"}" +
-                        "}",
-                runGet(this::getClipboardText).replaceAll("\\s+", ""));
+            Assert.assertEquals("copy as json",
+                    "{" +
+                            "\"hello\":\"value1\"," +
+                            "\"world\":true," +
+                            "\"obj1\":{\"value\":\"value2\"}," +
+                            "\"obj2\":{\"value\":\"value3\"}" +
+                            "}",
+                    runGet(this::getClipboardText).replaceAll("\\s+", ""));
+        });
     }
 
     @Test
     public void testViewObjPasteJson() {
-        GuiSwingViewObjectPane.ObjectPane pane = create();
+        withClipLock(() -> {
+            GuiSwingViewObjectPane.ObjectPane pane = create();
 
-        run(() -> setClipboardText("{" +
-                "\"obj2\":{\"value\":\"HELLO\"}," +
-                "\"world\":true," +
-                "\"obj1\":{\"value\":\"WORLD\"}," +
-                "\"hello\":\"Hello\"" +
-                "}"));
+            run(() -> setClipboardText("{" +
+                    "\"obj2\":{\"value\":\"HELLO\"}," +
+                    "\"world\":true," +
+                    "\"obj1\":{\"value\":\"WORLD\"}," +
+                    "\"hello\":\"Hello\"" +
+                    "}"));
 
-        GuiSwingJsonTransfer.JsonPasteAction a = runGet(() -> findMenuItemAction(pane.getSwingStaticMenuItems(),
-                GuiSwingJsonTransfer.JsonPasteAction.class));
-        run(() -> a.actionPerformed(null));
-        runWait();
+            GuiSwingJsonTransfer.JsonPasteAction a = runGet(() -> findMenuItemAction(pane.getSwingStaticMenuItems(),
+                    GuiSwingJsonTransfer.JsonPasteAction.class));
+            run(() -> a.actionPerformed(null));
+            runWait();
 
-        Assert.assertEquals("after paste json",
-                "Hello",
-                obj.hello);
+            Assert.assertEquals("after paste json",
+                    "Hello",
+                    obj.hello);
 
-        Assert.assertTrue("after paste json",
-                obj.world);
+            Assert.assertTrue("after paste json",
+                    obj.world);
 
-        Assert.assertEquals("after paste json",
-                "HELLO",
-                obj.obj2.value);
+            Assert.assertEquals("after paste json",
+                    "HELLO",
+                    obj.obj2.value);
 
-        Assert.assertEquals("after paste json",
-                "WORLD",
-                obj.obj1.value);
+            Assert.assertEquals("after paste json",
+                    "WORLD",
+                    obj.obj1.value);
+        });
     }
 
     @Test

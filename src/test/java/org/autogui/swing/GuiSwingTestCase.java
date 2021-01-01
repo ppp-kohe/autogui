@@ -13,6 +13,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -140,8 +142,9 @@ public class GuiSwingTestCase {
         return findMenuItemAction(items, type, null, null, null);
     }
 
+    public static Lock clipLock = new ReentrantLock();
 
-    public String getClipboardText() {
+    public String getClipboardText() { //some tests run those methods under another thread which is not reentrance
         Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
         if (board.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
             try {
@@ -158,6 +161,18 @@ public class GuiSwingTestCase {
         Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
         StringSelection se = new StringSelection(str);
         board.setContents(se, se);
+    }
+
+    public void withClipLock(Runnable r) {
+        System.err.println("clip-lock");
+        clipLock.lock();
+        System.err.println("clip-locked");
+        try {
+            r.run();
+        } finally {
+            System.err.println("clip-unlock");
+            clipLock.unlock();
+        }
     }
 
     public EditWait editWait(ScheduledTaskRunner<?> er) {

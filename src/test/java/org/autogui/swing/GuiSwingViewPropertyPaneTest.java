@@ -143,21 +143,23 @@ public class GuiSwingViewPropertyPaneTest extends GuiSwingTestCase {
 
     @Test
     public void testViewPropPanePopup() {
-        GuiSwingViewPropertyPane.PropertyPane pane = create();
+        withClipLock(() -> {
+            GuiSwingViewPropertyPane.PropertyPane pane = create();
 
-        GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findChildByType(pane,
-                GuiSwingViewStringField.PropertyStringPane.class));
-        run(() -> strPane.setSwingViewValue("Hello"));
+            GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findChildByType(pane,
+                    GuiSwingViewStringField.PropertyStringPane.class));
+            run(() -> strPane.setSwingViewValue("Hello"));
 
-        Iterable<PopupCategorized.CategorizedMenuItem> items = runGet(() -> ((PopupCategorized) pane.getSwingMenuBuilder()).getItemSupplier().get());
+            Iterable<PopupCategorized.CategorizedMenuItem> items = runGet(() -> ((PopupCategorized) pane.getSwingMenuBuilder()).getItemSupplier().get());
 
-        GuiSwingJsonTransfer.JsonCopyAction a = runGet(() -> findMenuItemAction(items,
-                GuiSwingJsonTransfer.JsonCopyAction.class, "Property Edit", null, null));
+            GuiSwingJsonTransfer.JsonCopyAction a = runGet(() -> findMenuItemAction(items,
+                    GuiSwingJsonTransfer.JsonCopyAction.class, "Property Edit", null, null));
 
-        run(() -> a.actionPerformed(null));
+            run(() -> a.actionPerformed(null));
 
-        Assert.assertEquals("property json copy",
-                "{\"value\":\"Hello\"}",
-                runGet(() -> getClipboardText().replaceAll("\\s+", "")));
+            Assert.assertEquals("property json copy",
+                    "{\"value\":\"Hello\"}",
+                    runGet(() -> getClipboardText().replaceAll("\\s+", "")));
+        });
     }
 }

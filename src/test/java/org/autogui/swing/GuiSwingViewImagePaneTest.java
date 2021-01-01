@@ -210,49 +210,53 @@ public class GuiSwingViewImagePaneTest extends GuiSwingTestCase {
 
     @Test
     public void testViewTransferHandlerExport() {
-        GuiSwingViewImagePane.PropertyImagePane i = runGet(this::create);
-        run(() -> i.setImage(getImage()));
-        run(() ->
-                i.getTransferHandler()
-                        .exportToClipboard(i,
-                                Toolkit.getDefaultToolkit().getSystemClipboard(),
-                                TransferHandler.COPY));
+        withClipLock(() -> {
+            GuiSwingViewImagePane.PropertyImagePane i = runGet(this::create);
+            run(() -> i.setImage(getImage()));
+            run(() ->
+                    i.getTransferHandler()
+                            .exportToClipboard(i,
+                                    Toolkit.getDefaultToolkit().getSystemClipboard(),
+                                    TransferHandler.COPY));
 
-        Assert.assertEquals("after export",
-                getImage(),
-                runGet(this::getClipboardImage));
+            Assert.assertEquals("after export",
+                    getImage(),
+                    runGet(this::getClipboardImage));
+        });
     }
 
     @Test
     public void testViewTransferHandlerImportFile() {
-        GuiSwingViewImagePane.PropertyImagePane i = runGet(this::create);
+        withClipLock(() -> {
+            GuiSwingViewImagePane.PropertyImagePane i = runGet(this::create);
 
-        run(() -> i.setImage(getImage2()));
+            run(() -> i.setImage(getImage2()));
 
-        SearchTextFieldFilePath.FileSelection se = new SearchTextFieldFilePath.FileSelection(
-                Collections.singletonList(getImageFile()));
-        TransferHandler.TransferSupport ts = new TransferHandler.TransferSupport(i, se);
-        Assert.assertTrue("can import",
-                runGet(() -> i.getTransferHandler().canImport(ts)));
-        Assert.assertTrue("import",
-                runGet(() -> i.getTransferHandler().importData(ts)));
+            SearchTextFieldFilePath.FileSelection se = new SearchTextFieldFilePath.FileSelection(
+                    Collections.singletonList(getImageFile()));
+            TransferHandler.TransferSupport ts = new TransferHandler.TransferSupport(i, se);
+            Assert.assertTrue("can import",
+                    runGet(() -> i.getTransferHandler().canImport(ts)));
+            Assert.assertTrue("import",
+                    runGet(() -> i.getTransferHandler().importData(ts)));
 
 
-        GuiSwingJsonTransfer.JsonCopyAction a = runGet(() ->
-                findMenuItemAction(i.getSwingStaticMenuItems(),
-                        GuiSwingJsonTransfer.JsonCopyAction.class));
-        run(() -> a.actionPerformed(null));
+            GuiSwingJsonTransfer.JsonCopyAction a = runGet(() ->
+                    findMenuItemAction(i.getSwingStaticMenuItems(),
+                            GuiSwingJsonTransfer.JsonCopyAction.class));
+            run(() -> a.actionPerformed(null));
 
-        Assert.assertEquals("path", getImageFile(),
-                runGet(() -> i.getImagePath(i.getImage())));
+            Assert.assertEquals("path", getImageFile(),
+                    runGet(() -> i.getImagePath(i.getImage())));
 
-        String data = JsonReader.create(runGet(this::getClipboardText)).parseString();
-        BufferedImage img = (BufferedImage) contextProp.getReprValue().fromJson(contextProp, null, data);
-        Assert.assertEquals("pixel",
-                Color.blue.getRGB(), img.getRGB(0, 0));
+            String data = JsonReader.create(runGet(this::getClipboardText)).parseString();
+            BufferedImage img = (BufferedImage) contextProp.getReprValue().fromJson(contextProp, null, data);
+            Assert.assertEquals("pixel",
+                    Color.blue.getRGB(), img.getRGB(0, 0));
 
-        Assert.assertEquals("size", 16, img.getWidth());
-        Assert.assertEquals("size", 16, img.getHeight());
+            Assert.assertEquals("size", 16, img.getWidth());
+            Assert.assertEquals("size", 16, img.getHeight());
+        });
     }
 
     @Test

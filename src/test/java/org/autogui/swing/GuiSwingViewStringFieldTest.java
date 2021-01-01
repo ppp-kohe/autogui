@@ -94,125 +94,135 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
 
     @Test
     public void testViewStringValueCopy() {
-        GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
+        withClipLock(() -> {
+            GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
 
-        run(() -> propField.setSwingViewValue("hello"));
-        runWait();
-        run(() -> {
-            propField.getField().setSelectionStart(2);
-            propField.getField().setSelectionEnd(4);
+            run(() -> propField.setSwingViewValue("hello"));
+            runWait();
+            run(() -> {
+                propField.getField().setSelectionStart(2);
+                propField.getField().setSelectionEnd(4);
+            });
+
+            run(() -> {
+                PopupExtensionText.TextCopyAction a = findMenuItemAction(propField.getMenuItems().get(),
+                        PopupExtensionText.TextCopyAction.class);
+                a.actionPerformed(null);
+            });
+
+            Assert.assertEquals("copy selected range",
+                    "ll", getClipboardText());
         });
-
-        run(() -> {
-            PopupExtensionText.TextCopyAction a = findMenuItemAction(propField.getMenuItems().get(),
-                    PopupExtensionText.TextCopyAction.class);
-            a.actionPerformed(null);
-        });
-
-        Assert.assertEquals("copy selected range",
-                "ll", getClipboardText());
     }
 
     @Test
     public void testViewStringValueCut() {
-        GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
+        withClipLock(() -> {
+            GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
 
-        run(() -> propField.setSwingViewValue("hello"));
-        runWait();
-        run(() -> {
-            propField.getField().setSelectionStart(2);
-            propField.getField().setSelectionEnd(4);
+            run(() -> propField.setSwingViewValue("hello"));
+            runWait();
+            run(() -> {
+                propField.getField().setSelectionStart(2);
+                propField.getField().setSelectionEnd(4);
+            });
+
+            run(() -> {
+                PopupExtensionText.TextCutAction a = findMenuItemAction(propField.getMenuItems().get(),
+                        PopupExtensionText.TextCutAction.class);
+                a.actionPerformed(null);
+            });
+
+            Assert.assertEquals("cut selected range",
+                    "ll", getClipboardText());
+            Assert.assertEquals("after cut",
+                    "heo",
+                    runGet(propField::getSwingViewValue));
+            runWait(600);
+            Assert.assertEquals("update after paste",
+                    "heo",
+                    obj.value);
         });
-
-        run(() -> {
-            PopupExtensionText.TextCutAction a = findMenuItemAction(propField.getMenuItems().get(),
-                    PopupExtensionText.TextCutAction.class);
-            a.actionPerformed(null);
-        });
-
-        Assert.assertEquals("cut selected range",
-                "ll", getClipboardText());
-        Assert.assertEquals("after cut",
-                "heo",
-                runGet(propField::getSwingViewValue));
-        runWait(600);
-        Assert.assertEquals("update after paste",
-                "heo",
-                obj.value);
     }
 
     @Test
     public void testViewStringValueCopyAll() {
-        GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
+        withClipLock(() -> {
+            GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
 
-        run(() -> propField.setSwingViewValue("hello"));
-        runWait();
-        run(() -> {
-            propField.getField().setSelectionStart(2);
-            propField.getField().setSelectionEnd(4);
+            run(() -> propField.setSwingViewValue("hello"));
+            runWait();
+            run(() -> {
+                propField.getField().setSelectionStart(2);
+                propField.getField().setSelectionEnd(4);
+            });
+
+            run(() -> {
+                PopupExtensionText.TextCopyAllAction a = findMenuItemAction(propField.getMenuItems().get(),
+                        PopupExtensionText.TextCopyAllAction.class);
+                a.actionPerformed(null);
+            });
+
+            Assert.assertEquals("copy entire text",
+                    "hello", getClipboardText());
         });
-
-        run(() -> {
-            PopupExtensionText.TextCopyAllAction a = findMenuItemAction(propField.getMenuItems().get(),
-                    PopupExtensionText.TextCopyAllAction.class);
-            a.actionPerformed(null);
-        });
-
-        Assert.assertEquals("copy entire text",
-                "hello", getClipboardText());
     }
 
     @Test
     public void testViewStringValuePaste() {
-        GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
-        EditWait wait = editWait(propField.getEditingRunner());
+        withClipLock(() -> {
+            GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
+            EditWait wait = editWait(propField.getEditingRunner());
 
-        run(() -> propField.setSwingViewValue("hello"));
-        runWait();
-        run(() -> {
-            propField.getField().setSelectionStart(2);
-            propField.getField().setSelectionEnd(4);
-        });
+            run(() -> propField.setSwingViewValue("hello"));
+            runWait();
+            run(() -> {
+                propField.getField().setSelectionStart(2);
+                propField.getField().setSelectionEnd(4);
+            });
 
-        run(() ->setClipboardText("LL"));
-        run(() -> {
-            PopupExtensionText.TextPasteAction a = findMenuItemAction(propField.getMenuItems().get(),
-                    PopupExtensionText.TextPasteAction.class);
-            a.actionPerformed(null);
+            run(() -> setClipboardText("LL"));
+            run(() -> {
+                PopupExtensionText.TextPasteAction a = findMenuItemAction(propField.getMenuItems().get(),
+                        PopupExtensionText.TextPasteAction.class);
+                a.actionPerformed(null);
+            });
+            runWait();
+            Assert.assertEquals("paste text",
+                    "heLLo", runGet(propField::getSwingViewValue));
+            wait.awaitNextFinish();
+            Assert.assertEquals("update after paste",
+                    "heLLo",
+                    obj.value);
         });
-        runWait();
-        Assert.assertEquals("paste text",
-                "heLLo", runGet(propField::getSwingViewValue));
-        wait.awaitNextFinish();
-        Assert.assertEquals("update after paste",
-                "heLLo",
-                obj.value);
     }
 
     @Test
     public void testViewStringValuePasteAll() {
-        GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
+        withClipLock(() -> {
+            GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
 
-        run(() -> propField.setSwingViewValue("hello"));
-        runWait();
-        run(() -> {
-            propField.getField().setSelectionStart(2);
-            propField.getField().setSelectionEnd(4);
-        });
+            run(() -> propField.setSwingViewValue("hello"));
+            runWait();
+            run(() -> {
+                propField.getField().setSelectionStart(2);
+                propField.getField().setSelectionEnd(4);
+            });
 
-        run(() ->setClipboardText("LL"));
-        run(() -> {
-            PopupExtensionText.TextPasteAllAction a = findMenuItemAction(propField.getMenuItems().get(),
-                    PopupExtensionText.TextPasteAllAction.class);
-            a.actionPerformed(null);
+            run(() -> setClipboardText("LL"));
+            run(() -> {
+                PopupExtensionText.TextPasteAllAction a = findMenuItemAction(propField.getMenuItems().get(),
+                        PopupExtensionText.TextPasteAllAction.class);
+                a.actionPerformed(null);
+            });
+            runWait();
+            Assert.assertEquals("paste text",
+                    "LL", runGet(propField::getSwingViewValue));
+            runWait(600);
+            Assert.assertEquals("update after paste",
+                    "LL",
+                    obj.value);
         });
-        runWait();
-        Assert.assertEquals("paste text",
-                "LL", runGet(propField::getSwingViewValue));
-        runWait(600);
-        Assert.assertEquals("update after paste",
-                "LL",
-                obj.value);
     }
 
     @Test

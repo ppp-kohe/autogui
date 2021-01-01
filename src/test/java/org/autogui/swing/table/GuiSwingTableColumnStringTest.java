@@ -174,40 +174,44 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
 
     @Test
     public void testActionToStringCopy() {
-        runGet(this::createTable);
+        withClipLock(() -> {
+            runGet(this::createTable);
 
-        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
-                runGet(() -> objColumn.getTableColumn().getCellRenderer());
-        GuiSwingTableColumnString.MultilineColumnTextPane pane = (GuiSwingTableColumnString.MultilineColumnTextPane) renderer.getComponent();
-        Action action = convertRowsAction(
-                findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelToStringCopyAction.class));
+            ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                    runGet(() -> objColumn.getTableColumn().getCellRenderer());
+            GuiSwingTableColumnString.MultilineColumnTextPane pane = (GuiSwingTableColumnString.MultilineColumnTextPane) renderer.getComponent();
+            Action action = convertRowsAction(
+                    findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelToStringCopyAction.class));
 
-        run(() -> table.addRowSelectionInterval(0, 0));
-        run(() -> table.addRowSelectionInterval(2, 2));
-        run(() -> action.actionPerformed(null));
-        Assert.assertEquals("only copies selected rows",
-                "hello\n!!!!", getClipboardText());
+            run(() -> table.addRowSelectionInterval(0, 0));
+            run(() -> table.addRowSelectionInterval(2, 2));
+            run(() -> action.actionPerformed(null));
+            Assert.assertEquals("only copies selected rows",
+                    "hello\n!!!!", getClipboardText());
+        });
     }
 
     @Test
     public void testActionPasteAll() {
-        runGet(this::createTable);
+        withClipLock(() -> {
+            runGet(this::createTable);
 
-        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
-                runGet(() -> objColumn.getTableColumn().getCellRenderer());
-        GuiSwingTableColumnString.MultilineColumnTextPane pane = (GuiSwingTableColumnString.MultilineColumnTextPane) renderer.getComponent();
+            ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                    runGet(() -> objColumn.getTableColumn().getCellRenderer());
+            GuiSwingTableColumnString.MultilineColumnTextPane pane = (GuiSwingTableColumnString.MultilineColumnTextPane) renderer.getComponent();
 
-        Action action = convertRowsAction(findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingTableColumnString.LabelTextPasteAllAction.class));
-        setClipboardText("HELLO\nWORLD");
-        run(() -> table.addRowSelectionInterval(0, 0));
-        run(() -> table.addRowSelectionInterval(2, 2));
-        runWait();
-        run(() -> action.actionPerformed(null));
+            Action action = convertRowsAction(findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingTableColumnString.LabelTextPasteAllAction.class));
+            setClipboardText("HELLO\nWORLD");
+            run(() -> table.addRowSelectionInterval(0, 0));
+            run(() -> table.addRowSelectionInterval(2, 2));
+            runWait();
+            run(() -> action.actionPerformed(null));
 
-        Assert.assertEquals("paste 1st line to 1st selected row",
-                "HELLO", runGet(() -> table.getValueAt(0, 0)));
-        Assert.assertEquals("world", runGet(() -> table.getValueAt(1, 0)));
-        Assert.assertEquals("paste 2nd line to 2nd selected row",
-                "WORLD", runGet(() -> table.getValueAt(2, 0)));
+            Assert.assertEquals("paste 1st line to 1st selected row",
+                    "HELLO", runGet(() -> table.getValueAt(0, 0)));
+            Assert.assertEquals("world", runGet(() -> table.getValueAt(1, 0)));
+            Assert.assertEquals("paste 2nd line to 2nd selected row",
+                    "WORLD", runGet(() -> table.getValueAt(2, 0)));
+        });
     }
 }

@@ -191,24 +191,26 @@ public class GuiSwingTableColumnBooleanTest extends GuiSwingTestCase {
 
     @Test
     public void testBooleanPasteAction() {
-        runGet(this::createTable);
-        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
-                runGet(() -> objColumn.getTableColumn().getCellRenderer());
+        withClipLock(() -> {
+            runGet(this::createTable);
+            ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                    runGet(() -> objColumn.getTableColumn().getCellRenderer());
 
-        GuiSwingTableColumnBoolean.ColumnCheckBox component = (GuiSwingTableColumnBoolean.ColumnCheckBox) runGet(renderer::getComponent);
-        GuiSwingViewBooleanCheckBox.BooleanPasteAction valueAct =
-                findMenuItemAction(component.getSwingStaticMenuItems(), GuiSwingViewBooleanCheckBox.BooleanPasteAction.class);
-        Action action = convertRowsAction(valueAct);
+            GuiSwingTableColumnBoolean.ColumnCheckBox component = (GuiSwingTableColumnBoolean.ColumnCheckBox) runGet(renderer::getComponent);
+            GuiSwingViewBooleanCheckBox.BooleanPasteAction valueAct =
+                    findMenuItemAction(component.getSwingStaticMenuItems(), GuiSwingViewBooleanCheckBox.BooleanPasteAction.class);
+            Action action = convertRowsAction(valueAct);
 
-        setClipboardText("true\nfalse");
+            setClipboardText("true\nfalse");
 
-        run(() -> table.setRowSelectionInterval(1, 1));
-        run(() -> table.addRowSelectionInterval(2, 2));
-        run(() -> action.actionPerformed(null));
+            run(() -> table.setRowSelectionInterval(1, 1));
+            run(() -> table.addRowSelectionInterval(2, 2));
+            run(() -> action.actionPerformed(null));
 
-        Assert.assertEquals(true, runGet(() -> table.getValueAt(0, 0)));
-        Assert.assertEquals(true, runGet(() -> table.getValueAt(1, 0)));
-        Assert.assertEquals(false, runGet(() -> table.getValueAt(2, 0)));
+            Assert.assertEquals(true, runGet(() -> table.getValueAt(0, 0)));
+            Assert.assertEquals(true, runGet(() -> table.getValueAt(1, 0)));
+            Assert.assertEquals(false, runGet(() -> table.getValueAt(2, 0)));
+        });
     }
 
     public Action convertRowsAction(Object menu) {

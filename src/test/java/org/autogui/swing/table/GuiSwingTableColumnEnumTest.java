@@ -172,26 +172,28 @@ public class GuiSwingTableColumnEnumTest extends GuiSwingTestCase {
 
     @Test
     public void testPasteAction() {
-        runGet(this::createTable);
-        ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
-                runGet(() -> objColumn.getTableColumn().getCellRenderer());
-        GuiSwingTableColumnEnum.ColumnEnumPane pane = (GuiSwingTableColumnEnum.ColumnEnumPane) renderer.getComponent();
-        Action menu = (Action) convertRowsAction(
-                findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingTableColumnString.LabelTextPasteAllAction.class));
+        withClipLock(() -> {
+            runGet(this::createTable);
+            ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+                    runGet(() -> objColumn.getTableColumn().getCellRenderer());
+            GuiSwingTableColumnEnum.ColumnEnumPane pane = (GuiSwingTableColumnEnum.ColumnEnumPane) renderer.getComponent();
+            Action menu = (Action) convertRowsAction(
+                    findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingTableColumnString.LabelTextPasteAllAction.class));
 
-        setClipboardText(TestEnum.World.name() + "\n" + TestEnum.Hello.name());
+            setClipboardText(TestEnum.World.name() + "\n" + TestEnum.Hello.name());
 
-        run(() -> table.setRowSelectionInterval(0, 0));
-        run(() -> table.addRowSelectionInterval(2, 2));
-        run(() -> menu.actionPerformed(null));
+            run(() -> table.setRowSelectionInterval(0, 0));
+            run(() -> table.addRowSelectionInterval(2, 2));
+            run(() -> menu.actionPerformed(null));
 
-        System.err.println(obj.values);
-        Assert.assertEquals("set paste action applied to selected rows",
-                TestEnum.World, obj.values.get(0));
-        Assert.assertEquals("set paste action applied to selected rows",
-                TestEnum.World, obj.values.get(1));
-        Assert.assertEquals("set paste action applied to selected rows",
-                TestEnum.Hello, obj.values.get(2));
+            System.err.println(obj.values);
+            Assert.assertEquals("set paste action applied to selected rows",
+                    TestEnum.World, obj.values.get(0));
+            Assert.assertEquals("set paste action applied to selected rows",
+                    TestEnum.World, obj.values.get(1));
+            Assert.assertEquals("set paste action applied to selected rows",
+                    TestEnum.Hello, obj.values.get(2));
+        });
     }
 
 
