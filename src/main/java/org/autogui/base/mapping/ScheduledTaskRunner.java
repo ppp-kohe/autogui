@@ -230,4 +230,11 @@ public class ScheduledTaskRunner<EventType> {
         }
     }
 
+    /**
+     * @return true if it has awaiting task
+     * @since 1.2.1
+     */
+    public synchronized boolean hasScheduledTask() {
+        return scheduledTask != null;
+    }
 }

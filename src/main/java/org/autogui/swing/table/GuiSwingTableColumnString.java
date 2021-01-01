@@ -304,6 +304,10 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             }
 
+            public MultilineColumnTextPane getColumnTextPane() {
+                return (MultilineColumnTextPane) getSwingViewWrappedPane();
+            }
+
             @Override
             public void requestSwingViewFocus() {
                 getViewport().getView().requestFocusInWindow(); //focusing directly by clicking

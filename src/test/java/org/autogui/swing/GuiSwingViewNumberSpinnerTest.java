@@ -181,17 +181,19 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
     @Test
     public void testViewUpdateBigDecField() throws Exception {
         GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropBigDec));
+        EditWait wait = editWait(i.getEditingRunner());
+        wait.await();
+
         i.getEditorField().setText(Long.MAX_VALUE + "012345.678");
         i.commitEdit();
-        run(() -> runWait(500));
-        runWait(500);
+        wait.awaitNextFinish();
+
         Assert.assertEquals("after value set bigDec",
                 new BigDecimal(Long.MAX_VALUE + "012345.678"), obj.numBigDec);
 
         i.getEditorField().setText(Long.MAX_VALUE + "012345");
         i.commitEdit();
-        run(() -> runWait(500));
-        runWait(500);
+        wait.awaitNextFinish();
         Assert.assertEquals("after value set bigDec",
                 new BigDecimal(Long.MAX_VALUE + "012345"), obj.numBigDec);
     }
@@ -199,10 +201,10 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
     @Test
     public void testViewUpdateByteField() throws Exception {
         GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropByte));
+        EditWait wait = editWait(i.getEditingRunner());
         i.getEditorField().setText("554") ; //0b10_0010_1010 -> 0b0010_1010 =42
         i.commitEdit();
-        run(() -> runWait(500));
-        runWait(500);
+        wait.awaitNextFinish();
         Assert.assertEquals("after value set byte",
                 ((byte) 42), obj.numByte);
         Assert.assertEquals("after value set, field update byte",
@@ -328,6 +330,8 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
         GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropInt));
         i.setPreferencesUpdater(GuiSwingPreferences.PreferencesUpdateEvent::save);
 
+        EditWait wait = editWait(i.getEditingRunner());
+
         run(() -> i.getSettingAction().getPane().getMinCheckBox().setSelected(true));
         run(() -> i.getSettingAction().getPane().getMinSpinner().setValue(123));
 
@@ -341,7 +345,7 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
 
         run(() -> i.setSwingViewValueWithUpdate(123_123));
 
-        run(() -> runWait(500));
+        wait.awaitNextFinish();
         run(this::runWait);
 
         GuiPreferences targetPrefs = parentPrefs.getDescendant(contextPropInt);

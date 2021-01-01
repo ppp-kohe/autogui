@@ -151,14 +151,14 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
         ObjectTableColumnValue.ObjectTableCellEditor objEditor = (ObjectTableColumnValue.ObjectTableCellEditor) editor;
         Assert.assertEquals("world", runGet(objEditor::getCellEditorValue));
 
-        GuiSwingTableColumnString.ColumnEditTextPane component = (GuiSwingTableColumnString.ColumnEditTextPane) runGet(table::getEditorComponent);
+        GuiSwingTableColumnString.MultilineColumnTextPane component = ((GuiSwingTableColumnString.MultilineColumnTextPane.MultilineColumnScrollPane) runGet(table::getEditorComponent)).getColumnTextPane();
         run(() -> component.setBackground(Color.black));
         run(() -> component.setForeground(Color.gray));
 
-        Assert.assertEquals("editorPane.setBackground also sets field background", Color.black, runGet(() -> component.getField().getBackground()));
-        Assert.assertEquals("editorPane.setForeground also sets field foreground", Color.gray, runGet(() -> component.getField().getForeground()));
+        Assert.assertEquals("editorPane.setBackground also sets field background", Color.black, runGet(() -> component.getBackground()));
+        Assert.assertEquals("editorPane.setForeground also sets field foreground", Color.gray, runGet(() -> component.getForeground()));
 
-        run(() -> component.getField().setText("EDIT"));
+        run(() -> component.setText("EDIT"));
         runWait();
         run(objEditor::stopCellEditing);
 
@@ -178,7 +178,7 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
 
         ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
                 runGet(() -> objColumn.getTableColumn().getCellRenderer());
-        GuiSwingTableColumnString.ColumnTextPane pane = (GuiSwingTableColumnString.ColumnTextPane) renderer.getComponent();
+        GuiSwingTableColumnString.MultilineColumnTextPane pane = (GuiSwingTableColumnString.MultilineColumnTextPane) renderer.getComponent();
         Action action = convertRowsAction(
                 findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelToStringCopyAction.class));
 
@@ -195,12 +195,13 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
 
         ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
                 runGet(() -> objColumn.getTableColumn().getCellRenderer());
-        GuiSwingTableColumnString.ColumnTextPane pane = (GuiSwingTableColumnString.ColumnTextPane) renderer.getComponent();
+        GuiSwingTableColumnString.MultilineColumnTextPane pane = (GuiSwingTableColumnString.MultilineColumnTextPane) renderer.getComponent();
 
         Action action = convertRowsAction(findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingTableColumnString.LabelTextPasteAllAction.class));
         setClipboardText("HELLO\nWORLD");
         run(() -> table.addRowSelectionInterval(0, 0));
         run(() -> table.addRowSelectionInterval(2, 2));
+        runWait();
         run(() -> action.actionPerformed(null));
 
         Assert.assertEquals("paste 1st line to 1st selected row",

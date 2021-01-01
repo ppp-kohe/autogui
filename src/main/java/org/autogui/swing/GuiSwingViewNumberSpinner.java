@@ -290,6 +290,14 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             return settingAction;
         }
 
+        /**
+         * @return the editingRunner for the number
+         * @since 1.2.1
+         */
+        public EditingRunner getEditingRunner() {
+            return editingRunner;
+        }
+
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
             if (menuItems == null) {

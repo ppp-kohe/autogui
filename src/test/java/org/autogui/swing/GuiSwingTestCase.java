@@ -1,5 +1,7 @@
 package org.autogui.swing;
 
+import org.autogui.base.mapping.ScheduledTaskRunner;
+import org.autogui.swing.util.EditingRunner;
 import org.autogui.swing.util.PopupCategorized;
 
 import javax.swing.*;
@@ -9,7 +11,9 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class GuiSwingTestCase {
@@ -154,5 +158,39 @@ public class GuiSwingTestCase {
         Clipboard board = Toolkit.getDefaultToolkit().getSystemClipboard();
         StringSelection se = new StringSelection(str);
         board.setContents(se, se);
+    }
+
+    public EditWait editWait(ScheduledTaskRunner<?> er) {
+        return new EditWait(er);
+    }
+
+    public class EditWait {
+        ScheduledTaskRunner<?> runner;
+        public EditWait(ScheduledTaskRunner<?> r) {
+            this.runner = r;
+        }
+
+        public void awaitNextFinish() {
+            await(true);
+            System.err.println("await(true): " + runner.hasScheduledTask());
+            await(false);
+            System.err.println("await(false): " + runner.hasScheduledTask());
+        }
+
+        public void await() {
+            await(false);
+        }
+
+        public void await(boolean flag) {
+            int i = 0;
+            while (flag != runner.hasScheduledTask() && i < 20) {
+                try {
+                    Thread.sleep(100);
+                } catch (Exception ex) {
+                }
+                ++i;
+            }
+            runWait();
+        }
     }
 }

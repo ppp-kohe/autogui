@@ -104,9 +104,10 @@ public class GuiSwingViewPropertyPaneTest extends GuiSwingTestCase {
         GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findChildByType(pane,
                 GuiSwingViewStringField.PropertyStringPane.class));
 
+        EditWait wait = editWait(strPane.getEditingRunner());
         run(() -> pane.setSwingViewValue(
                 new GuiReprValue.NamedValue("value", "World")));
-        runWait(500);
+        wait.awaitNextFinish();
 
         Assert.assertEquals("set content-pane text",
                 "World",
@@ -125,9 +126,11 @@ public class GuiSwingViewPropertyPaneTest extends GuiSwingTestCase {
         GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findChildByType(pane,
                 GuiSwingViewStringField.PropertyStringPane.class));
 
+        EditWait wait = editWait(strPane.getEditingRunner());
+
         run(() -> pane.setSwingViewValueWithUpdate(
                 new GuiReprValue.NamedValue("value", "World")));
-        runWait(500);
+        wait.awaitNextFinish();
 
         Assert.assertEquals("set content-pane text",
                 "World",

@@ -175,9 +175,8 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
                 GuiSwingView.findChildByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
 
         run(() -> strPane.setSwingViewValueWithUpdate("Hello"));
-        runWait(500);
         run(() -> boolBox.setSwingViewValueWithUpdate(true));
-
+        runWait();
 
         Assert.assertEquals("set str prop value",
                 "Hello",
@@ -211,11 +210,9 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
 
         run(() -> boolBox.setSwingViewValueWithUpdate(true));
         run(() -> strPane.setSwingViewValueWithUpdate("value1"));
-        runWait(500);
         run(() -> subStrPane1.setSwingViewValueWithUpdate("value2"));
-        runWait(500);
         run(() -> subStrPane2.setSwingViewValueWithUpdate("value3"));
-        runWait(500);
+        runWait();
 
         GuiSwingJsonTransfer.JsonCopyAction a = runGet(() -> findMenuItemAction(pane.getSwingStaticMenuItems(),
                 GuiSwingJsonTransfer.JsonCopyAction.class));
@@ -246,7 +243,7 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         GuiSwingJsonTransfer.JsonPasteAction a = runGet(() -> findMenuItemAction(pane.getSwingStaticMenuItems(),
                 GuiSwingJsonTransfer.JsonPasteAction.class));
         run(() -> a.actionPerformed(null));
-        runWait(500);
+        runWait();
 
         Assert.assertEquals("after paste json",
                 "Hello",
@@ -270,7 +267,8 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         GuiSwingViewStringField.PropertyStringPane strPane = runGet(() ->
                 GuiSwingView.findChildByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
         run(() -> strPane.setSwingViewValueWithUpdate("Hello"));
-        runWait(500);
+        runWait();
+
         GuiSwingActionDefault.ExecutionAction a = runGet(() -> findMenuItemAction(pane.getSwingStaticMenuItems(),
                 GuiSwingActionDefault.ExecutionAction.class));
         run(() -> a.actionPerformed(null));
@@ -293,9 +291,11 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         GuiSwingViewObjectPane.ObjectPane pane = create();
 
         GuiSwingPreferences swingPrefs = runGet(() -> new GuiSwingPreferences(context, pane));
+        EditWait wait = editWait(swingPrefs.getUpdater());
 
         run(() -> pane.getSplitPanes().get(0).setDividerLocation(0.7));
-        runWait(500);
+        wait.awaitNextFinish();
+
         Map<String,Object> obj = runGet(prefs::toJson);
 
         Assert.assertTrue("divider location prefs converted as json string: " + obj.get("$split"),
@@ -340,18 +340,19 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
 
         GuiSwingPreferences swingPrefs = runGet(() -> new GuiSwingPreferences(context, pane));
 
+        EditWait wait = editWait(swingPrefs.getUpdater());
         run(() -> strPane.setSwingViewValueWithUpdate("value1"));
-        runWait(500);
+
         run(() -> boolBox.setSwingViewValueWithUpdate(true));
         run(() -> subStrPane1.setSwingViewValueWithUpdate("value2"));
-        runWait(500);
+
         run(() -> subStrPane2.setSwingViewValueWithUpdate("value3"));
-        runWait(500);
+
         run(() -> subStrPane2.setSwingViewValueWithUpdate("value4"));
-        runWait(500);
 
         Duration endTime = Duration.between(startTime, Instant.now());
 
+        wait.awaitNextFinish(); //above edits are immediately affected
         Map<String,Object> obj = runGet(prefs::toJson);
         System.out.println(obj);
 

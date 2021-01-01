@@ -63,6 +63,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
     public void testLambdaStringPane() {
         setPropString("init");
         LambdaProperty.LambdaStringPane pane = runGet(this::createStringPane);
+        EditWait wait = editWait(pane.getEditingRunner());
 
         Assert.assertEquals("init", runGet(pane::getSwingViewValue));
         Assert.assertEquals("init", runGet(() -> pane.getField().getText()));
@@ -70,7 +71,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
             pane.getField().setText("update1");
         });
 
-        runWait(600);
+        wait.awaitNextFinish();
         Assert.assertEquals("update1", getPropString());
 
         setPropString("update2");
@@ -205,7 +206,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
 
         Image i2 = createImage2();
         run(() -> pane.setImage(i2));
-        runWait(600);
+        runWait();
 
         Assert.assertEquals(i2, getPropImage());
 
@@ -292,7 +293,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         Assert.assertEquals(TestEnum.Init, runGet(pane::getSelectedItem));
 
         run(() -> pane.setSelectedItem(TestEnum.Update1));
-        runWait(600);
+        runWait();
 
         Assert.assertEquals(TestEnum.Update1, getPropEnum());
 
@@ -378,7 +379,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         Assert.assertEquals(getPropStyledDoc(), runGet(pane::getDocument));
 
         run(() -> pane.setText("hello, world"));
-        runWait(600);
+        runWait();
 
         Assert.assertEquals("hello, world", runGet(() -> {
             try {
@@ -438,7 +439,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         Assert.assertEquals(getPropPlainDoc(), runGet(pane::getDocument));
 
         run(() -> pane.setText("hello, world"));
-        runWait(600);
+        runWait();
 
         Assert.assertEquals("hello, world", runGet(() -> {
             try {

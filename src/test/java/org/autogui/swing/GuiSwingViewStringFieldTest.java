@@ -84,8 +84,9 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
     @Test
     public void testViewStringValueType() {
         GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
+        EditWait wait = editWait(propField.getEditingRunner());
         run(() -> propField.getField().setText("hello"));
-        runWait(600);
+        wait.awaitNextFinish();
         Assert.assertEquals("update after set and waiting >500ms",
                 "hello",
                 obj.value);
@@ -164,6 +165,7 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
     @Test
     public void testViewStringValuePaste() {
         GuiSwingViewStringField.PropertyStringPane propField = runGet(this::create);
+        EditWait wait = editWait(propField.getEditingRunner());
 
         run(() -> propField.setSwingViewValue("hello"));
         runWait();
@@ -181,7 +183,7 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
         runWait();
         Assert.assertEquals("paste text",
                 "heLLo", runGet(propField::getSwingViewValue));
-        runWait(600);
+        wait.awaitNextFinish();
         Assert.assertEquals("update after paste",
                 "heLLo",
                 obj.value);
