@@ -2,6 +2,7 @@ package org.autogui.swing.table;
 
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
+import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.mapping.GuiReprValueStringField;
 import org.autogui.base.mapping.GuiTaskClock;
 import org.autogui.swing.*;
@@ -18,9 +19,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -73,12 +72,61 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
     }
 
+    /**
+     *
+     * @param pane PropertyLabel or text pane
+     * @param s the converted string
+     * @return a string
+     * @since 1.2.1
+     */
+    public static Object getValueFromString(GuiSwingView.ValuePane<?> pane, String s) {
+        if (pane instanceof PropertyLabel) {
+            return ((PropertyLabel) pane).getValueFromString(s);
+        } else {
+            GuiMappingContext context = pane.getSwingViewContext();
+            GuiReprValue repr = context.getReprValue();
+            return repr.fromHumanReadableString(context, s);
+        }
+    }
+
+    /**
+     *
+     * @param pane PropertyLabel or text pane
+     * @param s the converted string
+     * @return the generated string
+     * @since 1.2.1
+     */
+    public static String getValueAsString(GuiSwingView.ValuePane<?> pane, Object s) {
+        if (pane instanceof PropertyLabel) {
+            return ((PropertyLabel) pane).getValueAsString(s);
+        } else {
+            GuiMappingContext context = pane.getSwingViewContext();
+            GuiReprValue repr = context.getReprValue();
+            return repr.toHumanReadableString(context, s);
+        }
+    }
+
+    /**
+     *
+     * @param pane PropertyLabel or text pane
+     * @param s the value string
+     * @since 1.2.1
+     */
+    @SuppressWarnings("unchecked")
+    public static void setSwingViewValueWithUpdateFromString(GuiSwingView.ValuePane<?> pane, String s) {
+        if (pane instanceof PropertyLabel) {
+            ((PropertyLabel) pane).setSwingViewValueWithUpdateFromString(s);
+        } else {
+            ((GuiSwingView.ValuePane<Object>) pane).setSwingViewValueWithUpdate(s);
+        }
+    }
+
     public static class LabelTextPasteAllAction extends PopupExtensionText.TextPasteAllAction
         implements TableTargetColumnAction {
         private static final long serialVersionUID = 1L;
-        protected PropertyLabel label;
+        protected GuiSwingView.ValuePane<?> label;
 
-        public LabelTextPasteAllAction(PropertyLabel label) {
+        public LabelTextPasteAllAction(GuiSwingView.ValuePane<?> label) {
             super(null);
             this.label = label;
         }
@@ -90,7 +138,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            paste(label::setSwingViewValueWithUpdateFromString);
+            paste(s -> setSwingViewValueWithUpdateFromString(label, s));
         }
 
         @Override
@@ -98,7 +146,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             pasteLines(lines ->
                     target.setSelectedCellValuesLoop(
                             lines.stream()
-                                .map(label::getValueFromString)
+                                .map(s -> getValueFromString(label, s))
                                 .collect(Collectors.toList())));
         }
     }
@@ -106,9 +154,9 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     public static class LabelTextLoadAction extends PopupExtensionText.TextLoadAction
             implements TableTargetColumnAction {
         private static final long serialVersionUID = 1L;
-        protected PropertyLabel label;
+        protected GuiSwingView.ValuePane<?> label;
 
-        public LabelTextLoadAction(PropertyLabel label) {
+        public LabelTextLoadAction(GuiSwingView.ValuePane<?> label) {
             super(null);
             putValue(NAME, "Load Text...");
             this.label = label;
@@ -121,7 +169,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
         @Override
         protected JComponent getComponent() {
-            return label;
+            return label.asSwingViewComponent();
         }
 
         @Override
@@ -134,7 +182,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             if (m.find()) {
                 str = str.substring(0, m.start());
             }
-            label.setSwingViewValueWithUpdateFromString(str);
+            setSwingViewValueWithUpdateFromString(label, str);
         }
 
         @Override
@@ -143,18 +191,32 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             if (str != null) {
                 target.setSelectedCellValuesLoop(
                         Arrays.stream(str.split("\\n", 0))
-                                .map(label::getValueFromString)
+                                .map(s -> getValueFromString(label, s))
                                 .collect(Collectors.toList()));
             }
         }
     }
 
-    public static class ColumnLabelTextSaveAction extends GuiSwingViewLabel.LabelTextSaveAction
+
+
+    public static class ColumnLabelTextSaveAction extends PopupExtensionText.TextSaveAction
         implements TableTargetColumnAction {
         private static final long serialVersionUID = 1L;
+        protected GuiSwingView.ValuePane<?> label;
 
-        public ColumnLabelTextSaveAction(PropertyLabel label) {
-            super(label);
+        public ColumnLabelTextSaveAction(GuiSwingView.ValuePane<?> label) {
+            super(null);
+            this.label = label;
+        }
+
+        @Override
+        protected JComponent getComponent() {
+            return label.asSwingViewComponent();
+        }
+
+        @Override
+        public void save(Path path) {
+            saveLines(path, Collections.singletonList(getValueAsString(label, label.getSwingViewValue())));
         }
 
         @Override
@@ -162,7 +224,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             Path path = getPath();
             if (path != null) {
                 saveLines(path, target.getSelectedCellValues().stream()
-                        .map(label::getValueAsString)
+                        .map(s -> getValueAsString(label, s))
                         .collect(Collectors.toList()));
             }
         }
@@ -222,13 +284,21 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
      * @since 1.2.1
      */
     public static class MultilineColumnTextViewPane extends MultilineColumnTextPane {
+        static final long serialVersionUID = 1;
         public MultilineColumnTextViewPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
         }
 
         @Override
         public List<CategorizedMenuItem> getSwingStaticMenuItems() {
-            return super.getSwingStaticMenuItems();
+            List<CategorizedMenuItem> items = new ArrayList<>(super.getSwingStaticMenuItems());
+
+            items.addAll(PopupCategorized.getMenuItems(Arrays.asList(
+                        new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
+                        new LabelTextLoadAction(this),
+                        new ColumnLabelTextSaveAction(this)
+                )));
+            return items;
         }
     }
 
@@ -244,6 +314,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             setOpaque(true);
             init();
         }
+
         protected void init() {
             initEditorKit();
             initAction();
@@ -255,7 +326,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
         protected void initAction() {
             InputMap iMap = getInputMap();
-            Action finish = new FinishCellEditAction();
+            Action finish = new FinishCellEditAction(editFinishHandlers);
             iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), finish);
             iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), finish);
 
@@ -263,9 +334,13 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK), DefaultEditorKit.insertBreakAction);
         }
 
-        public class FinishCellEditAction extends AbstractAction {
-            FinishCellEditAction() {
+        public static class FinishCellEditAction extends AbstractAction {
+            static final long serialVersionUID = 1;
+            List<Runnable> editFinishHandlers;
+
+            FinishCellEditAction(List<Runnable> editFinishHandlers) {
                 putValue(NAME, "FinishCellEdit");
+                this.editFinishHandlers = editFinishHandlers;
             }
 
             @Override
@@ -275,6 +350,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         public static class MultilineColumnEditorKit extends DefaultEditorKit implements ViewFactory  {
+            static final long serialVersionUID = 1;
             @Override
             public Document createDefaultDocument() {
                 Document doc = super.createDefaultDocument();
@@ -294,6 +370,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         public static class MultilineColumnCenterView extends WrappedPlainView {
+            static long serialVersionUID = 1;
             public MultilineColumnCenterView(Element elem) {
                 super(elem);
             }
@@ -312,7 +389,8 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             }
         }
 
-        public static class MultilineColumnScrollPane extends GuiSwingViewWrapper.ValueScrollPane {
+        public static class MultilineColumnScrollPane extends GuiSwingViewWrapper.ValueScrollPane<Object> {
+            private static final long serialVersionUID = 1L;
             public MultilineColumnScrollPane(Component view) {
                 super(view,
                         ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -336,6 +414,13 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         @Override
         protected void installLineNumberPane() {
             //no line numbering
+        }
+
+        @Override
+        public List<CategorizedMenuItem> getSwingStaticMenuItems() {
+            List<CategorizedMenuItem> items = new ArrayList<>(super.getSwingStaticMenuItems());
+            items.add(new GuiSwingHistoryMenu<>(this, getSwingViewContext()));
+            return items;
         }
 
         @Override

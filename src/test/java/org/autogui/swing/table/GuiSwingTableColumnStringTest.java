@@ -9,6 +9,7 @@ import org.autogui.swing.GuiSwingMapperSet;
 import org.autogui.swing.GuiSwingViewLabel;
 import org.autogui.swing.util.PopupExtension;
 import org.autogui.swing.GuiSwingTestCase;
+import org.autogui.swing.util.PopupExtensionText;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -181,11 +182,16 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
                     runGet(() -> objColumn.getTableColumn().getCellRenderer());
             GuiSwingTableColumnString.MultilineColumnTextPane pane = (GuiSwingTableColumnString.MultilineColumnTextPane) renderer.getComponent();
             Action action = convertRowsAction(
-                    findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelToStringCopyAction.class));
+                    findMenuItemAction(pane.getSwingStaticMenuItems(), PopupExtensionText.TextCopyAllAction.class));
+            if (action == null) {
+                action = convertRowsAction(
+                        findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelToStringCopyAction.class));
+            }
 
             run(() -> table.addRowSelectionInterval(0, 0));
             run(() -> table.addRowSelectionInterval(2, 2));
-            run(() -> action.actionPerformed(null));
+            Action copyAction = action;
+            run(() -> copyAction.actionPerformed(null));
             Assert.assertEquals("only copies selected rows",
                     "hello\n!!!!", getClipboardText());
         });
@@ -200,12 +206,17 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
                     runGet(() -> objColumn.getTableColumn().getCellRenderer());
             GuiSwingTableColumnString.MultilineColumnTextPane pane = (GuiSwingTableColumnString.MultilineColumnTextPane) renderer.getComponent();
 
-            Action action = convertRowsAction(findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingTableColumnString.LabelTextPasteAllAction.class));
+            Action action = convertRowsAction(findMenuItemAction(pane.getSwingStaticMenuItems(), PopupExtensionText.TextPasteAllAction.class));
+            if (action == null) {
+                action = convertRowsAction(findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingTableColumnString.LabelTextPasteAllAction.class));
+            }
+
             setClipboardText("HELLO\nWORLD");
             run(() -> table.addRowSelectionInterval(0, 0));
             run(() -> table.addRowSelectionInterval(2, 2));
             runWait();
-            run(() -> action.actionPerformed(null));
+            Action pasteAction = action;
+            run(() -> pasteAction.actionPerformed(null));
 
             Assert.assertEquals("paste 1st line to 1st selected row",
                     "HELLO", runGet(() -> table.getValueAt(0, 0)));

@@ -166,11 +166,13 @@ public class GuiSwingTestCase {
     public void withClipLock(Runnable r) {
         System.err.println("clip-lock");
         clipLock.lock();
+        System.setProperty("cliplock", "locked");
         System.err.println("clip-locked");
         try {
             r.run();
         } finally {
             System.err.println("clip-unlock");
+            System.setProperty("cliplock", "");
             clipLock.unlock();
         }
     }
