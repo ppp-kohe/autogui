@@ -391,12 +391,48 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         @Override
         public JPopupMenu get() {
             if (menu == null) {
-                menu = new JPopupMenu();
+                menu = new DefaultPopupMenu(component);
                 if (component != null) {
                     component.setComponentPopupMenu(menu);
                 }
             }
             return menu;
+        }
+    }
+
+    /**
+     * @since 1.2.1
+     */
+    public static class DefaultPopupMenu extends JPopupMenu {
+        protected Point location;
+        protected JComponent targetPane;
+
+        public DefaultPopupMenu(JComponent targetPane) {
+            this.targetPane = targetPane;
+        }
+
+        public Point getPopupLocationOnTargetPane() {
+            try {
+                Point p = getPopupLocation();
+                SwingUtilities.convertPointFromScreen(p, targetPane);
+                return p;
+            } catch (Exception ex) {
+                if (location != null) {
+                    return getPopupLocation();
+                } else {
+                    return new Point(-1, -1);
+                }
+            }
+        }
+
+        public Point getPopupLocation() {
+            return new Point(location);
+        }
+
+        @Override
+        public void setLocation(int x, int y) {
+            location = new Point(x, y);
+            super.setLocation(x, y);
         }
     }
 
@@ -445,6 +481,12 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         keyPressed(e);
     }
 
+    /**
+     * Note: currently disabled using the mechanism,
+     *   instead shown by framework original impl.
+     *    Some LAF relies on it.
+     * @param e the handling event
+     */
     @Override
     public void mousePressed(MouseEvent e) {
         if (e.isPopupTrigger()) {

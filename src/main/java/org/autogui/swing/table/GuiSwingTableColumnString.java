@@ -38,7 +38,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                                           SpecifierManager parentSpecifier) {
         SpecifierManager valueSpecifier = new SpecifierManagerDefault(parentSpecifier::getSpecifier);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
-                new MultilineColumnTextPane(context, valueSpecifier),
+                new MultilineColumnTextViewPane(context, valueSpecifier),
                 new MultilineColumnTextPane(context, valueSpecifier).asEditorPane())
 //        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
 //                new ColumnTextPane(context, valueSpecifier),
@@ -47,6 +47,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                     .withValueType(String.class);
     }
 
+    /** a component for string cell renderer : only for single-line (switched to {@link MultilineColumnTextViewPane}) */
     public static class ColumnTextPane extends PropertyLabel {
         private static final long serialVersionUID = 1L;
         public ColumnTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
@@ -168,7 +169,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     }
 
 
-    /** a component for editor and renderer (for single-line: switched to {@link MultilineColumnTextPane} since 1.2.1) */
+    /** a component for editor (this is only for single-line. switched to {@link MultilineColumnTextPane} since 1.2.1) */
     public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyStringPane {
         private static final long serialVersionUID = 1L;
         public ColumnEditTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
@@ -214,6 +215,20 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         public String getSwingViewValue() {
             updateFieldInEventWithoutEditFinish();
             return super.getSwingViewValue();
+        }
+    }
+
+    /**
+     * @since 1.2.1
+     */
+    public static class MultilineColumnTextViewPane extends MultilineColumnTextPane {
+        public MultilineColumnTextViewPane(GuiMappingContext context, SpecifierManager specifierManager) {
+            super(context, specifierManager);
+        }
+
+        @Override
+        public List<CategorizedMenuItem> getSwingStaticMenuItems() {
+            return super.getSwingStaticMenuItems();
         }
     }
 

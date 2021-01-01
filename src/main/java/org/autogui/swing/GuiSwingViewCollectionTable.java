@@ -1339,7 +1339,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected Set<ObjectTableColumn.TableMenuCompositeShared> existingShared;
 
         public PopupExtensionCollection(CollectionTable pane, Predicate<KeyEvent> keyMatcher, Supplier<? extends Collection<PopupCategorized.CategorizedMenuItem>> items) {
-            super(pane, keyMatcher, null);
+            super(pane, keyMatcher, null, new DefaultPopupGetter(pane));
+            new MenuKeySelector().addToMenu(menu.get());
+
             this.table = pane;
 
             PopupCategorized tableActions = new PopupCategorized(items, null,
@@ -1363,6 +1365,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
             showing = true;
+            Point p = ((DefaultPopupMenu) getMenu()).getPopupLocationOnTargetPane();
+            updatePopupLocation(p);
         }
 
         @Override
@@ -1391,6 +1395,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 targetColumnIndex = lastClickColumnIndex;
             }
             super.mousePressed(e);
+        }
+
+        /**
+         * @param p location with the table coordinate
+         * @since 1.2.1
+         */
+        public void updatePopupLocation(Point p) {
+            int viewColumn = table.columnAtPoint(p);
+            lastClickColumnIndex = table.convertColumnIndexToView(viewColumn);
+            targetColumnIndex = lastClickColumnIndex;
         }
 
         @Override
@@ -1704,23 +1718,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             getMenu().addPopupMenuListener(new PopupMenuListenerForSetup(this) {
                 @Override
                 public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                    updateTargetPointSelectAndClear(); //clear the point: the action might be called later without mouse moving
+                    Point p = ((DefaultPopupMenu) getMenu()).getPopupLocationOnTargetPane();
+                    updateTargetPoint(p);
                     super.popupMenuWillBecomeVisible(e);
                 }
             });
-            getPaneTable().getTableHeader().addMouseMotionListener(new MouseMotionAdapter() {
-                @Override
-                public void mouseMoved(MouseEvent e) {
-                    updateTargetPoint(e.getPoint());
-                }
-            });
-        }
-
-        private void updateTargetPointSelectAndClear() {
-            if (targetPoint != null && targetColumn == null) {
-                targetColumn = getTargetColumn(targetPoint);
-            }
-            targetPoint = null;
         }
 
         private void updateTargetPoint(Point p) {
@@ -1729,8 +1731,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         @Override
-        public void mousePressed(MouseEvent e) {
-            updateTargetPoint(e.getPoint());;
+        public void mousePressed(MouseEvent e) { //disabled
+            updateTargetPoint(e.getPoint());
             super.mousePressed(e);
         }
 
