@@ -77,7 +77,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
      * @param pane PropertyLabel or text pane
      * @param s the converted string
      * @return a string
-     * @since 1.2.1
+     * @since 1.3
      */
     public static Object getValueFromString(GuiSwingView.ValuePane<?> pane, String s) {
         if (pane instanceof PropertyLabel) {
@@ -94,7 +94,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
      * @param pane PropertyLabel or text pane
      * @param s the converted string
      * @return the generated string
-     * @since 1.2.1
+     * @since 1.3
      */
     public static String getValueAsString(GuiSwingView.ValuePane<?> pane, Object s) {
         if (pane instanceof PropertyLabel) {
@@ -110,7 +110,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
      *
      * @param pane PropertyLabel or text pane
      * @param s the value string
-     * @since 1.2.1
+     * @since 1.3
      */
     @SuppressWarnings("unchecked")
     public static void setSwingViewValueWithUpdateFromString(GuiSwingView.ValuePane<?> pane, String s) {
@@ -281,7 +281,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     }
 
     /**
-     * @since 1.2.1
+     * @since 1.3
      */
     public static class MultilineColumnTextViewPane extends MultilineColumnTextPane {
         static final long serialVersionUID = 1;
@@ -304,7 +304,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     /**
      * cell component with supporting {@link GuiReprValueStringField} instead of the document
-     * @since 1.2.1
+     * @since 1.3
      */
     public static class MultilineColumnTextPane extends GuiSwingViewDocumentEditor.PropertyDocumentEditorPane {
         private static final long serialVersionUID = 1L;

@@ -39,7 +39,7 @@ To use the library in your apaceh-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
     </dependency>
 ```
 

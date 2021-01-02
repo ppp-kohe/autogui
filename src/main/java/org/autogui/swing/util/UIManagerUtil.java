@@ -360,7 +360,7 @@ public class UIManagerUtil {
      * @param updateProp if true it updates the prop specified by the laf with the resolved concrete class-name
      *                    For "darklaf", it clears the property
      * @return  a resolved class-name from the property or null
-     * @since 1.2.1
+     * @since 1.3
      */
     public String selectLookAndFeelFromProperty(String prop, boolean updateProp) {
         if (prop == null || prop.isEmpty()) {
@@ -405,7 +405,7 @@ public class UIManagerUtil {
      * </ul>
      * @param name a special name or a class-name
      * @return resolved class name or still special name for some names
-     * @since 1.2.1
+     * @since 1.3
      */
     public String selectLookAndFeelFromSpecialName(String name) {
         if (name == null || name.isEmpty()) {
@@ -428,14 +428,14 @@ public class UIManagerUtil {
     /**
      * process default behavior for the "#default" configuration
      * <ol>
-     *     <li>try to load Darklaf by {@link #installLookAndFeelDarkLaf()}</li> if the parameter is true
+     *     <li>try to load Darklaf by {@link #installLookAndFeelDarkLaf()}  if the parameter is true</li>
      *     <li>if non-Unix environment, use {@link UIManager#getSystemLookAndFeelClassName()}</li>
      *     <li>if the GDK_SCALE env is set, use "metal" </li>
      *     <li>otherwise, nothing to do</li>
      * </ol>
      * @param tryDarklaf if true, call {@link #installLookAndFeelDarkLaf()}
      * @return a resolved LAF class-name or null
-     * @since 1.2.1
+     * @since 1.3
      */
     public String selectLookAndFeelDefault(boolean tryDarklaf) {
         if (tryDarklaf && installLookAndFeelDarkLaf()) {
@@ -453,7 +453,7 @@ public class UIManagerUtil {
      * do <code>com.github.weisj.darklaf.LafManager.install(LafManager.themeForPreferredStyle(LafManager.getPreferredThemeStyle()))</code>
      *  by reflection.
      * @return true if the darklaf is installed
-     * @since 1.2.1
+     * @since 1.3
      */
     public boolean installLookAndFeelDarkLaf() {
         try {
@@ -472,34 +472,34 @@ public class UIManagerUtil {
         }
     }
 
-    /** @since 1.2.1 */
+    /** @since 1.3 */
     public static final String LOOK_AND_FEEL_PROP_HEAD = "#prop:";
-    /** @since 1.2.1 */
+    /** @since 1.3 */
     public static final String LOOK_AND_FEEL_PROP_DEFAULT = "swing.defaultlaf";
 
-    /** @since 1.2.1 */
+    /** @since 1.3 */
     public static final String LOOK_AND_FEEL_VALUE_METAL = "metal";
-    /** @since 1.2.1 */
+    /** @since 1.3 */
     public static final String LOOK_AND_FEEL_VALUE_NIMBUS = "nimbus";
-    /** @since 1.2.1 */
+    /** @since 1.3 */
     public static final String LOOK_AND_FEEL_VALUE_SYSTEM = "system";
-    /** @since 1.2.1 */
+    /** @since 1.3 */
     public static final String LOOK_AND_FEEL_VALUE_DEFAULT = "default";
-    /** @since 1.2.1 */
+    /** @since 1.3 */
     public static final String LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF = "default-no-darklaf";
-    /** @since 1.2.1 */
+    /** @since 1.3 */
     public static final String LOOK_AND_FEEL_VALUE_DARKLAF = "darklaf";
 
-    /** @since 1.2.1 */
+    /** @since 1.3 */
     public static final String LOOK_AND_FEEL_DEFAULT = "#default";
 
-    /** @since 1.2.1 */
+    /** @since 1.3 */
     public static final String LOOK_AND_FEEL_NONE = "#none";
 
     /**
      * @param prop a property name
      * @return "#prop:"+prop
-     * @since 1.2.1
+     * @since 1.3
      */
     public static String getLookAndFeelProp(String prop) {
         return LOOK_AND_FEEL_PROP_HEAD + prop;

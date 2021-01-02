@@ -275,7 +275,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     /**
      * @param pane the target pane
-     * @since 1.2.1
+     * @since 1.3
      */
     protected void addListenersToAsPopupMenuListener(JComponent pane) {
         getMenu().addPopupMenuListener(new PopupMenuListenerForSetup(this));
@@ -401,9 +401,10 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     }
 
     /**
-     * @since 1.2.1
+     * @since 1.3
      */
     public static class DefaultPopupMenu extends JPopupMenu {
+        static final long serialVersionUID = 1L;
         protected Point location;
         protected JComponent targetPane;
 

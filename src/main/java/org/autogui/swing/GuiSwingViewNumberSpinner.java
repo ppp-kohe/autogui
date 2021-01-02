@@ -292,7 +292,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         /**
          * @return the editingRunner for the number
-         * @since 1.2.1
+         * @since 1.3
          */
         public EditingRunner getEditingRunner() {
             return editingRunner;

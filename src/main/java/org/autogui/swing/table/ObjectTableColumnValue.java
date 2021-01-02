@@ -133,7 +133,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     public void shutdown() {
         super.shutdown();
         setForComponents(ValuePane.class,
-                ValuePane::shutdownSwingView, renderer, editor);
+                v -> v.shutdownSwingView(), renderer, editor);
     }
 
     @Override

@@ -126,7 +126,7 @@ public class GuiSwingPreferences {
 
     @Deprecated
     protected JEditorPane contentTextPane;
-    /* @since 1.2.1 */
+    /* @since 1.3 */
     protected JTree contentTree;
     protected WindowPreferencesUpdater prefsWindowUpdater;
 
@@ -330,7 +330,7 @@ public class GuiSwingPreferences {
     /**
      * @param treeModel a model
      * @param n a node in the model
-     * @since 1.2.1
+     * @since 1.3
      */
     public void expandTreeAll(DefaultTreeModel treeModel, TreeNode n) {
         if (!n.isLeaf()) {
@@ -345,7 +345,7 @@ public class GuiSwingPreferences {
      *
      * @param list list of prefs
      * @return tree-model of list
-     * @since 1.2.1
+     * @since 1.3
      */
     public DefaultMutableTreeNode makeTreeNode(List<GuiPreferences> list) {
         if (list.size() == 1) {
@@ -360,7 +360,7 @@ public class GuiSwingPreferences {
     /**
      * @param prefs a prefs
      * @return the node for prefs
-     * @since 1.2.1
+     * @since 1.3
      */
     public DefaultMutableTreeNode makeTreeNode(GuiPreferences prefs) {
         return makeTreeNode(prefs.getName(), prefs.copyOnMemoryAsRoot().getValueStore());
@@ -1395,7 +1395,7 @@ public class GuiSwingPreferences {
     ////////////////////////
 
     /**
-     * @since 1.2.1
+     * @since 1.3
      */
     public static class PrefsValueStoreEntry {
         String key;
@@ -1428,9 +1428,10 @@ public class GuiSwingPreferences {
     }
 
     /**
-     * @since 1.2.1
+     * @since 1.3
      */
     public static class PrefsTreeCellRenderer extends DefaultTreeCellRenderer {
+        static final long serialVersionUID = 1L;
         protected String name;
         protected String entryValue;
         protected TextCellRenderer.LineInfo nameInfo;

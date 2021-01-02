@@ -117,7 +117,7 @@ public class AutoGuiShell {
     /**
      * @param p a system property, like "swing.defaultlaf".
      * @return this with setting "#prop:p"
-     * @since 1.2.1
+     * @since 1.3
      */
     public AutoGuiShell withLookAndFeelProperty(String p) {
         return withLookAndFeelClass(UIManagerUtil.getLookAndFeelProp(p));
@@ -126,7 +126,7 @@ public class AutoGuiShell {
     /**
      * turning off the feature of the setting look-and-feel from some property
      * @return this with setting "#none"
-     * @since 1.2.1
+     * @since 1.3
      */
     public AutoGuiShell withLookAndFeelNone() {
         return withLookAndFeelClass(UIManagerUtil.LOOK_AND_FEEL_NONE);
@@ -211,7 +211,7 @@ public class AutoGuiShell {
      * called from {@link #showLive(Object)}
      * @param o the target object
      * @return the created window for o
-     * @since 1.2.1
+     * @since 1.3
      */
     public GuiSwingWindow showWindowLive(Object o) {
         GuiSwingWindow w = createWindowRelaxed(o);
@@ -249,7 +249,7 @@ public class AutoGuiShell {
      * @param beforeActionInEvent null or an action for pre-process before the creating window
      * @param afterActionInEvent  null or an action with the created window, executed within the event dispatching thread
      * @return the created window for o, with relaxed component-set. Note that the created window does not become application root.
-     * @since 1.2.1
+     * @since 1.3
      */
     public GuiSwingWindow createWindowRelaxed(Object o, Runnable beforeActionInEvent, Consumer<GuiSwingWindow> afterActionInEvent) {
         return invokeAndWait(() -> {

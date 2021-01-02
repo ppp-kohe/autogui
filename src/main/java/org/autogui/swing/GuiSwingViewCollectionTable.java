@@ -151,9 +151,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected SettingsWindow settingsWindow;
 
         protected boolean customHighlighting;
-        /** @since 1.2.1 */
+        /** @since 1.3 */
         protected boolean customRowHeightByUser;
-        /** @since 1.2.1 */
+        /** @since 1.3 */
         protected int rowHeightByProgram;
 
 
@@ -779,7 +779,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         /**
          * setting the custom row-height
          * @param rowHeight the new row-height
-         * @since 1.2.1
+         * @since 1.3
          */
         public void setRowHeightByUser(int rowHeight) {
             customRowHeightByUser = true;
@@ -788,7 +788,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @return true if it has the value set by {@link #setRowHeightByUser(int)}
-         * @since 1.2.1
+         * @since 1.3
          */
         public boolean hasCustomRowHeightByUser() {
             return customRowHeightByUser;
@@ -796,7 +796,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @return the last row-height set by {@link #setRowHeight(int)}
-         * @since 1.2.1
+         * @since 1.3
          */
         public int getRowHeightByProgram() {
             return rowHeightByProgram;
@@ -804,10 +804,12 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     /**
-     * @since 1.2.1
+     * @since 1.3
      */
     public static class RowHeightSetAction extends JPanel
             implements PopupCategorized.CategorizedMenuItemComponent {
+        static final long serialVersionUID = 1L;
+
         protected JTable table;
         protected JCheckBox enabled;
         protected SpinnerNumberModel numModel;
@@ -1013,7 +1015,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         /**
-         * @since 1.2.1
+         * @since 1.3
          */
         public void setUpListenersRowHeight() {
             table.addPropertyChangeListener("rowHeight", this::rowHeightChanged);
@@ -1091,7 +1093,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         /**
          *
          * @param e the event, can be null
-         * @since 1.2.1
+         * @since 1.3
          */
         public void rowHeightChanged(PropertyChangeEvent e) {
             if (!savingDisabled) {
@@ -1106,7 +1108,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected List<Integer> columnWidth = new ArrayList<>();
         protected List<PreferencesForTableRowSort> rowSort = new ArrayList<>();
         protected int sizeLimit = 100;
-        /** @since 1.2.1 */
+        /** @since 1.3 */
         protected int rowHeight = -1;
 
         public void applyTo(JTable table) {
@@ -1146,7 +1148,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @param table the target table
-         * @since 1.2.1
+         * @since 1.3
          */
         public void applyRowHeightTo(JTable table) {
             if (rowHeight > 0) {
@@ -1187,7 +1189,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @param table the source table
-         * @since 1.2.1
+         * @since 1.3
          */
         public void setRowHeightFrom(JTable table) {
             if (table instanceof CollectionTable) {
@@ -1365,8 +1367,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
             showing = true;
-            Point p = ((DefaultPopupMenu) getMenu()).getPopupLocationOnTargetPane();
-            updatePopupLocation(p);
         }
 
         @Override
@@ -1379,18 +1379,25 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             showingTimer.start();
         }
 
+        @Override
+        public void setupMenu() {
+            Point p = ((DefaultPopupMenu) getMenu()).getPopupLocationOnTargetPane();
+            updatePopupLocation(p);
+            super.setupMenu();
+        }
+
         public CollectionTable getTable() {
             return table;
         }
 
         @Override
-        public void mousePressed(MouseEvent e) {
+        public void mousePressed(MouseEvent e) { //disabled
             if (!e.isPopupTrigger() && showing) { //closing the popup menu, and then nothing
                 e.consume();
                 return;
             }
             int viewColumn = table.columnAtPoint(e.getPoint());
-            lastClickColumnIndex = table.convertColumnIndexToView(viewColumn);
+            lastClickColumnIndex = table.convertColumnIndexToModel(viewColumn);
             if (e.isPopupTrigger()) {
                 targetColumnIndex = lastClickColumnIndex;
             }
@@ -1399,11 +1406,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @param p location with the table coordinate
-         * @since 1.2.1
+         * @since 1.3
          */
         public void updatePopupLocation(Point p) {
             int viewColumn = table.columnAtPoint(p);
-            lastClickColumnIndex = table.convertColumnIndexToView(viewColumn);
+            lastClickColumnIndex = table.convertColumnIndexToModel(viewColumn);
             targetColumnIndex = lastClickColumnIndex;
         }
 
@@ -1701,7 +1708,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class PopupExtensionCollectionColumnHeader extends PopupExtension implements MouseListener {
-        /** @since 1.2.1 */
+        /** @since 1.3 */
         protected Point targetPoint;
         protected TableColumn targetColumn;
 
@@ -1754,7 +1761,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         /**
          * @param p the clicked point of source component
          * @return the column under the point
-         * @since 1.2.1
+         * @since 1.3
          */
         public TableColumn getTargetColumn(Point p) {
             JTable table = getPaneTable();

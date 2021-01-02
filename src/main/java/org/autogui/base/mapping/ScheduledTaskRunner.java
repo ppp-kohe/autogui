@@ -232,7 +232,7 @@ public class ScheduledTaskRunner<EventType> {
 
     /**
      * @return true if it has awaiting task
-     * @since 1.2.1
+     * @since 1.3
      */
     public synchronized boolean hasScheduledTask() {
         return scheduledTask != null;
