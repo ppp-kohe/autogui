@@ -15,8 +15,7 @@ import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -494,7 +493,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
             logWindow.dispose();
         }
         settingsWindow.dispose();
-        keyBinding.unbind();
+        keyBinding.unbind(this);
         fileDialogPreferencesUpdater.removeFromDialogManager();
     }
 

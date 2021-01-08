@@ -521,6 +521,8 @@ public class UIManagerUtil {
             defaults.put("TabbedPane.selectedTabTitlePressedColor", black);
             defaults.put("TabbedPane.selectedTabTitleShadowNormalColor", clear);
             defaults.put("TabbedPane.selectedTabTitleShadowDisabledColor", clear);
+            defaults.put("Table.focusCellForeground", defaults.getColor("Table.foreground"));
+            defaults.put("Table.focusCellBackground", defaults.getColor("Table.background"));
         }
     }
 

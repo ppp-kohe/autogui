@@ -7,9 +7,7 @@ import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -181,7 +179,7 @@ public class GuiSwingKeyBinding {
     public void bind(JComponent component) {
         addKeyBindingForComponentTree(component);
         assign();
-        setDispatcher();
+        setDispatcher(component);
     }
 
     public GuiSwingKeyBinding addDefaultExcluded() {
@@ -860,7 +858,16 @@ public class GuiSwingKeyBinding {
         });
     }
 
+    @Deprecated
     public void setDispatcher() {
+        setDispatcher(null);
+    }
+
+    /**
+     * @param component the root pane
+     * @since 1.3.1
+     */
+    public void setDispatcher(JComponent component) {
         Map<KeyStroke, KeyStrokeAction> inputMap = new HashMap<>();
         for (KeyStrokeAction action : assigned) {
             action.updateInfo();
@@ -868,20 +875,37 @@ public class GuiSwingKeyBinding {
                 inputMap.put(action.stroke, action);
             }
         }
-        unbind();
+        unbind(component);
         dispatcher = new KeyBindDispatcher(inputMap);
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(dispatcher);
+        if (component != null) {
+            component.addHierarchyListener(dispatcher);
+        }
     }
 
+
+    @Deprecated
     public void unbind() {
+        unbind(null);
+    }
+
+    /**
+     * @param component the root pane, the former parameter of {@link #setDispatcher(JComponent)}
+     * @since 1.3.1
+     */
+    public void unbind(JComponent component) {
         if (dispatcher != null) {
             KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(dispatcher);
+            if (component != null) {
+                component.removeHierarchyListener(dispatcher);
+            }
         }
         dispatcher = null;
     }
 
-    public static class KeyBindDispatcher implements KeyEventDispatcher {
+    public static class KeyBindDispatcher implements KeyEventDispatcher, HierarchyListener {
         protected Map<KeyStroke, KeyStrokeAction> inputMap;
+        protected Window targetWindow;
 
         public KeyBindDispatcher(Map<KeyStroke, KeyStrokeAction> inputMap) {
             this.inputMap = inputMap;
@@ -891,6 +915,9 @@ public class GuiSwingKeyBinding {
         public boolean dispatchKeyEvent(KeyEvent e) {
             KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
             KeyStrokeAction action = inputMap.get(stroke);
+            if (targetWindow != null && !targetWindow.isFocused()) {
+                return false;
+            }
             if (action != null) {
                 action.process();
                 return true;
@@ -901,6 +928,11 @@ public class GuiSwingKeyBinding {
 
         public Map<KeyStroke, KeyStrokeAction> getInputMap() {
             return inputMap;
+        }
+
+        @Override
+        public void hierarchyChanged(HierarchyEvent e) {
+            targetWindow = SwingUtilities.getWindowAncestor(e.getComponent());
         }
     }
 
