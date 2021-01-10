@@ -12,6 +12,7 @@ import org.autogui.swing.GuiSwingViewLabel.PropertyLabel;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 import org.autogui.swing.util.PopupExtensionText;
+import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -370,9 +371,24 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         public static class MultilineColumnCenterView extends WrappedPlainView {
-            static long serialVersionUID = 1;
             public MultilineColumnCenterView(Element elem) {
                 super(elem);
+            }
+
+            @Override
+            public void paint(Graphics g, Shape a) {
+                //re-painting background for fixing custom background against SynthEditorPaneUI
+                if (getElement() == getDocument().getDefaultRootElement()) {
+                    paintRootBackground(g);
+                }
+                super.paint(g, a);
+            }
+
+            private void paintRootBackground(Graphics g) {
+                Container c = getContainer();
+                Dimension s = c.getSize();
+                g.setColor(c.getBackground());
+                g.fillRect(0, 0, s.width, s.height);
             }
 
             @Override
