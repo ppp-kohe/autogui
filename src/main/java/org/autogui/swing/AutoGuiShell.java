@@ -44,20 +44,25 @@ import java.util.function.Supplier;
  *
  * <h3>Setting Look and Feel</h3>
  * <p>
- *  configured by the field {@link #lookAndFeelClass} which can be set withLookAndFeel... methods like {@link #withLookAndFeelClass(String)}.
- *    The default value is <code>#prop:swing.defaultlaf</code>.
+ *  configured by the field {@link #lookAndFeelClass} which can be set by the following withLookAndFeel... methods.
+ *    The default value is <code>#prop:autogui.laf</code>.
  *   <ul>
+ *       <li>{@link #withLookAndFeelClass(String)} : directly set the argument</li>
  *       <li>{@link #withLookAndFeelProperty(String)} : <code>#prop:</code><i>p</i>.
  *         The value of the property <i>p</i> will be passed to {@link UIManagerUtil#selectLookAndFeelFromSpecialName(String)}.
  *         The absence of the property is equivalent to the special name <code>"default"</code>
  *       </li>
- *       <li>{@link #withCrossPlatformLookAndFeel()} : <code>system</code></li>
+ *       <li>{@link #withLookAndFeelSpecial(String)} : <code>#special:</code><i>v</i>.
+ *         The value <i>v</i> will passed to {@link UIManagerUtil#selectLookAndFeelFromSpecialName(String)}</li>
+ *       <li>{@link #withCrossPlatformLookAndFeel()} : a cross platform class</li>
  *       <li>{@link #withLookAndFeelNone()} : <code>#none</code> </li>
  *       <li>{@link #withLookAndFeelClassFromFunction(Function)} : the function will be invoked immediately.
  *          It can be used for custom LAF installation.
  *          The function can return a value for {@link #lookAndFeelClass} (nullable) </li>
  *   </ul>
- *  For example, the JVM option <code>-Dswing.defaultlaf=metal</code> with the default configuration
+ *   In {@link #setLookAndFeel()}, the {@link #lookAndFeelClass} will be passed to {@link UIManagerUtil#setLookAndFeel(String)}.
+ *   <p>
+ *  For example, the JVM option <code>-Dautogui.laf=metal</code> with the default configuration
  *    resets the property by the concrete MetalLookAndFeel class-name and sets to metal-laf thanks to {@link UIManagerUtil#setLookAndFeel(String)}.
  *
  */
@@ -115,12 +120,21 @@ public class AutoGuiShell {
     }
 
     /**
-     * @param p a system property, like "swing.defaultlaf".
+     * @param p a system property, like "autogui.laf".
      * @return this with setting "#prop:p"
      * @since 1.3
      */
     public AutoGuiShell withLookAndFeelProperty(String p) {
         return withLookAndFeelClass(UIManagerUtil.getLookAndFeelProp(p));
+    }
+
+    /**
+     * @param v a special name can be passed to {@link UIManagerUtil#selectLookAndFeelFromSpecialName(String)}
+     * @return this with setting "#special:v"
+     * @since 1.3.1
+     */
+    public AutoGuiShell withLookAndFeelSpecial(String v) {
+        return withLookAndFeelClass(UIManagerUtil.getLookAndFeelSpecial(v));
     }
 
     /**

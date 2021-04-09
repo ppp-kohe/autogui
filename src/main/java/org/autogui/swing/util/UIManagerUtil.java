@@ -5,9 +5,14 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -303,9 +308,10 @@ public class UIManagerUtil {
     /**
      * <ol>
      *     <li>#prop:p =&gt; {@link #selectLookAndFeelFromProperty(String, boolean)} with (p,true) </li>
+     *     <li>#special:v =&gt; {@link #selectLookAndFeelFromSpecialName(String)} with (v) </li>
      *     <li>#default or default =&gt; {@link #selectLookAndFeelDefault(boolean)}</li>
      *     <li>darklaf =&gt; {@link #installLookAndFeelDarkLaf()}</li>
-     *     <li>#none =&gt; nothing to do. it also clears the "swing.defaultlaf" property
+     *     <li>#none =&gt; nothing to do. it also clears the "autogui.laf" property
      *            for preventing changing LAF by the user</li>
      *     <li>null =&gt; nothing to do </li>
      *     <li>otherwise =&gt; treats the value as a LAF class-name </li>
@@ -321,6 +327,9 @@ public class UIManagerUtil {
             String laf = lookAndFeelClass;
             if (laf != null && laf.startsWith(LOOK_AND_FEEL_PROP_HEAD)) {
                 laf = selectLookAndFeelFromProperty(laf.substring(LOOK_AND_FEEL_PROP_HEAD.length()), true);
+            }
+            if (laf != null && laf.startsWith(LOOK_AND_FEEL_SPECIAL_HEAD)) {
+                laf = selectLookAndFeelFromSpecialName(laf.substring(LOOK_AND_FEEL_SPECIAL_HEAD.length()));
             }
             if (laf != null && (laf.equals(LOOK_AND_FEEL_DEFAULT) ||
                                 laf.equals(LOOK_AND_FEEL_VALUE_DEFAULT) ||
@@ -353,8 +362,8 @@ public class UIManagerUtil {
      *      The value of p can be a special name resolved by {@link #selectLookAndFeelFromSpecialName(String)}
      *        or a concrete LAF class-name .
      *  <p>
-     *   The default prop is "swing.defaultlaf".
-     *    This means that the system accepts the property with a special name like "-Dswing.defaultlaf=system"
+     *   The default prop is "autogui.laf".
+     *    This means that the system accepts the property with a special name like "-Dautogui.laf=system"
      *      and it can resolve the property with an actual class-name which will be read by the swing system.
      * @param prop a nullable property name
      * @param updateProp if true it updates the prop specified by the laf with the resolved concrete class-name
@@ -450,12 +459,29 @@ public class UIManagerUtil {
     }
 
     /**
-     * do <code>com.github.weisj.darklaf.LafManager.install(LafManager.themeForPreferredStyle(LafManager.getPreferredThemeStyle()))</code>
-     *  by reflection.
+     * install com.formdev.flatlaf.FlatDarkLaf or .FlatLaf by reflection.
      * @return true if the darklaf is installed
      * @since 1.3
      */
     public boolean installLookAndFeelDarkLaf() {
+        try {
+            String pack = "com.formdev.flatlaf";
+            Class<?> laf;
+            if (getOsVersion().isDarkTheme()) {
+                laf = Class.forName(pack + ".FlatDarkLaf");
+            } else {
+                laf = Class.forName(pack + ".FlatLaf");
+            }
+            laf.getMethod("install")
+                    .invoke(null);
+            return true;
+        } catch (Throwable ex) {
+            return false;
+        }
+    }
+    
+    //currently turned off:      * do <code>com.github.weisj.darklaf.LafManager.install(LafManager.themeForPreferredStyle(LafManager.getPreferredThemeStyle()))</code>
+    private boolean installLookAndFeelDarkLafOld() {
         try {
             String pack = "com.github.weisj.darklaf";
             Class<?> lafManager = Class.forName(pack + ".LafManager");
@@ -475,7 +501,9 @@ public class UIManagerUtil {
     /** @since 1.3 */
     public static final String LOOK_AND_FEEL_PROP_HEAD = "#prop:";
     /** @since 1.3 */
-    public static final String LOOK_AND_FEEL_PROP_DEFAULT = "swing.defaultlaf";
+    public static final String LOOK_AND_FEEL_SPECIAL_HEAD = "#special:";
+    /** @since 1.3 */
+    public static final String LOOK_AND_FEEL_PROP_DEFAULT = "autogui.laf";
 
     /** @since 1.3 */
     public static final String LOOK_AND_FEEL_VALUE_METAL = "metal";
@@ -505,6 +533,15 @@ public class UIManagerUtil {
         return LOOK_AND_FEEL_PROP_HEAD + prop;
     }
 
+    /**
+     *
+     * @param value a special name
+     * @return "#special:"+value
+     * @since 1.3.1
+     */
+    public static String getLookAndFeelSpecial(String value) {
+        return LOOK_AND_FEEL_SPECIAL_HEAD + value;
+    }
 
     /**
      * called from {@link #setLookAndFeel(String)} and apply some customization
@@ -549,7 +586,11 @@ public class UIManagerUtil {
      */
     public static OsVersion initOsVersion() {
         String os = System.getProperty("os.name", "").toLowerCase();
-        if (os.startsWith("mac")) {
+        if (os.startsWith("linux")) {
+            return new OsVersionWin();
+        } else if (os.startsWith("windows")) {
+            return new OsVersionWin();
+        } else if (os.startsWith("mac")) {
             return new OsVersionMac();
         } else {
             return new OsVersion();
@@ -626,6 +667,78 @@ public class UIManagerUtil {
         public boolean isLinux() {
             return getName().toLowerCase().startsWith("linux");
         }
+
+        /**
+         * @return true if the current UI theme is dark mode. (not yet fully implemented)
+         * @since 1.3.1
+         */
+        public boolean isDarkTheme() {
+            return false;
+        }
+    }
+
+    /**
+     * an OS version subclass for Windows
+     * @since 1.3.1
+     */
+    public static class OsVersionWin extends OsVersion {
+        public OsVersionWin(String arch, String name, String version) {
+            super(arch, name, version);
+        }
+
+        public OsVersionWin() {
+        }
+
+        @Override
+        public boolean isWindows() {
+            return true;
+        }
+
+        @Override
+        public boolean isDarkTheme() {
+            try {
+                String data = command("powershell.exe",
+                        "Get-ItemProperty",
+                        "-Path",
+                        "HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                        "-Name",
+                        "AppsUseLightTheme")
+                .toLowerCase();
+                return Pattern.compile("AppsUseLightTheme\\s*:\\s*0").matcher(data).find();
+            } catch (Exception ex) {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * an OS version subclass for Windows
+     * @since 1.3.1
+     */
+    public static class OsVersionLinux extends OsVersion {
+        public OsVersionLinux(String arch, String name, String version) {
+            super(arch, name, version);
+        }
+
+        public OsVersionLinux() {
+        }
+
+        @Override
+        public boolean isLinux() {
+            return true;
+        }
+
+        @Override
+        public boolean isDarkTheme() {
+            try {
+                //currently only support Gtk
+                return command("gsettings", "get", "org-gnome.desktop.interface", "gtk-theme")
+                        .toLowerCase()
+                        .contains("dark"); //'Yaru-dark' is the default dark theme?
+            } catch (Exception ex) {
+                return false;
+            }
+        }
     }
 
     /**
@@ -672,6 +785,48 @@ public class UIManagerUtil {
         @Override
         public boolean isMacOS() {
             return true;
+        }
+
+        @Override
+        public boolean isDarkTheme() {
+            try {
+                return command("defaults", "read", "-g", "AppleInterfaceStyle")
+                        .toLowerCase().trim()
+                        .contains("dark");
+            } catch (Exception ex) {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * run a process with the arguments. The timeout for waiting outputs is 10 secs.
+     * @param args the command arguments
+     * @return the standard output of the process. the method throws an exception if failed
+     * @since 1.3.1
+     */
+    public static String command(String... args) {
+        try {
+            Process p = new ProcessBuilder()
+                    .command(args)
+                    .start();
+            InputStream in = p.getInputStream();
+            CompletableFuture<String> result = new CompletableFuture();
+            new Thread() {
+                public void run() {
+                    try {
+                        String str = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(in.readAllBytes()))
+                                .toString();
+                        result.complete(str);
+                    } catch (Exception ex) {
+                        result.completeExceptionally(ex);
+                    }
+                }
+            }.start();
+            p.waitFor(10, TimeUnit.SECONDS);
+            return result.get(1, TimeUnit.SECONDS);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
     }
 }
