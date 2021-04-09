@@ -702,8 +702,7 @@ public class UIManagerUtil {
                         "-Path",
                         "HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
                         "-Name",
-                        "AppsUseLightTheme")
-                .toLowerCase();
+                        "AppsUseLightTheme");
                 return Pattern.compile("AppsUseLightTheme\\s*:\\s*0").matcher(data).find();
             } catch (Exception ex) {
                 return false;
