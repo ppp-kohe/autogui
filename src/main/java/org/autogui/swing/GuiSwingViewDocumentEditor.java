@@ -545,9 +545,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
-                GuiSwingView.loadPreferencesDefault(this, prefs);
+                GuiSwingView.loadPreferencesDefault(this, prefs, options);
                 GuiPreferences targetPrefs = prefs.getDescendant(context);
                 settingPane.loadFrom(targetPrefs);
             } catch (Exception ex) {

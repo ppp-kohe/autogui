@@ -10,10 +10,7 @@ import org.autogui.swing.util.*;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.*;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -530,6 +527,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 try {
                     //re-selection
                     changeSelection(selectedModelRowsIndices, change);
+                    requestFocus(); //focusing
                 } finally {
                     if (autoSelection) {
                         autoSelectionDepth--;
@@ -574,13 +572,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             int rows = getRowCount();
 
             Collection<Integer> is = change.indices;
-            sel.setValueIsAdjusting(true);
-            sel.clearSelection();
-            is.stream()
-                    .filter(i -> i >= 0 && i < rows)
-                    .mapToInt(this::convertRowIndexToView)
-                    .forEach(i -> sel.addSelectionInterval(i, i));
-            sel.setValueIsAdjusting(false);
 
             Set<Integer> update = new HashSet<>(is);
             IntStream.of(selectedModelRowsIndices).forEach(update::remove);
@@ -590,6 +581,18 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     .filter(i -> i >= 0 && i < rows)
                     .sorted()
                     .toArray());
+
+            //selecting all columns
+            int cols = getColumnCount();
+            setColumnSelectionInterval(0, cols - 1);
+
+            sel.setValueIsAdjusting(true);
+            sel.clearSelection();
+            is.stream()
+                    .filter(i -> i >= 0 && i < rows)
+                    .mapToInt(this::convertRowIndexToView)
+                    .forEach(i -> sel.addSelectionInterval(i, i));
+            sel.setValueIsAdjusting(false);
         }
 
         public void changeSelectionValues(int[] selectedModelRowsIndices, GuiSwingTableColumnSet.TableSelectionChangeValues change) {
@@ -620,7 +623,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
                 GuiSwingView.loadPreferencesDefault(this, prefs);
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
@@ -800,6 +803,74 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
          */
         public int getRowHeightByProgram() {
             return rowHeightByProgram;
+        }
+
+        @Override
+        public String getToolTipText(MouseEvent event) {
+            return null; //rely on table-header
+        }
+
+        @Override
+        protected JTableHeader createDefaultTableHeader() {
+            return new CollectionTableHeader(getColumnModel()); //customize for tool-tip
+        }
+    }
+
+    /**
+     * @since 1.4
+     */
+    public static class CollectionTableHeader extends JTableHeader {
+        public CollectionTableHeader() {
+        }
+
+        public CollectionTableHeader(TableColumnModel cm) {
+            super(cm);
+        }
+
+        @Override
+        public String getToolTipText(MouseEvent event) {
+            JTable table = getTable();
+            return getToolTipText(table, event);
+        }
+
+        public static String getToolTipText(JTable table, MouseEvent event) {
+            if (table != null) {
+                String tableText = table.getToolTipText();
+
+                String rowText = null;
+                Point p = event.getPoint();
+                int col = table.getTableHeader().columnAtPoint(p);
+                if (col != -1) {
+                    TableColumn model = table.getColumnModel().getColumn(col);
+                    JComponent source = getSourceComponentForToolTip(table, model);
+                    if (source != null) {
+                        rowText = source.getToolTipText();
+                    }
+                }
+                return (tableText == null ? "" : tableText) +
+                        (tableText != null && rowText != null ? ": " : "") +
+                        (rowText == null ? "" : rowText);
+            } else {
+                return null;
+            }
+        }
+
+        public static JComponent getSourceComponentForToolTip(JTable table, TableColumn model) {
+            TableCellRenderer renderer = model.getCellRenderer();
+            JComponent source = null;
+            if (renderer instanceof JComponent) {
+                source = (JComponent) renderer;
+            } else {
+                try {
+                    Component c = renderer.getTableCellRendererComponent(table, null, false, false, 0, model.getModelIndex());
+                    if (c instanceof JComponent) {
+                        source = (JComponent) c;
+                    }
+                } catch (Exception ex) {
+                    //ignore
+                }
+            }
+            return source;
         }
     }
 

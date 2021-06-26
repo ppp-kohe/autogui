@@ -53,7 +53,7 @@ public class ValueListDemo {
             this.image = image;
         }
 
-        @GuiIncluded(index = 1)
+        @GuiIncluded(index = 1, description = "str property")
         public String getStr() {
             return str;
         }
@@ -63,7 +63,7 @@ public class ValueListDemo {
             this.str = str;
         }
 
-        @GuiIncluded(index = 2)
+        @GuiIncluded(index = 2, description = "num property")
         public float getNum() {
             return num;
         }
@@ -73,7 +73,7 @@ public class ValueListDemo {
             this.num = num;
         }
 
-        @GuiIncluded(index = 3)
+        @GuiIncluded(index = 3, description = "flag property")
         public boolean isFlag() {
             return flag;
         }

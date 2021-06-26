@@ -15,7 +15,8 @@ import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -54,6 +55,11 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     protected ShowPreferencesAction showPreferencesAction;
     protected GuiSwingPreferences.PrefsApplyMenu prefsApplyMenu;
     protected WindowCloseAction closeAction;
+
+    /**
+     * @since 1.4
+     */
+    protected GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions = GuiSwingPreferences.APPLY_OPTIONS_DEFAULT;
 
 
     /**
@@ -111,6 +117,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         protected SettingsWindow settingsWindow;
         protected GuiSwingView view;
         protected Function<GuiMappingContext, GuiPreferences> prefsCreator;
+        /** @since 1.4 */
+        protected GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions;
 
         /**
          * set a {@link GuiSwingKeyBinding} without automatic bindings created
@@ -182,6 +190,15 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
             return this;
         }
 
+        /**
+         * @param prefsApplyOptions options
+         * @since 1.4
+         */
+        public GuiSwingRootPaneCreator withPrefsApplyOptions(GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions) {
+            this.prefsApplyOptions = prefsApplyOptions;
+            return this;
+        }
+
         public GuiSwingRootPane create(Object o) {
             if (typeBuilder == null) {
                 typeBuilder = new GuiTypeBuilder();
@@ -215,7 +232,12 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
                 settingsWindow = new SettingsWindow();
             }
 
-            return new GuiSwingRootPane(context, view, keyBinding, logStatus, settingsWindow);
+            GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions = this.prefsApplyOptions;
+            if (prefsApplyOptions == null) {
+                prefsApplyOptions = new GuiSwingPreferences.PrefsApplyOptionsDefault(true, false);
+            }
+
+            return new GuiSwingRootPane(context, view, keyBinding, logStatus, settingsWindow, prefsApplyOptions);
         }
 
         public GuiSwingKeyBinding getKeyBinding() {
@@ -238,6 +260,14 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
             return view;
         }
 
+        /**
+         * @return options or null (default)
+         * @since 1.4
+         */
+        public GuiSwingPreferences.PrefsApplyOptions getPrefsApplyOptions() {
+            return prefsApplyOptions;
+        }
+
         public Function<GuiMappingContext, GuiPreferences> getPrefsCreator() {
             return prefsCreator;
         }
@@ -249,17 +279,36 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         GuiSwingMapperSet.getReprDefaultSet().matchAndSetNotifiersAsInit(context);
         this.view = (GuiSwingView) GuiSwingMapperSet.getDefaultMapperSet().view(context);
         this.keyBinding = GuiSwingKeyBinding.createWithDefaultExcluded();
+        this.prefsApplyOptions = new GuiSwingPreferences.PrefsApplyOptionsDefault(true, false);
         init();
     }
 
     public GuiSwingRootPane(GuiMappingContext context, GuiSwingView view, GuiSwingKeyBinding keyBinding,
                             boolean logStatus, SettingsWindow settingsWindow) throws HeadlessException {
+        this(context, view, keyBinding, logStatus, settingsWindow, new GuiSwingPreferences.PrefsApplyOptionsDefault(true, false));
+    }
+
+    /**
+     *
+     * @param context the context
+     * @param view the view
+     * @param keyBinding the key-binding
+     * @param logStatus the flat for showing log-status
+     * @param settingsWindow  the setting window
+     * @param prefsApplyOptions the options for prefs application
+     * @throws HeadlessException
+     * @since 1.4
+     */
+    public GuiSwingRootPane(GuiMappingContext context, GuiSwingView view, GuiSwingKeyBinding keyBinding,
+                            boolean logStatus, SettingsWindow settingsWindow,
+                            GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions) throws HeadlessException {
         setLayout(new BorderLayout());
         this.context = context;
         this.view = view;
         this.keyBinding = keyBinding;
         this.logStatus = logStatus;
         this.settingsWindow = settingsWindow;
+        this.prefsApplyOptions = prefsApplyOptions;
         init();
     }
 
@@ -293,8 +342,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     protected void initToolTipManager() {
-        ToolTipManager tm = ToolTipManager.sharedInstance();
-        tm.setDismissDelay(20_000);
+        //ToolTipManager tm = ToolTipManager.sharedInstance();
+        //tm.setDismissDelay(20_000);
     }
 
     protected void initViewComponent() {
@@ -354,7 +403,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         objectMenu.add(prefsApplyMenu);
         objectMenu.addSeparator();
         if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
-            ((GuiSwingView.ValuePane) viewComponent).getSwingMenuBuilder()
+            ((GuiSwingView.ValuePane<?>) viewComponent).getSwingMenuBuilder()
                     .build(PopupExtension.MENU_FILTER_IDENTITY,
                             new MenuBuilder.MenuAppender(objectMenu));
             objectMenu.addSeparator();
@@ -394,7 +443,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     protected void initPrefsLoad() {
-        loadPreferences(preferences.getLaunchPreferences());
+        loadPreferences(preferences.getLaunchPreferences(),
+                prefsApplyOptions);
     }
 
     protected void initSettingWindow() {
@@ -477,13 +527,21 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         this.applicationRoot = applicationRoot;
     }
 
+
+    /**
+     * @return options
+     * @since 1.4
+     */
+    public GuiSwingPreferences.PrefsApplyOptions getPrefsApplyOptions() {
+        return prefsApplyOptions;
+    }
+
     /**
      * cleaning up the pane and related components.
      * the owner window should call the method before closing (disposing) the window.
      * <p>
      * The method does not intend to reuse the pane after cleaning up.
      */
-    @SuppressWarnings("rawtypes")
     public void cleanUp() {
         context.shutdown();
         GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
@@ -502,19 +560,19 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     @Override
-    public void loadPreferences(GuiPreferences prefs) {
-        withError(() -> preferences.getPrefsWindowUpdater().apply(prefs));
+    public void loadPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+        withError(() -> preferences.getPrefsWindowUpdater().apply(prefs, options));
         withError(() -> {
             if (logPreferencesUpdater != null) {
-                logPreferencesUpdater.apply(prefs);
+                logPreferencesUpdater.apply(prefs, options);
             }
         });
         withError(() -> fileDialogPreferencesUpdater.apply(prefs));
 
         if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
-            withError(() -> ((GuiSwingView.ValuePane) viewComponent).loadSwingPreferences(prefs));
+            withError(() -> ((GuiSwingView.ValuePane<?>) viewComponent).loadSwingPreferences(prefs, options));
         }
-        GuiSwingView.loadChildren(prefs, viewComponent);
+        GuiSwingView.loadChildren(prefs, viewComponent, options);
     }
 
     public void withError(Runnable r) {

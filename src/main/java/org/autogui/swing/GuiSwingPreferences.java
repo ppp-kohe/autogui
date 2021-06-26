@@ -137,7 +137,17 @@ public class GuiSwingPreferences {
     public interface RootView {
         GuiMappingContext getContext();
         JComponent getViewComponent();
-        void loadPreferences(GuiPreferences prefs);
+        default void loadPreferences(GuiPreferences prefs) {
+            loadPreferences(prefs, APPLY_OPTIONS_DEFAULT);
+        }
+
+        /**
+         * @param prefs the source prefs
+         * @param options options for applying
+         *                ({@link #APPLY_OPTIONS_DEFAULT} for {@link #loadPreferences(GuiPreferences)} that are all false)
+         * @since 1.4
+         */
+        void loadPreferences(GuiPreferences prefs, PrefsApplyOptions options);
         void savePreferences(GuiPreferences prefs);
 
     }
@@ -279,14 +289,24 @@ public class GuiSwingPreferences {
     }
 
     public void applyPreferences() {
+        applyPreferences(APPLY_OPTIONS_DEFAULT);
+    }
+
+    /**
+     * @param options options for applying
+     * @since 1.4
+     */
+    public void applyPreferences(PrefsApplyOptions options) {
         if (rootPane != null) {
-            rootPane.loadPreferences(rootContext.getPreferences());
+            rootPane.loadPreferences(rootContext.getPreferences(), options);
         } else {
             if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane<?>) rootComponent).loadSwingPreferences(
-                        rootContext.getPreferences());
+                if (!options.isSkippingValue()) {
+                    ((GuiSwingView.ValuePane<?>) rootComponent).loadSwingPreferences(
+                            rootContext.getPreferences(), options);
+                }
             }
-            GuiSwingView.loadChildren(rootContext.getPreferences(), rootComponent);
+            GuiSwingView.loadChildren(rootContext.getPreferences(), rootComponent, options);
         }
     }
 
@@ -868,7 +888,7 @@ public class GuiSwingPreferences {
             if (preferences != null) {
                 owner.getRootContext().getPreferences().clearAll();
                 owner.getRootContext().getPreferences().fromJson(preferences.toJson());
-                owner.applyPreferences();
+                owner.applyPreferences(new PrefsApplyOptionsDefault(false, false));
             }
         }
 
@@ -900,7 +920,7 @@ public class GuiSwingPreferences {
                     "Reset Entire Preferences ?");
             if (r == JOptionPane.OK_OPTION) {
                 owner.getRootContext().getPreferences().resetAsRoot();
-                owner.applyPreferences();
+                owner.applyPreferences(new PrefsApplyOptionsDefault(true, false));
                 owner.reloadList();
             }
         }
@@ -1047,16 +1067,44 @@ public class GuiSwingPreferences {
         }
 
         public void applyTo(Window window) {
+            applyTo(window, APPLY_OPTIONS_DEFAULT);
+        }
+
+        /**
+         *
+         * @param window the target window
+         * @param options options for applying: only setting locations if {@link PrefsApplyOptions#isInit()}
+         * @since 1.4
+         */
+        public void applyTo(Window window, PrefsApplyOptions options) {
             if (width > 0 && height > 0) {
                 Dimension size = new Dimension(width, height);
                 window.setSize(size);
             } else {
                 window.pack();
             }
-            if (x > 0 && y > 0) {
-                Point p = new Point(x, y);
-                window.setLocation(p);
+            if (x != 0 && y != 0 && options.isInit()) {
+                //we handle (0,0) as the null value: for multi-monitors, negative values can be possible for locations
+                Rectangle screen = getDeviceBoundsOrNull(x, y);
+                if (screen != null) {
+                    window.setLocation(new Point(x, y));
+                } //otherwise, changed devices: nothing happen
             }
+        }
+
+        /**
+         * @param x the absolute x location; 0 is the left of the main monitor
+         * @param y the absolute y location; 0 is the top of the main monitor
+         * @return rectangle for containing x,y
+         */
+        public static Rectangle getDeviceBoundsOrNull(int x, int y) {
+            GraphicsDevice[] devs = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                    .getScreenDevices();
+            return Arrays.stream(devs)
+                    .map(d -> d.getDefaultConfiguration().getBounds())
+                    .filter(r -> r.contains(x, y))
+                    .findFirst()
+                    .orElse(null);
         }
 
         public void setSizeFrom(Window window) {
@@ -1146,18 +1194,27 @@ public class GuiSwingPreferences {
         public void setup(JFrame window) {
             savingDisabled = true;
             try {
-                prefs.applyTo(window);
+                prefs.applyTo(window); //prefs window always ignore window-locations
             } finally {
                 savingDisabled = false;
             }
         }
 
         public void apply(GuiPreferences p) {
+            apply(p, APPLY_OPTIONS_DEFAULT);
+        }
+
+        /**
+         * @param p the source prefs
+         * @param options options for applying
+         * @since 1.4
+         */
+        public void apply(GuiPreferences p, PrefsApplyOptions options) {
             savingDisabled = true;
             try {
                 prefs.loadFrom(p);
                 if (window != null) {
-                    prefs.applyTo(window);
+                    prefs.applyTo(window, options);
                 }
             } finally {
                 savingDisabled = false;
@@ -1557,6 +1614,49 @@ public class GuiSwingPreferences {
                 g.fillRect(0, 0, getWidth(), getHeight());
             }
             paintOrLayout((Graphics2D) g, true);
+        }
+    }
+
+    //////
+
+    /**
+     * options at prefs loading
+     * @since 1.4
+     */
+    public interface PrefsApplyOptions {
+        /**
+         * @return true if the loading processing is the initial time; then the window location might be set
+         */
+        boolean isInit();
+
+        /**
+         * @return if true, skipping setting object properties
+         */
+        boolean isSkippingValue();
+    }
+    /** @since 1.4 */
+    public static PrefsApplyOptionsDefault APPLY_OPTIONS_DEFAULT = new PrefsApplyOptionsDefault(false, false);
+
+    /**
+     * @since 1.4
+     */
+    public static class PrefsApplyOptionsDefault implements PrefsApplyOptions {
+        protected boolean init;
+        protected boolean skippingValue;
+
+        public PrefsApplyOptionsDefault(boolean init, boolean skippingValue) {
+            this.init = init;
+            this.skippingValue = skippingValue;
+        }
+
+        @Override
+        public boolean isInit() {
+            return init;
+        }
+
+        @Override
+        public boolean isSkippingValue() {
+            return skippingValue;
         }
     }
 }

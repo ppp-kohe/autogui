@@ -68,9 +68,10 @@ public class GuiSwingViewWrapper {
         /**
          * nothing happen in the wrapper pane. the wrapped pane do the task
          * @param prefs target prefs or ancestor of the target;
+         * @param options options
          */
         @Override
-        default void loadSwingPreferences(GuiPreferences prefs) { }
+        default void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) { }
 
     }
 

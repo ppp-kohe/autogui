@@ -537,7 +537,7 @@ public class UIManagerUtil {
      *
      * @param value a special name
      * @return "#special:"+value
-     * @since 1.3.1
+     * @since 1.4
      */
     public static String getLookAndFeelSpecial(String value) {
         return LOOK_AND_FEEL_SPECIAL_HEAD + value;
@@ -670,7 +670,7 @@ public class UIManagerUtil {
 
         /**
          * @return true if the current UI theme is dark mode. (not yet fully implemented)
-         * @since 1.3.1
+         * @since 1.4
          */
         public boolean isDarkTheme() {
             return false;
@@ -679,7 +679,7 @@ public class UIManagerUtil {
 
     /**
      * an OS version subclass for Windows
-     * @since 1.3.1
+     * @since 1.4
      */
     public static class OsVersionWin extends OsVersion {
         public OsVersionWin(String arch, String name, String version) {
@@ -712,7 +712,7 @@ public class UIManagerUtil {
 
     /**
      * an OS version subclass for Windows
-     * @since 1.3.1
+     * @since 1.4
      */
     public static class OsVersionLinux extends OsVersion {
         public OsVersionLinux(String arch, String name, String version) {
@@ -802,7 +802,7 @@ public class UIManagerUtil {
      * run a process with the arguments. The timeout for waiting outputs is 10 secs.
      * @param args the command arguments
      * @return the standard output of the process. the method throws an exception if failed
-     * @since 1.3.1
+     * @since 1.4
      */
     public static String command(String... args) {
         try {
@@ -810,7 +810,7 @@ public class UIManagerUtil {
                     .command(args)
                     .start();
             InputStream in = p.getInputStream();
-            CompletableFuture<String> result = new CompletableFuture();
+            CompletableFuture<String> result = new CompletableFuture<>();
             new Thread() {
                 public void run() {
                     try {

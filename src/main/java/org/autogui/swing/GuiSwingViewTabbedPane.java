@@ -94,9 +94,9 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
-                super.loadSwingPreferences(prefs);
+                super.loadSwingPreferences(prefs, options);
                 tabPreferencesUpdater.apply(prefs.getDescendant(getSwingViewContext()));
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);

@@ -5,6 +5,9 @@ import org.autogui.swing.GuiSwingView;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingViewLabel.PropertyLabel;
 
+import java.util.Comparator;
+import java.util.Objects;
+
 /**
  * a column factory for any type of object.
  *
@@ -19,6 +22,7 @@ public class GuiSwingTableColumnLabel implements GuiSwingTableColumn {
         SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
         PropertyLabel view = new PropertyLabel(context, valueSpecifier);
         view.setOpaque(true);
-        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, view);
+        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, view)
+                .withComparator(Comparator.comparing(Objects::toString));
     }
 }

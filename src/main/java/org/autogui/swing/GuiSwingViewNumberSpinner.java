@@ -434,12 +434,12 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 getModelTyped().loadFrom(targetPrefs);
                 settingAction.loadFrom(targetPrefs);
-                GuiSwingView.loadPreferencesDefault(this, prefs);
+                GuiSwingView.loadPreferencesDefault(this, prefs, options);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
             }
@@ -1341,14 +1341,14 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 getModelTyped().loadFrom(targetPrefs);
                 if (settingAction != null) {
                     settingAction.loadFrom(targetPrefs);
                 }
-                GuiSwingView.loadPreferencesDefault(this, prefs);
+                GuiSwingView.loadPreferencesDefault(this, prefs, options);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
             }

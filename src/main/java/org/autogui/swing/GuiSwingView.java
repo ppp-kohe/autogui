@@ -178,14 +178,26 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         /**
+         * {@link #loadSwingPreferences(GuiPreferences, GuiSwingPreferences.PrefsApplyOptions)}
+         *  with {@link GuiSwingPreferences#APPLY_OPTIONS_DEFAULT}.
+         *  Do not override the method, instead, implements the same method with options version
+         * @param prefs target prefs
+         */
+        default void loadSwingPreferences(GuiPreferences prefs) {
+            loadSwingPreferences(prefs, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+        }
+
+        /**
          * a sub-class which wraps another value-pane should overrides the method
          *   in order to omit needless value setting.
          *   it can use {@link #loadPreferencesDefault(JComponent, GuiPreferences)}
          * @param prefs target prefs or ancestor of the target;
          *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
+         * @param options options for applying
+         * @since 1.4
          */
-        default void loadSwingPreferences(GuiPreferences prefs) {
-            loadPreferencesDefault(asSwingViewComponent(), prefs);
+        default void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+            loadPreferencesDefault(asSwingViewComponent(), prefs, options);
         }
 
         /**
@@ -373,6 +385,16 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     /**
+     * {@link #setLastHistoryValue(GuiPreferences, ValuePane, GuiSwingPreferences.PrefsApplyOptions)}
+     *   with {@link GuiSwingPreferences#APPLY_OPTIONS_DEFAULT}
+     * @param prefs the source preferences
+     * @param pane the target pane
+     */
+    static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane) {
+        setLastHistoryValue(prefs, pane, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+    }
+
+    /**
      * obtain {@link GuiPreferences#getCurrentValue()}
      *   or a last value of {@link GuiPreferences#getHistoryValues()}
      *      (only when the context {@link GuiMappingContext#isHistoryValueStored(Object)} with null),
@@ -381,9 +403,10 @@ public interface GuiSwingView extends GuiSwingElement {
      *  {@link GuiSwingView#loadPreferencesDefault(JComponent, GuiPreferences)} automatically calls the method.
      * @param prefs the source preferences
      * @param pane the target pane
+     * @since 1.4
      */
-    static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane) {
-        if (!pane.isSwingEditable() || !pane.isSwingCurrentValueSupported()) {
+    static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane, GuiSwingPreferences.PrefsApplyOptions options) {
+        if (!pane.isSwingEditable() || !pane.isSwingCurrentValueSupported() || options.isSkippingValue()) {
             return;
         }
 
@@ -445,17 +468,29 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     /**
-     * load the current value and history values of the prefs to the pane
+     * {@link #loadPreferencesDefault(JComponent, GuiPreferences, GuiSwingPreferences.PrefsApplyOptions)}
+     *  with {@link GuiSwingPreferences#APPLY_OPTIONS_DEFAULT}
      * @param pane a target {@link GuiSwingView.ValuePane}
      * @param prefs a source preferences
      */
-    @SuppressWarnings("unchecked")
     static void loadPreferencesDefault(JComponent pane, GuiPreferences prefs) {
+        loadPreferencesDefault(pane, prefs, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+    }
+
+    /**
+     * load the current value and history values of the prefs to the pane
+     * @param pane a target {@link GuiSwingView.ValuePane}
+     * @param prefs a source preferences
+     * @param options options for applying
+     * @since 1.4
+     */
+    @SuppressWarnings("unchecked")
+    static void loadPreferencesDefault(JComponent pane, GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
         try {
             if (pane instanceof ValuePane<?>) {
                 GuiMappingContext context = ((ValuePane) pane).getSwingViewContext();
                 GuiPreferences targetPrefs = prefs.getDescendant(context);
-                setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane);
+                setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane, options);
 
                 if (context.isHistoryValueSupported()) {
                     GuiPreferences ctxPrefs = context.getPreferences();
@@ -472,17 +507,29 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     /**
+     * {@link #loadChildren(GuiPreferences, JComponent, GuiSwingPreferences.PrefsApplyOptions)}
+     *  with {@link GuiSwingPreferences#APPLY_OPTIONS_DEFAULT}
+     * @param prefs a top prefs
+     * @param comp a top component
+     */
+    static void loadChildren(GuiPreferences prefs, JComponent comp) {
+        loadChildren(prefs, comp, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+    }
+
+    /**
      * traverses descendant components and call {@link GuiSwingView.ValuePane#loadPreferencesDefault(JComponent, GuiPreferences)}
      * @param prefs a top prefs
      * @param comp  a top component
+     * @param options  options for applying
+     * @since 1.4
      */
-    static void loadChildren(GuiPreferences prefs, JComponent comp) {
+    static void loadChildren(GuiPreferences prefs, JComponent comp, GuiSwingPreferences.PrefsApplyOptions options) {
         forEach(ValuePane.class, comp, c -> {
             if (c != comp) { //skip top
                 GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) c;
                 try {
                     valuePane.loadSwingPreferences(
-                            prefs.getDescendant(valuePane.getSwingViewContext()));
+                            prefs.getDescendant(valuePane.getSwingViewContext()), options);
                 } catch (Exception ex) {
                     GuiLogManager.get().logError(ex);
                 }

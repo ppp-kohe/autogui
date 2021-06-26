@@ -25,7 +25,7 @@ The project uses [apache-maven](http://maven.apache.org) and depends on a recent
 
 ```bash
 $ mvn package
-  # the command will generate target/autogui-1.3.jar
+  # the command will generate target/autogui-1.4.jar
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
@@ -33,13 +33,13 @@ So you can manually compile source files placed in `src/main/java` (also `src/ma
 
 ## Maven Usage
 
-To use the library in your apaceh-maven project, you can insert the following `dependency` section into `pom.xml`.
+To use the library in your apache-maven project, you can insert the following `dependency` section into `pom.xml`.
 
 ```xml
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.3</version>
+        <version>1.4</version>
     </dependency>
 ```
 
@@ -72,7 +72,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.3.jar
+/env -class-path target/autogui-1.4.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
@@ -81,7 +81,7 @@ AutoGuiShell.showLive(h)
 ```
 
 The above code defines the class `Hello` with an instance field and a method.
-After that, [`org.autogui.swing.AutoGuiShell.showLine(Object)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html#showLive(java.lang.Object)) starts creating a GUI window from the given object and shows the window.
+After that, [`org.autogui.swing.AutoGuiShell.showLive(Object)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html#showLive(java.lang.Object)) starts creating a GUI window from the given object and shows the window.
 
 The created window will contain a text field labeled as "Value" and a button on the tool-bar labeled as "Action". 
 You can fill the text field with the string "hello, world" by typing the keyboard and click the button, then you will see "hello, world" on the console of `jshell`.
@@ -98,6 +98,8 @@ Also, the method `action` is bound to the action of the button on the tool-bar. 
 See [`src/test/java/autogui/demo`](https://github.com/ppp-kohe/autogui/tree/master/src/test/java/org/autogui/demo). 
 
 You can execute the code in the directory, by `mvn test-compile exec:java  -Dexec.classpathScope=test -Dexec.mainClass=...`.
+
+### ImageFlipDemo
 
 For example:
 
@@ -161,6 +163,104 @@ The displayed window has the following GUI components:
 [`File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html)   object.
 * The action button *Save*  created from `void save()` : The action can write the flipped image as a new file specified by the Output field in the working directory.
 
+### FileRenameDemo
+
+Here is another example for demonstrating table feature of the library.
+
+```bash
+mvn test-compile exec:java -Dexec.classpathScope=test \
+    -Dexec.mainClass=org.autogui.demo.FileRenameDemo
+```
+
+The command will show a GUI window like the following image:
+
+<img src="docs/images/image-rename-demo-h.png" srcset="docs/images/image-rename-demo-h.png 1x, docs/images/image-rename-demo.png 2x" alt="ImageFlipDemo">
+
+You can drag & drop a directory to the *Dir* field and then listing files in the directory as the *Entries* table. 
+Note the *Rename* button actually changes names of the listed files to *New name*s without any warning.
+
+This is constructed from the following code:
+
+```java
+package org.autogui.demo;
+
+import org.autogui.GuiIncluded;
+import org.autogui.swing.AutoGuiShell;
+
+import java.io.File;
+import java.util.*;
+
+@GuiIncluded public class FileRenameDemo {
+    public static void main(String[] args) {
+        AutoGuiShell.get().showWindow(new FileRenameDemo());
+    }
+
+    File dir;
+
+    @GuiIncluded public File getDir() { return dir; }
+    @GuiIncluded public void setDir(File dir) {
+        boolean update = 
+             dir != null && !Objects.equals(this.dir, dir);
+        this.dir = dir;
+        if (update && dir.isDirectory()) {
+            List<RenameEntry> es = new ArrayList<>();
+            int i = 0;
+            List<File> files = new ArrayList<>(
+                            Arrays.asList(dir.listFiles()));
+            files.sort(Comparator.naturalOrder());
+            for (File file : files) {
+                es.add(new RenameEntry(file, 
+                  String.format("%03d-%s", 
+                                i, file.getName())));
+                ++i;
+            }
+            entries = es;
+        }
+    }
+
+    List<RenameEntry> entries = new ArrayList<>();
+
+    @GuiIncluded public List<RenameEntry> getEntries() { 
+        return entries; 
+    }
+
+    @GuiIncluded public static class RenameEntry {
+        File file;
+        String newName;
+        public RenameEntry(File file, String newName) {
+            this.file = file;
+            this.newName = newName;
+        }
+        @GuiIncluded public File getFile() {
+            return file;
+        }
+        @GuiIncluded public String getNewName() {
+            return newName; 
+        }
+        @GuiIncluded public void setNewName(String newName) {
+            this.newName = newName;
+        }
+    }
+
+    @GuiIncluded public void rename() {
+        for (RenameEntry e : entries) {
+            File newFile = new File(
+                e.getFile().getParentFile(), e.getNewName());
+            if (e.getFile().exists() && !newFile.exists()) {
+                e.getFile().renameTo(newFile);
+            }
+        }
+    }
+}
+```
+
+* In this demo, the library constructs GUI components by only selecting members attached the annotation `@GuiIncluded`. This is launched by `AutoGuiShell.get().showWindows(...)` as I call *strict mode*.
+* The file-path field *Dir*: When the user edits the field, the new text is set as `File` by invoking `setDir(File)`. The method loads files in the directory and constructs a new `ArrayList` object of `RenameEntry`. `RenameEntry` is the static inner class, and contains `File` and a new name prefixed with an index (`String.format("%03d-%s",...)`).    The rewriting `entries = es;` will cause updating the table display.
+* The *Entry* table: constructed from the list returned by `getEntries()`. The table columns are defined by the properties *File* and *New Name* of the element type of the list `<RenameEntry>`. Each row of the list corresponds to each element of the list. The updating of the item size in the table will be caused by changing of the identity of the list object returned by the getter method.
+* The *Rename* button: created from the `rename()` method for renaming entries.
+
+The table component of collection objects in the library is so powerful to extend the applications usage.
+
 ## Strict mode with @GuiIncluded
 
 To create an application that can be executed from the `main` method, 
@@ -171,9 +271,9 @@ it is reasonable to restrict GUI-aware members in the specified object.
 The strict mode ...
 
 *  can be started by [`AutoGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html#showWindow(java.lang.Object))
-*  targets on[`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html) and `public` classes, properties and members
+*  targets on [`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html) and `public` classes, properties and members
 
-The following Java program is an example application with the struct mode:
+The following Java program is an example application with the strict mode:
 
 ```java
   import org.autogui.GuiIncluded;
@@ -255,7 +355,7 @@ The recent versions (1.2-) have the `module-info.class` and require Java 11 or l
     [`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/Document.html)
   * Embedded component: a sub-type of 
     [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/JComponent.html)
-* Object pane: a user-defiend object type with composition of properties and actions
+* Object pane: a user-defined object type with composition of properties and actions
   * Object properties: `T getP() {...}`, `T p() {...}` (1.2-) , `void setP(T) {...}` or `T p;`
       * if all members are other user-defined objects, then the enclosing object will be bound to a tabbed-pane
   * Action methods: `void m() {...}`
@@ -277,7 +377,7 @@ The recent versions (1.2-) have the `module-info.class` and require Java 11 or l
       * Image column: a sub-type of 
         [`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html)
   * A user-defined object-type composing columns from its properties and actions
-  * Dynamic Collection table: a nested `Collection<Collection<E>>` or a multi-dimentional array `E[][]`
+  * Dynamic Collection table: a nested `Collection<Collection<E>>` or a multi-dimensional array `E[][]`
 
 ### String text-field
 
@@ -440,7 +540,7 @@ So, **the user code should not modify contents of `StringBuilder` or `Document` 
 
 When the type of the property is 
 [`javax.swing.text.StyledDocument`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/StyledDocument.html) 
-, its sub-type or `StringBuiilder`, 
+, its sub-type or `StringBuilder`, 
 the user can change its (global) style by settings from the context menu.
 
 <img src="docs/images/image-document-styled-h.png" srcset="docs/images/image-document-styled-h.png 1x, docs/images/image-document-styled.png 2x" alt="Document editor with styles">
@@ -479,7 +579,7 @@ Such action-method can read and write properties of the object. If the action-me
 #### Property definition 
 
 A user-defined object class has properties which are bound as sub-components.
-A *property* can be defiend as 1) an accessible field definition or 2) a pair of getter and setter methods. 
+A *property* can be defined as 1) an accessible field definition or 2) a pair of getter and setter methods. 
 
 ```java
   class Hello {
@@ -513,7 +613,7 @@ A *setter* method is a method whose name starts with `set` and which takes only 
 If a property is defined only a getter method, then the property value becomes *read-only*.
 
 In the setter method, the user code can cause modification of some other properties.
-The created UI automatically specifies changed properties of the object pane. In order to achieve the UI updateing, a getter method will be called abruptly and frequently.
+The created UI automatically specifies changed properties of the object pane. In order to achieve the UI updating, a getter method will be called abruptly and frequently.
 
 
 
@@ -587,7 +687,7 @@ And initialization of a field will be executed under a non event-dispatching thr
 
 Thus the user code of the property for an embedded component should be defined as *a getter method that caches the returned component as a field*. 
 For a property of the embedded component, the library executes the method within the event-dispatching thread.
-A returned embedded component will be added as a sub-compoennt of the owner object-pane.
+A returned embedded component will be added as a sub-component of the owner object-pane.
 
 
 #### Embedding component to your Swing applications
@@ -631,7 +731,7 @@ The column of the table will be created from the type-argument `E`.
 
 #### Object composition in Collection table
 
-If the type-argument`E` of `Collection<E>` is a user-defined object class, then collumns of the  table are created from properties of the class.
+If the type-argument`E` of `Collection<E>` is a user-defined object class, then columns of the  table are created from properties of the class.
 
 ```java
    import java.util.*;
@@ -791,7 +891,7 @@ To display a tool-tip message for a member, you can use
 ### Key binding by @GuiIncluded(keyStroke=...)
 
 The library automatically sets shortcut keys for members based on their names.
-[`@GuiIncluded(keyStroke=...)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html#keyStroke()) can controle binding keys. 
+[`@GuiIncluded(keyStroke=...)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html#keyStroke()) can control binding keys. 
 
 * `keyStroke="none"`: avoid binding
 * `keyStroke="<control>... <key>"`
@@ -875,7 +975,7 @@ The above example will show a text field that periodically updates its text as t
 
 The updating is done by the `update()` method; it rewrites `prop`  with the time string ( 
 [`Instant.now().toString()`](https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/time/Instant.html#now()) 
-) and  notifies the change of the field to the text field by explicitly calling `Runnable#run()`  to the updater set by `setPropUpdater(Runnable)`. The setter name specifies the `prop` field as the target of the updater by following the nameing rule `set<YourPropertyName>Updater`.
+) and  notifies the change of the field to the text field by explicitly calling `Runnable#run()`  to the updater set by `setPropUpdater(Runnable)`. The setter name specifies the `prop` field as the target of the updater by following the naming rule `set<YourPropertyName>Updater`.
 
 The constructor of the class the `update()` method will be scheduled by 
 [`ScheduledExecutorService#scheduleWithFixedDelay(this::update, ...)` ](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html#scheduleWithFixedDelay(java.lang.Runnable,long,long,java.util.concurrent.TimeUnit))
@@ -898,6 +998,18 @@ This feature relies on
 <img src="docs/images/image-prefs-h.png" srcset="docs/images/image-prefs-h.png 1x, docs/images/image-prefs.png 2x" alt="Preferences">
 
 <img src="docs/images/image-prefs-menu-h.png" srcset="docs/images/image-prefs-menu-h.png 1x, docs/images/image-prefs-menu.png 2x" alt="Preferences">
+
+Additionally, [`GuiPreferencesLoader`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/mapping/GuiPreferencesLoader.html) enables you to set properties saved by the feature to an object as non-GUI code.
+
+```java
+   var h = new Hello();
+   org.autogui.base.mapping.GuiPreferencesLoader.get()
+     .withTypeBuilderRelaxed()
+     .withPrefsGetterByNameEquals("saved-prefs")
+     .apply(h);
+
+   h.prop //=> "Hello" 
+```
 
 ## Logging 
 
@@ -983,7 +1095,7 @@ in order to explicitly check the interruption.
 
 ### Logging exceptions
 
-The created window sets an unchaught exception-handler for displaying the exception in the logging list. Also 
+The created window sets an uncaught exception-handler for displaying the exception in the logging list. Also 
 [`GuiLogManager.get().logError(e)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/log/GuiLogManager.html#logError(java.lang.Throwable))
 can explicitly display the given exception. The displayed exception becomes an item in the logging list with expandable stack-traces.
 
@@ -1002,7 +1114,7 @@ can explicitly display the given exception. The displayed exception becomes an i
 
 ### Long running action and progress-bars	
 
-A long running action will be an independent task with displaying an indeterminate progress-bar. The stop button can cause an interrupution resulting in 
+A long running action will be an independent task with displaying an indeterminate progress-bar. The stop button can cause an interruption resulting in 
 [`InterruptedException`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/InterruptedException.html) or 
 [`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#interrupted()). 
 
@@ -1020,3 +1132,23 @@ A long running action will be an independent task with displaying an indetermina
 ```
 
 <img src="docs/images/image-log-longrunning-h.png" srcset="docs/images/image-log-longrunning-h.png 1x, docs/images/image-log-longrunning.png 2x" alt="Progress">
+
+
+## Dark-mode support
+
+The current Swing GUI (in Java16) does not have automatic support of recent OS's dark-mode changing.
+
+However, there are some custom look-and-feel libraries for supporting dark-mode such [darklaf](https://github.com/weisJ/darklaf) and 
+[flatlaf](https://www.formdev.com/flatlaf/).
+
+The library implicitly has code for detecting existence of *flatlaf* and applying its LAF at launching with following OS's current theme. The detection is simply done by accessing to the reflection Class object through `Class.forName`.
+
+For example in macOS, you can launch the library's app with the combination of flatlaf + [JBR](https://confluence.jetbrains.com/display/JBR/JetBrains+Runtime) than, it will get best for modern UI experience including displaying Emoji and the dark-mode titlebar.
+
+<img src="docs/images/image-dark-h.png" srcset="docs/images/image-dark-h.png 1x, docs/images/image-dark.png 2x" alt="Progress">
+
+You can also control the LAF setting by the JVM option `-Dorg.autogui.laf=...`.
+The value are listed in the document of
+[UIManagerUtil.selectLookAndFeelFromSpecialName(String)](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/util/UIManagerUtil.html#selectLookAndFeelFromSpecialName(java.lang.String)).
+
+

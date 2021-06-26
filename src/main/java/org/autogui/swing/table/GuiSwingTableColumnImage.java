@@ -17,7 +17,9 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * a column factory for {@link Image}.
@@ -40,7 +42,8 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
             protected TableCellEditor editorForColumn() {
                 return editor; //always apply the editor
             }
-        }.withRowHeight(img.getPreferredSize().height);
+        }.withRowHeight(img.getPreferredSize().height)
+        .withComparator(Comparator.comparing(Objects::hash));
     }
 
     /**

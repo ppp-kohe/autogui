@@ -103,6 +103,11 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
         public GuiSwingWindowCreator withView(GuiSwingView view) {
             return (GuiSwingWindowCreator) super.withView(view);
         }
+
+        @Override
+        public GuiSwingWindowCreator withPrefsApplyOptions(GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions) {
+            return (GuiSwingWindowCreator) super.withPrefsApplyOptions(prefsApplyOptions);
+        }
     }
 
     public GuiSwingWindow(GuiMappingContext context) throws HeadlessException {
@@ -182,7 +187,8 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     }
 
     protected void initPrefsLoad() {
-        loadPreferences(contextRootPane.getPreferences().getLaunchPreferences());
+        loadPreferences(contextRootPane.getPreferences().getLaunchPreferences(),
+                contextRootPane.getPrefsApplyOptions());
     }
 
     protected void initClosing() {
@@ -244,9 +250,9 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     }
 
     @Override
-    public void loadPreferences(GuiPreferences prefs) {
-        contextRootPane.withError(() -> preferencesUpdater.apply(prefs));
-        contextRootPane.loadPreferences(prefs);
+    public void loadPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+        contextRootPane.withError(() -> preferencesUpdater.apply(prefs, options));
+        contextRootPane.loadPreferences(prefs, options);
     }
 
     @Override

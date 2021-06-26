@@ -1,5 +1,6 @@
 package org.autogui.swing;
 
+import org.autogui.base.mapping.GuiPreferencesLoader;
 import org.autogui.swing.util.SwingDeferredRunner;
 import org.autogui.GuiIncluded;
 import org.autogui.swing.util.UIManagerUtil;
@@ -7,6 +8,8 @@ import org.autogui.swing.util.UIManagerUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -88,6 +91,14 @@ public class AutoGuiShell {
     /**
      * create a window for the object o as the application root and display it.
      *  before creating the window, it sets LookAndFeel as the value of {@link #lookAndFeelClass} by {@link #setLookAndFeel()}.
+     *  <p>
+     *   The method is equivalent to the following code:
+     *  <pre>
+     *  SwingUtilities.invokeLater(() -&gt; {
+     *      setLookAndFeel();
+     *      createWindow(o, true).setVisible(true);
+     *  });
+     *  </pre>
      * @param o the target object
      */
     public void showWindow(Object o) {
@@ -131,7 +142,7 @@ public class AutoGuiShell {
     /**
      * @param v a special name can be passed to {@link UIManagerUtil#selectLookAndFeelFromSpecialName(String)}
      * @return this with setting "#special:v"
-     * @since 1.3.1
+     * @since 1.4
      */
     public AutoGuiShell withLookAndFeelSpecial(String v) {
         return withLookAndFeelClass(UIManagerUtil.getLookAndFeelSpecial(v));
@@ -153,6 +164,41 @@ public class AutoGuiShell {
      */
     public void setLookAndFeel() {
         UIManagerUtil.getInstance().setLookAndFeel(lookAndFeelClass);
+    }
+
+    /**
+     * skip loading default properties of object from saved default prefs.
+     * The method is useful when the target object's properties are already set:
+     * e.g.
+     * <pre>
+     *     GuiPreferencesLoader.get().parseArgs(obj, args); //control loading prefs by args
+     *     AutoGuiShell.get()
+     *         .withPrefsValuesLoadSkip() //skip loading prefs
+     *         .showWindow(obj);
+     * </pre>
+     * @return this
+     * @since 1.4
+     */
+    public AutoGuiShell withPrefsValuesLoadSkip() {
+        GuiSwingWindow.GuiSwingWindowCreator c = (windowCreator instanceof GuiSwingWindow.GuiSwingWindowCreator) ?
+                ((GuiSwingWindow.GuiSwingWindowCreator) windowCreator) : GuiSwingWindow.creator();
+        return withWindowCreator(c.withPrefsApplyOptions(new GuiSwingPreferences.PrefsApplyOptionsDefault(true, true)));
+    }
+
+    /**
+     * apply {@link GuiPreferencesLoader#parseArgs(Object, List)} for the target object.
+     * @param args the command args
+     * @return this
+     * @since 1.4
+     */
+    public AutoGuiShell withPrefsValuesLoadArgs(String... args) {
+        GuiSwingWindow.GuiSwingWindowCreator c = (windowCreator instanceof GuiSwingWindow.GuiSwingWindowCreator) ?
+                ((GuiSwingWindow.GuiSwingWindowCreator) windowCreator) : GuiSwingWindow.creator();
+        c.withPrefsApplyOptions(new GuiSwingPreferences.PrefsApplyOptionsDefault(true, true));
+        return withWindowCreator(obj -> {
+            GuiPreferencesLoader.get().parseArgs(obj, Arrays.asList(args));
+            return c.createWindow(obj);
+        });
     }
 
     public void showWindow(Object o, Runnable beforeActionInEvent) {

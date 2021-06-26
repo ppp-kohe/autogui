@@ -865,7 +865,7 @@ public class GuiSwingKeyBinding {
 
     /**
      * @param component the root pane
-     * @since 1.3.1
+     * @since 1.4
      */
     public void setDispatcher(JComponent component) {
         Map<KeyStroke, KeyStrokeAction> inputMap = new HashMap<>();
@@ -891,7 +891,7 @@ public class GuiSwingKeyBinding {
 
     /**
      * @param component the root pane, the former parameter of {@link #setDispatcher(JComponent)}
-     * @since 1.3.1
+     * @since 1.4
      */
     public void unbind(JComponent component) {
         if (dispatcher != null) {

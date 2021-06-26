@@ -408,9 +408,9 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
-                GuiSwingView.loadPreferencesDefault(this, prefs);
+                GuiSwingView.loadPreferencesDefault(this, prefs, options);
                 preferencesUpdater.apply(prefs.getDescendant(getSwingViewContext()));
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
