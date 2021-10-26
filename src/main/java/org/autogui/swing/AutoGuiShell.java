@@ -7,7 +7,6 @@ import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -201,12 +200,22 @@ public class AutoGuiShell {
         });
     }
 
+    /**
+     * shorthand for <code>showWindow(o, beforeActionInEvent, null)</code>
+     * @param o the target object
+     * @param beforeActionInEvent action executed before creating the window
+     * @see #showWindow(Object, Runnable, Consumer)
+     */
     public void showWindow(Object o, Runnable beforeActionInEvent) {
         showWindow(o, beforeActionInEvent, null);
     }
 
     /**
      * create a window for the object o as the application root and display it.
+     *  The method runs 1) <code>beforeActionInEvent</code>,
+     *    and 2) {@link #createWindow(Object, boolean, Consumer)} with <code>(o,true,afterActionInEvent)</code>
+     *       and showing the returned window.
+     *    The steps are executed under {@link SwingUtilities#invokeLater(Runnable)}.
      * @param o the target object
      * @param beforeActionInEvent action executed before creating the window within the event dispatching thread. nullable
      * @param afterActionInEvent action executed after creating the window within the event dispatching thread. nullable
@@ -223,10 +232,12 @@ public class AutoGuiShell {
 
     /**
      * if the current thread is the event dispatching thread, it will immediately create a window for o and return it.
-     * otherwise, it invoke the same task to the event dispatching thread and waits it
+     * otherwise, it invoke the same task to the event dispatching thread and waits it.
+     *  It is shorthand for <code>createWindow(o, appRoot, null)</code>
      * @param o the target object
      * @param appRoot if true, the returned window will clean-up windows and task-runners at closing of the window.
      * @return the created window for o, with default component-set
+     * @see #createWindow(Object, boolean, Consumer)
      */
     public GuiSwingWindow createWindow(Object o, boolean appRoot) {
         return createWindow(o, appRoot, null);
@@ -237,6 +248,9 @@ public class AutoGuiShell {
      * if the current thread is the event dispatching thread, it will immediately create a window for o and return it.
      * otherwise, it invokes the same task to the event dispatching thread and waits it.
      *  the afterActionInEvent will be executed within the event dispatching thread after creating the window.
+     *  The method 1) runs {@link #createWindowInEvent(Object)}
+     *     with setting the application root of the window as <code>appRoot</code>,
+     *     and 2) <coce>afterActionInEvent</coce>.
      * @param o the target object
      * @param appRoot if true, the returned window will clean-up windows and task-runners at closing of the window
      * @param afterActionInEvent null or an action with the created window, executed within the event dispatching thread
@@ -260,6 +274,7 @@ public class AutoGuiShell {
      * The created window is NOT app-root ({@link GuiSwingWindow#isApplicationRoot()}==false), thus
      *    closing the window will not call {@link AutoCloseable#close()} to o.
      *    In order to cause the close method, you can directly call {@link GuiSwingWindow#cleanUp()}.
+     *  The method do {@link #get()} and {@link #showWindowLive(Object)}.
      * @param o the target object
      * @return the created window for o
      */
@@ -268,7 +283,9 @@ public class AutoGuiShell {
     }
 
     /**
-     * called from {@link #showLive(Object)}
+     * called from {@link #showLive(Object)},
+     *  creating a new window by {@link #createWindowRelaxed(Object)} and
+     *    displaying it by {@link #displayLiveWindow(JFrame)}.
      * @param o the target object
      * @return the created window for o
      * @since 1.3
@@ -278,7 +295,10 @@ public class AutoGuiShell {
         SwingUtilities.invokeLater(() -> displayLiveWindow(w));
         return w;
     }
-
+    /**
+     * display the given window and moving it to front
+     * @param w the showing window
+     */
     public static void displayLiveWindow(JFrame w) {
         w.setVisible(true);
         w.toFront();
@@ -287,13 +307,18 @@ public class AutoGuiShell {
         }
     }
 
-
+    /**
+     * shorthand for <code>createWindowRelaxed(o, this::setLookAndFeel, null)</code>
+     * @param o the target object
+     * @return the created window for o
+     * @see #createWindowRelaxed(Object, Runnable, Consumer)
+     */
     public GuiSwingWindow createWindowRelaxed(Object o) {
         return createWindowRelaxed(o, null);
     }
 
     /**
-     *
+     * shorthand for <code>createWindowRelaxed(o, this::setLookAndFeel, afterActionInEvent)</code>
      * @param o the target object
      * @param afterActionInEvent  null or an action with the created window, executed within the event dispatching thread
      * @return the created window for o, with relaxed component-set. Note that the created window does not become application root.
@@ -304,7 +329,10 @@ public class AutoGuiShell {
     }
 
     /**
-     *
+     * The method runs 1) the <code>beforeActionInEvent</code>,
+     *   2) {@link #createWindowRelaxedInEvent(Object)} for o with setting the returned window to non application root,
+     *   and 3) runs <code>afterActionInEvent</code>.
+     *   Those steps are executed under the event dispatching thread ({@link SwingUtilities#invokeAndWait(Runnable)})
      * @param o the target object
      * @param beforeActionInEvent null or an action for pre-process before the creating window
      * @param afterActionInEvent  null or an action with the created window, executed within the event dispatching thread
@@ -340,7 +368,8 @@ public class AutoGuiShell {
     }
 
     /**
-     * calling the creator, within the event-dispatching thread
+     * calling the creator, within the event-dispatching thread.
+     *  The creator is set by {@link #withWindowCreator(Function)} or the default creator by {@link GuiSwingWindow#creator()}.
      * @param o the binding object
      * @return a created window
      * @since 1.2
@@ -351,6 +380,9 @@ public class AutoGuiShell {
 
     /**
      * calling the relaxed-creator, within the event-dispatching thread
+     *  The creator is set by {@link #withWindowCreatorRelaxed(Function)}
+     *  or the default creator by {@link GuiSwingWindow#creator()}
+     *     with {@link GuiSwingWindow.GuiSwingWindowCreator#withTypeBuilderRelaxed()}
      * @param o the binding object
      * @return a created window
      * @since 1.2
@@ -360,7 +392,15 @@ public class AutoGuiShell {
     }
 
     /**
-     * customizing the creator for {@link #createWindowInEvent(Object)}
+     * customizing the creator for {@link #createWindowInEvent(Object)}.
+     *  e.g.
+     *  <pre>
+     *      AutoGuiShell.get()
+     *          .withWindowCreator(
+     *              GuiSwingWindow.creator()
+     *                    .withLogStatus(false)) //customizing the creator
+     *          .showWindow(o);
+     *  </pre>
      * @param windowCreator the creator. the default creator is {@link GuiSwingWindow#creator()}
      * @return this
      * @since 1.2

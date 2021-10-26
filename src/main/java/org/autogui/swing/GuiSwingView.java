@@ -320,6 +320,19 @@ public interface GuiSwingView extends GuiSwingElement {
                                                                         Consumer<ContextTaskResult<RetType>> afterTask) {
             return new GuiSwingTaskRunner(getSwingViewContext()).executeContextTask(task, afterTask);
         }
+
+        /**
+         * prepare, clear and update via the context
+         * @since 1.5
+         */
+        default void refreshByContext() {
+            prepareForRefresh();
+            GuiSwingActionDefault.ActionPreparation.prepareAction(asSwingViewComponent());
+            GuiMappingContext context = getSwingViewContext();
+            context.clearSourceSubTree();
+            context.updateSourceSubTree();
+        }
+
     }
 
 
@@ -775,13 +788,12 @@ public interface GuiSwingView extends GuiSwingElement {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (pane != null) {
-                GuiSwingView.prepareForRefresh(pane);
-                GuiSwingActionDefault.ActionPreparation.prepareAction(pane.asSwingViewComponent());
+                pane.refreshByContext();
             } else {
                 GuiSwingActionDefault.ActionPreparation.prepareAction(e);
+                context.clearSourceSubTree();
+                context.updateSourceSubTree();
             }
-            context.clearSourceSubTree();
-            context.updateSourceSubTree();
         }
 
         @Override

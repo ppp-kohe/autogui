@@ -6,7 +6,7 @@
 
     <groupId>org.autogui</groupId>
     <artifactId>autogui</artifactId>
-    <version>1.4</version>
+    <version>1.5-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -315,4 +315,12 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     public GuiSwingActionDefault.ExecutionAction getDescendantActionByContext(GuiMappingContext context) {
         return contextRootPane.getDescendantActionByContext(context);
     }
+
+    /**
+     * the convenient method for refreshing the pane
+     * @since 1.5
+     */
+    public void refreshByContext() {
+        contextRootPane.refreshByContext();
+    }
 }

@@ -682,6 +682,14 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         getContext().updateSourceFromRoot();
     }
 
+    /**
+     * the convenient method for refreshing the pane
+     * @since 1.5
+     */
+    public void refreshByContext() {
+        GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
+                GuiSwingView.ValuePane::refreshByContext);
+    }
 
     public static class ShowPreferencesAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         private static final long serialVersionUID = 1L;

@@ -593,6 +593,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     .mapToInt(this::convertRowIndexToView)
                     .forEach(i -> sel.addSelectionInterval(i, i));
             sel.setValueIsAdjusting(false);
+            changeSelectionFinish();
         }
 
         public void changeSelectionValues(int[] selectedModelRowsIndices, GuiSwingTableColumnSet.TableSelectionChangeValues change) {
@@ -600,6 +601,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             changeSelectionIndices(selectedModelRowsIndices, new GuiSwingTableColumnSet.TableSelectionChangeIndices(change.values.stream()
                     .map(source::indexOf)
                     .collect(Collectors.toList())));
+            changeSelectionFinish();
         }
 
         public void changeSelectionIndicesRowAndColumns(int[] selectedModelRowsIndices, GuiSwingTableColumnSet.TableSelectionChangeIndicesRowAndColumn change) {
@@ -614,7 +616,18 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     .map(p -> new int[] {convertRowIndexToView(p[0]), convertColumnIndexToView(p[1])})
                     .forEach(p -> changeSelection(p[0], p[1], true, false));
             sel.setValueIsAdjusting(false);
+            changeSelectionFinish();
+        }
 
+        private void changeSelectionFinish() {
+            int[] sel = getSelectionModel().getSelectedIndices();
+            Rectangle visiRec = getVisibleRect();
+            if (sel.length > 0) {
+                int n = sel[0];
+                Rectangle cellRec = getCellRect(n, 0, true);
+                visiRec.y = cellRec.y;
+                scrollRectToVisible(visiRec);
+            }
         }
 
         @Override
