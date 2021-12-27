@@ -27,7 +27,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
     protected boolean selected;
     protected int interruptCount;
 
-    protected Map<Object, float[]> rendererToSizeCache;
+    protected SizeCache rendererToSizeCache;
 
     public GuiSwingLogEntryProgress() {
         selections = new HashMap<>(2);
@@ -40,7 +40,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
     @Override
     public float[] sizeCache(Object renderer, Supplier<float[]> src) {
         if (rendererToSizeCache == null) {
-            rendererToSizeCache = new HashMap<>(3);
+            rendererToSizeCache = new SizeCache(3);
         }
         return rendererToSizeCache.computeIfAbsent(renderer, _r -> src.get());
     }
@@ -432,6 +432,15 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
         }
 
         @Override
+        public float[] buildSize() {
+            if (value instanceof GuiSwingLogEntry) {
+                return ((GuiSwingLogEntry) value).sizeCache(this, super::buildSize);
+            } else {
+                return super.buildSize();
+            }
+        }
+
+        @Override
         public String format(GuiLogEntryProgress p) {
             if (p != null) {
                 return formatPreProcess(String.format("%s # %s",
@@ -542,6 +551,14 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             super.buildFromValue();
         }
 
+        @Override
+        public float[] buildSize() {
+            if (value instanceof GuiSwingLogEntry) {
+                return ((GuiSwingLogEntry) value).sizeCache(this, super::buildSize);
+            } else {
+                return super.buildSize();
+            }
+        }
 
         @Override
         public void paintLineSelection(Graphics2D g2, LineInfo line, TextLayout l, Color selectionColor, float lineX) {

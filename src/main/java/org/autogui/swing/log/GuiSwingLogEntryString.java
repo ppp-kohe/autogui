@@ -26,11 +26,11 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
     protected int selectionTo;
     protected boolean selected;
 
-    protected Map<Object, float[]> rendererToSizeCache;
+    protected SizeCache rendererToSizeCache;
 
     public float[] sizeCache(Object r, Supplier<float[]> src) {
         if (rendererToSizeCache == null) {
-            rendererToSizeCache = new HashMap<>(3);
+            rendererToSizeCache = new SizeCache(3);
         }
         return rendererToSizeCache.computeIfAbsent(r, _r -> src.get());
     }

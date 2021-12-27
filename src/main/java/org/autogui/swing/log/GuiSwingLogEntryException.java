@@ -15,8 +15,8 @@ import java.awt.font.TextLayout;
 import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator.Attribute;
 import java.time.Instant;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -30,7 +30,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
     protected String lines;
     protected Map<Integer, List<StackTraceAttributesForLine>> lineToAttrs;
 
-    protected Map<Object, float[]> rendererToSizeCache;
+    protected SizeCache rendererToSizeCache;
 
     public GuiSwingLogEntryException(Throwable exception) {
         super(exception);
@@ -42,7 +42,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
     public float[] sizeCache(Object r, Supplier<float[]> src) {
         if (rendererToSizeCache == null) {
-            rendererToSizeCache = new HashMap<>(3);
+            rendererToSizeCache = new SizeCache(5);
         }
         return rendererToSizeCache.computeIfAbsent(r, _r -> src.get());
     }
@@ -506,6 +506,15 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             super.buildFromValue();
             expandedStackSize = buildSize();
             collapsedStackSize = getCollapsedSize();
+        }
+
+        @Override
+        public float[] buildSize() {
+            if (value instanceof GuiSwingLogEntry) {
+                return ((GuiSwingLogEntry) value).sizeCache(this, super::buildSize);
+            } else {
+                return super.buildSize();
+            }
         }
 
         @Override
