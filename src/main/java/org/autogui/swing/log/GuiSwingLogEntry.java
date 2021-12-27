@@ -4,6 +4,7 @@ import org.autogui.base.log.GuiLogEntry;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * a log-entry supporting GUI rendering, managed by {@link GuiSwingLogManager} */
@@ -24,6 +25,10 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
      * @param type rendering for a list or a status-bar
      *  @return factory method of renderer */
     LogEntryRenderer getRenderer(GuiSwingLogManager manager, ContainerType type);
+
+    default float[] sizeCache(Object renderer, Supplier<float[]> src) {
+        return src.get();
+    }
 
     /** type of a rendering component */
     enum ContainerType {

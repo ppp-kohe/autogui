@@ -17,6 +17,7 @@ import java.text.AttributedCharacterIterator.Attribute;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * a log-entry for an exception with supporting GUI rendering
@@ -29,12 +30,21 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
     protected String lines;
     protected Map<Integer, List<StackTraceAttributesForLine>> lineToAttrs;
 
+    protected Map<Object, float[]> rendererToSizeCache;
+
     public GuiSwingLogEntryException(Throwable exception) {
         super(exception);
     }
 
     public GuiSwingLogEntryException(Instant time, Throwable exception) {
         super(time, exception);
+    }
+
+    public float[] sizeCache(Object r, Supplier<float[]> src) {
+        if (rendererToSizeCache == null) {
+            rendererToSizeCache = new HashMap<>(3);
+        }
+        return rendererToSizeCache.computeIfAbsent(r, _r -> src.get());
     }
 
     @Override
@@ -183,6 +193,8 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             }
             setSelection();
         }
+
+
 
         @Override
         protected void paintComponent(Graphics g) {
@@ -345,6 +357,15 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             } else {
                 timeEnd = 0;
                 return super.format(null);
+            }
+        }
+
+        @Override
+        public float[] buildSize() {
+            if (value instanceof GuiSwingLogEntry) {
+                return ((GuiSwingLogEntry) value).sizeCache(this, super::buildSize);
+            } else {
+                return super.buildSize();
             }
         }
 

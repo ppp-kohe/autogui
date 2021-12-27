@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * a log-entry of a string message with supporting GUI rendering
@@ -24,6 +25,15 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
     protected int selectionFrom;
     protected int selectionTo;
     protected boolean selected;
+
+    protected Map<Object, float[]> rendererToSizeCache;
+
+    public float[] sizeCache(Object r, Supplier<float[]> src) {
+        if (rendererToSizeCache == null) {
+            rendererToSizeCache = new HashMap<>(3);
+        }
+        return rendererToSizeCache.computeIfAbsent(r, _r -> src.get());
+    }
 
     public GuiSwingLogEntryString(String data) {
         super(data);
@@ -234,6 +244,15 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
                         str.getData()));
             } else {
                 return super.format(value);
+            }
+        }
+
+        @Override
+        public float[] buildSize() {
+            if (value instanceof GuiSwingLogEntry) {
+                return ((GuiSwingLogEntry) value).sizeCache(this, super::buildSize);
+            } else {
+                return super.buildSize();
             }
         }
 

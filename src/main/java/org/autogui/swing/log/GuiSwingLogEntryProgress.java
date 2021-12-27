@@ -17,6 +17,7 @@ import java.text.AttributedString;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * a log-entry of a progress bar
@@ -26,13 +27,22 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
     protected boolean selected;
     protected int interruptCount;
 
+    protected Map<Object, float[]> rendererToSizeCache;
+
     public GuiSwingLogEntryProgress() {
         selections = new HashMap<>(2);
     }
 
     public GuiSwingLogEntryProgress(GuiLogEntryProgress p) {
         setState(p);
+    }
 
+    @Override
+    public float[] sizeCache(Object renderer, Supplier<float[]> src) {
+        if (rendererToSizeCache == null) {
+            rendererToSizeCache = new HashMap<>(3);
+        }
+        return rendererToSizeCache.computeIfAbsent(renderer, _r -> src.get());
     }
 
     @Override
