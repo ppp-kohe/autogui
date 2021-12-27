@@ -194,6 +194,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 progressContainer.add(message2, BorderLayout.CENTER);
             }
             progressBar.setEnabled(false);
+            message2Layout = true;
             message2.setBorder(BorderFactory.createEmptyBorder());
         }
 
@@ -290,7 +291,10 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 progressBar.setIndeterminate(true);
             }
             previousState = nextValue;
-            invalidate();
+            Dimension nextSize = getPreferredSize();
+            if (!size.equals(nextSize)) {
+                invalidate();
+            }
         }
 
         @Override

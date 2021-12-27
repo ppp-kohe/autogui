@@ -5,8 +5,8 @@ import org.autogui.base.log.GuiLogManagerConsole;
 import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.swing.util.*;
 
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -20,8 +20,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -158,8 +158,6 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
     }
 
     public void addLogEntryInEvent(GuiLogEntry entry, boolean lowPriority) {
-        Rectangle beforeScrollTarget = getTargetEntryRectForScroll(getRowCount() - 1);
-
         GuiSwingLogListModel model = getLogListModel();
         int index = model.indexOfElement(entry);
         if (index >= 0) {
@@ -169,6 +167,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
             model.fireRowChangedAt(index);
             return;
         }
+        Rectangle beforeScrollTarget = getTargetEntryRectForScroll(getRowCount() - 1);
         LogListInsertResult res = model.addLogEntry(entry, lowPriority);
 
         if (res.hasSelectionChange()) {
