@@ -956,8 +956,8 @@ public class TextCellRenderer<ValueType> extends JPanel
         int end = 0;
         try {
             FontRenderContext frc = g2.getFontRenderContext();
-            float baseX = insets.left;
-            float y = insets.top;
+            double baseX = insets.left;
+            double y = insets.top;
             if (point.y < y) {
                 return 0;
             }
@@ -966,15 +966,15 @@ public class TextCellRenderer<ValueType> extends JPanel
             float startX = 0;
             for (LineInfo line : lines) {
                 TextLayout l = line.getLayout(frc);
-                float w = l.getAdvance();
-                float h = l.getAscent() + l.getDescent() + l.getLeading();
+                double w = l.getAdvance();
+                double h = l.getAscent() + l.getDescent() + l.getLeading();
 
                 startX = paintStartX(lineIndex, prev, startX, line, l, frc);
-                float x = startX + baseX;
+                double x = startX + baseX;
 
                 if (y <= point.y && point.y < y + h) {
                     if (x <= point.x && point.x < x + w) {
-                        TextHitInfo info = l.hitTestChar(point.x - x, point.y - y);
+                        TextHitInfo info = l.hitTestChar((float) (point.x - x), (float) (point.y - y));
                         return line.start + info.getCharIndex();
                     } else if (point.x < x) {
                         return line.start;

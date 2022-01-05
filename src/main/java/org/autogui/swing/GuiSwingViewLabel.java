@@ -313,8 +313,8 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
 
         public void paintStrokes(Graphics g, int x, int y, int width, int height) {
-            float ss = getStrokeSize();
-            RoundRectangle2D rr = new RoundRectangle2D.Float(x + ss / 2f, y + ss / 2f, width - ss, height - ss, ss * 1.3f, ss * 1.3f);
+            double ss = getStrokeSize();
+            RoundRectangle2D rr = new RoundRectangle2D.Double(x + ss / 2f, y + ss / 2f, width - ss, height - ss, ss * 1.3f, ss * 1.3f);
             Graphics2D g2 = (Graphics2D) g;
             Color color2 = new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 150);
             g2.setColor(color2);

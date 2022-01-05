@@ -317,7 +317,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
                 int xy = ui.getScaledSizeInt(2);
                 int wh = ui.getScaledSizeInt(5);
                 int arc = ui.getScaledSizeInt(3);
-                RoundRectangle2D.Float r = new RoundRectangle2D.Float(xy, xy, size.width - wh, size.height - wh, arc, arc);
+                RoundRectangle2D.Double r = new RoundRectangle2D.Double(xy, xy, size.width - wh, size.height - wh, arc, arc);
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setColor(message.getSelectionBackground());
                 g2.draw(r);

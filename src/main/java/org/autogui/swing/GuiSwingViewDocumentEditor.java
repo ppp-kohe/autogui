@@ -223,7 +223,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 if (startBottom != endBottom) {
                     endRight = c.getWidth();
                 }
-                Rectangle2D.Float selRect = new Rectangle2D.Float(startLeft, startTop, endRight - startLeft, startBottom - startTop);
+                Rectangle2D.Double selRect = new Rectangle2D.Double(startLeft, startTop, endRight - startLeft, startBottom - startTop);
                 g2.fill(selRect);
                 return selRect;
             } catch (Exception ex) {

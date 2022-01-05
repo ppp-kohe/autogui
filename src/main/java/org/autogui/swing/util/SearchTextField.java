@@ -774,7 +774,7 @@ public class SearchTextField extends JComponent {
             float arc = ui.getScaledSizeInt(4);
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            RoundRectangle2D rr = new RoundRectangle2D.Float(x, y, width - (x/2), height - (y/2), arc, arc);
+            RoundRectangle2D rr = new RoundRectangle2D.Double(x, y, width - (x/2), height - (y/2), arc, arc);
 
             paintGradientColors(g2, rr);
 
@@ -796,7 +796,7 @@ public class SearchTextField extends JComponent {
             Color[] cs = gradientColors;
             for (int i = 0, l = cs.length; i < l; ++i) {
                 g2.setPaint(cs[i]);
-                RoundRectangle2D rp = new RoundRectangle2D.Float(x + i, y + i, width - (2 * i), height - (2 * i), arcW, arcH);
+                RoundRectangle2D rp = new RoundRectangle2D.Double(x + i, y + i, width - (2 * i), height - (2 * i), arcW, arcH);
                 g2.fill(rp);
             }
             g2.setColor(new Color(180, 180, 180));

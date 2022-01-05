@@ -704,7 +704,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                         }
                     }
                     if (row != null) {
-                        g2.draw(new RoundRectangle2D.Float(row.x + unitSize, row.y + unitSize, row.width - size, row.height - size, arc, arc));
+                        g2.draw(new RoundRectangle2D.Double(row.x + unitSize, row.y + unitSize, row.width - size, row.height - size, arc, arc));
                     }
                 }
             }
@@ -1852,7 +1852,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             TableColumnModel model = table.getColumnModel();
             JTableHeader header = table.getTableHeader();
             int i = Math.min(model.getColumnCount() - 1,
-                    (int) (p.getX() / (header.getWidth() / (float) model.getColumnCount())));
+                    (int) (p.getX() / (header.getWidth() / (double) model.getColumnCount())));
             int inc = 0;
             int n = 0;
             while (0 <= i && i < model.getColumnCount() && n < model.getColumnCount()) {
