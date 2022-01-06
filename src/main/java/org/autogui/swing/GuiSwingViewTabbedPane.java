@@ -72,6 +72,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         }
 
         public void addSubComponent(GuiMappingContext subContext, JComponent component) {
+            childContextToComponents.put(subContext.getName(), component);
             String desc = subContext.getDescription();
             if (!component.isOpaque() && !UIManagerUtil.getInstance().isTabbedPaneAllowOpaqueComponent()) {
                 JComponent content = new JPanel(new BorderLayout());
@@ -87,9 +88,14 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         }
 
         @Override
+        public void addSubComponent(JComponent component, boolean resizable, GuiMappingContext subContext) {
+            addSubComponent(subContext, component);
+        }
+
+        @Override
         public void addSubComponent(JComponent component, boolean resizable) {
             if (component instanceof ValuePane<?>) {
-                addSubComponent(((ValuePane) component).getSwingViewContext(), component);
+                addSubComponent(((ValuePane<?>) component).getSwingViewContext(), component);
             }
         }
 

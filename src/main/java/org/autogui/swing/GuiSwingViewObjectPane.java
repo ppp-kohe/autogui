@@ -106,7 +106,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
     public void createSubView(GuiMappingContext subContext, ObjectPane pane, GuiSwingView view) {
         JComponent subComp = view.createView(subContext, pane::getSpecifier);
         if (subComp != null) {
-            pane.addSubComponent(subComp, view.isComponentResizable(subContext));
+            pane.addSubComponent(subComp, view.isComponentResizable(subContext), subContext);
         }
     }
 
@@ -114,7 +114,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
                                 List<GuiSwingViewCollectionTable.CollectionTable> tables) {
         Action act = action.createAction(subContext, pane, tables);
         if (act != null) {
-            pane.addAction(act);
+            pane.addAction(act, subContext);
         }
     }
 
@@ -155,6 +155,10 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         protected List<JSplitPane> splitPanes = new ArrayList<>();
         protected SplitPreferencesUpdater preferencesUpdater;
         protected SettingsWindow.LabelGroup labelGroup;
+
+        /** recording mapping between prop (context) name to subcomponent
+         * @since 1.5 */
+        protected Map<String, JComponent> childContextToComponents = new HashMap<>();
 
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
@@ -262,6 +266,17 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             viewClock.isOlderWithSet(clock);
         }
 
+        /**
+         * adding a child component
+         * @param component the component for the subContext
+         * @param resizable true if the component is resizable
+         * @param subContext a target child of the context of the pane
+         * @since 1.5
+         */
+        public void addSubComponent(JComponent component, boolean resizable, GuiMappingContext subContext) {
+            childContextToComponents.put(subContext.getName(), component);
+            addSubComponent(component, resizable);
+        }
 
         public void addSubComponent(JComponent component, boolean resizable) {
             if (resizable) {
@@ -332,16 +347,63 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             return horizontal ? size.getWidth() : size.getHeight();
         }
 
-        public void addAction(Action action) {
+        /**
+         * adding the action created from subContext
+         * @param action the action for subContext
+         * @param subContext a child context of the context of the pane
+         * @since 1.5
+         */
+        public void addAction(Action action, GuiMappingContext subContext) {
+            SearchTextField field = getTargetForTextAction(subContext);
+            if (field != null) {
+                addActionAsTextAction(field, action);
+            } else {
+                addAction(action);
+            }
+        }
+
+        /**
+         * obtains action target for a sub-context.
+         *  if the action is "xyzAction" then, searches the "xyz" property, and it is a {@link SearchTextField},
+         *   then it can combine the action and the field as like [ field [action] ]
+         * @param subContext the context of the action
+         * @return non-null target-field if exists, or null
+         */
+        protected SearchTextField getTargetForTextAction(GuiMappingContext subContext) {
+            String name = subContext.getName();
+            String suffix = "Action";
+            if (name.length() > suffix.length() && name.endsWith(suffix)) { //xyzAction -> for property xyz
+                String targetName = name.substring(0, name.length() - suffix.length());
+                JComponent childComponent = childContextToComponents.get(targetName);
+                if (childComponent instanceof NamedPane) {
+                    childComponent = ((NamedPane) childComponent).getContentPane();
+                }
+                if (childComponent instanceof SearchTextField) {
+                    return (SearchTextField) childComponent;
+                }
+            }
+            return null;
+        }
+
+        private void addActionAsTextAction(SearchTextField targetText, Action action) {
+            putActionMap(action);
+            targetText.getButtonsPane().add(new SearchTextActionButton(action), 0);
+        }
+
+        private void putActionMap(Action action) {
             Object name = action.getValue(Action.NAME);
             if (name != null) {
                 getActionMap().put(name, action);
             }
+            actions.add(action);
+        }
+
+        public void addAction(Action action) {
+            putActionMap(action);
             if (actionToolBar == null) {
                 initActionToolBar();
             }
             actionToolBar.add(new GuiSwingIcons.ActionButton(action));
-            actions.add(action);
         }
 
         public void initActionToolBar() {
@@ -449,6 +511,29 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         @Override
         public void prepareForRefresh() {
             viewClock.clear();
+        }
+    }
+
+    /**
+     * button used for a buttonPane member of {@link SearchTextField}
+     * @since 1.5
+     */
+    public static class SearchTextActionButton extends GuiSwingIcons.ActionButton {
+        public static final long serialVersionUID = -1;
+        public SearchTextActionButton(Action a) {
+            super(a);
+            setBorder(BorderFactory.createEmptyBorder());
+            setMargin(new Insets(0, 0, 0, 0));
+            setHideActionText(true);
+            updateIcon(this::getIcon, this::setIcon);
+            updateIcon(this::getPressedIcon, this::setPressedIcon);
+        }
+
+        private void updateIcon(Supplier<Icon> getter, Consumer<Icon> setter) {
+            Icon icon = getter.get();
+            if (icon != null) {
+                setter.accept(new SearchTextFieldFilePath.IconWrapper(icon, 2 * icon.getIconWidth() / 3)); // 2/3 size
+            }
         }
     }
 

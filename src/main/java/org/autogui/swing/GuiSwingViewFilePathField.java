@@ -79,7 +79,6 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
             initEditable();
             initContextUpdate();
             initValue();
-            initPopup();
         }
 
         public void initPopup() {

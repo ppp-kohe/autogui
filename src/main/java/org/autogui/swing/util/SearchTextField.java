@@ -59,6 +59,9 @@ public class SearchTextField extends JComponent {
 
     protected PopupExtensionText popup;
     protected JButton popupButton;
+    /** parent component of {@link #popupButton}
+     * @since 1.5 */
+    protected JComponent buttonsPane; //right-hand-side, including popupButton
     protected List<Object> menuItemsSource;
 
     protected List<PopupCategorized.CategorizedMenuItem> currentSearchedItems;
@@ -339,7 +342,35 @@ public class SearchTextField extends JComponent {
         setLayout(new BorderLayout());
         add(icon, BorderLayout.WEST);
         add(field, BorderLayout.CENTER);
-        add(popupButton, BorderLayout.EAST);
+
+        initLayoutButtonsPane();
+        if (buttonsPane != null) {
+            initLayoutButtons()
+                    .forEach(buttonsPane::add);
+            add(buttonsPane, BorderLayout.EAST);
+        }
+    }
+
+    /**
+     * setting up {@link #buttonsPane}
+     * @since 1.5
+     */
+    protected void initLayoutButtonsPane() {
+        int g = UIManagerUtil.getInstance().getScaledSizeInt(5);
+        this.buttonsPane = new JPanel(new FlowLayout(FlowLayout.LEFT, g, 0));
+        this.buttonsPane.setBorder(BorderFactory.createEmptyBorder());
+        buttonsPane.setOpaque(false);
+    }
+
+    /**
+     * {@link #popupButton} by default
+     * @return components added to {@link #buttonsPane}
+     * @since 1.5
+     */
+    protected List<? extends JComponent> initLayoutButtons() {
+        return popupButton == null ?
+                Collections.emptyList() :
+                Collections.singletonList(popupButton);
     }
 
     public void initBackgroundPainter() {
@@ -391,6 +422,14 @@ public class SearchTextField extends JComponent {
 
     public JTextField getField() {
         return field;
+    }
+
+    /**
+     * @return the pane at west
+     * @since 1.5
+     */
+    public JComponent getButtonsPane() {
+        return buttonsPane;
     }
 
     public SearchTask getCurrentTask() {
@@ -465,10 +504,27 @@ public class SearchTextField extends JComponent {
                 currentTask = createSearchTask(text);
                 currentTask.execute();
             } else {
-                //immediate
                 setCurrentSearchedItems(
                         model.getCandidates(text, field.isEditable(), new SearchTextFieldPublisherEmpty()),
                         model.getSelection());
+            }
+        }
+        if (immediate) {
+            doActionButtons();
+        }
+    }
+
+
+    /**
+     * do click to {@link JButton} in {@link #buttonsPane} other than {@link #popupButton}.
+     * @since 1.5
+     */
+    protected void doActionButtons() {
+        if (buttonsPane != null && buttonsPane.isShowing()) {
+            for (Component child : buttonsPane.getComponents()) {
+                if (child instanceof JButton && child != popupButton) {
+                    ((JButton) child).doClick();
+                }
             }
         }
     }
