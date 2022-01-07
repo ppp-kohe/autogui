@@ -98,6 +98,25 @@ public class GuiTypeMemberAction extends GuiTypeMember {
         }
     }
 
+    /**
+     * obtaining the target of selection updater
+     * @return non-empty name from {@link GuiListSelectionUpdater#target()}, the suffix of the method name "select...", or null
+     * @since 1.5
+     */
+    public String getSelectionChangeTargetName() {
+        Method method = getMethod();
+        if (method != null && method.isAnnotationPresent(GuiListSelectionUpdater.class)) {
+            String tgt = method.getAnnotation(GuiListSelectionUpdater.class).target();
+            if (tgt != null && !tgt.isEmpty()) {
+                return tgt;
+            }
+        }
+        if (methodName != null) { //"selectXyz"
+            return new GuiTypeBuilder().getNameSuffix("select", methodName);
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         return "action(" + name + "," + returnType  +")";

@@ -115,11 +115,31 @@ public class GuiReprAction implements GuiRepresentation {
        //  because the element class can be used some other new classes.
        // List<Integer> and List<int[]> is intended for primitive elements
        //  which cannot have a new method and thus never contain GuiReprAction
-    public boolean isSelectionChangeRowIndicesAction(GuiMappingContext context) {
-        return GuiReprActionList.isSelectionChangeRowIndicesActionForActions(context);
+       */
+
+    /**
+     *  checking an action can be a selection updater for a table
+     * @param context the action context
+     * @param tableContext the linked table-context
+     * @return true if the target action returning <code>List&lt;Integer&gt;</code> with {@link GuiListSelectionUpdater#index()}=true
+     *          and the parent of tableContext is target of the action (specified by {@link GuiListSelectionUpdater#target()} or the method name "select...")
+     * @since 1.5
+     */
+    public boolean isSelectionChangeRowIndicesAction(GuiMappingContext context, GuiMappingContext tableContext) {
+        return GuiReprActionList.isSelectionChangeRowIndicesActionForActions(context) &&
+                GuiReprActionList.isSelectionChangeTargetForActions(context, tableContext);
     }
-    public boolean isSelectionChangeRowAndColumnIndicesAction(GuiMappingContext context) {
-        return GuiReprActionList.isSelectionChangeRowAndColumnIndicesActionForActions(context);
+
+    /**
+     *  checking an action can be a selection updater for a table
+     * @param context the action context
+     * @param tableContext the linked table-context
+     * @return true if the target action returning <code>List&lt;int[]&gt;</code> with {@link GuiListSelectionUpdater} with <code>index=true</code>,
+     *          and the parent of tableContext is target of the action (specified by {@link GuiListSelectionUpdater#target()} or the method name "select...")
+     * @since 1.5
+     */
+    public boolean isSelectionChangeRowAndColumnIndicesAction(GuiMappingContext context, GuiMappingContext tableContext) {
+        return GuiReprActionList.isSelectionChangeRowAndColumnIndicesActionForActions(context) &&
+                GuiReprActionList.isSelectionChangeTargetForActions(context, tableContext);
     }
-    */
 }

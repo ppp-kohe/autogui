@@ -276,6 +276,23 @@ public class GuiReprActionList implements GuiRepresentation {
                         getRowAndColumnIndicesType());
     }
 
+    /**
+     *  matching the action target name with the table property name (parent of the tableContext)
+     * @param context the action context
+     * @param tableContext the target table-context
+     * @return the target-name of the context (obtained from {@link GuiListSelectionUpdater#target()} or
+     *    the method name "select...") is equals to the table property name (parent name of the tableContext)
+     * @since 1.5
+     */
+    public static boolean isSelectionChangeTargetForActions(GuiMappingContext context, GuiMappingContext tableContext) {
+        String tgt = context.getTypeElementAsAction().getSelectionChangeTargetName();
+        if (tgt != null && tableContext.getParent() != null) { //tableContext.parent : property
+            return tableContext.getParent().getName().equals(tgt);
+        } else {
+            return false;
+        }
+    }
+
 
     @Override
     public String toString() {

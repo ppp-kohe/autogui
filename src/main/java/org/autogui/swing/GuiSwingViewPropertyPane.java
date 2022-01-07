@@ -371,16 +371,15 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
 
         /**
          * @return null
-         *        meaning the named pane will never become key-binding target,
-         *        unless the type-element is explicitly attached a keyStroke annotation.
+         *        meaning the named pane will never become key-binding target
          */
         @Override
         public KeyStroke getSwingFocusKeyStroke() {
-            if (getSwingViewContext().isAcceleratorKeyStrokeSpecified()) {
-                return GuiSwingKeyBinding.getKeyStroke(getSwingViewContext().getAcceleratorKeyStroke());
-            } else {
+//            if (getSwingViewContext().isAcceleratorKeyStrokeSpecified()) {
+//                return GuiSwingKeyBinding.getKeyStroke(getSwingViewContext().getAcceleratorKeyStroke());
+//            } else {
                 return null;
-            }
+//            }
         }
 
         @Override

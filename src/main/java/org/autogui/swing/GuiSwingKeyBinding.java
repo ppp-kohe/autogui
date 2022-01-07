@@ -378,7 +378,7 @@ public class GuiSwingKeyBinding {
                 }
             }
             if (c instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane) c).requestSwingViewFocus();
+                ((GuiSwingView.ValuePane<?>) c).requestSwingViewFocus();
             }
         }
     }
@@ -668,8 +668,8 @@ public class GuiSwingKeyBinding {
         public void process() {
             show(pane.asSwingViewComponent());
             if (action != null && action.isEnabled()) {
+                System.err.println("Executing by Key: " + getDescription());
                 action.actionPerformed(null);
-                System.err.println("Executed by Key: " + getDescription());
             }
         }
 

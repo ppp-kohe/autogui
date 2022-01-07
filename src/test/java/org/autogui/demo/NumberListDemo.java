@@ -6,6 +6,7 @@ import org.autogui.swing.AutoGuiShell;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -83,6 +84,12 @@ public class NumberListDemo {
             return selectedIndexes.stream()
                     .map(i -> i + 1 >= integers.size() ? 0 : i + 1)
                     .collect(Collectors.toList());
+        }
+
+        @GuiListSelectionUpdater(index = true, target = "integers")
+        @GuiIncluded
+        public List<Integer> selectTop() {
+            return Collections.singletonList(0);
         }
     }
 
@@ -167,6 +174,12 @@ public class NumberListDemo {
             return selectedIndexes.stream()
                     .map(i -> i + 1 >= (propName.equals("floats") ? floats : doubles).size() ? 0 : i + 1)
                     .collect(Collectors.toList());
+        }
+
+        @GuiListSelectionUpdater(index = true, target = "floats")
+        @GuiIncluded
+        public List<Integer> selectFloatsTop() {
+            return Collections.singletonList(0);
         }
     }
 
