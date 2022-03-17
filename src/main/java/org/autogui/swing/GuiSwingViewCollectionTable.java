@@ -527,7 +527,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 try {
                     //re-selection
                     changeSelection(selectedModelRowsIndices, change);
-                    requestFocus(); //focusing
+                    requestFocusInWindow(); //focusing
                 } finally {
                     if (autoSelection) {
                         autoSelectionDepth--;
@@ -625,8 +625,11 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (sel.length > 0) {
                 int n = sel[0];
                 Rectangle cellRec = getCellRect(n, 0, true);
-                visiRec.y = cellRec.y;
-                scrollRectToVisible(visiRec);
+                int cy = (int) cellRec.getCenterY();
+                if (cy < visiRec.y || visiRec.getMaxY() < cy) {
+                    visiRec.y = cellRec.y;
+                    scrollRectToVisible(visiRec);
+                }
             }
         }
 

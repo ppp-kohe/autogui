@@ -78,7 +78,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             this.contextIndex = ((GuiReprCollectionElement) parentRepr).getFixedColumnIndex(context.getParent(), context);
         }
 
-        int size = UIManagerUtil.getInstance().getScaledSizeInt(64);
+        int size = UIManagerUtil.getInstance().getScaledSizeInt(32);
         setTableColumn(new TableColumn(0, size, renderer, editorForColumn()));
         getTableColumn().setMinWidth(size);
         getTableColumn().setHeaderValue(context.getDisplayName());
@@ -623,6 +623,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn
                 return new TableTargetInvocationAction(a, target,
                         (e, t) -> ((PopupExtensionText.TextPasteAllAction) a)
                                 .pasteLines(t::setSelectedCellValuesLoop));
+
+            } else if (a instanceof PopupExtensionText.TextClearAction) {
+                return new TableTargetInvocationAction(a, target,
+                        (e, t) -> ((PopupExtensionText.TextClearAction) a)
+                                .clearLines(t::setSelectedCellValuesLoop));
 
             } else if (a instanceof PopupExtensionText.TextOpenBrowserAction) {
                 return new TableTargetInvocationAction(a, target,

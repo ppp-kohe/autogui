@@ -160,6 +160,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
                         new GuiSwingHistoryMenu<>(this, getSwingViewContext()),
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new GuiSwingTableColumnString.LabelTextPasteAllAction(this),
+                        new GuiSwingTableColumnString.LabelTextClearAction(this, "0"),
                         new GuiSwingTableColumnString.LabelTextLoadAction(this),
                         new GuiSwingTableColumnString.ColumnLabelTextSaveAction(this)
                     ), getEditorActions(), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));

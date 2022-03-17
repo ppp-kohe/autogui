@@ -16,6 +16,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
@@ -877,9 +878,28 @@ public interface GuiSwingView extends GuiSwingElement {
      * @param handler the transfer-handler to be set
      */
     static void setupTransferHandler(JComponent component, TransferHandler handler) {
+        setupTransferHandler(component, handler, new Integer[0]);
+    }
+
+    /**
+     *
+     * @param component the target component
+     * @param handler the transfer-handler to be set
+     * @param modifierKeys {@link KeyEvent#VK_SHIFT}, {@link KeyEvent#VK_META}, {@link KeyEvent#VK_ALT} or {@link KeyEvent#VK_ALT_GRAPH}
+     * @since 1.5
+     */
+    static void setupTransferHandler(JComponent component, TransferHandler handler, Integer... modifierKeys) {
         component.setTransferHandler(handler);
         DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(component, DnDConstants.ACTION_COPY, e -> {
-            component.getTransferHandler().exportAsDrag(component, e.getTriggerEvent(), TransferHandler.COPY);
+            List<Integer> ks = Arrays.asList(modifierKeys);
+            InputEvent ie = e.getTriggerEvent();
+            if (ks.isEmpty()
+                    || (ks.contains(KeyEvent.VK_SHIFT) && ie.isShiftDown())
+                    || (ks.contains(KeyEvent.VK_META) && ie.isMetaDown())
+                    || (ks.contains(KeyEvent.VK_ALT) && ie.isAltDown())
+                    || (ks.contains(KeyEvent.VK_ALT_GRAPH) && ie.isAltGraphDown())) {
+                component.getTransferHandler().exportAsDrag(component, ie, TransferHandler.COPY);
+            }
         });
         if (!(component instanceof JTextComponent)) {
             setupCopyAndPasteActions(component);

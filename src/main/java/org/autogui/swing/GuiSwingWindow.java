@@ -23,6 +23,8 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     protected GuiSwingPreferences.WindowPreferencesUpdater preferencesUpdater;
     /** @since 1.1 */
     protected boolean exitAfterDispose;
+    /** @since 1.5 */
+    protected Image appIcon;
 
     public static GuiSwingWindow createForObject(Object o) {
         return creator()
@@ -175,8 +177,9 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
 
     protected void initIcon() {
         int wh = UIManagerUtil.getInstance().getScaledSizeInt(256);
-        new ApplicationIconGenerator(wh, wh, GuiMappingContext.nameSplit(contextRootPane.getContext().getName(), true))
-                .setAppIcon(this);
+        ApplicationIconGenerator gen = new ApplicationIconGenerator(wh, wh, GuiMappingContext.nameSplit(contextRootPane.getContext().getName(), true));
+        appIcon = gen.getImage();
+        updateAppIcon();
     }
 
     protected void initPrefsUpdater() {
@@ -214,6 +217,15 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     public void setApplicationRoot(boolean applicationRoot) {
         //this.applicationRoot = applicationRoot;
         contextRootPane.setApplicationRoot(applicationRoot);
+        updateAppIcon();
+    }
+
+    private void updateAppIcon() {
+        if (isApplicationRoot() && appIcon != null) {
+            ApplicationIconGenerator.setAppIcon(appIcon);
+        } else if (appIcon != null) {
+            setIconImage(appIcon);
+        }
     }
 
     /**

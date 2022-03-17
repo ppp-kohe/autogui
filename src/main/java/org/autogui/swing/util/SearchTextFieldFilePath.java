@@ -70,6 +70,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
                     new PopupExtensionText.TextCopyAction(field),
                     new FileCopyAllAction(this),
                     new FilePasteAction(this),
+                    new FileClearAction(this),
                     new PopupExtensionText.TextSelectAllAction(field),
                     new DesktopOpenAction(this),
                     new DesktopRevealAction(this),
@@ -294,6 +295,43 @@ public class SearchTextFieldFilePath extends SearchTextField {
         @Override
         public String getSubCategory() {
             return PopupExtension.MENU_SUB_CATEGORY_PASTE;
+        }
+    }
+
+    /**
+     * action for clearing the field
+     * @since 1.5
+     */
+    public static class FileClearAction extends FileListEditAction implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
+
+        public FileClearAction(SearchTextFieldFilePath component) {
+            super("Clear Value", component);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return component.getField().isEditable();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            component.setFile(null);
+        }
+
+        @Override
+        public void run(Consumer<List<Path>> files) {
+            files.accept(null);
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_DELETE;
         }
     }
 

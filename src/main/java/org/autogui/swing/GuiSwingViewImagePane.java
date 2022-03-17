@@ -95,6 +95,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             initValue();
             initPopup();
             initDragDrop();
+            initDragScroll();
             initFocus();
         }
 
@@ -160,9 +161,45 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         public void initDragDrop() {
-            GuiSwingView.setupTransferHandler(this, new ImageTransferHandler(this));
+            GuiSwingView.setupTransferHandler(this, new ImageTransferHandler(this), KeyEvent.VK_SHIFT);
         }
 
+        /**
+         * adding listeners for supporting drag scrolling
+         * @since 1.5
+         */
+        public void initDragScroll() {
+            MouseAdapter dragHandler = new MouseAdapter() {
+                Point dragStart;
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    dragStart = e.getLocationOnScreen();
+                }
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    Point current = e.getLocationOnScreen();
+                    if (dragStart != null && isParentViewport()) {
+                        int dx = current.x - dragStart.x;
+                        int dy = current.y - dragStart.y;
+                        JViewport viewport = (JViewport) getParent();
+                        Dimension extentSize = viewport.getExtentSize();
+                        Dimension size = viewport.getViewSize();
+                        Point newPos = viewport.getViewPosition();
+                        if (size.width > extentSize.width) {
+                            newPos.x = Math.min(size.width, Math.max(0, newPos.x - dx));
+                        }
+                        if (size.height > extentSize.height) {
+                            newPos.y = Math.min(size.height, Math.max(0, newPos.y - dy));
+
+                        }
+                        viewport.setViewPosition(newPos);
+                    }
+                    dragStart = current;
+                }
+            };
+            addMouseListener(dragHandler);
+            addMouseMotionListener(dragHandler);
+        }
 
         public void initFocus() {
             setFocusable(true);
@@ -226,6 +263,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                                         PopupExtension.MENU_CATEGORY_VIEW, ""),
                                 new ImageCopyAction(this::getImage, context),
                                 new ImagePasteAction(this),
+                                new ImageClearAction(this),
                                 new ImageSaveAction(this),
                                 new ImageLoadAction(this),
                                 new HistoryMenuImage(this, context)),
@@ -299,8 +337,19 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
                 Dimension size = (imageScale == null ? imageSize : imageScale.getScaledImageSize(imageSize, paneSize));
 
-                int left = (paneSize.width - size.width) / 2;
-                int top = (paneSize.height - size.height) / 2;
+                //if the image's size exceeds the view size, its starting position becomes 0, otherwise a half of diff.
+                int left;
+                if (size.width > paneSize.width) {
+                    left = 0;
+                } else {
+                    left = (paneSize.width - size.width) / 2;
+                }
+                int top;
+                if (size.height > paneSize.height) {
+                    top = 0;
+                } else {
+                    top = (paneSize.height - size.height) / 2;
+                }
 
                 try {
                     while (!g.drawImage(image, left, top, size.width, size.height, this)) {
@@ -366,11 +415,31 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             repaint();
         }
 
-        public Dimension getViewSize() {
-            if (getParent() != null && getParent() instanceof JViewport) {
+        public Dimension getViewSize() { //it means "extentSize"
+            if (isParentViewport()) {
                 return getParent().getSize();
             } else {
                 return getSize();
+            }
+        }
+
+        private boolean isParentViewport() {
+            return getParent() != null && getParent() instanceof JViewport;
+        }
+
+        /**
+         * @return the parent viewport's viewPosition or (0,0)
+         * @since 1.5
+         */
+        public Point getViewPosition() {
+            if (isParentViewport()) {
+                Point p = ((JViewport) getParent()).getViewPosition();
+                if (p == null) {
+                    p = new Point();
+                }
+                return p;
+            } else {
+                return new Point();
             }
         }
 
@@ -913,6 +982,62 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             return PopupExtension.MENU_SUB_CATEGORY_PASTE;
         }
     }
+
+    /**
+     * action for clearing the image
+     * @since 1.5
+     */
+    //TODO set null ?
+    public static class ImageClearAction extends AbstractAction implements TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
+
+        protected PropertyImagePane pane;
+
+        public ImageClearAction(PropertyImagePane pane) {
+            putValue(NAME, "Clear");
+            this.pane = pane;
+        }
+
+        BufferedImage image;
+
+        public BufferedImage getClearImage() {
+            if (image == null) {
+                image = new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR);
+                image.setRGB(0, 0, 0xFFFF_FFFF);
+            }
+            return image;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return pane != null && pane.isSwingEditable();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            clear(pane::setImage);
+        }
+
+        public void clear(Consumer<Image> c) {
+            c.accept(getClearImage());
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            clear(img -> target.setCellValues(target.getSelectedCellIndices(), r -> img));
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_PASTE;
+        }
+    }
+
 
     public static class ImageSaveAction extends ImageCopyAction {
         private static final long serialVersionUID = 1L;

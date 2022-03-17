@@ -90,11 +90,26 @@ public class ApplicationIconGenerator {
 
     public void setAppIcon(JFrame frame) {
         BufferedImage img = getImage();
-        setAppIcon(frame, img);
+        frame.setIconImage(img);
+        setAppIcon(img);
     }
 
-    private void setAppIcon(JFrame frame, Image image) {
-        frame.setIconImage(image);
+    /**
+     * setting the frame icon
+     * @param frame the target frame
+     * @since 1.5
+     */
+    public void setFrameIcon(JFrame frame) {
+        BufferedImage img = getImage();
+        frame.setIconImage(img);
+    }
+
+    /**
+     * setting-up the app-icon to the target-bar if supported
+     * @param image the icon-image
+     * @since 1.5
+     */
+    public static void setAppIcon(Image image) {
         if (Taskbar.isTaskbarSupported()) {
             Taskbar bar = Taskbar.getTaskbar();
             if (bar.isSupported(Taskbar.Feature.ICON_IMAGE)) {
@@ -105,7 +120,8 @@ public class ApplicationIconGenerator {
 
     @Deprecated
     public void setMacApplicationIcon(JFrame frame, Image image) {
-        setAppIcon(frame, image);
+        frame.setIconImage(image);
+        setAppIcon(image);
     }
 
     public BufferedImage getImage() {

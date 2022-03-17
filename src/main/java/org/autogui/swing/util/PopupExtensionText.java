@@ -161,6 +161,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                 new TextCopyAllAction(textComponent),
                 new TextPasteAction(textComponent),
                 new TextPasteAllAction(textComponent),
+                new TextClearAction(textComponent),
                 new TextSelectAllAction(textComponent),
                 new TextLoadAction(textComponent),
                 new TextSaveAction(textComponent),
@@ -525,6 +526,45 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         @Override
         public String getSubCategory() {
             return MENU_SUB_CATEGORY_PASTE;
+        }
+    }
+
+    /**
+     * action for clearing the field
+     * @since 1.5
+     */
+    public static class TextClearAction extends AbstractAction
+            implements PopupCategorized.CategorizedMenuItemAction {
+        private static final long serialVersionUID = 1L;
+        protected JTextComponent field;
+        public TextClearAction(JTextComponent field) {
+            putValue(NAME, "Clear");
+            this.field = field;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return field.isEditable();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            field.setText("");
+        }
+
+        public void clearLines(Consumer<List<String>> setter) {
+            setter.accept(Collections.singletonList(""));
+        }
+
+
+        @Override
+        public String getCategory() {
+            return MENU_CATEGORY_EDIT;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return MENU_SUB_CATEGORY_DELETE;
         }
     }
 

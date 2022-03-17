@@ -64,6 +64,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                         new GuiSwingHistoryMenu<>(this, getSwingViewContext()),
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new LabelTextPasteAllAction(this),
+                        new LabelTextClearAction(this),
                         new LabelTextLoadAction(this),
                         new ColumnLabelTextSaveAction(this),
                         new PopupExtensionText.TextOpenBrowserAction(this)
@@ -149,6 +150,45 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                             lines.stream()
                                 .map(s -> getValueFromString(label, s))
                                 .collect(Collectors.toList())));
+        }
+    }
+
+    /**
+     * action for clearing the label
+     * @since 1.5
+     */
+    public static class LabelTextClearAction extends PopupExtensionText.TextClearAction
+        implements TableTargetColumnAction {
+        private static final long serialVersionUID = 1L;
+        protected GuiSwingView.ValuePane<?> label;
+        protected String clearValue;
+        public LabelTextClearAction(GuiSwingView.ValuePane<?> label) {
+            this(label, "");
+        }
+        public LabelTextClearAction(GuiSwingView.ValuePane<?> label, String clearValue) {
+            super(null);
+            this.label = label;
+            this.clearValue = clearValue;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return label != null && label.isSwingEditable();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            setSwingViewValueWithUpdateFromString(label, getClearValue());
+        }
+
+        protected String getClearValue() {
+            return clearValue;
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, TableTargetColumn target) {
+            target.setSelectedCellValuesLoop(
+                        Collections.singletonList(getValueFromString(label, getClearValue())));
         }
     }
 

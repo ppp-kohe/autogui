@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -237,7 +238,8 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
                         Arrays.asList(
                                 infoLabel,
                                 new ContextRefreshAction(context, this),
-                                new ToStringCopyAction(this, context)),
+                                new ToStringCopyAction(this, context),
+                                new FlipSplitOrientationAction(this::getSplitPanes)),
                         GuiSwingJsonTransfer.getActions(this, context),
                         getActions());
             }
@@ -318,6 +320,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             double nextWidth = getSize(horizontal, right);
 
             JSplitPane pane = new JSplitPane(horizontal ? JSplitPane.HORIZONTAL_SPLIT : JSplitPane.VERTICAL_SPLIT, left, right);
+            pane.setOneTouchExpandable(true);
             pane.setOpaque(false);
             pane.setBorder(BorderFactory.createEmptyBorder());
             pane.setDividerLocation(prevWidth / (prevWidth + nextWidth));
@@ -511,6 +514,32 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         @Override
         public void prepareForRefresh() {
             viewClock.clear();
+        }
+    }
+
+    /**
+     * action for flipping orientation of all split-panes
+     * @since 1.5
+     */
+    public static class FlipSplitOrientationAction extends AbstractAction {
+        protected Supplier<List<JSplitPane>> splits;
+
+        public FlipSplitOrientationAction(Supplier<List<JSplitPane>> splits) {
+            this.splits = splits;
+            putValue(NAME, "Flip Split Orientation");
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return !splits.get().isEmpty();
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            splits.get()
+                    .forEach(split -> split.setOrientation(
+                            split.getOrientation() == JSplitPane.HORIZONTAL_SPLIT ?
+                                JSplitPane.VERTICAL_SPLIT : JSplitPane.HORIZONTAL_SPLIT));
         }
     }
 

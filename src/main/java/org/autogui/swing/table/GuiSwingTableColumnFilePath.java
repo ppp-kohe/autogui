@@ -150,6 +150,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
                         new GuiSwingViewLabel.LabelToStringCopyAction(this),
                         new ColumnFileCopyAction(this),
                         new GuiSwingTableColumnString.LabelTextPasteAllAction(this),
+                        new GuiSwingTableColumnString.LabelTextClearAction(this),
                         new GuiSwingTableColumnString.LabelTextLoadAction(this),
                         new GuiSwingTableColumnString.ColumnLabelTextSaveAction(this),
                         new ColumnDesktopOpenAction(this),
