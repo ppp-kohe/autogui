@@ -205,6 +205,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(String value) {
+            GuiSwingView.updateViewClockSync(viewClock, context);
             viewClock.increment();
             updateFromGui(setValueWithoutUpdateField(value), viewClock);
         }

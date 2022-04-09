@@ -349,6 +349,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
+            GuiSwingView.updateViewClockSync(viewClock, context);
             viewClock.increment();
             GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, true, viewClock);
         }
@@ -487,6 +488,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
+            GuiSwingView.updateViewClockSync(viewClock, context);
             viewClock.increment();
             GuiSwingViewDocumentEditor.setSwingViewValue(this, specifierManager, context, value, true, viewClock);
         }

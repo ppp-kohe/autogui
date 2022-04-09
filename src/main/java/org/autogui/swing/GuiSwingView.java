@@ -340,6 +340,16 @@ public interface GuiSwingView extends GuiSwingElement {
     ///////////////////////////////
 
     /**
+     * obtains context clock and set to the viewClock if the viewClock is older:
+     *  typically used by {@link ValuePane#setSwingViewValueWithUpdate(Object)}
+     * @param viewClock the changed view-clock
+     * @param context this source context
+     */
+    static void updateViewClockSync(GuiTaskClock viewClock, GuiMappingContext context) {
+        viewClock.isOlderWithSet(context.getContextClock());
+    }
+
+    /**
      * send the value to the context of the pane by {@link GuiReprValue#updateFromGui(GuiMappingContext, Object, GuiReprValue.ObjectSpecifier, GuiTaskClock)},
      *    with copying the clock and the specifier of the pane in the caller's thread.
      * @param pane the source pane

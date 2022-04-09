@@ -301,6 +301,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
                 if (isProperty() && value instanceof GuiReprValue.NamedValue) {
                     value = ((GuiReprValue.NamedValue) value).value;
                 }
+                GuiSwingView.updateViewClockSync(viewClock, getSwingViewContext());
                 viewClock.increment();
                 getContentPaneAsValuePane().setSwingViewValueWithUpdate(value);
             }

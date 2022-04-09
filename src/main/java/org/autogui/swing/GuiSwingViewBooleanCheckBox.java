@@ -198,6 +198,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(Boolean value) {
+            GuiSwingView.updateViewClockSync(viewClock, context);
             viewClock.increment();
             setSwingViewValueWithUpdateWithoutClock(value);
         }

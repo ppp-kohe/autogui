@@ -435,6 +435,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(Object value) {
+            GuiSwingView.updateViewClockSync(viewClock, context);
             updateFromGui(value, viewClock.increment());
             revalidate();
             repaint();
@@ -701,6 +702,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         public void applyTo(JSplitPane pane) {
             pane.setDividerLocation(dividerLocation);
+            pane.setOrientation(horizontal ? JSplitPane.HORIZONTAL_SPLIT : JSplitPane.VERTICAL_SPLIT);
         }
 
         public void set(JSplitPane pane) {

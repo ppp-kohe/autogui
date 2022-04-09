@@ -457,6 +457,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(Image value) {
+            GuiSwingView.updateViewClockSync(viewClock, context);
             setImage(value);
         }
 

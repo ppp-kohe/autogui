@@ -430,6 +430,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void setSwingViewValueWithUpdate(List<?> value) {
+            GuiSwingView.updateViewClockSync(viewClock, context);
             setSwingViewValue(value);
             updateFromGui(value, viewClock);
         }
