@@ -282,6 +282,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     }
 
     /**
+     * the menu listener for calling {@link PopupExtension#setupMenu()}
      * @since 1.2
      */
     public static class PopupMenuListenerForSetup implements PopupMenuListener {
@@ -401,6 +402,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     }
 
     /**
+     * custom popup-menu for fixing display location issue: overriding setLocation
      * @since 1.3
      */
     public static class DefaultPopupMenu extends JPopupMenu {

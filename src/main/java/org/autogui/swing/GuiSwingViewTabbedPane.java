@@ -19,11 +19,11 @@ import java.util.function.Supplier;
 /**
  * a swing view for {@link GuiReprObjectTabbedPane}
  *
- * <h3>swing-value</h3>
+ * <h2>swing-value</h2>
  *  {@link ObjectTabbedPane#getSwingViewValue()}: Object.
  *
  *
- * <h3>preferences</h3>
+ * <h2>preferences</h2>
  * <pre>
  *     "$tab" {
  *         "selectedIndex" : Integer

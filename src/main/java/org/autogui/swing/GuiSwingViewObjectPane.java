@@ -21,22 +21,22 @@ import java.util.stream.Collectors;
 /**
  * a swing view for {@link GuiReprObjectPane}
  *
- * <h3>swing-value</h3>
+ * <h2>swing-value</h2>
  * {@link ObjectPane#getSwingViewValue()}:
  *  latest set raw-object.
  *
  *  Currently, {@link ObjectPane#setSwingViewValue(Object)} also set context's value.
  *    TODO omit to update?
  *
- * <h3>history-value</h3>
+ * <h2>history-value</h2>
  *  supported.
  *
- * <h3>string-transfer</h3>
+ * <h2>string-transfer</h2>
  * no-transfer-handler.
  *  supported by {@link GuiSwingView.ToStringCopyAction} and
  *     {@link GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}.
  *
- * <h3>preferences</h3>
+ * <h2>preferences</h2>
  * <pre>
  *     "$split" : [ {
  *         "dividerLocation": Integer,

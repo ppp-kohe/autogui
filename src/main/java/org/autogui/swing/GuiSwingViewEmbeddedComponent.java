@@ -19,16 +19,16 @@ import java.util.function.Supplier;
 /**
  * a swing view for {@link GuiReprEmbeddedComponent}
  *
- * <h3>swing-value</h3>
+ * <h2>swing-value</h2>
  * {@link PropertyEmbeddedPane#getSwingViewValue()}:
  * {@link JComponent} or
  *   {@link SwingDeferredRunner.TaskResultFuture} unwrapped by
  *      {@link GuiReprEmbeddedComponent#toUpdateValue(GuiMappingContext, Object, Consumer)}
  *
- * <h3>history-value</h3>
+ * <h2>history-value</h2>
  * unsupported
  *
- * <h3>string-transfer</h3>
+ * <h2>string-transfer</h2>
  * unsupported.
  */
 public class GuiSwingViewEmbeddedComponent implements GuiSwingView {

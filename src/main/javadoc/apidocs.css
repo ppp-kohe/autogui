@@ -1,0 +1,53 @@
+
+.top-nav,
+.ui-autocomplete-category
+ {
+  background-color: rgb(93,157,170);
+  background-image: linear-gradient(120deg, rgb(141,123,147), rgb(93,157,170));
+}
+
+div.table-tabs > button.table-tab {
+  background-color: rgb(141,123,147);
+}
+
+body, button, dt, dd, div.block,
+dl.notes > dt,
+dl.notes > dd,
+div.block,
+.deprecation-block,
+.preview-block,
+.details.invalid-tag,
+span.invalid-tag ,
+button.snippet-copy span
+{
+    font-family:'Helvetica Neue', 'DejaVu Sans', Helvetica, Arial, sans-serif;
+}
+
+pre,
+code, tt,
+dt code,
+.summary-table dt code,
+.module-signature, .package-signature, .type-signature, .member-signature,
+{
+    font-family:Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+}
+
+/* ------------------- for older version */
+
+div.bottomNav, div.topNav {
+  background-color: rgb(93,157,170);
+  background-image: linear-gradient(120deg, rgb(141,123,147), rgb(93,157,170));
+}
+
+.contentContainer .description dl dd,
+.contentContainer .details dl dd,
+.serializedFormContainer dl dd,
+.deprecationBlock
+ {
+    font-family:'Helvetica Neue', 'DejaVu Sans', Helvetica, Arial, sans-serif;
+}
+
+table tr td dt code,
+{
+    font-family:Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+}

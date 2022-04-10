@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 /**
  * a swing view for {@link GuiReprValueNumberSpinner}
  *
- * <h3>swing-value</h3>
+ * <h2>swing-value</h2>
  * {@link PropertyNumberSpinner#getSwingViewValue()}:
  *  spinner-model's value as {@link Number}, but the value type is actually Object because
  *     it includes {@link GuiReprValueNumberSpinner.Infinity}.
@@ -45,16 +45,16 @@ import java.util.stream.Collectors;
  *        {@link PropertyNumberSpinner#updateNumber(List)}
  *
  *
- * <h3>history-value</h3>
+ * <h2>history-value</h2>
  *  supported.
  *
- * <h3>string-transfer</h3>
+ * <h2>string-transfer</h2>
  *  {@link NumberTransferHandler}.
  *   formatted by formatter of {@link PropertyNumberSpinner#getEditorField()}
  *      which is actually a {@link TypedNumberFormatter} with format returned
  *        by {@link GuiReprValueNumberSpinner.NumberType#getFormat()}
  *
- * <h3>preference</h3>
+ * <h2>preference</h2>
  *   <pre>
  *       {
  *           "maximum" : String,

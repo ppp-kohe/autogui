@@ -25,15 +25,15 @@ import java.util.function.Supplier;
 /**
  * a fallback swing view for {@link GuiReprValue}
  *
- * <h3>swing-value</h3>
+ * <h2>swing-value</h2>
  * {@link PropertyLabel#getSwingViewValue()}
  * latest set value as (read-only) Object.
  *   {@link PropertyLabel#setSwingViewValueWithUpdate(Object)} just causes GUI update without updating the context's value.
  *
- *  <h3>history-value</h3>
+ *  <h2>history-value</h2>
  *  unsupported.
  *
- *  <h3>string-transfer</h3>
+ *  <h2>string-transfer</h2>
  *  {@link LabelTransferHandler}.
  *   exporting-only {@link GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}
  */

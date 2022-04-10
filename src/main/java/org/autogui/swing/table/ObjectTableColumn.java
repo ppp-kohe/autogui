@@ -384,6 +384,7 @@ public class ObjectTableColumn {
     //////////////
 
     /**
+     * supporting value conversion like Path to File
      * @since 1.1
      */
     public static class TableTargetColumnForObjectColumn implements GuiReprCollectionTable.TableTargetColumn {

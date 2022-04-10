@@ -24,17 +24,17 @@ import java.util.function.Supplier;
 /**
  * a swing view for {@link GuiReprValueImagePane}
  *
- * <h3>swing-value</h3>
+ * <h2>swing-value</h2>
  * {@link PropertyImagePane#getSwingViewValue()}:
  * latest set image as {@link Image}
  *
  * <p>
  *   updating is caused by {@link PropertyImagePane#setImage(Image)}
  *
- * <h3>history-value</h3>
+ * <h2>history-value</h2>
  * supported.
  *
- * <h3>string-transfer</h3>
+ * <h2>string-transfer</h2>
  * unsupported. but it can directly handle an image-data, or a file in a file-list.
  */
 public class GuiSwingViewImagePane implements GuiSwingView {

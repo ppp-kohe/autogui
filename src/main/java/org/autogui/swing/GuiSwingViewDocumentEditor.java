@@ -30,7 +30,7 @@ import java.util.function.Supplier;
 /**
  * a swing view for {@link GuiReprValueDocumentEditor}
  *
- * <h3>swing-value </h3>
+ * <h2>swing-value </h2>
  * {@link PropertyDocumentEditorPane#getSwingViewValue()} or
  *      {@link PropertyDocumentTextPane#getSwingViewValue()}:
  * {@link Document},  {@link AbstractDocument.Content}, {@link StringBuilder},
@@ -50,13 +50,13 @@ import java.util.function.Supplier;
  *             and calls {@link GuiSwingView.ValuePane#updateFromGui(GuiSwingView.ValuePane, Object, GuiTaskClock)} (if contextUpdate=true) </li>
  *      </ul>
  *
- * <h3>history-value</h3>
+ * <h2>history-value</h2>
  * TODO unsupported yet
  *
- * <h3>string-transfer</h3>
+ * <h2>string-transfer</h2>
  * TODO unsupported yet
  *
- * <h3>preferences</h3>
+ * <h2>preferences</h2>
  * <pre>
  *     {
  *         "lineSpacing": Number,

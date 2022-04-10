@@ -126,6 +126,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     ////////////
 
     /**
+     * the lambda-based version of string-pane
      * @since 1.1
      */
     public static class LambdaStringPane extends GuiSwingViewStringField.PropertyStringPane {

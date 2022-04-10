@@ -459,7 +459,8 @@ public class UIManagerUtil {
     }
 
     /**
-     * install com.formdev.flatlaf.FlatDarkLaf or .FlatLaf by reflection.
+     * install com.formdev.flatlaf.FlatDarkLaf or .FlatLightLaf by reflection.
+     *  Note: currently supporting flatlaf:2.0.1--2.1
      * @return true if the darklaf is installed
      * @since 1.3
      */
@@ -470,10 +471,10 @@ public class UIManagerUtil {
             if (getOsVersion().isDarkTheme()) {
                 laf = Class.forName(pack + ".FlatDarkLaf");
             } else {
-                laf = Class.forName(pack + ".FlatLaf");
+                laf = Class.forName(pack + ".FlatLightLaf");
             }
             laf.getMethod("install")
-                    .invoke(null);
+                    .invoke(null); //note: install is now deprecated, since 2.1?
             return true;
         } catch (Throwable ex) {
             return false;

@@ -28,14 +28,14 @@ import java.util.stream.IntStream;
 /**
  * a swing view for {@link GuiReprCollectionTable}
  *
- * <h3>swing-value</h3>
+ * <h2>swing-value</h2>
  * {@link CollectionTable#getSwingViewValue()}:
  * latest set {@link List}.
  *
- * <h3>history-value</h3>
+ * <h2>history-value</h2>
  *  Currently unsupported.
  *
- * <h3>string-transfer</h3>
+ * <h2>string-transfer</h2>
  * entire copying is supported by owned {@link GuiSwingViewPropertyPane.PropertyPane}.
  *  the entire copying is handled by {@link GuiReprPropertyPane#toHumanReadableString(GuiMappingContext, Object)} -&gt;
  *  {@link GuiReprObjectPane#toHumanReadableStringFromObject(GuiMappingContext, Object)}  -&gt;
@@ -834,6 +834,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     /**
+     * table-header for collection-table: customizing tool-tips
      * @since 1.4
      */
     public static class CollectionTableHeader extends JTableHeader {
@@ -892,6 +893,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     /**
+     * the row-height setting pane: displayed in the header context-menu
      * @since 1.3
      */
     public static class RowHeightSetAction extends JPanel

@@ -418,6 +418,7 @@ public class GuiSwingLogManager extends GuiLogManager {
         }
 
         /**
+         * initializing the status bar
          * @since 1.1
          */
         protected void initStatusBar() {

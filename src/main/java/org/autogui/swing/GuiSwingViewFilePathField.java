@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 /**
  * a swing view for {@link GuiReprValueFilePathField}
  *
- * <h3>swing-value</h3>
+ * <h2>swing-value</h2>
  * {@link PropertyFilePathPane#getSwingViewValue()}:
  * selected path as {@link Path} or {@link java.io.File}
  *
@@ -28,10 +28,10 @@ import java.util.function.Supplier;
  *         {@link PropertyFilePathPane#selectSearchedItemFromModel(PopupCategorized.CategorizedMenuItem)}
  *
  *
- * <h3>history-value</h3>
+ * <h2>history-value</h2>
  * supported.
  *
- * <h3>string-transfer</h3>
+ * <h2>string-transfer</h2>
  * {@link SearchTextFieldFilePath.FileTransferHandler}.
  * reading and writing a file path string.
  */

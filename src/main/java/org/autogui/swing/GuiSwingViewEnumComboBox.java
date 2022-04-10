@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 /**
  * a swing view for {@link GuiReprValueEnumComboBox}
  *
- * <h3>swing-value </h3>
+ * <h2>swing-value </h2>
  * {@link PropertyEnumComboBox#getSwingViewValue()}:
  *  the selected {@link Enum} member.
  *
@@ -30,10 +30,10 @@ import java.util.stream.Collectors;
  *      item-listener: {@link PropertyEnumComboBox#itemStateChanged(ItemEvent)}
  *
  *
- * <h3>history-value</h3>
+ * <h2>history-value</h2>
  * supported.
  *
- * <h3>string-transfer</h3>
+ * <h2>string-transfer</h2>
  * {@link EnumTransferHandler}.
  *  reading {@link Enum#name()} or {@link Enum#ordinal()}, and writing {@link Enum#name()}.
  *  @see GuiReprValueEnumComboBox#getEnumValue(GuiMappingContext, String)

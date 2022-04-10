@@ -28,13 +28,13 @@ import java.util.stream.Collectors;
  * a swing view for
  * {@link GuiReprValueBooleanCheckBox}
  *
- * <h3>swing-value</h3>
+ * <h2>swing-value</h2>
  * {@link PropertyCheckBox#getSwingViewValue()}: check-box selection as {@link Boolean}
  *
- * <h3>history-value</h3>
+ * <h2>history-value</h2>
  * supported.
  *
- * <h3>string-transfer</h3>
+ * <h2>string-transfer</h2>
  * {@link BooleanTransferHandler}.
  *  "true" or non "0" for true,
  *  and "false" or "0" for false.

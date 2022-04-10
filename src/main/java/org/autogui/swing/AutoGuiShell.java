@@ -44,7 +44,7 @@ import java.util.function.Supplier;
  *     jshell&gt; AutoGuiShell.showLive(new Hello())
  * </pre>
  *
- * <h3>Setting Look and Feel</h3>
+ * <h2>Setting Look and Feel</h2>
  * <p>
  *  configured by the field {@link #lookAndFeelClass} which can be set by the following withLookAndFeel... methods.
  *    The default value is <code>#prop:autogui.laf</code>.
@@ -250,7 +250,7 @@ public class AutoGuiShell {
      *  the afterActionInEvent will be executed within the event dispatching thread after creating the window.
      *  The method 1) runs {@link #createWindowInEvent(Object)}
      *     with setting the application root of the window as <code>appRoot</code>,
-     *     and 2) <coce>afterActionInEvent</coce>.
+     *     and 2) <code>afterActionInEvent</code>.
      * @param o the target object
      * @param appRoot if true, the returned window will clean-up windows and task-runners at closing of the window
      * @param afterActionInEvent null or an action with the created window, executed within the event dispatching thread

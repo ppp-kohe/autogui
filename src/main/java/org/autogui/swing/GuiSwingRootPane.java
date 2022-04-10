@@ -192,6 +192,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
         /**
          * @param prefsApplyOptions options
+         * @return this
          * @since 1.4
          */
         public GuiSwingRootPaneCreator withPrefsApplyOptions(GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions) {
@@ -296,7 +297,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
      * @param logStatus the flat for showing log-status
      * @param settingsWindow  the setting window
      * @param prefsApplyOptions the options for prefs application
-     * @throws HeadlessException
+     * @throws HeadlessException if the runtime is headless
      * @since 1.4
      */
     public GuiSwingRootPane(GuiMappingContext context, GuiSwingView view, GuiSwingKeyBinding keyBinding,

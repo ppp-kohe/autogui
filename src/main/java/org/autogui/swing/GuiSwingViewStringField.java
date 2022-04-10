@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 /**
  * a swing view for {@link GuiReprValueStringField}
  *
- * <h3>swing-value</h3>
+ * <h2>swing-value</h2>
  * {@link PropertyStringPane#getSwingViewValue()}
  *  : the field text as {@link String}.
  * <p>
@@ -28,10 +28,10 @@ import java.util.function.Supplier;
  *      document listener -&gt;
  *      taskRunner -&gt; {@link PropertyStringPane#updateFieldInEvent(boolean, boolean)}.
  *
- * <h3>history-value</h3>
+ * <h2>history-value</h2>
  * supported.
  *
- * <h3>string-transfer</h3>
+ * <h2>string-transfer</h2>
  * {@link StringTransferHandler},
  *   reading and writing String.
  */

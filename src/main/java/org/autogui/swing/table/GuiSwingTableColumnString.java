@@ -322,6 +322,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     }
 
     /**
+     * cell component for displaying multiline texts
      * @since 1.3
      */
     public static class MultilineColumnTextViewPane extends MultilineColumnTextPane {

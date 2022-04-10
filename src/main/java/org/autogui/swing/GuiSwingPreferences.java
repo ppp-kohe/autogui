@@ -40,7 +40,7 @@ import java.util.stream.IntStream;
  * a preferences manager.
  *
  *
- * <h3>GUI properties as preferences</h3>
+ * <h2>GUI properties as preferences</h2>
  *
  *  <ol>
  *      <li>define a custom {@link PreferencesByJsonEntry} (or {@link Preferences}).
@@ -1452,6 +1452,7 @@ public class GuiSwingPreferences {
     ////////////////////////
 
     /**
+     * tree-model value for prefs-tree
      * @since 1.3
      */
     public static class PrefsValueStoreEntry {
@@ -1485,6 +1486,7 @@ public class GuiSwingPreferences {
     }
 
     /**
+     * cell-renderer for prefs-tree
      * @since 1.3
      */
     public static class PrefsTreeCellRenderer extends DefaultTreeCellRenderer {
@@ -1634,10 +1636,14 @@ public class GuiSwingPreferences {
          */
         boolean isSkippingValue();
     }
-    /** @since 1.4 */
+    /**
+     *  default options at prefs loading: non-init, no skipping
+     * @since 1.4
+     */
     public static PrefsApplyOptionsDefault APPLY_OPTIONS_DEFAULT = new PrefsApplyOptionsDefault(false, false);
 
     /**
+     * the default impl. of options at prefs loading
      * @since 1.4
      */
     public static class PrefsApplyOptionsDefault implements PrefsApplyOptions {

@@ -42,7 +42,7 @@ import java.util.stream.StreamSupport;
  *         }
  * </pre>
  *
- * <h3>matching and sub-contexts</h3>
+ * <h2>matching and sub-contexts</h2>
  *  <p>
  *
  *        {@link GuiTypeCollection#getChildren()} will return the element type of the collection.

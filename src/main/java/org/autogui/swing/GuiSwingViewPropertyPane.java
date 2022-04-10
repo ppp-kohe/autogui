@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  *  The latter case is that a context has a property type, but the representation matched to the value type of the property.
  *    (see {@link GuiReprValue#getValueType(GuiMappingContext)}).
  *
- * <h3>swing-value</h3>
+ * <h2>swing-value</h2>
  * {@link PropertyPane#getSwingViewValue()}
  *  {@link GuiReprValue.NamedValue}, or other value types.
  *     obtaining and setting ({@link PropertyPane#setSwingViewValue(Object)} and
@@ -32,10 +32,10 @@ import java.util.stream.Collectors;
  *        by the value's contentPane
  *         supports the case of the parent is a property.
  *
- *  <h3>history-value</h3>
+ *  <h2>history-value</h2>
  *  unsupported. (supported by the contentPane)
  *
- *  <h3>string-transfer</h3>
+ *  <h2>string-transfer</h2>
  *  only copying is supported by {@link GuiSwingView.ToStringCopyAction}
  */
 public class GuiSwingViewPropertyPane implements GuiSwingView {

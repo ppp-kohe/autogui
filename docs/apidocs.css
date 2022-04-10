@@ -1,9 +1,0 @@
-
-div.bottomNav, div.topNav {
-  background-color: rgb(93,157,170);
-  background-image: linear-gradient(120deg, rgb(141,123,147), rgb(93,157,170));
-}
-
-.contentContainer .description dl dd, .contentContainer .details dl dd, .serializedFormContainer dl dd, div.block, .deprecationBlock {
-    font-family:'DejaVu Sans', Arial, Helvetica, sans-serif;
-}

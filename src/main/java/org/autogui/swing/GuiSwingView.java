@@ -427,6 +427,7 @@ public interface GuiSwingView extends GuiSwingElement {
      *  {@link GuiSwingView#loadPreferencesDefault(JComponent, GuiPreferences)} automatically calls the method.
      * @param prefs the source preferences
      * @param pane the target pane
+     * @param options the options
      * @since 1.4
      */
     static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane, GuiSwingPreferences.PrefsApplyOptions options) {
