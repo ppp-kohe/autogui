@@ -1,6 +1,7 @@
 package org.autogui.swing;
 
 import org.autogui.base.mapping.GuiMappingContext;
+import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.mapping.GuiTaskClock;
 import org.autogui.swing.mapping.GuiReprEmbeddedComponent;
@@ -58,6 +59,8 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         protected JComponent component;
 
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
+        /** @since 1.5 */
+        protected Object initPrefsJson;
 
         public PropertyEmbeddedPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
@@ -149,12 +152,28 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
                 if (component != null && getComponentCount() > 0) {
                     remove(component);
                 }
+                consumeInitPrefsJson(comp);
                 add(comp, 0);
                 setPreferredSize(comp.getPreferredSize());
                 component = comp;
                 revalidate();
             }
             repaint();
+        }
+
+        /**
+         * set and clear if it has {@link #initPrefsJson} for
+         *    the given component as {@link GuiPreferences.PreferencesJsonSupport}
+         * @param comp the new component value
+         * @since 1.5
+         */
+        protected void consumeInitPrefsJson(JComponent comp) {
+            Object initPrefsJson = this.initPrefsJson;
+            if (comp instanceof GuiPreferences.PreferencesJsonSupport &&
+                initPrefsJson != null) {
+                ((GuiPreferences.PreferencesJsonSupport) comp).setPrefsJson(initPrefsJson);
+                this.initPrefsJson = null;
+            }
         }
 
         @Override
@@ -191,6 +210,25 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         @Override
         public void prepareForRefresh() {
             viewClock.clear();
+        }
+
+        @Override
+        public Object getPrefsJsonSupported() {
+            if (initPrefsJson != null) {
+                //the prefs json is not yet consumed.
+                return initPrefsJson;
+            } else {
+                return ValuePane.super.getPrefsJsonSupported();
+            }
+        }
+
+        @Override
+        public void setPrefsJsonSupported(Object json) {
+            if (getSwingViewValue() != null) {
+                ValuePane.super.setPrefsJsonSupported(json);
+            } else {
+                this.initPrefsJson = json;
+            }
         }
     }
 }

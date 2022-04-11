@@ -642,7 +642,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
-                GuiSwingView.loadPreferencesDefault(this, prefs);
+                GuiSwingView.loadPreferencesDefault(this, prefs, options);
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 preferencesUpdater.apply(targetPrefs);
                 getObjectTableModel().getColumnsWithContext().loadSwingPreferences(targetPrefs);

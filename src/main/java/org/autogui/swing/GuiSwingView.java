@@ -334,6 +334,29 @@ public interface GuiSwingView extends GuiSwingElement {
             context.updateSourceSubTree();
         }
 
+        /**
+         * @return prefs JSON
+         * @since 1.5
+         */
+        default Object getPrefsJsonSupported() {
+            Object o = getSwingViewValue();
+            if (o instanceof GuiPreferences.PreferencesJsonSupport) {
+                return ((GuiPreferences.PreferencesJsonSupport) o).getPrefsJson();
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * @param json prefs JSON
+         * @since 1.5
+         */
+        default void setPrefsJsonSupported(Object json) {
+            Object o = getSwingViewValue();
+            if (o instanceof GuiPreferences.PreferencesJsonSupport) {
+                ((GuiPreferences.PreferencesJsonSupport) o).setPrefsJson(json);
+            }
+        }
     }
 
 
@@ -431,13 +454,22 @@ public interface GuiSwingView extends GuiSwingElement {
      * @since 1.4
      */
     static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane, GuiSwingPreferences.PrefsApplyOptions options) {
-        if (!pane.isSwingEditable() || !pane.isSwingCurrentValueSupported() || options.isSkippingValue()) {
+        if (options.isSkippingValue()) {
+            return;
+        }
+
+        boolean loadAsJson = prefs.isContextTypeIsJsonSupport();
+        if (!pane.isSwingEditable() && !loadAsJson) {
             return;
         }
 
         Object v = prefs.getCurrentValue();
-        if (v != null) {
-            pane.setSwingViewHistoryValue(v);
+        if (v != null || loadAsJson) {
+            if (v != null && pane.isSwingCurrentValueSupported()) {
+                pane.setSwingViewHistoryValue(v);
+            } else if (loadAsJson) {
+                pane.setPrefsJsonSupported(prefs.getCurrentValueAsJsonSupported());
+            }
         } else if (pane.getSwingViewContext().isHistoryValueStored(null)) {
             List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefs.getHistoryValues());
             es.sort(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime));
@@ -480,6 +512,8 @@ public interface GuiSwingView extends GuiSwingElement {
             GuiPreferences targetPrefs = prefs.getDescendant(context);
             if (((ValuePane<?>) pane).isSwingCurrentValueSupported()) {
                 targetPrefs.setCurrentValue(((ValuePane<?>) pane).getSwingViewValue());
+            } else if (targetPrefs.isContextTypeIsJsonSupport()) {
+                targetPrefs.setCurrentValueAsJsonSupported(((ValuePane<?>) pane).getPrefsJsonSupported());
             }
             if (context.isHistoryValueSupported()) {
                 GuiPreferences ctxPrefs = context.getPreferences();
@@ -513,7 +547,7 @@ public interface GuiSwingView extends GuiSwingElement {
     static void loadPreferencesDefault(JComponent pane, GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
         try {
             if (pane instanceof ValuePane<?>) {
-                GuiMappingContext context = ((ValuePane) pane).getSwingViewContext();
+                GuiMappingContext context = ((ValuePane<?>) pane).getSwingViewContext();
                 GuiPreferences targetPrefs = prefs.getDescendant(context);
                 setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane, options);
 

@@ -49,6 +49,54 @@ public class GuiPreferences {
     protected List<HistoryValueEntry> historyValues;
     protected int historyValueLimit = 10;
 
+    /**
+     * the interface for supporting user-defined prefs:
+     *   a context-object that implements the interface always saves/loads prefs via the interface.
+     *   Note: JSON objects returned by the method must be a JSON object ({@link Map} (String keyed), {@link List}, {@link String}, {@link Number} or {@link Boolean}),
+     *    and the stringified data of those JSONs must be small for storing as a prefs entry.
+     * @since 1.5
+     */
+    public interface PreferencesJsonSupport {
+        Object getPrefsJson();
+        void setPrefsJson(Object prefs);
+    }
+
+    /**
+     * @return the type of the context of the prefs is {@link PreferencesJsonSupport}
+     * @since 1.5
+     */
+    public boolean isContextTypeIsJsonSupport() {
+        GuiMappingContext context = getContext();
+        Class<?> cls = null;
+        if (context.isTypeElementValue()) {
+            cls = context.getTypeElementValueAsClass();
+        } else if (context.isTypeElementProperty()) {
+            cls = context.getTypeElementPropertyTypeAsClass();
+        }
+        return cls != null && PreferencesJsonSupport.class.isAssignableFrom(cls);
+    }
+
+    /**
+     * a subclass of prefs for custom usage with supplying specific sub-paths.
+     * @since 1.5
+     */
+    public static class GuiPreferencesWithPaths extends GuiPreferences {
+        protected List<String> subPaths;
+        public GuiPreferencesWithPaths(GuiMappingContext context, String... subPaths) {
+            super(context);
+            this.subPaths = Arrays.asList(subPaths);
+        }
+
+        @Override
+        public GuiValueStore getPreferencesNodeAsRoot() {
+            GuiValueStore store = super.getPreferencesNodeAsRoot();
+            for (String subPath : subPaths) {
+                store = store.getChild(subPath);
+            }
+            return store;
+        }
+    }
+
     public GuiPreferences(GuiMappingContext context) {
         this.context = context;
     }
@@ -260,8 +308,28 @@ public class GuiPreferences {
         e.storeAsCurrentValue();
     }
 
+    /**
+     *  obtains {@link PreferencesJsonSupport#toJson()} and saves the returned JSON as a prefs entry
+     * @param json the saved object
+     * @since 1.5
+     */
+    public void setCurrentValueAsJsonSupported(Object json) {
+        HistoryValueEntry e = new HistoryValueEntryJsonSupported(this, json);
+        e.storeAsCurrentValue();
+    }
+
     public Object getCurrentValue() {
         HistoryValueEntry e = createHistoryValueEntry(null);
+        return e.loadAsCurrentValue();
+    }
+
+    /**
+     *  loads prefs JSON object for {@link PreferencesJsonSupport#setPrefsJson(Object)}
+     * @return loaded JSON object
+     * @since 1.5
+     */
+    public Object getCurrentValueAsJsonSupported() {
+        HistoryValueEntry e = new HistoryValueEntryJsonSupported(this, null);
         return e.loadAsCurrentValue();
     }
 
@@ -668,11 +736,21 @@ public class GuiPreferences {
         public HistoryValueEntry(GuiPreferences preferences, Object rawObject) {
             this.preferences = preferences;
             this.time = Instant.now();
+            this.value = toValueInit(rawObject);
+        }
+
+        /**
+         * called from the constructor
+         * @param rawObject the constructor argument
+         * @return stored value as a prefs entry
+         * @since 1.5
+         */
+        protected Object toValueInit(Object rawObject) {
             if (isJsonValue() && rawObject != null) {
-                this.value = preferences.getContext().getRepresentation()
+                return preferences.getContext().getRepresentation()
                         .toJsonWithNamed(preferences.getContext(), rawObject);
             } else {
-                this.value = rawObject;
+                return rawObject;
             }
         }
 
@@ -846,6 +924,26 @@ public class GuiPreferences {
             } else {
                 return null;
             }
+        }
+    }
+
+    /**
+     * JSON entry for JSON support object
+     * @since 1.5
+     */
+    public static class HistoryValueEntryJsonSupported extends HistoryValueEntry {
+        public HistoryValueEntryJsonSupported(GuiPreferences preferences, Object json) {
+            super(preferences, json);
+        }
+
+        @Override
+        protected Object toValueInit(Object rawObject) {
+            return rawObject;
+        }
+
+        @Override
+        public boolean isJsonValue() {
+            return true;
         }
     }
 
