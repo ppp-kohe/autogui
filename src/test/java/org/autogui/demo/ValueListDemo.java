@@ -1,11 +1,13 @@
 package org.autogui.demo;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiListSelectionUpdater;
 import org.autogui.swing.AutoGuiShell;
 
 import java.awt.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @GuiIncluded
@@ -18,13 +20,15 @@ public class ValueListDemo {
     public List<Row> rows = new ArrayList<>();
 
     @GuiIncluded
-    public void addRow() {
+    @GuiListSelectionUpdater
+    public List<Row> addRow() {
         Row r = new Row();
         r.setStr("row " + rows.size());
         r.setNum(rows.size());
         rows.add(r);
         rows = new ArrayList<>(rows);
         System.err.println("added " + rows.size());
+        return Collections.singletonList(r);
     }
 
     @GuiIncluded

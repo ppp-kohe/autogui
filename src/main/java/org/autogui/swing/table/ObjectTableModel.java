@@ -16,8 +16,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -102,9 +102,49 @@ public class ObjectTableModel extends AbstractTableModel
 
     public void refreshColumns() {
         executeContextTask(
-                () -> columns.getColumnSizeForUpdate(getCollectionFromSource()),
+                () -> ObjectTableColumnSizeAndSelection.of(columns.getColumnSizeForUpdate(getCollectionFromSource()), table), //saving the selection indices of columns
                 r -> r.executeIfPresent(
-                        sizes -> SwingUtilities.invokeLater(() -> columns.update(sizes))));
+                        sizesAndSelCols -> SwingUtilities.invokeLater(() -> {
+                            columns.update(sizesAndSelCols.getSizes());
+                            sizesAndSelCols.restoreColumnSelectionIndices(table);
+                        })));
+    }
+
+    /**
+     * {@link ObjectTableModel#refreshColumns()} seems to clear column selection
+     * between the first size-obtaining step and the after-step.
+     * To save the selection info. the class will be returned the first step.
+     * @since 1.5
+     */
+    public static class ObjectTableColumnSizeAndSelection {
+        protected List<ObjectTableModelColumns.ObjectTableColumnSize> sizes;
+        protected int[] selectedIndices;
+
+        public static ObjectTableColumnSizeAndSelection of(List<ObjectTableModelColumns.ObjectTableColumnSize> sizes,
+                                                             JTable table) {
+            return new ObjectTableColumnSizeAndSelection(sizes,
+                    table.getColumnModel().getSelectionModel().getSelectedIndices());
+        }
+
+        public ObjectTableColumnSizeAndSelection(List<ObjectTableModelColumns.ObjectTableColumnSize> sizes, int[] selectedIndices) {
+            this.sizes = sizes;
+            this.selectedIndices = selectedIndices;
+        }
+
+        public List<ObjectTableModelColumns.ObjectTableColumnSize> getSizes() {
+            return sizes;
+        }
+
+        public int[] getSelectedIndices() {
+            return selectedIndices;
+        }
+
+        public void restoreColumnSelectionIndices(JTable table) {
+            //restoring the selection indices of columns
+            ListSelectionModel selModel = table.getColumnModel().getSelectionModel();
+            Arrays.stream(getSelectedIndices())
+                    .forEach(i -> selModel.addSelectionInterval(i, i));
+        }
     }
 
 

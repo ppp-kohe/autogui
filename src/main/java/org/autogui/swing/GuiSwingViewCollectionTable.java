@@ -329,6 +329,12 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             actionToolBar.setOpaque(false);
 
             getSelectionModel().addListSelectionListener(this::runListSelection);
+            addMouseListener(new MouseAdapter() { //mouse click as selection updating: if no selection change, this also causes handlers
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    selectionRunner.schedule(e);
+                }
+            });
             actions.forEach(a -> initAction(actionToolBar, a));
 
             if (popup != null) {
@@ -572,6 +578,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             ListSelectionModel sel = getSelectionModel();
             int rows = getRowCount();
 
+            ListSelectionModel colSel = getColumnModel().getSelectionModel();
+            int[] cols = colSel.getSelectedIndices();
+
             Collection<Integer> is = change.indices;
 
             Set<Integer> update = new HashSet<>(is);
@@ -582,10 +591,13 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     .filter(i -> i >= 0 && i < rows)
                     .sorted()
                     .toArray());
-
-            //selecting all columns
-            int cols = getColumnCount();
-            setColumnSelectionInterval(0, cols - 1);
+            Arrays.stream(cols)
+                    .forEach(col -> colSel.addSelectionInterval(col, col));
+            if (cols.length == 0) {
+                //selecting all columns
+                int colSize = getColumnCount();
+                setColumnSelectionInterval(0, colSize - 1);
+            }
 
             sel.setValueIsAdjusting(true);
             sel.clearSelection();
