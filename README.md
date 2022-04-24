@@ -25,7 +25,7 @@ The project uses [apache-maven](http://maven.apache.org) and depends on a recent
 
 ```bash
 mvn package
-  # the command will generate target/autogui-1.5-SNAPSHOT.jar
+  # the command will generate target/autogui-1.5.jar
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
@@ -39,11 +39,14 @@ To use the library in your apache-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.5-SNAPSHOT</version>
+        <version>1.5</version>
     </dependency>
 ```
 
 The library jar is available from Maven Central Repository: [org.autogui:autogui](https://search.maven.org/artifact/org.autogui/autogui/).
+
+
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.autogui/autogui/badge.svg?color=44aa44)](https://maven-badges.herokuapp.com/maven-central/org.autogui/autogui)
 
 ## API documents
 
@@ -72,7 +75,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.5-SNAPSHOT.jar
+/env -class-path target/autogui-1.5.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
@@ -629,6 +632,35 @@ of objects of the class will be called at closing of owner window of those objec
 [`cleanUp()`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/GuiSwingWindow.html#cleanUp())
 for completely closing the window.)
 
+#### Action property combination
+
+As a special rule, you can combine an action-button and a text-field in object pane:
+
+* An object-pane class has the `String <propName>` property, 
+* and the class also has the `<propName>Action()` action method. 
+
+Then, the generated text-field for the property will contain the action button for the method.
+
+```java
+import java.util.regex.*;
+class PatternFind {
+    String text;
+    String search;
+    void searchAction() {
+        var m = Pattern.compile(search).matcher(text);
+        if (m.find()) {
+            System.out.printf("found: %d%n", m.start());
+        } else {
+            System.out.println("not found");
+        }
+    }
+}
+org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
+```
+
+<img src="docs/images/image-action-combination-h.png" srcset="docs/images/image-action-combination-h.png 1x, docs/images/image-action-combination.png 2x" alt="Action property combination">
+
+
 ### Object tabbed-pane
 
 A user-defined object which has only properties of sub user-defined objects without other value properties will be bound to a tabbed-pane. Components of each tab in the tabbed-pane become the pane created from the sub objects.
@@ -1010,6 +1042,50 @@ Additionally, [`GuiPreferencesLoader`](https://www.autogui.org/docs/apidocs/late
 
    h.prop //=> "Hello" 
 ```
+
+### Custom preferences for embedded components
+
+Your custom embedded components can easily interact with preferences mechanism of the library.
+
+To support the feature, a return-type of the property method must be your custom component-type that implements the [`GuiPreferences.PreferencesJsonSupport`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/mapping/GuiPreferencesLoader.PreferencesJsonSupport.html) interface. 
+The interface has 2 methods for generating and setting preferences-data as JSON objects.
+
+```java
+import org.autogui.base.mapping.GuiPreferences;
+import javax.swing.*;
+import java.util.*;
+
+class Hello { //object-pane type
+    MyPane pane;
+    MyPane getPane() { //embedded component returning a custom type
+        if (pane == null) pane = new MyPane();
+        return pane;
+    }
+}
+
+class MyPane extends JPanel
+     implements GuiPreferences.PreferencesJsonSupport {
+    JTextField data = new JTextField(20);
+    MyPane() { 
+        add(data); 
+    }
+    public Map<String,Object> getPrefsJson() { //data for writing to prefs-store
+        System.err.println("save " + data.getText());
+        return Map.of("myItem", data.getText());
+    }
+    @SuppressWarnings("unchecked")
+    public void setPrefsJson(Object v) { //set data from prefs-store
+        if (v instanceof Map<?,?>) {
+            data.setText(((Map<String,String>) v).getOrDefault("myItem", ""));
+        }
+    }
+}
+org.autogui.swing.AutoGuiShell.showLive(new Hello())
+```
+
+The returned object of `getPrefsJson()` must be one of simple JSON supported types (Map, List, String, Number, Boolean) and sufficiently small for storing preferences-store.
+
+
 
 ## Logging 
 

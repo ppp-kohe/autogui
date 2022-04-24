@@ -6,7 +6,7 @@
 
     <groupId>org.autogui</groupId>
     <artifactId>autogui</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.5</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -157,8 +157,8 @@
     <developers>
         <developer>
             <id>ppp-kohe</id>
-            <name>Kohei SAKURAI</name>
-            <email>k_sakurai@acm.org</email>
+            <name>Kohei Sakurai</name>
+            <email>kohe.sakurai@gmail.com</email>
             <url>https://github.com/ppp-kohe</url>
             <timezone>+9</timezone>
         </developer>
