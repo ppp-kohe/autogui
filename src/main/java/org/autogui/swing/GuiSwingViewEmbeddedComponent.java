@@ -14,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -167,11 +168,12 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
          * @param comp the new component value
          * @since 1.5
          */
+        @SuppressWarnings("unchecked")
         protected void consumeInitPrefsJson(JComponent comp) {
             Object initPrefsJson = this.initPrefsJson;
             if (comp instanceof GuiPreferences.PreferencesJsonSupport &&
-                initPrefsJson != null) {
-                ((GuiPreferences.PreferencesJsonSupport) comp).setPrefsJson(initPrefsJson);
+                initPrefsJson instanceof Map<?,?>) {
+                ((GuiPreferences.PreferencesJsonSupport) comp).setPrefsJson((Map<String,Object>) initPrefsJson);
                 this.initPrefsJson = null;
             }
         }

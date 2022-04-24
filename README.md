@@ -14,8 +14,8 @@ and composes Swing-based components for each type of property and action defined
 [GitHub Project Page](https://github.com/ppp-kohe/autogui.git)
 
 ```bash
-$ git clone https://github.com/ppp-kohe/autogui.git
-$ cd autogui
+git clone https://github.com/ppp-kohe/autogui.git
+cd autogui
 ```
 
 The project uses [apache-maven](http://maven.apache.org) and depends on a recent version of Java. 
@@ -24,7 +24,7 @@ The project uses [apache-maven](http://maven.apache.org) and depends on a recent
 * 1.2- : java 11 or later
 
 ```bash
-$ mvn package
+mvn package
   # the command will generate target/autogui-1.5-SNAPSHOT.jar
 ```
 
@@ -337,29 +337,29 @@ The recent versions (1.2-) have the `module-info.class` and require Java 11 or l
 ## Supported types and components
 
 * Basic value types
-  * String text-field: 
+  * [String text-field](#string-text-field): 
     [`java.lang.String`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html)
-  * File text-field: 
+  * [File text-field](#file-text-field): 
     [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Path.html) or 
     [`java.io.File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html)
-  * Number spinner: a primitive numeric(`byte`, `short`, `int`, `long`, `float` or `double`) or a sub-type of
+  * [Number spinner](#number-spinner): a primitive numeric(`byte`, `short`, `int`, `long`, `float` or `double`) or a sub-type of
     [`java.lang.Number`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Number.html)
-  * Boolean check-box: `boolean` or 
+  * [Boolean check-box](#boolean-check-box): `boolean` or 
     [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html)
-  * Enum pull-down menu: a sub-type of 
+  * [Enum pull-down menu](#enum-pull-down-menu): a sub-type of 
     [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html)
-  * Image pane: a sub-type of 
+  * [Image pane](#image-pane): a sub-type of 
     [`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html)
-  * Document editor: 
+  * [Document editor](#document-editor): 
     [`java.lang.StringBuilder`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/StringBuilder.html) or 
     [`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/Document.html)
-  * Embedded component: a sub-type of 
+  * [Embedded component](#embedded-component): a sub-type of 
     [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/JComponent.html)
-* Object pane: a user-defined object type with composition of properties and actions
+* [Object pane](#object-pane): a user-defined object type with composition of properties and actions
   * Object properties: `T getP() {...}`, `T p() {...}` (1.2-) , `void setP(T) {...}` or `T p;`
       * if all members are other user-defined objects, then the enclosing object will be bound to a tabbed-pane
   * Action methods: `void m() {...}`
-* Collection table: a sub-type of 
+* [Collection table](#collection-table): a sub-type of 
   [`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Collection.html)
   or an array `E[]` with columns based `E`
   * Value columns for `E`
@@ -376,7 +376,7 @@ The recent versions (1.2-) have the `module-info.class` and require Java 11 or l
         [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html)
       * Image column: a sub-type of 
         [`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html)
-  * A user-defined object-type composing columns from its properties and actions
+  * [Object rows](#object-rows): A user-defined object-type composing columns from its properties and actions
   * Dynamic Collection table: a nested `Collection<Collection<E>>` or a multi-dimensional array `E[][]`
 
 ### String text-field
@@ -685,7 +685,7 @@ or its sub-type will be bound to a pane for embedding the property value as sub-
 To create a user-defined UI component, you will need to follow the rule of Swing components that the code for the component must be executed within the event-dispatching thread.
 And initialization of a field will be executed under a non event-dispatching thread such as the main-thread.  
 
-Thus the user code of the property for an embedded component should be defined as *a getter method that caches the returned component as a field*. 
+Thus, the user code of the property for an embedded component should be defined as *a getter method that caches the returned component as a field*. 
 For a property of the embedded component, the library executes the method within the event-dispatching thread.
 A returned embedded component will be added as a sub-component of the owner object-pane.
 
@@ -729,7 +729,7 @@ The column of the table will be created from the type-argument `E`.
 
 *In order to update display of the table from an action, it needs to replace instance of the list.* `prop = new ArrayList<>(prop);` is the easiest way for that.
 
-#### Object composition in Collection table
+#### Object rows
 
 If the type-argument`E` of `Collection<E>` is a user-defined object class, then columns of the  table are created from properties of the class.
 
@@ -821,7 +821,7 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 
 <img src="docs/images/image-collection-select-h.png" srcset="docs/images/image-collection-select-h.png 1x, docs/images/image-collection-select.png 2x" alt="Collection table with selection actions">
 
-In the above example, `List<Item>selectTop()` has `@GuiListSelectionUpdater`. The method becomes the action button "Select Top" and it causes changing the selection in the table of `prop ` as selecting the top item in the list, which is returned by the method. 
+In the above example, `List<Item> selectTop()` has `@GuiListSelectionUpdater`. The method becomes the action button "Select Top" and it causes changing the selection in the table of `prop ` as selecting the top item in the list, which is returned by the method. 
 
 And, `void selected(List<Item> items)` has `@GuiListSelectionCallback` and takes a list of items. The method also becomes the action button "*Selected", but the action of the button is automatically executed  by a selection change of the table of `prop`.
 
@@ -1027,6 +1027,8 @@ The created window will replace
 [`System.err`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#err) and 
 [`System.out`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#out) with redirecting its outputs to a status-view and a list-window  on the created window. 
 
+Note: the replacing feature can be controlled by system-properties read in [`GuiSwingLogManager#setupConsoleWithDefaultFlags()`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/log/GuiSwingLogManager.html#setupConsoleWithDefaultFlags). You can dismiss the replacement by `-Dautogui.log.replaceErr=false -Dautogui.log.replaceOut=false`.
+
 Also, the user-code can directly show messages via 
 [`GuiLogManager`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/log/GuiLogManager.html).
 
@@ -1143,7 +1145,7 @@ However, there are some custom look-and-feel libraries for supporting dark-mode 
 
 The library implicitly has code for detecting existence of *flatlaf* and applying its LAF at launching with following OS's current theme. The detection is simply done by accessing to the reflection Class object through `Class.forName`.
 
-For example in macOS, you can launch the library's app with the combination of flatlaf and the JVM option `-Dapple.awt.application.appearance=system`, it will get best experience as modern GUI including displaying Emoji and the dark-mode titlebar.
+For example in macOS, you can launch the library's app with the combination of flatlaf (confirmed by `com.formdev:flatlaf:2.1`) and the JVM option `-Dapple.awt.application.appearance=system`, it will get best experience as modern GUI including displaying Emoji and the dark-mode title-bar.
 
 <img src="docs/images/image-dark-h.png" srcset="docs/images/image-dark-h.png 1x, docs/images/image-dark.png 2x" alt="Progress">
 

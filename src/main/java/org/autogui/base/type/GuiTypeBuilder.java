@@ -416,7 +416,7 @@ public class GuiTypeBuilder {
 
     /**
      * @param m the tested method
-     * @return true if {@link GuiIncluded} attached and non-static with exluding {@link #isNotifierSetterMethod(Method)} */
+     * @return true if {@link GuiIncluded} attached and non-static with excluding {@link #isNotifierSetterMethod(Method)} */
     public boolean isMemberMethod(Method m) {
         return isGuiIncludedEnabled(m) && !Modifier.isStatic(m.getModifiers()) && !isNotifierSetterMethod(m);
     }
@@ -487,14 +487,14 @@ public class GuiTypeBuilder {
 
     /**
      * @param m the tested method
-     * @return true if T m(), no annotation {@link GuiListSelectionUpdater} and {@link GuiIncluded#action()}==false
+     * @return true if T m(), no annotation {@link GuiListSelectionUpdater} and {@link GuiIncluded#action()}==false (or no {@link GuiIncluded})
      * @since 1.2
      */
     public boolean isAccessorMethod(Method m) {
         return m.getParameterCount() == 0 && !m.getReturnType().equals(void.class)
                 && !m.isAnnotationPresent(GuiListSelectionUpdater.class)
-                && (m.isAnnotationPresent(GuiIncluded.class) &&
-                    !m.getAnnotation(GuiIncluded.class).action());
+                && (!m.isAnnotationPresent(GuiIncluded.class) || !m.getAnnotation(GuiIncluded.class).action());
+                    //no @GuiIncluded or no @GuiIncluded(action=false)
     }
 
     /**

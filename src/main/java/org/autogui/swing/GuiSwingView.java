@@ -351,10 +351,12 @@ public interface GuiSwingView extends GuiSwingElement {
          * @param json prefs JSON
          * @since 1.5
          */
+        @SuppressWarnings("unchecked")
         default void setPrefsJsonSupported(Object json) {
             Object o = getSwingViewValue();
-            if (o instanceof GuiPreferences.PreferencesJsonSupport) {
-                ((GuiPreferences.PreferencesJsonSupport) o).setPrefsJson(json);
+            if (o instanceof GuiPreferences.PreferencesJsonSupport && json instanceof Map<?,?>) {
+                ((GuiPreferences.PreferencesJsonSupport) o).setPrefsJson(
+                        (Map<String,Object>) json);
             }
         }
     }

@@ -57,8 +57,8 @@ public class GuiPreferences {
      * @since 1.5
      */
     public interface PreferencesJsonSupport {
-        Object getPrefsJson();
-        void setPrefsJson(Object prefs);
+        Map<String,Object> getPrefsJson();
+        void setPrefsJson(Map<String,Object> prefs);
     }
 
     /**
