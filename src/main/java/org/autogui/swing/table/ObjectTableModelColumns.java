@@ -42,6 +42,7 @@ public class ObjectTableModelColumns
     public ObjectTableModelColumns(ObjectTableModelColumnsListener updater) {
         this.updater = updater;
         columnModel = new DefaultTableColumnModel();
+        columnModel.setColumnMargin(0);
         columnModel.addColumnModelListener(this);
     }
 
@@ -205,7 +206,7 @@ public class ObjectTableModelColumns
 
     public int convertColumnModelToView(int modelIndex) {
         Integer n = modelToView.get(modelIndex);
-        if (n == null || n >= columnModel.getColumnCount() || columnModel.getColumn(n).getModelIndex() != n) {
+        if (n == null || n >= columnModel.getColumnCount() || columnModel.getColumn(n).getModelIndex() != modelIndex) {
             int i = 0;
             n = -1;
             for (Enumeration<TableColumn> iter = columnModel.getColumns(); iter.hasMoreElements();) {

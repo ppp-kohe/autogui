@@ -210,7 +210,11 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getTableBackground() {
-        return UIManager.getColor("Table.background");
+        Color color = UIManager.getColor("Table.background");
+        if (color == null) {
+            color = Color.white;
+        }
+        return color;
     }
 
     /**

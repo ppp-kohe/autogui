@@ -13,8 +13,8 @@ import java.awt.image.BufferedImage;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -276,11 +276,43 @@ public class TextCellRenderer<ValueType> extends JPanel
         int w = Math.max(1, ui.getScaledSizeInt(2));
 
         int iw = ui.getScaledSizeInt(5);
-        cell.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(h, leftEnd ? w : 0, h * 2, rightEnd ? w : 0, getCellBackground(table, true, row)),
-                BorderFactory.createMatteBorder(h, iw * 2, h, iw, cell.getBackground())));
+        cell.setBorder(
+                BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(h, leftEnd ? w : 0, h * 2, rightEnd ? w : 0, getCellBackground(table, true, row)),
+                    BorderFactory.createMatteBorder(h, iw * 2, h, iw, cell.getBackground())));
+        setCellTableBorderRowSeparator(cell);
         return true;
     }
+
+    public static void setCellTableBorderRowSeparator(JComponent cell) {
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        Color grid = ui.getTableAlternateRowColor();
+        Color background = ui.getTableBackground();
+        if (grid == null || Objects.equals(grid, background)) {
+            grid = getGridColor(background);
+        }
+        wrapBorder(cell, BorderFactory.createMatteBorder(0, 0,
+                Math.max(1, ui.getScaledSizeInt(1)), 0, grid));
+    }
+
+    public static Color getGridColor(Color background) {
+        float[] fs = Color.RGBtoHSB(background.getRed(), background.getGreen(), background.getBlue(), null);
+        if (fs[2] < 0.5f) { //check brightness
+            fs[2] = Math.min(1.0f, fs[2] + 0.1f); //brighter
+        } else {
+            fs[2] = Math.max(0.0f, fs[2] - 0.1f); //darker
+        }
+        return Color.getHSBColor(fs[0], fs[1], fs[2]);
+    }
+
+    public static void wrapBorder(JComponent component, Border border) {
+        Border exBorder = component.getBorder();
+        if (exBorder != null) {
+            border = BorderFactory.createCompoundBorder(border, exBorder);
+        }
+        component.setBorder(border);
+    }
+
 
     /**
      *
@@ -326,6 +358,7 @@ public class TextCellRenderer<ValueType> extends JPanel
             b = (b == null ? BorderFactory.createEmptyBorder(1, 1, 1, 1) : b);
             component.setBorder(b);
         }
+        setCellTableBorderRowSeparator(component);
     }
 
     //////////////////////////////

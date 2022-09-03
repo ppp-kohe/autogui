@@ -228,7 +228,7 @@ public class MenuBuilder {
             if (fs[2] < 0.5f) { //check brightness
                 fs[2] = Math.min(1.0f, fs[2] + 0.2f); //brighter
             } else {
-                fs[2] = Math.min(1.0f, fs[2] - 0.2f); //darker
+                fs[2] = Math.max(0.0f, fs[2] - 0.2f); //darker
             }
         }
 

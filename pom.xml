@@ -6,7 +6,7 @@
 
     <groupId>org.autogui</groupId>
     <artifactId>autogui</artifactId>
-    <version>1.5</version>
+    <version>1.6-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,7 +37,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.10.0</version>
+                <version>2.11.0</version>
                 <configuration>
                     <generateBackupPoms>false</generateBackupPoms>
                 </configuration>
@@ -46,7 +46,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.4.1</version>
                 <configuration>
                     <additionalJOption>-J-Duser.language=en</additionalJOption>
                     <locale>en</locale>
@@ -68,7 +68,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.4.0</version>
+                        <version>3.4.1</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>

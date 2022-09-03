@@ -270,7 +270,7 @@ public class ObjectTableColumn {
     ////////////////
 
     /**
-     * a top-column displaying an row-index number
+     * a top-column displaying a row-index number
      */
     public static class ObjectTableColumnRowIndex extends ObjectTableColumn {
         public ObjectTableColumnRowIndex() {
@@ -317,7 +317,9 @@ public class ObjectTableColumn {
                                                        int column) {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus,
                     row, column);
-            TextCellRenderer.setCellTableBorder(table, this, isSelected, hasFocus, row, column);
+            if (!TextCellRenderer.setCellTableBorder(table, this, isSelected, hasFocus, row, column)) {
+                TextCellRenderer.setCellBorderDefault(true, this, isSelected, hasFocus);
+            }
             return this;
         }
     }

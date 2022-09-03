@@ -104,7 +104,7 @@ public class ObjectTableModel extends AbstractTableModel
         executeContextTask(
                 () -> ObjectTableColumnSizeAndSelection.of(columns.getColumnSizeForUpdate(getCollectionFromSource()), table), //saving the selection indices of columns
                 r -> r.executeIfPresent(
-                        sizesAndSelCols -> SwingUtilities.invokeLater(() -> {
+                        sizesAndSelCols -> invokeLater(() -> {
                             columns.update(sizesAndSelCols.getSizes());
                             sizesAndSelCols.restoreColumnSelectionIndices(table);
                         })));
@@ -220,7 +220,7 @@ public class ObjectTableModel extends AbstractTableModel
     public int getRowCountUpdated() {
         Object list = getCollectionFromSource();
         if (list instanceof List<?>) {
-            return ((List) list).size();
+            return ((List<?>) list).size();
         } else {
             return 0;
         }
@@ -256,7 +256,7 @@ public class ObjectTableModel extends AbstractTableModel
                     return s;
                 },
                 r -> r.executeIfPresentWithDelay(
-                        v -> SwingUtilities.invokeLater(delayedAfterInEvent)));
+                        v -> invokeLater(delayedAfterInEvent)));
         if (size.isPresented()) {
             int[] s = size.getValue();
             int rows = s[0];
@@ -344,9 +344,9 @@ public class ObjectTableModel extends AbstractTableModel
                 },
                 r -> {
                     if (r.isTimeout()) {
-                        SwingUtilities.invokeLater(() -> fireTableCellUpdated(rowIndex, columnIndex));
+                        invokeLater(() -> fireTableCellUpdated(rowIndex, columnIndex));
                     } else if (!r.isCancel()) {
-                        SwingUtilities.invokeLater(() -> taskValueFromSourceAfter(rowData, rowIndex, columnIndex, r.getValue()));
+                        invokeLater(() -> taskValueFromSourceAfter(rowData, rowIndex, columnIndex, r.getValue()));
                     }
                 });
         return taskValueFromSourceAfter(rowData, rowIndex, columnIndex, cellObject.getValue());
@@ -382,7 +382,7 @@ public class ObjectTableModel extends AbstractTableModel
                 cellObject = NULL_CELL;
             }
             rowData[columnIndex] = cellObject;
-            SwingUtilities.invokeLater(() -> {
+            invokeLater(() -> {
                 fireTableCellUpdated(rowIndex, columnIndex);
             });
         } catch (Exception ex) {
@@ -444,7 +444,7 @@ public class ObjectTableModel extends AbstractTableModel
             if (future != null) {
                 future.get(2, TimeUnit.SECONDS);
             }
-            SwingUtilities.invokeLater(() -> refreshRow(rowIndex));
+            invokeLater(() -> refreshRow(rowIndex));
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -535,13 +535,21 @@ public class ObjectTableModel extends AbstractTableModel
     public void fireTableRowsUpdatedAll() {
         int rows = getRowCount();
         if (rows > 0) {
-            SwingUtilities.invokeLater(() -> {
+            invokeLater(() -> {
                 int rows2 = Math.min(rows, getRowCount());
                 if (rows2 > 0) {
                     fireTableRowsUpdated(0, rows2 - 1);
                 }
             });
         }
+    }
+
+    /**
+     * running the task in the event thread
+     * @param task the task
+     */
+    protected void invokeLater(Runnable task) {
+        SwingUtilities.invokeLater(task);
     }
 
     @Override
