@@ -335,7 +335,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             if (image != null) {
                 Dimension paneSize = getViewSize();
 
-                Dimension size = (imageScale == null ? imageSize : imageScale.getScaledImageSize(imageSize, paneSize));
+                Dimension size = getImageScaledSize();
 
                 //if the image's size exceeds the view size, its starting position becomes 0, otherwise a half of diff.
                 int left;
@@ -359,6 +359,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                     //nothing
                 }
             }
+        }
+
+        public Dimension getImageScaledSize() {
+            return imageScale == null ? imageSize : imageScale.getScaledImageSize(imageSize, getViewSize());
         }
 
         public ImageScale getImageScale() {

@@ -345,9 +345,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             if (valuePane != null) {
                 valuePane.accept(value);
             }
-            if (!TextCellRenderer.setCellTableBorder(table, component, isSelected, hasFocus, row, column)) {
-                TextCellRenderer.setCellBorderDefault(true, component, isSelected, hasFocus);
-            }
+            TextCellRenderer.setCellTableBorderWithMargin(table, component, isSelected, hasFocus, row, column);
             return component;
         }
 
@@ -408,6 +406,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         protected int clickCount = 2;
         protected boolean skipShutDown;
         protected SpecifierManagerIndex specifierIndex;
+        /** @since 1.6 */
+        protected Border originalBorder;
 
         /**
          * @param component the editor component, must be a {@link ValuePane}
@@ -421,6 +421,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             if (component instanceof ValuePane<?>) {
                 ((ValuePane<?>) component).addSwingEditFinishHandler(this::stopCellEditing);
             }
+            this.originalBorder = component.getBorder();
         }
 
         @Override
@@ -461,21 +462,41 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 //                    }
 //                }
             }
-            UIManagerUtil ui = UIManagerUtil.getInstance();
-            component.setBorder(BorderFactory.createCompoundBorder(
-                    border(ui, 0, 5, 0, 3),
-                    BorderFactory.createCompoundBorder(
-                            getTableFocusBorder(),
-                            border(ui, 1, 5, 1, 2))));
+            component.setBorder(originalBorder);
+            setBorders(table, column);
             return component;
         }
 
-        private Border border(UIManagerUtil ui, int top, int left, int bottom, int right) {
-            Color back = ui.getTableBackground();
-            return BorderFactory.createMatteBorder(
-                    ui.getScaledSizeInt(top), ui.getScaledSizeInt(left),
-                    ui.getScaledSizeInt(bottom), ui.getScaledSizeInt(right),
-                    back);
+        /**
+         * @param table the target table
+         * @param column column view index
+         * @since 1.6
+         */
+        protected void setBorders(JTable table, int column) {
+            TextCellRenderer.wrapBorder(component, TextCellRenderer.createBorder(9, 7, 1, 2, getCellBackgroundEditing()), false);
+            TextCellRenderer.wrapBorder(component,
+                    TextCellRenderer.createBorder(1,
+                            TextCellRenderer.isCellTableEnd(table, column, true) ? 1 : 0, 1,
+                            TextCellRenderer.isCellTableEnd(table, column, false) ? 1 : 0, getCellBackgroundEditingBorder()), false);
+            TextCellRenderer.setCellTableBorderRowSeparator(component);
+        }
+
+        /**
+         * called from {@link #setBorders(JTable, int)}
+         * @return null
+         * @since 1.6
+         */
+        protected Color getCellBackgroundEditing() {
+            return null;
+        }
+
+        /**
+         *  called from {@link #setBorders(JTable, int)}         *
+         * @return table-background
+         * @since 1.6
+         */
+        protected Color getCellBackgroundEditingBorder() {
+            return UIManagerUtil.getInstance().getTableBackground();
         }
 
         @Override

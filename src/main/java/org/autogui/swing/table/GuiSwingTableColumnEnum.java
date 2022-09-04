@@ -11,6 +11,7 @@ import org.autogui.swing.GuiSwingViewEnumComboBox.PropertyLabelEnum;
 import org.autogui.swing.table.ObjectTableColumnValue.ObjectTableCellEditor;
 import org.autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
 import org.autogui.swing.util.PopupCategorized;
+import org.autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -35,8 +36,8 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
 
         PropertyEnumComboBox comboBox = new ColumnEditEnumComboBox(context, valueSpecifier);
         ObjectTableCellEditor editor = new ObjectTableCellEditor(
-                comboBox, false, rowSpecifier);
-        editor.setClickCount(2);
+                GuiSwingTableColumn.wrapEditor(comboBox), false, rowSpecifier);
+        editor.setClickCount(1);
 
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableCellRenderer(label, rowSpecifier),
@@ -50,7 +51,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
 
         public ColumnEnumPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
-            setOpaque(true);
+            TextCellRenderer.setCellDefaultProperties(this);
         }
 
         @Override
@@ -77,7 +78,8 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
         public ColumnEditEnumComboBox(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
-            setBorder(BorderFactory.createEmptyBorder());
+            TextCellRenderer.setCellDefaultProperties(this);
+            setBorder(TextCellRenderer.createBorder(3, 0, 2, 0));
             putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         }
 

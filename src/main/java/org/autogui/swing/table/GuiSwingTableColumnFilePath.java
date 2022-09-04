@@ -7,12 +7,9 @@ import org.autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import org.autogui.swing.GuiSwingViewLabel.PropertyLabel;
 import org.autogui.swing.table.ObjectTableColumnValue.ObjectTableCellEditor;
 import org.autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
-import org.autogui.swing.util.PopupCategorized;
+import org.autogui.swing.util.*;
 import org.autogui.swing.util.PopupCategorized.CategorizedMenuItem;
-import org.autogui.swing.util.SearchTextField;
-import org.autogui.swing.util.SearchTextFieldFilePath;
 import org.autogui.swing.util.SearchTextFieldFilePath.SearchTextFieldModelFilePath;
-import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -87,7 +84,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         public ColumnFilePathPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             filePathModel = new SearchTextFieldModelFilePathEmpty();
-            setOpaque(true);
+            TextCellRenderer.setCellDefaultProperties(this);
         }
 
         public void setTableColumn(TableColumn tableColumn) {
@@ -290,18 +287,27 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         public ColumnEditFilePathPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager, new SearchTextFieldModelFilePath());
             setCurrentValueSupported(false);
+            TextCellRenderer.setCellDefaultProperties(this);
         }
 
         @Override
         public void initLayout() {
             initBackgroundPainter();
+            /*
             setLayout(new BorderLayout());
             add(icon, BorderLayout.WEST);
             add(field, BorderLayout.CENTER);
+            */
+            new ResizableFlowLayout(true)
+                    .withContainer(this)
+                    .withMargin(UIManagerUtil.getInstance().getScaledSizeInt(5))
+                    .add(icon)
+                    .add(field, true);
             icon.setOpaque(true);
             field.setOpaque(true);
+            setBorder(TextCellRenderer.createBorder(9, 7, 3, 2, getBackground()));
+            icon.setBorder(BorderFactory.createEmptyBorder());
             field.setBorder(BorderFactory.createEmptyBorder());
-            setOpaque(true);
         }
 
         @Override

@@ -12,7 +12,7 @@ import org.autogui.swing.GuiSwingViewLabel.PropertyLabel;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 import org.autogui.swing.util.PopupExtensionText;
-import org.autogui.swing.util.UIManagerUtil;
+import org.autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -20,8 +20,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -52,7 +52,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         private static final long serialVersionUID = 1L;
         public ColumnTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
-            setOpaque(true);
+            TextCellRenderer.setCellDefaultProperties(this);
         }
 
         @Override
@@ -278,13 +278,14 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         public ColumnEditTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
+            setBorder(null);
             //getField().setEditable(false);
         }
 
         @Override
         public void initLayout() {
             initBackgroundPainter();
-            setOpaque(true);
+            TextCellRenderer.setCellDefaultProperties(this);
             setLayout(new BorderLayout());
             add(field, BorderLayout.CENTER);
             getField().setBorder(BorderFactory.createEmptyBorder());
@@ -353,7 +354,8 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         protected List<Runnable> editFinishHandlers = new ArrayList<>(1);
         public MultilineColumnTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
-            setOpaque(true);
+            setBorder(TextCellRenderer.createBorder(3, 7, 5, 5));
+            TextCellRenderer.setCellDefaultProperties(this);
             init();
         }
 
@@ -369,11 +371,11 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         protected void initAction() {
             InputMap iMap = getInputMap();
             Action finish = new FinishCellEditAction(editFinishHandlers);
-            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), finish);
-            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), finish);
+            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK), finish);
+            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK), finish);
 
-            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK), DefaultEditorKit.insertTabAction);
-            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK), DefaultEditorKit.insertBreakAction);
+            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), DefaultEditorKit.insertTabAction);
+            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), DefaultEditorKit.insertBreakAction);
         }
 
         public static class FinishCellEditAction extends AbstractAction {
@@ -393,6 +395,21 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
         public static class MultilineColumnEditorKit extends DefaultEditorKit implements ViewFactory  {
             static final long serialVersionUID = 1;
+            /** @since 1.6 */
+            protected boolean verticalCentering;
+
+            public MultilineColumnEditorKit() {
+                this(false);
+            }
+
+            /**
+             * @param verticalCentering centering if true
+             * @since 1.6
+             */
+            public MultilineColumnEditorKit(boolean verticalCentering) {
+                this.verticalCentering = verticalCentering;
+            }
+
             @Override
             public Document createDefaultDocument() {
                 Document doc = super.createDefaultDocument();
@@ -412,8 +429,21 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         public static class MultilineColumnCenterView extends WrappedPlainView {
+            /** @since 1.6 */
+            protected boolean verticalCentering;
+
             public MultilineColumnCenterView(Element elem) {
+                this(elem, false);
+            }
+
+            /**
+             * @param elem the element
+             * @param verticalCentering centering if true
+             * @since 1.6
+             */
+            public MultilineColumnCenterView(Element elem, boolean verticalCentering) {
                 super(elem);
+                this.verticalCentering = verticalCentering;
             }
 
             @Override
@@ -435,6 +465,19 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             @Override
             protected void layoutMajorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
                 super.layoutMajorAxis(targetSpan, axis, offsets, spans);
+                if (verticalCentering) {
+                    layoutMajorAxisCentering(targetSpan, axis, offsets, spans);
+                }
+            }
+
+            /**
+             * @param targetSpan span
+             * @param axis axis
+             * @param offsets offsets modified
+             * @param spans spans
+             * @since 1.6
+             */
+            protected void layoutMajorAxisCentering(int targetSpan, int axis, int[] offsets, int[]spans) {
                 int textHeight = (offsets.length == 0 ? 0 :
                         offsets[offsets.length - 1] + spans[spans.length - 1]);
                 //adjust Y starting point if the textHeight is smaller than the cell height (targetSpan)
@@ -452,6 +495,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                 super(view,
                         ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+                setBorder(BorderFactory.createEmptyBorder());
             }
 
             public MultilineColumnTextPane getColumnTextPane() {

@@ -67,9 +67,7 @@ public class TextCellRenderer<ValueType> extends JPanel
 
     protected void initBorder() {
         UIManagerUtil ui = UIManagerUtil.getInstance();
-        setBorder(BorderFactory.createEmptyBorder(
-                ui.getScaledSizeInt(7), ui.getScaledSizeInt(10),
-                ui.getScaledSizeInt(7), ui.getScaledSizeInt(10)));
+        setBorder(createBorder(7, 10, 7, 10));
     }
 
     public String getText() {
@@ -150,6 +148,24 @@ public class TextCellRenderer<ValueType> extends JPanel
         this.originalBackground = bg;
     }
     //////////////////////////////
+
+    /**
+     * setting properties for renderers
+     * @param cellComponent the target component
+     * @since 1.6
+     */
+    public static void setCellDefaultProperties(JComponent cellComponent) {
+        cellComponent.setOpaque(true);
+        cellComponent.setAlignmentY(0.1f);
+        if (cellComponent instanceof JLabel) {
+            JLabel label = (JLabel) cellComponent;
+            label.setVerticalAlignment(SwingConstants.TOP);
+        }
+        if (cellComponent instanceof AbstractButton) {
+            AbstractButton checkBox = (AbstractButton) cellComponent;
+            checkBox.setVerticalAlignment(SwingConstants.TOP);
+        }
+    }
 
     /**
      *
@@ -254,8 +270,41 @@ public class TextCellRenderer<ValueType> extends JPanel
         }
     }
 
+    /**
+     * <pre>
+     *     ----------------------------
+     *     |  matte(alternativeColor) top=1, left=(2 or 0), right=(2 or 0), bottom=2
+     *     |   matte(cell.background)   top=1, left=10, right=5, bottom=1
+     *     |    empty top=10, left=10, right=10, bottom=5
+     *     |      [cell]
+     * </pre>
+     * @param table the table
+     * @param cell the target cell
+     * @param isSelected true if the cell is selected
+     * @param hasFocus true if the cell has focus
+     * @param row the row index of the cell
+     * @param column the column index of the cell
+     * @since 1.6
+     */
+    public static void setCellTableBorderWithMargin(JTable table, JComponent cell, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (!setCellTableBorder(table, cell, isSelected, hasFocus, row, column)) {
+            setCellBorderDefault(true, cell, isSelected, hasFocus);
+        }
+    }
 
     /**
+     * the method totally replacing the border with a new one when it returns true.
+     *  <pre>
+     *     --------------------------------
+     *     |    matte(alternativeColor) top=1, left=(2 or 0), right=(2 or 0), bottom=2
+     *     |      matte(background) top=1, left=10, right=5, bottom=1
+     *     |       empty top=10, left=10, right=10, bottom=5
+     *     |         [cell]
+     *     |    ...
+     *     |  matte({@link #getGridColor(Color)})  top=0, left=0, right=0, bottom=1
+     *     ---------------------------------------
+     *  </pre>
+     * Currently, the true case is only the macOS SystemLAF.
      * @param table the table
      * @param cell the target cell
      * @param row the row index of the cell
@@ -270,20 +319,79 @@ public class TextCellRenderer<ValueType> extends JPanel
         if (!ui.isTableCustomHighlighting()) {
             return false;
         }
-        boolean leftEnd = (column == 0);
-        boolean rightEnd = (table == null ? true : (table.getColumnCount() == column + 1));
-        int h = Math.max(1, ui.getScaledSizeInt(1));
-        int w = Math.max(1, ui.getScaledSizeInt(2));
-
-        int iw = ui.getScaledSizeInt(5);
-        cell.setBorder(
-                BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(h, leftEnd ? w : 0, h * 2, rightEnd ? w : 0, getCellBackground(table, true, row)),
-                    BorderFactory.createMatteBorder(h, iw * 2, h, iw, cell.getBackground())));
+        int h = 1;
+        int iw = 5;
+        cell.setBorder(BorderFactory.createCompoundBorder(
+                    createCellTableBorderOuter(table, column, getCellBackground(table, true, row)),
+                    createBorder(1, iw * 2, h, iw)));
+        setCellTableMargin(cell);
         setCellTableBorderRowSeparator(cell);
         return true;
     }
 
+    /**
+     *
+     *  <pre>
+     *     --------------------------------
+     *     |    matte(color) top=1, left=(2 or 0), right=(2 or 0), bottom=2 //changed by the column index
+     *     |     [cell]
+     *     |
+     *     ---------------------------------------
+     *  </pre>
+     * @param table the table
+     * @param column  the target column
+     * @param color the border color
+     * @return matte border
+     * @since 1.6
+     */
+    public static Border createCellTableBorderOuter(JTable table, int column, Color color) {
+        int h = 1;
+        int w = 2;
+        return createBorder(h, isCellTableEnd(table, column, true) ? w : 0, h * 2, isCellTableEnd(table, column, false) ? w : 0, color);
+    }
+
+    /**
+     * @param table the table
+     * @param column the target column
+     * @param left the checked end
+     * @return true if index == 0 and left, or index is count-1 and !left
+     * @since 1.6
+     */
+    public static boolean isCellTableEnd(JTable table, int column, boolean left) {
+        if (left) {
+            return column == 0;
+        } else {
+            return (table != null && (table.getColumnCount() == column + 1));
+        }
+    }
+
+
+
+    /**
+     * <pre>
+     *     ------------------------
+     *     |  existing-border
+     *     |   empty top=10, left=10, right=10, bottom=5
+     *     |    [cell]
+     * </pre>
+     * @param cell the target cell
+     * @since 1.6
+     */
+    public static void setCellTableMargin(JComponent cell) {
+        wrapBorder(cell, createBorder(10, 10, 5, 10), true);
+    }
+
+    /**
+     * <pre>
+     *     |    [cell]
+     *     |   existing-border
+     *     |  matte({@link #getGridColor(Color)})  top=0, left=0, right=0, bottom=1
+     *     ---------------------------------------
+     * </pre>
+     * adding a grid-separator as border
+     * @param cell the target cell
+     * @since 1.6
+     */
     public static void setCellTableBorderRowSeparator(JComponent cell) {
         UIManagerUtil ui = UIManagerUtil.getInstance();
         Color grid = ui.getTableAlternateRowColor();
@@ -291,10 +399,16 @@ public class TextCellRenderer<ValueType> extends JPanel
         if (grid == null || Objects.equals(grid, background)) {
             grid = getGridColor(background);
         }
-        wrapBorder(cell, BorderFactory.createMatteBorder(0, 0,
-                Math.max(1, ui.getScaledSizeInt(1)), 0, grid));
+        wrapBorder(cell,
+                createBorder(0, 0, 1, 0, grid), false); //separator
     }
 
+    /**
+     *  modify the background color for grid-separator: a bright color becomes darker, a dark color becomes brighter
+     * @param background the color obtained from {@link JTable#getBackground()}
+     * @return the modified color
+     * @since 1.6
+     */
     public static Color getGridColor(Color background) {
         float[] fs = Color.RGBtoHSB(background.getRed(), background.getGreen(), background.getBlue(), null);
         if (fs[2] < 0.5f) { //check brightness
@@ -305,14 +419,61 @@ public class TextCellRenderer<ValueType> extends JPanel
         return Color.getHSBColor(fs[0], fs[1], fs[2]);
     }
 
-    public static void wrapBorder(JComponent component, Border border) {
+    /**
+     * @param component the border holder
+     * @param border the appended border
+     * @param inside if true the border will be the inside of the existing border
+     * @since 1.6
+     */
+    public static void wrapBorder(JComponent component, Border border, boolean inside) {
         Border exBorder = component.getBorder();
         if (exBorder != null) {
-            border = BorderFactory.createCompoundBorder(border, exBorder);
+            if (inside) {
+                border = BorderFactory.createCompoundBorder(exBorder, border);
+            } else {
+                border = BorderFactory.createCompoundBorder(border, exBorder);
+            }
         }
         component.setBorder(border);
     }
 
+    /**
+     *  the sizes of the border will be scaled; if non 0 size is specified, the minimum becomes 1.
+     * @param top the top size
+     * @param left the left size
+     * @param bottom the bottom size
+     * @param right the right size
+     * @return empty-border
+     * @since 1.6
+     */
+    public static Border createBorder(int top, int left, int bottom, int right) {
+        return createBorder(top, left, bottom, right, null);
+    }
+
+    /**
+     *  the sizes of the border will be scaled; if non 0 size is specified, the minimum becomes 1.
+     * @param top the top size
+     * @param left the left size
+     * @param bottom the bottom size
+     * @param right the right size
+     * @param background  the border color
+     * @return matte-border
+     * @since 1.6
+     */
+    public static Border createBorder(int top, int left, int bottom, int right, Color background) {
+        var ui = UIManagerUtil.getInstance();
+        return background == null ?
+                BorderFactory.createEmptyBorder(borderSize(ui, top), borderSize(ui, left), borderSize(ui, bottom), borderSize(ui, right)) :
+                BorderFactory.createMatteBorder(borderSize(ui, top), borderSize(ui, left), borderSize(ui, bottom), borderSize(ui, right), background);
+    }
+
+    private static int borderSize(UIManagerUtil ui, int n) {
+        if (n > 0) {
+            return Math.max(1, ui.getScaledSizeInt(n));
+        } else {
+            return ui.getScaledSizeInt(n);
+        }
+    }
 
     /**
      *
@@ -335,14 +496,14 @@ public class TextCellRenderer<ValueType> extends JPanel
     }
 
     /**
-     *
+     * the fallback impl. for returning false by {@link #setCellTableBorder(JTable, JComponent, boolean, boolean, int, int)}
      * @param isTable true if a table cell
-     * @param component the cell component
+     * @param cell the cell component
      * @param isSelected the cell is selected
      * @param hasFocus the cell has focus
      * @since 1.2
      */
-    public static void setCellBorderDefault(boolean isTable, JComponent component, boolean isSelected, boolean hasFocus) {
+    public static void setCellBorderDefault(boolean isTable, JComponent cell, boolean isSelected, boolean hasFocus) {
         if (hasFocus) {
             String selBorderName = (isTable ? "Table.focusSelectedCellHighlightBorder" :
                                                 "List.focusSelectedCellHighlightBorder");
@@ -350,15 +511,64 @@ public class TextCellRenderer<ValueType> extends JPanel
                                             "List.focusCellHighlightBorder");
             Border b = (isSelected ? UIManager.getBorder(selBorderName) : null);
             b = (b == null ? UIManager.getBorder(borderName) : b);
-            component.setBorder(b);
+            cell.setBorder(b);
         } else {
             Border b = UIManager.getBorder(isTable ?
                     "Table.cellNoFocusBorder" :
                     "List.cellNoFocusBorder");
-            b = (b == null ? BorderFactory.createEmptyBorder(1, 1, 1, 1) : b);
-            component.setBorder(b);
+            b = (b == null ? createBorder(1, 1, 1, 1) : b);
+            cell.setBorder(b);
         }
-        setCellTableBorderRowSeparator(component);
+        setCellTableMargin(cell);
+        setCellTableBorderRowSeparator(cell);
+    }
+
+    /**
+     * draw additional round highlighting rectangles for selected rows.
+     *  the method can be called after execution of {@link JTable#paintComponent(Graphics)}
+     * @param table the target table
+     * @param g2 the target context
+     * @since 1.6
+     */
+    public static void paintRowsBorderSelection(JTable table, Graphics2D g2) {
+        Rectangle rect = g2.getClipBounds();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        double top = rect.getY();
+        double bottom = rect.getMaxY();
+        double x = rect.getX();
+
+        int start = table.rowAtPoint(new Point((int) x, (int) top));
+        int end = table.rowAtPoint(new Point((int) x, (int) bottom));
+        if (end < 0) {
+            end = table.getRowCount() - 1;
+        }
+
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        int unitSize = Math.max(1, ui.getScaledSizeInt(1));
+        int size = ui.getScaledSizeInt(3);
+        int arc = ui.getScaledSizeInt(5);
+
+        g2.setColor(table.getSelectionBackground());
+        g2.setStroke(new BasicStroke(unitSize));
+
+        ListSelectionModel sel = table.getSelectionModel();
+        int cols = table.getColumnCount();
+        for (int i = start; i <= end; ++i) {
+            if (sel.isSelectedIndex(i)) {
+                Rectangle row = null;
+                for (int c = 0; c < cols; ++c) {
+                    Rectangle r = table.getCellRect(i, c, false);
+                    if (row == null) {
+                        row= r;
+                    } else {
+                        row.add(r);
+                    }
+                }
+                if (row != null) {
+                    g2.draw(new RoundRectangle2D.Double(row.x + unitSize, row.y + unitSize, row.width - size, row.height - size - unitSize, arc, arc));
+                }
+            }
+        }
     }
 
     //////////////////////////////

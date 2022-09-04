@@ -8,7 +8,13 @@ import org.autogui.swing.GuiSwingElement;
 import org.autogui.swing.GuiSwingPreferences;
 import org.autogui.swing.GuiSwingView;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
+import org.autogui.swing.GuiSwingViewWrapper;
+import org.autogui.swing.util.ResizableFlowLayout;
+import org.autogui.swing.util.TextCellRenderer;
+import org.autogui.swing.util.UIManagerUtil;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.function.Supplier;
 
 /**
@@ -77,5 +83,40 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
         void loadSwingPreferences(GuiPreferences prefs);
 
         void saveSwingPreferences(GuiPreferences prefs);
+    }
+
+    /**
+     * create wrapper for the editor component; useful for avoiding to resize with the entire cell size
+     * @param component the wrapped pane
+     * @return the wrapper
+     * @since 1.6
+     */
+    static JComponent wrapEditor(JComponent component) {
+        var pane = new GuiSwingViewWrapper.ValueWrappingPane<>((LayoutManager) null) {
+            @Override
+            public void setBackground(Color bg) {
+                super.setBackground(bg);
+                var p = getSwingViewWrappedPaneAsTypeOrNull(JComponent.class);
+                if (p != null) {
+                    p.setBackground(bg);
+                }
+            }
+
+            @Override
+            public void setForeground(Color fg) {
+                super.setForeground(fg);
+                var p = getSwingViewWrappedPaneAsTypeOrNull(JComponent.class);
+                if (p != null) {
+                    p.setForeground(fg);
+                }
+            }
+        };
+        pane.setBackground(UIManagerUtil.getInstance().getTableBackground());
+        pane.setBorder(TextCellRenderer.createBorder(1, 1, 1, 1));
+        TextCellRenderer.setCellDefaultProperties(pane);
+        new ResizableFlowLayout(true)
+                .withContainer(pane)
+                .add(component, true);
+        return pane;
     }
 }

@@ -10,6 +10,7 @@ import org.autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
 import org.autogui.swing.util.MenuBuilder;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupCategorized.CategorizedMenuItem;
+import org.autogui.swing.util.TextCellRenderer;
 import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         public ColumnEditImagePane(GuiMappingContext context, SpecifierManager specifierManager, boolean editor) {
             super(context, specifierManager);
             this.editor = editor;
-            setOpaque(true);
+            TextCellRenderer.setCellDefaultProperties(this);
             setPreferredSizeFromImageSize(); //fixed size
             setCurrentValueSupported(false);
         }
@@ -121,6 +122,10 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
             setPreferredSize(new Dimension(size, size));
         }
 
+        @Override
+        public Dimension getMinimumSize() {
+            return getImageScaledSize();
+        }
 
         public List<CategorizedMenuItem> getDynamicMenuItems() {
             if (editor) {

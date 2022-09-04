@@ -10,6 +10,7 @@ import org.autogui.swing.GuiSwingViewNumberSpinner.PropertyNumberSpinner;
 import org.autogui.swing.GuiSwingViewNumberSpinner.TypedSpinnerNumberModel;
 import org.autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
 import org.autogui.swing.util.PopupCategorized;
+import org.autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -32,12 +33,12 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           SpecifierManager parentSpecifier) {
         SpecifierManager valueSpecifier = new SpecifierManagerDefault(parentSpecifier::getSpecifier);
-        PropertyNumberSpinner spinner = new ColumnEditNumberSpinner(context, valueSpecifier);
-        ColumnNumberPane label = new ColumnNumberPane(context, valueSpecifier, spinner);
+        PropertyNumberSpinner editorSpinner = new ColumnEditNumberSpinner(context, valueSpecifier);
+        ColumnNumberPane viewerLabel = new ColumnNumberPane(context, valueSpecifier, editorSpinner);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
-                label,
-                spinner)
-                .withRowHeight(spinner.getPreferredSize().height)
+                viewerLabel,
+                GuiSwingTableColumn.wrapEditor(editorSpinner))
+                .withRowHeight(editorSpinner.getPreferredSize().height)
                 .withComparator(new NumberComparator())
                 .withValueType(Number.class);
     }
@@ -65,7 +66,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         public ColumnNumberPane(GuiMappingContext context, SpecifierManager specifierManager,
                                 PropertyNumberSpinner editor) {
             super(context, specifierManager);
-            setOpaque(true);
+            TextCellRenderer.setCellDefaultProperties(this);
             this.editor = editor;
             if (editor != null) {
                 currentFormat = editor.getModelTyped().getFormat();
@@ -175,6 +176,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
             super(context, specifierManager);
             setCurrentValueSupported(false);
             getEditorField().setBorder(BorderFactory.createEmptyBorder());
+            setBorder(TextCellRenderer.createBorder(4, 0, 0, 0));
         }
 
         @Override

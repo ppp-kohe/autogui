@@ -4,7 +4,9 @@ import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.swing.GuiSwingView;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingViewLabel.PropertyLabel;
+import org.autogui.swing.util.TextCellRenderer;
 
+import javax.swing.*;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -21,7 +23,7 @@ public class GuiSwingTableColumnLabel implements GuiSwingTableColumn {
                                           SpecifierManager parentSpecifier) {
         SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
         PropertyLabel view = new PropertyLabel(context, valueSpecifier);
-        view.setOpaque(true);
+        TextCellRenderer.setCellDefaultProperties(view);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, view)
                 .withComparator(Comparator.comparing(Objects::toString));
     }

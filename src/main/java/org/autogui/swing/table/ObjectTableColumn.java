@@ -309,17 +309,13 @@ public class ObjectTableColumn {
 
         public NumberRenderer() {
             setHorizontalAlignment(JLabel.RIGHT);
+            TextCellRenderer.setCellDefaultProperties(this);
         }
 
         @Override
-        public Component getTableCellRendererComponent(JTable table,
-                                                       Object value, boolean isSelected, boolean hasFocus, int row,
-                                                       int column) {
-            super.getTableCellRendererComponent(table, value, isSelected, hasFocus,
-                    row, column);
-            if (!TextCellRenderer.setCellTableBorder(table, this, isSelected, hasFocus, row, column)) {
-                TextCellRenderer.setCellBorderDefault(true, this, isSelected, hasFocus);
-            }
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            TextCellRenderer.setCellTableBorderWithMargin(table, this, isSelected, hasFocus, row, column);
             return this;
         }
     }

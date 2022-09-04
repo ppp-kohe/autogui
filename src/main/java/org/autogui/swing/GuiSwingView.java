@@ -631,7 +631,7 @@ public interface GuiSwingView extends GuiSwingElement {
         if (component instanceof GuiSwingViewWrapper.ValuePaneWrapper<?>) {
             GuiSwingViewWrapper.ValuePaneWrapper<?> wrapper = (GuiSwingViewWrapper.ValuePaneWrapper<?>) component;
             if (wrapper.isSwingViewWrappedPaneSameContext()) {
-                return getChild(wrapper.getSwingViewWrappedPane().asSwingViewComponent(), predicate);
+                return getChild(wrapper.getSwingViewWrappedPaneAsTypeOrNull(JComponent.class), predicate);
             }
         }
         return null;
@@ -676,11 +676,15 @@ public interface GuiSwingView extends GuiSwingElement {
                 if (component instanceof GuiSwingViewWrapper.ValuePaneWrapper<?> &&
                         ((GuiSwingViewWrapper.ValuePaneWrapper<Object>) component).isSwingViewWrappedPaneSameContext()) {
                     GuiSwingView.ValuePane<Object> wrapped = ((GuiSwingViewWrapper.ValuePaneWrapper<Object>) component).getSwingViewWrappedPane();
-                    T wrappedResult = checkNonNull(wrapped.asSwingViewComponent(), f);
-                    if (wrappedResult != null) {
-                        return wrappedResult;
+                    if (wrapped == null) {
+                        return t;
                     } else {
-                        return t; //not matched with the wrapped pane, so return the wrapper's one
+                        T wrappedResult = checkNonNull(wrapped.asSwingViewComponent(), f);
+                        if (wrappedResult != null) {
+                            return wrappedResult;
+                        } else {
+                            return t; //not matched with the wrapped pane, so return the wrapper's one
+                        }
                     }
                 } else {
                     return t;  //different context

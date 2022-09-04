@@ -25,6 +25,24 @@ public class GuiSwingViewWrapper {
          */
         GuiSwingView.ValuePane<Object> getSwingViewWrappedPane();
 
+        /**
+         * returns {@link #getSwingViewWrappedPane()} with type casting, or null
+         * @param paneType the class of the result type
+         * @return null or {@link #asSwingViewComponent()}
+         * @param <PaneType> the result type
+         * @since 1.6
+         */
+        default <PaneType extends JComponent> PaneType getSwingViewWrappedPaneAsTypeOrNull(Class<PaneType> paneType) {
+            var p = getSwingViewWrappedPane();
+            if (p != null) {
+                var cmp = p.asSwingViewComponent();
+                if (paneType.isInstance(cmp)) {
+                    return paneType.cast(cmp);
+                }
+            }
+            return null;
+        }
+
         default boolean isSwingViewWrappedPaneSameContext() {
             GuiSwingView.ValuePane<Object> p = getSwingViewWrappedPane();
             return p != null && Objects.equals(p.getSwingViewContext(), getSwingViewContext());

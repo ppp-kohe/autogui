@@ -1,24 +1,23 @@
 package org.autogui.swing;
 
 import org.autogui.base.log.GuiLogManager;
+import org.autogui.base.mapping.*;
 import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.swing.table.*;
 import org.autogui.swing.table.ToStringCopyCell.ToStringCopyForCellsAction;
-import org.autogui.base.mapping.*;
 import org.autogui.swing.util.*;
 
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
-import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -152,6 +151,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected boolean customRowHeightByUser;
         /** @since 1.3 */
         protected int rowHeightByProgram;
+        /** @since 1.6 */
+        protected RowHeightSetAction rowHeightSetAction;
 
 
         public CollectionTable(GuiMappingContext context, SpecifierManager specifierManager) {
@@ -170,6 +171,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             initSelectionSource();
             initSelectionClear();
             initValue();
+            initRowHeight();
             initPreferencesUpdater();
             initDragDrop();
             initFocus();
@@ -225,6 +227,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             UnSelectAction unSelectAction = new UnSelectAction(this);
             getInputMap().put(PopupExtension.getKeyStroke(KeyEvent.VK_ESCAPE, 0), unSelectAction.getValue(Action.NAME));
             getActionMap().put(unSelectAction.getValue(Action.NAME), unSelectAction);
+        }
+
+        public void initRowHeight() {
+            rowHeightSetAction = new RowHeightSetAction(this);
         }
 
         public void initValue() {
@@ -686,44 +692,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         protected void paintSelectedRows(Graphics2D g2) {
-            Rectangle rect = g2.getClipBounds();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            double top = rect.getY();
-            double bottom = rect.getMaxY();
-            double x = rect.getX();
-
-            int start = rowAtPoint(new Point((int) x, (int) top));
-            int end = rowAtPoint(new Point((int) x, (int) bottom));
-            if (end < 0) {
-                end = getRowCount() - 1;
-            }
-
-            UIManagerUtil ui = UIManagerUtil.getInstance();
-            int unitSize = Math.max(1, ui.getScaledSizeInt(1));
-            int size = ui.getScaledSizeInt(3);
-            int arc = ui.getScaledSizeInt(5);
-
-            g2.setColor(getSelectionBackground());
-            g2.setStroke(new BasicStroke(unitSize));
-
-            ListSelectionModel sel = getSelectionModel();
-            int cols = getColumnCount();
-            for (int i = start; i <= end; ++i) {
-                if (sel.isSelectedIndex(i)) {
-                    Rectangle row = null;
-                    for (int c = 0; c < cols; ++c) {
-                        Rectangle r = getCellRect(i, c, false);
-                        if (row == null) {
-                            row= r;
-                        } else {
-                            row.add(r);
-                        }
-                    }
-                    if (row != null) {
-                        g2.draw(new RoundRectangle2D.Double(row.x + unitSize, row.y + unitSize, row.width - size, row.height - size, arc, arc));
-                    }
-                }
-            }
+            TextCellRenderer.paintRowsBorderSelection(this, g2);
         }
 
         @Override
@@ -748,7 +717,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                                 switchAction::updateSelected),
                         switchAction,
                         new ColumnOrderResetAction(this),
-                        new RowHeightSetAction(this)
+                        rowHeightSetAction
                 ));
 
             }
@@ -843,6 +812,39 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected JTableHeader createDefaultTableHeader() {
             return new CollectionTableHeader(getColumnModel()); //customize for tool-tip
         }
+
+        /**
+         * overrides for preserving custom-row-heights if e is a total refreshing:
+         *  If {@link TableModelEvent#getLastRow()} is {@link Integer#MAX_VALUE},
+         *   it indicates updating of all rows.
+         *   Then, the default impl. of {@link JTable} clears custom all-row-heights set by {@link #setRowHeight(int, int)}.
+         *   This causes unintended row-heights expansion by re-painting after the method.
+         *  So, the overriding impl. saves before super call,
+         *       and resets the saved values before re-painting.
+         * @param e a model-event
+         */
+        @Override
+        public void tableChanged(TableModelEvent e) {
+            if (e.getLastRow() == Integer.MAX_VALUE) {
+                int[] allRowHeights = IntStream.range(0, getRowCount())
+                        .map(this::getRowHeight)
+                        .toArray();
+                super.tableChanged(e);
+                IntStream.range(0, Math.min(allRowHeights.length, getRowCount()))
+                        .forEach(r -> setRowHeight(r, Math.max(1, allRowHeights[r])));
+            } else {
+                super.tableChanged(e);
+            }
+        }
+
+        /**
+         * obtains an object for row-height customizing
+         * @return the action instance associated to the table
+         * @since 1.6
+         */
+        public RowHeightSetAction getRowHeightSetAction() {
+            return rowHeightSetAction;
+        }
     }
 
     /**
@@ -916,10 +918,25 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected JCheckBox enabled;
         protected SpinnerNumberModel numModel;
         protected JSpinner num;
+        /** @since 1.6 */
+        protected JRadioButton radioFit;
+        /** @since 1.6 */
+        protected JRadioButton radioFixed;
+        /** @since 1.6 */
+        protected JComponent rowHeightSettingPane;
+        /** @since 1.6 */
+        protected TableRowHeightFitter fitter;
+        /** @since 1.6 */
+        protected List<Consumer<RowHeightSetAction>> updateListeners = Collections.emptyList();
 
         public RowHeightSetAction(JTable table) {
-            super(new FlowLayout(FlowLayout.LEADING, 3, 3));
+            super(new BorderLayout());
+            var ui = UIManagerUtil.getInstance();
+
             this.table = table;
+            this.fitter = new TableRowHeightFitter(table);
+            fitter.addListenersToTable();
+            fitter.setEnabled(false);
             setOpaque(false);
 
             enabled = new JCheckBox("Row Height");
@@ -927,7 +944,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (table instanceof CollectionTable) {
                 enabled.setSelected(((CollectionTable) table).hasCustomRowHeightByUser());
             }
-            add(enabled);
+            radioFit = new JRadioButton("Fit to Content");
+            radioFit.addActionListener(this::update);
+            radioFixed = new JRadioButton("Fixed Size");
+            radioFixed.addActionListener(this::update);
 
             numModel = new SpinnerNumberModel(table.getRowHeight(), 5, Short.MAX_VALUE, 1);
             numModel.addChangeListener(this::update);
@@ -936,7 +956,45 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 ((JSpinner.NumberEditor) num.getEditor()).getTextField()
                         .addActionListener(this::updateBySpinnerAction);
             }
-            add(num);
+
+            int margin = ui.getScaledSizeInt(10);
+            int halfMargin = ui.getScaledSizeInt(5);
+            setBorder(BorderFactory.createEmptyBorder(halfMargin, margin, halfMargin, margin));
+            JComponent pane = ResizableFlowLayout.create(true)
+                    .withMargin(margin)
+                    .add(enabled)
+                    .add(rowHeightSettingPane = ResizableFlowLayout.create(false)
+                            .add(ResizableFlowLayout.create(true)
+                                    .add(radioFixed)
+                                    .add(num)
+                                    .withMargin(margin)
+                                    .getContainer())
+                            .withMargin(margin)
+                            .add(radioFit)
+                            .getContainer()).getContainer();
+            add(pane);
+            var settingGroup = new ButtonGroup();
+            settingGroup.add(radioFit);
+            settingGroup.add(radioFixed);
+            radioFixed.setSelected(true);
+            enabled.addItemListener(ce ->
+                updateEnabled(enabled.isSelected(), rowHeightSettingPane));
+            updateEnabled(enabled.isSelected(), rowHeightSettingPane);
+        }
+
+        /**
+         * {@link Component#setEnabled(boolean)} for the component tree
+         * @param on the flag
+         * @param comp traversed container
+         * @since 1.6
+         */
+        protected void updateEnabled(boolean on, Container comp) {
+            comp.setEnabled(on);
+            for (Component child : comp.getComponents()) {
+                if (child instanceof Container) {
+                    updateEnabled(on, (Container) child);
+                }
+            }
         }
 
         @Override
@@ -958,23 +1016,72 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public void updateHeight() {
             if (enabled.isSelected()) {
-                int height = numModel.getNumber().intValue();
-                if (table instanceof CollectionTable) {
-                    ((CollectionTable) table).setRowHeightByUser(height);
-                } else {
-                    table.setRowHeight(height);
+                if (radioFit.isSelected()) {
+                    fitter.setEnabled(true);
+                    SwingUtilities.invokeLater(fitter::fitAll);
+                } else if (radioFixed.isSelected()) {
+                    fitter.setEnabled(false);
+                    int height = numModel.getNumber().intValue();
+                    if (table instanceof CollectionTable) {
+                        ((CollectionTable) table).setRowHeightByUser(height);
+                    } else {
+                        table.setRowHeight(height);
+                    }
                 }
             } else {
+                fitter.setEnabled(false);
                 if (table instanceof CollectionTable) {
                     CollectionTable colTable = (CollectionTable) table;
                     colTable.setRowHeight(colTable.getRowHeightByProgram());
                 }
             }
+            updateListeners.forEach(u -> u.accept(this));
         }
 
         @Override
         public String getCategory() {
             return CATEGORY_COLUMN_RESIZE;
+        }
+
+        /**
+         *
+         * @return true if "Row Height" is enabled and "Fit to Content" is selected.
+         * @since 1.6
+         */
+        public boolean isRowHeightFitToContent() {
+            return enabled.isSelected() && radioFit.isSelected();
+        }
+
+        /**
+         * @param fit if true, enable "Row Height" and select "Fit to Content"
+         * @since 1.6
+         */
+        public void setRowHeightFitToContent(boolean fit) {
+            radioFit.setSelected(fit);
+            if (fit) {
+                radioFixed.setSelected(false);
+                enabled.setSelected(true);
+            }
+            updateHeight();
+        }
+
+        /**
+         * @param l the added listener
+         * @since 1.6
+         */
+        public void addUpdateListener(Consumer<RowHeightSetAction> l) {
+            if (updateListeners.isEmpty()) {
+                updateListeners = new ArrayList<>(1);
+            }
+            updateListeners.add(l);
+        }
+
+        /**
+         * @return registered listeners. the direct list reference of the field
+         * @since 1.6
+         */
+        public List<Consumer<RowHeightSetAction>> getUpdateListeners() {
+            return updateListeners;
         }
     }
 
@@ -1121,6 +1228,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
          */
         public void setUpListenersRowHeight() {
             table.addPropertyChangeListener("rowHeight", this::rowHeightChanged);
+            if (table instanceof CollectionTable) {
+                ((CollectionTable) table).getRowHeightSetAction()
+                        .addUpdateListener(a -> rowHeightChanged(null));
+            }
         }
 
         public void setPrefs(PreferencesForTable prefs) {
@@ -1212,6 +1323,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected int sizeLimit = 100;
         /** @since 1.3 */
         protected int rowHeight = -1;
+        /** @since 1.6 */
+        protected boolean rowCustom;
+        /** @since 1.6 */
+        protected boolean rowFitToContent;
 
         public void applyTo(JTable table) {
             TableColumnModel columnModel = table.getColumnModel();
@@ -1253,11 +1368,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
          * @since 1.3
          */
         public void applyRowHeightTo(JTable table) {
-            if (rowHeight > 0) {
+            if (rowCustom) {
                 if (table instanceof CollectionTable) {
-                    ((CollectionTable) table).setRowHeightByUser(rowHeight);
-                } else {
-                    table.setRowHeight(rowHeight);
+                    ((CollectionTable) table).getRowHeightSetAction().setRowHeightFitToContent(rowFitToContent);
+                }
+                if (rowHeight > 0) {
+                    if (table instanceof CollectionTable) {
+                        ((CollectionTable) table).setRowHeightByUser(rowHeight);
+                    } else {
+                        table.setRowHeight(rowHeight);
+                    }
                 }
             }
         }
@@ -1296,6 +1416,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setRowHeightFrom(JTable table) {
             if (table instanceof CollectionTable) {
                 CollectionTable colTable = (CollectionTable) table;
+                rowFitToContent = colTable.getRowHeightSetAction().isRowHeightFitToContent();
                 if (colTable.hasCustomRowHeightByUser()) {
                     rowHeight = colTable.getRowHeight();
                 } else {
@@ -1304,6 +1425,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             } else {
                 rowHeight = table.getRowHeight();
             }
+            rowCustom = (rowFitToContent || rowHeight > 0);
         }
 
         @Override
@@ -1319,6 +1441,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             map.put("rowSort", rowSort.stream()
                                 .map(PreferencesForTableRowSort::toJson)
                                 .collect(Collectors.toList()));
+            map.put("rowCustom", rowCustom);
+            map.put("rowFitToContent", rowFitToContent);
             map.put("rowHeight", rowHeight);
             return map;
         }
@@ -1350,6 +1474,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                             .forEach(rowSort::add);
                 }
 
+                Object rowCustomObj = map.get("rowCustom");
+                if (rowCustomObj != null) {
+                    rowCustom = (Boolean) rowCustomObj;
+                }
+                Object rowFitToContentObj = map.get("rowFitToContent");
+                if (rowFitToContentObj != null) {
+                    rowFitToContent = (Boolean) rowFitToContentObj;
+                }
                 Object rowHeightObj = map.get("rowHeight");
                 if (rowHeightObj != null) {
                     rowHeight = (Integer) rowHeightObj;
@@ -1928,7 +2060,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected JTable table;
 
         public ColumnResizeModeSwitchAction(JTable table) {
-            putValue(NAME, "Auto Resize");
+            putValue(NAME, "Auto Resize Column Width");
             this.table = table;
             updateSelected();
         }
