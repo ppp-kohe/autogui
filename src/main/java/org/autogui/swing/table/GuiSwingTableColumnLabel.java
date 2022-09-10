@@ -25,6 +25,7 @@ public class GuiSwingTableColumnLabel implements GuiSwingTableColumn {
         PropertyLabel view = new PropertyLabel(context, valueSpecifier);
         TextCellRenderer.setCellDefaultProperties(view);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, view)
+                .withBorderType(ObjectTableColumnValue.CellBorderType.Regular)
                 .withComparator(Comparator.comparing(Objects::toString));
     }
 }

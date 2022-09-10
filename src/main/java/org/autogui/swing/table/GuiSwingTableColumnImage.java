@@ -38,13 +38,11 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         ColumnEditImagePane edit = new ColumnEditImagePane(context, valueSpecifier, true);
         edit.setScaleTarget(img);
         img.setScaleTarget(edit);
-        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, img, edit) {
-            @Override
-            protected TableCellEditor editorForColumn() {
-                return editor; //always apply the editor
-            }
-        }.withRowHeight(img.getPreferredSize().height)
-        .withComparator(Comparator.comparing(Objects::hash));
+        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, img, edit)
+                .withBorderType(ObjectTableColumnValue.CellBorderType.Regular)
+                .withEditorForColumnAlwaysApplying(true)
+                .withRowHeight(img.getPreferredSize().height)
+                .withComparator(Comparator.comparing(Objects::hash));
     }
 
     /**

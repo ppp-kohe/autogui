@@ -32,7 +32,8 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
 
         ObjectTableColumnValue column = new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(view, rowSpecifier),
-                new CheckBoxEditor(GuiSwingTableColumn.wrapEditor(editor), view == editor, rowSpecifier));
+                new CheckBoxEditor(GuiSwingTableColumn.wrapEditor(editor), view == editor, rowSpecifier))
+                .withBorderType(ObjectTableColumnValue.CellBorderType.Regular);
         column.withComparator(Comparator.comparing(Boolean.class::cast));
         column.setValueType(Boolean.class);
 
@@ -59,13 +60,10 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
             setHorizontalAlignment(SwingConstants.CENTER);
             setBorderPainted(true);
             TextCellRenderer.setCellDefaultProperties(this);
-            if (!editor) {
-                setBorder(BorderFactory.createEmptyBorder());
-            } else {
-                setBorder(TextCellRenderer.createBorder(4, 4, 3, 2));
-            }
+            setBorder(BorderFactory.createEmptyBorder());
             setOpaque(false); //clear background
             setText("");
+            setFocusPainted(false);
         }
 
         @Override

@@ -39,7 +39,8 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         SpecifierManager valueSpecifier = new SpecifierManagerDefault(parentSpecifier::getSpecifier);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new MultilineColumnTextViewPane(context, valueSpecifier),
-                new MultilineColumnTextPane(context, valueSpecifier).asEditorPane())
+                new MultilineColumnWrappingPane(new MultilineColumnTextPane(context, valueSpecifier).asEditorPane()))
+                .withBorderType(ObjectTableColumnValue.CellBorderType.EditorPane)
 //        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
 //                new ColumnTextPane(context, valueSpecifier),
 //                new ColumnEditTextPane(context, valueSpecifier))
@@ -278,7 +279,6 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         public ColumnEditTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
-            setBorder(null);
             //getField().setEditable(false);
         }
 
@@ -354,8 +354,8 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         protected List<Runnable> editFinishHandlers = new ArrayList<>(1);
         public MultilineColumnTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
-            setBorder(TextCellRenderer.createBorder(3, 7, 5, 5));
             TextCellRenderer.setCellDefaultProperties(this);
+            setBorder(BorderFactory.createEmptyBorder());
             init();
         }
 
@@ -382,7 +382,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             static final long serialVersionUID = 1;
             List<Runnable> editFinishHandlers;
 
-            FinishCellEditAction(List<Runnable> editFinishHandlers) {
+            public FinishCellEditAction(List<Runnable> editFinishHandlers) {
                 putValue(NAME, "FinishCellEdit");
                 this.editFinishHandlers = editFinishHandlers;
             }
@@ -496,6 +496,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                         ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
                 setBorder(BorderFactory.createEmptyBorder());
+                TextCellRenderer.setCellDefaultProperties(this);
             }
 
             public MultilineColumnTextPane getColumnTextPane() {
@@ -567,4 +568,22 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
     }
 
+    /**
+     * a wrapper pane for scroll+editor cell.
+     *    the JScrollPane seems that it cannot fill background color for the empty border.
+     *    The class solve this by wrapping the scroll pane with the border.
+     * @since 1.6
+     */
+    public static class MultilineColumnWrappingPane extends GuiSwingViewWrapper.ValueWrappingPane<Object> {
+        public MultilineColumnWrappingPane(Component view) {
+            super(view);
+            setBorder(BorderFactory.createEmptyBorder());
+            setOpaque(true);
+        }
+
+        @Override
+        public void requestSwingViewFocus() {
+            getSwingViewWrappedPane().requestSwingViewFocus();
+        }
+    }
 }

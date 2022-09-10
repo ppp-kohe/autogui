@@ -151,6 +151,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected boolean customRowHeightByUser;
         /** @since 1.3 */
         protected int rowHeightByProgram;
+        /** some row-height is customized by {@link #setRowHeight(int, int)}. cleared by {@link #setRowHeight(int)}
+         * @since 1.6 */
+        protected boolean customRowHeightIndividual;
         /** @since 1.6 */
         protected RowHeightSetAction rowHeightSetAction;
 
@@ -205,11 +208,22 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initGrid() {
-            customHighlighting = UIManagerUtil.getInstance().isTableCustomHighlighting();
-            if (customHighlighting) {
-                setGridColor(getBackground());
-                setShowGrid(false);
+            var ui = UIManagerUtil.getInstance();
+            customHighlighting = ui.isTableCustomHighlighting();
+            setGridColor(getAutoGridColor());
+            setShowVerticalLines(false);
+            setShowHorizontalLines(true);
+            setRowMargin(Math.max(1, ui.getScaledSizeInt(1)));
+        }
+
+        private Color getAutoGridColor() {
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            Color grid = ui.getTableAlternateRowColor();
+            Color background = ui.getTableBackground();
+            if (grid == null || Objects.equals(grid, background)) {
+                grid = TextCellRenderer.getGridColor(background);
             }
+            return grid;
         }
 
         public void initSelection() {
@@ -230,6 +244,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initRowHeight() {
+            setRowHeight(getRowHeight() + UIManagerUtil.getInstance().getScaledSizeInt(16)); //adding margin top+bottom: later ObjectTableModel.initTableRowHeight updates the value based on columns
             rowHeightSetAction = new RowHeightSetAction(this);
         }
 
@@ -774,6 +789,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setRowHeight(int rowHeight) {
             rowHeightByProgram = rowHeight;
             customRowHeightByUser = false;
+            customRowHeightIndividual = false;
             super.setRowHeight(rowHeight);
         }
 
@@ -785,6 +801,12 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void setRowHeightByUser(int rowHeight) {
             customRowHeightByUser = true;
             super.setRowHeight(rowHeight);
+        }
+
+        @Override
+        public void setRowHeight(int row, int rowHeight) {
+            customRowHeightIndividual = true;
+            super.setRowHeight(row, rowHeight);
         }
 
         /**
@@ -825,7 +847,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
          */
         @Override
         public void tableChanged(TableModelEvent e) {
-            if (e.getLastRow() == Integer.MAX_VALUE) {
+            if (e.getLastRow() == Integer.MAX_VALUE && customRowHeightIndividual) {
                 int[] allRowHeights = IntStream.range(0, getRowCount())
                         .map(this::getRowHeight)
                         .toArray();

@@ -7,6 +7,7 @@ import org.autogui.swing.util.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
@@ -349,6 +350,12 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                     top = 0;
                 } else {
                     top = (paneSize.height - size.height) / 2;
+                }
+
+                Insets insets = getInsets();
+                if (insets != null) {
+                    left += insets.left;
+                    top += insets.top;
                 }
 
                 try {

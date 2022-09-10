@@ -44,6 +44,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     protected int contextIndex = -1;
     protected TableCellRenderer renderer;
     protected TableCellEditor editor;
+    /** @since 1.6 */
+    protected boolean editorForColumnAlwaysApplying;
 
     /**
      * the representation of the context must be a sub-type of {@link GuiReprValue}.
@@ -88,8 +90,52 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         }
     }
 
+    /**
+     * indicating whether the editor needs a specific margin border
+     * @since 1.6
+     */
+    public enum CellBorderType {
+        Regular(new Insets(8, 8, 8, 8)),
+        Spinner(new Insets(3, 8, 8, 1)),
+        ComboBox(new Insets(3, 4, 8, 8)),
+        FilePath(new Insets(8, 10, 8, 8)),
+        EditorPane(new Insets(8, 10, 8, 8));
+
+        final Insets insets;
+        CellBorderType(Insets insets) {
+            this.insets = insets;
+        }
+        public Insets getMargin() {
+            return insets;
+        }
+    }
+
+    /**
+     * specify the margin border when the editor is a {@link ObjectTableCellEditor}.
+     * @param type the border type
+     * @return this
+     * @since 1.6
+     */
+    public ObjectTableColumnValue withBorderType(CellBorderType type) {
+        if (editor instanceof ObjectTableCellEditor) {
+            Insets margin = type.getMargin();
+            ((ObjectTableCellEditor) editor).setMarginBorder(BorderFactory.createEmptyBorder(margin.top, margin.left, margin.bottom, margin.right));
+        }
+        return this;
+    }
+
+    /**
+     * @param alwaysApplying true for {@link #editorForColumn()} always returning {@link #editor}
+     * @return this
+     * @since 1.6
+     */
+    public ObjectTableColumnValue withEditorForColumnAlwaysApplying(boolean alwaysApplying) {
+        this.editorForColumnAlwaysApplying = alwaysApplying;
+        return this;
+    }
+
     protected TableCellEditor editorForColumn() {
-        return context.getReprValue().isEditable(context) ? editor : null;
+        return (editorForColumnAlwaysApplying || context.getReprValue().isEditable(context)) ? editor : null;
     }
 
     @Override
@@ -408,6 +454,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         protected SpecifierManagerIndex specifierIndex;
         /** @since 1.6 */
         protected Border originalBorder;
+        /** @since 1.6 */
+        protected Border marginBorder;
 
         /**
          * @param component the editor component, must be a {@link ValuePane}
@@ -462,9 +510,17 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 //                    }
 //                }
             }
-            component.setBorder(originalBorder);
+            TextCellRenderer.setCellTableColor(table, component, isSelected, true, row, column);
             setBorders(table, column);
             return component;
+        }
+
+        /**
+         * @param marginBorder an additional border
+         * @since 1.6
+         */
+        public void setMarginBorder(Border marginBorder) {
+            this.marginBorder = marginBorder;
         }
 
         /**
@@ -473,12 +529,16 @@ public class ObjectTableColumnValue extends ObjectTableColumn
          * @since 1.6
          */
         protected void setBorders(JTable table, int column) {
-            TextCellRenderer.wrapBorder(component, TextCellRenderer.createBorder(9, 7, 1, 2, getCellBackgroundEditing()), false);
+            component.setBorder(originalBorder);
+            if (marginBorder != null) {
+                TextCellRenderer.wrapBorder(component, marginBorder, false);
+            }
+            /*
             TextCellRenderer.wrapBorder(component,
                     TextCellRenderer.createBorder(1,
                             TextCellRenderer.isCellTableEnd(table, column, true) ? 1 : 0, 1,
                             TextCellRenderer.isCellTableEnd(table, column, false) ? 1 : 0, getCellBackgroundEditingBorder()), false);
-            TextCellRenderer.setCellTableBorderRowSeparator(component);
+                            */
         }
 
         /**

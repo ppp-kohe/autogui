@@ -37,6 +37,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         ObjectTableColumn column = new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableCellRenderer(renderPane, rowSpecifier),
                 new ObjectTableCellEditor(new ColumnEditFilePathPane(context, valueSpecifier), false, rowSpecifier))
+                .withBorderType(ObjectTableColumnValue.CellBorderType.FilePath)
                 .withComparator(new FilePathComparator(context))
                 .withValueType(Path.class)
                 .withRowHeight(UIManagerUtil.getInstance().getScaledSizeInt(28));
@@ -305,7 +306,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
                     .add(field, true);
             icon.setOpaque(true);
             field.setOpaque(true);
-            setBorder(TextCellRenderer.createBorder(9, 7, 3, 2, getBackground()));
+            //setBorder(TextCellRenderer.createBorder(9, 7, 3, 2, getBackground()));
             icon.setBorder(BorderFactory.createEmptyBorder());
             field.setBorder(BorderFactory.createEmptyBorder());
         }

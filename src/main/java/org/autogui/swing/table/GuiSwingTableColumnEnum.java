@@ -42,6 +42,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableCellRenderer(label, rowSpecifier),
                 editor)
+                .withBorderType(ObjectTableColumnValue.CellBorderType.ComboBox)
                 .withComparator(Comparator.naturalOrder())
                 .withValueType(Enum.class);
     }
@@ -79,8 +80,9 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
             super(context, specifierManager);
             setCurrentValueSupported(false);
             TextCellRenderer.setCellDefaultProperties(this);
-            setBorder(TextCellRenderer.createBorder(3, 0, 2, 0));
+            setBorder(BorderFactory.createEmptyBorder());
             putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+            setOpaque(false);
         }
 
         @Override

@@ -38,6 +38,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 viewerLabel,
                 GuiSwingTableColumn.wrapEditor(editorSpinner))
+                .withBorderType(ObjectTableColumnValue.CellBorderType.Spinner)
                 .withRowHeight(editorSpinner.getPreferredSize().height)
                 .withComparator(new NumberComparator())
                 .withValueType(Number.class);
@@ -176,7 +177,9 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
             super(context, specifierManager);
             setCurrentValueSupported(false);
             getEditorField().setBorder(BorderFactory.createEmptyBorder());
-            setBorder(TextCellRenderer.createBorder(4, 0, 0, 0));
+            TextCellRenderer.setCellDefaultProperties(getEditorField());
+            setBorder(BorderFactory.createEmptyBorder());
+            //setBorder(TextCellRenderer.createBorder(4, 0, 0, 0));
         }
 
         @Override

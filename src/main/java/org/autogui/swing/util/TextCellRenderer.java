@@ -296,12 +296,9 @@ public class TextCellRenderer<ValueType> extends JPanel
      * the method totally replacing the border with a new one when it returns true.
      *  <pre>
      *     --------------------------------
-     *     |    matte(alternativeColor) top=1, left=(2 or 0), right=(2 or 0), bottom=2
-     *     |      matte(background) top=1, left=10, right=5, bottom=1
-     *     |       empty top=10, left=10, right=10, bottom=5
+     *     |       empty top=7, left=8, right=8, bottom=8
      *     |         [cell]
      *     |    ...
-     *     |  matte({@link #getGridColor(Color)})  top=0, left=0, right=0, bottom=1
      *     ---------------------------------------
      *  </pre>
      * Currently, the true case is only the macOS SystemLAF.
@@ -319,13 +316,8 @@ public class TextCellRenderer<ValueType> extends JPanel
         if (!ui.isTableCustomHighlighting()) {
             return false;
         }
-        int h = 1;
-        int iw = 5;
-        cell.setBorder(BorderFactory.createCompoundBorder(
-                    createCellTableBorderOuter(table, column, getCellBackground(table, true, row)),
-                    createBorder(1, iw * 2, h, iw)));
+        cell.setBorder(createCellTableBorderOuter(table, column, getCellBackground(table, true, row)));
         setCellTableMargin(cell);
-        setCellTableBorderRowSeparator(cell);
         return true;
     }
 
@@ -371,36 +363,14 @@ public class TextCellRenderer<ValueType> extends JPanel
      * <pre>
      *     ------------------------
      *     |  existing-border
-     *     |   empty top=10, left=10, right=10, bottom=5
+     *     |   empty top=7, left=8, right=8, bottom=8
      *     |    [cell]
      * </pre>
      * @param cell the target cell
      * @since 1.6
      */
     public static void setCellTableMargin(JComponent cell) {
-        wrapBorder(cell, createBorder(10, 10, 5, 10), true);
-    }
-
-    /**
-     * <pre>
-     *     |    [cell]
-     *     |   existing-border
-     *     |  matte({@link #getGridColor(Color)})  top=0, left=0, right=0, bottom=1
-     *     ---------------------------------------
-     * </pre>
-     * adding a grid-separator as border
-     * @param cell the target cell
-     * @since 1.6
-     */
-    public static void setCellTableBorderRowSeparator(JComponent cell) {
-        UIManagerUtil ui = UIManagerUtil.getInstance();
-        Color grid = ui.getTableAlternateRowColor();
-        Color background = ui.getTableBackground();
-        if (grid == null || Objects.equals(grid, background)) {
-            grid = getGridColor(background);
-        }
-        wrapBorder(cell,
-                createBorder(0, 0, 1, 0, grid), false); //separator
+        wrapBorder(cell, createBorder(7, 8, 8, 8), true);
     }
 
     /**
@@ -462,9 +432,11 @@ public class TextCellRenderer<ValueType> extends JPanel
      */
     public static Border createBorder(int top, int left, int bottom, int right, Color background) {
         var ui = UIManagerUtil.getInstance();
-        return background == null ?
-                BorderFactory.createEmptyBorder(borderSize(ui, top), borderSize(ui, left), borderSize(ui, bottom), borderSize(ui, right)) :
-                BorderFactory.createMatteBorder(borderSize(ui, top), borderSize(ui, left), borderSize(ui, bottom), borderSize(ui, right), background);
+//        return background == null ?
+//                BorderFactory.createEmptyBorder(borderSize(ui, top), borderSize(ui, left), borderSize(ui, bottom), borderSize(ui, right)) :
+//                BorderFactory.createMatteBorder(borderSize(ui, top), borderSize(ui, left), borderSize(ui, bottom), borderSize(ui, right), background);
+//
+        return BorderFactory.createEmptyBorder(borderSize(ui, top), borderSize(ui, left), borderSize(ui, bottom), borderSize(ui, right));
     }
 
     private static int borderSize(UIManagerUtil ui, int n) {
@@ -520,7 +492,6 @@ public class TextCellRenderer<ValueType> extends JPanel
             cell.setBorder(b);
         }
         setCellTableMargin(cell);
-        setCellTableBorderRowSeparator(cell);
     }
 
     /**
@@ -545,7 +516,7 @@ public class TextCellRenderer<ValueType> extends JPanel
 
         UIManagerUtil ui = UIManagerUtil.getInstance();
         int unitSize = Math.max(1, ui.getScaledSizeInt(1));
-        int size = ui.getScaledSizeInt(3);
+        int size = ui.getScaledSizeInt(2);
         int arc = ui.getScaledSizeInt(5);
 
         g2.setColor(table.getSelectionBackground());
@@ -565,7 +536,7 @@ public class TextCellRenderer<ValueType> extends JPanel
                     }
                 }
                 if (row != null) {
-                    g2.draw(new RoundRectangle2D.Double(row.x + unitSize, row.y + unitSize, row.width - size, row.height - size - unitSize, arc, arc));
+                    g2.draw(new RoundRectangle2D.Double(row.x + unitSize, row.y, row.width - size, row.height, arc, arc));
                 }
             }
         }

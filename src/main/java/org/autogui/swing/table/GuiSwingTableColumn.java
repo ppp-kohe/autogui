@@ -92,31 +92,52 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
      * @since 1.6
      */
     static JComponent wrapEditor(JComponent component) {
-        var pane = new GuiSwingViewWrapper.ValueWrappingPane<>((LayoutManager) null) {
-            @Override
-            public void setBackground(Color bg) {
-                super.setBackground(bg);
+        return new ValueWrappingPaneForEditor(component, true);
+    }
+
+    /**
+     * a wrapper class for cell-editors: the wrapped view aligned to the top of the pane
+     * @since 1.6
+     */
+    class ValueWrappingPaneForEditor extends GuiSwingViewWrapper.ValueWrappingPane<Object> {
+        protected boolean sharedColor;
+        public ValueWrappingPaneForEditor(Component view, boolean shareColor) {
+            super((LayoutManager) null);
+            this.sharedColor = shareColor;
+            setBackground(UIManagerUtil.getInstance().getTableBackground());
+            setBorder(BorderFactory.createEmptyBorder());
+            TextCellRenderer.setCellDefaultProperties(this);
+            new ResizableFlowLayout(true)
+                    .withContainer(this)
+                    .withMargin(0)
+                    .add(view, true);
+        }
+
+        @Override
+        public void setBackground(Color bg) {
+            super.setBackground(bg);
+            if (sharedColor) {
                 var p = getSwingViewWrappedPaneAsTypeOrNull(JComponent.class);
                 if (p != null) {
                     p.setBackground(bg);
                 }
             }
+        }
 
-            @Override
-            public void setForeground(Color fg) {
-                super.setForeground(fg);
+        @Override
+        public void setForeground(Color fg) {
+            super.setForeground(fg);
+            if (sharedColor) {
                 var p = getSwingViewWrappedPaneAsTypeOrNull(JComponent.class);
                 if (p != null) {
                     p.setForeground(fg);
                 }
             }
-        };
-        pane.setBackground(UIManagerUtil.getInstance().getTableBackground());
-        pane.setBorder(TextCellRenderer.createBorder(1, 1, 1, 1));
-        TextCellRenderer.setCellDefaultProperties(pane);
-        new ResizableFlowLayout(true)
-                .withContainer(pane)
-                .add(component, true);
-        return pane;
+        }
+
+        @Override
+        public void requestSwingViewFocus() {
+            getSwingViewWrappedPane().requestSwingViewFocus();
+        }
     }
 }

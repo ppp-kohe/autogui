@@ -177,7 +177,7 @@ public class ObjectTableModel extends AbstractTableModel
     }
 
     public void initTableRowHeight(JTable table) {
-        int height = Math.max(table.getRowHeight() + UIManagerUtil.getInstance().getScaledSizeInt(3),
+        int height = Math.max(table.getRowHeight(),
                 getColumns().getRowHeight());
         table.setRowHeight(height);
     }
