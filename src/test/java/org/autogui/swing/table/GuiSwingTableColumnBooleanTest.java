@@ -132,7 +132,7 @@ public class GuiSwingTableColumnBooleanTest extends GuiSwingTestCase {
         ObjectTableColumnValue.ObjectTableCellEditor objEditor = (ObjectTableColumnValue.ObjectTableCellEditor) editor;
         Assert.assertEquals(false, runGet(objEditor::getCellEditorValue));
 
-        GuiSwingTableColumnBoolean.ColumnCheckBox component = (GuiSwingTableColumnBoolean.ColumnCheckBox) runGet(table::getEditorComponent);
+        GuiSwingTableColumnBoolean.ColumnCheckBox component = runGetPane(GuiSwingTableColumnBoolean.ColumnCheckBox.class, table::getEditorComponent);
         run(() -> component.setSelected(true));
         runWait();
 

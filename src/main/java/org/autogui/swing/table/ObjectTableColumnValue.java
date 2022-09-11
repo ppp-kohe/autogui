@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -569,7 +570,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             if (e instanceof MouseEvent) {
                 return ((MouseEvent) e).getClickCount() >= getClickCount();
             } else if (e instanceof KeyEvent) {
-                int code = ((KeyEvent) e).getKeyCode();
+                KeyEvent ke = (KeyEvent) e;
+                if (KeyHandlerFinishEditing.isKeyEventFinishEditing(ke)) {
+                    return true;
+                }
+                int code = ke.getKeyCode();
                 return code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE;
             } else {
                 return true;
@@ -582,6 +587,57 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         public int getClickCount() {
             return clickCount;
+        }
+    }
+
+    /**
+     * a handler for finishing editor by alt+enter
+     * @since 1.6
+     */
+    public static class KeyHandlerFinishEditing extends KeyAdapter {
+        protected Supplier<List<Runnable>> finishRunners;
+
+        public KeyHandlerFinishEditing(Supplier<List<Runnable>> finishRunners) {
+            this.finishRunners = finishRunners;
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            //keyPressed, instead of keyReleased: isCellEditable(e) responds for keyPressed, and then it sends keyReleased event to the component
+            if (isKeyEventFinishEditing(e)) {
+                finishRunners.get().forEach(Runnable::run);
+                e.consume();
+            }
+        }
+
+        /**
+         * @param e the tested event
+         * @return true if alt+enter
+         */
+        public static boolean isKeyEventFinishEditing(KeyEvent e) {
+            return e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiersEx() == KeyEvent.ALT_DOWN_MASK;
+        }
+
+        /**
+         * call {@link #installFinishEditingKeyHandler(Component, Supplier)}
+         * @param c the target component
+         * @param finishRunners finishers added by {@link ValuePane#addSwingEditFinishHandler(Runnable)}
+         * @since 1.6
+         */
+        public static KeyListener installFinishEditingKeyHandler(Component c, List<Runnable> finishRunners) {
+            return installFinishEditingKeyHandler(c, () -> finishRunners);
+        }
+
+        /**
+         * provides general key-handling handler of finish editing
+         * @param c the target component
+         * @param finishRunners finishers added by {@link ValuePane#addSwingEditFinishHandler(Runnable)}
+         * @since 1.6
+         */
+        public static KeyListener installFinishEditingKeyHandler(Component c, Supplier<List<Runnable>> finishRunners) {
+            var h = new KeyHandlerFinishEditing(finishRunners);
+            c.addKeyListener(h);
+            return h;
         }
     }
 

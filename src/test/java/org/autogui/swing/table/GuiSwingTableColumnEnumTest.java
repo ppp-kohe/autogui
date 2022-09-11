@@ -132,7 +132,7 @@ public class GuiSwingTableColumnEnumTest extends GuiSwingTestCase {
         ObjectTableColumnValue.ObjectTableCellEditor objEditor = (ObjectTableColumnValue.ObjectTableCellEditor) editor;
         Assert.assertEquals(TestEnum.World, runGet(objEditor::getCellEditorValue));
 
-        GuiSwingTableColumnEnum.ColumnEditEnumComboBox component = (GuiSwingTableColumnEnum.ColumnEditEnumComboBox) runGet(table::getEditorComponent);
+        GuiSwingTableColumnEnum.ColumnEditEnumComboBox component = runGetPane(GuiSwingTableColumnEnum.ColumnEditEnumComboBox.class, table::getEditorComponent);
         run(() -> component.setSelectedItem(TestEnum.Hello));
         runWait();
 

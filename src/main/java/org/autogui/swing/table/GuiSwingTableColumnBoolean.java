@@ -10,9 +10,13 @@ import org.autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EventObject;
+import java.util.List;
 
 /**
  * a column factory for {@link Boolean}.
@@ -43,6 +47,8 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
     /** a property-check-box for column renderer and editor */
     public static class ColumnCheckBox extends PropertyCheckBox {
         private static final long serialVersionUID = 1L;
+        /** @since 1.6 */
+        protected List<Runnable> finishRunners = new ArrayList<>(1);
 
         public ColumnCheckBox(GuiMappingContext context, SpecifierManager specifierManager) {
             this(context, specifierManager, false);
@@ -64,6 +70,24 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
             setOpaque(false); //clear background
             setText("");
             setFocusPainted(false);
+            if (editor) {
+                addKeyListener(new KeyAdapter() {
+                    @Override
+                    public void keyReleased(KeyEvent e) {
+                        if (e.getKeyCode() == KeyEvent.VK_SPACE && e.getModifiersEx() == 0) {
+                            setSelected(!isSelected());
+                            e.consume();
+                        }
+                    }
+                });
+                ObjectTableColumnValue.KeyHandlerFinishEditing.installFinishEditingKeyHandler(this, finishRunners);
+            }
+        }
+
+        @Override
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
+            finishRunners.add(eventHandler);
+            super.addSwingEditFinishHandler(eventHandler);
         }
 
         @Override

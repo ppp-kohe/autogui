@@ -14,13 +14,10 @@ import org.autogui.swing.util.TextCellRenderer;
 import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * a column factory for {@link Image}.
@@ -63,12 +60,24 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         protected boolean editor;
         protected Runnable viewUpdater;
 
+        /** @since 1.6 */
+        protected List<Runnable> finishRunners = new ArrayList<>(1);
+
         public ColumnEditImagePane(GuiMappingContext context, SpecifierManager specifierManager, boolean editor) {
             super(context, specifierManager);
             this.editor = editor;
             TextCellRenderer.setCellDefaultProperties(this);
             setPreferredSizeFromImageSize(); //fixed size
             setCurrentValueSupported(false);
+            if (editor) {
+                ObjectTableColumnValue.KeyHandlerFinishEditing.installFinishEditingKeyHandler(this, finishRunners);
+            }
+        }
+
+        @Override
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
+            finishRunners.add(eventHandler);
+            super.addSwingEditFinishHandler(eventHandler);
         }
 
         public void setScaleTarget(ColumnEditImagePane scaleTarget) {
@@ -122,7 +131,9 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
 
         @Override
         public Dimension getMinimumSize() {
-            return getImageScaledSize();
+            Insets insets = getInsets();
+            Dimension size = getImageScaledSize();
+            return new Dimension(size.width + insets.left + insets.right, size.height + insets.top + insets.bottom);
         }
 
         public List<CategorizedMenuItem> getDynamicMenuItems() {

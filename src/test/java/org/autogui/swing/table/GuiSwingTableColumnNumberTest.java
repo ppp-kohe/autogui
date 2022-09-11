@@ -125,7 +125,7 @@ public class GuiSwingTableColumnNumberTest extends GuiSwingTestCase {
         ObjectTableColumnValue.ObjectTableCellEditor objEditor = (ObjectTableColumnValue.ObjectTableCellEditor) editor;
         Assert.assertEquals(4560, runGet(objEditor::getCellEditorValue));
 
-        GuiSwingTableColumnNumber.ColumnEditNumberSpinner component = (GuiSwingTableColumnNumber.ColumnEditNumberSpinner) runGet(table::getEditorComponent);
+        GuiSwingTableColumnNumber.ColumnEditNumberSpinner component = runGetPane(GuiSwingTableColumnNumber.ColumnEditNumberSpinner.class, table::getEditorComponent);
         run(() -> component.getModelTyped().setFormatPattern("####"));
         run(() -> component.setValue(12345));
         runWait();

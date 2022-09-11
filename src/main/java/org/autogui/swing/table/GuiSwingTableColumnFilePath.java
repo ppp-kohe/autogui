@@ -284,11 +284,19 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
      */
     public static class ColumnEditFilePathPane extends GuiSwingViewFilePathField.PropertyFilePathPane {
         private static final long serialVersionUID = 1L;
+        /** @since 1.6 */
+        protected List<Runnable> finishRunners = new ArrayList<>(1);
 
         public ColumnEditFilePathPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager, new SearchTextFieldModelFilePath());
             setCurrentValueSupported(false);
             TextCellRenderer.setCellDefaultProperties(this);
+            var handler = ObjectTableColumnValue.KeyHandlerFinishEditing.installFinishEditingKeyHandler(this, finishRunners);
+            for (Component sub : getComponents()) {
+                if (sub.isFocusable()) {
+                    sub.addKeyListener(handler);
+                }
+            }
         }
 
         @Override
@@ -362,6 +370,12 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             //force to update: tab-key's focus lost causes a stopEditing which precedes any other events
             updateFieldInEventWithoutEditFinish();
             return super.getSwingViewValue();
+        }
+
+        @Override
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
+            finishRunners.add(eventHandler);
+            super.addSwingEditFinishHandler(eventHandler);
         }
     }
 

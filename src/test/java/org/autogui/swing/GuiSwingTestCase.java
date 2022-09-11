@@ -1,7 +1,6 @@
 package org.autogui.swing;
 
 import org.autogui.base.mapping.ScheduledTaskRunner;
-import org.autogui.swing.util.EditingRunner;
 import org.autogui.swing.util.PopupCategorized;
 
 import javax.swing.*;
@@ -11,11 +10,9 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class GuiSwingTestCase {
@@ -44,6 +41,14 @@ public class GuiSwingTestCase {
 
     public void run(Runnable r) {
         runGet(() -> { r.run(); return null; });
+    }
+
+    public <T extends JComponent> T runGetPane(Class<T> type, Callable<? extends Component> r) {
+        var pane = runGet(r);
+        while (pane != null && !type.isInstance(pane) && pane instanceof GuiSwingViewWrapper.ValuePaneWrapper<?>) {
+            pane = ((GuiSwingViewWrapper.ValuePaneWrapper<?>) pane).getSwingViewWrappedPane().asSwingViewComponent();
+        }
+        return type.cast(pane);
     }
 
     public <T> T runGet(final Callable<T> r) {

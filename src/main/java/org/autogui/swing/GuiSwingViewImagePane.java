@@ -339,23 +339,18 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 Dimension size = getImageScaledSize();
 
                 //if the image's size exceeds the view size, its starting position becomes 0, otherwise a half of diff.
+                Insets insets = getInsets();
                 int left;
                 if (size.width > paneSize.width) {
-                    left = 0;
+                    left = insets.left;
                 } else {
-                    left = (paneSize.width - size.width) / 2;
+                    left = (paneSize.width - size.width) / 2 + insets.left;
                 }
                 int top;
                 if (size.height > paneSize.height) {
-                    top = 0;
+                    top = insets.top;
                 } else {
-                    top = (paneSize.height - size.height) / 2;
-                }
-
-                Insets insets = getInsets();
-                if (insets != null) {
-                    left += insets.left;
-                    top += insets.top;
+                    top = (paneSize.height - size.height) / 2 + insets.top;
                 }
 
                 try {
@@ -427,10 +422,20 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         public Dimension getViewSize() { //it means "extentSize"
+            Insets insets = getInsets();
             if (isParentViewport()) {
-                return getParent().getSize();
+                return subtract(getParent().getSize(), insets);
             } else {
-                return getSize();
+                return subtract(getSize(), insets);
+            }
+        }
+
+        private Dimension subtract(Dimension dim, Insets insets) {
+            if (insets == null) {
+                return dim;
+            } else {
+                return new Dimension(dim.width - insets.left - insets.right ,
+                        dim.height - insets.top - insets.bottom);
             }
         }
 

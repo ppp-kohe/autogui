@@ -15,10 +15,7 @@ import org.autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * a column factory for {@link Enum}.
@@ -75,6 +72,8 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
 
     public static class ColumnEditEnumComboBox extends PropertyEnumComboBox {
         private static final long serialVersionUID = 1L;
+        /** @since 1.6 */
+        protected List<Runnable> finishRunners = new ArrayList<>(1);
 
         public ColumnEditEnumComboBox(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
@@ -83,6 +82,13 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
             setBorder(BorderFactory.createEmptyBorder());
             putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
             setOpaque(false);
+            ObjectTableColumnValue.KeyHandlerFinishEditing.installFinishEditingKeyHandler(this, finishRunners);
+        }
+
+        @Override
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
+            finishRunners.add(eventHandler);
+            super.addSwingEditFinishHandler(eventHandler);
         }
 
         @Override

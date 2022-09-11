@@ -381,7 +381,7 @@ public class TableRowHeightFitter {
     public int fitCell(int viewRow, TableColumn column) {
         int viewColumn = table.convertColumnIndexToView(column.getModelIndex());
         var cellComp = table.prepareRenderer(table.getCellRenderer(viewRow, viewColumn), viewRow, viewColumn);
-        var smallSize = new Dimension(column.getWidth(), 10);
+        var smallSize = new Dimension(column.getWidth(), Short.MAX_VALUE);
         //clear the custom specified minSize
         cellComp.setMinimumSize(null);
         cellComp.setSize(smallSize);

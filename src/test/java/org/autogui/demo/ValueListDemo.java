@@ -116,6 +116,18 @@ public class ValueListDemo {
         public void setImage(Image image) {
             this.image = image;
         }
+
+        @Override
+        public String toString() {
+            return "Row{" +
+                    "str='" + str + '\'' +
+                    ", num=" + num +
+                    ", flag=" + flag +
+                    ", selection=" + selection +
+                    ", path=" + path +
+                    ", image=" + image +
+                    '}';
+        }
     }
 
     public enum EnumVal {

@@ -152,7 +152,7 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
         ObjectTableColumnValue.ObjectTableCellEditor objEditor = (ObjectTableColumnValue.ObjectTableCellEditor) editor;
         Assert.assertEquals("world", runGet(objEditor::getCellEditorValue));
 
-        GuiSwingTableColumnString.MultilineColumnTextPane component = ((GuiSwingTableColumnString.MultilineColumnTextPane.MultilineColumnScrollPane) runGet(table::getEditorComponent)).getColumnTextPane();
+        GuiSwingTableColumnString.MultilineColumnTextPane component = runGetPane(GuiSwingTableColumnString.MultilineColumnTextPane.MultilineColumnScrollPane.class, table::getEditorComponent).getColumnTextPane();
         run(() -> component.setBackground(Color.black));
         run(() -> component.setForeground(Color.gray));
 

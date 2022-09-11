@@ -15,8 +15,10 @@ import org.autogui.swing.util.TextCellRenderer;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellRenderer;
+import java.awt.*;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -173,6 +175,8 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
 
     public static class ColumnEditNumberSpinner extends PropertyNumberSpinner {
         private static final long serialVersionUID = 1L;
+        /** @since 1.6 */
+        protected List<Runnable> finishRunners = new ArrayList<>(1);
         public ColumnEditNumberSpinner(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
@@ -180,6 +184,13 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
             TextCellRenderer.setCellDefaultProperties(getEditorField());
             setBorder(BorderFactory.createEmptyBorder());
             //setBorder(TextCellRenderer.createBorder(4, 0, 0, 0));
+            var h = ObjectTableColumnValue.KeyHandlerFinishEditing.installFinishEditingKeyHandler(this, finishRunners);
+            for (Component sub : getComponents()) {
+                if (sub.isFocusable()) {
+                    sub.addKeyListener(h);
+                }
+            }
+            getEditorField().addKeyListener(h);
         }
 
         @Override
@@ -195,6 +206,12 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
                 //e.printStackTrace();
             }
             return super.getSwingViewValue();
+        }
+
+        @Override
+        public void addSwingEditFinishHandler(Runnable eventHandler) {
+            finishRunners.add(eventHandler);
+            super.addSwingEditFinishHandler(eventHandler);
         }
     }
 }
