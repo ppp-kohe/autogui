@@ -356,6 +356,7 @@ public class UIManagerUtil {
                 systemLaf = true;
                 setLookAndFeelSystemFix();
             }
+            setLookAndFeelFix();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -566,6 +567,26 @@ public class UIManagerUtil {
             defaults.put("TabbedPane.selectedTabTitleShadowDisabledColor", clear);
             defaults.put("Table.focusCellForeground", defaults.getColor("Table.foreground"));
             defaults.put("Table.focusCellBackground", defaults.getColor("Table.background"));
+        }
+    }
+
+    /**
+     * called from {@link #setLookAndFeel(String)} and apply some customization not depending on LAF.
+     * @since 1.6
+     */
+    public void setLookAndFeelFix() {
+        if (getOsVersion().isWindows()) {
+            if (Locale.getDefault().getLanguage().equals(Locale.JAPANESE.getLanguage())) {
+                UIDefaults defaults = UIManager.getDefaults();
+                String key = "defaultFont";
+                Font f = defaults.getFont(key);
+                String name = "游ゴシック Medium";
+                if (f != null && f.getFamily().equals("Yu Gothic UI") &&   //it is a narrow UI font
+                        Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames())
+                                .contains(name)) {
+                    defaults.put(key, new Font(name, f.getStyle(), f.getSize()));
+                }
+            }
         }
     }
 
