@@ -348,6 +348,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             actionToolBar = new JToolBar();
             actionToolBar.setFloatable(false);
             actionToolBar.setOpaque(false);
+            new ToolBarHiddenMenu().addTo(actionToolBar);
 
             getSelectionModel().addListSelectionListener(this::runListSelection);
             addMouseListener(new MouseAdapter() { //mouse click as selection updating: if no selection change, this also causes handlers

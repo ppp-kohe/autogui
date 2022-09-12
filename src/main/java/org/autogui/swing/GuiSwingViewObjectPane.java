@@ -414,6 +414,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             actionToolBar.setFloatable(false);
             actionToolBar.setOpaque(false);
             actionToolBar.setInheritsPopupMenu(true);
+            new ToolBarHiddenMenu().addTo(actionToolBar);
             add(actionToolBar, BorderLayout.PAGE_START);
             if (popup != null) {
                 popup.addListenersTo(actionToolBar);

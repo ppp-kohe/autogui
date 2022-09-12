@@ -225,7 +225,7 @@ public class GuiSwingPreferences {
             toolBar.add(actionButton(new SavePrefsAction(this)));
             toolBar.add(actionButton(new LoadPrefsAction(this)));
             toolBar.add(actionButton(new ResetPrefsAction(this)));
-
+            new ToolBarHiddenMenu().addTo(toolBar);
             mainPane.add(toolBar, BorderLayout.PAGE_START);
         }
         prefsWindowUpdater = new WindowPreferencesUpdater(null, rootContext, "$preferencesWindow");
