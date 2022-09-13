@@ -27,6 +27,7 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
         setVisible(false);
         setAlignmentX(0.5f);
         setAlignmentY(0.5f);
+        setBorder(BorderFactory.createEmptyBorder());
         setIcon(new IconDots());
         addActionListener(this::showMenu);
         menu = new JPopupMenu();
@@ -120,9 +121,17 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
         int totalSize = width(bar.getSize(), orientation);
         totalSize -= width(getPreferredSize(), orientation);
         List<InvisibleItem> availableItems = new ArrayList<>();
+        int maxEnd = 0;
+        for (var existing : bar.getComponents()) {
+            if (includeAsVisibleTarget(existing)) {
+                maxEnd = Math.max(maxEnd, end(existing.getBounds(), orientation));
+            }
+        }
         for (var last : invisibleComponents) {;
-            if (end(last.getToolBarBounds(), orientation) <= totalSize) {
+            int lastWidth = width(last.getToolBarBounds(), orientation);
+            if (maxEnd + lastWidth <= totalSize) {
                 availableItems.add(last);
+                maxEnd += lastWidth;
             } else {
                 break;
             }
@@ -206,6 +215,7 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
             var dot = new Ellipse2D.Float(0, 0, size, size);
 
             Graphics2D g2 = (Graphics2D) g.create();
+            g2.translate((getIconWidth() - getIconWidthFloat()) / 2f, 0);
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(c.getForeground());
             g2.translate(x + margin, y + margin);
@@ -218,7 +228,8 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
 
         @Override
         public int getIconWidth() {
-            return (int) getIconWidthFloat();
+            //return (int) getIconWidthFloat();
+            return getIconHeight(); //as square
         }
 
         @Override
