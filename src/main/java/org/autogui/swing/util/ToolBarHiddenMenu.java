@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.geom.Ellipse2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +20,7 @@ import java.util.List;
  * The minimum-size of the toolBar will be 1.
  * @since 1.6
  */
-public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListener {
+public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListener, PropertyChangeListener {
     protected JPopupMenu menu;
     protected List<InvisibleItem> invisibleComponents = new ArrayList<>();
     protected Component glue;
@@ -43,6 +45,7 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
         bar.add(glue);
         bar.add(this);
         bar.addHierarchyBoundsListener(this);
+        bar.addPropertyChangeListener("orientation", this);
         bar.setMinimumSize(getPreferredSize());
     }
 
@@ -51,6 +54,11 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
 
     @Override
     public void ancestorResized(HierarchyEvent e) {
+        updateToolBar();
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
         updateToolBar();
     }
 
@@ -66,6 +74,7 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
     }
 
     public void updateToolBar(JToolBar bar) {
+        adjustHiddenMenuComponents(bar);
         List<JComponent> newInvisibleComponents = collectExceededComponents(bar);
         List<InvisibleItem> newInvisibleItems = new ArrayList<>();
         if (!newInvisibleComponents.isEmpty()) {
@@ -90,6 +99,16 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
         setVisible(!invisibleComponents.isEmpty());
     }
 
+    public void adjustHiddenMenuComponents(JToolBar bar) {
+        if (bar.getComponentIndex(glue) == 0 && bar.getComponentCount() > 2) { //not only [glue, this]
+            //reorder glue and this
+            bar.remove(glue);
+            bar.remove(this);
+            bar.add(glue);
+            bar.add(this);
+        }
+    }
+
     public List<JComponent> collectExceededComponents(JToolBar bar) {
         int orientation = bar.getOrientation();
         int totalSize = width(bar.getVisibleRect(), orientation);
@@ -102,6 +121,7 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
                 invisible.add((JComponent) item);
             }
         }
+        System.err.println();
         return invisible;
     }
 
