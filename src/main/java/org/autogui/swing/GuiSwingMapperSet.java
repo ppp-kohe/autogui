@@ -50,6 +50,30 @@ public class GuiSwingMapperSet {
         return this;
     }
 
+    /**
+     * register a mapping of reprClass and a regular view with the type {@link MapperMatchTypeDefault#View} as top-precedence
+     * @param reprClass a representation class
+     * @param view a view factory
+     * @return this
+     * @since 1.6
+     */
+    public GuiSwingMapperSet addReprClassToTop(Class<? extends GuiRepresentation> reprClass, GuiSwingElement view) {
+        mappers.add(new MapperReprClass(reprClass, view, MapperMatchTypeDefault.View));
+        return this;
+    }
+
+    /**
+     * register a mapping of reprClass and a column view with the type {@link MapperMatchTypeDefault#TableColumn} as top-precedence
+     * @param reprClass a representation class
+     * @param view a column view factory
+     * @return this
+     * @since 1.6
+     */
+    public GuiSwingMapperSet addReprClassTableColumnToTop(Class<? extends GuiRepresentation> reprClass, GuiSwingElement view) {
+        mappers.add(0, new MapperReprClass(reprClass, view, MapperMatchTypeDefault.TableColumn));
+        return this;
+    }
+
     public GuiSwingMapperSet add(Mapper... mappers) {
         this.mappers.addAll(Arrays.asList(mappers));
         return this;
@@ -252,6 +276,7 @@ public class GuiSwingMapperSet {
      */
     public static void addDefaultReprClassesTo(GuiSwingMapperSet viewSet) {
         viewSet.addReprClassTableColumn(GuiReprValueBooleanCheckBox.class, new GuiSwingTableColumnBoolean())
+                .addReprClassTableColumn(GuiReprEmbeddedComponent.class, new GuiSwingTableColumnEmbeddedComponent())
                 .addReprClassTableColumn(GuiReprValueStringField.class, new GuiSwingTableColumnString())
                 .addReprClassTableColumn(GuiReprValueEnumComboBox.class, new GuiSwingTableColumnEnum())
                 .addReprClassTableColumn(GuiReprValueFilePathField.class, new GuiSwingTableColumnFilePath())

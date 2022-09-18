@@ -348,7 +348,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             actionToolBar = new JToolBar();
             actionToolBar.setFloatable(false);
             actionToolBar.setOpaque(false);
-            new ToolBarHiddenMenu().addTo(actionToolBar);
 
             getSelectionModel().addListSelectionListener(this::runListSelection);
             addMouseListener(new MouseAdapter() { //mouse click as selection updating: if no selection change, this also causes handlers
@@ -362,6 +361,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (popup != null) {
                 popup.addListenersTo(actionToolBar);
             }
+            new ToolBarHiddenMenu().addTo(actionToolBar);
             return actionToolBar;
         }
 

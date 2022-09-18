@@ -2,11 +2,11 @@ package org.autogui.swing.table;
 
 import org.autogui.base.mapping.GuiReprCollectionTable;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifier;
+import org.autogui.swing.GuiSwingView;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupExtension;
 import org.autogui.swing.util.TextCellRenderer;
 import org.autogui.swing.util.UIManagerUtil;
-import org.autogui.swing.GuiSwingView;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -21,6 +21,7 @@ import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -130,6 +131,16 @@ public class ObjectTableColumn {
      */
     public Object fromActionValue(Object value) {
         return value;
+    }
+
+    /**
+     * determines the task can be submitted to the task runner
+     * @param task the task to be invoked
+     * @return true if the task can be submitted to the task runner
+     * @since 1.6
+     */
+    public boolean isTaskRunnerUsedFor(Supplier<?> task) {
+        return true;
     }
 
 

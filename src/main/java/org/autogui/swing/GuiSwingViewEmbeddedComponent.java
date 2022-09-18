@@ -124,11 +124,7 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
 
         @Override
         public Object getSwingViewValue() {
-            if (getComponentCount() == 0) {
-                return null;
-            } else {
-                return getComponent(0);
-            }
+            return component;
         }
 
         @Override
@@ -144,18 +140,29 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
             setSwingViewValueComponent(comp);
         }
 
+
         public void setSwingViewValueComponent(JComponent comp) {
-            if (comp != null && comp != component) {
-//                if (getComponentCount() > 0) {
-//                    remove(0);
-//                }
-//            } else {
-                if (component != null && getComponentCount() > 0) {
-                    remove(component);
+            if (comp != component && component != null && component.getParent() == this) {
+                remove(component);
+            }
+            setSwingViewValueComponent(comp, comp, (comp != null && comp != component));
+        }
+
+        /**
+         * @param comp the value component
+         * @param addedComponent the added component; it might be the comp or a wrapper of the comp
+         * @param update if true it force to remove and insert the comp even if the comp is the component.
+         * @since 1.6
+         */
+        public void setSwingViewValueComponent(JComponent comp, JComponent addedComponent, boolean update) {
+            if (update) {
+                if (comp != null) {
+                    consumeInitPrefsJson(comp);
                 }
-                consumeInitPrefsJson(comp);
-                add(comp, 0);
-                setPreferredSize(comp.getPreferredSize());
+                if (addedComponent != null) {
+                    add(addedComponent, 0);
+                    setPreferredSize(addedComponent.getPreferredSize());
+                }
                 component = comp;
                 revalidate();
             }

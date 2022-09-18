@@ -196,6 +196,19 @@ public class ObjectTableModel extends AbstractTableModel
         return runner.executeContextTask(task, afterTask);
     }
 
+    /**
+     * @param column the column related to the task
+     * @param task executed task
+     * @param afterTask the second task. nullable
+     * @return result of the task
+     * @param <RetType> the task result type
+     * @since 1.6
+     */
+    public <RetType> ContextTaskResult<RetType> executeContextTask(ObjectTableColumn column, Supplier<RetType> task,
+                                                                   Consumer<ContextTaskResult<RetType>> afterTask) {
+        return runner.executeContextTask(column.isTaskRunnerUsedFor(task), task, afterTask);
+    }
+
     //////////// row
 
     public void setSource(Supplier<Object> source) {
@@ -332,7 +345,7 @@ public class ObjectTableModel extends AbstractTableModel
         ObjectTableColumn column = getColumnAt(columnIndex);
         GuiReprValue.ObjectSpecifier specifier = column.getSpecifier(rowIndex, columnIndex);
 
-        ContextTaskResult<Object> cellObject = executeContextTask(
+        ContextTaskResult<Object> cellObject = executeContextTask(column,
                 () -> {
                     try {
                         Object rowObject = getRowAtIndex(rowIndex);
@@ -420,7 +433,7 @@ public class ObjectTableModel extends AbstractTableModel
     public void offerValueForSource(Object aValue, int rowIndex, int columnIndex) {
         ObjectTableColumn column = getColumnAt(columnIndex);
         GuiReprValue.ObjectSpecifier specifier = column.getSpecifier(rowIndex, columnIndex);
-        executeContextTask(() -> {
+        executeContextTask(column, () -> {
                     Object rowObject = getRowAtIndex(rowIndex);
                     return new OfferResult(column.setCellValue(rowObject, rowIndex, columnIndex, aValue, specifier), rowObject);
                 },

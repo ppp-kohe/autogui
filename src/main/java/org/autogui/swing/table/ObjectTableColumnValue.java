@@ -25,8 +25,8 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -126,12 +126,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     /**
+     * if the parameter to be true, it updates the editor of tableColumn
      * @param alwaysApplying true for {@link #editorForColumn()} always returning {@link #editor}
      * @return this
      * @since 1.6
      */
     public ObjectTableColumnValue withEditorForColumnAlwaysApplying(boolean alwaysApplying) {
         this.editorForColumnAlwaysApplying = alwaysApplying;
+        getTableColumn().setCellEditor(editorForColumn());
         return this;
     }
 
@@ -180,7 +182,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     public void shutdown() {
         super.shutdown();
         setForComponents(ValuePane.class,
-                v -> v.shutdownSwingView(), renderer, editor);
+                ValuePane::shutdownSwingView, renderer, editor);
     }
 
     @Override
@@ -326,6 +328,11 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         }
     }
 
+    @Override
+    public boolean isTaskRunnerUsedFor(Supplier<?> task) {
+        return context.getRepresentation().isTaskRunnerUsedFor(task);
+    }
+
     /** interface for renderer and editor, in order to setting up some properties like preferences and setting-windows */
     public interface ObjectTableColumnCellView {
         JComponent getComponent();
@@ -381,6 +388,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             return ownerColumn;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             if (specifierIndex != null) {
@@ -388,9 +396,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             }
 
             setTableColor(table, component, isSelected, hasFocus, row, column);
-            Consumer<Object> valuePane = getMenuTargetPane();
-            if (valuePane != null) {
-                valuePane.accept(value);
+            if (component instanceof ValuePane<?>) {
+                ((ValuePane<Object>) component).setSwingViewValueForTable(table, value, row, column);
             }
             TextCellRenderer.setCellTableBorderWithMargin(table, component, isSelected, hasFocus, row, column);
             return component;
@@ -400,7 +407,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         @Override
         public Consumer<Object> getMenuTargetPane() {
             if (component instanceof ValuePane) {
-                return ((ValuePane) component)::setSwingViewValue;
+                return ((ValuePane<Object>) component)::setSwingViewValue;
             } else {
                 return null;
             }
@@ -409,7 +416,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         @Override
         public PopupMenuBuilder getMenuBuilder(JTable table) {
             if (component instanceof ValuePane) {
-                PopupMenuBuilder rendererPaneOriginalBuilder = ((ValuePane) component).getSwingMenuBuilder();;
+                PopupMenuBuilder rendererPaneOriginalBuilder = ((ValuePane<?>) component).getSwingMenuBuilder();;
 
                 if (rendererPaneOriginalBuilder instanceof PopupCategorized) {
                     ((PopupCategorized) rendererPaneOriginalBuilder).setMenuBuilder(
@@ -500,7 +507,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             }
             if (component instanceof ValuePane<?>) {
                 ValuePane<Object> pane = (ValuePane<Object>) component;
-                pane.setSwingViewValue(value);
+                pane.setSwingViewValueForTable(table, value, row, column);
                 SwingUtilities.invokeLater(pane::requestSwingViewFocus);
 //                if (table.getModel() instanceof ObjectTableModel) {
 //                    ObjectTableModel model = (ObjectTableModel) table.getModel() ;

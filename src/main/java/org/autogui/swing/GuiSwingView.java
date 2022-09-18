@@ -55,6 +55,20 @@ public interface GuiSwingView extends GuiSwingElement {
         void setSwingViewValue(ValueType value);
 
         /**
+         * update GUI display as a table-cell.
+         * the default impl. is just calling {@link #setSwingViewValue(Object)}
+         * @param table the table
+         * @param value the table row value as Object
+         * @param row the view row index
+         * @param column the view column index
+         * @since 1.6
+         */
+        @SuppressWarnings("unchecked")
+        default void setSwingViewValueForTable(JTable table, Object value, int row, int column) {
+            setSwingViewValue((ValueType) value);
+        }
+
+        /**
          *  update if the clock is newer than the current view-clock of the pane.
          *  the view-clock becomes the given clock.
          *  Note: instead, {@link #setSwingViewValue(Object)} increments the current clock

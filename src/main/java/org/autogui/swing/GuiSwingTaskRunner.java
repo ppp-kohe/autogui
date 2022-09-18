@@ -69,7 +69,21 @@ public class GuiSwingTaskRunner {
      * @return the result status of the task: cancel, timeout or returned
      */
     public <RetType> ContextTaskResult<RetType> executeContextTask(Supplier<RetType> task, Consumer<ContextTaskResult<RetType>> afterTask) {
-        if (context == null || !context.getRepresentation().isTaskRunnerUsedFor(task)) {
+        return executeContextTask(true, task, afterTask);
+    }
+
+    /**
+     * {@link #executeContextTask(Supplier, Consumer)} with additional flag for task-runner:
+     *  the method is used for custom checking of the runner submission like collection-table: the context of the runner is not the actual context of the task.
+     * @param useTaskRunner if false, it will be executed by {@link #executeContextTaskWithContext(Supplier, Consumer)}
+     * @param task the running task
+     * @param afterTask a task executed after the task. nullable
+     * @return the result status of the task: cancel, timeout or returned
+     * @param <RetType> the value type of the task
+     * @since 1.6
+     */
+    public <RetType> ContextTaskResult<RetType> executeContextTask(boolean useTaskRunner, Supplier<RetType> task, Consumer<ContextTaskResult<RetType>> afterTask) {
+        if (!useTaskRunner || context == null || !context.getRepresentation().isTaskRunnerUsedFor(task)) {
             return executeContextTaskWithContext(task, afterTask);
         } else {
             GuiMappingContext.ContextExecutorService taskRunner = context.getTaskRunner();
@@ -296,6 +310,18 @@ public class GuiSwingTaskRunner {
 
         public <RetType> ContextTaskResult<RetType> executeContextTask(Supplier<RetType> task, Consumer<ContextTaskResult<RetType>> afterTask) {
             return taskRunner.executeContextTask(task, afterTask);
+        }
+
+        /**
+         * @param useTaskRunner controls task submission
+         * @param task the executed task
+         * @param afterTask after task. nullable.
+         * @return the result of the task
+         * @param <RetType> the result type
+         * @since 1.6
+         */
+        public <RetType> ContextTaskResult<RetType> executeContextTask(boolean useTaskRunner, Supplier<RetType> task, Consumer<ContextTaskResult<RetType>> afterTask) {
+            return taskRunner.executeContextTask(useTaskRunner, task, afterTask);
         }
 
         @Override

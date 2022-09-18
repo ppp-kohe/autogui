@@ -121,7 +121,6 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
                 invisible.add((JComponent) item);
             }
         }
-        System.err.println();
         return invisible;
     }
 
