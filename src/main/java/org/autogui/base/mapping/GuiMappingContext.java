@@ -5,7 +5,7 @@ import org.autogui.base.type.*;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -708,9 +708,8 @@ public class GuiMappingContext {
             GuiMappingContext parent = getParent();
             if (parent != null) {
                 taskRunner = parent.getTaskRunner();
-            } else {
-                if (taskRunnerSingleThread) {
-                    taskRunner = new ContextExecutorServiceSingleThread();
+            } else {if (taskRunnerSingleThread) {
+                    taskRunner = new ContextExecutorServiceNoThread();
                 } else {
                     taskRunner = new ContextExecutorServiceForkJoin();
                 }
@@ -941,8 +940,7 @@ public class GuiMappingContext {
 
         @Override
         public void run() {
-            context.getTaskRunner()
-                    .submit(() -> {runBody(); return (Void) null;});
+            context.getTaskRunner().execute(this::runBody);
         }
 
         public void runBody() {
@@ -971,6 +969,15 @@ public class GuiMappingContext {
         <V> Future<V> submit(Callable<V> v);
 
         /**
+         * submit a task guaranteed running; non-threading executors can immediately run it
+         * @param task a task
+         * @since 1.6
+         */
+        default void execute(Runnable task) {
+            submit(() -> {task.run();return (Void) null;});
+        }
+
+        /**
          * shut down the service
          * @see ExecutorService#shutdown()
          */
@@ -978,8 +985,111 @@ public class GuiMappingContext {
     }
 
     /**
+     * executor-service without creating threads for tasks
+     * @since 1.6
+     */
+    public static class ContextExecutorServiceNoThread implements ContextExecutorService {
+        protected ExecutorService timeoutService = Executors.newCachedThreadPool();
+        @Override
+        public <V> Future<V> submit(Callable<V> v) {
+            return new FutureImmediate<>(v, timeoutService);
+        }
+
+        @Override
+        public void execute(Runnable task) {
+            task.run();
+        }
+
+        @Override
+        public void shutdown() {
+            timeoutService.shutdown();
+        }
+    }
+
+    /**
+     * the task future without thread
+     * @param <V> the task value
+     * @since 1.6
+     */
+    public static class FutureImmediate<V> implements Future<V> {
+        protected Callable<V> task;
+        protected V result;
+        protected AtomicBoolean finish = new AtomicBoolean(false);
+        protected AtomicBoolean cancelled = new AtomicBoolean(false);
+        protected ExecutorService timeoutService;
+
+        public FutureImmediate(Callable<V> task, ExecutorService timeoutService) {
+            this.task = task;
+            this.timeoutService = timeoutService;
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            boolean success = finish.compareAndSet(false, true);
+            if (success) {
+                cancelled.set(true);
+            }
+            return success;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return cancelled.get();
+        }
+
+        @Override
+        public boolean isDone() {
+            return finish.get();
+        }
+
+        @Override
+        public V get() throws InterruptedException, ExecutionException {
+            if (!finish.get()) {
+                try {
+                    result = task.call();
+                } catch (InterruptedException ex) {
+                    throw ex;
+                } catch (Throwable ex) {
+                    throw new ExecutionException(ex);
+                } finally {
+                    finish.set(true);
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            Future<Boolean> timeoutTask = null;
+            Thread runnerThread = Thread.currentThread();
+            if (timeoutService != null) {
+                timeoutTask = timeoutService.submit(() -> {
+                    try {
+                        unit.sleep(timeout);
+                        if (!finish.get() && !cancelled.get()) {
+                            runnerThread.interrupt();
+                            return false;
+                        }
+                    } catch (InterruptedException e) {
+                        //none
+                    }
+                    return true;
+                });
+            }
+            try {
+                return get();
+            } finally {
+                if (timeoutTask != null) {
+                    timeoutTask.cancel(true);
+                }
+            }
+        }
+    }
+
+    /**
      * a simple executor-service wrapping single-thread executor
      *  by {@link Executors#newSingleThreadScheduledExecutor(ThreadFactory)}
+     * @deprecated
      * @since 1.2
      */
     public static class ContextExecutorServiceSingleThread implements ContextExecutorService {
