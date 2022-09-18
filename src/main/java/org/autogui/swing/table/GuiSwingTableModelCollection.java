@@ -215,16 +215,19 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
 
         public void applyPrefsTo(ObjectTableColumnWithContext column, DynamicColumnContainer d) {
-            PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth();
-            w.loadFrom(column.getContext().getPreferences());
-            w.applyTo(column.asColumn());
+            GuiPreferences prefs = column.getContext().getPreferences();
+            try (var lock = prefs.lock()) {
+                PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth();
+                w.loadFrom(prefs);
+                w.applyTo(column.asColumn());
 
-            if (d == null) { //non-dynamic column: the ordering might be incorrect due to the lack of dynamic column re-ordering
-                PreferencesForTableColumnOrder o = new PreferencesForTableColumnOrder();
-                o.loadFrom(column.getContext().getPreferences());
-                //o.modelIndex == column.tableModel.modelIndex
-                if (!o.applyTo(this)) {
-                    pendingOrders.add(o);
+                if (d == null) { //non-dynamic column: the ordering might be incorrect due to the lack of dynamic column re-ordering
+                    PreferencesForTableColumnOrder o = new PreferencesForTableColumnOrder();
+                    o.loadFrom(prefs);
+                    //o.modelIndex == column.tableModel.modelIndex
+                    if (!o.applyTo(this)) {
+                        pendingOrders.add(o);
+                    }
                 }
             }
         }

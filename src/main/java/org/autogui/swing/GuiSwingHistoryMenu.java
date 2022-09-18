@@ -66,7 +66,10 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
     }
 
     public void clearHistory() {
-        context.getPreferences().clearHistories();
+        GuiPreferences prefs = context.getPreferences();
+        try (var lock = prefs.lock()) {
+            prefs.clearHistories();
+        }
     }
 
     public void loadItems() {
@@ -76,7 +79,11 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
         }
 
         boolean added = false;
-        List<GuiPreferences.HistoryValueEntry> prefEs = context.getPreferences().getHistoryValues();
+        List<GuiPreferences.HistoryValueEntry> prefEs;
+        GuiPreferences prefs = context.getPreferences();
+        try (var lock = prefs.lock()) {
+            prefEs = prefs.getHistoryValues();
+        }
         List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefEs);
         Collections.reverse(es);
         for (GuiPreferences.HistoryValueEntry e : es) {

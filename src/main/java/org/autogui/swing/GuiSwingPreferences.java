@@ -297,16 +297,18 @@ public class GuiSwingPreferences {
      * @since 1.4
      */
     public void applyPreferences(PrefsApplyOptions options) {
-        if (rootPane != null) {
-            rootPane.loadPreferences(rootContext.getPreferences(), options);
-        } else {
-            if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
-                if (!options.isSkippingValue()) {
-                    ((GuiSwingView.ValuePane<?>) rootComponent).loadSwingPreferences(
-                            rootContext.getPreferences(), options);
+        GuiPreferences prefs = rootContext.getPreferences();
+        try (var lock = prefs.lock()) {
+            if (rootPane != null) {
+                rootPane.loadPreferences(prefs, options);
+            } else {
+                if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
+                    if (!options.isSkippingValue()) {
+                        ((GuiSwingView.ValuePane<?>) rootComponent).loadSwingPreferences(prefs, options);
+                    }
                 }
+                GuiSwingView.loadChildren(prefs, rootComponent, options);
             }
-            GuiSwingView.loadChildren(rootContext.getPreferences(), rootComponent, options);
         }
     }
 
@@ -318,7 +320,10 @@ public class GuiSwingPreferences {
                 ((GuiSwingView.ValuePane<?>) rootComponent).saveSwingPreferences(
                         prefs);
             }
-            GuiSwingView.saveChildren(rootContext.getPreferences(), rootComponent);
+            GuiPreferences rootPrefs = rootContext.getPreferences();
+            try (var lock = rootPrefs.lock()) {
+                GuiSwingView.saveChildren(rootPrefs, rootComponent);
+            }
         }
     }
 
@@ -575,7 +580,10 @@ public class GuiSwingPreferences {
         }
 
         protected void saveLaunchPrefsUUID() {
-            rootContext.get().getPreferences().setLaunchPrefsAsRoot(getUUID(launchPrefs));
+            GuiPreferences prefs = rootContext.get().getPreferences();
+            try (var lock = prefs.lock()) {
+                prefs.setLaunchPrefsAsRoot(getUUID(launchPrefs));
+            }
         }
 
         public void setName(GuiPreferences prefs, String name) {
@@ -586,29 +594,31 @@ public class GuiSwingPreferences {
         public void update(boolean loadSavedList) {
             GuiMappingContext context = this.rootContext.get();
             lastDefault = context.getPreferences();
-            targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
-            targetDefault.getValueStore().putString("$name", "Target Code Values");
-            targetDefault.getValueStore().putString("$uuid", "empty");
+            try (var lock = lastDefault.lock()) {
+                targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
+                targetDefault.getValueStore().putString("$name", "Target Code Values");
+                targetDefault.getValueStore().putString("$uuid", "empty");
 
-            list = new ArrayList<>();
-            list.add(lastDefault); //0
-            list.add(targetDefault); //1
-            if (savedPrefsList == null || loadSavedList) {
-                savedPrefsList = lastDefault.getSavedStoreListAsRoot();
-            }
-            savedPrefsList.sort(Comparator.comparing(this::getName)); //sort by updated names
-            list.addAll(savedPrefsList);
+                list = new ArrayList<>();
+                list.add(lastDefault); //0
+                list.add(targetDefault); //1
+                if (savedPrefsList == null || loadSavedList) {
+                    savedPrefsList = lastDefault.getSavedStoreListAsRoot();
+                }
+                savedPrefsList.sort(Comparator.comparing(this::getName)); //sort by updated names
+                list.addAll(savedPrefsList);
 
-            String launchPrefsUUID = lastDefault.getLaunchPrefsAsRoot();
-            if (launchPrefsUUID.isEmpty()) { //default
-                launchPrefs = lastDefault;
-            } else if (launchPrefsUUID.equals("empty")) {
-                launchPrefs = targetDefault;
-            } else {
-                launchPrefs = savedPrefsList.stream()
-                        .filter(p -> p.getValueStore().getString("$uuid", "").equals(launchPrefsUUID))
-                        .findFirst()
-                        .orElse(targetDefault);
+                String launchPrefsUUID = lastDefault.getLaunchPrefsAsRoot();
+                if (launchPrefsUUID.isEmpty()) { //default
+                    launchPrefs = lastDefault;
+                } else if (launchPrefsUUID.equals("empty")) {
+                    launchPrefs = targetDefault;
+                } else {
+                    launchPrefs = savedPrefsList.stream()
+                            .filter(p -> p.getValueStore().getString("$uuid", "").equals(launchPrefsUUID))
+                            .findFirst()
+                            .orElse(targetDefault);
+                }
             }
             fireTableDataChanged();
         }
@@ -713,15 +723,17 @@ public class GuiSwingPreferences {
         @Override
         public void actionPerformed(ActionEvent e) {
             GuiPreferences rootPrefs = owner.getRootContext().getPreferences();
-            GuiPreferences newStore = rootPrefs.addNewSavedStoreAsRoot();
-            owner.savePreferences(newStore);
+            try (var lock = rootPrefs.lock()) {
+                GuiPreferences newStore = rootPrefs.addNewSavedStoreAsRoot();
+                owner.savePreferences(newStore);
 
 //            Map<String,Object> map = rootPrefs.toJson();
 //            map.remove("$name");
 //            map.remove("$uuid");
 //            newStore.fromJson(map);
 
-            newStore.getValueStore().flush();
+                newStore.getValueStore().flush();
+            }
             owner.reloadList();
         }
 
@@ -845,8 +857,11 @@ public class GuiSwingPreferences {
             Path file = SettingsWindow.getFileDialogManager().showOpenDialog(owner.getMainPane(), null);
             if (file != null) {
                 Object json = JsonReader.read(file.toFile());
-                owner.getRootContext().getPreferences().addNewSavedStoreAsRoot()
-                        .fromJson((Map<String,Object>) json);
+                GuiPreferences prefs = owner.getRootContext().getPreferences();
+                try (var lock = prefs.lock()) {
+                    prefs.addNewSavedStoreAsRoot()
+                            .fromJson((Map<String, Object>) json);
+                }
                 owner.reloadList();
             }
         }
@@ -886,8 +901,11 @@ public class GuiSwingPreferences {
 
         public void apply(GuiPreferences preferences) {
             if (preferences != null) {
-                owner.getRootContext().getPreferences().clearAll();
-                owner.getRootContext().getPreferences().fromJson(preferences.toJson());
+                GuiPreferences prefs = owner.getRootContext().getPreferences();
+                try (var lock = prefs.lock()) {
+                    prefs.clearAll();
+                    prefs.fromJson(preferences.toJson());
+                }
                 owner.applyPreferences(new PrefsApplyOptionsDefault(false, false));
             }
         }
@@ -919,7 +937,10 @@ public class GuiSwingPreferences {
             int r = JOptionPane.showConfirmDialog(owner.getMainPane(),
                     "Reset Entire Preferences ?");
             if (r == JOptionPane.OK_OPTION) {
-                owner.getRootContext().getPreferences().resetAsRoot();
+                GuiPreferences prefs = owner.getRootContext().getPreferences();
+                try (var lock = prefs.lock()) {
+                    prefs.resetAsRoot();
+                }
                 owner.applyPreferences(new PrefsApplyOptionsDefault(true, false));
                 owner.reloadList();
             }
@@ -963,7 +984,10 @@ public class GuiSwingPreferences {
         list.stream()
                 .distinct()
                 .forEach(PreferencesUpdateEvent::save);
-        rootContext.getPreferences().getValueStore().flush();
+        GuiPreferences prefs = rootContext.getPreferences();
+        try (var lock = prefs.lock()) {
+            prefs.getValueStore().flush();
+        }
     }
 
     public static class PreferencesUpdateEvent {
@@ -990,7 +1014,10 @@ public class GuiSwingPreferences {
         }
 
         public void save() {
-            prefs.saveTo(context.getPreferences());
+            GuiPreferences cxtPrefs = context.getPreferences();
+            try (var lock = cxtPrefs.lock()) {
+                prefs.saveTo(cxtPrefs);
+            }
         }
     }
 

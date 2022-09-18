@@ -520,9 +520,12 @@ public interface GuiSwingView extends GuiSwingElement {
             if (context.isHistoryValueSupported()) {
                 GuiPreferences ctxPrefs = context.getPreferences();
                 if (!ctxPrefs.equals(targetPrefs)) {
-                    context.getPreferences().getHistoryValues().stream()
-                            .sorted(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime))
-                            .forEachOrdered(e -> targetPrefs.addHistoryValue(e.getValue(), e.getTime()));
+                    try (var ctxLock = ctxPrefs.lock();
+                        var lock = targetPrefs.lock()) {
+                        ctxPrefs.getHistoryValues().stream()
+                                .sorted(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime))
+                                .forEachOrdered(e -> targetPrefs.addHistoryValue(e.getValue(), e.getTime()));
+                    }
                 }
             }
         }
@@ -556,9 +559,12 @@ public interface GuiSwingView extends GuiSwingElement {
                 if (context.isHistoryValueSupported()) {
                     GuiPreferences ctxPrefs = context.getPreferences();
                     if (!targetPrefs.equals(ctxPrefs)) {
-                        targetPrefs.getHistoryValues().stream()
-                                .sorted(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime))
-                                .forEachOrdered(e -> ctxPrefs.addHistoryValue(e.getValue(), e.getTime()));
+                        try (var lock = targetPrefs.lock();
+                            var ctxLock = ctxPrefs.lock()) {
+                            targetPrefs.getHistoryValues().stream()
+                                    .sorted(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime))
+                                    .forEachOrdered(e -> ctxPrefs.addHistoryValue(e.getValue(), e.getTime()));
+                        }
                     }
                 }
             }

@@ -80,8 +80,11 @@ public class GuiReprValue implements GuiRepresentation {
     public void addHistoryValue(GuiMappingContext context, Object value) {
         try {
             if (isHistoryValueSupported(context)) {
-                context.getPreferences().addHistoryValue(value);
-                context.getPreferences().setCurrentValue(value);
+                GuiPreferences prefs = context.getPreferences();
+                try (var lock = prefs.lock()) {
+                    context.getPreferences().addHistoryValue(value);
+                    context.getPreferences().setCurrentValue(value);
+                }
             }
         } catch (Throwable ex) {
             errorWhileAddHistoryValue(context, value, ex);

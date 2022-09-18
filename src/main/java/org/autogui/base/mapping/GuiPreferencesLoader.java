@@ -119,18 +119,23 @@ public class GuiPreferencesLoader {
     }
 
     public static List<GuiPreferences> getSavedPrefs(GuiMappingContext context) {
-        return context.getPreferences().getSavedStoreListAsRoot();
+        GuiPreferences prefs = context.getPreferences();
+        try (var lock = prefs.lock()) {
+            return prefs.getSavedStoreListAsRoot();
+        }
     }
 
     public static List<GuiPreferences> getSavedPrefsWithDefault(GuiMappingContext context) {
         List<GuiPreferences> all = new ArrayList<>();
         GuiPreferences rootPrefs = context.getPreferences();
-        GuiPreferences p = findSavedPrefsDefault(rootPrefs);
-        if (p != null) {
-            all.add(p);
+        try (var lock = rootPrefs.lock()) {
+            GuiPreferences p = findSavedPrefsDefault(rootPrefs);
+            if (p != null) {
+                all.add(p);
+            }
+            all.addAll(getSavedPrefs(context));
+            return all;
         }
-        all.addAll(getSavedPrefs(context));
-        return all;
     }
 
     /**
@@ -169,7 +174,10 @@ public class GuiPreferencesLoader {
     }
 
     public GuiPreferences takeSavedPrefs(GuiMappingContext context) {
-        return prefsGetter.apply(context.getPreferences());
+        GuiPreferences prefs = context.getPreferences();
+        try (var lock = prefs.lock()) {
+            return prefsGetter.apply(prefs);
+        }
     }
 
     public static GuiPreferences findSavedPrefsByName(GuiPreferences rootPrefs, Predicate<String> name) {

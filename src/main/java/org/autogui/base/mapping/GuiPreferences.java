@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -48,6 +49,8 @@ public class GuiPreferences {
     protected GuiValueStore valueStore;
     protected List<HistoryValueEntry> historyValues;
     protected int historyValueLimit = 10;
+    /** @since 1.6 */
+    protected PreferencesLock lock;
 
     /**
      * the interface for supporting user-defined prefs:
@@ -94,6 +97,27 @@ public class GuiPreferences {
                 store = store.getChild(subPath);
             }
             return store;
+        }
+    }
+
+
+    /**
+     * the entire lock object for the preferences
+     * <pre>
+     *     try (var lock = prefs.lock()) {
+     *         ... //editing
+     *     }
+     * </pre>
+     * @since 1.6
+     */
+    public static class PreferencesLock extends ReentrantLock implements AutoCloseable {
+        public PreferencesLock open() {
+            lock();
+            return this;
+        }
+        @Override
+        public void close() {
+            unlock();
         }
     }
 
@@ -218,6 +242,26 @@ public class GuiPreferences {
         root.removeThisNode();
         root.flush();
         valueStore = null;
+        synchronized (this) {
+            lock = null;
+        }
+    }
+
+    /**
+     * @return lock object with holding the lock
+     * @since 1.6
+     */
+    public PreferencesLock lock() {
+        GuiPreferences parent = this;
+        while (parent.getParent() != null) {
+            parent = parent.getParent();
+        }
+        synchronized (parent) {
+            if (parent.lock == null) {
+                parent.lock = new PreferencesLock();
+            }
+            return parent.lock.open();
+        }
     }
 
     /**
@@ -324,7 +368,7 @@ public class GuiPreferences {
     }
 
     /**
-     *  loads prefs JSON object for {@link PreferencesJsonSupport#setPrefsJson(Object)}
+     *  loads prefs JSON object for {@link PreferencesJsonSupport#setPrefsJson(Map)}
      * @return loaded JSON object
      * @since 1.5
      */
@@ -508,7 +552,10 @@ public class GuiPreferences {
     public void clearHistoriesTree() {
         clearHistories();
         for (GuiMappingContext subContext : context.getChildren()) {
-            subContext.getPreferences().clearHistoriesTree();
+            GuiPreferences prefs = subContext.getPreferences();
+            try (var lock = prefs.lock()) {
+                prefs.clearHistoriesTree();
+            }
         }
         context.clearPreferences();
     }
