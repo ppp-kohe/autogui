@@ -25,7 +25,7 @@ The project uses [apache-maven](http://maven.apache.org) and depends on a recent
 
 ```bash
 mvn package
-  # the command will generate target/autogui-1.5.jar
+  # the command will generate target/autogui-1.6-SNAPSHOT.jar
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
@@ -39,7 +39,7 @@ To use the library in your apache-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.5</version>
+        <version>1.6-SNAPSHOT</version>
     </dependency>
 ```
 
@@ -75,7 +75,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.5.jar
+/env -class-path target/autogui-1.6-SNAPSHOT.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
@@ -379,6 +379,7 @@ The recent versions (1.2-) have the `module-info.class` and require Java 11 or l
         [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html)
       * Image column: a sub-type of 
         [`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html)
+      * Embedded component: a sub-type of [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/JComponent.html)
   * [Object rows](#object-rows): A user-defined object-type composing columns from its properties and actions
   * Dynamic Collection table: a nested `Collection<Collection<E>>` or a multi-dimensional array `E[][]`
 
@@ -861,7 +862,15 @@ The target table of those special methods are specified by the item type, i.e. t
 
 As another special feature, both annotation types have the boolean argument `index`. The default value of the flag is false, and if it is specified as true, then the return or argument type of the target methods becomes  `List<Integer>` and it means the index numbers of rows instead of the item type `E`. Moreover,  `List<int[]>`  means list of {row,column}. 
 
+#### Changing cell sizes
 
+The created table has ability to change column and row sizes via the pop-up menu of the table-header.
+
+* *Set All Column Width to This* : makes all column widths the target column.
+* *Auto Resize Column Width* : automatically sets the all column widths
+* *Row Height* : switches customization of row heights.
+    * *Fixed Size* : sets all row heights to the specified size.
+    * *Fit to Content* : sets each row height from the content size.
 
 ### Naming rule and @GuiIncluded(name=...)
 
