@@ -77,7 +77,7 @@ public class GuiSwingTaskRunner {
      *  the method is used for custom checking of the runner submission like collection-table: the context of the runner is not the actual context of the task.
      * @param useTaskRunner if false, it will be executed by {@link #executeContextTaskWithContext(Supplier, Consumer)}
      * @param task the running task
-     * @param afterTask a task executed after the task. nullable
+     * @param afterTask a task executed after the task. nullable: if null, the method might cause an exception. otherwise, the consumer becomes a finally-block.
      * @return the result status of the task: cancel, timeout or returned
      * @param <RetType> the value type of the task
      * @since 1.6
@@ -97,8 +97,12 @@ public class GuiSwingTaskRunner {
                 return retValue;
 
             } catch (ExecutionException ex) {
-                throw new RuntimeException(ex);
-
+                if (afterTask != null) {
+                    afterTask.accept(new ContextTaskResultFailException<>(ex));
+                    return null;
+                } else {
+                    throw new RuntimeException(ex);
+                }
             } catch (InterruptedException ie) {
                 return fail(false, afterTask);
 
@@ -159,11 +163,20 @@ public class GuiSwingTaskRunner {
     }
 
     public static <RetType> ContextTaskResult<RetType> executeContextTaskWithContext(Supplier<RetType> task, Consumer<ContextTaskResult<RetType>> afterTask) {
-        ContextTaskResult<RetType> ret = new ContextTaskResult<>(task.get());
-        if (afterTask != null) {
-            afterTask.accept(ret);
+        try {
+            ContextTaskResult<RetType> ret = new ContextTaskResult<>(task.get());
+            if (afterTask != null) {
+                afterTask.accept(ret);
+            }
+            return ret;
+        } catch (Throwable ex) {
+            if (afterTask != null) {
+                afterTask.accept(new ContextTaskResultFailException<>(ex));
+                return null;
+            } else {
+                throw ex;
+            }
         }
-        return ret;
     }
 
     /** the returned value for successfully obtaining a value
@@ -189,6 +202,14 @@ public class GuiSwingTaskRunner {
         }
 
         public boolean isPresentedWithDelay() {
+            return false;
+        }
+
+        /**
+         * @return true if the value is an error
+         * @since 1.6.1
+         */
+        public boolean isError() {
             return false;
         }
 
@@ -290,6 +311,29 @@ public class GuiSwingTaskRunner {
         @Override
         public RetType getValueOr(RetType cancelValue, RetType timeoutValue) {
             return timeout ? timeoutValue : cancelValue;
+        }
+    }
+
+    /**
+     * the failure status of execution with an exception
+     * @param <RetType> the missing value type
+     * @since 1.6.1
+     */
+    public static class ContextTaskResultFailException<RetType> extends ContextTaskResult<RetType> {
+        protected Throwable error;
+
+        public ContextTaskResultFailException(Throwable error) {
+            super(null);
+            this.error = error;
+        }
+
+        @Override
+        public boolean isError() {
+            return true;
+        }
+
+        public Throwable getError() {
+            return error;
         }
     }
 
