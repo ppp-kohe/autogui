@@ -1149,7 +1149,7 @@ public class GuiMappingContext {
                     th.setName(GuiMappingContext.class.getSimpleName() + "-" + th.getName());
                     return th;
                 }
-            }, null, false));
+            }, null, true));
         }
 
         @Override
