@@ -2,6 +2,7 @@ package org.autogui.swing.util;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 import java.awt.*;
 import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
@@ -416,6 +417,7 @@ public class UIManagerUtil {
      * <li> null, "" or "default"  =&gt; "default" for later processes by {@link #selectLookAndFeelDefault(boolean)} </li>
      * <li> "darklaf"  =&gt; "darklaf" for later processes by {@link #installLookAndFeelDarkLaf()} </li>
      * <li> "default-no-darklaf" =&gt; "default-no-darklaf" for later processes. same as "default" except for no darklaf installing </li>
+     * <li> "nimbus-custom" =&gt; {@link NimbusLookAndFeelCustomLight}</li>
      * <li> otherwise =&gt; name as is </li>
      * </ul>
      * @param name a special name or a class-name
@@ -429,6 +431,8 @@ public class UIManagerUtil {
             return "javax.swing.plaf.metal.MetalLookAndFeel";
         } else if (name.equals(LOOK_AND_FEEL_VALUE_NIMBUS)) {
             return "javax.swing.plaf.nimbus.NimbusLookAndFeel";
+        } else if (name.equals(LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM)) {
+            return NimbusLookAndFeelCustomLight.class.getName();
         } else if (name.equals(LOOK_AND_FEEL_VALUE_SYSTEM)) {
             return UIManager.getSystemLookAndFeelClassName();
         } else if (name.equals(LOOK_AND_FEEL_VALUE_DEFAULT) ||
@@ -444,7 +448,8 @@ public class UIManagerUtil {
      * process default behavior for the "#default" configuration
      * <ol>
      *     <li>try to load Darklaf by {@link #installLookAndFeelDarkLaf()}  if the parameter is true</li>
-     *     <li>if non-Unix environment, use {@link UIManager#getSystemLookAndFeelClassName()}</li>
+     *     <li>if macOS environment, use {@link UIManager#getSystemLookAndFeelClassName()}</li>
+     *     <li>if Windows environment, use "nimbus" (due to failure of size on HiDPI)</li>
      *     <li>if the GDK_SCALE env is set, use "metal" </li>
      *     <li>otherwise, nothing to do</li>
      * </ol>
@@ -455,8 +460,10 @@ public class UIManagerUtil {
     public String selectLookAndFeelDefault(boolean tryDarklaf) {
         if (tryDarklaf && installLookAndFeelDarkLaf()) {
             return null;
-        } else if (getOsVersion().isMacOS() || getOsVersion().isWindows()) {
+        } else if (getOsVersion().isMacOS()) {
             return UIManager.getSystemLookAndFeelClassName();
+        } else if (getOsVersion().isWindows()) {
+            return selectLookAndFeelFromSpecialName(LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM);
         } else if (System.getenv("GDK_SCALE") != null) { //for Unix GNOME with GDK_SCALE=...
             return selectLookAndFeelFromSpecialName(LOOK_AND_FEEL_VALUE_METAL);
         } else {
@@ -524,6 +531,8 @@ public class UIManagerUtil {
     public static final String LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF = "default-no-darklaf";
     /** @since 1.3 */
     public static final String LOOK_AND_FEEL_VALUE_DARKLAF = "darklaf";
+    /** @since 1.6.1 */
+    public static final String LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM = "nimbus-custom";
 
     /** @since 1.3 */
     public static final String LOOK_AND_FEEL_DEFAULT = "#default";
@@ -580,11 +589,9 @@ public class UIManagerUtil {
                 UIDefaults defaults = UIManager.getDefaults();
                 String key = "defaultFont";
                 Font f = defaults.getFont(key);
-                String name = "游ゴシック Medium";
-                if (f != null && f.getFamily().equals("Yu Gothic UI") &&   //it is a narrow UI font
-                        Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames())
-                                .contains(name)) {
-                    defaults.put(key, new Font(name, f.getStyle(), f.getSize()));
+                String name = "Noto Sans JP";
+                if ((f == null || f.getFamily().equals("Yu Gothic UI"))) { //the default is too narrow. if it has the specified font, use the font
+                    defaults.put(key, new Font(name, f == null ? Font.PLAIN : f.getStyle(), f == null ? 12 : f.getSize()));
                 }
             }
         }
@@ -734,6 +741,57 @@ public class UIManagerUtil {
             } catch (Exception ex) {
                 return false;
             }
+        }
+    }
+
+    /**
+     * a subclass of {@link NimbusLookAndFeel} with changing colors as suitable for modern Windows.
+     * @since 1.6.1
+     */
+    public static class NimbusLookAndFeelCustomLight extends NimbusLookAndFeel {
+        protected boolean init = false;
+        @Override
+        public UIDefaults getDefaults() {
+            UIDefaults defaults = super.getDefaults();
+            if (!init) {
+                if (isDarkTheme()) {
+                    initDefaultDark(defaults);
+                } else {
+                    initDefaultLight(defaults);
+                }
+                init = true;
+            }
+            return defaults;
+        }
+
+        protected boolean isDarkTheme() {
+            return UIManagerUtil.getInstance().getOsVersion().isDarkTheme();
+        }
+
+        public void initDefaultDark(UIDefaults defaults) {
+            /* //insufficient settings; menu-bar, scroll-bar, button, table-cells...
+            Color back = new Color(54, 54, 54);
+            Color backLight = new Color(60, 60, 60);
+            Color backSelect = new Color(120, 120, 120);
+            Color disabledText = new Color(100, 100, 100);
+            Color selection = new Color(180, 180, 180);
+            Color text = new Color(200, 200, 200);
+            defaults.put("nimbusBase", back);
+            defaults.put("control", back);
+            defaults.put("nimbusSelectionBackground", selection);
+            defaults.put("nimbusLightBackground", backLight);
+            defaults.put("nimbusSelectedText", backSelect);
+            defaults.put("nimbusDisabledText", disabledText);
+            defaults.put("text", text);
+            defaults.put("background", back);
+             */
+            initDefaultLight(defaults);
+        }
+
+        public void initDefaultLight(UIDefaults defaults) {
+            defaults.put("control", new Color(249, 249, 249));
+            defaults.put("nimbusBase", new Color(140, 140, 180));
+            defaults.put("nimbusSelectionBackground", new Color(88, 101, 102));
         }
     }
 
