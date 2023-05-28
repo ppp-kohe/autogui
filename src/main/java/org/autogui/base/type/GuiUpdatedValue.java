@@ -69,6 +69,7 @@ public interface GuiUpdatedValue {
      * the no value for {@link GuiUpdatedValue}, can be obtained by {@link #NO_UPDATE}
      */
     final class GuiUpdatedValueNone implements GuiUpdatedValue {
+        public GuiUpdatedValueNone() {}
         @Override
         public boolean isNone() {
             return true;

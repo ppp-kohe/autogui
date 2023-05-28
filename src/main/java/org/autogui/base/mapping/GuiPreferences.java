@@ -111,6 +111,7 @@ public class GuiPreferences {
      * @since 1.6
      */
     public static class PreferencesLock extends ReentrantLock implements AutoCloseable {
+        public PreferencesLock() {}
         public PreferencesLock open() {
             lock();
             return this;

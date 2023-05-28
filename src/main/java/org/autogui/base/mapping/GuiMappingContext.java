@@ -77,6 +77,8 @@ public class GuiMappingContext {
             return false;
         }
 
+        public GuiSourceValue() {}
+
         /**
          * @return null if none
          */
@@ -130,6 +132,8 @@ public class GuiMappingContext {
      * nothing of source value, can be obtained by {@link #NO_SOURCE}
      */
     public static final class GuiSourceValueNone extends GuiSourceValue {
+        public GuiSourceValueNone() {}
+
         @Override
         public boolean isNone() {
             return true;
@@ -990,6 +994,9 @@ public class GuiMappingContext {
      */
     public static class ContextExecutorServiceNoThread implements ContextExecutorService {
         protected ExecutorService timeoutService = Executors.newCachedThreadPool();
+
+        public ContextExecutorServiceNoThread() {}
+
         @Override
         public <V> Future<V> submit(Callable<V> v) {
             return new FutureImmediate<>(v, timeoutService);
@@ -1101,7 +1108,7 @@ public class GuiMappingContext {
 
         public ContextExecutorServiceSingleThread() {
             this(Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-                ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+                final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
                 @Override
                 public Thread newThread(Runnable r) {
                     Thread th = defaultFactory.newThread(r);

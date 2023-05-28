@@ -9,7 +9,7 @@ import java.util.List;
  *  the matched member representation will be set to the context */
 public class GuiReprSet implements GuiRepresentation {
     protected List<GuiRepresentation> representations = new ArrayList<>();
-
+    public GuiReprSet() {}
     public GuiReprSet add(GuiRepresentation... rs) {
         representations.addAll(Arrays.asList(rs));
         return this;

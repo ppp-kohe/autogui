@@ -11,6 +11,8 @@ import org.autogui.base.type.*;
 public class GuiSwingContextInfo {
     protected static GuiSwingContextInfo instance = new GuiSwingContextInfo();
 
+    public GuiSwingContextInfo() {}
+
     public static GuiSwingContextInfo get() {
         return instance;
     }

@@ -461,6 +461,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
      * a converter for list object. so just casting
      */
     public static class ListConverterCast implements ListConverter {
+        public ListConverterCast() {}
         @Override
         public List<?> toList(Object obj) {
             if (obj == null) {

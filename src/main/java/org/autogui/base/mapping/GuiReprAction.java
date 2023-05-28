@@ -21,6 +21,7 @@ import java.util.concurrent.Callable;
  * an action can be selection-updater by attaching {@link GuiListSelectionUpdater}
  */
 public class GuiReprAction implements GuiRepresentation {
+    public GuiReprAction() {}
     @Override
     public boolean match(GuiMappingContext context) {
         if (context.isTypeElementAction()) {

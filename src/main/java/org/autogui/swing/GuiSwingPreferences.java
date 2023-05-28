@@ -13,7 +13,10 @@ import org.autogui.swing.util.*;
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import javax.swing.table.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -27,8 +30,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.AttributedString;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -1283,6 +1286,8 @@ public class GuiSwingPreferences {
         protected String currentDirectory;
         protected String key = "$fileDialog";
 
+        public PreferencesForFileDialog() {}
+
         public void setFileList(List<Path> fileList) {
             this.fileList = fileList.stream()
                     .map(Path::toString)
@@ -1520,11 +1525,13 @@ public class GuiSwingPreferences {
         static final long serialVersionUID = 1L;
         protected String name;
         protected String entryValue;
-        protected TextCellRenderer.LineInfo nameInfo;
-        protected TextCellRenderer.LineInfo valueInfo;
+        protected transient TextCellRenderer.LineInfo nameInfo;
+        protected transient TextCellRenderer.LineInfo valueInfo;
         protected Map<Color, Map<Color, Color>> colorMap = new HashMap<>();
         protected boolean selected;
         protected boolean node;
+
+        public PrefsTreeCellRenderer() {}
 
         public void setValue(Object value) {
             node = false;

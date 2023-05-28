@@ -151,6 +151,7 @@ public interface GuiRepresentation {
 
     /** the empty implementation of the representation */
     class GuiReprNone implements GuiRepresentation {
+        public GuiReprNone() {}
         @Override
         public boolean match(GuiMappingContext context) {
             return false;

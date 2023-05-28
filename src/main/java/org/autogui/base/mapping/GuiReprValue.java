@@ -17,6 +17,7 @@ import java.util.function.Supplier;
  *  matching {@link Class} with the subclass implementing {@link #matchValueType(Class)}.
  */
 public class GuiReprValue implements GuiRepresentation {
+    public GuiReprValue() {}
     @Override
     public boolean match(GuiMappingContext context) {
         Class<?> cls = getValueType(context);

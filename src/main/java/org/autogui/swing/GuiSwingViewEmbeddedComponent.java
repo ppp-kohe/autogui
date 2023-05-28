@@ -142,7 +142,8 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
 
 
         public void setSwingViewValueComponent(JComponent comp) {
-            if (comp != component && component != null && component.getParent() == this) {
+            if (comp != component && component != null && component.getParent() == this &&
+                !comp.equals(GuiReprEmbeddedComponent.COMPONENT_NONE)) {
                 remove(component);
             }
             setSwingViewValueComponent(comp, comp, (comp != null && comp != component));

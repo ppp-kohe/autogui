@@ -79,6 +79,7 @@ import java.util.concurrent.Callable;
  *   </pre>
  */
 public class GuiReprActionList implements GuiRepresentation {
+    public GuiReprActionList() {}
     @Override
     public boolean match(GuiMappingContext context) {
         if (context.isTypeElementActionList()) {

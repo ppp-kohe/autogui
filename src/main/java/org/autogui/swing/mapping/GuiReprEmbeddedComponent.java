@@ -75,38 +75,56 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
      */
     @Override
     public JComponent toUpdateValue(GuiMappingContext context, Object value) {
-        return toUpdateValue(context, value, null);
+        return toUpdateValue(context, value);
     }
 
     public JComponent toUpdateValue(GuiMappingContext context, Object value, Consumer<JComponent> delayed) {
-        if (value instanceof SwingDeferredRunner.TaskResultFuture) {
-            Future<Object> f = ((SwingDeferredRunner.TaskResultFuture) value).getFuture();
+        if (value instanceof SwingDeferredRunner.TaskResultFuture taskResult) {
+            Future<Object> f = taskResult.getFuture();
             if (f.isDone()) {
                 try {
                     value = f.get();
                 } catch (Exception ex) {
-                    return null;
+                    System.err.println(this + " : " + ex);
+                    return COMPONENT_NONE;
                 }
             } else {
                 if (delayed != null) {
                     SwingDeferredRunner.getDefaultService().execute(() -> {
                         try {
-                            delayed.accept(toUpdateValue(context, f.get()));
+                            var newValue = toUpdateValue(context, f.get());
+                            if (!newValue.equals(COMPONENT_NONE)) {
+                                delayed.accept(newValue);
+                            }
                         } catch (Exception ex) {
                             throw new RuntimeException(ex);
                         }
                     });
                 }
-                return null;
+                return COMPONENT_NONE;
             }
         }
-        if (value instanceof GuiUpdatedValue) {
-            return toUpdateValue(context, ((GuiUpdatedValue) value).getValue(), delayed);
+        if (value == null) {
+            return null;
+        } else if (value instanceof GuiUpdatedValue updatedValue) {
+            if (updatedValue.isNone()) {
+                return COMPONENT_NONE;
+            } else {
+                return toUpdateValue(context, updatedValue.getValue(), delayed);
+            }
         } else if (value instanceof JComponent) {
             return (JComponent) value;
         } else {
-            return null;
+            return COMPONENT_NONE;
         }
+    }
+
+    public static ComponentNone COMPONENT_NONE = new ComponentNone();
+
+    /**
+     * a dummy component class for representing no updating.
+     */
+    public static class ComponentNone extends JComponent {
     }
 
     @Override
