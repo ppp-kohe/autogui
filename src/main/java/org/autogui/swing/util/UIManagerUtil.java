@@ -473,24 +473,48 @@ public class UIManagerUtil {
 
     /**
      * install com.formdev.flatlaf.FlatDarkLaf or .FlatLightLaf by reflection.
-     *  Note: currently supporting flatlaf:2.0.1--2.1
-     * @return true if the darklaf is installed
+     *  Note: currently supporting flatlaf:2.0.1--3.1.1
+     *  Since v3, flatlaf supports com.formdev.flatlaf.themes.{FlatMacDarkLaf, FlatMacLightLaf}.
+     * @return true if the flatlaf is installed
      * @since 1.3
      */
     public boolean installLookAndFeelDarkLaf() {
         try {
-            String pack = "com.formdev.flatlaf";
             Class<?> laf;
-            if (getOsVersion().isDarkTheme()) {
-                laf = Class.forName(pack + ".FlatDarkLaf");
+            if (getOsVersion().isMacOS()) {
+                try {
+                    // v3.0
+                    String pack = "com.formdev.flatlaf.themes";
+                    if (getOsVersion().isDarkTheme()) {
+                        laf = Class.forName(pack + ".FlatMacDarkLaf");
+                    } else {
+                        laf = Class.forName(pack + ".FlatMacLightLaf");
+                    }
+                } catch (ClassNotFoundException ex) {
+                    laf = getLookAndFeelDarkLafClass();
+                }
             } else {
-                laf = Class.forName(pack + ".FlatLightLaf");
+                laf = getLookAndFeelDarkLafClass();
             }
-            laf.getMethod("install")
-                    .invoke(null); //note: install is now deprecated, since 2.1?
+            try {
+                laf.getMethod("setup")
+                        .invoke(null);
+            } catch (NoSuchMethodException nsm) {
+                laf.getMethod("install")
+                        .invoke(null); //note: install is now deprecated, since 2.1?
+            }
             return true;
         } catch (Throwable ex) {
             return false;
+        }
+    }
+
+    protected Class<?> getLookAndFeelDarkLafClass() throws ClassNotFoundException {
+        String pack = "com.formdev.flatlaf";
+        if (getOsVersion().isDarkTheme()) {
+            return Class.forName(pack + ".FlatDarkLaf");
+        } else {
+            return Class.forName(pack + ".FlatLightLaf");
         }
     }
     
