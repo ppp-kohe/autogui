@@ -34,6 +34,8 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
     GuiSwingViewDocumentEditor doc;
     JFrame frame;
 
+    public GuiSwingViewDocumentEditorTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -61,6 +63,8 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
     public static class TestObj {
         @GuiIncluded
         public StringBuilder value = new StringBuilder();
+
+        public TestObj() {}
     }
 
     //////////////

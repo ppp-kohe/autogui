@@ -7,6 +7,7 @@ import org.autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.io.Serial;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -127,26 +128,26 @@ public class GuiSwingTaskRunner {
     }
 
     private <RetType> void waitCompletion(Future<RetType> ret, Consumer<ContextTaskResult<RetType>> afterTask) {
-        GuiLogEntryProgress p = GuiLogManager.get().logProgress();
-        p.setIndeterminate(true);
-        p.setMessage("executing...");
-        try {
-            RetType value = ret.get();
-            if (afterTask != null) {
-                afterTask.accept(new ContextTaskResultWithDelay<>(value));
+        try (GuiLogEntryProgress p = GuiLogManager.get().logProgress()) {
+            p.setIndeterminate(true);
+            p.setMessage("executing...");
+            try {
+                RetType value = ret.get();
+                if (afterTask != null) {
+                    afterTask.accept(new ContextTaskResultWithDelay<>(value));
+                }
+            } catch (InterruptedException ie) {
+                GuiLogManager.get().logString("cancelling...");
+                p.setMessage("cancelling...");
+                ret.cancel(true);
+                fail(false, afterTask);
+            } catch (Throwable ex) {
+                throw new RuntimeException(ex);
+            } finally {
+                if (ret.isDone()) {
+                    p.setMessage("completed");
+                }
             }
-        } catch (InterruptedException ie) {
-            GuiLogManager.get().logString("cancelling...");
-            p.setMessage("cancelling...");
-            ret.cancel(true);
-            fail(false, afterTask);
-        } catch (Throwable ex) {
-            throw new RuntimeException(ex);
-        } finally {
-            if (ret.isDone()) {
-                p.setMessage("completed");
-            }
-            p.finish();
         }
     }
 
@@ -339,7 +340,7 @@ public class GuiSwingTaskRunner {
 
     /** a base class for actions */
     public static class ContextAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected GuiSwingTaskRunner taskRunner;
 

@@ -70,7 +70,7 @@ public class GuiTypeValue implements GuiTypeElement {
     }
 
     /**
-     * @return NO_UPDATE. a sub-class may returns a special value
+     * @return NO_UPDATE. a subclass may return a special value
      */
     public GuiUpdatedValue getValue() {
         return GuiUpdatedValue.NO_UPDATE;
@@ -94,10 +94,10 @@ public class GuiTypeValue implements GuiTypeElement {
      * @param prevValue  the previous value
      * @return a value other than {@link GuiUpdatedValue#NO_UPDATE} if the value is updated from the prevValue;
      *   the returned value is a next(current) state of the prevValue.
-     *   Even if the returned value is equivalent to the prevValue, it is non-NO_UPDATE and then it indicates an update.
+     *   Even if the returned value is equivalent to the prevValue, it is non-NO_UPDATE, and then it indicates an update.
      * <p>
      * the default implementation simply call {@link #getValue()} and it will return NO_UPDATE.
-     *  The main purpose of the method is provide extensibility for GUI source.
+     *  The main purpose of the method is providing extensibility for GUI source.
      */
     public GuiUpdatedValue updatedValue(Object prevValue) {
         return getValue();
@@ -163,7 +163,7 @@ public class GuiTypeValue implements GuiTypeElement {
 
         GuiTypeValue that = (GuiTypeValue) o;
 
-        return name != null ? name.equals(that.name) : that.name == null;
+        return Objects.equals(name, that.name);
     }
 
     @Override
@@ -174,7 +174,7 @@ public class GuiTypeValue implements GuiTypeElement {
     /** check equality 2 objects: default implementation is calling (shallow) equals
      * @param prevValue the compared value 1
      * @param nextValue the compared value 2
-     * @return use Objects.equals
+     * @return use {@link Objects#equals(Object, Object)}
      */
     public boolean equals(Object prevValue, Object nextValue) {
         return Objects.equals(prevValue, nextValue);

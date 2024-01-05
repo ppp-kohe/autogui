@@ -44,6 +44,8 @@ public class GuiSwingTableColumnBooleanTest extends GuiSwingTestCase {
     ObjectTableModel model;
     ObjectTableColumn objColumn;
 
+    public GuiSwingTableColumnBooleanTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -61,7 +63,7 @@ public class GuiSwingTableColumnBooleanTest extends GuiSwingTestCase {
         propContext = context.getChildByName("values")
                 .getChildByName("List");
 
-        elemContext = propContext.getChildren().get(0);
+        elemContext = propContext.getChildren().getFirst();
         boolContext = elemContext.getChildByName("Boolean");
 
         column = new GuiSwingTableColumnBoolean();
@@ -81,6 +83,7 @@ public class GuiSwingTableColumnBooleanTest extends GuiSwingTestCase {
     public static class TestObj {
         @GuiIncluded
         public List<Boolean> values;
+        public TestObj() {}
     }
 
 
@@ -163,7 +166,7 @@ public class GuiSwingTableColumnBooleanTest extends GuiSwingTestCase {
                 clickPoint.x, clickPoint.y, 1, false, MouseEvent.BUTTON1)));
         runWait();
         Assert.assertEquals("editor click change",
-                false, obj.values.get(0));
+                false, obj.values.getFirst());
     }
 
     @Test

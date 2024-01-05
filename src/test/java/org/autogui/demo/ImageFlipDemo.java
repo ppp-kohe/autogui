@@ -27,7 +27,6 @@ public class ImageFlipDemo {
     void save() throws Exception {
         if (output.exists()) {
             System.err.println("File already exists: " + output);
-            return;
         } else {
             ImageIO.write(image, "png", output);
         }

@@ -16,6 +16,8 @@ public class GuiReprValueBooleanCheckBoxTest {
     GuiMappingContext contextValue;
     GuiMappingContext contextObj;
 
+    public GuiReprValueBooleanCheckBoxTest() {}
+
     @Before
     public void setUp() {
         checkBox = new GuiReprValueBooleanCheckBox();

@@ -5,7 +5,6 @@ import org.autogui.base.log.GuiLogEntry;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -48,7 +47,7 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
         return src.get();
     }
 
-    /** type of a rendering component */
+    /** type of rendering component */
     enum ContainerType {
         List,
         StatusBar

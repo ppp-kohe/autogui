@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.Serial;
 
 public class GuiSwingViewEmbeddedComponentTest extends GuiSwingTestCase {
 
@@ -27,6 +28,8 @@ public class GuiSwingViewEmbeddedComponentTest extends GuiSwingTestCase {
     JFrame frame;
 
     GuiSwingViewEmbeddedComponent comp;
+
+    public GuiSwingViewEmbeddedComponentTest() {}
 
     @Before
     public void setUp() {
@@ -57,6 +60,8 @@ public class GuiSwingViewEmbeddedComponentTest extends GuiSwingTestCase {
 
         public long waitTime;
 
+        public TestObj() {}
+
         @GuiIncluded
         public JComponent getValue() throws Exception {
             if (value == null) {
@@ -75,9 +80,10 @@ public class GuiSwingViewEmbeddedComponentTest extends GuiSwingTestCase {
     }
 
     public static class TestPane extends JComponent {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public int paintCount;
         public String label;
+        @SuppressWarnings("this-escape")
         public TestPane(String label) {
             this.label = label;
             setPreferredSize(new Dimension(300, 300));

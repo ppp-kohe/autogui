@@ -55,6 +55,8 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
 
     JFrame frame;
 
+    public GuiSwingViewCollectionTableTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -117,6 +119,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
             System.err.println(ss);
             selectedItems.addAll(ss);
         }
+        public TestObj() {}
     }
 
     @GuiIncluded
@@ -150,6 +153,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
     public static class TestValues {
         @GuiIncluded
         public List<String> value = new ArrayList<>();
+        public TestValues() {}
     }
 
     ////////////////////////
@@ -158,6 +162,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
     public static class TestMatrix {
         @GuiIncluded
         public List<List<String>> value = new ArrayList<>();
+        public TestMatrix() {}
     }
 
 
@@ -167,6 +172,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
     public static class TestObjMatrix {
         @GuiIncluded
         public List<List<TestRow>> value = new ArrayList<>();
+        public TestObjMatrix() {}
     }
 
     ////////////////////////

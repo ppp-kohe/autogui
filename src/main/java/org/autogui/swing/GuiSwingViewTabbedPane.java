@@ -11,6 +11,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.io.Serial;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -50,7 +51,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
     }
 
     public static class ObjectTabbedPane extends GuiSwingViewObjectPane.ObjectPane {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTabbedPane tabbedPane;
         protected TabPreferencesUpdater tabPreferencesUpdater;
 
@@ -170,6 +171,8 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
 
     public static class PreferencesForTab implements GuiSwingPreferences.PreferencesByJsonEntry {
         protected int selectedIndex;
+
+        public PreferencesForTab() {}
 
         public void applyTo(JTabbedPane tabbedPane) {
             tabbedPane.getModel().setSelectedIndex(selectedIndex);

@@ -8,6 +8,7 @@ import org.autogui.swing.util.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
  *  <h2>string-transfer</h2>
  *  only copying is supported by {@link GuiSwingView.ToStringCopyAction}
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingViewPropertyPane implements GuiSwingView {
     protected GuiSwingMapperSet mapperSet;
 
@@ -53,8 +55,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
 
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement e = mapperSet.view(subContext);
-            if (e instanceof GuiSwingView) {
-                GuiSwingView view = (GuiSwingView) e;
+            if (e instanceof GuiSwingView view) {
                 JComponent subComp = view.createView(subContext, specifierForChildren);
                 if (subComp != null) {
                     pane.setContentPane(subComp);
@@ -76,7 +77,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
     }
 
     public static class PropertyPane extends NamedPropertyPane {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected PopupExtension popup;
@@ -222,7 +223,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
     }
 
     public static class PropertyWrapperPane extends PropertyPane {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public PropertyWrapperPane(GuiMappingContext context, boolean showName, ValuePane<?> content) {
             super(context, showName, null, content.asSwingViewComponent());
         }
@@ -234,7 +235,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
     }
 
     public static class NamedPropertyPane extends NamedPane implements GuiSwingViewWrapper.ValuePaneWrapper<Object> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected PopupExtension popup;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
 
@@ -354,11 +355,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
 
         public boolean isProperty() {
             GuiMappingContext context = getSwingViewContext();
-            if (context != null && context.getRepresentation() instanceof GuiReprPropertyPane) {
-                return true;
-            } else {
-                return false;
-            }
+            return context != null && context.getRepresentation() instanceof GuiReprPropertyPane;
         }
 
         @Override

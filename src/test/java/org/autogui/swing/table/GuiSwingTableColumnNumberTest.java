@@ -41,6 +41,8 @@ public class GuiSwingTableColumnNumberTest extends GuiSwingTestCase {
     ObjectTableModel model;
     ObjectTableColumn objColumn;
 
+    public GuiSwingTableColumnNumberTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -58,7 +60,7 @@ public class GuiSwingTableColumnNumberTest extends GuiSwingTestCase {
         propContext = context.getChildByName("values")
                 .getChildByName("List");
 
-        elemContext = propContext.getChildren().get(0);
+        elemContext = propContext.getChildren().getFirst();
         numContext = elemContext.getChildByName("Integer");
 
         column = new GuiSwingTableColumnNumber();
@@ -78,6 +80,7 @@ public class GuiSwingTableColumnNumberTest extends GuiSwingTestCase {
     public static class TestObj {
         @GuiIncluded
         public List<Integer> values;
+        public TestObj() {}
     }
 
 

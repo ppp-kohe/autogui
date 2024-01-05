@@ -71,6 +71,7 @@ public class TableRowHeightFitter {
     protected ScheduledTaskRunner<RowHeightUpdate> columnEventHandler = new ScheduledTaskRunner<>(100, this::fitByEvent,
             Executors.newScheduledThreadPool(0)); //create another auto closing cached pool
 
+    @SuppressWarnings("this-escape")
     public TableRowHeightFitter(JTable table) {
         this.table = table;
     }
@@ -84,11 +85,10 @@ public class TableRowHeightFitter {
         TableModelListener listener = this::scheduleFitByEvent;
         model.addTableModelListener(listener);
         if (DEBUG) {
-            model.addTableModelListener(e -> {
+            model.addTableModelListener(e ->
                 System.err.printf("tableChange %s col=%d row=(%d,%d)%n",
                         (e.getType() == TableModelEvent.INSERT ? "INS" : e.getType() == TableModelEvent.DELETE ? "DEL" : e.getType() == TableModelEvent.UPDATE ? "UP" : "" + e.getType()),
-                        e.getColumn(), e.getFirstRow(), e.getLastRow());
-            });
+                        e.getColumn(), e.getFirstRow(), e.getLastRow()));
         }
         return listener;
     }
@@ -325,7 +325,7 @@ public class TableRowHeightFitter {
     }
 
     protected void log(String fmt, Object... args) {
-        System.err.println(String.format(fmt, args));
+        System.err.printf(fmt, args);
     }
 
     public void fitRow(int viewRow, int row, Collection<TableColumn> targetColumns) {

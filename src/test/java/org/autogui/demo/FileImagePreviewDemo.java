@@ -55,9 +55,11 @@ public class FileImagePreviewDemo {
                 if (dir == null || dir.toString().isEmpty() || !Files.isDirectory(dir)) {
                     items = new ArrayList<>();
                 } else {
-                    items = Files.list(dir)
-                            .map(FileItem::new)
-                            .collect(Collectors.toList());
+                    try (var list = Files.list(dir)) {
+                        items = list
+                                .map(FileItem::new)
+                                .collect(Collectors.toList());
+                    }
                 }
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -72,7 +74,7 @@ public class FileImagePreviewDemo {
         @GuiListSelectionCallback
         @GuiIncluded
         public void preview(List<FileItem> item) {
-            preview.setImage(item.get(0).getThumb());
+            preview.setImage(item.getFirst().getThumb());
         }
 
         @GuiListSelectionUpdater

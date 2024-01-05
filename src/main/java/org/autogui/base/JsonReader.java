@@ -27,7 +27,7 @@ public class JsonReader {
     public static Object read(File file) {
         if (file.exists()) {
             try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));) {
+                    new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
                 String line;
                 StringBuilder buf = new StringBuilder();
                 while ((line = reader.readLine()) != null) {
@@ -104,7 +104,7 @@ public class JsonReader {
         }
     }
     public RuntimeException error(char c) {
-        return error("\'" + c + "\'");
+        return error("'" + c + "'");
     }
 
     public RuntimeException error(String c) {
@@ -117,9 +117,9 @@ public class JsonReader {
         int len = (source == null ? 0 : Math.max(0, source.indexOf('\n', index))) - start;
         String targetLine = "";
         if (len > 80) {
-            targetLine = " : \'" + (source == null ? "" : source.substring(start, start + 80)) + "...\'";
+            targetLine = " : '" + (source == null ? "" : source.substring(start, start + 80)) + "...'";
         } else if (len > 0) {
-            targetLine = " : \'" + (source == null ? "" : source.substring(start, start + len)) + "\'";
+            targetLine = " : '" + (source == null ? "" : source.substring(start, start + len)) + "'";
         }
         return "line " + lineNumber + " column " + columnNumber + targetLine;
     }

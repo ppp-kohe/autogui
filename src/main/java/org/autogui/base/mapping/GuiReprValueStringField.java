@@ -7,6 +7,7 @@ package org.autogui.base.mapping;
  * </pre>
  */
 public class GuiReprValueStringField extends GuiReprValue {
+    public GuiReprValueStringField() {}
     @Override
     public boolean matchValueType(Class<?> cls) {
         return cls.equals(String.class);

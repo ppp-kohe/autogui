@@ -19,6 +19,7 @@ import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.io.Serial;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
@@ -30,9 +31,11 @@ import java.util.stream.IntStream;
 /**
  * a column factory for {@link String}.
  * <p>
- *     both editor and renderer are realized by a sub-class of {@link PropertyLabel}.
+ *     both editor and renderer are realized by a subclass of {@link PropertyLabel}.
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingTableColumnString implements GuiSwingTableColumn {
+    public GuiSwingTableColumnString() {}
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           SpecifierManager parentSpecifier) {
@@ -50,7 +53,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     /** a component for string cell renderer : only for single-line (switched to {@link MultilineColumnTextViewPane}) */
     public static class ColumnTextPane extends PropertyLabel {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public ColumnTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             TextCellRenderer.setCellDefaultProperties(this);
@@ -126,7 +129,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     public static class LabelTextPasteAllAction extends PopupExtensionText.TextPasteAllAction
         implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingView.ValuePane<?> label;
 
         public LabelTextPasteAllAction(GuiSwingView.ValuePane<?> label) {
@@ -160,7 +163,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
      */
     public static class LabelTextClearAction extends PopupExtensionText.TextClearAction
         implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingView.ValuePane<?> label;
         protected String clearValue;
         public LabelTextClearAction(GuiSwingView.ValuePane<?> label) {
@@ -195,7 +198,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     public static class LabelTextLoadAction extends PopupExtensionText.TextLoadAction
             implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingView.ValuePane<?> label;
 
         public LabelTextLoadAction(GuiSwingView.ValuePane<?> label) {
@@ -243,7 +246,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     public static class ColumnLabelTextSaveAction extends PopupExtensionText.TextSaveAction
         implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingView.ValuePane<?> label;
 
         public ColumnLabelTextSaveAction(GuiSwingView.ValuePane<?> label) {
@@ -275,7 +278,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     /** a component for editor (this is only for single-line. switched to {@link MultilineColumnTextPane} since 1.2.1) */
     public static class ColumnEditTextPane extends GuiSwingViewStringField.PropertyStringPane {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public ColumnEditTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
@@ -327,7 +330,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
      * @since 1.3
      */
     public static class MultilineColumnTextViewPane extends MultilineColumnTextPane {
-        static final long serialVersionUID = 1;
+        @Serial private static final long serialVersionUID = 1;
         public MultilineColumnTextViewPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
         }
@@ -350,7 +353,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
      * @since 1.3
      */
     public static class MultilineColumnTextPane extends GuiSwingViewDocumentEditor.PropertyDocumentEditorPane {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected List<Runnable> editFinishHandlers = new ArrayList<>(1);
         public MultilineColumnTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
@@ -382,7 +385,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         public static class FinishCellEditAction extends AbstractAction {
-            static final long serialVersionUID = 1;
+            @Serial private static final long serialVersionUID = 1;
             List<Runnable> editFinishHandlers;
 
             public FinishCellEditAction(List<Runnable> editFinishHandlers) {
@@ -397,7 +400,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         public static class MultilineColumnEditorKit extends DefaultEditorKit implements ViewFactory  {
-            static final long serialVersionUID = 1;
+            @Serial private static final long serialVersionUID = 1;
             /** @since 1.6 */
             protected boolean verticalCentering;
 
@@ -493,7 +496,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         public static class MultilineColumnScrollPane extends GuiSwingViewWrapper.ValueScrollPane<Object> {
-            private static final long serialVersionUID = 1L;
+            @Serial private static final long serialVersionUID = 1L;
             public MultilineColumnScrollPane(Component view) {
                 super(view,
                         ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,

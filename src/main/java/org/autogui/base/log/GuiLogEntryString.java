@@ -15,7 +15,7 @@ public class GuiLogEntryString implements GuiLogEntry {
 
     /**
      * @param data the entry string
-     * @param fromStandard whether data comes from System.out
+     * @param fromStandard whether data comes from {@link System#out}
      * @since 1.1
      */
     public GuiLogEntryString(String data, boolean fromStandard) {

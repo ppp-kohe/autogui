@@ -7,13 +7,12 @@ import org.autogui.swing.util.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
+import java.io.Serial;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +37,9 @@ import java.util.function.Supplier;
  * <h2>string-transfer</h2>
  * unsupported. but it can directly handle an image-data, or a file in a file-list.
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingViewImagePane implements GuiSwingView {
+    public GuiSwingViewImagePane() {}
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         PropertyImagePane imagePane = new PropertyImagePane(context, new SpecifierManagerDefault(parentSpecifier));
@@ -57,7 +58,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     public static class PropertyImagePane extends JComponent
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Image> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
@@ -560,7 +561,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public float getScale(Dimension srcSize, Dimension dstSize) {
             float pw = (dstSize.width / (float) srcSize.width);
             float ph = (dstSize.height / (float) srcSize.height);
-            return Math.min(pw < ph ? pw : ph, maxImageScale);
+            return Math.min(Math.min(pw, ph), maxImageScale);
         }
 
         @Override
@@ -644,7 +645,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     public static class ImageScaleSwitchFitAction extends AbstractAction
             implements PopupCategorized.CategorizedMenuItemActionCheck, TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyImagePane pane;
 
@@ -689,7 +690,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     public static class ImageScaleOriginalSizeAction extends AbstractAction
             implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyImagePane pane;
 
@@ -721,7 +722,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageScaleSizeAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyImagePane pane;
         protected float n;
@@ -746,7 +747,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageScaleAutoSwitchByMouseWheel extends AbstractAction implements PopupCategorized.CategorizedMenuItemActionCheck {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyImagePane pane;
 
@@ -777,7 +778,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageScaleIncreaseAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyImagePane pane;
         protected float n;
@@ -816,7 +817,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     ///////////////////////
 
     public static class HistoryMenuImage extends GuiSwingHistoryMenu<Image, PropertyImagePane> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public HistoryMenuImage(PropertyImagePane component, GuiMappingContext context) {
             super(component, context);
@@ -827,8 +828,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             Object value = e.getValue();
             String name;
             Image img;
-            if (value instanceof GuiReprValueImagePane.ImageHistoryEntry) {
-                GuiReprValueImagePane.ImageHistoryEntry he = (GuiReprValueImagePane.ImageHistoryEntry) value;
+            if (value instanceof GuiReprValueImagePane.ImageHistoryEntry he) {
                 img = he.getImage();
                 name = getActionNameFromString(he.getPath().toString());
             } else {
@@ -853,8 +853,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 buf.append("null");
             } else {
                 buf.append(v.getClass().getSimpleName());
-                if (v instanceof BufferedImage) {
-                    BufferedImage img = (BufferedImage) v;
+                if (v instanceof BufferedImage img) {
                     buf.append(": ").append(img.getWidth()).append(" x ").append(img.getHeight());
                 }
             }
@@ -872,7 +871,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class HistoryMenuItemForTableColumn extends HistoryMenuImage {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected GuiReprCollectionTable.TableTargetColumn target;
         public HistoryMenuItemForTableColumn(PropertyImagePane component, GuiMappingContext context, GuiReprCollectionTable.TableTargetColumn target) {
@@ -887,7 +886,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageCopyAction extends AbstractAction implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected Supplier<Image> image;
         protected GuiMappingContext context;
@@ -940,7 +939,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImagePasteAction extends AbstractAction implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyImagePane pane;
 
@@ -978,7 +977,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             if (clip.isDataFlavorAvailable(DataFlavor.javaFileListFlavor)) {
                 List<File> fs = (List<File>) clip.getData(DataFlavor.javaFileListFlavor);
                 if (fs != null && !fs.isEmpty()) {
-                    pane.setImagePath(img, fs.get(0).toPath());
+                    pane.setImagePath(img, fs.getFirst().toPath());
                 }
             }
         }
@@ -1006,7 +1005,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
      */
     //TODO set null ?
     public static class ImageClearAction extends AbstractAction implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyImagePane pane;
 
@@ -1057,7 +1056,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
 
     public static class ImageSaveAction extends ImageCopyAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyImagePane pane;
         public ImageSaveAction(PropertyImagePane pane) {
@@ -1102,7 +1101,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     }
 
     public static class ImageLoadAction extends ImagePasteAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public ImageLoadAction(PropertyImagePane pane) {
             super(pane);
@@ -1167,7 +1166,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public DataFlavor[] getTransferDataFlavors() {
-            return flavors.toArray(new DataFlavor[flavors.size()]);
+            return flavors.toArray(new DataFlavor[0]);
         }
 
         @Override
@@ -1178,7 +1177,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public Object getTransferData(DataFlavor flavor)
-                throws UnsupportedFlavorException, IOException {
+                throws UnsupportedFlavorException {
             if (DataFlavor.imageFlavor.equals(flavor)) {
                 return image;
             } else if (context != null && DataFlavor.javaFileListFlavor.equals(flavor)) {
@@ -1199,7 +1198,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
 
     public static class ImageTransferHandler extends TransferHandler {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyImagePane imagePane;
 
@@ -1228,7 +1227,6 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             }
         }
 
-        @SuppressWarnings("unchecked")
         public Image getTransferableAsImage(TransferSupport support, DataFlavor flavor) {
             try {
                 Image image = (Image) support.getTransferable().getTransferData(flavor);
@@ -1247,14 +1245,13 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         @SuppressWarnings("unchecked")
         private File getTransferableFile(TransferSupport support, DataFlavor flavor) throws Exception {
             List<File> fs = (List<File>) support.getTransferable().getTransferData(flavor);
-            if (fs != null && !fs.isEmpty()) {
-                return fs.get(0);
+            if (!fs.isEmpty()) {
+                return fs.getFirst();
             } else {
                 return null;
             }
         }
 
-        @SuppressWarnings("unchecked")
         public Image loadTransferableFilesAsImage(TransferSupport support, DataFlavor flavor) {
             try {
                 try {

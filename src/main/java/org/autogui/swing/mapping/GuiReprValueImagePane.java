@@ -103,8 +103,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
     public Dimension getSize(GuiMappingContext context, Image image) {
         if (image == null) {
             return new Dimension(1, 1);
-        } else if (image instanceof BufferedImage) {
-            BufferedImage bufferedImage = (BufferedImage) image;
+        } else if (image instanceof BufferedImage bufferedImage) {
             return new Dimension(bufferedImage.getWidth(), bufferedImage.getHeight());
         } else {
             return new ImageSizeGetter().getWithWait(image);
@@ -130,6 +129,8 @@ public class GuiReprValueImagePane extends GuiReprValue {
         protected AtomicInteger width = new AtomicInteger();
         protected AtomicInteger height = new AtomicInteger();
         protected AtomicBoolean finish = new AtomicBoolean();
+
+        public ImageSizeGetter() {}
 
         public Dimension getWithWait(Image image) {
             finish.set(false);
@@ -166,9 +167,9 @@ public class GuiReprValueImagePane extends GuiReprValue {
         }
 
         @Override
-        public boolean imageUpdate(Image img, int infoflags,
+        public boolean imageUpdate(Image img, int infoFlags,
                                    int x, int y, int width, int height) {
-            if ((infoflags & ImageObserver.ERROR) != 0) {
+            if ((infoFlags & ImageObserver.ERROR) != 0) {
                 finish.set(true);
                 this.width.set(0);
                 this.height.set(0);
@@ -180,8 +181,8 @@ public class GuiReprValueImagePane extends GuiReprValue {
             if (height > 0) {
                 this.height.set(height);
             }
-            boolean f = ((infoflags & ImageObserver.ALLBITS) != 0)
-                    || ((infoflags & (ImageObserver.WIDTH | ImageObserver.HEIGHT)) != 0);
+            boolean f = ((infoFlags & ImageObserver.ALLBITS) != 0)
+                    || ((infoFlags & (ImageObserver.WIDTH | ImageObserver.HEIGHT)) != 0);
             finish.set(f);
             return !f;
         }
@@ -226,9 +227,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
      */
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
-        if (json instanceof String) {
-            String jsonStr = (String) json;
-
+        if (json instanceof String jsonStr) {
             if (jsonStr.startsWith("file://")) {
                 return new ImageHistoryEntry(Paths.get(URI.create(jsonStr)), this::setImagePath);
             }
@@ -287,8 +286,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
     public BufferedImage getBufferedImage(GuiMappingContext context, Object source) {
         if (source instanceof BufferedImage) {
             return (BufferedImage) source;
-        } else if (source instanceof Image) {
-            Image image = (Image) source;
+        } else if (source instanceof Image image) {
             Dimension size = getSize(context, image);
             BufferedImage tmp = new BufferedImage(size.width, size.height, BufferedImage.TYPE_4BYTE_ABGR);
 
@@ -344,7 +342,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
     }
 
 
-    /** a special value of history entry which has an image and it's source file path */
+    /** a special value of history entry which has an image, and it's source file path */
     public static class ImageHistoryEntry {
         protected Path path;
         protected Image image;

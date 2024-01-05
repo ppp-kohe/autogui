@@ -16,6 +16,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 public class GuiSwingTestCase {
+
+    public GuiSwingTestCase() {}
     public JFrame createFrame(JComponent pane) {
         JFrame frame = new JFrame("test");
         {
@@ -209,6 +211,7 @@ public class GuiSwingTestCase {
                 try {
                     Thread.sleep(100);
                 } catch (Exception ex) {
+                    //
                 }
                 ++i;
             }

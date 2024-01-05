@@ -27,17 +27,13 @@ public class GuiSwingContextInfo {
     }
 
     public String getName(GuiTypeElement e) {
-        if (e == null) {
-            return "?";
-        } else if (e instanceof GuiTypeCollection) {
-            return getNameCollection((GuiTypeCollection) e);
-        } else if (e instanceof GuiTypeValue) {
-            return getName(e.getName());
-        } else if (e instanceof GuiTypeMember) {
-            return getNameMember((GuiTypeMember) e);
-        } else {
-            return e.toString();
-        }
+        return switch (e) {
+            case null -> "?";
+            case GuiTypeCollection guiTypeCollection -> getNameCollection(guiTypeCollection);
+            case GuiTypeValue guiTypeValue -> getName(e.getName());
+            case GuiTypeMember guiTypeMember -> getNameMember(guiTypeMember);
+            default -> e.toString();
+        };
     }
 
     public String getNameCollection(GuiTypeCollection collection) {

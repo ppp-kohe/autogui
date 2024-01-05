@@ -10,6 +10,7 @@ import java.awt.font.TextHitInfo;
 import java.awt.font.TextLayout;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.Serial;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
  */
 public class TextCellRenderer<ValueType> extends JPanel
     implements TableCellRenderer, ListCellRenderer<ValueType> {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected boolean selected;   //cell selection
     protected int selectionStart; //text selection range
     protected int selectionEnd;
@@ -49,6 +50,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     /** @since 1.2 */
     protected Color originalBackground = Color.white;
 
+    @SuppressWarnings("this-escape")
     public TextCellRenderer() {
         lines = new ArrayList<>();
         setOpaque(false);
@@ -157,12 +159,10 @@ public class TextCellRenderer<ValueType> extends JPanel
     public static void setCellDefaultProperties(JComponent cellComponent) {
         cellComponent.setOpaque(true);
         cellComponent.setAlignmentY(0.1f);
-        if (cellComponent instanceof JLabel) {
-            JLabel label = (JLabel) cellComponent;
+        if (cellComponent instanceof JLabel label) {
             label.setVerticalAlignment(SwingConstants.TOP);
         }
-        if (cellComponent instanceof AbstractButton) {
-            AbstractButton checkBox = (AbstractButton) cellComponent;
+        if (cellComponent instanceof AbstractButton checkBox) {
             checkBox.setVerticalAlignment(SwingConstants.TOP);
         }
     }
@@ -696,7 +696,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     }
 
     /**
-     * constructs find-ranges for each lines matched by findPattern.
+     * constructs find-ranges for each line matched by findPattern.
      *  thus, {@link #updateFindPattern(String)} or {@link #updateFindPattern(Pattern)} needs to be called before.
      * @return number of matched portions
      */
@@ -786,7 +786,7 @@ public class TextCellRenderer<ValueType> extends JPanel
      */
     public Object getFocusNextFound(ValueType value, Object prevIndex, boolean forward) {
         setValue(value, false);
-        if (!(prevIndex instanceof LineInfoMatch) || //null
+        if (!(prevIndex instanceof LineInfoMatch m) || //null
                 !((LineInfoMatch) prevIndex).sameKeys(this, value)) {
             if (forward) {
                 int i = 0;
@@ -797,8 +797,6 @@ public class TextCellRenderer<ValueType> extends JPanel
                     }
                     ++i;
                 }
-                lastMatch = null;
-                return null;
             } else {
                 for (int i = lines.size() - 1; i >= 0; --i) {
                     LineInfo line = lines.get(i);
@@ -808,11 +806,10 @@ public class TextCellRenderer<ValueType> extends JPanel
                         return lastMatch;
                     }
                 }
-                lastMatch = null;
-                return null;
             }
+            lastMatch = null;
+            return null;
         } else {
-            LineInfoMatch m = (LineInfoMatch) prevIndex;
             lastMatch = forward ? m.next(lines) : m.previous(lines);
             return lastMatch;
         }
@@ -834,7 +831,7 @@ public class TextCellRenderer<ValueType> extends JPanel
      * @param <V> the type of cell values
      */
     @SafeVarargs
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({"varargs"})
     public static <V> void mouseUpdateForComposition(V value, Map<TextCellRenderer<?>,int[]> ranges, boolean pressInit,
                                                      Component pointComponent, Point point, TextCellRenderer<V>... rs) {
         if (pressInit) {
@@ -850,20 +847,18 @@ public class TextCellRenderer<ValueType> extends JPanel
             int[] range = ranges.computeIfAbsent(r, v -> new int[2]);
             if (pressInit) {
                 range[0] = idx;
-                range[1] = idx;
-            } else {
-                range[1] = idx;
             }
+            range[1] = idx;
             r.setSelectionRange(range[0], range[1]);
         }
     }
 
     @SafeVarargs
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({"varargs"})
     public static <V> boolean updateFindPatternForComposition(String findKeyword, TextCellRenderer<V>... rs) {
         List<Boolean> bs = Arrays.stream(rs)
             .map(r -> r.updateFindPattern(findKeyword))
-            .collect(Collectors.toList());
+            .toList();
 
         for (boolean b : bs) {
             if (b) {
@@ -874,7 +869,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     }
 
     @SafeVarargs
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({"varargs"})
     public static <V> int findTextForComposition(V value, String findKeyword, TextCellRenderer<V>... rs) {
         for (TextCellRenderer<V> r : rs) {
             r.setValue(value, false);
@@ -890,8 +885,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     public static <V> Object getFocusNextFoundForComposition(V value, Object prevIndex, boolean forward, TextCellRenderer<V>... rs) {
         List<TextCellRenderer<V>> list = Arrays.asList(rs);
         int idx;
-        if (prevIndex instanceof LineInfoMatch) {
-            TextCellRenderer.LineInfoMatch prevMatch = (TextCellRenderer.LineInfoMatch) prevIndex;
+        if (prevIndex instanceof TextCellRenderer.LineInfoMatch prevMatch) {
             prevIndex = ((TextCellRenderer<V>) prevMatch.renderer).getFocusNextFound(value, prevIndex, forward);
             idx = list.indexOf(prevMatch.renderer);
         } else {
@@ -925,7 +919,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     }
 
     @SafeVarargs
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({"varargs"})
     public static <V> String getSelectedTextForComposition(V value, boolean entireText,
                                                            Map<TextCellRenderer<?>,int[]> rangesOpt,
                                                            TextCellRenderer<V>... rs) {
@@ -1010,7 +1004,7 @@ public class TextCellRenderer<ValueType> extends JPanel
 
     /**
      * @param g the target graphics
-     * @param paint if true, do drawing. if false, it just calculate the size
+     * @param paint if true, do drawing. if false, it just calculates the size
      * @return width and height
      * @since 1.2
      */
@@ -1264,11 +1258,10 @@ public class TextCellRenderer<ValueType> extends JPanel
             if (layout == null) {
                 layoutState = Collections.emptyList();
                 layout = new TextLayout(attributedString.getIterator(), frc);
-                return layout;
             } else {
                 //the empty state always included any other layoutState
-                return layout;
             }
+            return layout;
         }
 
         public TextLayout getLayout(FontRenderContext frc, int selectionStart, int selectionEnd,
@@ -1329,20 +1322,19 @@ public class TextCellRenderer<ValueType> extends JPanel
                 Color computedColor = textToBackToColor.computeIfAbsent(f, tc -> new HashMap<>())
                         .computeIfAbsent(b, bc -> getColor(f, rf, b));
                 List<int[]> r = colorRange.computeIfAbsent(computedColor, cc -> new ArrayList<>());
-                if (!r.isEmpty() && r.get(r.size() - 1)[1] == i) {
-                    r.get(r.size() - 1)[1] = i + 1;
+                if (!r.isEmpty() && r.getLast()[1] == i) {
+                    r.getLast()[1] = i + 1;
                 } else {
                     r.add(new int[] {i, i + 1});
                 }
             }
             AttributedString colored = new AttributedString(attrStr.getIterator());
-            colorRange.forEach((c, rs) -> {
+            colorRange.forEach((c, rs) ->
                 rs.forEach(r -> {
                     if (r[0] < r[1]) {
                         colored.addAttribute(TextAttribute.FOREGROUND, c, r[0], r[1]);
                     }
-                });
-            });
+                }));
             return colored;
         }
 
@@ -1398,7 +1390,7 @@ public class TextCellRenderer<ValueType> extends JPanel
                 end = start;
                 start = tmp;
             }
-            if ((start == -1 && end == -1) || start > end ||
+            if ((start == -1 && end == -1) || /*start > end ||*/
                     (end != -1 && end < this.start) ||
                     (start != -1 && this.end < start)) {
                 return null;
@@ -1435,10 +1427,7 @@ public class TextCellRenderer<ValueType> extends JPanel
          * @return never null
          */
         public List<int[]> getFindRanges() {
-            if (findRanges == null) {
-                return Collections.emptyList();
-            }
-            return findRanges;
+            return Objects.requireNonNullElse(findRanges, Collections.emptyList());
         }
 
         public void clearFindRanges() {

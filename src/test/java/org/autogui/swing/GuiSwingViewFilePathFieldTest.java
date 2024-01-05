@@ -30,10 +30,13 @@ public class GuiSwingViewFilePathFieldTest extends GuiSwingTestCase {
 
     Path homePath;
 
+    public GuiSwingViewFilePathFieldTest() {}
+
     @GuiIncluded
     public static class TestObj {
         @GuiIncluded public File file;
         @GuiIncluded public Path path;
+        public TestObj() {}
     }
 
     @Before

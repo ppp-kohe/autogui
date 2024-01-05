@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 /** the Preferences holder associated to a {@link GuiMappingContext}.
  *     Each child is also held by {@link GuiMappingContext}.
- *
  *   The class has a {@link GuiValueStore}.
  *   It also has a list of history values.
  *
@@ -116,6 +115,12 @@ public class GuiPreferences {
             lock();
             return this;
         }
+
+        /**
+         * empty operation for suppressing warnings of no resource usage
+         */
+        public void use() {}
+
         @Override
         public void close() {
             unlock();
@@ -131,6 +136,7 @@ public class GuiPreferences {
         this.context = context;
     }
 
+    @SuppressWarnings("this-escape")
     public GuiPreferences(GuiValueStore valueStore, GuiMappingContext context) {
         this.valueStore = valueStore;
         if (valueStore != null) {
@@ -192,7 +198,7 @@ public class GuiPreferences {
         List<GuiMappingContext> path = new ArrayList<>();
         GuiMappingContext interContext = descendantContext;
         while (interContext != null && !interContext.equals(context)) {
-            path.add(0, interContext);
+            path.addFirst(interContext);
             interContext = interContext.getParent();
         }
         GuiPreferences p = this;
@@ -325,12 +331,12 @@ public class GuiPreferences {
         try {
             List<String> stores = saved.getKeys().stream()
                     .filter(saved::hasNodeKey)
-                    .collect(Collectors.toList());
+                    .toList();
             int n = stores.size();
-            String key = "$" + Integer.toString(n);
+            String key = "$" + n;
             while (stores.contains(key)) {
                 n++;
-                key = "$" + Integer.toString(n);
+                key = "$" + n;
             }
             GuiPreferences newPrefs = new GuiPreferences(context);
             newPrefs.valueStore = saved.getChild(newPrefs, key);
@@ -391,7 +397,7 @@ public class GuiPreferences {
      *  </li>
      *  <li>
      *   The entry moves to the end of the history as the latest value,
-     *    by setting the max index + 1 as it's index, which is a temporarly index.
+     *    by setting the max index + 1 as it's index, which is a temporarily index.
      *    The entire history is sorted by the indices.
      *  </li>
      *  <li>
@@ -435,7 +441,7 @@ public class GuiPreferences {
 
         while (historyValues.size() > historyValueLimit) {
             historyValues
-                    .remove(0)
+                    .removeFirst()
                     .remove();
         }
 
@@ -555,6 +561,7 @@ public class GuiPreferences {
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiPreferences prefs = subContext.getPreferences();
             try (var lock = prefs.lock()) {
+                lock.use();
                 prefs.clearHistoriesTree();
             }
         }
@@ -781,6 +788,7 @@ public class GuiPreferences {
         protected GuiValueStore valueStore;
         protected Instant time;
 
+        @SuppressWarnings("this-escape")
         public HistoryValueEntry(GuiPreferences preferences, Object rawObject) {
             this.preferences = preferences;
             this.time = Instant.now();
@@ -1152,7 +1160,7 @@ public class GuiPreferences {
         @Override
         public int getInt(String key, int def) {
             try {
-                return Integer.valueOf((String) values.getOrDefault(key, Integer.toString(def)));
+                return Integer.parseInt((String) values.getOrDefault(key, Integer.toString(def)));
             } catch (Exception ex) {
                 return def;
             }

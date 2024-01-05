@@ -34,6 +34,8 @@ public class GuiSwingViewPropertyPaneTest extends GuiSwingTestCase {
 
     JFrame frame;
 
+    public GuiSwingViewPropertyPaneTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -66,6 +68,7 @@ public class GuiSwingViewPropertyPaneTest extends GuiSwingTestCase {
     public static class TestObj {
         @GuiIncluded
         public String value;
+        public TestObj() {}
     }
 
     public GuiSwingViewPropertyPane.PropertyPane create() {

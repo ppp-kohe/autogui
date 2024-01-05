@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /** a combo-box component for an {@link Enum} property
  *  <pre>
@@ -14,7 +13,7 @@ import java.util.stream.Collectors;
  *  </pre>
  */
 public class GuiReprValueEnumComboBox extends GuiReprValue {
-
+    public GuiReprValueEnumComboBox() {}
     @Override
     public boolean matchValueType(Class<?> cls) {
         return cls.isEnum();
@@ -49,8 +48,7 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
      */
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
-        if (json instanceof String) {
-            String jsonStr = (String) json;
+        if (json instanceof String jsonStr) {
             Class<?> enumType = getValueType(context);
             return Arrays.stream(enumType.getEnumConstants())
                     .filter(e -> ((Enum<?>) e).name().equals(jsonStr))
@@ -98,7 +96,7 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
      *
      * @param context the context which is used for obtaining the type of the enum.
      * @param nameOrIndex {@link Enum#name()} or {@link Enum#ordinal()}
-     * @return a Enum member or null if not found
+     * @return an Enum member or null if not found
      */
     @SuppressWarnings("rawtypes")
     public Object getEnumValue(GuiMappingContext context, String nameOrIndex) {
@@ -114,7 +112,7 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
             List<String> names = Arrays.stream(es)
                     .map(Enum.class::cast)
                     .map(Enum::name)
-                    .collect(Collectors.toList());
+                    .toList();
             int idx = names.indexOf(nameOrIndex);
             if (idx >= 0) {
                 return es[idx];
@@ -122,7 +120,7 @@ public class GuiReprValueEnumComboBox extends GuiReprValue {
                 String lower = nameOrIndex.toLowerCase();
                 idx = names.stream()
                         .map(String::toLowerCase)
-                        .collect(Collectors.toList())
+                        .toList()
                         .indexOf(lower);
                 if (idx >= 0) {
                     return es[idx];

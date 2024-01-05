@@ -15,6 +15,8 @@ public class GuiTypeMemberPropertyTest {
 
     TestObj obj;
 
+    public GuiTypeMemberPropertyTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -44,6 +46,8 @@ public class GuiTypeMemberPropertyTest {
         public void setStr(String s) {
             this.str = s;
         }
+
+        public TestObj() {}
     }
 
     @Test

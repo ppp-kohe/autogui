@@ -38,7 +38,7 @@ public class SwingDeferredRunner {
         synchronized (SwingDeferredRunner.class) {
             if (defaultService == null) {
                 defaultService = Executors.newCachedThreadPool(new ThreadFactory() {
-                    ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+                    final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
 
                     @Override
                     public Thread newThread(Runnable r) {
@@ -75,7 +75,7 @@ public class SwingDeferredRunner {
      * execute the specified task on the event dispatching thread and return the result.
      *  if the current thread is the event dispatching thread, then it runs immediately.
      *  otherwise, submit the task to the event dispatching thread,
-     *     and wait a little while and return a future value if do not completed.
+     *     and wait a little while and return a future value if it is not completed.
      * @return the result of the task (nullable) if no-delaying,
      *     or {@link TaskResultFuture} submitted to the futureFactory
      * @throws Throwable if the task throws an exception without delay, then it is thrown

@@ -28,6 +28,8 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
 
     JFrame frame;
 
+    public LambdaPropertyTest() {}
+
     @Before
     public void setUp() {
 
@@ -67,9 +69,8 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
 
         Assert.assertEquals("init", runGet(pane::getSwingViewValue));
         Assert.assertEquals("init", runGet(() -> pane.getField().getText()));
-        run(() -> {
-            pane.getField().setText("update1");
-        });
+        run(() ->
+            pane.getField().setText("update1"));
 
         wait.awaitNextFinish();
         Assert.assertEquals("update1", getPropString());
@@ -460,6 +461,8 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
     public static class TestElem {
         String str;
 
+        public TestElem() {}
+
         public void setStr(String str) { this.str = str; }
         public String getStr() {  return str; }
 
@@ -585,7 +588,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         run(() -> pane.setValueAt(i3, 6, 7));
         runWait();
 
-        Assert.assertEquals("update2", runGet(() -> getPropList().get(0).getStr()));
+        Assert.assertEquals("update2", runGet(() -> getPropList().getFirst().getStr()));
         Assert.assertEquals(Boolean.TRUE, runGet(() -> getPropList().get(1).isBool()));
         Assert.assertEquals(200, (int) runGet(() -> getPropList().get(2).getNum()));
         Assert.assertEquals(p2, runGet(() -> getPropList().get(3).getPath()));

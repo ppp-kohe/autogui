@@ -9,7 +9,6 @@ import java.util.List;
  *  public R m(List&lt;E&gt; selectedItems) { ... }
  *  </code>.
  *  the type of the argument is List, and its super types except for Object (Collection and Iterable).
- *
  *  no children.
  */
 public class GuiTypeMemberActionList extends GuiTypeMemberAction {

@@ -17,6 +17,7 @@ import org.autogui.base.mapping.GuiReprCollectionElement;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -86,17 +87,15 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
             //context: GuiReprCollectionElement(...) { subContext: GuiReprObjectPane { ... }  }
             //context: GuiReprCollectionElement(...) { subContext: GuiReprCollectionTable { subSubContext: GuiReprCollectionElement(...) }  }
             GuiSwingElement subView = columnMappingSet.viewTableColumn(subContext);
-            if (subView instanceof GuiSwingTableColumn) {
-                GuiSwingTableColumn column = (GuiSwingTableColumn) subView;
+            if (subView instanceof GuiSwingTableColumn column) {
                 ObjectTableColumn columnStatic = column.createColumn(subContext, rowSpecifier, subManager);
                 if (columnStatic != null) {
                     model.addColumnStatic(columnStatic);
                 }
-            } else if (subView instanceof GuiSwingTableColumnDynamic) {
-                ((GuiSwingTableColumnDynamic) subView).createColumnDynamic(
+            } else if (subView instanceof GuiSwingTableColumnDynamic subViewDyn) {
+                subViewDyn.createColumnDynamic(
                         subContext, model, rowSpecifier, subManager);
-            } else if (subView instanceof GuiSwingTableColumnSet) {
-                GuiSwingTableColumnSet set = (GuiSwingTableColumnSet) subView;
+            } else if (subView instanceof GuiSwingTableColumnSet set) {
 
                 set.createColumns(subContext, model, rowSpecifier, subManager, null);
 
@@ -208,8 +207,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                                                         SpecifierManagerIndex rowSpecifier,
                                                         SpecifierManager subSpecifier,
                                                         GuiSwingElement view) {
-        if (view instanceof GuiSwingTableColumn) { //a value-type : List<List<String>>
-            GuiSwingTableColumn column = (GuiSwingTableColumn) view;
+        if (view instanceof GuiSwingTableColumn column) { //a value-type : List<List<String>>
             ObjectTableColumnSizeConcrete c = new ObjectTableColumnSizeConcrete(1, subContext, column, subSpecifier, target);
             target.addColumnDynamic(c);
         } else if (view instanceof GuiSwingTableColumnDynamic) { //further collection: List<List<List<...>>>
@@ -244,12 +242,13 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      * </pre>
      */
     public static class TableSelectionListAction extends GuiSwingActionDefault.ExecutionAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected TableSelectionSource source;
         protected Function<Object, TableSelectionChange> selectionChangeFactory;
         protected boolean selectionChange;
 
+        @SuppressWarnings("this-escape")
         public TableSelectionListAction(GuiMappingContext context, TableSelectionSource source) {
             super(context, () -> GuiReprValue.NONE_WITH_CACHE); //unused specifier:
                                     // for spec path outside of List, NONE... can be used
@@ -389,7 +388,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      * </pre>
      * */
     public static class TableSelectionAction extends TableSelectionListAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public TableSelectionAction(GuiMappingContext context, TableSelectionSource source) {
             super(context, source);

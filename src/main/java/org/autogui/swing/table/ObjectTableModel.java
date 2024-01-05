@@ -16,6 +16,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.Serial;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
  */
 public class ObjectTableModel extends AbstractTableModel
         implements ObjectTableModelColumns.ObjectTableModelColumnsListener {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected JTable table;
     protected Supplier<Object> source;
 
@@ -46,6 +47,7 @@ public class ObjectTableModel extends AbstractTableModel
         this(new GuiSwingTaskRunner(null));
     }
 
+    @SuppressWarnings("this-escape")
     public ObjectTableModel(GuiSwingTaskRunner runner) {
         this.runner = runner;
         initColumns();
@@ -241,8 +243,7 @@ public class ObjectTableModel extends AbstractTableModel
 
     public Object getRowAtIndex(int row) {
         Object list = getCollectionFromSource();
-        if (list instanceof List<?>) {
-            List<?> l = (List<?>) list;
+        if (list instanceof List<?> l) {
             if (row < l.size()) {
                 return l.get(row);
             } else {
@@ -333,7 +334,7 @@ public class ObjectTableModel extends AbstractTableModel
 
     /**
      *  the column's {@link ObjectTableColumn#getCellValue(Object, int, int, GuiReprValue.ObjectSpecifier)} might return
-     *   a {@link Future} object and
+     *   a {@link Future} object, and
      *   then it waits completion of the task in {@link #takeValueFromSourceFuture(Object[], int, int, Future)}.
      *   The method is run in {@link #getFutureWaiter()} (default is just call the method)
      * @param rowData the row array which the returned cell value will be stored
@@ -395,9 +396,8 @@ public class ObjectTableModel extends AbstractTableModel
                 cellObject = NULL_CELL;
             }
             rowData[columnIndex] = cellObject;
-            invokeLater(() -> {
-                fireTableCellUpdated(rowIndex, columnIndex);
-            });
+            invokeLater(() ->
+                fireTableCellUpdated(rowIndex, columnIndex));
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -610,6 +610,7 @@ public class ObjectTableModel extends AbstractTableModel
 
     /** a menu builder without adding titles */
     public static class MenuBuilderForRowsOrCells extends MenuBuilderWithEmptySeparator {
+        public MenuBuilderForRowsOrCells() {}
         @Override
         public boolean addMenuTitle(AddingProcess process, String title) {
             return false; //the title are explicitly added by buildCategoryLabel
@@ -651,6 +652,7 @@ public class ObjectTableModel extends AbstractTableModel
 
     /** a menu builder with empty separators */
     public static class MenuBuilderWithEmptySeparator extends MenuBuilder {
+        public MenuBuilderWithEmptySeparator() {}
         @Override
         public boolean addMenuSeparator(AddingProcess process, boolean nonEmpty) {
             if (process.isSeparatorNeeded() && nonEmpty) {
@@ -702,7 +704,7 @@ public class ObjectTableModel extends AbstractTableModel
      */
     public static class TableTargetCellExecutionAction extends ObjectTableColumnValue.ActionDelegate<TableTargetCellAction>
             implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected TableTargetCell target;
 
         public TableTargetCellExecutionAction(TableTargetCellAction action, TableTargetCell target) {

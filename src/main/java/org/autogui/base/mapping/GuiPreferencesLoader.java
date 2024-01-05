@@ -40,6 +40,8 @@ public class GuiPreferencesLoader {
         return new GuiPreferencesLoader();
     }
 
+    public GuiPreferencesLoader() {}
+
     public GuiPreferencesLoader withTypeBuilder(GuiTypeBuilder typeBuilder) {
         this.typeBuilder = typeBuilder;
         return this;
@@ -121,6 +123,7 @@ public class GuiPreferencesLoader {
     public static List<GuiPreferences> getSavedPrefs(GuiMappingContext context) {
         GuiPreferences prefs = context.getPreferences();
         try (var lock = prefs.lock()) {
+            lock.use();
             return prefs.getSavedStoreListAsRoot();
         }
     }
@@ -129,6 +132,7 @@ public class GuiPreferencesLoader {
         List<GuiPreferences> all = new ArrayList<>();
         GuiPreferences rootPrefs = context.getPreferences();
         try (var lock = rootPrefs.lock()) {
+            lock.use();
             GuiPreferences p = findSavedPrefsDefault(rootPrefs);
             if (p != null) {
                 all.add(p);
@@ -176,6 +180,7 @@ public class GuiPreferencesLoader {
     public GuiPreferences takeSavedPrefs(GuiMappingContext context) {
         GuiPreferences prefs = context.getPreferences();
         try (var lock = prefs.lock()) {
+            lock.use();
             return prefsGetter.apply(prefs);
         }
     }
@@ -409,7 +414,6 @@ public class GuiPreferencesLoader {
             ++i;
         } else if (help.contains(arg)) {
             runHelp();
-            i= 0;
         }
         return args.subList(i, args.size());
     }

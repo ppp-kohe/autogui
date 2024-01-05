@@ -39,6 +39,8 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
 
     JFrame frame;
 
+    public GuiSwingViewNumberSpinnerTest() {}
+
     @GuiIncluded
     public static class TestObj {
         @GuiIncluded public byte numByte;
@@ -48,6 +50,7 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
         @GuiIncluded public BigInteger numBigInt = BigInteger.ZERO;
         @GuiIncluded public BigDecimal numBigDec = BigDecimal.ZERO;
         @GuiIncluded public Integer numObj;
+        public TestObj() {}
     }
 
     @Before

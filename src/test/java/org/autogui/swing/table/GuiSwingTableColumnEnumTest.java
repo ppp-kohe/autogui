@@ -40,6 +40,8 @@ public class GuiSwingTableColumnEnumTest extends GuiSwingTestCase {
     ObjectTableModel model;
     ObjectTableColumn objColumn;
 
+    public GuiSwingTableColumnEnumTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -57,7 +59,7 @@ public class GuiSwingTableColumnEnumTest extends GuiSwingTestCase {
         propContext = context.getChildByName("values")
                 .getChildByName("List");
 
-        elemContext = propContext.getChildren().get(0);
+        elemContext = propContext.getChildren().getFirst();
         enumContext = elemContext.getChildByName("TestEnum");
 
         column = new GuiSwingTableColumnEnum();
@@ -77,6 +79,7 @@ public class GuiSwingTableColumnEnumTest extends GuiSwingTestCase {
     public static class TestObj {
         @GuiIncluded
         public List<TestEnum> values;
+        public TestObj() {}
     }
 
     public enum TestEnum {

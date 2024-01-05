@@ -24,6 +24,8 @@ public class GuiReprValueFilePathFieldTest {
     File file;
     Path path;
 
+    public GuiReprValueFilePathFieldTest() {}
+
     @Before
     public void setUp() {
         fld = new GuiReprValueFilePathField();

@@ -16,6 +16,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
+import java.io.Serial;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -43,6 +44,7 @@ import java.util.stream.IntStream;
  *      selected rows or cells can be achieved by {@link ToStringCopyCell}
  *      based on {@link TableTargetCellAction}.
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingViewCollectionTable implements GuiSwingView {
     protected GuiSwingMapperSet columnMapperSet;
 
@@ -60,9 +62,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         for (GuiMappingContext elementContext : context.getChildren()) {
             GuiSwingElement subView = columnMapperSet.viewTableColumn(elementContext);
-            if (subView instanceof GuiSwingTableColumnSet) {
-                GuiSwingTableColumnSet columnSet = (GuiSwingTableColumnSet) subView;
-
+            if (subView instanceof GuiSwingTableColumnSet columnSet) {
                 columnSet.createColumns(elementContext, table.getObjectTableModel().getColumns(), rowSpecifier, tableSpecifier, rowSpecifier);
 
                 actions.addAll(columnSet.createColumnActions(elementContext, table));
@@ -75,9 +75,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 parent = parent.getParent();
             }
             for (GuiMappingContext siblingContext : parent.getChildren()) {
-                if (siblingContext.getRepresentation() instanceof GuiReprActionList) {
-                    GuiReprActionList listAction = (GuiReprActionList) siblingContext.getRepresentation();
-
+                if (siblingContext.getRepresentation() instanceof GuiReprActionList listAction) {
                     ObjectTableModelColumns.DynamicColumnContainer dc = table.getObjectTableModel().getColumns().getRootContainer(); //currently always returns non-null container
                     if (dc != null) {
                         dc.addRootListActionContext(siblingContext);
@@ -119,7 +117,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<List<?>>,
                         GuiSwingTableColumnSet.TableSelectionSource, GuiSwingPreferences.PreferencesUpdateSupport,
                         SettingsWindowClient {
-        private static final long serialVersionUID = 1L;
+        private static final long sionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected List<?> source;
@@ -566,20 +564,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void changeSelection(int[] selectedModelRowsIndices, GuiSwingTableColumnSet.TableSelectionChange change) {
-            if (change instanceof GuiSwingTableColumnSet.TableSelectionChangeNothing) {
-                changeSelectionNothing(selectedModelRowsIndices, change);
-
-            } else if (change instanceof GuiSwingTableColumnSet.TableSelectionChangeIndices) {
-                changeSelectionIndices(selectedModelRowsIndices, (GuiSwingTableColumnSet.TableSelectionChangeIndices) change);
-
-            } else if (change instanceof GuiSwingTableColumnSet.TableSelectionChangeValues) {
-                changeSelectionValues(selectedModelRowsIndices, (GuiSwingTableColumnSet.TableSelectionChangeValues) change);
-
-            } else if (change instanceof GuiSwingTableColumnSet.TableSelectionChangeIndicesRowAndColumn) {
-                changeSelectionIndicesRowAndColumns(selectedModelRowsIndices, (GuiSwingTableColumnSet.TableSelectionChangeIndicesRowAndColumn) change);
-
-            } else {
-                System.err.println("Unknown selection change type: " + change);
+            switch (change) {
+                case GuiSwingTableColumnSet.TableSelectionChangeNothing tableSelectionChangeNothing ->
+                        changeSelectionNothing(selectedModelRowsIndices, change);
+                case GuiSwingTableColumnSet.TableSelectionChangeIndices tableSelectionChangeIndices ->
+                        changeSelectionIndices(selectedModelRowsIndices, tableSelectionChangeIndices);
+                case GuiSwingTableColumnSet.TableSelectionChangeValues tableSelectionChangeValues ->
+                        changeSelectionValues(selectedModelRowsIndices, tableSelectionChangeValues);
+                case GuiSwingTableColumnSet.TableSelectionChangeIndicesRowAndColumn tableSelectionChangeIndicesRowAndColumn ->
+                        changeSelectionIndicesRowAndColumns(selectedModelRowsIndices, tableSelectionChangeIndicesRowAndColumn);
+                case null, default -> System.err.println("Unknown selection change type: " + change);
             }
         }
 
@@ -935,7 +929,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
      */
     public static class RowHeightSetAction extends JPanel
             implements PopupCategorized.CategorizedMenuItemComponent {
-        static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected JTable table;
         protected JCheckBox enabled;
@@ -1053,8 +1047,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 }
             } else {
                 fitter.setEnabled(false);
-                if (table instanceof CollectionTable) {
-                    CollectionTable colTable = (CollectionTable) table;
+                if (table instanceof CollectionTable colTable) {
                     colTable.setRowHeight(colTable.getRowHeightByProgram());
                 }
             }
@@ -1351,6 +1344,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         /** @since 1.6 */
         protected boolean rowFitToContent;
 
+        public PreferencesForTable() {}
+
         public void applyTo(JTable table) {
             TableColumnModel columnModel = table.getColumnModel();
             applyColumnWidthTo(table, columnModel);
@@ -1437,8 +1432,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
          * @since 1.3
          */
         public void setRowHeightFrom(JTable table) {
-            if (table instanceof CollectionTable) {
-                CollectionTable colTable = (CollectionTable) table;
+            if (table instanceof CollectionTable colTable) {
                 rowFitToContent = colTable.getRowHeightSetAction().isRowHeightFitToContent();
                 if (colTable.hasCustomRowHeightByUser()) {
                     rowHeight = colTable.getRowHeight();
@@ -1553,7 +1547,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class SelectAllAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTable table;
 
         public SelectAllAction(JTable table) {
@@ -1615,9 +1609,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             });
 
             menu.get().addPopupMenuListener(this);
-            showingTimer = new Timer(100, e -> {
-                showing = false;
-            });
+            showingTimer = new Timer(100, e -> showing = false);
             showingTimer.setRepeats(false);
         }
 
@@ -1846,7 +1838,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class ToStringCollectionTransferHandler extends TransferHandler {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected CollectionTable pane;
 
         public ToStringCollectionTransferHandler(CollectionTable pane) {
@@ -1893,7 +1885,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class UnSelectAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTable table;
 
         public UnSelectAction(JTable table) {
@@ -1923,7 +1915,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class TableCompositesAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected CollectionTable table;
         protected ObjectTableColumn.TableMenuCompositeShared shared;
         protected String category;
@@ -2046,7 +2038,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     public static String CATEGORY_COLUMN_ORDER = MenuBuilder.getCategoryImplicit("Column Order");
 
     public static class ColumnFitAllWidthAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTable table;
         protected Supplier<TableColumn> targetColumn;
         protected Runnable afterRunner;
@@ -2079,7 +2071,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class ColumnResizeModeSwitchAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemActionCheck {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTable table;
 
         public ColumnResizeModeSwitchAction(JTable table) {
@@ -2114,7 +2106,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
     }
 
     public static class ColumnOrderResetAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTable table;
 
         public ColumnOrderResetAction(JTable table) {

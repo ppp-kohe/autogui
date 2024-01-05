@@ -13,6 +13,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.Serial;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -50,8 +51,9 @@ import java.util.function.Supplier;
  *        {@link EditingRunner} with {@link #updateField(List)}
  *         and registers it to the field as document listener, action listener and focus listener .
  */
+@SuppressWarnings("this-escape")
 public class SearchTextField extends JComponent {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected SearchTextFieldModel model;
     protected JButton icon;
     protected JTextField field;
@@ -107,7 +109,7 @@ public class SearchTextField extends JComponent {
 
         /** After {@link #getCandidates(String, boolean, SearchTextField.SearchTextFieldPublisher)},
          *    an exact matching item might be found, and then the method returns the item.
-         *    Otherwise returns null.
+         *    Otherwise, returns null.
          *    The method is executed under the event dispatching thread.
          * @return the exact matched item or null
          */
@@ -130,6 +132,7 @@ public class SearchTextField extends JComponent {
 
     /** empty impl. of the publisher*/
     public static class SearchTextFieldPublisherEmpty implements SearchTextFieldPublisher {
+        public SearchTextFieldPublisherEmpty() {}
         @Override
         public boolean isSearchCancelled() {
             return false;
@@ -147,6 +150,7 @@ public class SearchTextField extends JComponent {
 
     /** the empty model for searching nothing */
     public static class SearchTextFieldModelEmpty implements SearchTextFieldModel {
+        public SearchTextFieldModelEmpty() {}
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getCandidates(String text, boolean editable, SearchTextFieldPublisher publisher) {
             return new ArrayList<>();
@@ -212,7 +216,7 @@ public class SearchTextField extends JComponent {
     public void initField() {
         editingRunner = new EditingRunner(getEditingRunnerDelay(), this::updateField);
         field = new JTextField() {
-            private static final long serialVersionUID = 1L;
+            @Serial private static final long serialVersionUID = 1L;
             @Override
             public Dimension getPreferredSize() {
                 Dimension dim = super.getPreferredSize();
@@ -249,9 +253,8 @@ public class SearchTextField extends JComponent {
         getField().setDragEnabled(true);
 
         getIcon().setTransferHandler(handler);
-        DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(getIcon(), DnDConstants.ACTION_COPY, e -> {
-            getTransferHandler().exportAsDrag(getIcon(), e.getTriggerEvent(), TransferHandler.COPY);
-        });
+        DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(getIcon(), DnDConstants.ACTION_COPY, e ->
+            getTransferHandler().exportAsDrag(getIcon(), e.getTriggerEvent(), TransferHandler.COPY));
 
         JComponent component = getIcon();
         setupCopyAndPaste(component);
@@ -555,11 +558,7 @@ public class SearchTextField extends JComponent {
 
     public List<PopupCategorized.CategorizedMenuItem> getSearchedItems() {
         List<PopupCategorized.CategorizedMenuItem> items = currentSearchedItems;
-        if (items == null) {
-            return Collections.emptyList();
-        } else {
-            return items;
-        }
+        return Objects.requireNonNullElse(items, Collections.emptyList());
     }
 
     /** the user selects the item from the menu.
@@ -654,7 +653,7 @@ public class SearchTextField extends JComponent {
         //at first, the background thread call the method.
         //while in the method, this is passed as SearchTextFieldPublisher
         @Override
-        protected List<PopupCategorized.CategorizedMenuItem> doInBackground() throws Exception {
+        protected List<PopupCategorized.CategorizedMenuItem> doInBackground() {
             try{
                 return field.getModel().getCandidates(text, field.isSwingEditable(), this);
             } catch (CancellationException ex) {
@@ -695,6 +694,7 @@ public class SearchTextField extends JComponent {
 
     /** an interface for painting background */
     public static class SearchBackgroundPainter {
+        public SearchBackgroundPainter() {}
         public void setChild(JComponent child) { }
         public void init() { }
         public void paintComponent(Graphics g) { }
@@ -747,12 +747,12 @@ public class SearchTextField extends JComponent {
         public void initGradientColors() {
             int gradMax = 3;
 
-            List<Color> cs = new ArrayList<Color>();
+            List<Color> cs = new ArrayList<>();
             for (int i = 0; i < gradMax; ++i) {
                 float p = (((float) i + 1) / ((float) gradMax));
                 cs.add(getGradientColor(p));
             }
-            gradientColors = cs.toArray(new Color[cs.size()]);
+            gradientColors = cs.toArray(new Color[0]);
         }
 
         public void initFocusColor() {
@@ -761,9 +761,7 @@ public class SearchTextField extends JComponent {
 
         public void initStrokes() {
             strokes = new BasicStroke[3];
-            for (int i = 0; i < strokes.length; ++i) {
-                strokes[i] = new BasicStroke(strokes.length / 2.0f);
-            }
+            Arrays.fill(strokes, new BasicStroke(strokes.length / 2.0f));
         }
 
         public Color getGradientColor(float p) {
@@ -795,6 +793,7 @@ public class SearchTextField extends JComponent {
         }
 
         public class FocusRepaint implements FocusListener {
+            public FocusRepaint() {}
             @Override
             public void focusGained(FocusEvent e) {
                 component.repaint();
@@ -830,7 +829,7 @@ public class SearchTextField extends JComponent {
             float arc = ui.getScaledSizeInt(4);
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            RoundRectangle2D rr = new RoundRectangle2D.Double(x, y, width - (x/2), height - (y/2), arc, arc);
+            RoundRectangle2D rr = new RoundRectangle2D.Double(x, y, width - ((double) x /2), height - ((double) y /2), arc, arc);
 
             paintGradientColors(g2, rr);
 
@@ -885,10 +884,10 @@ public class SearchTextField extends JComponent {
 
     /**
      * an action for dynamic created menu items: the returned action searches an action by the specified key.
-     *  So {@link #getSearchedItems()} will contains an item with the key
+     *  So {@link #getSearchedItems()} will contain an item with the key
      *    ({@link PopupCategorized.CategorizedMenuItem#getKeyStroke()}).
      * @param name the name of the action, used for ActionMap and InputMap binding
-     * @param key the key-stroke of the action
+     * @param key the keystroke of the action
      * @param put if true, it binds to the component and also the field and the icon button
      * @return the created item
      */
@@ -906,7 +905,7 @@ public class SearchTextField extends JComponent {
 
     /** an action for searching, filtering and selecting items */
     public static class DynamicItemAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected Supplier<List<PopupCategorized.CategorizedMenuItem>> currentSearchedItems;
         protected Predicate<PopupCategorized.CategorizedMenuItem> filter;
         protected Consumer<PopupCategorized.CategorizedMenuItem> selector;

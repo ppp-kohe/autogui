@@ -24,9 +24,11 @@ public class GuiReprObjectPaneTest {
 
     GuiTaskClock viewClock;
 
+    public GuiReprObjectPaneTest() {}
+
     @Before
     public void setUp() {
-        viewClock = new GuiTaskClock(true);;
+        viewClock = new GuiTaskClock(true);
         objPane = new GuiReprObjectPane(GuiRepresentation.getDefaultSet());
 
         builder = new GuiTypeBuilder();
@@ -55,10 +57,14 @@ public class GuiReprObjectPaneTest {
 
         @GuiIncluded(index = 1)
         public int x;
+
+        public TestReprObjPane() {}
     }
 
     public static class TestUpdater implements GuiMappingContext.SourceUpdateListener  {
         public List<Object> newValues = new ArrayList<>();
+
+        public TestUpdater() {}
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock clock) {
@@ -108,7 +114,7 @@ public class GuiReprObjectPaneTest {
                 objPane,
                 ctx.getRepresentation());
 
-        GuiMappingContext contextProp = ctx.getChildren().get(0);
+        GuiMappingContext contextProp = ctx.getChildren().getFirst();
         Assert.assertEquals("match creates a sub-context with prop repr",
                 typeProperty, contextProp.getTypeElement());
 

@@ -16,6 +16,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.io.Serial;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.List;
  *     the editor is realized by {@link PropertyNumberSpinner}.
  */
 public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
+    public GuiSwingTableColumnNumber() {}
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           SpecifierManager parentSpecifier) {
@@ -49,6 +51,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
     /**
      * a comparator for comparing numbers */
     public static class NumberComparator implements Comparator<Object> {
+        public NumberComparator() {}
         @Override
         public int compare(Object o1, Object o2) {
             if (o1 instanceof Number && o2 instanceof Number) {
@@ -60,12 +63,13 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
 
     public static class ColumnNumberPane extends GuiSwingViewNumberSpinner.PropertyLabelNumber
             implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected PropertyNumberSpinner editor;
 
         protected Runnable updater;
         protected int updating;
 
+        @SuppressWarnings("this-escape")
         public ColumnNumberPane(GuiMappingContext context, SpecifierManager specifierManager,
                                 PropertyNumberSpinner editor) {
             super(context, specifierManager);
@@ -107,14 +111,12 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
             TableCellRenderer renderer = source.getTableColumn().getCellRenderer();
             if (renderer instanceof ObjectTableCellRenderer) {
                 JComponent comp = ((ObjectTableCellRenderer) renderer).getComponent();
-                if (comp instanceof ColumnNumberPane) {
-                    ColumnNumberPane numPane = (ColumnNumberPane) comp;
+                if (comp instanceof ColumnNumberPane numPane) {
                     setCurrentFormat(numPane.getCurrentFormat(), numPane.getEditor());
                 }
             } else if (source instanceof ObjectTableColumnWithContext) {
                 GuiMappingContext context = ((ObjectTableColumnWithContext) source).getContext();
-                if (context.getRepresentation() instanceof GuiReprValueNumberSpinner) {
-                    GuiReprValueNumberSpinner spinner = (GuiReprValueNumberSpinner) context.getRepresentation();
+                if (context.getRepresentation() instanceof GuiReprValueNumberSpinner spinner) {
                     setCurrentFormat(spinner.getFormat(), null);
                 }
             }
@@ -174,9 +176,10 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
     }
 
     public static class ColumnEditNumberSpinner extends PropertyNumberSpinner {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         /** @since 1.6 */
         protected List<Runnable> finishRunners = new ArrayList<>(1);
+        @SuppressWarnings("this-escape")
         public ColumnEditNumberSpinner(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             setCurrentValueSupported(false);

@@ -32,6 +32,8 @@ public class GuiReprPropertyPaneTest {
     TestObjReprProp obj;
     GuiTaskClock viewClock;
 
+    public GuiReprPropertyPaneTest() {}
+
     @Before
     public void setUp() {
         viewClock = new GuiTaskClock(true);
@@ -72,6 +74,8 @@ public class GuiReprPropertyPaneTest {
 
         @GuiIncluded
         public BigInteger num;
+
+        public TestObjReprProp() {}
     }
 
     @Test
@@ -103,7 +107,7 @@ public class GuiReprPropertyPaneTest {
     }
 
     @Test
-    public void testValueUpdate() throws Throwable {
+    public void testValueUpdate() {
         contextValue.getReprValue()
                 .updateFromGui(contextValue, "world", GuiReprValue.NONE, viewClock.increment().copy());
 

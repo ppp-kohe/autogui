@@ -35,6 +35,8 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
     TestObj obj;
     JFrame frame;
 
+    public GuiSwingViewObjectPaneTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -79,12 +81,14 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
             actionCount++;
             hello += "!";
         }
+        public TestObj() {}
     }
 
     @GuiIncluded
     public static class TestSubObj {
         @GuiIncluded
         public String value;
+        public TestSubObj() {}
     }
 
     public GuiSwingViewObjectPane.ObjectPane create() {
@@ -297,7 +301,7 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         GuiSwingPreferences swingPrefs = runGet(() -> new GuiSwingPreferences(context, pane));
         EditWait wait = editWait(swingPrefs.getUpdater());
 
-        run(() -> pane.getSplitPanes().get(0).setDividerLocation(0.7));
+        run(() -> pane.getSplitPanes().getFirst().setDividerLocation(0.7));
         wait.awaitNextFinish();
 
         Map<String,Object> obj = runGet(prefs::toJson);
@@ -309,13 +313,12 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
                 .create((String) obj.get("$split")).parseValue();
 
         Assert.assertTrue("divider location prefs",
-                list.get(0).containsKey("dividerLocation"));
+                list.getFirst().containsKey("dividerLocation"));
 
         Assert.assertTrue("divider location prefs",
-                (Boolean) list.get(0).get("horizontal"));
+                (Boolean) list.getFirst().get("horizontal"));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testViewObjPrefsSetHistory()  {
         Instant startTime = Instant.now();

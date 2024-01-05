@@ -38,6 +38,8 @@ public class UIManagerUtil {
      */
     protected OsVersion osVersion = initOsVersion();
 
+    public UIManagerUtil() {}
+
     public static UIManagerUtil getInstance() {
         if (instance == null) {
             instance = new UIManagerUtil();
@@ -53,7 +55,7 @@ public class UIManagerUtil {
             Font f = null;
 
             if (getOsVersion() instanceof OsVersionMac) {
-                f = new Font("Menlo", Font.PLAIN, size); //macOS Sierra introduced "SF Mono" font but it seems not available
+                f = new Font("Menlo", Font.PLAIN, size); //macOS Sierra introduced "SF Mono" font, but it seems not available
                 //Windows and Linux seems not to support font-fallback
 //            } else if (os.contains("windows")) {
 //                f = new Font("Consolas", Font.PLAIN, size); //from Vista
@@ -400,8 +402,7 @@ public class UIManagerUtil {
     }
 
     private boolean isLookAndFeelSpecial(String laf) {
-        return laf != null &&
-                (LOOK_AND_FEEL_VALUE_METAL.equals(laf) ||
+        return (LOOK_AND_FEEL_VALUE_METAL.equals(laf) ||
                  LOOK_AND_FEEL_VALUE_NIMBUS.equals(laf) ||
                  LOOK_AND_FEEL_VALUE_SYSTEM.equals(laf) ||
                  LOOK_AND_FEEL_VALUE_DEFAULT.equals(laf) ||
@@ -774,6 +775,8 @@ public class UIManagerUtil {
      */
     public static class NimbusLookAndFeelCustomLight extends NimbusLookAndFeel {
         protected boolean init = false;
+
+        public NimbusLookAndFeelCustomLight() {}
         @Override
         public UIDefaults getDefaults() {
             UIDefaults defaults = super.getDefaults();
@@ -857,11 +860,13 @@ public class UIManagerUtil {
         protected int versionTop; //10 : 11.0==10.16
         protected int versionMajor; //15, 16, ...
         protected int versionMinor;
+        @SuppressWarnings("this-escape")
         public OsVersionMac(String arch, String name, String version) {
             super(arch, name, version);
             initMac();
         }
 
+        @SuppressWarnings("this-escape")
         public OsVersionMac() {
             super();
             initMac();
@@ -869,7 +874,7 @@ public class UIManagerUtil {
 
         protected void initMac() {
             List<String> version = Arrays.asList(getVersion().split("\\.", -1));
-            versionTop = (version.size() >= 1 ? versionNumber(version.get(0)) : 10);
+            versionTop = (!version.isEmpty() ? versionNumber(version.get(0)) : 10);
             versionMajor = (version.size() >= 2 ? versionNumber(version.get(1)) : 0);
             versionMinor = (version.size() >= 3 ? versionNumber(version.get(2)) : 0);
         }
@@ -920,17 +925,15 @@ public class UIManagerUtil {
                     .start();
             InputStream in = p.getInputStream();
             CompletableFuture<String> result = new CompletableFuture<>();
-            new Thread() {
-                public void run() {
-                    try {
-                        String str = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(in.readAllBytes()))
-                                .toString();
-                        result.complete(str);
-                    } catch (Exception ex) {
-                        result.completeExceptionally(ex);
-                    }
+            new Thread(() -> {
+                try {
+                    String str = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(in.readAllBytes()))
+                            .toString();
+                    result.complete(str);
+                } catch (Exception ex) {
+                    result.completeExceptionally(ex);
                 }
-            }.start();
+            }).start();
             p.waitFor(10, TimeUnit.SECONDS);
             return result.get(1, TimeUnit.SECONDS);
         } catch (Exception ex) {

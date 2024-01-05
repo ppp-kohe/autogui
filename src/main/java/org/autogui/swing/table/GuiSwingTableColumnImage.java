@@ -16,6 +16,7 @@ import org.autogui.swing.util.UIManagerUtil;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.io.Serial;
 import java.util.List;
 import java.util.*;
 
@@ -23,10 +24,11 @@ import java.util.*;
  * a column factory for {@link Image}.
  *
  * <p>
- *     both editor and renderer are realized by a sub-class of
+ *     both editor and renderer are realized by a subclass of
  *     {@link PropertyImagePane}.
  */
 public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
+    public GuiSwingTableColumnImage() {}
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           SpecifierManager parentSpecifier) {
@@ -53,7 +55,7 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
      */
     public static class ColumnEditImagePane extends PropertyImagePane
             implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected ColumnEditImagePane scaleTarget;
         protected int updating;
@@ -63,6 +65,7 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         /** @since 1.6 */
         protected List<Runnable> finishRunners = new ArrayList<>(1);
 
+        @SuppressWarnings("this-escape")
         public ColumnEditImagePane(GuiMappingContext context, SpecifierManager specifierManager, boolean editor) {
             super(context, specifierManager);
             this.editor = editor;
@@ -94,8 +97,7 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
             TableCellRenderer renderer = source.getTableColumn().getCellRenderer();
             if (renderer instanceof ObjectTableCellRenderer) {
                 JComponent comp = ((ObjectTableCellRenderer) renderer).getComponent();
-                if (comp instanceof PropertyImagePane) {
-                    PropertyImagePane pane = (PropertyImagePane) comp;
+                if (comp instanceof PropertyImagePane pane) {
                     setImageScale(pane.getImageScale());
                 }
             }

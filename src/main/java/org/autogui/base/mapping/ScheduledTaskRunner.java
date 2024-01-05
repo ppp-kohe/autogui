@@ -16,6 +16,7 @@ import java.util.function.Consumer;
  *  </pre>
  *
  * */
+@SuppressWarnings("this-escape")
 public class ScheduledTaskRunner<EventType> {
     /** msec */
     protected long delay;
@@ -36,7 +37,7 @@ public class ScheduledTaskRunner<EventType> {
 
     /**
      * creates a new task-runner with {@link #sharedExecutor}.
-     * @param delay the delay milli-seconds for launching a task
+     * @param delay the delay milliseconds for launching a task
      * @param consumer the actual task runner as taking accumulated events
      */
     public ScheduledTaskRunner(long delay, Consumer<List<EventType>> consumer) {
@@ -106,7 +107,7 @@ public class ScheduledTaskRunner<EventType> {
             }
             if (sharedExecutor == null) {
                 sharedExecutor = Executors.newScheduledThreadPool(4, new ThreadFactory() {
-                    ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+                    final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
 
                     @Override
                     public Thread newThread(Runnable r) {

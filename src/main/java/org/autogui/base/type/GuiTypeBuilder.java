@@ -1,7 +1,6 @@
 package org.autogui.base.type;
 
 import org.autogui.GuiIncluded;
-import org.autogui.GuiListSelectionCallback;
 import org.autogui.GuiListSelectionUpdater;
 import org.autogui.GuiNotifierSetter;
 
@@ -12,7 +11,6 @@ import java.util.function.Predicate;
 /**
  * the factory for {@link GuiTypeElement}. {@link #get(Type)} can obtain a {@link GuiTypeElement} from {@link Type}.
  *   it's targets are members attached [at]{@link GuiIncluded}.
- *
  * */
 public class GuiTypeBuilder {
     protected Map<Type, GuiTypeElement> typeElements = new HashMap<>();
@@ -74,8 +72,7 @@ public class GuiTypeBuilder {
         if (type instanceof Class<?>) {
             return createFromClass((Class<?>) type);
             //GenericArrayType is not supported
-        } else if (type instanceof ParameterizedType) {
-            ParameterizedType pType = (ParameterizedType) type;
+        } else if (type instanceof ParameterizedType pType) {
             Class<?> rawType = getClass(pType);
             if (Collection.class.isAssignableFrom(rawType) &&
                     pType.getActualTypeArguments().length == 1) { //currently only support C<E>
@@ -166,7 +163,6 @@ public class GuiTypeBuilder {
      *   and construct field and method members.
      *   those members are grouped by their names
      *   and passed to {@link #createMember(GuiTypeObject, MemberDefinitions)}.
-     *
      *   the rules for finding members are {@link #isMemberField(Field)} and {@link #isMemberMethod(Method)}.
      * <pre>
      *     //example
@@ -247,7 +243,7 @@ public class GuiTypeBuilder {
         }
 
         public Field getLastField() {
-            return fields.isEmpty() ? null : fields.get(fields.size() - 1);
+            return fields.isEmpty() ? null : fields.getLast();
         }
 
         public Method getLast(Predicate<Method> builder) {
@@ -514,7 +510,7 @@ public class GuiTypeBuilder {
 
     /**
      * @param m  the tested method
-     * @return m(L&lt;E&gt;) and L is a super type of {@link List} except for Object.
+     * @return m(L&lt;E&gt; ) and L is a super type of {@link List} except for Object.
      *          or, m(L&lt;E&gt;, String)
      *   */
     public boolean isActionListMethod(Method m) {
@@ -548,45 +544,52 @@ public class GuiTypeBuilder {
      *  or Object
      *
      * @param type the type for extraction
-     * @return an extracted class or Object.class
+     * @return an extracted class or {@code Object.class}
      * */
     public Class<?> getClass(Type type) {
-        if (type instanceof Class<?>) {
-            return (Class<?>) type;
-        } else if (type instanceof ParameterizedType) {
-            return getClass(((ParameterizedType) type).getRawType());
-        } else if (type instanceof WildcardType) {
-            Type[] uppers = ((WildcardType) type).getUpperBounds();
-            if (uppers != null) {
-                Class<?> lub = Object.class;
-                for (Type upper : uppers) {
-                    Class<?> b = getClass(upper);
-                    if (!b.isAssignableFrom(lub)) {
-                        lub = b;
+        switch (type) {
+            case Class<?> aClass -> {
+                return aClass;
+            }
+            case ParameterizedType parameterizedType -> {
+                return getClass(parameterizedType.getRawType());
+            }
+            case WildcardType wildcardType -> {
+                Type[] uppers = wildcardType.getUpperBounds();
+                if (uppers != null) {
+                    Class<?> lub = Object.class;
+                    for (Type upper : uppers) {
+                        Class<?> b = getClass(upper);
+                        if (!b.isAssignableFrom(lub)) {
+                            lub = b;
+                        }
                     }
+                    return lub;
+                } else {
+                    return Object.class;
                 }
-                return lub;
-            } else {
+            }
+            case TypeVariable<?> typeVariable -> {
+                Type[] bounds = typeVariable.getBounds();
+                if (bounds != null) {
+                    Class<?> lub = Object.class;
+                    for (Type bound : bounds) {
+                        Class<?> b = getClass(bound);
+                        if (!b.isAssignableFrom(lub)) {
+                            lub = b;
+                        }
+                    }
+                    return lub;
+                } else {
+                    return Object.class;
+                }
+            }
+            case GenericArrayType genericArrayType -> {
+                return Object[].class; //do not support
+            }
+            case null, default -> {
                 return Object.class;
             }
-        } else if (type instanceof TypeVariable) {
-            Type[] bounds = ((TypeVariable) type).getBounds();
-            if (bounds != null) {
-                Class<?> lub = Object.class;
-                for (Type bound : bounds) {
-                    Class<?> b = getClass(bound);
-                    if (!b.isAssignableFrom(lub)) {
-                        lub = b;
-                    }
-                }
-                return lub;
-            } else {
-                return Object.class;
-            }
-        } else if (type instanceof GenericArrayType) {
-            return Object[].class; //do not support
-        } else {
-            return Object.class;
         }
     }
 
@@ -611,6 +614,7 @@ public class GuiTypeBuilder {
      *   including non-public (without access-modifiers) members.
      * */
     public static class GuiTypeBuilderRelaxed extends GuiTypeBuilder {
+        public GuiTypeBuilderRelaxed() {}
         @Override
         public boolean isExcludedType(Class<?> cls) {
             return Modifier.isPrivate(cls.getModifiers()) ||

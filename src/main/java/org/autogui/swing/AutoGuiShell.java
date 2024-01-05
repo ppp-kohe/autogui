@@ -80,6 +80,8 @@ public class AutoGuiShell {
      */
     protected Function<Object, GuiSwingWindow> windowCreatorRelaxed = GuiSwingWindow.creator().withTypeBuilderRelaxed();
 
+    public AutoGuiShell() {}
+
     /**
      * @return a new instance
      */

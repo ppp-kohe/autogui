@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /** column managing part of {@link ObjectTableModel} */
+@SuppressWarnings("this-escape")
 public class ObjectTableModelColumns
         implements GuiSwingTableColumnSet.TableColumnHost, TableColumnModelListener {
     protected DefaultTableColumnModel columnModel;
@@ -125,7 +126,7 @@ public class ObjectTableModelColumns
 
     public DynamicColumnContainer getRootContainer() {
         return dynamicColumns.isEmpty() ? null :
-                dynamicColumns.get(0);
+                dynamicColumns.getFirst();
     }
 
     public List<Action> getDynamicColumnsActions(TableTargetCell selection, TableSelectionSource tableSource) {
@@ -357,17 +358,13 @@ public class ObjectTableModelColumns
                     }
                 }
                 for (int i = 0 ; i < removingSize; ++i) {
-                    children.remove(children.size() - 1); //{0,...s-3,s-2,s-1}->{0,...s-3,s-2} -> {0,...s-3}
+                    children.removeLast(); //{0,...s-3,s-2,s-1}->{0,...s-3,s-2} -> {0,...s-3}
                 }
             }
         }
 
         public List<ObjectTableColumn> getColumnsInSize() {
-            if (columnsInSize == null) {
-                return Collections.emptyList();
-            } else {
-                return columnsInSize;
-            }
+            return Objects.requireNonNullElse(columnsInSize, Collections.emptyList());
         }
 
 
@@ -491,7 +488,7 @@ public class ObjectTableModelColumns
     }
 
     /**
-     * a size information of hierarchical composition of sub-columns
+     * size information of hierarchical composition of sub-columns
      *
      *  <pre>
      *      Size ::= { Size, Size, ... }  //SizeComposite
@@ -561,6 +558,8 @@ public class ObjectTableModelColumns
         protected int size;
         protected ObjectTableColumnSize parent;
         protected SpecifierManagerIndex elementSpecifierIndex;
+
+        public ObjectTableColumnSize() {}
 
         public int size() {
             return size;
@@ -656,7 +655,7 @@ public class ObjectTableModelColumns
         public void debugPrint(int depth) {
             System.err.println(IntStream.range(0, depth)
                     .mapToObj(i -> "   ")
-                    .collect(Collectors.joining()) + this.toString() +
+                    .collect(Collectors.joining()) + this +
                         Arrays.toString(toIndices(Collections.emptyMap())));
             for (ObjectTableColumnSize child : getChildren()) {
                 child.debugPrint(depth + 1);

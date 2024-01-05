@@ -52,9 +52,9 @@ import java.util.Set;
  */
 public class ResizableFlowLayout implements LayoutManager {
     protected int margin = 1;
-    protected boolean orientation = true;
+    protected boolean orientation;
     protected boolean fitHeight = false;
-    protected Set<Component> resizable = new HashSet<Component>();
+    protected Set<Component> resizable = new HashSet<>();
 
     public static ResizableFlowLayout.LayoutAppender<JPanel> create(boolean horizontalOrientation) {
         ResizableFlowLayout r = new ResizableFlowLayout(horizontalOrientation);
@@ -169,7 +169,7 @@ public class ResizableFlowLayout implements LayoutManager {
     public class ResizedWidth {
         /** summation of base size of lining orientation; resizable component's minimum or preferred size */
         public float resSum;
-        /** summation of fixed size parts of lining orientation; insets, margin and non resizable component's size  */
+        /** summation of fixed size parts of lining orientation; insets, margin and non-resizable component's size  */
         public float fixedSum;
         /** max size of opposite orientation of lining orientation and insets*/
         public int height;
@@ -221,7 +221,7 @@ public class ResizableFlowLayout implements LayoutManager {
     public static void add(Container parent, Component comp, boolean resizable) {
         parent.add(comp);
         LayoutManager m = parent.getLayout();
-        ResizableFlowLayout rfl = null;
+        ResizableFlowLayout rfl;
         if (!(m instanceof ResizableFlowLayout)) {
             rfl = new ResizableFlowLayout(true);
             parent.setLayout(rfl);

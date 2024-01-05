@@ -13,6 +13,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.io.PrintStream;
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,8 +28,9 @@ import java.util.function.Consumer;
 /**
  * a list component for displaying log entries
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogManager.GuiSwingLogView {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected GuiSwingLogManager manager;
     protected Timer activePainter;
     protected GuiSwingLogEventDispatcher eventDispatcher;
@@ -223,7 +225,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
 
     /**
      * call {@link GuiSwingLogManager#clear()} to {@link #manager}.
-     * it will leads to not only this doing {@link #clearLogEntries()},
+     * it will lead to not only this doing {@link #clearLogEntries()},
      *            but also other views including status bars.
      * @since 1.2
      */
@@ -325,10 +327,12 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
 
     /** the list model for the log-list component */
     public static class GuiSwingLogListModel extends AbstractListModel<GuiLogEntry> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected int entryLimit = -1;
         protected java.util.List<GuiLogEntry> entries = new ArrayList<>();
         protected int highPriorityActives = 0;
+
+        public GuiSwingLogListModel() {}
 
         public int getEntryLimit() {
             return entryLimit;
@@ -502,6 +506,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         public List<Integer> changedSelectedItems = Collections.emptyList();
         public List<Integer> changedNonSelectedItems = Collections.emptyList();
 
+        public LogListInsertResult() {}
+
         public boolean hasSelectionChange() {
             return !changedSelectedItems.isEmpty() || !changedNonSelectedItems.isEmpty();
         }
@@ -523,9 +529,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
             this.rendererPane = new CellRendererPane();
             table.add(rendererPane);
 
-            table.addListSelectionListener(e -> {
-                selectionChange(e.getFirstIndex(), e.getLastIndex());
-            });
+            table.addListSelectionListener(e ->
+                selectionChange(e.getFirstIndex(), e.getLastIndex()));
         }
 
         public void selectionChange(int from, int to) {
@@ -534,8 +539,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
                 if (i >= 0 && i < table.getRowCount()) {
                     boolean selected = sel.isSelectedIndex(i);
                     GuiLogEntry e = table.getValueAt(i);
-                    if (e instanceof GuiSwingLogEntry) {
-                        GuiSwingLogEntry se = (GuiSwingLogEntry) e;
+                    if (e instanceof GuiSwingLogEntry se) {
                         boolean alreadySelected = se.isSelected();
                         se.setSelected(selected);
                         if (alreadySelected && !selected) {
@@ -616,9 +620,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
                     } else {
                         sel.setSelectionInterval(row, row);
                     }
-                    runEntry(row, entry, r -> {
-                        r.mousePressed(entry, convert(cellRect, pressPoint));
-                    });
+                    runEntry(row, entry, r ->
+                            r.mousePressed(entry, convert(cellRect, pressPoint)));
                 }
                 delayedPressProcess = null;
             };
@@ -666,9 +669,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
                 updateSelectionRange(pressIndex, row);
                 drag(pressPoint, point);
             }
-            runEntry(row, entry, r -> {
-                r.mouseReleased(entry, convert(cellRect, point));
-            });
+            runEntry(row, entry, r ->
+                    r.mouseReleased(entry, convert(cellRect, point)));
             pressPoint = null;
             table.setValueIsAdjusting(false);
         }
@@ -690,9 +692,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
                 updateSelectionRange(pressIndex, row);
                 drag(pressPoint, dragPoint);
             } else {
-                runEntry(row, entry, r -> {
-                    r.mouseDragged(entry, convert(cellRect, dragPoint));
-                });
+                runEntry(row, entry, r ->
+                    r.mouseDragged(entry, convert(cellRect, dragPoint)));
                 pressPoint = dragPoint;
             }
         }
@@ -739,8 +740,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
             Rectangle cellRect = table.getCellRect(i);
             int rowIndex = table.convertRowIndexToModel(i);
             Object val = table.getValueAt(rowIndex);
-            if (val instanceof GuiSwingLogEntry) {
-                GuiSwingLogEntry e = (GuiSwingLogEntry) val;
+            if (val instanceof GuiSwingLogEntry e) {
                 runEntry(i, e, r -> {
                     Rectangle selectRect = cellRect.intersection(bounds);
                     Point topLeft = cellRect.getLocation();
@@ -841,8 +841,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
                 }
 
                 GuiLogEntry rowValue = table.getValueAt(i);
-                if (rowValue instanceof GuiSwingLogEntry) {
-                    GuiSwingLogEntry e = (GuiSwingLogEntry) rowValue;
+                if (rowValue instanceof GuiSwingLogEntry e) {
                     int row = i;
                     runEntry(i, e, r -> {
                         findState.entryIndex = row;
@@ -866,8 +865,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
             for (int i = sel.getMinSelectionIndex(), l = sel.getMaxSelectionIndex(); i >= 0 && i <= l; ++i) {
                 if (sel.isSelectedIndex(i)) {
                     GuiLogEntry e = table.getValueAt(i);
-                    if (e instanceof GuiSwingLogEntry) {
-                        GuiSwingLogEntry se = (GuiSwingLogEntry) e;
+                    if (e instanceof GuiSwingLogEntry se) {
                         runEntry(i, se, r -> {
                             String text = r.getSelectedText(se, false);
                             if (text.isEmpty()) {
@@ -890,6 +888,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         public int entryIndex = -1;
         public Object entryFocusIndex;
 
+        public FindState() {}
+
         public boolean found() {
             return entryIndex != -1 && entryFocusIndex != null;
         }
@@ -909,8 +909,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
 
 
         JComponent findPane = new JComponent() {
-            private static final long serialVersionUID = 1L;
-            SearchTextField.SearchBackgroundPainterBordered p = new SearchTextField.SearchBackgroundPainterBordered(this);
+            @Serial private static final long serialVersionUID = 1L;
+            final SearchTextField.SearchBackgroundPainterBordered p = new SearchTextField.SearchBackgroundPainterBordered(this);
             {
                 setLayout(new BorderLayout());
                 setBackground(UIManagerUtil.getInstance().getTextPaneBackground());
@@ -958,7 +958,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
 
     /** the action for saving a log list to a file */
     public static class LogListSaveAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingLogList list;
         protected DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd-HH-mm");
 
@@ -978,7 +978,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
             Path path = fd.showConfirmDialogIfOverwriting(list,
                     fd.showSaveDialog(list, null, "log-" + LocalDateTime.now().format(formatter)+ ".txt"));
             if (path != null) {
-                try (PrintStream out = new PrintStream(Files.newOutputStream(path), false, StandardCharsets.UTF_8.name())) {
+                try (PrintStream out = new PrintStream(Files.newOutputStream(path), false, StandardCharsets.UTF_8)) {
                     GuiLogManagerConsole console = new GuiLogManagerConsole(out);
                     console.setControlSequence(false);
 
@@ -995,7 +995,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
      * the action for clearing the log-list
      */
     public static class LogListClearAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingLogList list;
 
         public LogListClearAction(GuiSwingLogList list) {
@@ -1042,7 +1042,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
      * the action for copying texts of log-entries
      */
     public static class LogListCopyTextAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingLogList list;
 
         public LogListCopyTextAction(GuiSwingLogList list) {

@@ -11,6 +11,7 @@ import org.autogui.GuiListSelectionUpdater;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.Serial;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -22,15 +23,15 @@ import java.util.function.Function;
  * An instance of the class is also registered for table-column, but the instance will not be used.
  */
 public class GuiSwingActionDefault implements GuiSwingAction {
+    public GuiSwingActionDefault() {}
     @Override
     public Action createAction(GuiMappingContext context, GuiSwingView.ValuePane<?> pane,
                                List<GuiSwingViewCollectionTable.CollectionTable> tables) {
 
         List<TableSelectionConversion> conversions = getTableConversions(context, tables);
         ExecutionAction a = new ExecutionAction(context, pane::getSpecifier);
-        a.setResultTarget(r -> {
-            conversions.forEach(c -> c.run(r));
-        });
+        a.setResultTarget(r ->
+            conversions.forEach(c -> c.run(r)));
         return a;
     }
 
@@ -98,12 +99,13 @@ public class GuiSwingActionDefault implements GuiSwingAction {
      */
     public static class ExecutionAction extends GuiSwingTaskRunner.ContextAction implements PopupCategorized.CategorizedMenuItemAction,
             GuiSwingKeyBinding.RecommendedKeyStroke {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected Consumer<Object> resultTarget;
         protected AtomicBoolean running = new AtomicBoolean(false);
         protected GuiSwingView.SpecifierManager targetSpecifier;
 
+        @SuppressWarnings("this-escape")
         public ExecutionAction(GuiMappingContext context, GuiSwingView.SpecifierManager targetSpecifier) {
             super(context);
             this.targetSpecifier = targetSpecifier;
@@ -168,12 +170,6 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         }
 
         @Override
-        public String getCategory() {
-            return PopupCategorized.CATEGORY_ACTION;
-        }
-
-
-        @Override
         public KeyStroke getRecommendedKeyStroke() {
             return GuiSwingKeyBinding.getKeyStroke(getContext().getAcceleratorKeyStroke());
         }
@@ -197,6 +193,8 @@ public class GuiSwingActionDefault implements GuiSwingAction {
      */
     public static class ActionPreparation {
         protected Map<Object, Runnable> editingTables = new WeakHashMap<>();
+
+        public ActionPreparation() {}
 
         public void register(Object key, Runnable task) {
             editingTables.put(key, task);

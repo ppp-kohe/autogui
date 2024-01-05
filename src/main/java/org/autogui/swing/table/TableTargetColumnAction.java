@@ -15,7 +15,7 @@ import java.util.function.Consumer;
  *
  *  <p>
  *  a collection table whose model is {@link ObjectTableModel} builds menu items including actions of the type.
- *   It obtains an selected column {@link ObjectTableColumn} as the target
+ *   It obtains selected column {@link ObjectTableColumn} as the target
  *   and calls {@link ObjectTableColumn#getMenuBuilderSource()} to the target.
  *   The current impl. of the method returns the cell renderer implementing {@link ObjectTableColumn.PopupMenuBuilderSource}.
  *      For instance, those renderers are {@link ObjectTableColumnValue.ObjectTableCellRenderer} and

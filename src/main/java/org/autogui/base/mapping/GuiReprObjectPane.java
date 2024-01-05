@@ -136,7 +136,7 @@ public class GuiReprObjectPane extends GuiReprValue {
      * constructing an object or setting up the target object from the JSON.
      *  to set properties, it relies on {@link GuiMappingContext#execute(Callable)}.
      * @param context the context of the caller's repr
-     * @param target the target object, may be null and then it creates a new object
+     * @param target the target object, may be null, and then it creates a new object
      *                by 0-args constructor of the value type of the representation (supposing {@link GuiReprValue})
      * @param json the JSON object
      * @return the target or newly created object
@@ -197,11 +197,6 @@ public class GuiReprObjectPane extends GuiReprValue {
         }
     }
 
-    @Override
-    public boolean isJsonSetter() {
-        return true;
-    }
-
     /**
      * use {@link #toHumanReadableStringFromObject(GuiMappingContext, Object)}
      * @param context the context of the repr.
@@ -214,7 +209,7 @@ public class GuiReprObjectPane extends GuiReprValue {
     }
 
     /**
-     * constructing a human readable string representation of the object.
+     * constructing a human-readable string representation of the object.
      *   the contents consist of members of the object (listed by the context).
      *    each of them is processed by {@link #runSubPropertyValue(GuiMappingContext, Object, BiConsumer)}
      *     if it is a property. For obtaining the value of the property, it relies on {@link GuiMappingContext#execute(Callable)}.
@@ -225,8 +220,8 @@ public class GuiReprObjectPane extends GuiReprValue {
      * @return the representation of the source
      */
     public static String toHumanReadableStringFromObject(GuiMappingContext context, Object source) {
-        List<String> strs = new ArrayList<>(context.getChildren().size());
-        BiConsumer<GuiMappingContext, Object> processor = getAddingHumanReadableStringToList(strs);
+        List<String> strings = new ArrayList<>(context.getChildren().size());
+        BiConsumer<GuiMappingContext, Object> processor = getAddingHumanReadableStringToList(strings);
         for (GuiMappingContext subContext : context.getChildren()) {
             if (subContext.isTypeElementCollection()) {
                 runSubCollectionValue(subContext, source, processor);
@@ -234,7 +229,7 @@ public class GuiReprObjectPane extends GuiReprValue {
                 runSubPropertyValue(subContext, source, processor);
             }
         }
-        return String.join("\t", strs);
+        return String.join("\t", strings);
     }
 
     public static BiConsumer<GuiMappingContext, Object> getAddingHumanReadableStringToList(List<String> list) {

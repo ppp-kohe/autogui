@@ -18,6 +18,7 @@ import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.Serial;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -490,7 +491,7 @@ public interface GuiSwingView extends GuiSwingElement {
             List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefs.getHistoryValues());
             es.sort(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime));
             if (!es.isEmpty()) {
-                Object value = es.get(es.size() - 1).getValue();
+                Object value = es.getLast().getValue();
                 pane.setSwingViewHistoryValue(value);
             }
         }
@@ -521,7 +522,6 @@ public interface GuiSwingView extends GuiSwingElement {
      * @param pane a {@link GuiSwingView.ValuePane}
      * @param prefs a target preferences
      */
-    @SuppressWarnings("unchecked")
     static void savePreferencesDefault(JComponent pane, GuiPreferences prefs) {
         if (pane instanceof ValuePane<?>) {
             GuiMappingContext context = ((ValuePane<?>) pane).getSwingViewContext();
@@ -536,6 +536,8 @@ public interface GuiSwingView extends GuiSwingElement {
                 if (!ctxPrefs.equals(targetPrefs)) {
                     try (var ctxLock = ctxPrefs.lock();
                         var lock = targetPrefs.lock()) {
+                        ctxLock.use();
+                        lock.use();
                         ctxPrefs.getHistoryValues().stream()
                                 .sorted(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime))
                                 .forEachOrdered(e -> targetPrefs.addHistoryValue(e.getValue(), e.getTime()));
@@ -575,6 +577,8 @@ public interface GuiSwingView extends GuiSwingElement {
                     if (!targetPrefs.equals(ctxPrefs)) {
                         try (var lock = targetPrefs.lock();
                             var ctxLock = ctxPrefs.lock()) {
+                            lock.use();
+                            ctxLock.use();
                             targetPrefs.getHistoryValues().stream()
                                     .sorted(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime))
                                     .forEachOrdered(e -> ctxPrefs.addHistoryValue(e.getValue(), e.getTime()));
@@ -622,7 +626,6 @@ public interface GuiSwingView extends GuiSwingElement {
         return paneType.cast(findChild(component, paneType::isInstance));
     }
 
-    @SuppressWarnings("unchecked")
     static ValuePane<Object> findChild(Component component, Predicate<ValuePane<Object>> predicate) {
         return findNonNullByFunction(component, p -> predicate.test(p) ? p : null);
     }
@@ -648,8 +651,7 @@ public interface GuiSwingView extends GuiSwingElement {
             }
         }
         //descendant for wrapper
-        if (component instanceof GuiSwingViewWrapper.ValuePaneWrapper<?>) {
-            GuiSwingViewWrapper.ValuePaneWrapper<?> wrapper = (GuiSwingViewWrapper.ValuePaneWrapper<?>) component;
+        if (component instanceof GuiSwingViewWrapper.ValuePaneWrapper<?> wrapper) {
             if (wrapper.isSwingViewWrappedPaneSameContext()) {
                 return getChild(wrapper.getSwingViewWrappedPaneAsTypeOrNull(JComponent.class), predicate);
             }
@@ -700,11 +702,8 @@ public interface GuiSwingView extends GuiSwingElement {
                         return t;
                     } else {
                         T wrappedResult = checkNonNull(wrapped.asSwingViewComponent(), f);
-                        if (wrappedResult != null) {
-                            return wrappedResult;
-                        } else {
-                            return t; //not matched with the wrapped pane, so return the wrapper's one
-                        }
+                        //not matched with the wrapped pane, so return the wrapper's one
+                        return Objects.requireNonNullElse(wrappedResult, t);
                     }
                 } else {
                     return t;  //different context
@@ -729,7 +728,9 @@ public interface GuiSwingView extends GuiSwingElement {
      */
     @SuppressWarnings("rawtypes")
     static void prepareForRefresh(ValuePane<?> pane) {
-        forEach(ValuePane.class, pane.asSwingViewComponent(), ValuePane::prepareForRefresh);
+        forEach(ValuePane.class,
+                pane.asSwingViewComponent(),
+                ValuePane::prepareForRefresh);
     }
 
 
@@ -801,8 +802,7 @@ public interface GuiSwingView extends GuiSwingElement {
             Object ks = inputs.get(s);
 
             boolean put;
-            if (ks != null && Arrays.stream(inputs.keys())
-                    .anyMatch(s::equals)) { //actually defined in the inputs
+            if (ks != null && Arrays.asList(inputs.keys()).contains(s)) { //actually defined in the inputs
                 if (!Objects.equals(actions.get(inputs.get(s)), a)) {
                     put = overwrite.test(a);
                 } else {
@@ -844,11 +844,12 @@ public interface GuiSwingView extends GuiSwingElement {
      *  next clears values by {@link GuiMappingContext#clearSourceSubTree()} and calls {@link GuiMappingContext#updateSourceSubTree()}
      *     */
     class ContextRefreshAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected GuiMappingContext context;
         protected ValuePane<?> pane;
 
+        @SuppressWarnings("this-escape")
         public ContextRefreshAction(GuiMappingContext context, ValuePane<?> pane) {
             putValue(NAME, "Refresh");
             putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_R,
@@ -883,10 +884,11 @@ public interface GuiSwingView extends GuiSwingElement {
      * a general to-string copy action by using {@link GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}
      */
     class ToStringCopyAction extends GuiSwingTaskRunner.ContextAction implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected ValuePane<?> pane;
 
+        @SuppressWarnings("this-escape")
         public ToStringCopyAction(ValuePane<?> pane, GuiMappingContext context) {
             super(context);
             putValue(NAME, "Copy as Text");

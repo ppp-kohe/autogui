@@ -5,11 +5,10 @@ import java.util.function.Supplier;
 
 /** abstract GUI component:
  *    most methods of the interface always take  a {@link GuiMappingContext},
- *      this is because an instance of the interface might be an singleton instance.
- *
+ *      this is because an instance of the interface might be a singleton instance.
  * */
 public interface GuiRepresentation {
-    /** match the representation with the typeElement of the context, and if succeed,
+    /** match the representation with the typeElement of the context, and if succeeded,
      *   it sets this representation to the context, and it might create sub-contexts for recursive matches      *
      * @param context the context of the repr.
      * @return the matching result
@@ -70,8 +69,7 @@ public interface GuiRepresentation {
      * @return JSON object
      */
     default Object toJsonWithNamed(GuiMappingContext context, Object source) {
-        if (source instanceof GuiReprValue.NamedValue) {
-            GuiReprValue.NamedValue named = (GuiReprValue.NamedValue) source;
+        if (source instanceof GuiReprValue.NamedValue named) {
             return named.toJson(toJson(context, named.value));
         } else {
             return toJson(context, source);
@@ -179,7 +177,7 @@ public interface GuiRepresentation {
 
     /**
      * @return the set of default representations.
-     *  it does not includes swing-based representations.
+     *  it does not include swing-based representations.
      *  Instead, GuiSwingMapperSet includes all representations.
      */
     static GuiReprSet getDefaultSet() {
@@ -219,7 +217,7 @@ public interface GuiRepresentation {
     }
 
     /**
-     * do shutdown process if the target object is an AutoCloseable.
+     * do shutting-down process if the target object is an AutoCloseable.
      * @param context the context of the repr.
      * @param target the target object, obtained from source value of the context
      */

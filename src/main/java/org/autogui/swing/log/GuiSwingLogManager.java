@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.PrintStream;
+import java.io.Serial;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -43,8 +44,10 @@ public class GuiSwingLogManager extends GuiLogManager {
     /** @since 1.1 */
     public static boolean suppressOutputRedirection = true;
 
+    public GuiSwingLogManager() {}
+
     /**
-     * methods of the interface might happen outside of the event thread
+     * methods of the interface might happen outside of event thread
      * @since 1.2
      */
     public interface GuiSwingLogView {
@@ -211,10 +214,10 @@ public class GuiSwingLogManager extends GuiLogManager {
      *      logString("msg");        // =&gt;  stderr: "[Time...] msg",                GUI-list: "[Time...] msg"
      *
      * </pre>
-     * @param replaceError replace System.err for redirection to the GUI list
-     * @param replaceOutput replace System.out for redirection to the GUI list
+     * @param replaceError replace {@code System.err} for redirection to the GUI list
+     * @param replaceOutput replace {@code System.out} for redirection to the GUI list
      * @param uncaughtHandler replace the uncaught-handler for redirection to the GUI list
-     * @param redirectToConsole adding {@link GuiLogManagerConsole} to the manager: this means that the GUI list redirects to the console (original System.err)
+     * @param redirectToConsole adding {@link GuiLogManagerConsole} to the manager: this means that the GUI list redirects to the console (original {@code System.err})
      * @param suppressOutputRedirection avoiding redirection of redirectToConsole
      *                                  from replaced System.out. So work only if replaceOutput=true and redirectToConsole=true
      * @return this
@@ -351,8 +354,7 @@ public class GuiSwingLogManager extends GuiLogManager {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                        boolean hasFocus, int row, int column) {
-            if (value instanceof GuiSwingLogEntry) {
-                GuiSwingLogEntry e = (GuiSwingLogEntry) value ;
+            if (value instanceof GuiSwingLogEntry e) {
                 TableCellRenderer renderer = (TableCellRenderer) getEntryRenderer(e).getTableCellRenderer();
                 if (renderer != null) {
                     return renderer.getTableCellRendererComponent(table, e, isSelected, hasFocus, row, column);
@@ -376,12 +378,13 @@ public class GuiSwingLogManager extends GuiLogManager {
      * a window for displaying log-list
      */
     public static class GuiSwingLogWindow extends JFrame {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingLogManager manager;
         protected GuiSwingLogList list;
         protected JToolBar toolbar;
         protected GuiSwingLogStatusBar statusBar;
 
+        @SuppressWarnings("this-escape")
         public GuiSwingLogWindow(GuiSwingLogManager manager) {
             this.manager = manager;
             setTitle("Log");
@@ -412,7 +415,7 @@ public class GuiSwingLogManager extends GuiLogManager {
             scrollPane.getVerticalScrollBar().setUnitIncrement(ui.getScaledSizeInt(16));
             pane.add(scrollPane, BorderLayout.CENTER);
 
-            //tool bar
+            //toolbar
             toolbar = list.createToolBar();
             pane.add(toolbar, BorderLayout.NORTH);
         }
@@ -473,9 +476,10 @@ public class GuiSwingLogManager extends GuiLogManager {
      * an action for showing the log-list, displayed on a status-bar
      */
     public static class LogWindowShowAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JFrame frame;
         protected boolean first = true;
+        @SuppressWarnings("this-escape")
         public LogWindowShowAction(JFrame frame) {
             putValue(NAME, "Show");
             putValue(ACCELERATOR_KEY,

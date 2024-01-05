@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 
 /**
  * an object type, which has actions and properties.
- *
  * children: actions and properties
  */
 public class GuiTypeObject extends GuiTypeValue {

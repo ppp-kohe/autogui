@@ -44,6 +44,8 @@ public class GuiReprCollectionTableTest {
 
     GuiTaskClock viewClock;
 
+    public GuiReprCollectionTableTest() {}
+
     @Before
     public void setUp() {
         viewClock = new GuiTaskClock(true);
@@ -74,8 +76,8 @@ public class GuiReprCollectionTableTest {
         contextObjElement = contextObjList.getReprCollectionTable().getElementContext(contextObjList);
         contextValElement = contextValList.getReprCollectionTable().getElementContext(contextValList);
 
-        contextObjChild = contextObjElement.getChildren().get(0);
-        contextValChild = contextValElement.getChildren().get(0);
+        contextObjChild = contextObjElement.getChildren().getFirst();
+        contextValChild = contextValElement.getChildren().getFirst();
 
         contextObjChildProp = contextObjChild.getChildByName("prop");
 
@@ -84,9 +86,9 @@ public class GuiReprCollectionTableTest {
         contextValListListProp = contextObj.getChildByName("valueListList");
         contextValListList = contextValListListProp.getChildByName("List");
         contextValListListElement = contextValListList.getReprCollectionTable().getElementContext(contextValListList);
-        contextValListListChild = contextValListListElement.getChildren().get(0);
+        contextValListListChild = contextValListListElement.getChildren().getFirst();
         contextValListListChildElement = contextValListListChild.getReprCollectionTable().getElementContext(contextValListListChild);
-        contextValListListChildChild = contextValListListChildElement.getChildren().get(0);
+        contextValListListChildChild = contextValListListChildElement.getChildren().getFirst();
     }
 
     @GuiIncluded
@@ -99,6 +101,8 @@ public class GuiReprCollectionTableTest {
 
         @GuiIncluded
         public List<List<String>> valueListList;
+
+        public TestReprCol() {}
     }
 
     @GuiIncluded
@@ -337,7 +341,7 @@ public class GuiReprCollectionTableTest {
     }
 
     @Test
-    public void testCollectionElementUpdateFromGuiListList() throws Throwable {
+    public void testCollectionElementUpdateFromGuiListList() {
         contextValListListChildElement.getReprValue().updateFromGui(contextValListListChildElement,
                 "HELLO", GuiReprValue.NONE
                         .childIndex(1)

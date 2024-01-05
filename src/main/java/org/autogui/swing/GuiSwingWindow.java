@@ -11,6 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.Serial;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -18,7 +19,7 @@ import java.util.function.Predicate;
  * a root window wrapping a {@link GuiSwingRootPane}.
  */
 public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootView {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected GuiSwingRootPane contextRootPane;
     protected GuiSwingPreferences.WindowPreferencesUpdater preferencesUpdater;
     /** @since 1.1 */
@@ -43,6 +44,9 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
 
     public static class GuiSwingWindowCreator extends GuiSwingRootPane.GuiSwingRootPaneCreator
             implements Function<Object, GuiSwingWindow> {
+
+        public GuiSwingWindowCreator() {}
+
         @Override
         public GuiSwingWindow apply(Object o) {
             return createWindow(o);
@@ -121,6 +125,7 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
         this(new GuiSwingRootPane(context, view, keyBinding, logStatus, settingsWindow));
     }
 
+    @SuppressWarnings("this-escape")
     public GuiSwingWindow(GuiSwingRootPane contextRootPane) {
         this.contextRootPane = contextRootPane;
         init();

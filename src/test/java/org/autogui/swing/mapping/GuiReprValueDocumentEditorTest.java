@@ -20,6 +20,8 @@ public class GuiReprValueDocumentEditorTest extends GuiSwingTestCase {
     KeyUndoManager undoManager;
     JFrame frame;
 
+    public GuiReprValueDocumentEditorTest() {}
+
     @Before
     public void setUp() {
         content = new GuiReprValueDocumentEditor.StringBuilderContent(new StringBuilder());
@@ -326,7 +328,7 @@ public class GuiReprValueDocumentEditorTest extends GuiSwingTestCase {
     }
 
     @Test
-    public void testViewUndoRedo() throws Exception {
+    public void testViewUndoRedo() {
         JTextPane pane = runGet(this::create);
 
         run(() -> {

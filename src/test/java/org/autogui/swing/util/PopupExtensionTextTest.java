@@ -18,6 +18,8 @@ public class PopupExtensionTextTest extends GuiSwingTestCase {
     protected JFrame frame;
     protected PopupExtensionText ext;
 
+    public PopupExtensionTextTest() {}
+
     @After
     public void tearDown() {
         if (frame != null) {

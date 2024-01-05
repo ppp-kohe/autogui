@@ -10,6 +10,7 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.Serial;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ import java.util.regex.Pattern;
 
 /**
  * a popup menu manager.
- * it support showing the popup menu supplied by {@link #menu} via the following event listeners:
+ * it supports showing the popup menu supplied by {@link #menu} via the following event listeners:
  * <ul>
  *     <li>{@link MouseListener} </li>
  *     <li>{@link KeyListener}  with {@link #keyMatcher}, can be {@link #getDefaultKeyMatcher()}</li>
@@ -33,6 +34,7 @@ import java.util.regex.Pattern;
  * {@link PopupMenuBuilder#buildWithClear(PopupExtension.PopupMenuFilter, JPopupMenu)}.
  *
  */
+@SuppressWarnings("this-escape")
 public class PopupExtension implements MouseListener, KeyListener, ActionListener {
     public static String MENU_CATEGORY_UNDO = MenuBuilder.getCategoryImplicit("Undo");
     public static String MENU_CATEGORY_EDIT = MenuBuilder.getCategoryImplicit("Edit");
@@ -110,6 +112,8 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     /** the empty builder  */
     public static class PopupMenuBuilderEmpty implements PopupMenuBuilder {
+
+        public PopupMenuBuilderEmpty() {}
         @Override
         public void build(PopupMenuFilter filter, Consumer<Object> menu) {
             filter.aroundItems(true).forEach(menu);
@@ -152,6 +156,8 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     /** a filter for accepting any items as is */
     public static class PopupMenuFilterAsIs implements PopupMenuFilter {
+
+        public PopupMenuFilterAsIs() {}
         @Override
         public Object convert(Object item) {
             return item;
@@ -197,7 +203,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     /**
      * call {@link #PopupExtension(JComponent, Predicate, PopupMenuBuilder, Supplier)}.
      * the menu is supplied by creating a new one and setting it by {@link JComponent#setComponentPopupMenu(JPopupMenu)}.
-     *   it also call {@link MenuKeySelector#addToMenu(JPopupMenu)} for incremental item search while showing the popup menu
+     *   it also calls {@link MenuKeySelector#addToMenu(JPopupMenu)} for incremental item search while showing the popup menu
      * @param pane the host pane of the popup-menu, can be null
      * @param keyMatcher  matching with a key-event for displaying the menu
      * @param menuBuilder a builder for constructing menu-items
@@ -221,8 +227,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         JPopupMenu m = menu.get();
         //reuse existing checker
         for (PopupMenuListener l : m.getPopupMenuListeners()) {
-            if (l instanceof PopupCancelChecker) {
-                PopupCancelChecker existingChecker = (PopupCancelChecker) l;
+            if (l instanceof PopupCancelChecker existingChecker) {
                 if (existingChecker.isReusable()) {
                     cancelChecker = existingChecker;
                 }
@@ -239,6 +244,8 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     public static class PopupCancelChecker implements PopupMenuListener {
         protected Instant lastCancelTime = Instant.EPOCH;
         protected Duration limit = Duration.ofMillis(500);
+
+        public PopupCancelChecker() {}
 
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {}
@@ -326,22 +333,13 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     @SuppressWarnings("deprecation")
     public static int getMenuShortcutKeyMask() {
         int menuMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-        int menuDownMask = menuMask;
-        switch (menuMask) {
-            case InputEvent.SHIFT_MASK:
-                menuDownMask = InputEvent.SHIFT_DOWN_MASK;
-                break;
-            case InputEvent.CTRL_MASK:
-                menuDownMask = InputEvent.CTRL_DOWN_MASK;
-                break;
-            case InputEvent.ALT_MASK:
-                menuDownMask = InputEvent.ALT_DOWN_MASK;
-                break;
-            case InputEvent.META_MASK:
-                menuDownMask = InputEvent.META_DOWN_MASK;
-                break;
-        }
-        return menuDownMask;
+        return switch (menuMask) {
+            case InputEvent.SHIFT_MASK -> InputEvent.SHIFT_DOWN_MASK;
+            case InputEvent.CTRL_MASK -> InputEvent.CTRL_DOWN_MASK;
+            case InputEvent.ALT_MASK -> InputEvent.ALT_DOWN_MASK;
+            case InputEvent.META_MASK -> InputEvent.META_DOWN_MASK;
+            default -> menuMask;
+        };
     }
 
     /**
@@ -406,7 +404,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
      * @since 1.3
      */
     public static class DefaultPopupMenu extends JPopupMenu {
-        static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected Point location;
         protected JComponent targetPane;
 
@@ -533,7 +531,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     /** an action for displaying a popup menu */
     public static class PopupExtensionDisplayAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PopupExtension extension;
 
@@ -599,6 +597,8 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
     public static class MenuKeySelector implements MenuKeyListener, PopupMenuListener {
         protected StringBuilder buffer = new StringBuilder();
 
+        public MenuKeySelector() {}
+
         public void addToMenu(JPopupMenu menu) {
             menu.addMenuKeyListener(this);
             menu.addPopupMenuListener(this);
@@ -627,7 +627,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         }
 
         public void clearBuffer() {
-            if (buffer.length() > 0) {
+            if (!buffer.isEmpty()) {
                 buffer.delete(0, buffer.length());
             }
         }
@@ -695,7 +695,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
                 return null;
             }
             for (MenuElement e : children) {
-                if (stopAt != null && e.equals(stopAt)) {
+                if (e.equals(stopAt)) {
                     return new MenuElement[0];
                 } else if (match(e, str)) {
                     return child(path, e);
@@ -761,7 +761,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
             }
         }
 
-        private Pattern spaces = Pattern.compile(" +");
+        private final Pattern spaces = Pattern.compile(" +");
 
         public boolean matchText(String text, String str) {
             String low = text.toLowerCase();
@@ -778,7 +778,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
 
     /** a window-listener and popup-menu listener for fixing the behavior of showing/hiding a popup menu */
-    public class PopupMenuHidingFix extends WindowAdapter implements PopupMenuListener {
+    public static class PopupMenuHidingFix extends WindowAdapter implements PopupMenuListener {
         protected JPopupMenu menu;
 
         public PopupMenuHidingFix(JPopupMenu menu) {
@@ -816,21 +816,14 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         }
 
         public Window getWindow(Object comp) {
-            if (comp == null) {
-                return null;
-            } else if (comp instanceof JPopupMenu) {
-                return getWindow(((JPopupMenu) comp).getInvoker());
-            } else if (comp instanceof Window) {
-                return (Window) comp;
-            } else if (comp instanceof JRootPane) {
-                return getWindow(((JRootPane) comp).getParent());
-            } else if (comp instanceof JComponent) {
-                return getWindow(((JComponent) comp).getRootPane());
-            } else if (comp instanceof Component) {
-                return getWindow(((Component) comp).getParent());
-            } else {
-                return null;
-            }
+            return switch (comp) {
+                case JPopupMenu jPopupMenu -> getWindow(jPopupMenu.getInvoker());
+                case Window window -> window;
+                case JRootPane jRootPane -> getWindow(jRootPane.getParent());
+                case JComponent jComponent -> getWindow(jComponent.getRootPane());
+                case Component component -> getWindow(component.getParent());
+                case null, default -> null;
+            };
         }
     }
 

@@ -18,6 +18,8 @@ public class GuiTypeCollectionTest {
     GuiTypeCollection typeCollection;
     TestObjCol obj;
 
+    public GuiTypeCollectionTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -34,6 +36,8 @@ public class GuiTypeCollectionTest {
     public static class TestObjCol {
         @GuiIncluded
         public List<Integer> col;
+
+        public TestObjCol() {}
     }
 
     @Test

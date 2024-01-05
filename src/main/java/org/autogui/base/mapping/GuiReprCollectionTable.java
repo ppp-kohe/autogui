@@ -49,7 +49,6 @@ import java.util.stream.StreamSupport;
  *        Also, the {@link #subRepresentation} will take a factory of {@link GuiReprCollectionElement}.
  *         The factory will match the element type with the {@link GuiTypeCollection} as it's parent
  *           (the element itself is a regular element type but the collection element repr. has higher precedence in the factory).
- *
  *        So, a sub-context becomes a single element with the {@link GuiReprCollectionElement}.
  *
  *   <p>  The sub-contexts of the sub-collection element become a singleton list of the wrapped element representation.
@@ -96,8 +95,7 @@ import java.util.stream.StreamSupport;
  *      {@link GuiReprCollectionElement#checkAndUpdateSource(GuiMappingContext)} do nothing,
  *  <p>
  *    A concrete GUI component for the repr., like GuiSwingViewCollectionTable,
- *       can partially obtains properties of an element of a collection as on-demand cells.
- *
+ *       can partially obtain properties of an element of a collection as on-demand cells.
  *    A GUI column obtains its model value via {@link GuiReprValue#getUpdatedValue(GuiMappingContext, GuiReprValue.ObjectSpecifier)} ,
  *      and then the repr. obtains a parent value which is an element in a list.
  *    A parent {@link GuiReprCollectionElement} provides an element value by
@@ -186,7 +184,7 @@ import java.util.stream.StreamSupport;
  *          <ul>
  *            <li><code>ObjectTableModel#setValueAt(v,ri,ci)</code> causes
  *             <code>ObjectTableColumnValue#setCellValue(rowObj,ri,ci,v)</code></li>
- *            <li>the repr's update is {@link GuiReprValue#update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, GuiReprValue.ObjectSpecifier)}
+ *            <li>the reprs update is {@link GuiReprValue#update(GuiMappingContext, GuiMappingContext.GuiSourceValue, Object, GuiReprValue.ObjectSpecifier)}
  *              and it matches the case of the parent context is a collection-element,
  *                then it calls parent's {@link GuiReprValue#updateWithParentSource(GuiMappingContext, Object, GuiReprValue.ObjectSpecifier)}</li>
  *            <li>the method of the parent obtains the source of the parent of the parent, which is a list, and
@@ -257,10 +255,10 @@ public class GuiReprCollectionTable extends GuiReprValue {
     public GuiMappingContext getElementValueContext(GuiMappingContext context) {
         List<GuiMappingContext> cs = context.getChildren();
         if (!cs.isEmpty()) {
-            GuiMappingContext elementContext = cs.get(0);
+            GuiMappingContext elementContext = cs.getFirst();
             List<GuiMappingContext> valueContexts = elementContext.getChildren();
             if (!valueContexts.isEmpty()) {
-                return valueContexts.get(0);
+                return valueContexts.getFirst();
             }
         }
         return null;
@@ -282,7 +280,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
 
     @Override
     public GuiUpdatedValue getValueCollectionElement(GuiMappingContext context, GuiSourceValue collection,
-                                                     ObjectSpecifier elementSpecifier, GuiSourceValue prev) throws Throwable {
+                                                     ObjectSpecifier elementSpecifier, GuiSourceValue prev) {
         GuiTypeCollection collType = context.getTypeElementCollection();
         Object col = toSource(collection.getValue());
         GuiMappingContext elementValueContext = getElementValueContext(context);
@@ -379,9 +377,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         GuiMappingContext elementContext = getElementContext(context);
-        if (json instanceof List<?>) {
-            List<?> listJson = (List<?>) json;
-
+        if (json instanceof List<?> listJson) {
             List<Object> listTarget = GuiReprValue.castOrMake(List.class, target, () -> null);
             List<Object> listResult = new ArrayList<>(listJson.size());
 
@@ -511,7 +507,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
 
     /**
      * a list wraps an array. it relies on reflection ({@link Array}) and can support primitive arrays.
-     *  for multi-dimensional arrays (dim &gt; 1), it wraps/unwraps element values
+     *  for multidimensional arrays (dim &gt; 1), it wraps/unwraps element values
      */
     public static class ArrayWrappingList extends AbstractList<Object> {
         protected Object array;
@@ -593,7 +589,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
     }
 
     /**
-     * a sub-type of table-target, also supporting selecting partial columns;
+     * a subtype of table-target, also supporting selecting partial columns;
      *   in the type, {@link #getSelectedCells()} returns the values of the partial columns.
      *   it also supports obtaining all-cells in a row.
      */
@@ -632,7 +628,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
         }
 
         @Override
-        public Object apply(int[] ints) {
+        public Object apply(int[] numbers) {
             Object v = values.get(nextIndex % values.size());
             ++nextIndex;
             return v;

@@ -3,6 +3,7 @@ package org.autogui.swing.util;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Serial;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -30,6 +31,11 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
     protected Supplier<? extends Collection<CategorizedMenuItem>> itemSupplier;
     protected Consumer<CategorizedMenuItem> itemConsumer;
     protected MenuBuilder menuBuilder;
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 
     /** the categorized menu item */
     public interface CategorizedMenuItem {
@@ -128,7 +134,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
     }
 
     /**
-     * an action with category info, which becomes an check-box menu item
+     * an action with category info, which becomes a check-box menu item
      */
     public interface CategorizedMenuItemActionCheck extends CategorizedMenuItemAction {
         @Override
@@ -168,31 +174,34 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
      * @return a {@link CategorizedMenuItem} converted from the item
      */
     public static CategorizedMenuItem getMenuItem(Object item) {
-        if (item instanceof CategorizedMenuItem) {
-            return (CategorizedMenuItem) item;
-        } else if (item instanceof Action) {
-            return new CategorizedMenuItemActionDelegate((Action) item);
-        } else if (item instanceof JComponent) {
-            return new CategorizedMenuItemComponentDefault((JComponent) item);
-        } else {
-            throw new IllegalArgumentException("unsupported type: " + (item == null ? "null" : item.getClass()));
-        }
+        return switch (item) {
+            case CategorizedMenuItem categorizedMenuItem -> categorizedMenuItem;
+            case Action action -> new CategorizedMenuItemActionDelegate(action);
+            case JComponent jComponent -> new CategorizedMenuItemComponentDefault(jComponent);
+            case null, default ->
+                    throw new IllegalArgumentException("unsupported type: " + (item == null ? "null" : item.getClass()));
+        };
     }
 
     public static Action getMenuItemAction(CategorizedMenuItem item) {
-        if (item instanceof Action) { //including CategorizedMenuItemAction
-            return (Action) item;
-        } else if (item instanceof AbstractButton) {
-            return ((AbstractButton) item).getAction();
-        } else if (item instanceof CategorizedMenuItemComponent) {
-            JComponent c = ((CategorizedMenuItemComponent) item).getMenuItem();
-            if (c instanceof AbstractButton) {
-                return ((AbstractButton) c).getAction();
-            } else {
+        switch (item) {
+            case Action action -> {
+                return action;  //including CategorizedMenuItemAction
+            }
+            case AbstractButton abstractButton -> {
+                return abstractButton.getAction();
+            }
+            case CategorizedMenuItemComponent categorizedMenuItemComponent -> {
+                JComponent c = categorizedMenuItemComponent.getMenuItem();
+                if (c instanceof AbstractButton) {
+                    return ((AbstractButton) c).getAction();
+                } else {
+                    return null;
+                }
+            }
+            case null, default -> {
                 return null;
             }
-        } else {
-            return null;
         }
     }
 
@@ -217,7 +226,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
 
 
     @SafeVarargs
-    @SuppressWarnings({"unchecked", "varargs", "rawtypes"})
+    @SuppressWarnings({"varargs"})
     public static Supplier<? extends Collection<CategorizedMenuItem>> getMenuItemsSupplier(
             Supplier<? extends Collection<CategorizedMenuItem>>... itemsList) {
         return () ->
@@ -383,29 +392,23 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
     }
 
     public JComponent createMenuItem(CategorizedMenuItem item) {
-        if (item instanceof CategorizedMenuItemLabel) {
-            return getMenuBuilder().createLabel(item.getName());
-        } else if (item instanceof CategorizedMenuItemComponent) {
-            return ((CategorizedMenuItemComponent) item).getMenuItem();
-        } else if (item instanceof JComponent) {
-            return (JComponent) item;
-        } else if (item instanceof Action) {
-            return new JMenuItem((Action) item);
-        } else {
-            return new JMenuItem(new SearchPopupAction(this, item));
-        }
+        return switch (item) {
+            case CategorizedMenuItemLabel categorizedMenuItemLabel -> getMenuBuilder().createLabel(item.getName());
+            case CategorizedMenuItemComponent categorizedMenuItemComponent ->
+                    categorizedMenuItemComponent.getMenuItem();
+            case JComponent jComponent -> jComponent;
+            case Action action -> new JMenuItem(action);
+            case null, default -> new JMenuItem(new SearchPopupAction(this, item));
+        };
     }
 
     public JComponent createMenuItemFromObject(Object i) {
-        if (i instanceof PopupCategorized.CategorizedMenuItem) {
-            return createMenuItem((PopupCategorized.CategorizedMenuItem) i);
-        } else if (i instanceof JComponent) {
-            return (JComponent) i;
-        } else if (i instanceof Action) {
-            return new JMenuItem((Action) i);
-        } else {
-            return null;
-        }
+        return switch (i) {
+            case CategorizedMenuItem categorizedMenuItem -> createMenuItem(categorizedMenuItem);
+            case JComponent jComponent -> jComponent;
+            case Action action -> new JMenuItem(action);
+            case null, default -> null;
+        };
     }
 
     public List<JComponent> createMenuItems(List<Object> items) {
@@ -438,11 +441,12 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
      * an action for selecting a {@link CategorizedMenuItem}
      */
     public static class SearchPopupAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PopupCategorized popup;
         protected CategorizedMenuItem item;
 
+        @SuppressWarnings("this-escape")
         public SearchPopupAction(PopupCategorized popup, CategorizedMenuItem item) {
             this.popup = popup;
             this.item = item;
@@ -537,8 +541,8 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
     /** a {@link CategorizedMenuItemComponent} with custom category and subCategory */
     public static class CategorizedMenuItemComponentDelegate implements CategorizedMenuItemComponent  {
         protected CategorizedMenuItemComponent component;
-        protected String category = "";
-        protected String subCategory = "";
+        protected String category;
+        protected String subCategory;
 
         public CategorizedMenuItemComponentDelegate(CategorizedMenuItemComponent component) {
             this.component = component;
@@ -586,7 +590,7 @@ public class PopupCategorized implements PopupExtension.PopupMenuBuilder, Clonea
     /** the default impl. of {@link CategorizedMenuItemComponent} */
     public static class CategorizedMenuItemComponentDefault implements CategorizedMenuItemComponent  {
         protected JComponent component;
-        protected String category = "";
+        protected String category;
         protected String subCategory = "";
 
         public CategorizedMenuItemComponentDefault(JComponent component) {

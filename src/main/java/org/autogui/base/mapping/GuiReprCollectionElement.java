@@ -73,7 +73,7 @@ public class GuiReprCollectionElement extends GuiReprValue {
      * @return the child context whose repr is the wrapped representation of the element
      */
     public GuiMappingContext getElementChild(GuiMappingContext context) {
-        return context.getChildren().get(0);
+        return context.getChildren().getFirst();
     }
 
     /**
@@ -160,7 +160,6 @@ public class GuiReprCollectionElement extends GuiReprValue {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         return getRepresentation().fromJson(context, target, json);

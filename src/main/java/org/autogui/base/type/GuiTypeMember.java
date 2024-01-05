@@ -57,7 +57,7 @@ public abstract class GuiTypeMember implements GuiTypeElement {
     }
 
     /**
-     * an ordinal information of a member
+     * ordinal information of a member
      */
     public static class MemberOrdinal implements Comparable<MemberOrdinal> {
         protected int index;

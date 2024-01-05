@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -20,7 +21,7 @@ public class ApplicationIconGenerator {
         JFrame frame = new JFrame("App Icon");
         {
             JPanel pane = new JPanel() {
-                private static final long serialVersionUID = 1L;
+                @Serial private static final long serialVersionUID = 1L;
                 @Override
                 public void paintComponent(Graphics g) {
                     g.clearRect(0, 0, getWidth(), getHeight());
@@ -267,7 +268,7 @@ public class ApplicationIconGenerator {
 //        System.err.printf("req-r=%.3f\n", requiredRatio);
 //        pats.forEach(e -> System.err.printf("d=%.3f, %s\n", e.getRatioDiff(requiredRatio), e));
 
-        return pats.get(0);
+        return pats.getFirst();
     }
 
     /** a pattern of line wrapping in order to find optimal layout:
@@ -329,7 +330,7 @@ public class ApplicationIconGenerator {
             if (indices.isEmpty() || nextLine){
                 indices.add(new ArrayList<>());
             }
-            indices.get(indices.size() - 1).add(i);
+            indices.getLast().add(i);
             return this;
         }
 
@@ -337,8 +338,8 @@ public class ApplicationIconGenerator {
             NameLinePattern p = new NameLinePattern();
             p.indices.addAll(indices);
             if (!p.indices.isEmpty()) {
-                p.indices.remove(p.indices.size() - 1);
-                p.indices.add(new ArrayList<>(indices.get(indices.size() - 1)));
+                p.indices.removeLast();
+                p.indices.add(new ArrayList<>(indices.getLast()));
             }
             return p;
         }

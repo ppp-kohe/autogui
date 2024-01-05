@@ -26,6 +26,8 @@ public class GuiSwingKeyBinding {
     protected Set<KeyStroke> assignedKeys = new HashSet<>();
     protected KeyBindDispatcher dispatcher;
 
+    public GuiSwingKeyBinding() {}
+
     /**
      * @return a default key-binding with excluding some keys by {@link #addDefaultExcluded()}
      * and with default traversing function by {@link #addTraverseFunctionDefault()}.
@@ -348,6 +350,8 @@ public class GuiSwingKeyBinding {
         public KeyStroke stroke;
         protected boolean assigned;
 
+        public KeyStrokeAction() {}
+
         public boolean isAssigned() {
             return assigned;
         }
@@ -593,7 +597,7 @@ public class GuiSwingKeyBinding {
                         return Character.toCodePoint(c, c2);
                     }
                 } else {
-                    return (int) c;
+                    return c;
                 }
             } else {
                 return -1;
@@ -629,10 +633,10 @@ public class GuiSwingKeyBinding {
             String shift = "Shift";
             boolean mac = UIManagerUtil.getInstance().getOsVersion().isMacOS();
             if (mac) {
-                alt = "\u2325";
-                meta = "\u2318";
-                ctrl = "\u2303";
-                shift = "\u21E7";
+                alt = "⌥";
+                meta = "⌘";
+                ctrl = "⌃";
+                shift = "⇧";
             }
             int mod = stroke.getModifiers();
             List<String> words = new ArrayList<>();
@@ -714,10 +718,10 @@ public class GuiSwingKeyBinding {
             int mods = stroke.getModifiers();
             List<Integer> used = getModifiers().stream()
                     .filter(i -> (i & mods) != 0)
-                    .collect(Collectors.toList());
+                    .toList();
             List<Set<Integer>> available = getModifierPowerSet().stream()
                     .filter(s -> used.stream().noneMatch(s::contains))
-                    .collect(Collectors.toList());
+                    .toList();
 
             return available.stream()
                     .map(s -> toModifiers(mods, s))
@@ -793,21 +797,13 @@ public class GuiSwingKeyBinding {
 
     @SuppressWarnings("deprecation")
     public static boolean checkMenuModifiersMask(int constKey, int testedMods) {
-        int oldKey = -1;
-        switch (constKey) {
-            case InputEvent.SHIFT_DOWN_MASK:
-                oldKey = InputEvent.SHIFT_MASK;
-                break;
-            case InputEvent.CTRL_DOWN_MASK:
-                oldKey = InputEvent.CTRL_MASK;
-                break;
-            case InputEvent.ALT_DOWN_MASK:
-                oldKey = InputEvent.ALT_MASK;
-                break;
-            case InputEvent.META_DOWN_MASK:
-                oldKey = InputEvent.META_MASK;
-                break;
-        }
+        int oldKey = switch (constKey) {
+            case InputEvent.SHIFT_DOWN_MASK -> InputEvent.SHIFT_MASK;
+            case InputEvent.CTRL_DOWN_MASK -> InputEvent.CTRL_MASK;
+            case InputEvent.ALT_DOWN_MASK -> InputEvent.ALT_MASK;
+            case InputEvent.META_DOWN_MASK -> InputEvent.META_MASK;
+            default -> constKey;
+        };
         return (testedMods & oldKey) != 0 ||
                 (testedMods & constKey) != 0;
     }
@@ -818,9 +814,9 @@ public class GuiSwingKeyBinding {
             List<KeyPrecedenceSet> precedences = new ArrayList<>(precToActions.keySet());
             precedences.sort(Comparator.naturalOrder());
 
-            KeyPrecedenceSet prec = precedences.remove(0);
+            KeyPrecedenceSet prec = precedences.removeFirst();
             List<KeyStrokeAction> actions = precToActions.get(prec);
-            KeyStrokeAction assignedAction = actions.remove(0);
+            KeyStrokeAction assignedAction = actions.removeFirst();
 
             assigned.add(assignedAction);
             assignedAction.assigned();
@@ -974,6 +970,7 @@ public class GuiSwingKeyBinding {
      *      which indicates the type of action, or
      *    a view-depth ({@link KeyPrecedenceDepth}).
      */
+    @SuppressWarnings("this-escape")
     public static class KeyPrecedenceSet implements Comparable<KeyPrecedenceSet> {
         protected List<KeyPrecedence> set;
 

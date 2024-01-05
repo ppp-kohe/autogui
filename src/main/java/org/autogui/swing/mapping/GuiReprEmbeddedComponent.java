@@ -26,15 +26,16 @@ import java.util.function.Supplier;
  *      via {@link SwingDeferredRunner}.
  * <p>
  *      For the case of updating from GUI,
- *      an UI event (in the event thread) -&gt;
+ *      a UI event (in the event thread) -&gt;
  *       executeContextTask
  *         and it observes that {@link #isTaskRunnerUsedFor(Supplier)} returns false and directly invoke the given task
  *       -&gt;
  *        updateFromGui -&gt; update -&gt;
- *         {@link SwingDeferredRunner#run(SwingDeferredRunner.Task)} with super.update (it directly invoke the task as in the event thread)
+ *         {@link SwingDeferredRunner#run(SwingDeferredRunner.Task)} with {@code super.update} (it directly invoke the task as in the event thread)
  *          -&gt; the method of the target object is invoked under the event thread.
  */
 public class GuiReprEmbeddedComponent extends GuiReprValue {
+    public GuiReprEmbeddedComponent() {}
     @Override
     public boolean matchValueType(Class<?> cls) {
         return JComponent.class.isAssignableFrom(cls);
@@ -75,7 +76,7 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
      */
     @Override
     public JComponent toUpdateValue(GuiMappingContext context, Object value) {
-        return toUpdateValue(context, value);
+        return toUpdateValue(context, value, null);
     }
 
     public JComponent toUpdateValue(GuiMappingContext context, Object value, Consumer<JComponent> delayed) {
@@ -104,18 +105,23 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
                 return COMPONENT_NONE;
             }
         }
-        if (value == null) {
-            return null;
-        } else if (value instanceof GuiUpdatedValue updatedValue) {
-            if (updatedValue.isNone()) {
-                return COMPONENT_NONE;
-            } else {
-                return toUpdateValue(context, updatedValue.getValue(), delayed);
+        switch (value) {
+            case null -> {
+                return null;
             }
-        } else if (value instanceof JComponent) {
-            return (JComponent) value;
-        } else {
-            return COMPONENT_NONE;
+            case GuiUpdatedValue updatedValue -> {
+                if (updatedValue.isNone()) {
+                    return COMPONENT_NONE;
+                } else {
+                    return toUpdateValue(context, updatedValue.getValue(), delayed);
+                }
+            }
+            case JComponent jComponent -> {
+                return jComponent;
+            }
+            default -> {
+                return COMPONENT_NONE;
+            }
         }
     }
 
@@ -125,16 +131,7 @@ public class GuiReprEmbeddedComponent extends GuiReprValue {
      * a dummy component class for representing no updating.
      */
     public static class ComponentNone extends JComponent {
-    }
-
-    @Override
-    public Object toJson(GuiMappingContext context, Object source) {
-        return null;
-    }
-
-    @Override
-    public Object fromJson(GuiMappingContext context, Object target, Object json) {
-        return target;
+        public ComponentNone() {}
     }
 
     @Override

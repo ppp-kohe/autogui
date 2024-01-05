@@ -13,6 +13,8 @@ public class GuiReprValueNumberSpinnerTest {
 
     GuiTypeBuilder builder;
 
+    public GuiReprValueNumberSpinnerTest() {}
+
 
     @Before
     public void setUp() {

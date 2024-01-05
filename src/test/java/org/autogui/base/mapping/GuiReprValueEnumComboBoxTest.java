@@ -14,6 +14,8 @@ public class GuiReprValueEnumComboBoxTest {
 
     GuiMappingContext contextValue;
 
+    public GuiReprValueEnumComboBoxTest() {}
+
     public enum TestEnum {
         Hello,
         World,

@@ -48,6 +48,8 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
     ObjectTableModel model;
     ObjectTableColumn objColumn;
 
+    public GuiSwingTableColumnFilePathTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -70,13 +72,13 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
         GuiMappingContext propContext = context.getChildByName("paths")
                 .getChildByName("List");
 
-        elemPathContext = propContext.getChildren().get(0);
+        elemPathContext = propContext.getChildren().getFirst();
         pathContext = elemPathContext.getChildByName("Path");
 
         GuiMappingContext propFileContext = context.getChildByName("files")
                 .getChildByName("List");
 
-        elemFileContext = propFileContext.getChildren().get(0);
+        elemFileContext = propFileContext.getChildren().getFirst();
         fileContext = elemFileContext.getChildByName("File");
 
         column = new GuiSwingTableColumnFilePath();
@@ -99,6 +101,7 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
 
         @GuiIncluded
         public List<File> files;
+        public TestObj() {}
     }
 
     JScrollPane createTable(GuiMappingContext ctx, Supplier<Object> src) {

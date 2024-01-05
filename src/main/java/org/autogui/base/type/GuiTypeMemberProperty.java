@@ -155,7 +155,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
      * execute the property method or obtain the value of the property field
      * @param target the property holder, nullable.
      * @return the property value or {@link GuiUpdatedValue#NO_UPDATE} if the target is null or the property is static
-     * @throws Exception it might be cause exception during the execution
+     * @throws Exception it might be caused exception during the execution
      */
     public GuiUpdatedValue executeGet(Object target) throws Exception {
         Method getter = getGetter();
@@ -183,7 +183,7 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
      * @param prevValue a previous value of the property, which can be compared to the new value and if it equals,
      *                   the returned value will be {@link GuiUpdatedValue#NO_UPDATE}.
      * @return the current property value or {@link GuiUpdatedValue#NO_UPDATE} if no difference from the prevValue
-     * @throws Exception it might be cause exception during the method invocation
+     * @throws Exception it might be caused exception during the method invocation
      */
     public GuiUpdatedValue executeGet(Object target, Object prevValue) throws Exception {
         GuiUpdatedValue v = executeGet(target);

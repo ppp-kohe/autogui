@@ -7,8 +7,7 @@ import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
+import java.io.Serial;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
@@ -25,8 +24,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** a text-field with background searching file-items */
+@SuppressWarnings("this-escape")
 public class SearchTextFieldFilePath extends SearchTextField {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
 
     public static String MENU_CATEGORY_FILE_DEFAULT = "Default";
     public static String MENU_CATEGORY_FILE_CHILD = "Child";
@@ -143,7 +143,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** a transfer-handler for copying and pasting a file-list */
     public static class FileTransferHandler extends TransferHandler {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected SearchTextFieldFilePath component;
 
         public FileTransferHandler(SearchTextFieldFilePath component) {
@@ -190,7 +190,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         public boolean select(List<File> files) {
             if (files != null && !files.isEmpty()) {
-                component.setFile(files.get(0).toPath());
+                component.setFile(files.getFirst().toPath());
                 return true;
             }  else {
                 return false;
@@ -215,7 +215,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** the action for completing a searched file-item */
     public static abstract class FileListEditAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected SearchTextFieldFilePath component;
 
         public FileListEditAction(String name, SearchTextFieldFilePath component) {
@@ -230,7 +230,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            run(fs -> component.setFile(fs.get(0)));
+            run(fs -> component.setFile(fs.getFirst()));
         }
 
         public abstract void run(Consumer<List<Path>> files);
@@ -238,7 +238,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** the action for text paste */
     public static class FilePasteAction extends FileListEditAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public FilePasteAction(SearchTextFieldFilePath component) {
             super("Paste Value", component);
@@ -258,7 +258,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 if (fs == null) {
                     component.getField().paste();
                 } else {
-                    component.setFile(fs.get(0));
+                    component.setFile(fs.getFirst());
                 }
             });
         }
@@ -274,7 +274,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
             if (board.isDataFlavorAvailable(DataFlavor.javaFileListFlavor)) {
                 try {
                     List<File> files = (List<File>) board.getData(DataFlavor.javaFileListFlavor);
-                    if (files != null && files.size() > 0) {
+                    if (files != null/* && files.size() > 0*/) {
                         proc.accept(files.stream()
                                 .map(File::toPath)
                                 .collect(Collectors.toList()));
@@ -303,7 +303,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
      * @since 1.5
      */
     public static class FileClearAction extends FileListEditAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public FileClearAction(SearchTextFieldFilePath component) {
             super("Clear Value", component);
@@ -337,7 +337,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** an abstract definition of a file-list */
     public static abstract class FileListAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected SearchTextFieldFilePath component;
 
         public FileListAction(String name, SearchTextFieldFilePath component) {
@@ -363,7 +363,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** copying the selected file */
     public static class FileCopyAllAction extends FileListAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public FileCopyAllAction(SearchTextFieldFilePath component) {
             super("Copy Value", component);
@@ -419,7 +419,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         @Override
         public Object getTransferData(DataFlavor flavor)
-                throws UnsupportedFlavorException, IOException {
+                throws UnsupportedFlavorException {
             if (DataFlavor.stringFlavor.equals(flavor)) {
                 return files.stream()
                         .filter(Objects::nonNull)
@@ -440,7 +440,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** the action for opening files */
     public static class DesktopOpenAction extends FileListAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public DesktopOpenAction(SearchTextFieldFilePath component) {
             super("Open in Desktop", component);
@@ -482,7 +482,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** the action for showing files in Finder or Explorer */
     public static class DesktopRevealAction extends FileListAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected Consumer<Path> command;
 
 
@@ -545,7 +545,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
     /** an action for selecting a file item from an open dialog */
     public static class OpenDialogAction extends FileListEditAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public OpenDialogAction(SearchTextFieldFilePath component) {
             super("Select...", component);
@@ -586,6 +586,8 @@ public class SearchTextFieldFilePath extends SearchTextField {
     public static class SearchTextFieldModelFilePath implements SearchTextFieldModel {
         protected PopupCategorized.CategorizedMenuItem selection;
         protected FileSystemView iconSource;
+
+        public SearchTextFieldModelFilePath() {}
 
         @Override
         public boolean isFixedCategorySize() {
@@ -651,10 +653,12 @@ public class SearchTextFieldFilePath extends SearchTextField {
                     head = toFileNameString(path).toLowerCase();
                 }
                 if (dir != null && Files.isDirectory(dir)) {
-                    return Files.list(dir)
-                            .filter(p -> p.getFileName().toString().toLowerCase().startsWith(head))
-                            .map(p -> getFileItem(p, MENU_CATEGORY_FILE_CANDIDATE, true))
-                            .collect(Collectors.toList());
+                    try (var list = Files.list(dir)) {
+                        return list
+                                .filter(p -> p.getFileName().toString().toLowerCase().startsWith(head))
+                                .map(p -> getFileItem(p, MENU_CATEGORY_FILE_CANDIDATE, true))
+                                .collect(Collectors.toList());
+                    }
                 } else {
                     return Collections.emptyList();
                 }
@@ -694,10 +698,12 @@ public class SearchTextFieldFilePath extends SearchTextField {
                 } else {
                     category = MENU_CATEGORY_FILE_CHILD;
                 }
-                return Files.list(path)
-                        .sorted(this::compare)
-                        .map(p -> getFileItem(p, category, true))
-                        .collect(Collectors.toList());
+                try (var list = Files.list(path)) {
+                    return list
+                            .sorted(this::compare)
+                            .map(p -> getFileItem(p, category, true))
+                            .collect(Collectors.toList());
+                }
             } catch (Exception ex) {
                 return Collections.emptyList();
             }
@@ -935,7 +941,7 @@ public class SearchTextFieldFilePath extends SearchTextField {
             times.add("Modified: " + toFileTime(time));
             try {
                 BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
-                times.add(0, " Created: " + toFileTime(attrs.creationTime()));
+                times.addFirst(" Created: " + toFileTime(attrs.creationTime()));
                 times.add("Accessed: " + toFileTime(attrs.lastAccessTime()));
             } catch (Exception ex) {
                 //nothing
@@ -951,14 +957,16 @@ public class SearchTextFieldFilePath extends SearchTextField {
 
         public String getNameSize() throws Exception {
             if (Files.isDirectory(path)) {
-                return Files.list(path).count()  + " items";
+                try (var list = Files.list(path)) {
+                    return list.count() + " items";
+                }
             } else {
                 long size = Files.size(path);
                 return formatFileSize(size);
             }
         }
 
-        public String getNamePermission() throws Exception {
+        public String getNamePermission() {
             String r = !Files.isReadable(path)? " No read" : "";
             String w = !Files.isWritable(path)? " No write" : "";
             return join(r, w);

@@ -9,7 +9,7 @@ import java.util.Objects;
  * a type information about <code>
  *     Collection&lt;E&gt;
  * </code>.
- *  the type is Collection, and its sub-types
+ *  the type is Collection, and its subtypes
  */
 public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
     protected GuiTypeElement elementType;
@@ -67,7 +67,7 @@ public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
 
         GuiTypeCollection that = (GuiTypeCollection) o;
 
-        return elementType != null ? elementType.equals(that.elementType) : that.elementType == null;
+        return Objects.equals(elementType, that.elementType);
     }
 
     @Override

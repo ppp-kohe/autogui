@@ -1,10 +1,12 @@
 package org.autogui.base.log;
 
 import java.io.Closeable;
+import java.io.Serial;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -36,8 +38,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
     }
 
     /** copy fields of p. p can be null
-     * @param p copied state
-     * */
+     * @param p copied state */
     public void setState(GuiLogEntryProgress p) {
         if (p == null) {
             minimum = 0;
@@ -82,11 +83,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
     }
 
     public List<Consumer<GuiLogEntryProgress>> getListeners() {
-        if (listeners == null) {
-            return Collections.emptyList();
-        } else {
-            return listeners;
-        }
+        return Objects.requireNonNullElse(listeners, Collections.emptyList());
     }
 
     /** notifies to listeners. this is automatically called from setter methods*/
@@ -305,6 +302,7 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
 
     /** an exception thrown by checking-interruption */
     public static class GuiLogEntryProgressInterruptedException extends RuntimeException {
-        private static final long serialVersionUID = 1L;
+        public GuiLogEntryProgressInterruptedException() {}
+        @Serial private static final long serialVersionUID = 1L;
     }
 }

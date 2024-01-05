@@ -12,6 +12,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Serial;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -24,7 +25,6 @@ import java.util.stream.Collectors;
  * <h2>swing-value</h2>
  * {@link ObjectPane#getSwingViewValue()}:
  *  latest set raw-object.
- *
  *  Currently, {@link ObjectPane#setSwingViewValue(Object)} also set context's value.
  *    TODO omit to update?
  *
@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
  *     } ]
  * </pre>
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingViewObjectPane implements GuiSwingView {
     protected GuiSwingMapperSet mapperSet;
 
@@ -142,7 +143,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
      */
     public static class ObjectPane extends JPanel implements GuiMappingContext.SourceUpdateListener, ValuePane<Object>,
         GuiSwingPreferences.PreferencesUpdateSupport {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected JToolBar actionToolBar;
@@ -550,7 +551,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
      * @since 1.5
      */
     public static class SearchTextActionButton extends GuiSwingIcons.ActionButton {
-        public static final long serialVersionUID = -1;
+        @Serial private static final long serialVersionUID = -1;
         public SearchTextActionButton(Action a) {
             super(a);
             setBorder(BorderFactory.createEmptyBorder());
@@ -569,7 +570,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
     }
 
     public static class ToStringTransferHandler extends TransferHandler {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected ValuePane<?> pane;
 
         public ToStringTransferHandler(ValuePane<?> pane) {
@@ -640,7 +641,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
     public static class PreferencesForSplit implements GuiSwingPreferences.PreferencesByJsonEntry {
         protected List<PreferencesForSplitEntry> splits = new ArrayList<>();
-
+        public PreferencesForSplit() {}
         @Override
         public String getKey() {
             return "$split";
@@ -693,6 +694,8 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
     public static class PreferencesForSplitEntry {
         public int dividerLocation;
         public boolean horizontal;
+
+        public PreferencesForSplitEntry() {}
 
         public Object toJson() {
             Map<String,Object> map = new LinkedHashMap<>();

@@ -6,6 +6,7 @@ import org.autogui.swing.AutoGuiShell;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.io.Serial;
 import java.util.prefs.Preferences;
 
 @GuiIncluded
@@ -51,8 +52,7 @@ public class EmbeddedTreeDemo {
             }
             Object value = node.getUserObject();
             try {
-                if (value instanceof Preferences) {
-                    Preferences p = ((Preferences) value);
+                if (value instanceof Preferences p) {
                     p.removeNode();
                     p.flush();
                 } else if (value instanceof KeyValue) {
@@ -143,7 +143,7 @@ public class EmbeddedTreeDemo {
 
 
     static class Renderer extends DefaultTreeCellRenderer {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
             if (value instanceof DefaultMutableTreeNode) {

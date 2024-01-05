@@ -21,6 +21,8 @@ import java.util.List;
 public class GuiSwingMapperSet {
     protected List<Mapper> mappers = new ArrayList<>();
 
+    public GuiSwingMapperSet() {}
+
     /** a mapping between {@link GuiRepresentation} bound to a {@link GuiMappingContext} and {@link GuiSwingElement}.
      *    the mapping can be varied by a mapping type {@link MapperMatchType}. */
     public interface Mapper {
@@ -70,7 +72,7 @@ public class GuiSwingMapperSet {
      * @since 1.6
      */
     public GuiSwingMapperSet addReprClassTableColumnToTop(Class<? extends GuiRepresentation> reprClass, GuiSwingElement view) {
-        mappers.add(0, new MapperReprClass(reprClass, view, MapperMatchTypeDefault.TableColumn));
+        mappers.addFirst(new MapperReprClass(reprClass, view, MapperMatchTypeDefault.TableColumn));
         return this;
     }
 

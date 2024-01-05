@@ -58,8 +58,8 @@ public class GuiReprAction implements GuiRepresentation {
     /** the action executor relying on {@link GuiMappingContext#execute(Callable)}.
      * @param context the context
      * @param targets  the targets
-     * @return results of each executions, might include null elements.
-     * if some of executions cause an exception, partially constructed results will be returned
+     * @return results of each execution, might include null elements.
+     * if some execution cause an exception, partially constructed results will be returned
      * */
     public List<Object> executeActionForTargets(GuiMappingContext context, List<?> targets) {
         List<Object> results = new ArrayList<>(targets.size());

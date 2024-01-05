@@ -48,20 +48,14 @@ public class JsonWriter {
     }
 
     public JsonWriter write(Object o) {
-        if (o == null) {
-            emit("null");
-        } else if (o instanceof Map<?,?>) {
-            writeMap((Map<?,?>) o);
-        } else if (o instanceof String) {
-            writeString((String) o);
-        } else if (o instanceof List<?>) {
-            writeArray((List<?>) o);
-        } else if ( o instanceof Number) {
-            writeNumber((Number) o);
-        } else if (o instanceof Boolean) {
-            emit(o.toString());
-        } else {
-            writeObject(o);
+        switch (o) {
+            case null -> emit("null");
+            case Map<?, ?> map -> writeMap(map);
+            case String s -> writeString(s);
+            case List<?> objects -> writeArray(objects);
+            case Number number -> writeNumber(number);
+            case Boolean b -> emit(o.toString());
+            default -> writeObject(o);
         }
         return this;
     }
@@ -130,7 +124,7 @@ public class JsonWriter {
         try{
             source.append(c);
         } catch (Exception ex) {
-            error(ex);;
+            error(ex);
         }
     }
 
@@ -159,23 +153,17 @@ public class JsonWriter {
         }
     }
     protected boolean isEscape(char c) {
-        return "\n\r\f\t\b\"\'\\".indexOf(c) != -1;
+        return "\n\r\f\t\b\"'\\".indexOf(c) != -1;
     }
     protected char toEscape(char c) {
-        switch (c) {
-        case '\n':
-            return 'n';
-        case '\r':
-            return 'r';
-        case '\f':
-            return 'f';
-        case '\t':
-            return 't';
-        case '\b':
-            return 'b';
-        default:
-            return c;
-        }
+        return switch (c) {
+            case '\n' -> 'n';
+            case '\r' -> 'r';
+            case '\f' -> 'f';
+            case '\t' -> 't';
+            case '\b' -> 'b';
+            default -> c;
+        };
     }
     public String toSource() {
         return source.toString();

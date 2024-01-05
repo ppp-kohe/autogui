@@ -18,6 +18,7 @@ public class IconListDemo {
 
     public List<IconItem> items;
 
+    @SuppressWarnings("this-escape")
     public IconListDemo() {
         GuiSwingIcons ics = GuiSwingIcons.getInstance();
         items = ics.getIconWords().stream()

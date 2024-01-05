@@ -15,6 +15,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.Serial;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,7 +41,9 @@ import java.util.stream.Collectors;
  *  and "false" or "0" for false.
  *   @see GuiReprValueBooleanCheckBox#getBooleanValue(String)
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
+    public GuiSwingViewBooleanCheckBox() {}
     @Override
     @SuppressWarnings("rawtypes")
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
@@ -55,7 +58,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
     public static class PropertyCheckBox extends JCheckBox
             implements ActionListener, GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Boolean> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected PopupExtension popup;
@@ -190,7 +193,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         }
 
         private void setSwingViewValueWithoutClock(Boolean value) {
-            lastValue = (value == null ? false : value);
+            lastValue = (value != null && value);
             GuiReprValueBooleanCheckBox repr = (GuiReprValueBooleanCheckBox) context.getRepresentation();
             //setSelected seems not to cause ActionEvent
             setSelected(repr.toUpdateValue(context, value));
@@ -268,7 +271,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
     public abstract static class BooleanSetAction extends AbstractAction implements
             PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyCheckBox pane;
 
@@ -303,7 +306,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     }
 
     public static class BooleanFlipAction extends BooleanSetAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public BooleanFlipAction(PropertyCheckBox pane) {
             super(pane);
@@ -317,7 +320,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     }
 
     public static class BooleanSetValueAction extends BooleanSetAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected boolean value;
         public BooleanSetValueAction(PropertyCheckBox pane, boolean v) {
@@ -334,7 +337,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
     public static class BooleanPasteAction extends PopupExtensionText.TextPasteAllAction
             implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyCheckBox checkBox;
 
@@ -373,7 +376,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
     public static class BooleanTextLoadAction extends PopupExtensionText.TextLoadAction
             implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyCheckBox checkBox;
 
@@ -420,7 +423,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
     public static class BooleanTextSaveAction extends PopupExtensionText.TextSaveAction
             implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyCheckBox checkBox;
 
@@ -453,7 +456,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
     }
 
     public static class BooleanTransferHandler extends TransferHandler {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyCheckBox pane;
 

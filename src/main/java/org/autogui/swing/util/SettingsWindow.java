@@ -11,12 +11,11 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
+import java.io.Serial;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -24,6 +23,7 @@ import java.util.stream.Collectors;
 
 /** a shared window manager for the setting panel.
  *   it needs to explicitly dispose once the instance obtained */
+@SuppressWarnings("this-escape")
 public class SettingsWindow {
     protected static SettingsWindow instance;
 
@@ -73,7 +73,7 @@ public class SettingsWindow {
                 .put(PopupExtension.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "window-close");
         window.getRootPane().getActionMap()
                 .put("window-close", new AbstractAction() {
-                    private static final long serialVersionUID = 1L;
+                    @Serial private static final long serialVersionUID = 1L;
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         window.setVisible(false);
@@ -82,8 +82,10 @@ public class SettingsWindow {
     }
 
     public static class SettingsFrame extends JFrame {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected boolean shown;
+
+        public SettingsFrame() {}
 
         public void setShown(boolean shown) {
             this.shown = shown;
@@ -221,7 +223,7 @@ public class SettingsWindow {
 
     /** a window holder for the color chooser used by {@link ColorButton}.
      *   it has a reference count and
-     *     a client needs to call {@link #retain()} and {@link #release()} for each instances. */
+     *     a client needs to call {@link #retain()} and {@link #release()} for each instance. */
     public static class ColorWindow {
         protected JFrame window;
 
@@ -289,7 +291,7 @@ public class SettingsWindow {
 
     /** a color well can be changed by a shared color-panel */
     public static class ColorButton extends JButton implements ActionListener {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected Color color;
         protected Consumer<Color> callback;
         protected ColorWindow window;
@@ -376,6 +378,8 @@ public class SettingsWindow {
 
         protected List<FileDialogManagerListener> listeners = new ArrayList<>(1);
 
+        public FileDialogManager() {}
+
         public void setCurrentPath(Path p) {
             init();
             if (p != null) {
@@ -438,7 +442,7 @@ public class SettingsWindow {
         public Path showConfirmDialogIfOverwriting(JComponent sender, Path p) {
             init();
             if (p != null && Files.isRegularFile(p)) {
-                int op = JOptionPane.showConfirmDialog(sender, p.toString() + " exists. Overwrites?",
+                int op = JOptionPane.showConfirmDialog(sender, p + " exists. Overwrites?",
                         "File Saving", JOptionPane.OK_CANCEL_OPTION);
                 if (op == JOptionPane.OK_OPTION) {
                     return p;
@@ -600,7 +604,7 @@ public class SettingsWindow {
             List<Path> paths = new ArrayList<>(ps);
             int removed = 0;
             while (paths.size() > maxHistoryList && !paths.isEmpty()) {
-                paths.remove(paths.size() - 1);
+                paths.removeLast();
                 removed++;
             }
             if (removed > 0) {
@@ -651,7 +655,7 @@ public class SettingsWindow {
 
     /** an action for changing the selected directory of {@link FileDialogManager} */
     public static class FileBackAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JFileChooser fileChooser;
         protected Path path;
         protected FileSystemView iconSource;
@@ -667,11 +671,7 @@ public class SettingsWindow {
             String name = "";
             if (path != null) {
                 Path fileName = path.getFileName();
-                if (fileName == null) {
-                    name = path.toString();
-                } else {
-                    name = fileName.toString();
-                }
+                name = Objects.requireNonNullElse(fileName, path).toString();
             }
             putValue(NAME, name);
             putValue(LARGE_ICON_KEY, path == null ? null : iconSource.getSystemIcon(path.toFile()));
@@ -691,9 +691,11 @@ public class SettingsWindow {
 
     /** a list renderer for history of files of {@link FileDialogManager} */
     public static class FileItemRenderer extends DefaultListCellRenderer {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected FileSystemView iconSource;
         protected Icon dummy;
+
+        public FileItemRenderer() {}
 
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -706,14 +708,9 @@ public class SettingsWindow {
         public String getText(Object value) {
             if (value == null) {
                 return "";
-            } else if (value instanceof Path) {
-                Path path = (Path) value;
+            } else if (value instanceof Path path) {
                 Path f = path.getFileName();
-                if (f != null) {
-                    return f.toString();
-                } else {
-                    return path.toString();
-                }
+                return Objects.requireNonNullElse(f, path).toString();
             } else {
                 return "" + value;
             }
@@ -765,7 +762,7 @@ public class SettingsWindow {
 
     /** a list-model for history files of {@link FileDialogManager} */
     public static class FileListModel extends AbstractListModel<Path> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected List<Path> paths;
         protected List<Path> initPaths;
 
@@ -839,7 +836,7 @@ public class SettingsWindow {
 
     /** an action for clearing history of files of {@link FileDialogManager} */
     public static class FileListClearAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected FileListModel listModel;
         protected JList<Path> list;
 
@@ -857,7 +854,7 @@ public class SettingsWindow {
 
     /** an action for removing an item in history of files of {@link FileDialogManager} */
     public static class FileListRemoveAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected FileListModel listModel;
         protected JList<Path> list;
 
@@ -882,7 +879,7 @@ public class SettingsWindow {
 
     /** an action for adding the selected file to history of files of {@link FileDialogManager} */
     public static class FileListAddAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected FileListModel listModel;
         protected JFileChooser chooser;
 

@@ -13,6 +13,7 @@ import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -36,6 +37,7 @@ import java.util.function.Supplier;
  *   reading and writing String.
  */
 public class GuiSwingViewStringField implements GuiSwingView {
+    public GuiSwingViewStringField() {}
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         PropertyStringPane field = new PropertyStringPane(context, new SpecifierManagerDefault(parentSpecifier));
@@ -46,14 +48,9 @@ public class GuiSwingViewStringField implements GuiSwingView {
         }
     }
 
-    @Override
-    public boolean isComponentResizable(GuiMappingContext context) {
-        return false;
-    }
-
     public static class PropertyStringPane extends SearchTextField
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<String> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected List<PopupCategorized.CategorizedMenuItem> menuItems;
@@ -62,6 +59,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         protected boolean currentValueSupported = true;
         protected List<Runnable> editFinishHandlers = new ArrayList<>(1);
 
+        @SuppressWarnings("this-escape")
         public PropertyStringPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
             this.specifierManager = specifierManager;
@@ -263,7 +261,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
     /** handle entire text */
     public static class StringTransferHandler extends TransferHandler {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected PropertyStringPane pane;
 
         public StringTransferHandler(PropertyStringPane pane) {

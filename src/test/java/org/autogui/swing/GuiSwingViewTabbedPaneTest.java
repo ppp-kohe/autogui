@@ -29,6 +29,8 @@ public class GuiSwingViewTabbedPaneTest extends GuiSwingTestCase {
 
     JFrame frame;
 
+    public GuiSwingViewTabbedPaneTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -56,6 +58,7 @@ public class GuiSwingViewTabbedPaneTest extends GuiSwingTestCase {
         @GuiIncluded public TabObj1 tab1 = new TabObj1();
         @GuiIncluded public TabObj2 tab2 = new TabObj2();
 
+        public TestObj() {}
         @GuiIncluded
         public void action() {
         }
@@ -64,11 +67,13 @@ public class GuiSwingViewTabbedPaneTest extends GuiSwingTestCase {
     @GuiIncluded
     public static class TabObj1 {
         @GuiIncluded public String prop;
+        public TabObj1() {}
     }
 
     @GuiIncluded
     public static class TabObj2 {
         @GuiIncluded public int prop;
+        public TabObj2() {}
     }
 
     public GuiSwingViewTabbedPane.ObjectTabbedPane create() {

@@ -12,6 +12,7 @@ import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.event.ActionEvent;
+import java.io.Serial;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -25,9 +26,10 @@ import java.util.List;
  * @param <ValueType> the value type of the pane
  * @param <PaneType>  a valued pane
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValuePane<ValueType>> extends JMenu implements TableTargetMenu,
         PopupCategorized.CategorizedMenuItemComponent {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected PaneType component;
     protected GuiMappingContext context;
     protected GuiSwingTaskRunner.ContextAction runner;
@@ -68,6 +70,7 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
     public void clearHistory() {
         GuiPreferences prefs = context.getPreferences();
         try (var lock = prefs.lock()) {
+            lock.use();
             prefs.clearHistories();
         }
     }
@@ -82,6 +85,7 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
         List<GuiPreferences.HistoryValueEntry> prefEs;
         GuiPreferences prefs = context.getPreferences();
         try (var lock = prefs.lock()) {
+            lock.use();
             prefEs = prefs.getHistoryValues();
         }
         List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefEs);
@@ -150,7 +154,7 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
      * @param <PaneType>  the column component
      */
     public static class HistoryMenuForTableColumn<ValueType, PaneType extends GuiSwingView.ValuePane<ValueType>> extends GuiSwingHistoryMenu<ValueType, PaneType> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiReprCollectionTable.TableTargetColumn target;
         public HistoryMenuForTableColumn(PaneType component, GuiMappingContext context, GuiReprCollectionTable.TableTargetColumn target) {
             super(component, context);
@@ -174,7 +178,7 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
      * @param <ValueType> the value type of the target component
      */
     public static class HistorySetAction<ValueType> extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected ValueType value;
         protected GuiSwingView.ValuePane<ValueType> component;
 
@@ -200,7 +204,7 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
      * @param <ValueType> the value type of the target column
      */
     public static class HistorySetForColumnAction<ValueType> extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected ValueType value;
         protected GuiReprCollectionTable.TableTargetColumn target;
 
@@ -221,7 +225,7 @@ public class GuiSwingHistoryMenu<ValueType, PaneType extends GuiSwingView.ValueP
      */
     @SuppressWarnings("rawtypes")
     public static class HistoryClearAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingHistoryMenu menu;
 
         public HistoryClearAction(GuiSwingHistoryMenu menu) {

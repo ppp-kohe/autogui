@@ -10,6 +10,7 @@ import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
+import java.io.Serial;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.time.Instant;
@@ -161,7 +162,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
      */
     public static class GuiSwingLogStringRenderer extends TextCellRenderer<GuiLogEntry>
             implements LogEntryRenderer {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected GuiLogManager manager;
 
@@ -170,6 +171,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         protected Map<AttributedCharacterIterator.Attribute, Object> timeStyle;
         protected Map<AttributedCharacterIterator.Attribute, Object> followingLineStyle;
 
+        @SuppressWarnings("this-escape")
         public GuiSwingLogStringRenderer(GuiLogManager manager, ContainerType type) {
             this.manager = manager;
             this.containerType = type;
@@ -214,8 +216,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
 
         @Override
         public void setSelectionFromValue(GuiLogEntry value) {
-            if (value instanceof GuiSwingLogEntryString) {
-                GuiSwingLogEntryString sStr = (GuiSwingLogEntryString) value;
+            if (value instanceof GuiSwingLogEntryString sStr) {
                 setSelectionRange(sStr);
             }
             super.setSelectionFromValue(value);
@@ -237,8 +238,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
 
         @Override
         public String format(GuiLogEntry value) {
-            if (value instanceof GuiLogEntryString) {
-                GuiLogEntryString str = (GuiLogEntryString) value;
+            if (value instanceof GuiLogEntryString str) {
                 return formatPreProcess(String.format("%s %s",
                         manager.formatTime(str.getTime()),
                         str.getData()));

@@ -40,8 +40,8 @@ public @interface GuiListSelectionCallback {
     /**
      * determines the type of parameter list.
      * @return if true, the target method must take
-     *   a list of row-indices (List&lt;Integer&gt;) or
-     *   a list of  a list of row-and-column-indices (List&lt;int[]&gt;).
+     *   a list of row-indices ({@code List<Integer>}) or
+     *   a list of  a list of row-and-column-indices ({@code List<int[]>}).
      *   if false, the target method must take a list of table elements
      *     (List&lt;E&gt; and E will be used for matching the table property).
      */

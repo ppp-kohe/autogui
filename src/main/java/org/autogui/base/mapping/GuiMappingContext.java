@@ -3,6 +3,7 @@ package org.autogui.base.mapping;
 import org.autogui.base.log.GuiLogManager;
 import org.autogui.base.type.*;
 
+import java.io.Serial;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,8 +20,8 @@ import java.util.stream.Collectors;
  *       {@link #GuiMappingContext(GuiTypeElement)}.
  *        The type-element tree can be obtained by GuiTypeBuilder.
  *  <p>
- *      Second, {@link GuiReprSet} receives the unmapped context object, and constructs sub-trees.
- *       The sub-trees are created by using {@link #createChildCandidates()} and
+ *      Second, {@link GuiReprSet} receives the unmapped context object, and constructs subtrees.
+ *       The subtrees are created by using {@link #createChildCandidates()} and
  *         matched with {@link GuiReprSet#match(GuiMappingContext)}.
  *          The only matched sub-context becomes an actual child of a context by {@link #addToParent()}.
  *          Also, if matched, the context becomes to have a {@link GuiRepresentation}.
@@ -108,7 +109,7 @@ public class GuiMappingContext {
 
         @Override
         public String toString() {
-            return "Source(" + Objects.toString(value) + ")";
+            return "Source(" + value + ")";
         }
 
         @Override
@@ -197,6 +198,7 @@ public class GuiMappingContext {
         this(typeElement, representation, null, NO_SOURCE);
     }
 
+    @SuppressWarnings("this-escape")
     public GuiMappingContext(GuiTypeElement typeElement, GuiRepresentation representation, GuiMappingContext parent, GuiSourceValue source) {
         this.typeElement = typeElement;
         this.representation = representation;
@@ -221,11 +223,7 @@ public class GuiMappingContext {
     }
 
     public List<GuiMappingContext> getChildren() {
-        if (children == null) {
-            return Collections.emptyList();
-        } else {
-            return children;
-        }
+        return Objects.requireNonNullElse(children, Collections.emptyList());
     }
 
     public GuiMappingContext getParent() {
@@ -293,7 +291,7 @@ public class GuiMappingContext {
         String s = typeElement.getAcceleratorKeyStroke();
         if (s.isEmpty()) {
             String name = getName();
-            if (name.length() > 0) {
+            if (!name.isEmpty()) {
                 char c = name.charAt(0);
                 return Character.toString(Character.toUpperCase(c));
             }
@@ -530,7 +528,7 @@ public class GuiMappingContext {
     public String getIconName() {
         if (iconName == null) {
             iconName = nameSplit(getName(), true)
-                    .get(0).toLowerCase();
+                    .getFirst().toLowerCase();
         }
         return iconName;
     }
@@ -557,11 +555,11 @@ public class GuiMappingContext {
      * If <code>forDisplay=false</code>, "MYName" =&gt; ["M", "Y", "Name"]
      */
     public static List<String> nameSplit(String name, boolean forDisplay) {
-        List<String> words = new ArrayList<String>();
+        List<String> words = new ArrayList<>();
         StringBuilder buf = new StringBuilder();
         for (int i = 0, len = name.length(); i < len; ++i) {
             char c = name.charAt(i);
-            if (buf.length() > 0 &&
+            if (!buf.isEmpty() &&
                     (isNameSeparator(c) ||
                      isNameCharUpper(c, i, len, name, forDisplay))) {
                 words.add(buf.toString());
@@ -571,19 +569,20 @@ public class GuiMappingContext {
                 buf.append(c);
             }
         }
-        if (buf.length() > 0 || words.isEmpty()) {
+        if (!buf.isEmpty() || words.isEmpty()) {
             words.add(buf.toString());
         }
         return words;
     }
 
     public static boolean isNameCharUpper(char c, int i, int len, String name, boolean forDisplay) {
+        boolean upperOrDigit = Character.isUpperCase(c) || Character.isDigit(c);
         if (forDisplay) {
-            return ((Character.isUpperCase(c) || Character.isDigit(c)) &&
+            return (upperOrDigit &&
                     ((i > 0 && Character.isLowerCase(name.charAt(i - 1))) ||  // a[A]
                      (i + 1 < len && Character.isLowerCase(name.charAt(i + 1))))); //[A]a
         } else {
-            return Character.isUpperCase(c) || Character.isDigit(c);
+            return upperOrDigit;
         }
     }
 
@@ -795,7 +794,7 @@ public class GuiMappingContext {
                 .add(e));
         tasks.forEach((k, v) -> {
             v.sort(Comparator.comparing(DelayedTask::getTaskClock));
-            v.get(v.size() - 1).run(v);
+            v.getLast().run(v);
         });
     }
 
@@ -1099,6 +1098,7 @@ public class GuiMappingContext {
      * @deprecated
      * @since 1.2
      */
+    @Deprecated
     public static class ContextExecutorServiceSingleThread implements ContextExecutorService {
         protected ExecutorService service;
 
@@ -1147,7 +1147,7 @@ public class GuiMappingContext {
 
         public ContextExecutorServiceForkJoin() {
             this(new ForkJoinPool(1, new ForkJoinPool.ForkJoinWorkerThreadFactory() {
-                ForkJoinPool.ForkJoinWorkerThreadFactory defaultFactory = ForkJoinPool.defaultForkJoinWorkerThreadFactory;
+                final ForkJoinPool.ForkJoinWorkerThreadFactory defaultFactory = ForkJoinPool.defaultForkJoinWorkerThreadFactory;
 
                 @Override
                 public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
@@ -1178,7 +1178,7 @@ public class GuiMappingContext {
      */
     public static class ContextExecutorForkJoinTask<V> extends ForkJoinTask<V>
         implements RunnableFuture<V> {
-        public static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected Callable<V> task;
         protected V value;
         protected AtomicReference<Thread> runnerThread = new AtomicReference<>();

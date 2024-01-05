@@ -27,6 +27,8 @@ public class GuiReprValueStringFieldTest {
 
     GuiMappingContext contextReadOnly;
 
+    public GuiReprValueStringFieldTest() {}
+
     @Before
     public void setUp() {
         fld = new GuiReprValueStringField();
@@ -59,6 +61,8 @@ public class GuiReprValueStringFieldTest {
         public String getReadOnly() {
             return "hello";
         }
+
+        public TestObjRepr() {}
     }
 
     @Test

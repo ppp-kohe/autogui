@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
+import java.io.Serial;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -31,8 +32,9 @@ import java.util.stream.Collectors;
 /**
  * a table-model with {@link GuiMappingContext}
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingTableModelCollection extends ObjectTableModel {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected GuiMappingContext elementContext;
     protected Supplier<ObjectSpecifier> tableSpecifier;
     protected SpecifierManagerIndex rowSpecifierManager;
@@ -116,7 +118,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
     }
 
-    /** a sub-class of {@link ObjectTableModelColumns} with supporting settings and preferences */
+    /** a subclass of {@link ObjectTableModelColumns} with supporting settings and preferences */
     public static class GuiSwingTableModelColumns extends ObjectTableModelColumns
             implements PreferencesUpdateSupport, SettingsWindowClient {
 
@@ -217,6 +219,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         public void applyPrefsTo(ObjectTableColumnWithContext column, DynamicColumnContainer d) {
             GuiPreferences prefs = column.getContext().getPreferences();
             try (var lock = prefs.lock()) {
+                lock.use();
                 PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth();
                 w.loadFrom(prefs);
                 w.applyTo(column.asColumn());
@@ -341,6 +344,8 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
     public static class PreferencesForTableColumnOrderStatic implements GuiSwingPreferences.PreferencesByJsonEntry {
         protected Map<Integer, PreferencesForTableColumnOrder> modelIndexToOrder = new LinkedHashMap<>();
 
+        public PreferencesForTableColumnOrderStatic() {}
+
         @Override
         public String getKey() {
             return "$columnOrder";
@@ -366,9 +371,8 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         @Override
         public Object toJson() {
             Map<String,Object> map = new LinkedHashMap<>();
-            modelIndexToOrder.forEach((k,v) -> {
-                map.put(Integer.toString(k), v.toJson());
-            });
+            modelIndexToOrder.forEach((k,v) ->
+                map.put(Integer.toString(k), v.toJson()));
             return map;
         }
 
@@ -379,7 +383,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
                 Map<String,Object> map = (Map<String,Object>) json;
                 map.forEach((k,v) -> {
                     try {
-                        int n = Integer.valueOf(k);
+                        int n = Integer.parseInt(k);
                         PreferencesForTableColumnOrder w = new PreferencesForTableColumnOrder();
                         w.setJson(v);
                         modelIndexToOrder.put(n, w);
@@ -460,7 +464,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
      */
     public static class PreferencesForTableColumnWidthStatic implements GuiSwingPreferences.PreferencesByJsonEntry {
         protected Map<Integer, PreferencesForTableColumnWidth> modelIndexToWidth = new LinkedHashMap<>();
-
+        public PreferencesForTableColumnWidthStatic() {}
         @Override
         public String getKey() {
             return "$columnWidth";
@@ -480,9 +484,8 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         @Override
         public Object toJson() {
             Map<String,Object> map = new LinkedHashMap<>();
-            modelIndexToWidth.forEach((k,v) -> {
-                map.put(Integer.toString(k), v.toJson());
-            });
+            modelIndexToWidth.forEach((k,v) ->
+                map.put(Integer.toString(k), v.toJson()));
             return map;
         }
 
@@ -493,7 +496,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
                 Map<String,Object> map = (Map<String,Object>) json;
                 map.forEach((k,v) -> {
                     try {
-                        int n = Integer.valueOf(k);
+                        int n = Integer.parseInt(k);
                         PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth();
                         w.setJson(v);
                         modelIndexToWidth.put(n, w);
@@ -552,7 +555,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
     }
 
     /**
-     * a row-index column with a actions including toString and JSON
+     * a row-index column with an actions including toString and JSON
      */
     public static class ObjectTableColumnRowIndexWithActions
             extends ObjectTableColumn.ObjectTableColumnRowIndex implements ObjectTableColumn.PopupMenuBuilderSource {
@@ -586,11 +589,6 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
 
         @Override
-        public Consumer<Object> getMenuTargetPane() {
-            return null;
-        }
-
-        @Override
         public PopupExtension.PopupMenuBuilder getMenuBuilder(JTable table) {
             return new ObjectTableColumnValue.ObjectTableColumnActionBuilder(table, this,
                     new PopupCategorized(() -> Collections.singletonList(new NumberCopyAction()), null,
@@ -603,7 +601,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
      */
     public static class NumberCopyAction extends PopupExtensionText.TextCopyAllAction
             implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public NumberCopyAction() {
             super(null);

@@ -30,7 +30,7 @@ public class NumberListDemo {
     public MatrixPrimitive matrixPrimitive = new MatrixPrimitive();
 
     @GuiIncluded
-    public class Integers {
+    public static class Integers {
         @GuiIncluded(index = 1)
         public int start = 0;
         @GuiIncluded(index = 2)
@@ -60,11 +60,11 @@ public class NumberListDemo {
                 int n = integers.get(idx);
                 buf.append(" [").append(idx).append("]: ").append(n);
                 if (i > 0 && i % 10 == 0) {
-                    System.out.println(buf.toString());
+                    System.out.println(buf);
                     buf = new StringBuilder();
                 }
             }
-            if (buf.length() > 0) {
+            if (!buf.isEmpty()) {
                 System.out.println(buf);
             }
         }
@@ -94,7 +94,7 @@ public class NumberListDemo {
     }
 
     @GuiIncluded
-    public class Floats {
+    public static class Floats {
         @GuiIncluded(index = 1)
         public double start = 0;
         @GuiIncluded(index = 2)
@@ -142,11 +142,11 @@ public class NumberListDemo {
                 Object n = data.get(idx);
                 buf.append(" [").append(idx).append("]: ").append(n);
                 if (i > 0 && i % 10 == 0) {
-                    System.out.println(buf.toString());
+                    System.out.println(buf);
                     buf = new StringBuilder();
                 }
             }
-            if (buf.length() > 0) {
+            if (!buf.isEmpty()) {
                 System.out.println(buf);
             }
         }

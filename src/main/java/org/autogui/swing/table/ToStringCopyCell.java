@@ -21,6 +21,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.io.Serial;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -33,6 +34,7 @@ import java.util.stream.IntStream;
  * classes for copying string description of selected cells and rows
  */
 public class ToStringCopyCell {
+    public ToStringCopyCell() {}
     /**
      * a composite for to-string relying on
      * {@link GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}
@@ -74,6 +76,7 @@ public class ToStringCopyCell {
      * the key of {@link TableMenuCompositeToStringCopy}
      */
     public static class TableMenuCompositeSharedToStringCopy implements TableMenuCompositeShared {
+        public TableMenuCompositeSharedToStringCopy() {}
         @Override
         public List<CategorizedMenuItem> composite(JTable table, List<TableMenuComposite> columns, boolean row) {
             List<TableMenuCompositeToStringCopy> cs = columns.stream()
@@ -93,8 +96,9 @@ public class ToStringCopyCell {
     /**
      * the action defined by composition of selected columns; it joins cell strings by new-lines (for row) and tabs (for columns).
      */
+    @SuppressWarnings("this-escape")
     public static class ToStringCopyForCellsAction extends GuiSwingTaskRunner.ContextAction implements TableTargetCellAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected List<TableMenuCompositeToStringCopy> activatedColumns;
         protected boolean onlyApplyingSelectedColumns;
 
@@ -107,11 +111,6 @@ public class ToStringCopyCell {
             }
             this.activatedColumns = activatedColumns;
             this.onlyApplyingSelectedColumns = onlyApplyingSelectedColumns;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -198,8 +197,9 @@ public class ToStringCopyCell {
         }
     }
 
+    @SuppressWarnings("this-escape")
     public static class ToStringSaveForCellsAction extends ToStringCopyForCellsAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JComponent table;
 
         public ToStringSaveForCellsAction(GuiMappingContext context, List<TableMenuCompositeToStringCopy> activatedColumns, boolean onlyApplyingSelectedColumns,
@@ -257,7 +257,7 @@ public class ToStringCopyCell {
     }
 
     public static class TableMenuCompositeSharedToStringPaste implements TableMenuCompositeShared  { //TODO
-
+        public TableMenuCompositeSharedToStringPaste() {}
         @Override
         public List<CategorizedMenuItem> composite(JTable table, List<TableMenuComposite> columns, boolean row) {
             List<TableMenuCompositeToStringPaste> cs = columns.stream()
@@ -274,8 +274,9 @@ public class ToStringCopyCell {
         }
     }
 
+    @SuppressWarnings("this-escape")
     public static class ToStringPasteForCellsAction extends PopupExtensionText.TextPasteAllAction implements TableTargetCellAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected List<TableMenuCompositeToStringPaste> activeComposites;
         protected String lineSeparator = "\\n"; //regex
         protected String columnSeparator = "\\t"; //regex
@@ -379,8 +380,9 @@ public class ToStringCopyCell {
         }
     }
 
+    @SuppressWarnings("this-escape")
     public static class ToStringLoadForCellsAction extends ToStringPasteForCellsAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JComponent table;
         protected PopupExtensionText.TextLoadAction loader;
 
@@ -395,7 +397,7 @@ public class ToStringCopyCell {
             }
             this.table = table;
             loader = new PopupExtensionText.TextLoadAction(null) {
-                private static final long serialVersionUID = 1L;
+                @Serial private static final long serialVersionUID = 1L;
                 @Override
                 protected JComponent getComponent() {
                     return table;

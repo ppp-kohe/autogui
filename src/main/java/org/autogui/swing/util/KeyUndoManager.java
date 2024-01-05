@@ -8,6 +8,7 @@ import javax.swing.text.JTextComponent;
 import javax.swing.undo.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import java.util.List;
  *     km.putListenersAndActionsTo(editorPane);
  * </pre>
  */
+@SuppressWarnings("this-escape")
 public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusListener {
     protected UndoManager undoManager;
     protected DynamicCompoundEdit edits;
@@ -167,7 +169,7 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
     /** the action for undo or redo */
     public static class UndoAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected UndoManager manager;
         protected boolean undo;
         protected boolean lastEnabled;
@@ -235,7 +237,7 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
 
     /** a composition of undoable-edits */
     public static class DynamicCompoundEdit extends AbstractUndoableEdit {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected List<UndoableEdit> edits = new ArrayList<>();
 
         protected boolean fixed = false;
@@ -273,7 +275,7 @@ public class KeyUndoManager implements KeyListener, UndoableEditListener, FocusL
                 return false;
             } else {
                 if (edits.isEmpty() ||
-                        edits.get(edits.size() - 1).getPresentationName().equals(anEdit.getPresentationName())) {
+                        edits.getLast().getPresentationName().equals(anEdit.getPresentationName())) {
                     edits.add(anEdit);
                     return true;
                 } else {

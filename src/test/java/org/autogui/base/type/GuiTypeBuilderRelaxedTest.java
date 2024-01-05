@@ -12,6 +12,8 @@ public class GuiTypeBuilderRelaxedTest {
     GuiTypeBuilder.GuiTypeBuilderRelaxed builder;
     GuiTypeElement type;
 
+    public GuiTypeBuilderRelaxedTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder.GuiTypeBuilderRelaxed();
@@ -32,7 +34,7 @@ public class GuiTypeBuilderRelaxedTest {
     }
 
     static class JdkExtTest extends AbstractMap<String,String> implements AutoCloseable {
-        private List<Entry<String,String>> es = new ArrayList<>();
+        private final List<Entry<String,String>> es = new ArrayList<>();
         @Override
         public Set<Entry<String,String>> entrySet() {
             return new HashSet<>(es);

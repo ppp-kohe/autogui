@@ -18,6 +18,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
@@ -66,7 +67,9 @@ import java.util.stream.Collectors;
  *
  *   <code>$settingWindow</code> : {@link GuiSwingPreferences.WindowPreferencesUpdater}
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingViewNumberSpinner implements GuiSwingView {
+    public GuiSwingViewNumberSpinner() {}
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         ValuePane<Object> pane;
@@ -83,7 +86,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     }
 
     public static class InfinityNumberSpinner extends JSpinner {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public InfinityNumberSpinner(TypedSpinnerNumberModel model) {
             super(model);
             setMinimumSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(32), getMinimumSize().height));
@@ -96,7 +99,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     }
 
     public static class TypedNumberFormatter extends NumberFormatter {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected SpinnerNumberModel model;
 
         public TypedNumberFormatter(NumberFormat format, SpinnerNumberModel model) {
@@ -111,8 +114,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
 
         @Override
-        @SuppressWarnings("rawtypes")
-        public void setMinimum(Comparable minimum) {
+        public void setMinimum(Comparable<?> minimum) {
             model.setMinimum(minimum);
         }
 
@@ -122,8 +124,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        @SuppressWarnings("rawtypes")
-        public void setMaximum(Comparable max) {
+        public void setMaximum(Comparable<?> max) {
             model.setMaximum(max);
         }
 
@@ -135,7 +136,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     }
 
     public static class InfinityNumberEditor extends JSpinner.DefaultEditor {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public InfinityNumberEditor(JSpinner spinner) {
             super(spinner);
 
@@ -183,7 +184,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     public static class PropertyNumberSpinner extends InfinityNumberSpinner
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>, SettingsWindowClient,
             GuiSwingPreferences.PreferencesUpdateSupport {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected EditingRunner editingRunner;
@@ -498,7 +499,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
     public static abstract class NumberSetAction extends AbstractAction
             implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected ValuePane<Object> spinner;
         protected TypedSpinnerNumberModel model;
 
@@ -542,7 +543,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     }
 
     public static class NumberTextPasteAllAction extends PopupExtensionText.TextPasteAllAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected PropertyNumberSpinner spinner;
         public NumberTextPasteAllAction(PropertyNumberSpinner spinner) {
             super(spinner.getEditorField());
@@ -565,7 +566,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     }
 
     public static class NumberMaximumAction extends NumberSetAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected boolean max;
 
         public NumberMaximumAction(boolean max, PropertyNumberSpinner spinner) {
@@ -589,7 +590,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     }
 
     public static class NumberIncrementAction extends NumberSetAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected boolean inc;
 
         public NumberIncrementAction(boolean inc, PropertyNumberSpinner spinner) {
@@ -617,7 +618,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     }
 
     public static class TypedSpinnerNumberModelWithRepr extends TypedSpinnerNumberModel {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiReprValueNumberSpinner numberSpinner;
 
         public TypedSpinnerNumberModelWithRepr(GuiMappingContext context, GuiReprValueNumberSpinner numberSpinner) {
@@ -651,7 +652,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     }
 
     public static class TypedSpinnerNumberModel extends SpinnerNumberModel implements GuiSwingPreferences.Preferences {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiReprValueNumberSpinner.NumberType numberType;
         protected int depth;
         protected Object extendedValue;
@@ -908,7 +909,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
 
     public static class NumberTransferHandler extends TransferHandler {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected PropertyNumberSpinner pane;
         public NumberTransferHandler(PropertyNumberSpinner pane) {
             this.pane = pane;
@@ -957,7 +958,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
     public static class NumberSettingAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction,
         TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected NumberSettingPane pane;
         protected JPanel contentPane;
         protected SettingsWindowClient client;
@@ -1029,7 +1030,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     }
 
     public static class NumberSettingPane extends JPanel {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected TypedSpinnerNumberModel model;
         protected JCheckBox minCheckBox;
         protected JCheckBox maxCheckBox;
@@ -1240,7 +1241,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
     public static class PropertyLabelNumber extends GuiSwingViewLabel.PropertyLabel
             implements SettingsWindowClient, GuiSwingPreferences.PreferencesUpdateSupport {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected TypedSpinnerNumberModel model;
         protected TypedSpinnerNumberModelPreferencesUpdater modelPreferencesUpdater;
         protected SettingsWindow settingsWindow;

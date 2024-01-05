@@ -101,7 +101,9 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
     TableSelectionChangeNothing NO_CHANGE = new TableSelectionChangeNothing();
 
     /** indicates that the selection is not changed */
-    class TableSelectionChangeNothing implements TableSelectionChange { }
+    class TableSelectionChangeNothing implements TableSelectionChange {
+        public TableSelectionChangeNothing() {}
+    }
 
     /**
      * index list of selected rows

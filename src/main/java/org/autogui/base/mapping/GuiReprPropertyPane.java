@@ -93,8 +93,7 @@ public class GuiReprPropertyPane extends GuiReprValue {
      */
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
-        if (source instanceof GuiReprValue.NamedValue) {
-            GuiReprValue.NamedValue named = (GuiReprValue.NamedValue) source;
+        if (source instanceof NamedValue named) {
             return toJsonProperty(context, named.value);
         } else {
             return toJsonProperty(context, source);
@@ -149,11 +148,6 @@ public class GuiReprPropertyPane extends GuiReprValue {
 
     @Override
     public boolean isFromJsonTakingMapWithContextNameEntry(GuiMappingContext context) {
-        return true;
-    }
-
-    @Override
-    public boolean isJsonSetter() {
         return true;
     }
 

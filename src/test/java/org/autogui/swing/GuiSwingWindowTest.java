@@ -13,6 +13,8 @@ public class GuiSwingWindowTest extends GuiSwingTestCase {
     TestObj obj;
     JFrame frame;
 
+    public GuiSwingWindowTest() {}
+
     @Before
     public void setUp() {
         obj = new TestObj();
@@ -31,6 +33,7 @@ public class GuiSwingWindowTest extends GuiSwingTestCase {
         void action() {
             System.err.println("hello");
         }
+        public TestObj() {}
     }
 
     @Test

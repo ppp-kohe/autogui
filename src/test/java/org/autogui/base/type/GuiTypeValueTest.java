@@ -9,6 +9,8 @@ public class GuiTypeValueTest {
     GuiTypeBuilder builder;
     GuiTypeValue intType;
 
+    public GuiTypeValueTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();

@@ -32,6 +32,8 @@ public class GuiSwingViewEnumComboBoxTest extends GuiSwingTestCase {
 
     JFrame frame;
 
+    public GuiSwingViewEnumComboBoxTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -60,6 +62,7 @@ public class GuiSwingViewEnumComboBoxTest extends GuiSwingTestCase {
     public static class TestObj {
         @GuiIncluded
         public TestEnum value;
+        public TestObj() {}
     }
 
     public enum TestEnum {

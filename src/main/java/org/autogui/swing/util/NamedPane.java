@@ -1,23 +1,26 @@
 package org.autogui.swing.util;
 
 import javax.swing.*;
+import java.io.Serial;
 
 /**
  * a wrapper pane with a label
  */
 public class NamedPane extends JComponent {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected String displayName;
     protected JLabel label;
     protected JComponent contentPane;
 
     public NamedPane() { }
 
+    @SuppressWarnings("this-escape")
     public NamedPane(String displayName) {
         this.displayName = displayName;
         init();
     }
 
+    @SuppressWarnings("this-escape")
     public NamedPane(String displayName, JComponent contentPane) {
         this(displayName);
         this.contentPane = contentPane;

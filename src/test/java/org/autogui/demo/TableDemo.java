@@ -5,7 +5,6 @@ import org.autogui.swing.AutoGuiShell;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @GuiIncluded
 public class TableDemo {
@@ -36,7 +35,7 @@ public class TableDemo {
         }
 
         @GuiIncluded public void actionA3(List<int[]> l, String name) {
-            System.err.println("actionA3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+            System.err.println("actionA3: " + l.stream().map(Arrays::toString).toList() + " : " + name);
         }
     }
 
@@ -56,7 +55,7 @@ public class TableDemo {
         }
 
         @GuiIncluded public void actionB3(List<int[]> l, String name) {
-            System.err.println("actionB3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+            System.err.println("actionB3: " + l.stream().map(Arrays::toString).toList() + " : " + name);
         }
     }
 
@@ -99,7 +98,7 @@ public class TableDemo {
         }
 
         @GuiIncluded public void actionC3(List<int[]> l, String name) {
-            System.err.println("actionC3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+            System.err.println("actionC3: " + l.stream().map(Arrays::toString).toList() + " : " + name);
         }
     }
 
@@ -123,7 +122,7 @@ public class TableDemo {
         }
 
         @GuiIncluded public void actionD3(List<int[]> l, String name) {
-            System.err.println("actionD3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+            System.err.println("actionD3: " + l.stream().map(Arrays::toString).toList() + " : " + name);
         }
     }
 
@@ -147,7 +146,7 @@ public class TableDemo {
         }
 
         @GuiIncluded public void actionE3(List<int[]> l, String name) {
-            System.err.println("actionE3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+            System.err.println("actionE3: " + l.stream().map(Arrays::toString).toList() + " : " + name);
         }
     }
 
@@ -175,7 +174,7 @@ public class TableDemo {
         }
 
         @GuiIncluded public void actionElemE3(List<int[]> l, String name) {
-            System.err.println(this + ".action3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+            System.err.println(this + ".action3: " + l.stream().map(Arrays::toString).toList() + " : " + name);
         }
 
 
@@ -203,7 +202,7 @@ public class TableDemo {
         }
 
         @GuiIncluded public void actionF3(List<int[]> l, String name) {
-            System.err.println("actionF3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+            System.err.println("actionF3: " + l.stream().map(Arrays::toString).toList() + " : " + name);
         }
     }
 
@@ -215,7 +214,7 @@ public class TableDemo {
         public ElemF(float fValue, Float... floatList) {
             this.fValue = fValue;
             List<Float> fs = Arrays.asList(floatList);
-            e = new ElemE(fs.get(0),
+            e = new ElemE(fs.getFirst(),
                     fs.subList(1, fs.size()).toArray(new Float[fs.size() - 1]));
         }
 
@@ -229,7 +228,7 @@ public class TableDemo {
         }
 
         @GuiIncluded public void actionElemF3(List<int[]> l, String name) {
-            System.err.println(this + ".action3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+            System.err.println(this + ".action3: " + l.stream().map(Arrays::toString).toList() + " : " + name);
         }
 
         @Override
@@ -254,7 +253,7 @@ public class TableDemo {
         }
 
         @GuiIncluded public void actionG3(List<int[]> l, String name) {
-            System.err.println("actionG3: " + l.stream().map(Arrays::toString).collect(Collectors.toList()) + " : " + name);
+            System.err.println("actionG3: " + l.stream().map(Arrays::toString).toList() + " : " + name);
         }
     }
 

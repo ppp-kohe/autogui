@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * the special button for a tool-bar that can collect overflow components as a popup-menu.
+ * the special button for a toolbar that can collect overflow components as a popup-menu.
  * <pre>
  *     new ToolBarHiddenMenu().addTo(toolBar);
  * </pre>
@@ -24,6 +24,7 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
     protected JPopupMenu menu;
     protected List<InvisibleItem> invisibleComponents = new ArrayList<>();
     protected Component glue;
+    @SuppressWarnings("this-escape")
     public ToolBarHiddenMenu() {
         setOpaque(false);
         setVisible(false);
@@ -146,7 +147,7 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
                 maxEnd = Math.max(maxEnd, end(existing.getBounds(), orientation));
             }
         }
-        for (var last : invisibleComponents) {;
+        for (var last : invisibleComponents) {
             int lastWidth = width(last.getToolBarBounds(), orientation);
             if (maxEnd + lastWidth <= totalSize) {
                 availableItems.add(last);
@@ -207,6 +208,8 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
     }
 
     public static class IconDots implements Icon {
+
+        public IconDots() {}
 
         protected float getDotSize() {
             return UIManagerUtil.getInstance().getScaledSizeFloat(3);

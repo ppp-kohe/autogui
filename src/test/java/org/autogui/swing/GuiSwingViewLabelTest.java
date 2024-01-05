@@ -27,6 +27,8 @@ public class GuiSwingViewLabelTest extends GuiSwingTestCase {
 
     JFrame frame;
 
+    public GuiSwingViewLabelTest() {}
+
     @Before
     public void setUp() {
 
@@ -47,6 +49,7 @@ public class GuiSwingViewLabelTest extends GuiSwingTestCase {
     public static class TestObj {
         @GuiIncluded
         public Object value = new TestValue("hello");
+        public TestObj() {}
     }
 
     public static class TestValue {

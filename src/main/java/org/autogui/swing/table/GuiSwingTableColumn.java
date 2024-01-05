@@ -28,7 +28,7 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
      *  For columns of nested lists, the managers are also nested.
      *    In order to specify the indices Map&lt;SpecifierManagerIndex,Integer&gt; is used.
      *     This means that instances of the class are created for each nested structure
-     *      and the identify of them are used. */
+     *      and identify of them are used. */
     class SpecifierManagerIndex implements SpecifierManager {
         protected Supplier<ObjectSpecifier> tableSpecifier;
         protected int index;
@@ -86,7 +86,7 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
     }
 
     /**
-     * create wrapper for the editor component; useful for avoiding to resize with the entire cell size
+     * create wrapper for the editor component; useful for avoiding resize with the entire cell size
      * @param component the wrapped pane
      * @return the wrapper
      * @since 1.6
@@ -101,6 +101,7 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
      */
     class ValueWrappingPaneForEditor extends GuiSwingViewWrapper.ValueWrappingPane<Object> {
         protected boolean sharedColor;
+        @SuppressWarnings("this-escape")
         public ValueWrappingPaneForEditor(Component view, boolean shareColor) {
             super((LayoutManager) null);
             this.sharedColor = shareColor;

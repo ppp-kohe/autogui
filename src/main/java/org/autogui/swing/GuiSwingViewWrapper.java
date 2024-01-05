@@ -9,11 +9,13 @@ import org.autogui.swing.util.PopupExtension;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class GuiSwingViewWrapper {
+    public GuiSwingViewWrapper() {}
     /**
      * indicating the pane wraps another {@link GuiSwingView.ValuePane}
      * @param <ValueType> the value type
@@ -94,7 +96,7 @@ public class GuiSwingViewWrapper {
     }
 
     public static class ValueScrollPane<ValueType> extends JScrollPane implements ValuePaneWrapper<ValueType> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingView.ValuePane<ValueType> pane;
 
         @SuppressWarnings("unchecked")
@@ -184,9 +186,10 @@ public class GuiSwingViewWrapper {
     }
 
     public static class ValueWrappingPane<ValueType> extends JPanel implements ValuePaneWrapper<ValueType> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingView.ValuePane<ValueType> pane;
 
+        @SuppressWarnings("this-escape")
         public ValueWrappingPane(Component view) {
             super(new BorderLayout());
             setOpaque(false);

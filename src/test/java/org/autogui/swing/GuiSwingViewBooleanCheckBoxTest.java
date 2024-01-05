@@ -32,6 +32,8 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
 
     JFrame frame;
 
+    public GuiSwingViewBooleanCheckBoxTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -61,6 +63,7 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
     public static class TestObj {
         @GuiIncluded
         public boolean value;
+        public TestObj() {}
     }
 
     /////////
@@ -117,9 +120,8 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
             GuiSwingView.ToStringCopyAction a = runGet(() -> findMenuItemAction(propBox.getSwingStaticMenuItems(),
                     GuiSwingView.ToStringCopyAction.class));
 
-            run(() -> {
-                a.actionPerformed(null);
-            });
+            run(() ->
+                a.actionPerformed(null));
 
             Assert.assertEquals("copy text",
                     "false",
@@ -127,9 +129,8 @@ public class GuiSwingViewBooleanCheckBoxTest extends GuiSwingTestCase {
 
             run(() -> propBox.setSwingViewValue(true));
 
-            run(() -> {
-                a.actionPerformed(null);
-            });
+            run(() ->
+                a.actionPerformed(null));
 
             Assert.assertEquals("copy text after update",
                     "true",

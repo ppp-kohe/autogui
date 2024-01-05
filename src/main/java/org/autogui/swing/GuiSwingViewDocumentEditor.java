@@ -20,6 +20,7 @@ import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
+import java.io.Serial;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -70,7 +71,9 @@ import java.util.function.Supplier;
  *     }
  * </pre>
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingViewDocumentEditor implements GuiSwingView {
+    public GuiSwingViewDocumentEditor() {}
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
@@ -157,8 +160,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public void initHighlight() {
             pane.setCaret(new DefaultCaret() {
-                private static final long serialVersionUID = 1L;
-                SelectionHighlightPainter painter = new SelectionHighlightPainter();
+                @Serial private static final long serialVersionUID = 1L;
+                final SelectionHighlightPainter painter = new SelectionHighlightPainter();
                 @Override
                 protected Highlighter.HighlightPainter getSelectionPainter() {
                     return painter;
@@ -237,9 +240,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static void setSwingViewValue(JEditorPane pane, SpecifierManager specifierManager, GuiMappingContext context,
                                          Object newValue, boolean contextUpdate, GuiTaskClock viewClock) {
         GuiReprValueDocumentEditor docEditor = (GuiReprValueDocumentEditor) context.getRepresentation();
-        Document doc = docEditor.toUpdateValue(context, newValue, delayedDoc -> {
-            setSwingViewValueDocument(pane, specifierManager, context, delayedDoc, delayedDoc, contextUpdate, viewClock);
-        });
+        Document doc = docEditor.toUpdateValue(context, newValue, delayedDoc ->
+            setSwingViewValueDocument(pane, specifierManager, context, delayedDoc, delayedDoc, contextUpdate, viewClock));
         if (doc != null) {
             setSwingViewValueDocument(pane, specifierManager, context, newValue, doc, contextUpdate, viewClock);
         }
@@ -284,7 +286,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static class PropertyDocumentEditorPane extends JEditorPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
                 SettingsWindowClient { //ValuePane<StringBuilder|Content|Document>
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected PopupExtension popup;
@@ -420,7 +422,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static class PropertyDocumentTextPane extends JTextPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
             SettingsWindowClient, GuiSwingPreferences.PreferencesUpdateSupport   { //ValuePane<StringBuilder|Content|Document>
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected PopupExtension popup;
@@ -597,19 +599,15 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
 
     public static JScrollPane scroll(Container c) {
-        if (c == null) {
-            return null;
-        } else if (c instanceof JViewport) {
-            return scroll(c.getParent());
-        } else if (c instanceof JScrollPane) {
-            return (JScrollPane) c;
-        } else {
-            return null;
-        }
+        return switch (c) {
+            case JViewport jViewport -> scroll(c.getParent());
+            case JScrollPane jScrollPane -> jScrollPane;
+            case null, default -> null;
+        };
     }
 
     public static class TextWrapTextAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTextComponent field;
 
         public TextWrapTextAction(JTextComponent field) {
@@ -670,7 +668,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
 
     public static class DocumentSettingAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected DocumentSettingPane pane;
         protected JPanel contentPane;
         protected SettingsWindowClient editorPane;
@@ -709,7 +707,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
     public static class DocumentSettingPane extends JPanel implements ItemListener, ChangeListener,
             GuiSwingPreferences.Preferences {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JEditorPane pane;
         protected Map<String, Font> nameFonts = new HashMap<>();
 
@@ -750,7 +748,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 defaultFontSize = StyleConstants.getFontSize(s);
                 defaultBold = StyleConstants.isBold(s);
                 defaultItalic = StyleConstants.isItalic(s);
-                defaultLineSpace = (double) StyleConstants.getLineSpacing(s);
+                defaultLineSpace = StyleConstants.getLineSpacing(s);
             } else {
                 Font font = ui.getEditorPaneFont();
                 defaultFontSize = font.getSize();
@@ -759,7 +757,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
             fontFamily = new JComboBox<>(env.getAvailableFontFamilyNames());
             fontFamily.setRenderer(new DefaultListCellRenderer() {
-                private static final long serialVersionUID = 1L;
+                @Serial private static final long serialVersionUID = 1L;
                 @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -976,21 +974,21 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public Map<String,Object> getJson() {
             Map<String, Object> json = new LinkedHashMap<>();
             json.put("lineSpacing", ((Number) lineSpacing.getValue()).floatValue());
-            json.put("fontFamily", (String) fontFamily.getSelectedItem());
+            json.put("fontFamily", fontFamily.getSelectedItem());
             json.put("fontSize", ((Number) fontSize.getValue()).intValue());
-            json.put("bold", (Boolean) styleBold.getValue(Action.SELECTED_KEY));
-            json.put("italic", (Boolean) styleItalic.getValue(Action.SELECTED_KEY));
+            json.put("bold", styleBold.getValue(Action.SELECTED_KEY));
+            json.put("italic", styleItalic.getValue(Action.SELECTED_KEY));
             json.put("backgroundColor", toJsonColor(backgroundColor.getColor()));
             json.put("foregroundColor", toJsonColor(foregroundColor.getColor()));
-            json.put("backgroundCustom", (Boolean) backgroundCustom.isSelected());
-            json.put("foregroundCustom", (Boolean) foregroundCustom.isSelected());
-            json.put("wrapText", (Boolean) wrapText.getValue(Action.SELECTED_KEY));
+            json.put("backgroundCustom", backgroundCustom.isSelected());
+            json.put("foregroundCustom", foregroundCustom.isSelected());
+            json.put("wrapText", wrapText.getValue(Action.SELECTED_KEY));
             return json;
         }
 
         public <T> void jsonSet(Map<String,?> json, String key, Class<T> type, Consumer<T> setter) {
             Object v = json.get(key);
-            if (v != null && type.isInstance(v)) {
+            if (type.isInstance(v)) {
                 setter.accept(type.cast(v));
             }
         }
@@ -998,7 +996,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public Color fromJsonColor(Object o) {
             if (o != null) {
                 List<?> list = (List<?>) o;
-                int r = list.size() >= 1 ? ((Number) list.get(0)).intValue() : 0;
+                int r = !list.isEmpty() ? ((Number) list.get(0)).intValue() : 0;
                 int g = list.size() >= 2 ? ((Number) list.get(1)).intValue() : 0;
                 int b = list.size() >= 3 ? ((Number) list.get(2)).intValue() : 0;
                 int a = list.size() >= 4 ? ((Number) list.get(3)).intValue() : 0;
@@ -1023,9 +1021,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         public void sendPreferences() {
-            if (pane instanceof ValuePane<?> && preferencesUpdater != null) {
+            if (pane instanceof ValuePane<?> valuePane && preferencesUpdater != null) {
                 preferencesUpdater.accept(
-                        new GuiSwingPreferences.PreferencesUpdateEvent(((ValuePane) pane).getSwingViewContext(), this));
+                        new GuiSwingPreferences.PreferencesUpdateEvent(valuePane.getSwingViewContext(), this));
             }
         }
 
@@ -1038,18 +1036,17 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 String storeVal = store.getString(k, "");
                 Object exVal = e.getValue();
                 if (!storeVal.isEmpty()) {
-                    if (exVal instanceof String) {
-                        json.put(k, storeVal);
-                    } else if (exVal instanceof Boolean) {
-                        json.put(k, storeVal.endsWith("true"));
-                    } else if (exVal instanceof Number) {
-                        try {
-                            json.put(k, Integer.valueOf(storeVal));
-                        } catch (Exception ex) {
-                            json.put(k, Float.valueOf(storeVal));
+                    switch (exVal) {
+                        case String s -> json.put(k, storeVal);
+                        case Boolean b -> json.put(k, storeVal.endsWith("true"));
+                        case Number number -> {
+                            try {
+                                json.put(k, Integer.valueOf(storeVal));
+                            } catch (Exception ex) {
+                                json.put(k, Float.valueOf(storeVal));
+                            }
                         }
-                    } else {
-                        json.put(k, JsonReader.create(storeVal).parseValue());
+                        case null, default -> json.put(k, JsonReader.create(storeVal).parseValue());
                     }
                 }
             }
@@ -1063,14 +1060,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             for (Map.Entry<String,Object> e : getJson().entrySet()) {
                 String k = e.getKey();
                 Object v = e.getValue();
-                if (v instanceof String) {
-                    store.putString(k, (String) v);
-                } else if (v instanceof Number) {
-                    store.putString(k, v.toString());
-                } else if (v instanceof Boolean) {
-                    store.putString(k, v.equals(Boolean.TRUE) ? "true" : "false");
-                } else {
-                    store.putString(k, JsonWriter.create()
+                switch (v) {
+                    case String s -> store.putString(k, s);
+                    case Number number -> store.putString(k, v.toString());
+                    case Boolean b -> store.putString(k, v.equals(Boolean.TRUE) ? "true" : "false");
+                    case null, default -> store.putString(k, JsonWriter.create()
                             .withNewLines(false).write(v).toSource());
                 }
             }
@@ -1162,7 +1156,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     }
 
     public static class StyleSetAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected Consumer<StyleSetAction> callback;
         public StyleSetAction(String name, boolean initVal, Consumer<StyleSetAction> callback) {
             putValue(NAME, name);

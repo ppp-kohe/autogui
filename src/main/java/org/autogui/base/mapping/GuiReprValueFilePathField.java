@@ -13,6 +13,7 @@ import java.util.Objects;
  * </pre>
  */
 public class GuiReprValueFilePathField extends GuiReprValue {
+    public GuiReprValueFilePathField() {}
     @Override
     public boolean matchValueType(Class<?> cls) {
         return File.class.isAssignableFrom(cls) || Path.class.isAssignableFrom(cls);

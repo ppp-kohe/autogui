@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * a impl. of {@link GuiReprCollectionTable.TableTargetColumn} with a {@link JTable}.
+ * an impl. of {@link GuiReprCollectionTable.TableTargetColumn} with a {@link JTable}.
  */
 public class TableTargetColumnForJTable extends TableTargetCellForJTable
         implements GuiReprCollectionTable.TableTargetColumn {

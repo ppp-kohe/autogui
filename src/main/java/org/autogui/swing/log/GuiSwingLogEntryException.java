@@ -13,6 +13,7 @@ import java.awt.event.ActionEvent;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.awt.geom.RoundRectangle2D;
+import java.io.Serial;
 import java.text.AttributedCharacterIterator.Attribute;
 import java.time.Instant;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.function.Supplier;
 /**
  * a log-entry for an exception with supporting GUI rendering
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingLogEntryException extends GuiLogEntryException implements GuiSwingLogEntry {
     protected Map<TextCellRenderer<?>, int[]> selectionMap = new HashMap<>(2);
     protected boolean expanded;
@@ -98,7 +100,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
     /** a renderer for exception stack-traces */
     public static class GuiSwingLogExceptionRenderer extends JComponent
             implements TableCellRenderer, ListCellRenderer<GuiLogEntry>, LogEntryRenderer {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected ContainerType containerType;
         protected GuiSwingLogManager manager;
         protected TextCellRenderer<GuiLogEntryException> message;
@@ -225,8 +227,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
                 stackTrace.setExpanded(expanded);
             }
-            if (lastList != null && lastList.getModel() instanceof GuiSwingLogList.GuiSwingLogListModel) {
-                GuiSwingLogList.GuiSwingLogListModel model = (GuiSwingLogList.GuiSwingLogListModel) lastList.getModel();
+            if (lastList != null && lastList.getModel() instanceof GuiSwingLogList.GuiSwingLogListModel model) {
                 model.fireRowChanged(lastValue);
             }
         }
@@ -243,8 +244,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         //////////////////
 
         public void setSelection() {
-            if (lastValue instanceof GuiSwingLogEntryException) {
-                GuiSwingLogEntryException ex = (GuiSwingLogEntryException) lastValue;
+            if (lastValue instanceof GuiSwingLogEntryException ex) {
                 selected = ex.isSelected();
                 message.clearSelectionRange();
                 stackTrace.clearSelectionRange();
@@ -297,7 +297,6 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             return TextCellRenderer.findTextForComposition(ex, findKeyword, message, stackTrace);
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public Object focusNextFound(GuiSwingLogEntry entry, Object prevIndex, boolean forward) {
             GuiSwingLogEntryException ex = (GuiSwingLogEntryException) entry;
@@ -320,7 +319,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
     /** a renderer for an exception message */
     public static class ExceptionMessageRenderer extends TextCellRenderer<GuiLogEntryException> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingLogManager manager;
         protected ContainerType containerType;
         protected Map<Attribute, Object> messageTimeAttributes;
@@ -417,7 +416,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
     /** a renderer for a stack-trace lines */
     public static class ExceptionStackTraceRenderer extends TextCellRenderer<GuiLogEntryException> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected StackTraceAttributeSet topSet;
         protected StackTraceAttributeSet middleSet;
         protected StackTraceAttributeSet lastSet;
@@ -476,8 +475,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
         @Override
         public boolean setValue(GuiLogEntryException value, boolean forMouseEvents) {
-            if (value instanceof GuiSwingLogEntryException) {
-                GuiSwingLogEntryException ex = (GuiSwingLogEntryException) value;
+            if (value instanceof GuiSwingLogEntryException ex) {
                 if (isValueSame(value, forMouseEvents)) {
                     return false;
                 } else {
@@ -546,8 +544,8 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             Set<Throwable> history = Collections.newSetFromMap(new IdentityHashMap<>());
             formatStackTrace(ex, history, "", topSet, Collections.emptyList());
 
-            if (!lines.isEmpty() && lines.get(lines.size() - 1).isEmpty()) { //cut empty tail
-                lines.remove(lines.size() - 1);
+            if (!lines.isEmpty() && lines.getLast().isEmpty()) { //cut empty tail
+                lines.removeLast();
             }
             return String.join("\n", lines);
         }
@@ -561,7 +559,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             int start = line.length();
             for (char c : str.toCharArray()) {
                 if (c == '\n') {
-                    if (line.length() > 0) {
+                    if (!line.isEmpty()) {
                         int lineNum = lines.size();
                         lineAttrs.computeIfAbsent(lineNum, l -> new ArrayList<>())
                             .add(new StackTraceAttributesForLine(lineNum, start, line.length(), attrs));
@@ -573,7 +571,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
                     line.append(c);
                 }
             }
-            if (line.length() > 0) {
+            if (!line.isEmpty()) {
                 int lineNum = lines.size();
                 lineAttrs.computeIfAbsent(lineNum, l -> new ArrayList<>())
                         .add(new StackTraceAttributesForLine(lineNum, start, line.length(), attrs));
@@ -626,7 +624,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
                 attrSet = middleSet;
             }
             append(lineHead + head, attrSet.defaultStyle);
-            append(ex.toString() + "\n", attrSet.messageStyle);
+            append(ex + "\n", attrSet.messageStyle);
 
             formatStackTrace(ex, history, lineHead, attrSet, stackTrace);
         }
@@ -649,7 +647,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             //classLoaderName/moduleName@moduleVersion/declCls.methodName(fileName:lineNum)
 
             String str = e.toString();
-            int methodEnd = str.indexOf('('); //it suppose a class loader name does not contain "("
+            int methodEnd = str.indexOf('('); //it supposes a class loader name does not contain an open parenthesis
             int methodStart = str.lastIndexOf('.', methodEnd - 1);
 
             String typePart = str.substring(0, methodStart);
@@ -671,9 +669,8 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
             append(classPart.substring(packEnd + 1, enclosingStart + 1), attrSet.classNameStyle);
 
-            if (enclosingStart < classPart.length()) {
-                append(classPart.substring(enclosingStart + 1), attrSet.innerClassNameStyle);
-            }
+            //if (enclosingStart < classPart.length())
+            append(classPart.substring(enclosingStart + 1), attrSet.innerClassNameStyle);
 
             append(str.substring(methodStart, methodEnd), attrSet.moduleStyle);
             append(str.substring(methodEnd), attrSet.fileNameStyle);
@@ -721,7 +718,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
      * an action for expanding stack-trace of an exception entry
      */
     public static class ExceptionExpandAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingLogExceptionRenderer renderer;
 
         public ExceptionExpandAction(GuiSwingLogExceptionRenderer renderer) {
@@ -764,6 +761,8 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         public Map<Attribute, Object> innerClassNameStyle;
         public Map<Attribute, Object> methodStyle;
         public Map<Attribute, Object> fileNameStyle;
+
+        public StackTraceAttributeSet() {}
 
         public void set(Map<Attribute, Object> base,
                         Color time, Color message, Color module, Color pack,

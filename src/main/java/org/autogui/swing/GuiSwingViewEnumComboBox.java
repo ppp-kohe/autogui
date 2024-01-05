@@ -13,6 +13,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
@@ -38,7 +39,9 @@ import java.util.stream.Collectors;
  *  reading {@link Enum#name()} or {@link Enum#ordinal()}, and writing {@link Enum#name()}.
  *  @see GuiReprValueEnumComboBox#getEnumValue(GuiMappingContext, String)
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingViewEnumComboBox implements GuiSwingView {
+    public GuiSwingViewEnumComboBox() {}
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         ValuePane<Object> pane;
@@ -56,7 +59,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
     public static class PropertyEnumComboBox extends JComboBox<Object>
             implements GuiMappingContext.SourceUpdateListener, ItemListener, GuiSwingView.ValuePane<Object> { //Enum
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
@@ -276,7 +279,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     }
 
     public static class PropertyEnumListRenderer extends DefaultListCellRenderer {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected GuiMappingContext context;
         protected Color disabledForeground;
@@ -305,7 +308,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     }
 
     public static class EnumTransferHandler extends TransferHandler {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyEnumComboBox pane;
 
@@ -359,7 +362,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
     public static class EnumPasteAction extends PopupExtensionText.TextPasteAllAction
             implements TableTargetColumnAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyEnumComboBox view;
 
@@ -397,7 +400,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     }
 
     public static class EnumSetMenu extends JMenu implements PopupCategorized.CategorizedMenuItemComponent {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected ValuePane<Object> pane;
 
@@ -433,7 +436,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
     public static class EnumSetAction extends AbstractAction implements
             PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected Object value;
         protected ValuePane<Object> pane;
@@ -465,7 +468,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
     }
 
     public static class PropertyLabelEnum extends GuiSwingViewLabel.PropertyLabel {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public PropertyLabelEnum(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);

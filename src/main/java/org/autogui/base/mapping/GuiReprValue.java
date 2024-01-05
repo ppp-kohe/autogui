@@ -33,7 +33,7 @@ public class GuiReprValue implements GuiRepresentation {
      * obtains the value type from the context.
      *   the implementation checks the context is a property, or an element value
      * @param context the context
-     * @return a property type class, a element value class, or null
+     * @return a property type class, an element value class, or null
      */
     public Class<?> getValueType(GuiMappingContext context) {
         if (context.isTypeElementProperty()) {
@@ -55,7 +55,7 @@ public class GuiReprValue implements GuiRepresentation {
      *       and the parent is already checkAndUpdateSource and a new value is supplied.
      *   the method uses {@link #getUpdatedValue(GuiMappingContext, ObjectSpecifier)} with the {@link #NONE} specifier.
      *   <p>
-     *   As additional side-effect, the updated value will be added to the value-history if supported
+     *   As additional side effect, the updated value will be added to the value-history if supported
      *    by {@link #addHistoryValue(GuiMappingContext, Object)},
      *    and the value will also be set as a new source value by {@link #setSource(GuiMappingContext, Object)}
      *  @param context the source context
@@ -83,6 +83,7 @@ public class GuiReprValue implements GuiRepresentation {
             if (isHistoryValueSupported(context)) {
                 GuiPreferences prefs = context.getPreferences();
                 try (var lock = prefs.lock()) {
+                    lock.use();
                     context.getPreferences().addHistoryValue(value);
                     context.getPreferences().setCurrentValue(value);
                 }
@@ -103,7 +104,7 @@ public class GuiReprValue implements GuiRepresentation {
      */
     public void errorWhileAddHistoryValue(GuiMappingContext context, Object value, Throwable ex) {
         if (ex instanceof IllegalArgumentException) {
-            String str = "" + ex.getMessage();
+            String str = Objects.toString(ex.getMessage());
             if (str.length() > 32) {
                 str = str.substring(0, 32) + "...";
             }
@@ -254,7 +255,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @param context the context
      * @param specifier the specifier of the value
      * @return the updated value as a source-value or the current source value of the context
-     * @throws Throwable might be cause d by executing method invocation
+     * @throws Throwable might be caused d by executing method invocation
      */
     public GuiSourceValue getUpdatedSource(GuiMappingContext context, ObjectSpecifier specifier) throws Throwable {
         if (context.isParentValuePane() &&
@@ -294,10 +295,9 @@ public class GuiReprValue implements GuiRepresentation {
      * @param elementSpecifier an element index i.e. {@link ObjectSpecifierIndex}
      * @param prev the previous value of the element
      * @return an element in the collection, default is null
-     * @throws Throwable an error while getting
      */
     public GuiUpdatedValue getValueCollectionElement(GuiMappingContext context, GuiSourceValue collection,
-                                                     ObjectSpecifier elementSpecifier, GuiSourceValue prev) throws Throwable {
+                                                     ObjectSpecifier elementSpecifier, GuiSourceValue prev) {
         return null;
     }
 
@@ -314,7 +314,7 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
-     * a table pane updates an specified element
+     * a table pane updates a specified element
      * @param context the context of the repr
      * @param collection a collection target
      * @param newValue an element value
@@ -378,7 +378,7 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
-     * set a new value to an property of an object, which specified by the context
+     * set a new value to a property of an object, which specified by the context
      *  <ul>
      *      <li>using {@link GuiMappingContext#execute(Callable)}</li>
      *      <li> if the type is a {@link GuiTypeMemberProperty},
@@ -485,7 +485,7 @@ public class GuiReprValue implements GuiRepresentation {
     }
 
     /**
-     * called from a GUI element in order to update the it's value.
+     * called from a GUI element in order to update its value.
      * subclass can change to returned type and convert the value to the type.
      * a typical use case is just down-casting and converting null to an empty object.
      *
@@ -603,7 +603,7 @@ public class GuiReprValue implements GuiRepresentation {
 
     /**
      * an auxiliary information for specifying a property value.
-     *  An typical example is an index of a list.
+     *  A typical example is an index of a list.
      *  <p>
      *  For regular properties, {@link GuiReprValue#NONE} is sufficient.
      *  <p>
@@ -706,7 +706,7 @@ public class GuiReprValue implements GuiRepresentation {
         @Override
         public String toString() {
             if (parent != null && parent != this) {
-                return parent + "[" + + index + "]";
+                return parent + "[" + index + "]";
             } else if (parent == this) {
                 return "...[" + index + "]";
             } else {

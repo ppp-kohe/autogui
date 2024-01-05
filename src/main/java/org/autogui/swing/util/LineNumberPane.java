@@ -5,6 +5,7 @@ import javax.swing.event.*;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.ListIterator;
  * </pre>
  */
 public class LineNumberPane extends JComponent implements DocumentListener {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected JTextComponent field;
 
     /** line-starting positions excluding 0 */
@@ -32,17 +33,14 @@ public class LineNumberPane extends JComponent implements DocumentListener {
     protected AncestorListener fieldInstallListener;
 
     public static JScrollPane scroll(Container c) {
-        if (c == null) {
-            return null;
-        } else if (c instanceof JViewport) {
-            return scroll(c.getParent());
-        } else if (c instanceof JScrollPane) {
-            return (JScrollPane) c;
-        } else {
-            return null;
-        }
+        return switch (c) {
+            case JViewport jViewport -> scroll(c.getParent());
+            case JScrollPane jScrollPane -> jScrollPane;
+            case null, default -> null;
+        };
     }
 
+    @SuppressWarnings("this-escape")
     public LineNumberPane(JTextComponent field) {
         this.field = field;
         setOpaque(true);
@@ -196,7 +194,7 @@ public class LineNumberPane extends JComponent implements DocumentListener {
 
     private void debug(String head, String text, int off, List<Integer> lineHeads) {
         StringBuilder buf = new StringBuilder();
-        buf.append(head + ":<");
+        buf.append(head).append(":<");
         int i = off;
         for (char c : text.toCharArray()) {
             if (lineHeads.contains(i)) {
@@ -312,7 +310,7 @@ public class LineNumberPane extends JComponent implements DocumentListener {
             int endLineIndex = Math.min(lines, findPosition(endIndex));
             if (lineIndex == 0) {
                 paintLine(g2, 0, 0,
-                        overlap(0, lines == 0 ? Integer.MAX_VALUE : linePosition.get(0) - 1, selStart, selEnd),
+                        overlap(0, lines == 0 ? Integer.MAX_VALUE : linePosition.getFirst() - 1, selStart, selEnd),
                         selfOffsetY);
             }
             for (int i = lineIndex; i < endLineIndex; ++i) {

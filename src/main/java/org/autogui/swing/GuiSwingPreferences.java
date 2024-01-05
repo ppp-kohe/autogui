@@ -25,6 +25,7 @@ import java.awt.event.ComponentListener;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
+import java.io.Serial;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -155,11 +156,14 @@ public class GuiSwingPreferences {
 
     }
 
+    @SuppressWarnings("this-escape")
     public GuiSwingPreferences(RootView rootPane) {
         setRootView(rootPane);
         init();
         initRunner();
     }
+
+    @SuppressWarnings("this-escape")
 
     public GuiSwingPreferences(GuiMappingContext rootContext, JComponent rootComponent) {
         this.rootContext = rootContext;
@@ -302,6 +306,7 @@ public class GuiSwingPreferences {
     public void applyPreferences(PrefsApplyOptions options) {
         GuiPreferences prefs = rootContext.getPreferences();
         try (var lock = prefs.lock()) {
+            lock.use();
             if (rootPane != null) {
                 rootPane.loadPreferences(prefs, options);
             } else {
@@ -325,6 +330,7 @@ public class GuiSwingPreferences {
             }
             GuiPreferences rootPrefs = rootContext.getPreferences();
             try (var lock = rootPrefs.lock()) {
+                lock.use();
                 GuiSwingView.saveChildren(rootPrefs, rootComponent);
             }
         }
@@ -377,7 +383,7 @@ public class GuiSwingPreferences {
      */
     public DefaultMutableTreeNode makeTreeNode(List<GuiPreferences> list) {
         if (list.size() == 1) {
-            return makeTreeNode(list.get(0));
+            return makeTreeNode(list.getFirst());
         } else {
             DefaultMutableTreeNode node = new DefaultMutableTreeNode(list.size() + " preferences");
             list.forEach(p -> node.add(makeTreeNode(p)));
@@ -438,7 +444,7 @@ public class GuiSwingPreferences {
     /////////////
 
     public static class PreferencesListModel extends AbstractTableModel {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected Supplier<GuiMappingContext> rootContext;
         protected List<GuiPreferences> list;
         protected List<GuiPreferences> savedPrefsList;
@@ -450,6 +456,7 @@ public class GuiSwingPreferences {
         public static int COLUMN_NAME = 0;
         public static int COLUMN_LAUNCH = 1;
 
+        @SuppressWarnings("this-escape")
         public PreferencesListModel(Supplier<GuiMappingContext> rootContext) {
             this.rootContext = rootContext;
             reload();
@@ -495,11 +502,7 @@ public class GuiSwingPreferences {
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             if (columnIndex == COLUMN_NAME) {
                 return isNameEditable(list.get(rowIndex));
-            } else if (columnIndex == COLUMN_LAUNCH) {
-                return true;
-            } else {
-                return false;
-            }
+            } else return columnIndex == COLUMN_LAUNCH;
         }
 
         public GuiPreferences getLaunchPrefs() {
@@ -585,6 +588,7 @@ public class GuiSwingPreferences {
         protected void saveLaunchPrefsUUID() {
             GuiPreferences prefs = rootContext.get().getPreferences();
             try (var lock = prefs.lock()) {
+                lock.use();
                 prefs.setLaunchPrefsAsRoot(getUUID(launchPrefs));
             }
         }
@@ -598,6 +602,7 @@ public class GuiSwingPreferences {
             GuiMappingContext context = this.rootContext.get();
             lastDefault = context.getPreferences();
             try (var lock = lastDefault.lock()) {
+                lock.use();
                 targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
                 targetDefault.getValueStore().putString("$name", "Target Code Values");
                 targetDefault.getValueStore().putString("$uuid", "empty");
@@ -628,7 +633,7 @@ public class GuiSwingPreferences {
     }
 
     public static class PreferencesNameRenderer extends DefaultTableCellRenderer {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected PreferencesListModel listModel;
 
         public PreferencesNameRenderer(PreferencesListModel listModel) {
@@ -637,8 +642,7 @@ public class GuiSwingPreferences {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            if (value instanceof GuiPreferences) {
-                GuiPreferences prefs = (GuiPreferences) value;
+            if (value instanceof GuiPreferences prefs) {
                 value = listModel.getName(prefs);
             }
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -647,7 +651,7 @@ public class GuiSwingPreferences {
     }
 
     public static class PreferencesNameEditor extends DefaultCellEditor {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected PreferencesListModel listModel;
 
         public PreferencesNameEditor(PreferencesListModel listModel) {
@@ -657,8 +661,7 @@ public class GuiSwingPreferences {
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            if (value instanceof GuiPreferences) {
-                GuiPreferences prefs = (GuiPreferences) value;
+            if (value instanceof GuiPreferences prefs) {
                 value = listModel.getName(prefs);
             }
             return super.getTableCellEditorComponent(table, value, isSelected, row, column);
@@ -666,9 +669,10 @@ public class GuiSwingPreferences {
     }
 
     public static class PreferencesLaunchApplyRenderer extends JCheckBox implements TableCellRenderer {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected PreferencesListModel listModel;
 
+        @SuppressWarnings("this-escape")
         public PreferencesLaunchApplyRenderer(PreferencesListModel listModel) {
             this.listModel = listModel;
             setupCheckBox(this);
@@ -693,9 +697,10 @@ public class GuiSwingPreferences {
     }
 
     public static class PreferencesLaunchApplyEditor extends DefaultCellEditor {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected PreferencesListModel listModel;
 
+        @SuppressWarnings("this-escape")
         public PreferencesLaunchApplyEditor(PreferencesListModel listModel) {
             super(new JCheckBox());
             this.listModel = listModel;
@@ -714,8 +719,10 @@ public class GuiSwingPreferences {
     ///////////////////
 
     public static class NewPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
+
+        @SuppressWarnings("this-escape")
         public NewPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Save");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("add"));
@@ -727,6 +734,7 @@ public class GuiSwingPreferences {
         public void actionPerformed(ActionEvent e) {
             GuiPreferences rootPrefs = owner.getRootContext().getPreferences();
             try (var lock = rootPrefs.lock()) {
+                lock.use();
                 GuiPreferences newStore = rootPrefs.addNewSavedStoreAsRoot();
                 owner.savePreferences(newStore);
 
@@ -752,8 +760,10 @@ public class GuiSwingPreferences {
     }
 
     public static class DeletePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
+
+        @SuppressWarnings("this-escape")
         public DeletePrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Delete");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("delete"));
@@ -788,9 +798,10 @@ public class GuiSwingPreferences {
     }
 
     public static class SavePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
 
+        @SuppressWarnings("this-escape")
         public SavePrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Write To File...");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("save"));
@@ -844,9 +855,10 @@ public class GuiSwingPreferences {
     }
 
     public static class LoadPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
 
+        @SuppressWarnings("this-escape")
         public LoadPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Load From File...");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("load"));
@@ -862,6 +874,7 @@ public class GuiSwingPreferences {
                 Object json = JsonReader.read(file.toFile());
                 GuiPreferences prefs = owner.getRootContext().getPreferences();
                 try (var lock = prefs.lock()) {
+                    lock.use();
                     prefs.addNewSavedStoreAsRoot()
                             .fromJson((Map<String, Object>) json);
                 }
@@ -881,9 +894,10 @@ public class GuiSwingPreferences {
     }
 
     public static class ApplyPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction  {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
 
+        @SuppressWarnings("this-escape")
         public ApplyPrefsAction(GuiSwingPreferences owner) {
             this.owner = owner;
             init();
@@ -906,6 +920,7 @@ public class GuiSwingPreferences {
             if (preferences != null) {
                 GuiPreferences prefs = owner.getRootContext().getPreferences();
                 try (var lock = prefs.lock()) {
+                    lock.use();
                     prefs.clearAll();
                     prefs.fromJson(preferences.toJson());
                 }
@@ -925,9 +940,10 @@ public class GuiSwingPreferences {
     }
 
     public static class ResetPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
 
+        @SuppressWarnings("this-escape")
         public ResetPrefsAction(GuiSwingPreferences owner) {
             putValue(NAME, "Reset");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("reset"));
@@ -942,6 +958,7 @@ public class GuiSwingPreferences {
             if (r == JOptionPane.OK_OPTION) {
                 GuiPreferences prefs = owner.getRootContext().getPreferences();
                 try (var lock = prefs.lock()) {
+                    lock.use();
                     prefs.resetAsRoot();
                 }
                 owner.applyPreferences(new PrefsApplyOptionsDefault(true, false));
@@ -989,6 +1006,7 @@ public class GuiSwingPreferences {
                 .forEach(PreferencesUpdateEvent::save);
         GuiPreferences prefs = rootContext.getPreferences();
         try (var lock = prefs.lock()) {
+            lock.use();
             prefs.getValueStore().flush();
         }
     }
@@ -1019,6 +1037,7 @@ public class GuiSwingPreferences {
         public void save() {
             GuiPreferences cxtPrefs = context.getPreferences();
             try (var lock = cxtPrefs.lock()) {
+                lock.use();
                 prefs.saveTo(cxtPrefs);
             }
         }
@@ -1422,9 +1441,10 @@ public class GuiSwingPreferences {
     }
 
     public static class PrefsApplyMenu extends JMenu {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences preferences;
 
+        @SuppressWarnings("this-escape")
         public PrefsApplyMenu(GuiSwingPreferences preferences) {
             super("Apply Preferences");
             this.preferences = preferences;
@@ -1459,9 +1479,10 @@ public class GuiSwingPreferences {
     }
 
     public static class ApplySpecifiedPrefsAction extends ApplyPrefsAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiPreferences targetPrefs;
 
+        @SuppressWarnings("this-escape")
         public ApplySpecifiedPrefsAction(GuiSwingPreferences owner, GuiPreferences targetPrefs) {
             super(owner);
             this.targetPrefs = targetPrefs;
@@ -1522,7 +1543,7 @@ public class GuiSwingPreferences {
      * @since 1.3
      */
     public static class PrefsTreeCellRenderer extends DefaultTreeCellRenderer {
-        static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected String name;
         protected String entryValue;
         protected transient TextCellRenderer.LineInfo nameInfo;
@@ -1535,15 +1556,13 @@ public class GuiSwingPreferences {
 
         public void setValue(Object value) {
             node = false;
-            if (value instanceof DefaultMutableTreeNode) {
-                DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) value;
+            if (value instanceof DefaultMutableTreeNode treeNode) {
                 value = treeNode.getUserObject();
                 node = (treeNode.getChildCount() > 0);
             }
             name = "?";
             entryValue = null;
-            if (value instanceof PrefsValueStoreEntry) {
-                PrefsValueStoreEntry e = (PrefsValueStoreEntry) value;
+            if (value instanceof PrefsValueStoreEntry e) {
                 name = e.getKey();
                 if (e.isNode()) {
                     node = true;
@@ -1601,10 +1620,8 @@ public class GuiSwingPreferences {
             }
 
             UIManagerUtil ui = UIManagerUtil.getInstance();
-            Color foreground = getForeground();
-            Color background = ui.getLabelBackground();
-            Color selForeground = foreground; //ui.getTextPaneSelectionForeground();
-            Color selBackground = background; //ui.getTextPaneSelectionBackground();
+            Color foreground = getForeground();//or ui.getTextPaneSelectionForeground();
+            Color background = ui.getLabelBackground();//or ui.getTextPaneSelectionBackground();
             if (paint) {
                 g.setColor(getForeground());
             }
@@ -1616,12 +1633,12 @@ public class GuiSwingPreferences {
             x += ui.getScaledSizeInt(3);
             if (paint) {
                 layout = nameInfo.getLayout(frc, 0, 0, foreground, background,
-                        selForeground, selBackground, colorMap);
+                        foreground, background, colorMap);
                 layout.draw(g, x, layout.getAscent());
             } else {
                 layout = nameInfo.getLayout(frc);
             }
-            x += layout.getAdvance();
+            x += (int) layout.getAdvance();
             h = Math.max(h, (int) (layout.getAscent() + layout.getDescent()));
 
             if (valueInfo != null) {
@@ -1629,12 +1646,12 @@ public class GuiSwingPreferences {
 
                 if (paint) {
                     layout = valueInfo.getLayout(frc, 0, 0, foreground, background,
-                            selForeground, selBackground, colorMap);
+                            foreground, background, colorMap);
                     layout.draw(g, x, layout.getAscent());
                 } else {
                     layout = valueInfo.getLayout(frc);
                 }
-                x += layout.getAdvance();
+                x += (int) layout.getAdvance();
                 h = Math.max(h, (int) (layout.getAscent() + layout.getDescent()));
             }
             if (!paint) {

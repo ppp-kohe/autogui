@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Objects;
 
 /**
  * a spinner text-field component for a {@link Number} or primitive number property
@@ -120,14 +121,19 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
     @Override
     public Object fromJson(GuiMappingContext context, Object target, Object json) {
         NumberType numType = getType(getValueType(context));
-        if (json == null) {
-            return null;
-        } else if ((numType instanceof NumberTypeBigDecimal || numType instanceof NumberTypeBigInteger) &&
-                json instanceof String) {
-            String jsonStr = (String) json;
-            return numType.fromString(jsonStr);
-        } else if (json instanceof Number) {
-            return numType.convert(json);
+        switch (json) {
+            case null -> {
+                return null;
+            }
+            case String s when (numType instanceof NumberTypeBigDecimal numberTypeBigDecimal || numType instanceof NumberTypeBigInteger) -> {
+                String jsonStr = (String) json;
+                return numType.fromString(jsonStr);
+            }
+            case Number number -> {
+                return numType.convert(json);
+            }
+            default -> {
+            }
         }
         return null;
     }
@@ -268,7 +274,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static int compare(Number l, Number r) {
         NumberType t = getCommonTypeForNumbers(l, r);
         return ((Comparable) t.convert(l)).compareTo(t.convert(r));
@@ -389,15 +395,12 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
     }
 
     public static BigInteger toBigInteger(Object n) {
-        if (n instanceof BigInteger) {
-            return (BigInteger) n;
-        } else if (n instanceof BigDecimal) {
-            return ((BigDecimal) n).toBigInteger();
-        } else if (n instanceof Number) {
-            return BigInteger.valueOf(((Number) n).longValue());
-        } else {
-            throw new RuntimeException("illegal: " + n);
-        }
+        return switch (n) {
+            case BigInteger bigInteger -> bigInteger;
+            case BigDecimal bigDecimal -> bigDecimal.toBigInteger();
+            case Number number -> BigInteger.valueOf(number.longValue());
+            case null, default -> throw new RuntimeException("illegal: " + n);
+        };
     }
 
     /** a comparable infinity representation, which is not a Number type, but comparable to any other types.
@@ -427,8 +430,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
                 } else {
                     return -1;
                 }
-            } else if (o instanceof Double && ((Double) o).isInfinite()) {
-                Double d = (Double) o;
+            } else if (o instanceof Double d && d.isInfinite()) {
                 if (upper == (d > 0)) {
                     return 0;
                 } else if (upper) {
@@ -436,8 +438,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
                 } else {
                     return -1;
                 }
-            } else if (o instanceof Float && ((Float) o).isInfinite()) {
-                Float d = (Float) o;
+            } else if (o instanceof Float d && d.isInfinite()) {
                 if (upper == (d > 0)) {
                     return 0;
                 } else if (upper) {
@@ -452,7 +453,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
 
         @Override
         public String toString() {
-            return (upper ? "+\u221e" : "-\u221e");
+            return (upper ? "+∞" : "-∞");
         }
     }
 
@@ -864,11 +865,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         @Override
         public Comparable<?> fromString(String s) {
             Infinity i = fromStringInfinity(s);
-            if (i != null) {
-                return i;
-            } else {
-                return new BigInteger(s);
-            }
+            return Objects.requireNonNullElseGet(i, () -> new BigInteger(s));
         }
 
         @Override
@@ -922,11 +919,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         @Override
         public Comparable<?> fromString(String s) {
             Infinity i = fromStringInfinity(s);
-            if (i != null) {
-                return i;
-            } else {
-                return new BigDecimal(s);
-            }
+            return Objects.requireNonNullElseGet(i, () -> new BigDecimal(s));
         }
 
         @Override

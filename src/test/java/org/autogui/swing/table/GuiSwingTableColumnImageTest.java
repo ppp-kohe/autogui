@@ -46,6 +46,8 @@ public class GuiSwingTableColumnImageTest extends GuiSwingTestCase {
     ObjectTableModel model;
     ObjectTableColumn objColumn;
 
+    public GuiSwingTableColumnImageTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -63,7 +65,7 @@ public class GuiSwingTableColumnImageTest extends GuiSwingTestCase {
         propContext = context.getChildByName("values")
                 .getChildByName("List");
 
-        elemContext = propContext.getChildren().get(0);
+        elemContext = propContext.getChildren().getFirst();
         imageContext = elemContext.getChildByName("BufferedImage");
 
         column = new GuiSwingTableColumnImage();
@@ -93,6 +95,7 @@ public class GuiSwingTableColumnImageTest extends GuiSwingTestCase {
     public static class TestObj {
         @GuiIncluded
         public List<BufferedImage> values;
+        public TestObj() {}
     }
 
 
@@ -124,7 +127,7 @@ public class GuiSwingTableColumnImageTest extends GuiSwingTestCase {
         run(this::createTable);
         run(() -> table.editCellAt(1, 0));
 
-        BufferedImage ex1 = obj.values.get(0);
+        BufferedImage ex1 = obj.values.getFirst();
         BufferedImage newImg = createImage(200);
 
         TableCellEditor editor = runGet(() -> objColumn.getTableColumn().getCellEditor());
@@ -211,7 +214,7 @@ public class GuiSwingTableColumnImageTest extends GuiSwingTestCase {
     }
 
     @Test
-    public void testCopyAction() throws Exception {
+    public void testCopyAction() {
         withClipLock(() -> {
             run(this::createTable);
 
@@ -236,7 +239,7 @@ public class GuiSwingTableColumnImageTest extends GuiSwingTestCase {
 
 
     @Test
-    public void testPasteAction() throws Exception {
+    public void testPasteAction() {
         withClipLock(() -> {
             run(this::createTable);
 

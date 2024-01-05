@@ -11,6 +11,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
+import java.io.Serial;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -37,8 +38,8 @@ import java.util.stream.Collectors;
  *
  *    <p>
  *      Note {@link #putUnregisteredEditActions(JTextComponent)} is not called automatically.
- *
  *  */
+@SuppressWarnings("this-escape")
 public class PopupExtensionText extends PopupExtension implements FocusListener {
     protected int selectionStart;
     protected int selectionEnd;
@@ -149,7 +150,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     }
 
     /** JDK has standard implementations for cut, copy and paste as DefaultEditorKit.
-     *   However, those actions take the target from event source, and do not have user friendly name
+     *   However, those actions take the target from event source, and do not have user-friendly name
      * @param textComponent the target component
      * @return list of actions for the component: cut, copy, copy-all, paste, paste-all, select-all, load, save,
      *    and open-browser
@@ -257,10 +258,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     ///////////// text actions for a specific target
 
-    /** the action for opening selection as an URL in a browser */
+    /** the action for opening selection as a URL in a browser */
     public static class TextOpenBrowserAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JComponent component;
         public TextOpenBrowserAction(JComponent component) {
             this.component = component;
@@ -280,10 +281,9 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         @Override
         public void actionPerformed(ActionEvent e) {
             String text = null;
-            if (component instanceof JLabel) {
-                text = ((JLabel) component).getText();
-            } else if (component instanceof JTextComponent) {
-                JTextComponent comp = (JTextComponent) component;
+            if (component instanceof JLabel label) {
+                text = label.getText();
+            } else if (component instanceof JTextComponent comp) {
                 int start = comp.getSelectionStart();
                 int end = comp.getSelectionEnd();
                 if (start != end) {
@@ -337,7 +337,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** a cut action */
     public static class TextCutAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextCutAction(JTextComponent field) {
             putValue(NAME, "Cut");
@@ -372,7 +372,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** a copy action */
     public static class TextCopyAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextCopyAction(JTextComponent field) {
             putValue(NAME, "Copy");
@@ -406,7 +406,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** a paste action*/
     public static class TextPasteAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextPasteAction(JTextComponent field) {
             putValue(NAME, "Paste");
@@ -440,7 +440,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** a copy-all action: copying all text in a text-component */
     public static class TextCopyAllAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextCopyAllAction(JTextComponent field) {
             putValue(NAME, "Copy Value");
@@ -481,7 +481,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** a paste-all action: replacing entire text with the clipboard contents */
     public static class TextPasteAllAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextPasteAllAction(JTextComponent field) {
             putValue(NAME, "Paste Value");
@@ -535,7 +535,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
      */
     public static class TextClearAction extends AbstractAction
             implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTextComponent field;
         public TextClearAction(JTextComponent field) {
             putValue(NAME, "Clear");
@@ -571,7 +571,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** a select-all action */
     public static class TextSelectAllAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTextComponent field;
 
         public TextSelectAllAction(JTextComponent field) {
@@ -602,7 +602,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     /** an abstract action for interacting with the history-buffer (kill-buffer) */
     public abstract static class TextAbstractHistoryAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTextComponent field;
 
         public TextAbstractHistoryAction(String name, JTextComponent field) {
@@ -645,7 +645,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                 to = from;
                 from = tmp;
             }
-            if (from >= 0 && to >= 0) {
+            if (from >= 0/* && to >= 0*/) {
                 String removedText = target.getDocument().getText(from, to - from);
                 target.getDocument().remove(from, to - from);
                 putKillBuffer(removedText);
@@ -657,10 +657,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
-    /** an delete-to-line-end action */
+    /** a delete-to-line-end action */
     public static class TextDeleteToLineEndAction extends TextAbstractHistoryAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public TextDeleteToLineEndAction(JTextComponent field) {
             super("delete-line-end", field);
@@ -695,10 +695,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
-    /** an delete-next-word action */
+    /** a delete-next-word action */
     public static class TextDeleteNextWordAction extends TextAbstractHistoryAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public TextDeleteNextWordAction(JTextComponent field) {
             super("delete-next-word", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -735,10 +735,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
-    /** an delete-previous-word action */
+    /** a delete-previous-word action */
     public static class TextDeletePreviousWordAction extends TextAbstractHistoryAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public TextDeletePreviousWordAction(JTextComponent field) {
             super("delete-previous-word", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -775,10 +775,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
-    /** an paste the history-buffer action (yank) */
+    /** a paste the history-buffer action (yank) */
     public static class TextPasteHistoryAction extends TextAbstractHistoryAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public TextPasteHistoryAction(JTextComponent field) {
             super("yank", field);
             putValue(Action.ACCELERATOR_KEY,
@@ -787,7 +787,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
 
         @Override
-        public void actionPerformedOnText(JTextComponent target) throws BadLocationException {
+        public void actionPerformedOnText(JTextComponent target) {
             try {
                 String content = defaultHistory.take();
                 target.replaceSelection(content);
@@ -815,9 +815,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         protected Object nextSource;
         protected int nextPosition = -1;
 
+        public TextInputHistory() {}
         public void put(String str) {
             if (!buffer.isEmpty()) {
-                TextInputEdit prev = buffer.get(0);
+                TextInputEdit prev = buffer.getFirst();
                 if (nextPosition == prev.position &&
                         nextSource == prev.source) {
                     //remove next
@@ -828,18 +829,18 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
                     prev.position = nextPosition;
                     prev.text = str + prev.text;
                 } else {
-                    buffer.add(0, new TextInputEdit(nextSource, nextPosition, str));
+                    buffer.addFirst(new TextInputEdit(nextSource, nextPosition, str));
                 }
             } else {
-                buffer.add(0, new TextInputEdit(nextSource, nextPosition, str));
+                buffer.addFirst(new TextInputEdit(nextSource, nextPosition, str));
             }
             while (buffer.size() > 1000) {
-                buffer.remove(buffer.size() - 1);
+                buffer.removeLast();
             }
         }
 
         public String take() {
-            return buffer.get(0).text;
+            return buffer.getFirst().text;
         }
 
         @Override
@@ -872,11 +873,10 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             JPanel pane = new JPanel(new BorderLayout());
             SortedMap<String,Charset> map = Charset.availableCharsets();
             JComboBox<String> box = new JComboBox<>(map.keySet()
-                    .toArray(new String[map.size()]));
+                    .toArray(new String[0]));
             box.setSelectedItem(StandardCharsets.UTF_8.displayName());
-            box.addActionListener(e -> {
-                selectedCharset = map.get((String) box.getSelectedItem());
-            });
+            box.addActionListener(e ->
+                selectedCharset = map.get((String) box.getSelectedItem()));
             JLabel label = new JLabel("Encoding:");
             label.setHorizontalAlignment(SwingConstants.LEADING);
             pane.add(label, BorderLayout.NORTH);
@@ -889,7 +889,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** a file loading action */
     public static class TextLoadAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTextComponent field;
 
         public TextLoadAction(JTextComponent field) {
@@ -920,7 +920,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
             Path path = SettingsWindow.getFileDialogManager().showOpenDialog(getComponent(), getEncodingPane());
             if (path != null) {
                 try {
-                    return new String(Files.readAllBytes(path), selectedCharset);
+                    return Files.readString(path, selectedCharset);
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
@@ -942,7 +942,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     /** a file saving action */
     public static class TextSaveAction extends TextLoadAction
         implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public TextSaveAction(JTextComponent component) {
             super(component);
             putValue(NAME, "Save...");
@@ -978,11 +978,6 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
 
         @Override
-        public String getCategory() {
-            return MENU_CATEGORY_TRANSFER;
-        }
-
-        @Override
         public String getSubCategory() {
             return MENU_SUB_CATEGORY_EXPORT;
         }
@@ -990,7 +985,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
 //
 //    public static class TextTabStopFitAction extends AbstractAction {
-//        private static final long serialVersionUID = 1L;
+//        @Serial private static final long serialVersionUID = 1L;
 //        protected JEditorPane text;
 //        protected Document lastDoc;
 //        protected TextTableLayout tableLayout = new TextTableLayout();

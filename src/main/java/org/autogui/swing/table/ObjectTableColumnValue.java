@@ -24,6 +24,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.Serial;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
  * a table-column with {@link GuiMappingContext}.
  *
  */
+@SuppressWarnings("this-escape")
 public class ObjectTableColumnValue extends ObjectTableColumn
         implements GuiSwingTableColumn.ObjectTableColumnWithContext {
     protected GuiMappingContext context;
@@ -49,7 +51,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     protected boolean editorForColumnAlwaysApplying;
 
     /**
-     * the representation of the context must be a sub-type of {@link GuiReprValue}.
+     * the representation of the context must be a subtype of {@link GuiReprValue}.
      * view must be a {@link ValuePane}
      * @param context the associated context
      * @param specifierIndex the optional index for row-index (nullable)
@@ -179,6 +181,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public void shutdown() {
         super.shutdown();
         setForComponents(ValuePane.class,
@@ -333,7 +336,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         return context.getRepresentation().isTaskRunnerUsedFor(task);
     }
 
-    /** interface for renderer and editor, in order to setting up some properties like preferences and setting-windows */
+    /** interface for renderer and editor, in order to set up some properties like preferences and setting-windows */
     public interface ObjectTableColumnCellView {
         JComponent getComponent();
 
@@ -415,8 +418,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         @Override
         public PopupMenuBuilder getMenuBuilder(JTable table) {
-            if (component instanceof ValuePane) {
-                PopupMenuBuilder rendererPaneOriginalBuilder = ((ValuePane<?>) component).getSwingMenuBuilder();;
+            if (component instanceof ValuePane<?> valuePane) {
+                PopupMenuBuilder rendererPaneOriginalBuilder = valuePane.getSwingMenuBuilder();
 
                 if (rendererPaneOriginalBuilder instanceof PopupCategorized) {
                     ((PopupCategorized) rendererPaneOriginalBuilder).setMenuBuilder(
@@ -455,7 +458,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * a cell-editor with {@link ValuePane}
      */
     public static class ObjectTableCellEditor extends AbstractCellEditor implements TableCellEditor, ObjectTableColumnCellView {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JComponent component;
         protected int clickCount = 2;
         protected boolean skipShutDown;
@@ -576,8 +579,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         public boolean isCellEditable(EventObject e) {
             if (e instanceof MouseEvent) {
                 return ((MouseEvent) e).getClickCount() >= getClickCount();
-            } else if (e instanceof KeyEvent) {
-                KeyEvent ke = (KeyEvent) e;
+            } else if (e instanceof KeyEvent ke) {
                 if (KeyHandlerFinishEditing.isKeyEventFinishEditing(ke)) {
                     return true;
                 }
@@ -683,7 +685,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * an action for selecting cells of a target column and all rows
      */
     public static class ColumnSelectionAction extends AbstractAction implements CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTable table;
         protected int column;
 
@@ -736,16 +738,12 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         @Override
         public Object convert(Object o) {
-            Object r;
-            if (o instanceof Action) {
-                r = convertAction((Action) o);
-            } else if (o instanceof TableTargetMenu) {
-                r = ((TableTargetMenu) o).convert(target);
-            } else if (o instanceof JMenuItem) {
-                r = convertAction(((JMenuItem) o).getAction());
-            } else {
-                r = o;
-            }
+            Object r = switch (o) {
+                case Action a -> convertAction(a);
+                case TableTargetMenu t -> t.convert(target);
+                case JMenuItem mi -> convertAction(mi.getAction());
+                case null, default -> o;
+            };
             r = clearKeyStroke(r);
             if (r != null) {
                 return filter.convert(r);
@@ -755,46 +753,38 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         }
 
         public Object convertAction(Action a) {
-            if (a instanceof TableTargetColumnAction) {
-                return new TableTargetExecutionAction((TableTargetColumnAction) a, target);
-
-            } else if (a instanceof PopupExtensionText.TextCopyAllAction) {
-                return new TableTargetInvocationAction(a, target,
-                        (e, t) -> ((PopupExtensionText.TextCopyAllAction) a).actionPerformedOnTable(e,
-                                t.getSelectedCellValues()));
-
-            } else if (a instanceof PopupExtensionText.TextPasteAllAction) {
-                return new TableTargetInvocationAction(a, target,
-                        (e, t) -> ((PopupExtensionText.TextPasteAllAction) a)
-                                .pasteLines(t::setSelectedCellValuesLoop));
-
-            } else if (a instanceof PopupExtensionText.TextClearAction) {
-                return new TableTargetInvocationAction(a, target,
+            return switch (a) {
+                case TableTargetColumnAction tableTargetColumnAction ->
+                        new TableTargetExecutionAction(tableTargetColumnAction, target);
+                case PopupExtensionText.TextCopyAllAction textCopyAllAction ->
+                        new TableTargetInvocationAction(a, target,
+                                (e, t) -> ((PopupExtensionText.TextCopyAllAction) a).actionPerformedOnTable(e,
+                                        t.getSelectedCellValues()));
+                case PopupExtensionText.TextPasteAllAction textPasteAllAction ->
+                        new TableTargetInvocationAction(a, target,
+                                (e, t) -> ((PopupExtensionText.TextPasteAllAction) a)
+                                        .pasteLines(t::setSelectedCellValuesLoop));
+                case PopupExtensionText.TextClearAction textClearAction -> new TableTargetInvocationAction(a, target,
                         (e, t) -> ((PopupExtensionText.TextClearAction) a)
                                 .clearLines(t::setSelectedCellValuesLoop));
-
-            } else if (a instanceof PopupExtensionText.TextOpenBrowserAction) {
-                return new TableTargetInvocationAction(a, target,
-                        (e, t) -> ((PopupExtensionText.TextOpenBrowserAction) a)
-                                .openList(t.getSelectedCellValues()));
-
-            } else if (a instanceof SearchTextFieldFilePath.FileListEditAction) {
-                return new TableTargetInvocationAction(a, target,
-                        (e, t) -> ((SearchTextFieldFilePath.FileListEditAction) a)
-                                .run(t::setSelectedCellValuesLoop));
-
-            } else if (a instanceof SearchTextFieldFilePath.FileListAction) {
-                return new TableTargetInvocationAction(a, target,
+                case PopupExtensionText.TextOpenBrowserAction textOpenBrowserAction ->
+                        new TableTargetInvocationAction(a, target,
+                                (e, t) -> ((PopupExtensionText.TextOpenBrowserAction) a)
+                                        .openList(t.getSelectedCellValues()));
+                case SearchTextFieldFilePath.FileListEditAction fileListEditAction ->
+                        new TableTargetInvocationAction(a, target,
+                                (e, t) -> ((SearchTextFieldFilePath.FileListEditAction) a)
+                                        .run(t::setSelectedCellValuesLoop));
+                case SearchTextFieldFilePath.FileListAction fileListAction -> new TableTargetInvocationAction(a, target,
                         (e, t) -> ((SearchTextFieldFilePath.FileListAction) a)
                                 .run(t.getSelectedCellValues().stream()
                                         .map(Path.class::cast)
                                         .collect(Collectors.toList())));
+                case GuiSwingActionDefault.ExecutionAction executionAction ->
+                        new TableRowsRepeatAction(table, column, a);
+                case null, default -> null; //disabled
 
-            } else if (a instanceof GuiSwingActionDefault.ExecutionAction) {
-                return new TableRowsRepeatAction(table, column, a);
-            } else {
-                return null; //disabled
-            }
+            };
         }
 
         public Object clearKeyStroke(Object o) {
@@ -827,7 +817,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
     /** a base class for wrapping an action */
     public static class ActionDelegate<TargetActionType extends Action> extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected TargetActionType action;
         protected Map<String, Object> values;
         protected static Object NULL = new Object();
@@ -884,7 +874,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      */
     public static class TableTargetExecutionAction extends ActionDelegate<TableTargetColumnAction>
             implements CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected TableTargetColumn target;
 
         public TableTargetExecutionAction(TableTargetColumnAction action, TableTargetColumn target) {
@@ -927,7 +917,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      */
     public static class TableTargetInvocationAction extends ActionDelegate<Action>
             implements CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected TableTargetColumn target;
         protected BiConsumer<ActionEvent, TableTargetColumn> invoker;
 
@@ -973,10 +963,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
     /**
      * an action for wrapping another action.
-     *   this action iterates over the selected rows and changing the target column value with the each row value.
+     *   this action iterates over the selected rows and changing the target column value with each row value.
      */
     public static class TableRowsRepeatAction extends ActionDelegate<Action> implements CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JTable table;
         protected ObjectTableColumn column;
 
@@ -999,7 +989,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             Consumer<Object> valuePane = (source == null ? null : source.getMenuTargetPane());
 
             for (int row : table.getSelectedRows()) {
-                Object prev = null;
+                Object prev;
                 if (valuePane != null) {
                     int modelRow = table.convertRowIndexToModel(row);
                     prev = table.getModel().getValueAt(modelRow, column.getTableColumn().getModelIndex());

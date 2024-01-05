@@ -2,6 +2,7 @@ package org.autogui.swing.util;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.Serial;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -175,10 +176,11 @@ public class MenuBuilder {
 
     /** a label menu-item component  */
     public static class MenuLabel extends JPanel implements PopupCategorized.CategorizedMenuItemComponent {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected String subCategory = "";
         protected JLabel label;
         protected String name;
+        @SuppressWarnings("this-escape")
         public MenuLabel(String name, String subCategory) {
             super(new FlowLayout(FlowLayout.LEADING, 3, 3));
             this.name = name;

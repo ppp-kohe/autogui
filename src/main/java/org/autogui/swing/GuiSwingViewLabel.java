@@ -16,6 +16,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.io.Serial;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +39,7 @@ import java.util.function.Supplier;
  *   exporting-only {@link GuiRepresentation#toHumanReadableString(GuiMappingContext, Object)}
  */
 public class GuiSwingViewLabel implements GuiSwingView {
+    public GuiSwingViewLabel() {}
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         PropertyLabel label = new PropertyLabel(context, new SpecifierManagerDefault(parentSpecifier));
@@ -48,9 +50,10 @@ public class GuiSwingViewLabel implements GuiSwingView {
         }
     }
 
+    @SuppressWarnings("this-escape")
     public static class PropertyLabel extends JLabel
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected Object value;
@@ -289,9 +292,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         public void initStrokes() {
             strokes = new BasicStroke[3];
-            for (int i = 0; i < strokes.length; ++i) {
-                strokes[i] = new BasicStroke(strokes.length / 2.0f);
-            }
+            Arrays.fill(strokes, new BasicStroke(strokes.length / 2.0f));
         }
 
         public float getStrokeSize() {
@@ -338,7 +339,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
     }
 
     public static class LabelToStringCopyAction extends ToStringCopyAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected PropertyLabel label;
         public LabelToStringCopyAction(PropertyLabel label) {
             super(label, label.getSwingViewContext());
@@ -353,7 +354,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
     /** special handling for any type of value as string */
     public static class LabelJsonCopyAction extends GuiSwingJsonTransfer.JsonCopyAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public LabelJsonCopyAction(ValuePane<?> component, GuiMappingContext context) {
             super(component, context);
         }
@@ -369,7 +370,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
     }
 
     public static class LabelJsonSaveAction extends GuiSwingJsonTransfer.JsonSaveAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         public LabelJsonSaveAction(ValuePane<?> component, GuiMappingContext context) {
             super(component, context);
         }
@@ -385,7 +386,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
     }
 
     public static class LabelTransferHandler extends  TransferHandler {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected PropertyLabel pane;
 
         public LabelTransferHandler(PropertyLabel pane) {
@@ -409,9 +410,10 @@ public class GuiSwingViewLabel implements GuiSwingView {
     }
 
     public static class LabelTextSaveAction extends PopupExtensionText.TextSaveAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingViewLabel.PropertyLabel label;
 
+        @SuppressWarnings("this-escape")
         public LabelTextSaveAction(GuiSwingViewLabel.PropertyLabel label) {
             super(null);
             putValue(NAME, "Save Text...");

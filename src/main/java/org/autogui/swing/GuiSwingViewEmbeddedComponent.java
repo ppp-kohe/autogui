@@ -12,6 +12,7 @@ import org.autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import java.util.function.Supplier;
  * unsupported.
  */
 public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
+    public GuiSwingViewEmbeddedComponent() {}
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         ValuePane<Object> comp = new PropertyEmbeddedPane(context, new SpecifierManagerDefault(parentSpecifier));
@@ -51,7 +53,7 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
 
     public static class PropertyEmbeddedPane extends JComponent
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object> {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
@@ -63,6 +65,7 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         /** @since 1.5 */
         protected Object initPrefsJson;
 
+        @SuppressWarnings("this-escape")
         public PropertyEmbeddedPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
             this.specifierManager = specifierManager;

@@ -14,6 +14,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.io.Serial;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -33,6 +34,8 @@ public class ObjectTableColumn {
     protected int rowHeight;
     protected Comparator<?> comparator;
     protected Class<?> valueType = String.class;
+
+    public ObjectTableColumn() {}
 
     public TableColumn getTableColumn() {
         return tableColumn;
@@ -216,7 +219,7 @@ public class ObjectTableColumn {
      *    set by {@link GuiSwingView.ValuePane#setSwingViewValue(Object)}.
      *    So when the action is invoked,
      *       it will need to iterate over the selected rows, set the target value and invoke the action for each row.
-     *       After the each action invoked, it might need to check the value.
+     *       After each action invoked, it might need to check the value.
      *
      * @return {@link TableColumn#getCellRenderer()} if the renderer is an {@link PopupMenuBuilderSource} itself.
      */
@@ -284,6 +287,7 @@ public class ObjectTableColumn {
      * a top-column displaying a row-index number
      */
     public static class ObjectTableColumnRowIndex extends ObjectTableColumn {
+        @SuppressWarnings("this-escape")
         public ObjectTableColumnRowIndex() {
             tableColumn = new TableColumn(0, UIManagerUtil.getInstance().getScaledSizeInt(64),
                     createRenderer(), null);
@@ -316,8 +320,9 @@ public class ObjectTableColumn {
      * a renderer for index numbers
      */
     public static class NumberRenderer extends DefaultTableCellRenderer {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
+        @SuppressWarnings("this-escape")
         public NumberRenderer() {
             setHorizontalAlignment(JLabel.RIGHT);
             TextCellRenderer.setCellDefaultProperties(this);
@@ -338,7 +343,7 @@ public class ObjectTableColumn {
     }
 
     public static <O,P> ObjectTableColumnLabel<O,P>  createLabel(String headerName, Function<O, P> getter, BiConsumer<O, P> setter) {
-        ObjectTableColumnLabel<O,P>  l = new ObjectTableColumnLabel<O,P>(getter, setter);
+        ObjectTableColumnLabel<O,P>  l = new ObjectTableColumnLabel<>(getter, setter);
         l.getTableColumn().setHeaderValue(headerName);
         if (setter != null) {
             l.getTableColumn().setCellEditor(new DefaultCellEditor(new JTextField()));

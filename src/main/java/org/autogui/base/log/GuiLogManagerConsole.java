@@ -162,9 +162,7 @@ public class GuiLogManagerConsole extends GuiLogManager {
             buf.append('=');
             --max;
         }
-        for (int i = 0; i < max; ++i) {
-            buf.append(' ');
-        }
+        buf.append(" ".repeat(Math.max(0, max)));
         buf.append('|');
         return buf.toString();
     }

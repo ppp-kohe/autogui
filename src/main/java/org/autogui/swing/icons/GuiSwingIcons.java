@@ -8,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.Serial;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
@@ -32,13 +33,14 @@ public class GuiSwingIcons {
         return instance;
     }
 
+    @SuppressWarnings("this-escape")
     public GuiSwingIcons() {
         initSynonyms();
     }
 
     /**
      * manually sets the icon for the name
-     * @param prefix a prefix of he name
+     * @param prefix a prefix of the name
      * @param name the name of the icon
      * @param icon the icon instance
      * @return this
@@ -120,7 +122,7 @@ public class GuiSwingIcons {
                     g.fillRect(0, 0, w, h);
 
                     g.setColor(new Color(245, 245, 245));
-                    RoundRectangle2D.Float rr = new RoundRectangle2D.Float(5, h / 2 - 10, w - 10, 20, 5, 5);
+                    RoundRectangle2D.Float rr = new RoundRectangle2D.Float(5, (float) h / 2 - 10, w - 10, 20, 5, 5);
                     g.fill(rr);
 
                     g.setStroke(new BasicStroke(0.7f));
@@ -172,7 +174,7 @@ public class GuiSwingIcons {
 
     /**
      * returns a gray version of the icon obtained by getIcon(name).
-     * this can be set for the pressed icon of an button:
+     * this can be set for the pressed icon of a button:
      * <pre>
      *     button.setPressedIcon(icons.getPressedIcon(name));
      * </pre>
@@ -243,9 +245,10 @@ public class GuiSwingIcons {
 
     /** an action button with the customized border */
     public static class ActionButton extends JButton {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected Instant lastDisabledWithFocusTime = Instant.EPOCH;
 
+        @SuppressWarnings("this-escape")
         public ActionButton(Action a) {
             super(a);
             setFocusable(true);
@@ -265,9 +268,7 @@ public class GuiSwingIcons {
             if (o != null) {
                 setPressedIcon((Icon) o);
             }
-            addPropertyChangeListener("enabled", e -> {
-                updateFocusWhenEnableChanged(e.getNewValue().equals(Boolean.TRUE));
-            });
+            addPropertyChangeListener("enabled", e -> updateFocusWhenEnableChanged(e.getNewValue().equals(Boolean.TRUE)));
         }
 
         public void updateFocusWhenEnableChanged(boolean e) {
@@ -427,7 +428,7 @@ public class GuiSwingIcons {
         addSynonym("previous", "back");
         addSynonym("provide", "offer");
         addSynonym("put", "send", "dispatch", "post", "push", "redirect", "store", "submit", "transfer");
-        addSynonym("remove", "uninstall", "deinstall", "dispose", "pop");
+        addSynonym("remove", "uninstall", "dispose", "pop");
         addSynonym("resolve", "solve");
         addSynonym("reverse", "rewind", "rollback");
         addSynonym("save", "report");

@@ -48,6 +48,8 @@ public class GuiSwingViewImagePaneTest extends GuiSwingTestCase {
     Path imageFile;
     Image savedImage;
 
+    public GuiSwingViewImagePaneTest() {}
+
     @Before
     public void setUp() {
 
@@ -83,6 +85,7 @@ public class GuiSwingViewImagePaneTest extends GuiSwingTestCase {
     @GuiIncluded
     public static class TestObj {
         @GuiIncluded public Image value;
+        public TestObj() {}
     }
 
 

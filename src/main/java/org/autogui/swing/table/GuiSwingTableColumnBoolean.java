@@ -13,6 +13,7 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EventObject;
@@ -25,7 +26,7 @@ import java.util.List;
  * Both editor and renderer are realized by {@link PropertyCheckBox}.
  */
 public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
-
+    public GuiSwingTableColumnBoolean() {}
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           SpecifierManager parentSpecifier) {
@@ -46,7 +47,7 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
 
     /** a property-check-box for column renderer and editor */
     public static class ColumnCheckBox extends PropertyCheckBox {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         /** @since 1.6 */
         protected List<Runnable> finishRunners = new ArrayList<>(1);
 
@@ -60,6 +61,7 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
          * @param editor  true if the component is used as an editor
          * @since 1.6
          */
+        @SuppressWarnings("this-escape")
         public ColumnCheckBox(GuiMappingContext context, SpecifierManager specifierManager, boolean editor) {
             super(context, specifierManager);
             setCurrentValueSupported(false);
@@ -100,8 +102,9 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
      * an editor for a boolean value
      */
     public static class CheckBoxEditor extends ObjectTableColumnValue.ObjectTableCellEditor {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
+        @SuppressWarnings("this-escape")
         public CheckBoxEditor(JComponent component, boolean skipShutDown, SpecifierManagerIndex specifierIndex) {
             super(component, skipShutDown, specifierIndex);
             setClickCount(0);

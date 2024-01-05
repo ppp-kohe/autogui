@@ -16,6 +16,8 @@ public class GuiSwingRootPaneTest extends GuiSwingTestCase {
     TestObj obj;
     TestObjPrivate objPrivate;
 
+    public GuiSwingRootPaneTest() {}
+
     @Before
     public void setUp() {
         obj = new TestObj();
@@ -36,6 +38,8 @@ public class GuiSwingRootPaneTest extends GuiSwingTestCase {
         @GuiIncluded public void action() {
             System.err.println("hello");
         }
+
+        public TestObj() {}
     }
 
     static class TestObjPrivate {

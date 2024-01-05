@@ -94,7 +94,7 @@ public @interface GuiIncluded {
     String description() default "";
 
     /**
-     * @return accelerator key stroke.
+     * @return accelerator keystroke.
      *  For example,
      *  <pre>
      *      &#64;GuiIncluded(keyStroke="K") public String prop;

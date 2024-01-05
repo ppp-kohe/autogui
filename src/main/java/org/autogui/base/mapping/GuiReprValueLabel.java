@@ -13,6 +13,7 @@ import java.util.Objects;
  * </pre>
  */
 public class GuiReprValueLabel extends GuiReprValue {
+    public GuiReprValueLabel() {}
     public String toUpdateValue(GuiMappingContext context, Object newValue) {
         return Objects.toString(newValue);
     }

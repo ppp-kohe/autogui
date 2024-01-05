@@ -8,13 +8,14 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.Serial;
 import java.util.function.Consumer;
 
 /**
  * a status-bar for displaying a last log-entry
  */
 public class GuiSwingLogStatusBar extends JComponent implements GuiSwingLogManager.GuiSwingLogView {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected GuiSwingLogManager manager;
     protected GuiLogEntry entry;
     protected Component entryComponent;
@@ -31,6 +32,7 @@ public class GuiSwingLogStatusBar extends JComponent implements GuiSwingLogManag
         this(manager, true);
     }
 
+    @SuppressWarnings("this-escape")
     public GuiSwingLogStatusBar(GuiSwingLogManager manager, boolean addManagerAsView) {
         UIManagerUtil ui = UIManagerUtil.getInstance();
         int w = ui.getScaledSizeInt(100);
@@ -41,7 +43,7 @@ public class GuiSwingLogStatusBar extends JComponent implements GuiSwingLogManag
         renderer = new GuiSwingLogManager.GuiSwingLogRenderer(manager, GuiSwingLogEntry.ContainerType.StatusBar);
         cellRendererPane = new CellRendererPane();
         centerPane = new JPanel() {
-            private static final long serialVersionUID = 1L;
+            @Serial private static final long serialVersionUID = 1L;
             @Override
             protected void paintComponent(Graphics g) {
                 paintCell(g, this);
@@ -126,8 +128,7 @@ public class GuiSwingLogStatusBar extends JComponent implements GuiSwingLogManag
     }
 
     public void dispatch(MouseEvent e) {
-        if (renderer != null && entry instanceof GuiSwingLogEntry) {
-            GuiSwingLogEntry se = (GuiSwingLogEntry) entry;
+        if (renderer != null && entry instanceof GuiSwingLogEntry se) {
             runEntry(se, r -> {
                 Point p = SwingUtilities.convertPoint(this, e.getPoint(), centerPane);
                 switch (e.getID()) {

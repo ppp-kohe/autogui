@@ -50,6 +50,8 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
 
     ObjectTableColumn objColumn;
 
+    public GuiSwingTableColumnStringTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -67,7 +69,7 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
         propContext = context.getChildByName("values")
                 .getChildByName("List");
 
-        elemContext = propContext.getChildren().get(0);
+        elemContext = propContext.getChildren().getFirst();
         strContext = elemContext.getChildByName("String");
 
 
@@ -88,6 +90,7 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
     public static class TestObj {
         @GuiIncluded
         public List<String> values;
+        public TestObj() {}
     }
 
     JScrollPane createTable() {
@@ -156,8 +159,8 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
         run(() -> component.setBackground(Color.black));
         run(() -> component.setForeground(Color.gray));
 
-        Assert.assertEquals("editorPane.setBackground also sets field background", Color.black, runGet(() -> component.getBackground()));
-        Assert.assertEquals("editorPane.setForeground also sets field foreground", Color.gray, runGet(() -> component.getForeground()));
+        Assert.assertEquals("editorPane.setBackground also sets field background", Color.black, runGet(component::getBackground));
+        Assert.assertEquals("editorPane.setForeground also sets field foreground", Color.gray, runGet(component::getForeground));
 
         run(() -> component.setText("EDIT"));
         runWait();

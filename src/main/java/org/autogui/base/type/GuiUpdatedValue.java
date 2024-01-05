@@ -34,21 +34,11 @@ public interface GuiUpdatedValue {
     /**
      * the value holder for {@link GuiUpdatedValue}
      */
-    final class GuiUpdatedValueObject implements GuiUpdatedValue {
-        protected Object value;
+    record GuiUpdatedValueObject(Object value) implements GuiUpdatedValue {
 
-        public GuiUpdatedValueObject(Object value) {
-            this.value = value;
-        }
-
-        @Override
-        public Object getValue() {
-            return value;
-        }
-
-        @Override
+    @Override
         public String toString() {
-            return "Updated(" + Objects.toString(value) + ")";
+            return "Updated(" + value + ")";
         }
 
         @Override
@@ -57,11 +47,6 @@ public interface GuiUpdatedValue {
             if (o == null || getClass() != o.getClass()) return false;
             GuiUpdatedValueObject that = (GuiUpdatedValueObject) o;
             return Objects.equals(value, that.value);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(value);
         }
     }
 

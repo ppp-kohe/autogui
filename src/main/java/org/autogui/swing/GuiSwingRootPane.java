@@ -17,6 +17,7 @@ import javax.swing.event.MenuListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.io.Serial;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -30,7 +31,7 @@ import java.util.function.Supplier;
  *    or {@link GuiSwingRootPaneCreator} obtained by {@link #creator()}.
  */
 public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.RootView {
-    private static final long serialVersionUID = 1L;
+    @Serial private static final long serialVersionUID = 1L;
     protected GuiMappingContext context;
     protected GuiSwingView view;
     protected GuiSwingPreferences preferences;
@@ -59,7 +60,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     /**
      * @since 1.4
      */
-    protected GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions = GuiSwingPreferences.APPLY_OPTIONS_DEFAULT;
+    protected GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions;
 
 
     /**
@@ -119,6 +120,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         protected Function<GuiMappingContext, GuiPreferences> prefsCreator;
         /** @since 1.4 */
         protected GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions;
+
+        public GuiSwingRootPaneCreator() {}
 
         /**
          * set a {@link GuiSwingKeyBinding} without automatic bindings created
@@ -274,6 +277,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         }
     }
 
+    @SuppressWarnings("this-escape")
     public GuiSwingRootPane(GuiMappingContext context) {
         setLayout(new BorderLayout());
         this.context = context;
@@ -300,6 +304,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
      * @throws HeadlessException if the runtime is headless
      * @since 1.4
      */
+    @SuppressWarnings("this-escape")
     public GuiSwingRootPane(GuiMappingContext context, GuiSwingView view, GuiSwingKeyBinding keyBinding,
                             boolean logStatus, SettingsWindow settingsWindow,
                             GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions) throws HeadlessException {
@@ -543,6 +548,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
      * <p>
      * The method does not intend to reuse the pane after cleaning up.
      */
+    @SuppressWarnings("rawtypes")
     public void cleanUp() {
         context.shutdown();
         GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
@@ -594,8 +600,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         });
         withError(() -> fileDialogPreferencesUpdater.getPrefs().saveTo(prefs));
 
-        if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
-            withError(() -> ((GuiSwingView.ValuePane) viewComponent).saveSwingPreferences(prefs));
+        if (viewComponent instanceof GuiSwingView.ValuePane<?> valuePane) {
+            withError(() -> valuePane.saveSwingPreferences(prefs));
         }
         GuiSwingView.saveChildren(prefs, viewComponent);
     }
@@ -687,16 +693,18 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
      * the convenient method for refreshing the pane
      * @since 1.5
      */
+    @SuppressWarnings("rawtypes")
     public void refreshByContext() {
         GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
                 GuiSwingView.ValuePane::refreshByContext);
     }
 
     public static class ShowPreferencesAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected Supplier<GuiSwingPreferences> preferences;
         protected JComponent sender;
 
+        @SuppressWarnings("this-escape")
         public ShowPreferencesAction(Supplier<GuiSwingPreferences> preferences, JComponent sender) {
             putValue(NAME, "Preferences...");
             putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_COMMA,
@@ -727,6 +735,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         protected WindowMenuMinimizeAction minimizeAction;
         protected WindowMenuZoomAction zoomAction;
 
+        @SuppressWarnings("this-escape")
         public WindowMenuBuilder() {
             menu = new JMenu("Window");
             minimizeAction = new WindowMenuMinimizeAction();
@@ -783,7 +792,9 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     public static class WindowMenuMinimizeAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
+
+        @SuppressWarnings("this-escape")
         public WindowMenuMinimizeAction() {
             putValue(NAME, "Minimize");
             ///putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_M,
@@ -810,7 +821,9 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     public static class WindowMenuZoomAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
+
+        @SuppressWarnings("this-escape")
         public WindowMenuZoomAction() {
             putValue(NAME, "Zoom");
         }
@@ -840,9 +853,10 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     public static class WindowMenuToFromAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected Frame frame;
 
+        @SuppressWarnings("this-escape")
         public WindowMenuToFromAction(Frame frame) {
             this.frame = frame;
             putValue(NAME, frame.getTitle());
@@ -872,10 +886,11 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     public static class WindowCloseAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected JComponent pane;
         protected KeyStroke keyStroke;
 
+        @SuppressWarnings("this-escape")
         public WindowCloseAction(JComponent pane) {
             this.pane = pane;
             putValue(NAME, "Close Window");

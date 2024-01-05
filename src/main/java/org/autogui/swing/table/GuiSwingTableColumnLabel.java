@@ -6,7 +6,6 @@ import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingViewLabel.PropertyLabel;
 import org.autogui.swing.util.TextCellRenderer;
 
-import javax.swing.*;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -18,6 +17,7 @@ import java.util.Objects;
  *     no editors.
  */
 public class GuiSwingTableColumnLabel implements GuiSwingTableColumn {
+    public GuiSwingTableColumnLabel() {}
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           SpecifierManager parentSpecifier) {

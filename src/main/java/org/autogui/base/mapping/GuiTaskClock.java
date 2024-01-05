@@ -4,7 +4,6 @@ import java.util.Objects;
 
 /**
  * clock of a context or a view.
- *
  *  both the context({@link #view}=false) and the view({@link #view}=true) maintain each clock.
  *  <p>
  *  values are passed between the context and the view with clocks.
@@ -14,7 +13,7 @@ import java.util.Objects;
  *       then it can accept the value and updates the clock with the opponent one:
  *       {@link #isOlderWithSet(GuiTaskClock)}.
  *   <p>
- *   The one side updates its value (e.g. an user edits the GUI value of the view),
+ *   The one side updates its value (e.g. a user edits the GUI value of the view),
  *      then the clock of the side {@link #increment()} and {@link #copy()}
  *        and send it to the other side.
  *

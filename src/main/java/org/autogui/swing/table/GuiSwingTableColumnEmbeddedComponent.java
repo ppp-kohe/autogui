@@ -30,7 +30,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *     The client can call repaint() of the parent component of the value-component in order to updating cells.
  * </p>
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingTableColumnEmbeddedComponent implements GuiSwingTableColumn {
+    public GuiSwingTableColumnEmbeddedComponent() {}
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           GuiSwingView.SpecifierManager parentSpecifier) {
@@ -120,11 +122,6 @@ public class GuiSwingTableColumnEmbeddedComponent implements GuiSwingTableColumn
             } finally {
                 repaintManager.unlockOrphanCandidates();
             }
-        }
-
-        @Override
-        public Object getSwingViewValue() {
-            return component;
         }
 
         @Override

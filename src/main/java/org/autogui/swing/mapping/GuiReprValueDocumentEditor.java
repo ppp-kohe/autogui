@@ -12,6 +12,7 @@ import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import java.awt.*;
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -43,6 +44,7 @@ import java.util.stream.IntStream;
  *
  *  */
 public class GuiReprValueDocumentEditor extends GuiReprValue {
+    public GuiReprValueDocumentEditor() {}
     @Override
     public boolean isTaskRunnerUsedFor(Supplier<?> task) {
         return !SwingDeferredRunner.isEventThreadOrDispatchedFromEventThread();
@@ -83,8 +85,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
 
     @Override
     public void setSource(GuiMappingContext context, Object value) {
-        if (value instanceof StyledDocument) {
-            StyledDocument doc = (StyledDocument) value;
+        if (value instanceof StyledDocument doc) {
             Style style = doc.getStyle(StyleContext.DEFAULT_STYLE);
             if (setupStyle(style)) {
                 doc.setParagraphAttributes(0, doc.getLength(), style, true);
@@ -119,17 +120,13 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
                 return null;
             }
         }
-        if (value instanceof GuiUpdatedValue) {
-            return toUpdateValue(context, ((GuiUpdatedValue) value).getValue(), delayed);
-        } else if (value instanceof Document) {
-            return (Document) value;
-        } else if (value instanceof AbstractDocument.Content) {
-            return ContentWrappingDocument.create((AbstractDocument.Content) value);
-        } else if (value instanceof StringBuilder) {
-            return toUpdateValue(context, new StringBuilderContent((StringBuilder) value));
-        } else {
-            return null;
-        }
+        return switch (value) {
+            case GuiUpdatedValue guiUpdatedValue -> toUpdateValue(context, guiUpdatedValue.getValue(), delayed);
+            case Document document -> document;
+            case AbstractDocument.Content content -> ContentWrappingDocument.create(content);
+            case StringBuilder stringBuilder -> toUpdateValue(context, new StringBuilderContent(stringBuilder));
+            case null, default -> null;
+        };
     }
 
     public Object toSourceValue(GuiMappingContext context, Document document) {
@@ -178,24 +175,27 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     public Object toJsonInEvent(Object source) {
-        if (source instanceof Document) {
-            Document doc = (Document) source;
-            try {
-                return doc.getText(0, doc.getLength());
-            } catch (Exception ex) {
+        switch (source) {
+            case Document doc -> {
+                try {
+                    return doc.getText(0, doc.getLength());
+                } catch (Exception ex) {
+                    return null;
+                }
+            }
+            case AbstractDocument.Content content -> {
+                try {
+                    return content.getString(0, content.length());
+                } catch (Exception ex) {
+                    return null;
+                }
+            }
+            case StringBuilder stringBuilder -> {
+                return source.toString();
+            }
+            case null, default -> {
                 return null;
             }
-        } else if (source instanceof AbstractDocument.Content) {
-            AbstractDocument.Content content = (AbstractDocument.Content) source;
-            try {
-                return content.getString(0, content.length());
-            } catch (Exception ex) {
-                return null;
-            }
-        } else if (source instanceof StringBuilder) {
-            return source.toString();
-        } else {
-            return null;
         }
     }
 
@@ -228,9 +228,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
 
     public Object fromJsonInEvent(GuiMappingContext context, Object target, Object json) {
         Class<?> cls = getValueType(context);
-        if (json instanceof String) {
-            String jsonStr = (String) json;
-
+        if (json instanceof String jsonStr) {
             if (fromJsonCheckType(Document.class, cls, target)) {
                 Document doc = castOrMake(Document.class, target, DefaultStyledDocument::new);
                 try {
@@ -262,11 +260,6 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         return target == null
                 ? type.isAssignableFrom(valueType)
                 : type.isInstance(target);
-    }
-
-    @Override
-    public boolean isJsonSetter() {
-        return true;
     }
 
     public static TabSet tabSet;
@@ -310,7 +303,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
      * a styled-document impl. for {@link javax.swing.text.AbstractDocument.Content}
      */
     public static class ContentWrappingDocument extends DefaultStyledDocument {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected Content value;
 
         public static ContentWrappingDocument create(Content c) {
@@ -336,6 +329,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
          * @param c an empty content: DefaultStyleDocument seems to require an empty content at initialization.
          *          To satisfy this, use {@link ContentWrappingDocument#create(AbstractDocument.Content)} which do removing, creating, and re-inserting
          */
+        @SuppressWarnings("this-escape")
         public ContentWrappingDocument(Content c) {
             super(c, new StyleContext());
             this.value = c;
@@ -362,7 +356,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
 
             ContentWrappingDocument that = (ContentWrappingDocument) o;
 
-            return value != null ? value.equals(that.value) : that.value == null;
+            return Objects.equals(value, that.value);
         }
 
         @Override
@@ -374,13 +368,13 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     /**
      *  a content for {@link StringBuilder}:
      *   wraps a buffer and manages any changes to the buffer.
-     *   Other changes to the buffer outside of the class will cause unexpected behavior.
+     *   Other changes to the buffer outside of class will cause unexpected behavior.
      *   Thus, the client code must not modify contents of the buffer.
      *   Also, when the class modified the buffer (usually in the event thread),
      *    it acquires the monitor of the buffer by synchronized.
      */
     public static class StringBuilderContent implements AbstractDocument.Content, Serializable {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected final StringBuilder buffer;
         transient protected char[] array;
         transient protected List<WeakReference<ContentPosition>> positions = new ArrayList<>();
@@ -394,7 +388,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
         }
 
         @Override
-        public Position createPosition(int offset) throws BadLocationException {
+        public Position createPosition(int offset) {
             ContentPosition pos = new ContentPosition(offset);
             positions.add(new WeakReference<>(pos));
             return pos;
@@ -533,7 +527,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     /**
-     * an functional interface used in {@link StringBuilderContent}
+     * a functional interface used in {@link StringBuilderContent}
      * @param <T> the returned type
      */
     public interface EditSupplier<T> {
@@ -585,7 +579,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
      * an undoable insertion operation for {@link StringBuilderContent}
      */
     public static class ContentInsertEdit extends AbstractUndoableEdit {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected StringBuilderContent content;
         protected int offset;
         protected int length;
@@ -627,7 +621,7 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
      * an undoable removing operation for {@link StringBuilderContent}
      */
     public static class ContentRemoveEdit extends AbstractUndoableEdit {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         protected StringBuilderContent content;
         protected int offset;
         protected int length;

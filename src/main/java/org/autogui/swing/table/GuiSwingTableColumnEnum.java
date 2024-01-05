@@ -15,6 +15,7 @@ import org.autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.io.Serial;
 import java.util.*;
 
 /**
@@ -24,7 +25,9 @@ import java.util.*;
  *    The renderer is realized by {@link GuiSwingViewLabel.PropertyLabel}.
  *    The editor is realized by {@link PropertyEnumComboBox}.
  */
+@SuppressWarnings("this-escape")
 public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
+    public GuiSwingTableColumnEnum() {}
     @Override
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           SpecifierManager parentSpecifier) {
@@ -45,7 +48,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     }
 
     public static class ColumnEnumPane extends PropertyLabelEnum {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public ColumnEnumPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
@@ -71,7 +74,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     }
 
     public static class ColumnEditEnumComboBox extends PropertyEnumComboBox {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
         /** @since 1.6 */
         protected List<Runnable> finishRunners = new ArrayList<>(1);
 
@@ -98,7 +101,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     }
 
     public static class ColumnEnumSetMenu extends GuiSwingViewEnumComboBox.EnumSetMenu implements TableTargetMenu {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         public ColumnEnumSetMenu(GuiSwingView.ValuePane<Object> pane) {
             super(pane);
@@ -111,7 +114,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     }
 
     public static class ColumnEnumSetMenuForTableColumn extends GuiSwingViewEnumComboBox.EnumSetMenu {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected GuiReprCollectionTable.TableTargetColumn target;
 
@@ -136,7 +139,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
     }
 
     public static class ColumnEnumSetAction extends GuiSwingViewEnumComboBox.EnumSetAction {
-        private static final long serialVersionUID = 1L;
+        @Serial private static final long serialVersionUID = 1L;
 
         protected GuiReprCollectionTable.TableTargetColumn target;
 

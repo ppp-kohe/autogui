@@ -27,6 +27,8 @@ import java.util.List;
 public class GuiLogManager {
     protected static GuiLogManager manager;
 
+    public GuiLogManager() {}
+
     /** @return a shared instance */
     public static GuiLogManager get() {
         synchronized (GuiLogManager.class) {
@@ -46,7 +48,7 @@ public class GuiLogManager {
     /**
      * create and report a log entry.
      * args are concatenated with a space and pass to {@link #logString(String)}.
-     *    if the previous arg is a String and it ends with an ASCII symbol char, it will not insert a space.
+     *    if the previous arg is a String, and it ends with an ASCII symbol char, it will not insert a space.
      *    <pre>
      *        log("hello", "world") =&gt; logString("hello world")
      *        log("hello:", "world") =&gt; logString("hello:world")
@@ -54,7 +56,7 @@ public class GuiLogManager {
      *           =&gt; logString("x=1 y=2 ex") and logError(new Exception())
      *    </pre>
      * when the last item of args is an exception, it will be passed to {@link #logError(Throwable)}.
-     *    if the args is only a single exception, it will returns its {@link GuiLogEntryException},
+     *    if the args is only a single exception, it will return its {@link GuiLogEntryException},
      *      otherwise {@link GuiLogEntryString}
      * @param args concatenated values for creating a log entry.
      * @return the created log entry
@@ -74,8 +76,7 @@ public class GuiLogManager {
             } else {
                 formatter.format("%s", arg);
             }
-            if (arg instanceof String) {
-                String str = (String) arg;
+            if (arg instanceof String str) {
                 needSpace = !(!str.isEmpty() && isSymbol(str.charAt(str.length() - 1)));
             } else {
                 needSpace = true;
@@ -118,7 +119,7 @@ public class GuiLogManager {
      *   System.out will be replaced with a manager stream with original System.out.
      *   those replaced streams are instances of {@link LogPrintStream}.
      * <p>
-     *   synchronized with System.class
+     *   synchronized with {@code System.class}
      *   @param replaceError if true, it will replace with a new {@link LogPrintStream}.
      *   @param replaceOutput  if true, it will replace with a new {@link LogPrintStream}.
      *   */
@@ -142,14 +143,13 @@ public class GuiLogManager {
     }
 
     /**
-     * synchronized with System.class
+     * synchronized with {@code System.class}
      * @since 1.1
      */
     public void resetErr() {
         synchronized (System.class) {
             PrintStream exOut = System.err;
-            while (exOut instanceof LogPrintStream) {
-                LogPrintStream lp = (LogPrintStream) exOut;
+            while (exOut instanceof LogPrintStream lp) {
                 if (lp.getOutType().equals(LogStreamType.Stderr) && lp.getManager().equals(this)) {
                     exOut = lp.getOriginal();
                 } else {
@@ -161,14 +161,13 @@ public class GuiLogManager {
     }
 
     /**
-     * synchronized with System.class
+     * synchronized with {@code System.class}
      * @since 1.1
      */
     public void resetOut() {
         synchronized (System.class) {
             PrintStream exOut = System.out;
-            while (exOut instanceof LogPrintStream) {
-                LogPrintStream lp = (LogPrintStream) exOut;
+            while (exOut instanceof LogPrintStream lp) {
                 if (lp.getOutType().equals(LogStreamType.Stdout) && lp.getManager().equals(this)) {
                     exOut = lp.getOriginal();
                 } else {
@@ -181,10 +180,9 @@ public class GuiLogManager {
 
     /** replace the default uncaught handler with {@link LogUncaughtHandler}
      * by calling {@link Thread#setDefaultUncaughtExceptionHandler(Thread.UncaughtExceptionHandler)}.
-     *
      * this makes the uncaught exception will be sent to the manager.
      * <p>
-     * synchronized with System.class
+     * synchronized with {@code System.class}
      * */
     public void replaceUncaughtHandler() {
         synchronized (System.class) {
@@ -198,14 +196,13 @@ public class GuiLogManager {
     }
 
     /**
-     * synchronized with System.class
+     * synchronized with {@code System.class}
      * @since 1.1
      */
     public void resetUncaughtHandler() {
         synchronized (System.class) {
             Thread.UncaughtExceptionHandler h = Thread.getDefaultUncaughtExceptionHandler();
-            while (h instanceof LogUncaughtHandler) {
-                LogUncaughtHandler lh = (LogUncaughtHandler) h;
+            while (h instanceof LogUncaughtHandler lh) {
                 if (lh.getManager().equals(this)) {
                     h = lh.getHandler();
                 } else {
@@ -216,7 +213,7 @@ public class GuiLogManager {
         }
     }
 
-    /** @return  obtains the original {@link System#err} from wrapped System.err
+    /** @return  obtains the original {@link System#err} from wrapped {@link System#err}
      * */
     public PrintStream getSystemErr() {
         PrintStream err = System.err;
@@ -311,7 +308,7 @@ public class GuiLogManager {
 
     /**
      *  @param msg the message to be formatted
-     *  @return the formatted line:  a tab and a newline are converted to an space.
+     *  @return the formatted line:  a tab and a newline are converted to a space.
      *  the length is limited to 70 chars
      *  */
     public String formatMessageLine(String msg) {
@@ -406,7 +403,7 @@ public class GuiLogManager {
         Stderr(true),
         Other(false);
 
-        private boolean std;
+        private final boolean std;
 
         LogStreamType(boolean std) {
             this.std = std;
@@ -419,7 +416,7 @@ public class GuiLogManager {
 
     /** a console-wrapper stream, with supporting printing exceptions */
     public static class LogPrintStream extends PrintStream {
-        private GuiLogManager manager;
+        private final GuiLogManager manager;
         protected PrintStream original;
 
         public LogPrintStream(GuiLogManager manager) {
@@ -433,7 +430,7 @@ public class GuiLogManager {
 
         /**
          * @param manager the manager
-         * @param original the original wrapped stream (typically System.err or System.out)
+         * @param original the original wrapped stream (typically {@link System#err} or {@link System#out})
          * @param out the wrapped out
          * @param outType the type of out
          * @since 1.1

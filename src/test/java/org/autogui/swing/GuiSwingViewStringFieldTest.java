@@ -31,6 +31,8 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
 
     JFrame frame;
 
+    public GuiSwingViewStringFieldTest() {}
+
     @Before
     public void setUp() {
         builder = new GuiTypeBuilder();
@@ -58,6 +60,7 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
     public static class TestObj {
         @GuiIncluded
         public String value;
+        public TestObj() {}
     }
 
     //////////

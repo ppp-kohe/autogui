@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
  *  </pre>
  * */
 public class GuiReprValueBooleanCheckBox extends GuiReprValue {
-
+    public GuiReprValueBooleanCheckBox() {}
     @Override
     public boolean matchValueType(Class<?> cls) {
         return cls.equals(Boolean.class) || cls.equals(boolean.class);

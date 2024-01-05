@@ -59,9 +59,7 @@ public class GuiReprObjectTabbedPane extends GuiReprObjectPane {
                 subContext.isTypeElementObject() ||
                 subContext.isTypeElementCollection()) {
                 ++panes;
-            } else if (subContext.isTypeElementAction() || subContext.isTypeElementActionList()) {
-                //ok
-            } else {
+            } else if (!(subContext.isTypeElementAction() || subContext.isTypeElementActionList())) {
                 return false;
             }
         }
