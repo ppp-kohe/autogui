@@ -35,8 +35,12 @@ public interface GuiUpdatedValue {
      * the value holder for {@link GuiUpdatedValue}
      */
     record GuiUpdatedValueObject(Object value) implements GuiUpdatedValue {
+        @Override
+        public Object getValue() {
+            return value();
+        }
 
-    @Override
+        @Override
         public String toString() {
             return "Updated(" + value + ")";
         }
