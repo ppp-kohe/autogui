@@ -103,10 +103,12 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         @Override
         public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
+                options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
                 super.loadSwingPreferences(prefs, options);
-                tabPreferencesUpdater.apply(prefs.getDescendant(getSwingViewContext()));
+                options.apply(tabPreferencesUpdater, prefs.getDescendant(getSwingViewContext()));
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
+                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -182,6 +184,22 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
             selectedIndex = tabbedPane.getModel().getSelectedIndex();
         }
 
+        /**
+         * @return the selected tab index
+         * @since 1.6.3
+         */
+        public int getSelectedIndex() {
+            return selectedIndex;
+        }
+
+        /**
+         * @param selectedIndex updated index
+         * @since 1.6.3
+         */
+        public void setSelectedIndex(int selectedIndex) {
+            this.selectedIndex = selectedIndex;
+        }
+
         @Override
         public String getKey() {
             return "$tab";
@@ -197,9 +215,8 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
-            if (json instanceof Map<?,?>) {
-                Map<String,Object> map = (Map<String,Object>) json;
-                selectedIndex = (Integer) map.getOrDefault("selectedIndex", selectedIndex);
+            if (json instanceof Map<?,?> map) {
+                selectedIndex = GuiSwingPreferences.getAs(map, Integer.class, "selectedIndex", 0);
             }
         }
     }

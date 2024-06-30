@@ -445,7 +445,7 @@ public class GuiMappingContext {
                         tasks -> updateSourceFromRoot(this)));
     }
 
-    /** {@link #updateSourceFromGui(Object)} with the null cause */
+    /** {@link #updateSourceFromRoot(GuiMappingContext)} with the null cause */
     public void updateSourceFromRoot() {
         updateSourceFromRoot(null);
     }

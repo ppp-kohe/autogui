@@ -194,7 +194,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         }
 
         public void initBorder() {
-            setBorder(new GuiSwingViewLabel.FocusBorder(this));
+            setBorder(new FocusBorder(this));
         }
 
         public void initContentPane() {
@@ -478,10 +478,12 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         @Override
         public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
+                options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
                 GuiSwingView.loadPreferencesDefault(this, prefs, options);
-                preferencesUpdater.apply(prefs.getDescendant(getSwingViewContext()));
+                options.apply(preferencesUpdater, prefs.getDescendant(getSwingViewContext()));
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
+                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -647,6 +649,14 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             return "$split";
         }
 
+        /**
+         * @return the entry list; modification will be affected to the prefs
+         * @since 1.6.3
+         */
+        public List<PreferencesForSplitEntry> getSplits() {
+            return splits;
+        }
+
         @Override
         public Object toJson() {
             return splits.stream()
@@ -676,18 +686,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
-            if (json instanceof List<?>) {
-                splits.clear();
-                for (Object item : (List<?>) json) {
-                    PreferencesForSplitEntry e = new PreferencesForSplitEntry();
-                    if (item instanceof Map<?,?>) {
-                        Map<String,Object> map = (Map<String,Object>) item;
-                        e.dividerLocation = (Integer) map.getOrDefault("dividerLocation", 0);
-                        e.horizontal = (Boolean) map.getOrDefault("horizontal", true);
-                    }
-                    splits.add(e);
-                }
-            }
+            GuiSwingPreferences.setAsList(splits, json, Map.class, PreferencesForSplitEntry::new);
         }
     }
 
@@ -696,6 +695,14 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         public boolean horizontal;
 
         public PreferencesForSplitEntry() {}
+
+        /**
+         * @param map the JSON map for the entry containing "divierLocation" and "horizontal"
+         */
+        public PreferencesForSplitEntry(Map<?, ?> map) {
+            dividerLocation = GuiSwingPreferences.getAs(map, Integer.class, "dividerLocation", 0);
+            horizontal = GuiSwingPreferences.getAs(map, Boolean.class,"horizontal", true);
+        }
 
         public Object toJson() {
             Map<String,Object> map = new LinkedHashMap<>();

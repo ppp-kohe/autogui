@@ -101,13 +101,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
     }
 
     public Dimension getSize(GuiMappingContext context, Image image) {
-        if (image == null) {
-            return new Dimension(1, 1);
-        } else if (image instanceof BufferedImage bufferedImage) {
-            return new Dimension(bufferedImage.getWidth(), bufferedImage.getHeight());
-        } else {
-            return new ImageSizeGetter().getWithWait(image);
-        }
+        return ImageSizeGetter.getSizeNonNull(image);
     }
 
     /**
@@ -131,6 +125,22 @@ public class GuiReprValueImagePane extends GuiReprValue {
         protected AtomicBoolean finish = new AtomicBoolean();
 
         public ImageSizeGetter() {}
+
+        /**
+         * the current impl. of {@link GuiReprValueImagePane#getSize(GuiMappingContext, Image)}
+         * @param image an image or null
+         * @return the size or (1,1)
+         * @since 1.6.3
+         */
+        public static Dimension getSizeNonNull(Image image) {
+            if (image == null) {
+                return new Dimension(1, 1);
+            } else if (image instanceof BufferedImage bufferedImage) {
+                return new Dimension(bufferedImage.getWidth(), bufferedImage.getHeight());
+            } else {
+                return new ImageSizeGetter().getWithWait(image);
+            }
+        }
 
         public Dimension getWithWait(Image image) {
             finish.set(false);
@@ -273,28 +283,70 @@ public class GuiReprValueImagePane extends GuiReprValue {
         return imageToReference.get(image);
     }
 
-    public RenderedImage getRenderedImage(GuiMappingContext context, Object source) {
+    /**
+     * support object for {@link #getRenderedImage(GuiMappingContext, Object)}
+     * @since 1.6.3
+     */
+    public interface RenderedImageGetterSupport {
+        Dimension size(Image image);
+        void setSourceImageToTemporaryImage(Image source, BufferedImage temporaryImage);
+    }
+
+    /**
+     * impl of the support interface
+     * @since 1.6.3
+     */
+    public static class RenderedImageGetterSupportForContext implements RenderedImageGetterSupport {
+        protected GuiReprValueImagePane img;
+        protected GuiMappingContext context;
+
+        public RenderedImageGetterSupportForContext(GuiReprValueImagePane img, GuiMappingContext context) {
+            this.img = img;
+            this.context = context;
+        }
+
+        @Override
+        public Dimension size(Image image) {
+            return img.getSize(context, image);
+        }
+
+        @Override
+        public void setSourceImageToTemporaryImage(Image source, BufferedImage temporaryImage) {
+            img.setImagePath(temporaryImage, img.getImagePath(source));
+        }
+    }
+
+    /**
+     * impl. of {@link #getRenderedImage(GuiMappingContext, Object)}
+     * @param support the non-null support
+     * @param source the source image object
+     * @return source or if it is not an {@link RenderedImage}, it renders to a temporary buffered-image.
+     * @since 1.6.3
+     */
+    public static RenderedImage getRenderedImageWithSupport(RenderedImageGetterSupport support, Object source) {
         if (source instanceof RenderedImage) { //including BufferedImage
             return (RenderedImage) source;
         } else if (source instanceof Image) {
-            return getBufferedImage(context, source);
+            return getBufferedImageWithSupport(support, source);
         } else {
             return null;
         }
     }
 
-    public BufferedImage getBufferedImage(GuiMappingContext context, Object source) {
+    /**
+     * impl. of {@link #getBufferedImage(GuiMappingContext, Object)}
+     * @param support the non-null support
+     * @param source the source image object
+     * @return source or if it is not an {@link RenderedImage}, it renders to a temporary buffered-image.
+     * @since 1.6.3
+     */
+    public static BufferedImage getBufferedImageWithSupport(RenderedImageGetterSupport support, Object source) {
         if (source instanceof BufferedImage) {
             return (BufferedImage) source;
         } else if (source instanceof Image image) {
-            Dimension size = getSize(context, image);
+            Dimension size = support.size(image);
             BufferedImage tmp = new BufferedImage(size.width, size.height, BufferedImage.TYPE_4BYTE_ABGR);
-
-            Path exPath = imageToReference.get(image);
-            if (exPath != null) {
-                imageToReference.put(tmp, exPath);
-            }
-
+            support.setSourceImageToTemporaryImage(image, tmp);
             Graphics2D g = tmp.createGraphics();
             {
                 int count = 0;
@@ -313,6 +365,14 @@ public class GuiReprValueImagePane extends GuiReprValue {
         } else {
             return null;
         }
+    }
+
+    public RenderedImage getRenderedImage(GuiMappingContext context, Object source) {
+        return getRenderedImageWithSupport(new RenderedImageGetterSupportForContext(this, context), source);
+    }
+
+    public BufferedImage getBufferedImage(GuiMappingContext context, Object source) {
+        return getBufferedImageWithSupport(new RenderedImageGetterSupportForContext(this, context), source);
     }
 
     @Override
@@ -366,7 +426,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
         }
 
         public Image getImage() {
-            if (image == null && Files.exists(path)) {
+            if (image == null && path != null && Files.exists(path)) {
                 try {
                     image = ImageIO.read(path.toFile());
                     if (imagePathSetter != null) {

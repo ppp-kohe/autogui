@@ -260,7 +260,7 @@ public class GuiSwingViewPropertyPane implements GuiSwingView {
         @Override
         public void init() {
             super.init();
-            setBorder(new GuiSwingViewLabel.FocusBorder(this));
+            setBorder(new FocusBorder(this));
         }
 
         public boolean hasContentValuePane() {

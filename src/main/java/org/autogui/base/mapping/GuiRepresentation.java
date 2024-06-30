@@ -183,24 +183,105 @@ public interface GuiRepresentation {
     static GuiReprSet getDefaultSet() {
         GuiReprSet set = new GuiReprSet();
 
-        set.add(new GuiReprCollectionElement(set));
+        set.add(createCollectionElement(set));
 
-        set.add(new GuiReprValueBooleanCheckBox(),
-                new GuiReprValueEnumComboBox(),
-                new GuiReprValueFilePathField(),
-                new GuiReprValueNumberSpinner(),
-                new GuiReprValueStringField());
+        set.add(createValueBooleanCheckBox(),
+                createValueEnumComboBox(),
+                createValueFilePathField(),
+                createValueNumberSpinner(),
+                createValueStringField());
 
-        set.add(new GuiReprCollectionTable(set),
-                new GuiReprObjectTabbedPane(set),
-                new GuiReprObjectPane(set),
-                new GuiReprPropertyPane(set),
-                new GuiReprAction(),
-                new GuiReprActionList());
+        set.add(createCollectionTable(set),
+                createObjectTabbedPane(set),
+                createObjectPane(set),
+                createPropertyPane(set),
+                createAction(),
+                createActionList());
 
-        set.add(new GuiReprValueLabel());
+        set.add(createValueLabel());
 
         return set;
+    }
+
+    /** @return new representation
+     * @param owner the owner which can contains the returned repr itself
+     * @since 1.6.3 */
+    static GuiReprCollectionElement createCollectionElement(GuiRepresentation owner) {
+        return new GuiReprCollectionElement(owner);
+    }
+    /** @return new representation
+     * @since 1.6.3 */
+    static GuiReprValueBooleanCheckBox createValueBooleanCheckBox() {
+        return new GuiReprValueBooleanCheckBox();
+    }
+    /** @return new representation
+     * @since 1.6.3 */
+    static GuiReprValueEnumComboBox createValueEnumComboBox() {
+        return new GuiReprValueEnumComboBox();
+    }
+    /** @return new representation
+     * @since 1.6.3 */
+    static GuiReprValueFilePathField createValueFilePathField() {
+        return new GuiReprValueFilePathField();
+    }
+    /** @return new representation
+     * @since 1.6.3 */
+    static GuiReprValueNumberSpinner createValueNumberSpinner() {
+        return new GuiReprValueNumberSpinner();
+    }
+    /** @return new representation
+     * @since 1.6.3 */
+    static GuiReprValueStringField createValueStringField() {
+        return new GuiReprValueStringField();
+    }
+
+    /** @return new representation
+     * @param owner the owner which can contains the returned repr itself
+     * @since 1.6.3 */
+    static GuiReprCollectionTable createCollectionTable(GuiRepresentation owner) {
+        return new GuiReprCollectionTable(owner);
+    }
+    /** @return new representation
+     * @param owner the owner which can contains the returned repr itself
+     * @since 1.6.3 */
+    static GuiReprObjectTabbedPane createObjectTabbedPane(GuiRepresentation owner) {
+        return new GuiReprObjectTabbedPane(owner);
+    }
+    /** @return new representation
+     * @param owner the owner which can contains the returned repr itself
+     * @since 1.6.3 */
+    static GuiReprObjectPane createObjectPane(GuiRepresentation owner) {
+        return new GuiReprObjectPane(owner);
+    }
+    /** @return new representation
+     * @param owner the owner which can contains the returned repr itself
+     * @since 1.6.3 */
+    static GuiReprPropertyPane createPropertyPane(GuiRepresentation owner) {
+        return new GuiReprPropertyPane(owner);
+    }
+    /** @return new representation
+     * @since 1.6.3 */
+    static GuiReprAction createAction() {
+        return new GuiReprAction();
+    }
+    /** @return new representation
+     * @since 1.6.3 */
+    static GuiReprActionList createActionList() {
+        return new GuiReprActionList();
+    }
+    /** @return new representation
+     * @since 1.6.3 */
+    static GuiReprValueLabel createValueLabel() {
+        return new GuiReprValueLabel();
+    }
+
+    /**
+     * the repr type is abstract for any values and it will not be directly included in the default set.
+     * @return new representation
+     * @since 1.6.3
+     */
+    static GuiReprValue createValue() {
+        return new GuiReprValue();
     }
 
     default String toStringHeader() {

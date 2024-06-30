@@ -372,9 +372,22 @@ public class GuiReprValue implements GuiRepresentation {
     public Object updateWithParentSource(GuiMappingContext context, Object newValue, ObjectSpecifier specifier) throws Throwable {
         GuiSourceValue src = getParentSource(context, specifier.getParent());
         if (src.isNone()) {
-            System.err.println("no src: context=" + context.getRepresentation() + " : parent=" + context.getParentRepresentation());
+            notifyUpdateWithParentSourceNone(context, newValue, specifier, src);
         }
         return update(context, src, newValue, specifier);
+    }
+
+    /**
+     * the source value is "None" at {@link #updateWithParentSource(GuiMappingContext, Object, ObjectSpecifier)}.
+     * The default behavior is nothing
+     * @param context the context
+     * @param newValue the updating new value
+     * @param specifier the specifier of the value
+     * @param src the source for the context
+     * @since 1.6.3
+     */
+    protected void notifyUpdateWithParentSourceNone(GuiMappingContext context, Object newValue, ObjectSpecifier specifier, GuiSourceValue src) {
+        //System.err.println("no src: context=" + context.getRepresentation() + " : parent=" + context.getParentRepresentation());
     }
 
     /**

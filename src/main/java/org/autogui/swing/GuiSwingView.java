@@ -1,12 +1,12 @@
 package org.autogui.swing;
 
 import org.autogui.base.log.GuiLogManager;
+import org.autogui.base.mapping.*;
 import org.autogui.swing.GuiSwingTaskRunner.ContextTaskResult;
 import org.autogui.swing.table.TableTargetColumnAction;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupExtension;
 import org.autogui.swing.util.SettingsWindow;
-import org.autogui.base.mapping.*;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -19,8 +19,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.Serial;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -480,20 +480,24 @@ public interface GuiSwingView extends GuiSwingElement {
             return;
         }
 
-        Object v = prefs.getCurrentValue();
-        if (v != null || loadAsJson) {
-            if (v != null && pane.isSwingCurrentValueSupported()) {
-                pane.setSwingViewHistoryValue(v);
-            } else if (loadAsJson) {
-                pane.setPrefsJsonSupported(prefs.getCurrentValueAsJsonSupported());
+        try {
+            options.begin(pane, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.CurrentValue);
+            Object v = prefs.getCurrentValue();
+            if (v != null || loadAsJson) {
+                if (v != null && pane.isSwingCurrentValueSupported()) {
+                    options.setLastHistoryValueBySwingViewHistoryValue(pane, prefs, v);
+                } else if (loadAsJson) {
+                    options.setLastHistoryValueByPrefsJsonSupported(pane, prefs, prefs.getCurrentValueAsJsonSupported());
+                }
+            } else if (pane.getSwingViewContext().isHistoryValueStored(null)) {
+                List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefs.getHistoryValues());
+                es.sort(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime));
+                if (!es.isEmpty()) {
+                    options.setLastHistoryValueBySwingViewHistoryValue(pane, prefs, es.getLast());
+                }
             }
-        } else if (pane.getSwingViewContext().isHistoryValueStored(null)) {
-            List<GuiPreferences.HistoryValueEntry> es = new ArrayList<>(prefs.getHistoryValues());
-            es.sort(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime));
-            if (!es.isEmpty()) {
-                Object value = es.getLast().getValue();
-                pane.setSwingViewHistoryValue(value);
-            }
+        } finally {
+            options.end(pane, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.CurrentValue);
         }
     }
 
@@ -507,9 +511,16 @@ public interface GuiSwingView extends GuiSwingElement {
         forEach(ValuePane.class, comp, e -> {
             GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) e;
             if (valuePane != comp) { //skip top
+                var subPrefs = prefs.getDescendant(valuePane.getSwingViewContext());
                 try {
                     valuePane.saveSwingPreferences(
-                            prefs.getDescendant(valuePane.getSwingViewContext()));
+                            subPrefs);
+                } catch (IllegalArgumentException iaex) {
+                    if (iaex.getMessage().contains("Value too long")) {
+                        GuiLogManager.get().logFormat("saveChildren(%s): Value too long", subPrefs.getName());
+                    } else {
+                        GuiLogManager.get().logError(iaex);
+                    }
                 } catch (Exception ex) {
                     GuiLogManager.get().logError(ex);
                 }
@@ -523,13 +534,13 @@ public interface GuiSwingView extends GuiSwingElement {
      * @param prefs a target preferences
      */
     static void savePreferencesDefault(JComponent pane, GuiPreferences prefs) {
-        if (pane instanceof ValuePane<?>) {
-            GuiMappingContext context = ((ValuePane<?>) pane).getSwingViewContext();
+        if (pane instanceof ValuePane<?> vPane) {
+            GuiMappingContext context = vPane.getSwingViewContext();
             GuiPreferences targetPrefs = prefs.getDescendant(context);
-            if (((ValuePane<?>) pane).isSwingCurrentValueSupported()) {
-                targetPrefs.setCurrentValue(((ValuePane<?>) pane).getSwingViewValue());
+            if (vPane.isSwingCurrentValueSupported()) {
+                targetPrefs.setCurrentValue(vPane.getSwingViewValue());
             } else if (targetPrefs.isContextTypeIsJsonSupport()) {
-                targetPrefs.setCurrentValueAsJsonSupported(((ValuePane<?>) pane).getPrefsJsonSupported());
+                targetPrefs.setCurrentValueAsJsonSupported(vPane.getPrefsJsonSupported());
             }
             if (context.isHistoryValueSupported()) {
                 GuiPreferences ctxPrefs = context.getPreferences();
@@ -567,27 +578,32 @@ public interface GuiSwingView extends GuiSwingElement {
     @SuppressWarnings("unchecked")
     static void loadPreferencesDefault(JComponent pane, GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
         try {
-            if (pane instanceof ValuePane<?>) {
-                GuiMappingContext context = ((ValuePane<?>) pane).getSwingViewContext();
+            options.begin(pane, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+            if (pane instanceof ValuePane<?> valuePane) {
+                GuiMappingContext context = valuePane.getSwingViewContext();
                 GuiPreferences targetPrefs = prefs.getDescendant(context);
-                setLastHistoryValue(targetPrefs, (ValuePane<Object>) pane, options);
+                setLastHistoryValue(targetPrefs, (ValuePane<Object>) valuePane, options);
 
                 if (context.isHistoryValueSupported()) {
                     GuiPreferences ctxPrefs = context.getPreferences();
-                    if (!targetPrefs.equals(ctxPrefs)) {
+                    if (options.hasHistoryValues(targetPrefs, ctxPrefs)) {
+                        options.begin(targetPrefs.getHistoryValues(), targetPrefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.HistoryValues);
                         try (var lock = targetPrefs.lock();
                             var ctxLock = ctxPrefs.lock()) {
                             lock.use();
                             ctxLock.use();
                             targetPrefs.getHistoryValues().stream()
                                     .sorted(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime))
-                                    .forEachOrdered(e -> ctxPrefs.addHistoryValue(e.getValue(), e.getTime()));
+                                    .forEachOrdered(e -> options.addHistoryValue(e, ctxPrefs));
+                        } finally {
+                            options.end(targetPrefs.getHistoryValues(), targetPrefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.HistoryValues);
                         }
                     }
                 }
             }
         } catch (Exception ex) {
             GuiLogManager.get().logError(ex);
+            options.end(pane, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
         }
     }
 
@@ -993,9 +1009,32 @@ public interface GuiSwingView extends GuiSwingElement {
 
     /////////////////////////////////
 
-    /** a factory interface for {@link GuiReprValue.ObjectSpecifier} */
-    interface SpecifierManager {
-        GuiReprValue.ObjectSpecifier getSpecifier();
+    /** a factory interface for {@link GuiReprValue.ObjectSpecifier}.
+     *   With regular(non-list) objects, it can be created by {@link #specifierManager(Supplier)} for a parent specifier,
+     *   or {@link #specifierManagerRoot()} for the root.
+     * */
+    interface SpecifierManager extends Supplier<GuiReprValue.ObjectSpecifier>  {
+        default GuiReprValue.ObjectSpecifier getSpecifier() {
+            return get();
+        }
+    }
+
+    /**
+     * @return the none
+     * @since 1.6.3
+     */
+    static SpecifierManager specifierManagerRoot() {
+        return () -> GuiReprValue.NONE;
+    }
+
+    /**
+     * the default factory
+     * @param parentSpecifier the parent specifieler
+     * @return a new instance
+     * @since 1.6.3
+     */
+    static SpecifierManagerDefault specifierManager(Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
+        return new SpecifierManagerDefault(parentSpecifier);
     }
 
     /** a default implementation of specifier-manager:
@@ -1009,7 +1048,7 @@ public interface GuiSwingView extends GuiSwingElement {
             this.parentSpecifier = parentSpecifier;
         }
 
-        public GuiReprValue.ObjectSpecifier getSpecifier() {
+        public GuiReprValue.ObjectSpecifier get() {
             GuiReprValue.ObjectSpecifier parentSpec = null;
             if (parentSpecifier != null) {
                 parentSpec = parentSpecifier.get();

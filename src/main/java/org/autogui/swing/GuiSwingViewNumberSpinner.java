@@ -440,7 +440,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             try {
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 getModelTyped().loadFrom(targetPrefs);
-                settingAction.loadFrom(targetPrefs);
+                settingAction.loadFrom(targetPrefs, options);
                 GuiSwingView.loadPreferencesDefault(this, prefs, options);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
@@ -1007,8 +1007,22 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         public void loadFrom(GuiPreferences prefs) {
-            if (getPreferencesUpdater() != null) {
-                getPreferencesUpdater().getPrefs().loadFrom(prefs);
+            loadFrom(prefs, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+        }
+
+        /**
+         * @param prefs  the target prefs
+         * @param options the processing options
+         * @since 1.6.3
+         */
+        public void loadFrom(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+            options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+            try {
+                if (getPreferencesUpdater() != null) {
+                    options.loadFromPrefs(getPreferencesUpdater(), prefs);
+                }
+            } finally {
+                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -1190,7 +1204,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public void updateFormat(DocumentEvent e) {
             if (validFormat(formatField.getText())) {
-                formatField.setForeground(Color.black);
+                formatField.setForeground(UIManagerUtil.getInstance().getLabelForeground());
                 updateFromGui(null);
             } else {
                 formatField.setForeground(Color.red);
@@ -1345,14 +1359,16 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         @Override
         public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
+                options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
-                getModelTyped().loadFrom(targetPrefs);
+                options.loadFrom(getModelTyped(), targetPrefs);
                 if (settingAction != null) {
-                    settingAction.loadFrom(targetPrefs);
+                    settingAction.loadFrom(targetPrefs, options);
                 }
                 GuiSwingView.loadPreferencesDefault(this, prefs, options);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
+                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 

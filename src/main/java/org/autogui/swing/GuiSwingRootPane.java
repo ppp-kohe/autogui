@@ -353,7 +353,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     protected void initViewComponent() {
-        viewComponent = view.createView(context, () -> GuiReprValue.NONE);
+        viewComponent = view.createView(context, GuiSwingView.specifierManagerRoot());
     }
 
 
@@ -568,18 +568,23 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
     @Override
     public void loadPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
-        withError(() -> preferences.getPrefsWindowUpdater().apply(prefs, options));
-        withError(() -> {
-            if (logPreferencesUpdater != null) {
-                logPreferencesUpdater.apply(prefs, options);
-            }
-        });
-        withError(() -> fileDialogPreferencesUpdater.apply(prefs));
+        options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+        try {
+            withError(() -> options.apply(preferences.getPrefsWindowUpdater(), prefs));
+            withError(() -> {
+                if (logPreferencesUpdater != null) {
+                    options.apply(logPreferencesUpdater, prefs);
+                }
+            });
+            withError(() -> options.apply(fileDialogPreferencesUpdater, prefs));
 
-        if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
-            withError(() -> ((GuiSwingView.ValuePane<?>) viewComponent).loadSwingPreferences(prefs, options));
+            if (viewComponent instanceof GuiSwingView.ValuePane<?> valuePane) {
+                withError(() -> valuePane.loadSwingPreferences(prefs, options));
+            }
+            GuiSwingView.loadChildren(prefs, viewComponent, options);
+        } finally {
+            options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
         }
-        GuiSwingView.loadChildren(prefs, viewComponent, options);
     }
 
     public void withError(Runnable r) {

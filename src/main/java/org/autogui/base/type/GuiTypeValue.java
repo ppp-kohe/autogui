@@ -27,16 +27,10 @@ public class GuiTypeValue implements GuiTypeElement {
         return name;
     }
 
-    /** @return the default implementation returns the class
-     * obtained from {@link Class#forName(String)} with the {@link #name} */
+    /** @return the default implementation returns the class.
+     *  1.6.3 removed the feature of calling Class.forName(name)
+     *  */
     public Class<?> getType() {
-        if (type == null) {
-            try {
-                type = Class.forName(name);
-            } catch (Exception ex) {
-                type = null;
-            }
-        }
         return type;
     }
 

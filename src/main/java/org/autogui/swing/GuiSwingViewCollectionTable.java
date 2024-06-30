@@ -55,7 +55,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
-        SpecifierManager tableSpecifier = new SpecifierManagerDefault(parentSpecifier);
+        SpecifierManager tableSpecifier = GuiSwingView.specifierManager(parentSpecifier);
         CollectionTable table = new CollectionTable(context, tableSpecifier);
         GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier = table.getRowSpecifier();
         List<Action> actions = new ArrayList<>();
@@ -670,12 +670,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
+                options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
                 GuiSwingView.loadPreferencesDefault(this, prefs, options);
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
-                preferencesUpdater.apply(targetPrefs);
-                getObjectTableModel().getColumnsWithContext().loadSwingPreferences(targetPrefs);
+                options.apply(preferencesUpdater, targetPrefs);
+                getObjectTableModel().getColumnsWithContext().loadSwingPreferences(targetPrefs, options);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
+                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -1346,6 +1348,78 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public PreferencesForTable() {}
 
+        /**
+         * @return the direct reference to the columnOrder list
+         * @since 1.6.3
+         */
+        public List<Integer> getColumnOrder() {
+            return columnOrder;
+        }
+
+        /**
+         * @return the direct reference to the columnWidth list
+         * @since 1.6.3
+         */
+        public List<Integer> getColumnWidth() {
+            return columnWidth;
+        }
+
+        /**
+         * @return the direct reference to the rowSort list
+         * @since 1.6.3
+         */
+        public List<PreferencesForTableRowSort> getRowSort() {
+            return rowSort;
+        }
+
+        /**
+         * @return rowHeight
+         * @since 1.6.3
+         */
+        public int getRowHeight() {
+            return rowHeight;
+        }
+
+        /**
+         * @param rowHeight a new rowHeight value
+         * @since 1.6.3
+         */
+        public void setRowHeight(int rowHeight) {
+            this.rowHeight = rowHeight;
+        }
+
+        /**
+         * @return the property value
+         * @since 1.6.3
+         */
+        public boolean isRowCustom() {
+            return rowCustom;
+        }
+
+        /**
+         * @param rowCustom a new value
+         * @since 1.6.3
+         */
+        public void setRowCustom(boolean rowCustom) {
+            this.rowCustom = rowCustom;
+        }
+
+        /**
+         * @return the property value
+         * @since 1.6.3
+         */
+        public boolean isRowFitToContent() {
+            return rowFitToContent;
+        }
+
+        /**
+         * @param rowFitToContent a new value
+         * @since 1.6.3
+         */
+        public void setRowFitToContent(boolean rowFitToContent) {
+            this.rowFitToContent = rowFitToContent;
+        }
+
         public void applyTo(JTable table) {
             TableColumnModel columnModel = table.getColumnModel();
             applyColumnWidthTo(table, columnModel);
@@ -1467,42 +1541,13 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         @SuppressWarnings("unchecked")
         public void setJson(Object json) {
-            if (json instanceof Map<?,?>) {
-                Map<String,?> map = (Map<String,?>) json;
-                Object order = map.get("columnOrder");
-                if (order != null) {
-                    columnOrder.clear();
-                    ((List<?>) order)
-                            .forEach(i -> columnOrder.add((Integer) i));
-                }
-
-                Object width = map.get("columnWidth");
-                if (width != null) {
-                    columnWidth.clear();
-                    ((List<?>) width)
-                            .forEach(i -> columnWidth.add((Integer) i));
-                }
-
-                Object rowSortObj = map.get("rowSort");
-                if (rowSortObj != null) {
-                    rowSort.clear();
-                    ((List<?>) rowSortObj).stream()
-                            .map(e -> new PreferencesForTableRowSort((Map<String, Object>) e))
-                            .forEach(rowSort::add);
-                }
-
-                Object rowCustomObj = map.get("rowCustom");
-                if (rowCustomObj != null) {
-                    rowCustom = (Boolean) rowCustomObj;
-                }
-                Object rowFitToContentObj = map.get("rowFitToContent");
-                if (rowFitToContentObj != null) {
-                    rowFitToContent = (Boolean) rowFitToContentObj;
-                }
-                Object rowHeightObj = map.get("rowHeight");
-                if (rowHeightObj != null) {
-                    rowHeight = (Integer) rowHeightObj;
-                }
+            if (json instanceof Map<?,?> map) {
+                GuiSwingPreferences.setAsList(columnOrder, map, Integer.class, "columnOrder");
+                GuiSwingPreferences.setAsList(columnWidth, map, Integer.class, "columnWidth");
+                GuiSwingPreferences.setAsList(rowSort, map, Map.class, "rowSort", PreferencesForTableRowSort::new);
+                rowCustom = GuiSwingPreferences.getAs(map, Boolean.class, "rowCustom", false);
+                rowFitToContent = GuiSwingPreferences.getAs(map, Boolean.class, "rowFitToContent", false);
+                rowHeight = GuiSwingPreferences.getAs(map, Integer.class, "rowHeight", -1);
             }
         }
     }
@@ -1516,9 +1561,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             this.order = order;
         }
 
-        public PreferencesForTableRowSort(Map<String, Object> map) {
-            column = (Integer) map.getOrDefault("column", 0);
-            order = (String) map.getOrDefault("order", "");
+        public PreferencesForTableRowSort(Map<?, ?> map) {
+            column = GuiSwingPreferences.getAs(map, Integer.class, "column", 0);
+            order = GuiSwingPreferences.getAs(map, String.class, "order", "");
         }
 
         public void setColumn(int column) {

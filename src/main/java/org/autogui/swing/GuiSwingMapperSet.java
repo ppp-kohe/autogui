@@ -215,26 +215,36 @@ public class GuiSwingMapperSet {
      * @param reprSet a target set for adding
      */
     public static void addDefaultReprSetTo(GuiReprSet reprSet) {
-        reprSet.add(new GuiReprCollectionElement(reprSet));
+        reprSet.add(GuiRepresentation.createCollectionElement(reprSet));
 
-        reprSet.add(new GuiReprValueBooleanCheckBox(),
-                new GuiReprValueEnumComboBox(),
-                new GuiReprValueFilePathField(),
-                new GuiReprValueNumberSpinner(),
-                new GuiReprValueStringField());
+        reprSet.add(GuiRepresentation.createValueBooleanCheckBox(),
+                GuiRepresentation.createValueEnumComboBox(),
+                GuiRepresentation.createValueFilePathField(),
+                GuiRepresentation.createValueNumberSpinner(),
+                GuiRepresentation.createValueStringField());
 
-        reprSet.add(new GuiReprEmbeddedComponent(),
-                new GuiReprValueDocumentEditor(),
-                new GuiReprValueImagePane(true));
+        reprSet.add(createEmbeddedComponent(),
+                createValueDocumentEditor(),
+                createValueImagePane(true));
 
-        reprSet.add(new GuiReprCollectionTable(reprSet),
-                new GuiReprObjectTabbedPane(reprSet),
-                new GuiReprObjectPane(reprSet),
-                new GuiReprPropertyPane(reprSet),
-                new GuiReprAction(),
-                new GuiReprActionList());
+        reprSet.add(GuiRepresentation.createCollectionTable(reprSet),
+                GuiRepresentation.createObjectTabbedPane(reprSet),
+                GuiRepresentation.createObjectPane(reprSet),
+                GuiRepresentation.createPropertyPane(reprSet),
+                GuiRepresentation.createAction(),
+                GuiRepresentation.createActionList());
 
-        reprSet.add(new GuiReprValueLabel());
+        reprSet.add(GuiRepresentation.createValueLabel());
+    }
+
+    public static GuiReprEmbeddedComponent createEmbeddedComponent() {
+        return new GuiReprEmbeddedComponent();
+    }
+    public static GuiReprValueDocumentEditor createValueDocumentEditor() {
+        return new GuiReprValueDocumentEditor();
+    }
+    public static GuiReprValueImagePane createValueImagePane(boolean processGlobal) {
+        return new GuiReprValueImagePane(processGlobal);
     }
 
     /**

@@ -7,7 +7,10 @@ import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.ScheduledTaskRunner;
 import org.autogui.swing.icons.GuiSwingIcons;
+import org.autogui.swing.table.GuiSwingTableModelCollection;
+import org.autogui.swing.table.ObjectTableColumn;
 import org.autogui.swing.table.ObjectTableColumnValue;
+import org.autogui.swing.table.ObjectTableModelColumns;
 import org.autogui.swing.util.*;
 
 import javax.swing.*;
@@ -36,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -227,6 +231,7 @@ public class GuiSwingPreferences {
             toolBar.setFloatable(false);
             toolBar.setOpaque(false);
             toolBar.add(actionButton(new NewPrefsAction(this)));
+            toolBar.add(actionButton(new UpdatePrefsAction(this)));
             toolBar.add(actionButton(new DeletePrefsAction(this)));
             toolBar.add(actionButton(new ApplyPrefsAction(this)));
             toolBar.add(actionButton(new SavePrefsAction(this)));
@@ -759,6 +764,52 @@ public class GuiSwingPreferences {
         }
     }
 
+    /**
+     * the action for overwriting an existing prefs
+     * @since 1.6.3
+     */
+    public static class UpdatePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        @Serial private static final long serialVersionUID = 1L;
+        protected GuiSwingPreferences owner;
+        @SuppressWarnings("this-escape")
+        public UpdatePrefsAction(GuiSwingPreferences owner) {
+            putValue(NAME, "Update");
+            putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("update"));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getIcon("update"));
+            this.owner = owner;
+            owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
+        }
+
+        @Override
+        public boolean isEnabled() {
+            setEnabled(owner.getSelectedSavedPreferences() != null);
+            return enabled;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            GuiPreferences pref = owner.getSelectedSavedPreferences();
+            if (pref == null) {
+                return;
+            }
+            try (var lock = pref.lock()) {
+                lock.use();
+                owner.savePreferences(pref);
+                pref.getValueStore().flush();
+            }
+            owner.reloadList();
+        }
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_EXPORT;
+        }
+    }
+
     public static class DeletePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
@@ -1070,6 +1121,104 @@ public class GuiSwingPreferences {
         }
     }
 
+    /**
+     * @param targetList the updated non-null list; cleared and set all elements from the map.
+     * @param map the source map
+     * @param type the element type
+     * @param key the key
+     * @param <E> the element type
+     * @since 1.6.1
+     */
+    public static <E> void setAsList(List<E> targetList, Map<?, ?> map, Class<E> type, String key) {
+        targetList.clear();
+        targetList.addAll(getAsListNonNull(map, type, key));
+    }
+
+    /**
+     * @param targetList the updated non-null list; cleared and set all elements from the map.
+     * @param map the source map
+     * @param type the element type of the JSON map
+     * @param key   the key
+     * @param mapper the mapper from a JSON element to an actual value in the list
+     * @param <E> the element type in the JSON
+     * @param <V> the actual element type of the trgetList
+     */
+    public static <E,V> void setAsList(List<V> targetList, Map<?, ?> map, Class<E> type, String key, Function<E, V> mapper) {
+        targetList.clear();
+        getAsListNonNull(map, type, key).stream()
+                .map(mapper)
+                .forEach(targetList::add);
+    }
+
+    /**
+     * @param targetList the updated non-null list; cleared and set all elements from the list.
+     * @param list the source list
+     * @param type the element type of the JSON map
+     * @param mapper the mapper from a JSON element to an actual value in the list
+     * @param <E> the element type in the JSON
+     * @param <V> the actual element type of the trgetList
+     */
+    public static <E,V> void setAsList(List<V> targetList, Object list, Class<E> type, Function<E, V> mapper) {
+        targetList.clear();
+        getAsListNonNull(list, type).stream()
+                .map(mapper)
+                .forEach(targetList::add);
+    }
+
+
+    /**
+     * supporting method for setting JSON values
+     * @param map the non-null map
+     * @param type the element type
+     * @param key the key for the map
+     * @return a list of map.get(key) that satifies all elements are the type.
+     * @param <E> the element type
+     * @since 1.6.3
+     */
+    @SuppressWarnings("unchecked")
+    public static <E> List<E> getAsListNonNull(Map<?, ?> map, Class<E> type, String key) {
+        return getAsListNonNull(map.get(key), type);
+    }
+
+    /**
+     * @param map
+     * @param type the type instance
+     * @param key the map-key
+     * @param defVal the default value if failure of type check
+     * @return the non-null map.get(key) or defVal
+     * @param <E> the type
+     */
+    public static <E> E getAs(Map<?, ?> map, Class<E> type, String key, E defVal) {
+        var e = map.get(key);
+        if (!type.isInstance(e)) {
+            return defVal;
+        } else {
+            return type.cast(e);
+        }
+    }
+
+    /**
+     * supporting method for setting JSON values
+     * @param list a list (nullable)
+     * @param type the element type
+     * @return the list that satifies all elements are the type, or a new empty list.
+     * @param <E> the element type
+     * @since 1.6.3
+     */
+    @SuppressWarnings("unchecked")
+    public static <E> List<E> getAsListNonNull(Object list, Class<E> type) {
+        if (list != null && list instanceof List<?> l) {
+            if (!l.isEmpty() &&
+                    l.stream().anyMatch(e -> !type.isInstance(e))) { //check type safety of all elements
+                return new ArrayList<>();
+            } else {
+                return (List<E>) l;
+            }
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
     public static class PreferencesForWindow implements PreferencesByJsonEntry {
         protected int x;
         protected int y;
@@ -1186,12 +1335,11 @@ public class GuiSwingPreferences {
         @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
-            if (json instanceof Map<?,?>) {
-                Map<String,Object> map = (Map<String,Object>) json;
-                this.x = (Integer) map.getOrDefault("x", 0);
-                this.y = (Integer) map.getOrDefault("y", 0);
-                this.width = (Integer) map.getOrDefault("width", 0);
-                this.height = (Integer) map.getOrDefault("height", 0);
+            if (json instanceof Map<?,?> map) {
+                this.x = GuiSwingPreferences.getAs(map, Integer.class, "x", 0);
+                this.y = GuiSwingPreferences.getAs(map, Integer.class, "y", 0);
+                this.width = GuiSwingPreferences.getAs(map, Integer.class, "width", 0);
+                this.height = GuiSwingPreferences.getAs(map, Integer.class, "height", 0);
             }
         }
     }
@@ -1308,9 +1456,9 @@ public class GuiSwingPreferences {
         public PreferencesForFileDialog() {}
 
         public void setFileList(List<Path> fileList) {
-            this.fileList = fileList.stream()
+            this.fileList = new ArrayList<>(fileList.stream()
                     .map(Path::toString)
-                    .collect(Collectors.toList());
+                    .toList());
         }
 
         public void setBackPath(Path path) {
@@ -1338,6 +1486,30 @@ public class GuiSwingPreferences {
             return key;
         }
 
+        /**
+         * @return the direct reference to the property fileList
+         * @since 1.6.3
+         */
+        public List<String> getFileListDirect() {
+            return fileList;
+        }
+
+        /**
+         * @return the property value or null
+         * @since 1.6.3
+         */
+        public Path getBackPath() {
+            return backPath == null ? null : Paths.get(backPath);
+        }
+
+        /**
+         * @return the property value or null
+         * @since 1.6.3
+         */
+        public Path getCurrentDirectory() {
+            return currentDirectory == null ? null : Paths.get(currentDirectory);
+        }
+
         @Override
         public Object toJson() {
             Map<String,Object> map = new LinkedHashMap<>();
@@ -1350,11 +1522,10 @@ public class GuiSwingPreferences {
         @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
-            if (json instanceof Map<?,?>) {
-                Map<String,Object> map =  (Map<String,Object>) json;
-                fileList = (List<String>) map.getOrDefault("fileList", new ArrayList<>());
-                currentDirectory = (String) map.getOrDefault("currentDirectory", null);
-                backPath = (String) map.getOrDefault("backPath", null);
+            if (json instanceof Map<?,?> map) {
+                GuiSwingPreferences.setAsList(fileList, map, String.class,"fileList");
+                currentDirectory = GuiSwingPreferences.getAs(map, String.class, "currentDirectory", null);
+                backPath = GuiSwingPreferences.getAs(map, String.class, "backPath", null);
             }
         }
     }
@@ -1686,7 +1857,90 @@ public class GuiSwingPreferences {
          * @return if true, skipping setting object properties
          */
         boolean isSkippingValue();
+
+        default boolean hasHistoryValues(GuiPreferences targetPrefs, GuiPreferences ctxPrefs) {
+            return !targetPrefs.equals(ctxPrefs);
+        }
+
+        default void begin(Object loadingTarget, GuiPreferences prefs, PrefsApplyOptionsLoadingTargetType targetType) {}
+        default void apply(WindowPreferencesUpdater windowPrefs, GuiPreferences prefs) {
+            windowPrefs.apply(prefs, this);
+        }
+        default void loadFromPrefs(WindowPreferencesUpdater windowPrefs, GuiPreferences prefs) {
+            windowPrefs.getPrefs().loadFrom(prefs);
+        }
+        default void apply(FileDialogPreferencesUpdater fileDialogPrefs, GuiPreferences prefs) {
+            fileDialogPrefs.apply(prefs);
+        }
+        default void apply(GuiSwingViewObjectPane.SplitPreferencesUpdater splitPrtefs, GuiPreferences prefs) {
+            splitPrtefs.apply(prefs);
+        }
+        default void apply(GuiSwingViewTabbedPane.TabPreferencesUpdater tabPrefs, GuiPreferences prefs) {
+            tabPrefs.apply(prefs);
+        }
+        default void addHistoryValue(GuiPreferences.HistoryValueEntry entry, GuiPreferences prefs) {
+            prefs.addHistoryValue(entry.getValue(), entry.getTime());
+        }
+        default void loadFrom(GuiSwingViewDocumentEditor.DocumentSettingPane pane, GuiPreferences prefs) {
+            pane.loadFrom(prefs);
+        }
+        default void loadFrom(GuiSwingViewNumberSpinner.TypedSpinnerNumberModel numModel, GuiPreferences prefs) {
+            numModel.loadFrom(prefs);
+        }
+        default void setLastHistoryValueBySwingViewHistoryValue(GuiSwingView.ValuePane<Object> pane, GuiPreferences prefs, Object value) {
+            pane.setSwingViewHistoryValue(value);
+        }
+        default void setLastHistoryValueByPrefsJsonSupported(GuiSwingView.ValuePane<Object> pane, GuiPreferences prefs, Object value) {
+            pane.setPrefsJsonSupported(value);
+        }
+        default void setLastHistoryValueBySwingViewHistoryValue(GuiSwingView.ValuePane<Object> pane, GuiPreferences prefs, GuiPreferences.HistoryValueEntry entry) {
+            Object value = entry.getValue();
+            pane.setSwingViewHistoryValue(value);
+        }
+
+        default void apply(GuiSwingViewCollectionTable.TablePreferencesUpdater tablePrefs, GuiPreferences prefs) {
+            tablePrefs.apply(prefs);
+        }
+
+        default boolean isSavingAsCurrentPreferencesInColumns() {
+            return true;
+        }
+
+        default void loadFrom(GuiSwingTableModelCollection.PreferencesForTableColumnWidthStatic widthPrefs, GuiPreferences prefs) {
+            widthPrefs.loadFrom(prefs);
+        }
+
+        default void loadFrom(GuiSwingTableModelCollection.PreferencesForTableColumnOrderStatic orderPrefs, GuiPreferences prefs) {
+            orderPrefs.loadFrom(prefs);
+        }
+
+        default void applyTo(GuiSwingTableModelCollection.PreferencesForTableColumnWidthStatic widthPrefs, ObjectTableColumn column) {
+            widthPrefs.applyTo(column);
+        }
+
+        default boolean applyTo(GuiSwingTableModelCollection.PreferencesForTableColumnOrderStatic orderPrefs, GuiSwingTableModelCollection.GuiSwingTableModelColumns columns, int modelIndex) {
+            return orderPrefs.applyTo(columns, modelIndex);
+        }
+
+        default void loadFromAndApplyTo(GuiSwingTableModelCollection.PreferencesForTableColumnWidth columnWidthPrefs, ObjectTableColumn column, GuiPreferences prefs) {
+            columnWidthPrefs.loadFrom(prefs);
+            columnWidthPrefs.applyTo(column);
+        }
+
+        default boolean loadFromAndApplyTo(GuiSwingTableModelCollection.PreferencesForTableColumnOrder orderPrefs, ObjectTableModelColumns columns, GuiPreferences prefs) {
+            orderPrefs.loadFrom(prefs);
+            return orderPrefs.applyTo(columns);
+        }
+
+        default void end(Object loadingTarget, GuiPreferences prefs, PrefsApplyOptionsLoadingTargetType targetType) {}
     }
+
+    public enum PrefsApplyOptionsLoadingTargetType {
+        View,
+        HistoryValues,
+        CurrentValue
+    }
+
     /**
      *  default options at prefs loading: non-init, no skipping
      * @since 1.4

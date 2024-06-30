@@ -60,7 +60,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             if (context.getRepresentation() instanceof GuiReprValueFilePathField) {
                 this.filePathField = (GuiReprValueFilePathField) context.getRepresentation();
             } else {
-                this.filePathField = new GuiReprValueFilePathField();
+                this.filePathField = GuiRepresentation.createValueFilePathField();
             }
         }
 

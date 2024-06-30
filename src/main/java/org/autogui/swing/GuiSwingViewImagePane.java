@@ -1,8 +1,8 @@
 package org.autogui.swing;
 
+import org.autogui.base.mapping.*;
 import org.autogui.swing.mapping.GuiReprValueImagePane;
 import org.autogui.swing.table.TableTargetColumnAction;
-import org.autogui.base.mapping.*;
 import org.autogui.swing.util.*;
 
 import javax.imageio.ImageIO;
@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.Serial;
 import java.nio.file.Path;
@@ -56,57 +57,45 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         return true;
     }
 
-    public static class PropertyImagePane extends JComponent
-            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Image> {
-        @Serial private static final long serialVersionUID = 1L;
-
-        protected GuiMappingContext context;
-        protected SpecifierManager specifierManager;
+    /**
+     * a base image-pane for rendering an image object
+     * @since 1.6.3
+     */
+    public static class ImagePaneBase extends JComponent {
         protected Image image;
         protected Dimension imageSize = new Dimension(1, 1);
-        protected boolean editable;
-
         protected ImageScale imageScale;
         protected ImageScaleFit imageScaleDefault;
         protected ImageScaleFit imageScaleFit;
         protected ImageScaleMouseWheel imageScaleMouseWheel;
-
         protected boolean imageScaleAutoSwitchByMouseWheel = true;
-
-        protected PopupExtension popup;
-        protected List<PopupCategorized.CategorizedMenuItem> menuItems;
-        protected MenuBuilder.MenuLabel infoLabel;
-
         protected ImageScaleAutoSwitchByMouseWheel autoSwitchByMouseWheel;
         protected ImageScaleSwitchFitAction switchFitAction;
+        protected PopupExtension popup;
+        protected List<PopupCategorized.CategorizedMenuItem> menuItems;
 
-        protected GuiTaskClock viewClock = new GuiTaskClock(true);
-        protected boolean currentValueSupported = true;
-
-        public PropertyImagePane(GuiMappingContext context, SpecifierManager specifierManager) {
-            this.context = context;
-            this.specifierManager = specifierManager;
-            init();
+        /** the constructor calling {@link #init()} */
+        public ImagePaneBase() {
+            this(true);
         }
 
+        /**
+         * @param init if true, call {@link #init()}
+         */
+        protected ImagePaneBase(boolean init) {
+            if (init) {
+                init();
+            }
+        }
+
+        /** initializer */
         public void init() {
-            initName();
             initScale();
-            initEditable();
-            initContextUpdate();
-            initValue();
             initPopup();
-            initDragDrop();
             initDragScroll();
             initFocus();
         }
-
-        public void initName() {
-            setName(context.getName());
-            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
-            GuiSwingView.setDescriptionToolTipText(context, this);
-        }
-
+        /** initializer for image-scaling */
         public void initScale() {
             imageScaleDefault = new ImageScaleFit(1f);
             setImageScale(imageScaleDefault);
@@ -115,55 +104,20 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
             imageScaleMouseWheel = new ImageScaleMouseWheel(this);
             addMouseWheelListener(e -> {
-                boolean activate = imageScaleMouseWheelShouldBeActivated(e);
+                boolean activate = isImageScaleChangeByMouseWheel(e) && imageScaleMouseWheelShouldBeActivated(e);
                 if (activate) {
                     setImageScale(imageScaleMouseWheel);
                     imageScaleMouseWheel.mouseWheelMoved(e);
                 }
             });
         }
-
-        protected boolean imageScaleMouseWheelShouldBeActivated(MouseWheelEvent e) {
-            return isImageScaleAutoSwitchByMouseWheel();// && (this.imageScale == imageScaleDefault);
-        }
-
-        public void setImageScaleAutoSwitchByMouseWheel(boolean imageScaleAutoSwitchByMouseWheel) {
-            this.imageScaleAutoSwitchByMouseWheel = imageScaleAutoSwitchByMouseWheel;
-            if (imageScale instanceof MouseWheelListener) {
-                if (imageScaleAutoSwitchByMouseWheel) {
-                    addMouseWheelListener((MouseWheelListener) imageScale);
-                } else {
-                    removeMouseWheelListener((MouseWheelListener) imageScale);
-                }
-            }
-        }
-
-        public boolean isImageScaleAutoSwitchByMouseWheel() {
-            return imageScaleAutoSwitchByMouseWheel;
-        }
-
-        public void initEditable() {
-            setEditable(((GuiReprValueImagePane) context.getRepresentation())
-                    .isEditable(context));
-        }
-
-        public void initContextUpdate() {
-            context.addSourceUpdateListener(this);
-        }
-
-        public void initValue() {
-            update(context, context.getSource().getValue(), context.getContextClock().copy());
-        }
-
+        /** initialize popup-menu */
         public void initPopup() {
+            autoSwitchByMouseWheel = new ImageScaleAutoSwitchByMouseWheel(this);
+            switchFitAction = new ImageScaleSwitchFitAction(this);
             popup = new PopupExtension(this, new PopupCategorized(
-                    PopupCategorized.getMenuItemsSupplier(this::getSwingStaticMenuItems, this::getDynamicMenuItems)));
-            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
+                    PopupCategorized.getMenuItemsSupplier(this::getStaticMenuItems, this::getDynamicMenuItems)));
             setInheritsPopupMenu(true);
-        }
-
-        public void initDragDrop() {
-            GuiSwingView.setupTransferHandler(this, new ImageTransferHandler(this), KeyEvent.VK_SHIFT);
         }
 
         /**
@@ -181,20 +135,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 public void mouseDragged(MouseEvent e) {
                     Point current = e.getLocationOnScreen();
                     if (dragStart != null && isParentViewport()) {
-                        int dx = current.x - dragStart.x;
-                        int dy = current.y - dragStart.y;
-                        JViewport viewport = (JViewport) getParent();
-                        Dimension extentSize = viewport.getExtentSize();
-                        Dimension size = viewport.getViewSize();
-                        Point newPos = viewport.getViewPosition();
-                        if (size.width > extentSize.width) {
-                            newPos.x = Math.min(size.width, Math.max(0, newPos.x - dx));
-                        }
-                        if (size.height > extentSize.height) {
-                            newPos.y = Math.min(size.height, Math.max(0, newPos.y - dy));
-
-                        }
-                        viewport.setViewPosition(newPos);
+                        dragMove(dragStart, current, (JViewport) getParent());
                     }
                     dragStart = current;
                 }
@@ -203,6 +144,28 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             addMouseMotionListener(dragHandler);
         }
 
+        /**
+         * set viewPosition of viewport
+         * @param dragStart the previous drag-position (the previous value of "current")
+         * @param current the next drag-position (can be obtained by {@link MouseEvent#getLocationOnScreen()})
+         * @param viewport the target view-port (the parent of the target-pane)
+         */
+        public static void dragMove(Point dragStart, Point current, JViewport viewport) {
+            int dx = current.x - dragStart.x;
+            int dy = current.y - dragStart.y;
+            Dimension extentSize = viewport.getExtentSize();
+            Dimension size = viewport.getViewSize();
+            Point newPos = viewport.getViewPosition();
+            if (size.width > extentSize.width) {
+                newPos.x = Math.min(size.width, Math.max(0, newPos.x - dx));
+            }
+            if (size.height > extentSize.height) {
+                newPos.y = Math.min(size.height, Math.max(0, newPos.y - dy));
+            }
+            viewport.setViewPosition(newPos);
+        }
+
+        /** make this view fucusable with a mouse-listener of focusing */
         public void initFocus() {
             setFocusable(true);
             addMouseListener(new MouseAdapter() {
@@ -211,123 +174,121 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                     requestFocusInWindow();
                 }
             });
-            setBorder(new GuiSwingViewLabel.FocusBorder(this));
         }
 
-        @Override
-        public boolean isSwingCurrentValueSupported() {
-            return currentValueSupported && getSwingViewContext().isHistoryValueSupported();
+        /**
+         * checking for the ALT-down mask; Note: macOS trackpad-scrolling will set a Shift-down mask for some gestures that occurs in normal use.
+         * @param event an event
+         * @return the event is satisfied the condition for updating scale setting; checking ALT down.
+         * @since 1.6.3
+         */
+        public boolean isImageScaleChangeByMouseWheel(MouseWheelEvent event) {
+            return event.isAltDown();
         }
 
-        public void setCurrentValueSupported(boolean currentValueSupported) {
-            this.currentValueSupported = currentValueSupported;
+        /**
+         * @param e the tested event
+         * @return returns the autho-switch property value
+         */
+        protected boolean imageScaleMouseWheelShouldBeActivated(MouseWheelEvent e) {
+            return isImageScaleAutoSwitchByMouseWheel();// && (this.imageScale == imageScaleDefault);
         }
 
-        @Override
-        public GuiMappingContext getSwingViewContext() {
-            return context;
-        }
-
-        public JComponent createSizeInfo(Dimension size) {
-            return MenuBuilder.get().createLabel(String.format("Size: %,d x %,d", size.width, size.height),
-                    PopupCategorized.SUB_CATEGORY_LABEL_VALUE);
-        }
-
-        public JComponent createScaleInfo(Dimension size) {
-            return MenuBuilder.get().createLabel(String.format("Scale: %s",
-                    imageScale == null ? "null" : imageScale.getInfo(size, getViewSize())),
-                    PopupCategorized.SUB_CATEGORY_LABEL_VALUE);
-        }
-
-        @Override
-        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
-            if (menuItems == null) {
-                JMenu scaleMenu = new JMenu("Scale");
-                scaleMenu.add(new ImageScaleSizeAction(this, 0.5f));
-                scaleMenu.add(new ImageScaleSizeAction(this, 1.5f));
-                scaleMenu.add(new ImageScaleSizeAction(this, 2f));
-                scaleMenu.add(new ImageScaleSizeAction(this, 4f));
-                scaleMenu.add(new ImageScaleSizeAction(this, 8f));
-
-                autoSwitchByMouseWheel = new ImageScaleAutoSwitchByMouseWheel(this);
-                switchFitAction = new ImageScaleSwitchFitAction(this);
-
-                menuItems = PopupCategorized.getMenuItems(
-                        Arrays.asList(
-                                infoLabel,
-                                new ContextRefreshAction(context, this),
-                                switchFitAction,
-                                new ImageScaleOriginalSizeAction(this),
-                                autoSwitchByMouseWheel,
-                                new ImageScaleIncreaseAction(this, 0.1f),
-                                new ImageScaleIncreaseAction(this, -0.1f),
-                                new PopupCategorized.CategorizedMenuItemComponentDefault(scaleMenu,
-                                        PopupExtension.MENU_CATEGORY_VIEW, ""),
-                                new ImageCopyAction(this::getImage, context),
-                                new ImagePasteAction(this),
-                                new ImageClearAction(this),
-                                new ImageSaveAction(this),
-                                new ImageLoadAction(this),
-                                new HistoryMenuImage(this, context)),
-                        GuiSwingJsonTransfer.getActions(this, context)
-                );
+        /**
+         * set the property and add/remove the imageScale if it is a {@link MouseWheelListener}
+         * @param imageScaleAutoSwitchByMouseWheel the new flag
+         */
+        public void setImageScaleAutoSwitchByMouseWheel(boolean imageScaleAutoSwitchByMouseWheel) {
+            this.imageScaleAutoSwitchByMouseWheel = imageScaleAutoSwitchByMouseWheel;
+            if (imageScale instanceof MouseWheelListener imageScaleListener) {
+                if (imageScaleAutoSwitchByMouseWheel) {
+                    addMouseWheelListener(imageScaleListener);
+                } else {
+                    removeMouseWheelListener(imageScaleListener);
+                }
             }
-            return menuItems;
         }
 
-        public List<PopupCategorized.CategorizedMenuItem> getDynamicMenuItems() {
-            return PopupCategorized.getMenuItems(
-                    Arrays.asList(createSizeInfo(getImageSize()), createScaleInfo(getImageSize())));
+        /**
+         * @return the auto-switch property value
+         */
+        public boolean isImageScaleAutoSwitchByMouseWheel() {
+            return imageScaleAutoSwitchByMouseWheel;
         }
 
-        @Override
-        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
-            return popup.getMenuBuilder();
-        }
-
-        public boolean isSwingEditable() {
-            return editable;
-        }
-
-        public void setEditable(boolean editable) {
-            this.editable = editable;
-        }
-
-        @Override
-        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue((Image) newValue, contextClock));
-        }
-
+        /**
+         * @return the current-image object
+         */
         public Image getImage() {
             return image;
         }
 
-        public void setImageWithoutContextUpdate(Image image) {
-            GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
+        /**
+         * update the imageScale value and relating listeners.
+         * <ol>
+         *     <li>update {@link MouseWheelListener} if the imageScale has the interface</li>
+         *     <li>if the imageScale is a {@link ImageScaleFit}, inherits the current scale</li>
+         *     <li>call {@link #updateScale()}</li>
+         * </ol>
+         * @param imageScale the new instance
+         */
+        public void setImageScale(ImageScale imageScale) {
+            if (imageScale != this.imageScale) {
+                ImageScale oldScale = this.imageScale;
+                if (this.imageScale instanceof MouseWheelListener imageScaleListener) {
+                    removeMouseWheelListener(imageScaleListener);
+                }
+                this.imageScale = imageScale;
+
+                //inherits fitting scale to mouse-wheel zoom
+                if (oldScale instanceof ImageScaleFit oldScaleFit && imageScale instanceof ImageScaleMouseWheel imageScaleWheel) {
+                    float p = oldScaleFit.getScale(getImageSize(), getViewSize());
+                    imageScaleWheel.setCurrentZoom(p);
+                }
+
+                if (imageScale instanceof MouseWheelListener imageScaleListener &&
+                        isImageScaleAutoSwitchByMouseWheel()) {
+                    addMouseWheelListener(imageScaleListener);
+                }
+                updateScale();
+            }
+        }
+
+        /**
+         * set the image and update rendering
+         * @param image the new image
+         */
+        public void setImage(Image image) {
             this.image = image;
-            imageSize = img.getSize(context, image);
+            imageSize = GuiReprValueImagePane.ImageSizeGetter.getSizeNonNull(image);
             setPreferredSizeFromImageSize();
             revalidate();
             repaint();
         }
 
+        /** call {@link #setPreferredSize(Dimension)} with imageSize */
         public void setPreferredSizeFromImageSize() {
             setPreferredSize(imageSize);
         }
 
-        public void setImage(Image image) {
-            GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
-            Image v = (Image) img.toUpdateValue(context, image);
-            setImageWithoutContextUpdate(v);
-            updateFromGui(v, viewClock.increment());
+        /** @return the image-scale object */
+        public ImageScale getImageScale() {
+            return imageScale;
         }
 
-        public void updateFromGui(Object v, GuiTaskClock viewClock) {
-            GuiSwingView.updateFromGui(this, v, viewClock);
+        /** @return the image-scale-default object */
+        public ImageScaleFit getImageScaleDefault() {
+            return imageScaleDefault;
         }
 
-        public Dimension getImageSize() {
-            return imageSize;
+        /** @return the image-scale-wheel object */
+        public ImageScaleMouseWheel getImageScaleMouseWheel() {
+            return imageScaleMouseWheel;
+        }
+
+        /** @return the image-scale-fit object */
+        public ImageScaleFit getImageScaleFit() {
+            return imageScaleFit;
         }
 
         @Override
@@ -336,7 +297,6 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             g.fillRect(0, 0, getWidth(), getHeight());
             if (image != null) {
                 Dimension paneSize = getViewSize();
-
                 Dimension size = getImageScaledSize();
 
                 //if the image's size exceeds the view size, its starting position becomes 0, otherwise a half of diff.
@@ -364,51 +324,56 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             }
         }
 
+        /**
+         * @return size - insets , or if the parent is a viewport, the parent-size - insets
+         */
+        public Dimension getViewSize() { //it means "extentSize"
+            Insets insets = getInsets();
+            if (isParentViewport()) {
+                return subtract(getParent().getSize(), insets);
+            } else {
+                return subtract(getSize(), insets);
+            }
+        }
+
+        /**
+         * @param dim a dimension
+         * @param insets a insets or null
+         * @return subtract insets from dim
+         */
+        protected Dimension subtract(Dimension dim, Insets insets) {
+            if (insets == null) {
+                return dim;
+            } else {
+                return new Dimension(dim.width - insets.left - insets.right ,
+                        dim.height - insets.top - insets.bottom);
+            }
+        }
+
+        /**
+         * @return {@link #getParent()}
+         */
+        protected boolean isParentViewport() {
+            return getParent() != null && getParent() instanceof JViewport;
+        }
+
+        /**
+         * @return the fit
+         */
         public Dimension getImageScaledSize() {
             return imageScale == null ? imageSize : imageScale.getScaledImageSize(imageSize, getViewSize());
         }
 
-        public ImageScale getImageScale() {
-            return imageScale;
+        /**
+         * @return the imageSize object
+         */
+        public Dimension getImageSize() {
+            return imageSize;
         }
 
-        public ImageScaleFit getImageScaleDefault() {
-            return imageScaleDefault;
-        }
-
-        public ImageScaleMouseWheel getImageScaleMouseWheel() {
-            return imageScaleMouseWheel;
-        }
-
-        public ImageScaleFit getImageScaleFit() {
-            return imageScaleFit;
-        }
-
-        public void setImageScale(ImageScale imageScale) {
-            if (imageScale != this.imageScale) {
-                ImageScale oldScale = this.imageScale;
-                if (this.imageScale instanceof MouseWheelListener) {
-                    removeMouseWheelListener((MouseWheelListener) this.imageScale);
-                }
-                this.imageScale = imageScale;
-
-                //inherits fitting scale to mouse-wheel zoom
-                if (oldScale instanceof ImageScaleFit && imageScale instanceof ImageScaleMouseWheel) {
-                    float p = ((ImageScaleFit) oldScale).getScale(getImageSize(), getViewSize());
-                    ((ImageScaleMouseWheel) imageScale).setCurrentZoom(p);
-                }
-
-                if (imageScale instanceof MouseWheelListener &&
-                        isImageScaleAutoSwitchByMouseWheel()) {
-                    addMouseWheelListener((MouseWheelListener) imageScale);
-                }
-                updateScale();
-            }
-        }
-
+        /** reflects image-scale settings */
         public void updateScale() {
-            Dimension paneSize = getViewSize();
-            Dimension size = (imageScale == null ? imageSize : imageScale.getScaledImageSize(imageSize, paneSize));
+            Dimension size = getImageScaledSize();
 
             if (autoSwitchByMouseWheel != null) {
                 autoSwitchByMouseWheel.updateSelected();
@@ -420,28 +385,6 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             setPreferredSize(size);
             revalidate();
             repaint();
-        }
-
-        public Dimension getViewSize() { //it means "extentSize"
-            Insets insets = getInsets();
-            if (isParentViewport()) {
-                return subtract(getParent().getSize(), insets);
-            } else {
-                return subtract(getSize(), insets);
-            }
-        }
-
-        private Dimension subtract(Dimension dim, Insets insets) {
-            if (insets == null) {
-                return dim;
-            } else {
-                return new Dimension(dim.width - insets.left - insets.right ,
-                        dim.height - insets.top - insets.bottom);
-            }
-        }
-
-        private boolean isParentViewport() {
-            return getParent() != null && getParent() instanceof JViewport;
         }
 
         /**
@@ -458,6 +401,263 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             } else {
                 return new Point();
             }
+        }
+
+        /**
+         * convert image to a writable {@link RenderedImage}
+         * @param image the source image
+         * @return call {@link GuiReprValueImagePane#getRenderedImageWithSupport(GuiReprValueImagePane.RenderedImageGetterSupport, Object)}
+         */
+        public RenderedImage getRenderedImage(Image image) {
+            return GuiReprValueImagePane.getRenderedImageWithSupport(
+                    new GuiReprValueImagePane.RenderedImageGetterSupport() {
+                        @Override
+                        public Dimension size(Image image) {
+                            return GuiReprValueImagePane.ImageSizeGetter.getSizeNonNull(image);
+                        }
+                        @Override
+                        public void setSourceImageToTemporaryImage(Image source, BufferedImage temporaryImage) {}
+                    },
+                    image);
+        }
+
+        /**
+         * @return default list of menu-items; creates the list if not yet
+         */
+        public List<PopupCategorized.CategorizedMenuItem> getStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(createStaticMenuItems());
+            }
+            return menuItems;
+        }
+
+        /**
+         * @return creating a list of menu-item
+         */
+        protected List<PopupCategorized.CategorizedMenuItem> createStaticMenuItems() {
+            JMenu scaleMenu = new JMenu("Scale");
+            scaleMenu.add(new ImageScaleSizeAction(this, 0.5f));
+            scaleMenu.add(new ImageScaleSizeAction(this, 1.5f));
+            scaleMenu.add(new ImageScaleSizeAction(this, 2f));
+            scaleMenu.add(new ImageScaleSizeAction(this, 4f));
+            scaleMenu.add(new ImageScaleSizeAction(this, 8f));
+            return List.of(
+                    switchFitAction,
+                    new ImageScaleOriginalSizeAction(this),
+                    autoSwitchByMouseWheel,
+                    new ImageScaleIncreaseAction(this, 0.1f),
+                    new ImageScaleIncreaseAction(this, -0.1f),
+                    new PopupCategorized.CategorizedMenuItemComponentDefault(scaleMenu,
+                            PopupExtension.MENU_CATEGORY_VIEW, ""),
+                    createCopyAction(),
+                    new ImageSaveAction(this)
+            );
+        }
+
+        protected ImageCopyAction createCopyAction() {
+            return new ImageCopyAction(this::getImage, null);
+        }
+
+        /**
+         * @return size-info and scale-info
+         */
+        public List<PopupCategorized.CategorizedMenuItem> getDynamicMenuItems() {
+            return PopupCategorized.getMenuItems(
+                    Arrays.asList(createSizeInfo(getImageSize()), createScaleInfo(getImageSize())));
+        }
+
+        /**
+         * @param size the given image-size
+         * @return the label of current size-info
+         */
+        public JComponent createSizeInfo(Dimension size) {
+            return MenuBuilder.get().createLabel(String.format("Size: %,d x %,d", size.width, size.height),
+                    PopupCategorized.SUB_CATEGORY_LABEL_VALUE);
+        }
+
+        /**
+         * @param size the given image-size
+         * @return the label of current scale-info
+         */
+        public JComponent createScaleInfo(Dimension size) {
+            return MenuBuilder.get().createLabel(String.format("Scale: %s",
+                            imageScale == null ? "null" : imageScale.getInfo(size, getViewSize())),
+                    PopupCategorized.SUB_CATEGORY_LABEL_VALUE);
+        }
+    }
+
+    public static class PropertyImagePane extends ImagePaneBase
+            implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Image>, SettingsWindowClient {
+        @Serial private static final long serialVersionUID = 1L;
+
+        protected GuiMappingContext context;
+        protected SpecifierManager specifierManager;
+        protected boolean editable;
+
+        protected MenuBuilder.MenuLabel infoLabel;
+
+        protected GuiTaskClock viewClock = new GuiTaskClock(true);
+        protected boolean currentValueSupported = true;
+        /** the window for previewing */
+        protected SettingsWindow settingsWindow;
+        /** the action for previewing */
+        protected ImagePreviewAction previewAction;
+
+        public PropertyImagePane(GuiMappingContext context, SpecifierManager specifierManager) {
+            super(false);
+            this.context = context;
+            this.specifierManager = specifierManager;
+            init();
+        }
+
+        @Override
+        public void init() {
+            initName();
+            initScale();
+            initEditable();
+            initContextUpdate();
+            initValue();
+            initPreview();
+            initPopup();
+            initDragDrop();
+            initDragScroll();
+            initFocus();
+        }
+
+        public void initName() {
+            setName(context.getName());
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
+            GuiSwingView.setDescriptionToolTipText(context, this);
+        }
+
+        public void initEditable() {
+            setEditable(((GuiReprValueImagePane) context.getRepresentation())
+                    .isEditable(context));
+        }
+
+        public void initContextUpdate() {
+            context.addSourceUpdateListener(this);
+        }
+
+        public void initValue() {
+            update(context, context.getSource().getValue(), context.getContextClock().copy());
+        }
+
+        public void initPreview() {
+            previewAction = new ImagePreviewAction(this);
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getClickCount() == 2) {
+                        previewAction.actionPerformed(null);
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void initPopup() {
+            super.initPopup();
+            GuiSwingView.setupKeyBindingsForStaticMenuItems(this);
+        }
+
+        public void initDragDrop() {
+            GuiSwingView.setupTransferHandler(this, new ImageTransferHandler(this), KeyEvent.VK_SHIFT);
+        }
+
+        @Override
+        public void initFocus() {
+            super.initFocus();
+            setBorder(new FocusBorder(this));
+        }
+
+        @Override
+        public boolean isSwingCurrentValueSupported() {
+            return currentValueSupported && getSwingViewContext().isHistoryValueSupported();
+        }
+
+        public void setCurrentValueSupported(boolean currentValueSupported) {
+            this.currentValueSupported = currentValueSupported;
+        }
+
+        @Override
+        public void setSettingsWindow(SettingsWindow settingsWindow) {
+            this.settingsWindow = settingsWindow;
+        }
+
+        @Override
+        public SettingsWindow getSettingsWindow() {
+            return settingsWindow == null ? SettingsWindow.get() : settingsWindow;
+        }
+
+        @Override
+        public GuiMappingContext getSwingViewContext() {
+            return context;
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
+            return getStaticMenuItems();
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getStaticMenuItems() {
+            if (menuItems == null) {
+                menuItems = PopupCategorized.getMenuItems(
+                        createStaticMenuItems(),
+                        Arrays.asList(
+                                infoLabel,
+                                new ContextRefreshAction(context, this),
+                                new ImagePasteAction(this),
+                                new ImageClearAction(this),
+                                new ImageLoadAction(this),
+                                previewAction,
+                                new HistoryMenuImage(this, context)),
+                        GuiSwingJsonTransfer.getActions(this, context));
+            }
+            return menuItems;
+        }
+
+        @Override
+        protected ImageCopyAction createCopyAction() {
+            return new ImageCopyAction(this::getImage, context);
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
+        }
+
+        public boolean isSwingEditable() {
+            return editable;
+        }
+
+        public void setEditable(boolean editable) {
+            this.editable = editable;
+        }
+
+        @Override
+        public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
+            SwingUtilities.invokeLater(() -> setSwingViewValue((Image) newValue, contextClock));
+        }
+
+        public void setImageWithoutContextUpdate(Image image) {
+            GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
+            this.image = image;
+            imageSize = img.getSize(context, image);
+            updateScale();
+        }
+
+        @Override
+        public void setImage(Image image) {
+            GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
+            Image v = (Image) img.toUpdateValue(context, image);
+            setImageWithoutContextUpdate(v);
+            updateFromGui(v, viewClock.increment());
+        }
+
+        public void updateFromGui(Object v, GuiTaskClock viewClock) {
+            GuiSwingView.updateFromGui(this, v, viewClock);
         }
 
         @Override
@@ -525,16 +725,22 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public void setSwingViewHistoryValue(Object value) {
-            if (value instanceof GuiReprValueImagePane.ImageHistoryEntry) {
-                setSwingViewValueWithUpdate(((GuiReprValueImagePane.ImageHistoryEntry) value).getImage());
-            } else {
-                setSwingViewValueWithUpdate((Image) value);
+            if (value instanceof GuiReprValueImagePane.ImageHistoryEntry imageHistEntry) {
+                setSwingViewValueWithUpdate(imageHistEntry.getImage());
+            } else if (value instanceof Image imageValue) {
+                setSwingViewValueWithUpdate(imageValue);
             }
         }
 
         @Override
         public void prepareForRefresh() {
             viewClock.clear();
+        }
+
+        @Override
+        public RenderedImage getRenderedImage(Image image) {
+            GuiReprValueImagePane imagePane = (GuiReprValueImagePane) getSwingViewContext().getRepresentation();
+            return imagePane.getRenderedImage(getSwingViewContext(), image);
         }
     }
 
@@ -589,10 +795,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     public static final int SCALE_MAX_HEIGHT = 30_000;
 
     public static class ImageScaleMouseWheel implements MouseWheelListener, ImageScale {
-        protected PropertyImagePane pane;
+        protected ImagePaneBase pane;
         protected float currentZoom = 1.0f;
 
-        public ImageScaleMouseWheel(PropertyImagePane pane) {
+        public ImageScaleMouseWheel(ImagePaneBase pane) {
             this.pane = pane;
         }
 
@@ -613,7 +819,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public void mouseWheelMoved(MouseWheelEvent event) {
-            if (event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
+            if (event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL &&
+                pane.isImageScaleChangeByMouseWheel(event)) {
                 float amount = (event.getUnitsToScroll() / 100.0f) * 4.0f;
                 setCurrentZoom(Math.min(Math.max(0.1f, amount + currentZoom), 20f));
             }
@@ -647,9 +854,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             implements PopupCategorized.CategorizedMenuItemActionCheck, TableTargetColumnAction {
         @Serial private static final long serialVersionUID = 1L;
 
-        protected PropertyImagePane pane;
+        protected ImagePaneBase pane;
 
-        public ImageScaleSwitchFitAction(PropertyImagePane pane) {
+        public ImageScaleSwitchFitAction(ImagePaneBase pane) {
             this.pane = pane;
             putValue(NAME, "Fit to View Size");
 
@@ -692,9 +899,9 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
         @Serial private static final long serialVersionUID = 1L;
 
-        protected PropertyImagePane pane;
+        protected ImagePaneBase pane;
 
-        public ImageScaleOriginalSizeAction(PropertyImagePane pane) {
+        public ImageScaleOriginalSizeAction(ImagePaneBase pane) {
             this.pane = pane;
             putValue(NAME, "Zoom to Original Size");
 
@@ -724,10 +931,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     public static class ImageScaleSizeAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         @Serial private static final long serialVersionUID = 1L;
 
-        protected PropertyImagePane pane;
+        protected ImagePaneBase pane;
         protected float n;
 
-        public ImageScaleSizeAction(PropertyImagePane pane, float n) {
+        public ImageScaleSizeAction(ImagePaneBase pane, float n) {
             this.pane = pane;
             putValue(NAME, String.format("%d%%", (int) (n * 100)));
             this.n = n;
@@ -749,10 +956,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     public static class ImageScaleAutoSwitchByMouseWheel extends AbstractAction implements PopupCategorized.CategorizedMenuItemActionCheck {
         @Serial private static final long serialVersionUID = 1L;
 
-        protected PropertyImagePane pane;
+        protected ImagePaneBase pane;
 
-        public ImageScaleAutoSwitchByMouseWheel(PropertyImagePane pane) {
-            putValue(NAME, "Zoom by Mouse Wheel");
+        public ImageScaleAutoSwitchByMouseWheel(ImagePaneBase pane) {
+            putValue(NAME, "Zoom by Mouse Wheel + Alt");
             this.pane = pane;
             updateSelected();
         }
@@ -780,10 +987,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     public static class ImageScaleIncreaseAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         @Serial private static final long serialVersionUID = 1L;
 
-        protected PropertyImagePane pane;
+        protected ImagePaneBase pane;
         protected float n;
 
-        public ImageScaleIncreaseAction(PropertyImagePane pane, float n) {
+        public ImageScaleIncreaseAction(ImagePaneBase pane, float n) {
             this.pane = pane;
             putValue(NAME, n > 0 ? "Increase Scale" : "Decrease Scale");
             putValue(ACCELERATOR_KEY,
@@ -922,8 +1129,8 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         @Override
         public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
             Object o = target.getSelectedCellValue();
-            if (o instanceof Image) {
-                copy((Image) o);
+            if (o instanceof Image img) {
+                copy(img);
             }
         }
 
@@ -1058,20 +1265,24 @@ public class GuiSwingViewImagePane implements GuiSwingView {
     public static class ImageSaveAction extends ImageCopyAction {
         @Serial private static final long serialVersionUID = 1L;
 
-        protected PropertyImagePane pane;
-        public ImageSaveAction(PropertyImagePane pane) {
-            super(pane::getImage, pane.getSwingViewContext());
+        protected ImagePaneBase pane;
+        public ImageSaveAction(ImagePaneBase pane) {
+            super(pane::getImage, contextOrNull(pane));
             putValue(NAME, "Export...");
             putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_S,
                     PopupExtension.getMenuShortcutKeyMask()));
             this.pane = pane;
         }
 
+        private static GuiMappingContext contextOrNull(ImagePaneBase pane) {
+            return pane instanceof ValuePane<?> vPane ? vPane.getSwingViewContext() : null;
+        }
+
         @Override
         public void copy(Image image) {
             SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
-            Path path = fd.showConfirmDialogIfOverwriting(pane.asSwingViewComponent(),
-                    fd.showSaveDialog(pane.asSwingViewComponent(), null, pane.getName() + ".png"));
+            Path path = fd.showConfirmDialogIfOverwriting(pane,
+                    fd.showSaveDialog(pane, null, pane.getName() + ".png"));
             if (path != null) {
                 try {
                     String name = path.getFileName().toString();
@@ -1080,9 +1291,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                     if (suffIdx > 0) {
                         format = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
                     }
-
-                    GuiReprValueImagePane imagePane = (GuiReprValueImagePane) pane.getSwingViewContext().getRepresentation();
-                    ImageIO.write(imagePane.getRenderedImage(pane.getSwingViewContext(), image), format, path.toFile());
+                    ImageIO.write(pane.getRenderedImage(image), format, path.toFile());
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
@@ -1309,6 +1518,55 @@ public class GuiSwingViewImagePane implements GuiSwingView {
                 return new ImageSelection(img, imagePane.getSwingViewContext());
             }
         }
+    }
 
+    /**
+     * open the preview-window
+     * @since 1.6.3
+     */
+    public static class ImagePreviewAction extends AbstractAction
+        implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
+        protected ImagePaneBase pane;
+        protected JScrollPane scrollPane;
+        protected PropertyImagePane owner;
+
+        public ImagePreviewAction(PropertyImagePane owner) {
+            putValue(NAME, "Image Preview");
+            pane = new ImagePaneBase();
+            pane.setName("Image Preview");
+            this.owner = owner;
+            scrollPane = new JScrollPane(pane);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            pane.setImage(owner.getImage());
+            show();
+        }
+
+        public void show() {
+            owner.getSettingsWindow().show("Image Preview", owner, scrollPane);
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_VIEW;
+        }
+
+        /**
+         * @return the preview pane
+         */
+        public ImagePaneBase getPreviewPane() {
+            return pane;
+        }
+
+        @Override
+        public void actionPerformedOnTableColumn(ActionEvent e, GuiReprCollectionTable.TableTargetColumn target) {
+            var vals = target.getSelectedCellValues();
+            if (!vals.isEmpty() && vals.getFirst() instanceof Image img) {
+                pane.setImage(img);
+                show();
+            }
+        }
     }
 }

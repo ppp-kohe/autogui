@@ -6,6 +6,7 @@ import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import org.autogui.swing.GuiSwingViewImagePane;
 import org.autogui.swing.GuiSwingViewImagePane.PropertyImagePane;
+import org.autogui.swing.mapping.GuiReprValueImagePane;
 import org.autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
 import org.autogui.swing.util.MenuBuilder;
 import org.autogui.swing.util.PopupCategorized;
@@ -75,6 +76,16 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
             if (editor) {
                 ObjectTableColumnValue.KeyHandlerFinishEditing.installFinishEditingKeyHandler(this, finishRunners);
             }
+        }
+
+        @Override
+        public void setImageWithoutContextUpdate(Image image) {
+            GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
+            this.image = image;
+            imageSize = img.getSize(context, image);
+            setPreferredSizeFromImageSize();
+            revalidate();
+            repaint();
         }
 
         @Override

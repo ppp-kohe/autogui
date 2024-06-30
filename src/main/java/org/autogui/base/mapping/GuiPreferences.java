@@ -360,7 +360,7 @@ public class GuiPreferences {
     }
 
     /**
-     *  obtains {@link PreferencesJsonSupport#toJson()} and saves the returned JSON as a prefs entry
+     *  saves the given JSON as a prefs entry
      * @param json the saved object
      * @since 1.5
      */

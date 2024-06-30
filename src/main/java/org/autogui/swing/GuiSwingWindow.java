@@ -268,8 +268,13 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
 
     @Override
     public void loadPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
-        contextRootPane.withError(() -> preferencesUpdater.apply(prefs, options));
-        contextRootPane.loadPreferences(prefs, options);
+        options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+        try {
+            contextRootPane.withError(() -> options.apply(preferencesUpdater, prefs));
+            contextRootPane.loadPreferences(prefs, options);
+        } finally {
+            options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+        }
     }
 
     @Override

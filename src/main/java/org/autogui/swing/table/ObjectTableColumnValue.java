@@ -169,9 +169,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     @Override
-    public void loadSwingPreferences(GuiPreferences prefs) {
+    public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
         setForComponents(ValuePane.class,
-                p -> p.loadSwingPreferences(prefs), renderer, editor);
+                p -> p.loadSwingPreferences(prefs, options), renderer, editor);
     }
 
     @Override

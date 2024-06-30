@@ -1061,8 +1061,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs) {
-            columnWithContext().loadSwingPreferences(prefs);
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+            columnWithContext().loadSwingPreferences(prefs, options);
         }
 
         /**

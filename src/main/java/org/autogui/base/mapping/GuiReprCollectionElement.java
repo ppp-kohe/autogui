@@ -65,7 +65,7 @@ public class GuiReprCollectionElement extends GuiReprValue {
     }
 
     public GuiRepresentation createElement(GuiRepresentation wrapped) {
-         return new GuiReprCollectionElement(wrapped);
+         return GuiRepresentation.createCollectionElement(wrapped);
     }
 
     /**

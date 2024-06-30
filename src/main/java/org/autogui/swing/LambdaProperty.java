@@ -1,11 +1,13 @@
 package org.autogui.swing;
 
-import org.autogui.swing.mapping.GuiReprValueDocumentEditor;
+import org.autogui.base.mapping.GuiMappingContext;
+import org.autogui.base.mapping.GuiReprSet;
+import org.autogui.base.mapping.GuiReprValue;
+import org.autogui.base.mapping.GuiRepresentation;
+import org.autogui.base.type.*;
 import org.autogui.swing.mapping.GuiReprValueImagePane;
 import org.autogui.swing.table.*;
 import org.autogui.swing.util.UIManagerUtil;
-import org.autogui.base.mapping.*;
-import org.autogui.base.type.*;
 
 import javax.swing.*;
 import javax.swing.text.Document;
@@ -52,15 +54,41 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
     protected Supplier<T> getter;
     protected Consumer<T> setter;
 
+    private static final String UNNAMED = "_";
+
     public LambdaProperty(Class<?> type, Supplier<T> getter, Consumer<T> setter) {
-        super("_");
+        this(UNNAMED, type, getter, setter);
+    }
+    @SuppressWarnings("rawtypes")
+    public LambdaProperty(Class<? extends java.util.List> listType, Class<?> elementType, Supplier<T> getter, Consumer<T> setter) {
+        this(UNNAMED, listType, elementType, getter, setter);
+    }
+
+    /**
+     * @param name the property name
+     * @param type the property type
+     * @param getter the supplier for the property
+     * @param setter the consumer for the property
+     * @since 1.6.3
+     */
+    public LambdaProperty(String name, Class<?> type, Supplier<T> getter, Consumer<T> setter) {
+        super(name);
         setType(new GuiTypeValue(type));
         this.getter = getter;
         this.setter = setter;
     }
+
+    /**
+     * @param name the property name
+     * @param listType the property list type
+     * @param elementType the explicit element type of the list, will be constructed as {@link GuiTypeValue}
+     * @param getter the supplier for the entire list property
+     * @param setter the consumer for the entire list property
+     * @since 1.6.3
+     */
     @SuppressWarnings("rawtypes")
-    public LambdaProperty(Class<? extends java.util.List> listType, Class<?> elementType, Supplier<T> getter, Consumer<T> setter) {
-        super("_");
+    public LambdaProperty(String name, Class<? extends java.util.List> listType, Class<?> elementType, Supplier<T> getter, Consumer<T> setter) {
+        super(name);
         setType(new GuiTypeCollection(listType, new GuiTypeValue(elementType)));
         this.getter = getter;
         this.setter = setter;
@@ -83,44 +111,92 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         return setter != null;
     }
 
+    /**
+     *
+     * @param type the value type
+     * @param getter supplier for a value of the type
+     * @param setter consumer for the type and update the value returned by the getter
+     * @return the context recursively constructed by {@link GuiSwingMapperSet#getReprDefaultSet()}. {@link GuiRepresentation#matchAndSetNotifiersAsInit(GuiMappingContext)}
+     * @param <T> the value type; T.class can be {@code Class<T>}
+     * @since 1.6.3
+     */
+    public static <T> GuiMappingContext createAndBuild(String name, Class<?> type, Supplier<T> getter, Consumer<T> setter) {
+        GuiReprSet reprSet = GuiSwingMapperSet.getReprDefaultSet();
+        GuiMappingContext context = create(name, type, getter, setter, reprSet);
+        reprSet.matchAndSetNotifiersAsInit(context);
+        context.updateSourceSubTree();
+        return context;
+    }
+
     public static <T> GuiMappingContext create(Class<?> type, Supplier<T> getter, Consumer<T> setter, GuiRepresentation repr) {
-        GuiMappingContext context = new GuiMappingContext(new LambdaProperty<>(type, getter, setter), repr);
+        return create(UNNAMED, type, getter, setter, repr);
+    }
+
+    /**
+     * @param name the proeprty name
+     * @param type the value-type of the property
+     * @param getter the getter for the property value
+     * @param setter the setter for the property value
+     * @param repr the representation for the property
+     * @return a new context for the property
+     * @param <T> the value-type of the property
+     * @since 1.6.3
+     */
+    public static <T> GuiMappingContext create(String name, Class<?> type, Supplier<T> getter, Consumer<T> setter, GuiRepresentation repr) {
+        GuiMappingContext context = new GuiMappingContext(new LambdaProperty<>(name, type, getter, setter), repr);
         context.updateSourceSubTree();
         return context;
     }
 
     @SuppressWarnings("rawtypes")
     public static <T> GuiMappingContext createList(Class<? extends java.util.List> listType, Class<?> elementType, Supplier<T> getter, Consumer<T> setter, GuiRepresentation repr) {
-        GuiMappingContext context = new GuiMappingContext(new LambdaProperty<>(listType, elementType, getter, setter), new GuiReprPropertyPane(repr));
+        return createList(UNNAMED, listType, elementType, getter, setter, repr);
+    }
+
+    /**
+     *
+     * @param name the property name
+     * @param listType the list type of the property
+     * @param elementType the element type of the property
+     * @param getter the getter for the entire list
+     * @param setter the setter for the entire list
+     * @param repr the representation of the element of the list
+     * @return a context for the list property
+     * @param <T> the list type
+     * @since 1.6.3
+     */
+    @SuppressWarnings("rawtypes")
+    public static <T> GuiMappingContext createList(String name, Class<? extends java.util.List> listType, Class<?> elementType, Supplier<T> getter, Consumer<T> setter, GuiRepresentation repr) {
+        GuiMappingContext context = new GuiMappingContext(new LambdaProperty<>(name, listType, elementType, getter, setter), GuiRepresentation.createPropertyPane(repr));
 
         GuiMappingContext listContext = context.createChildCandidate(context.getTypeElementAsProperty().getType());
         listContext.setRepresentation(repr);
         listContext.addToParent();
 
         GuiMappingContext elementContext = listContext.createChildCandidate(listContext.getTypeElement().getChildren().getFirst());
-        elementContext.setRepresentation(new GuiReprCollectionElement(null));
+        elementContext.setRepresentation(GuiRepresentation.createCollectionElement(null));
         elementContext.addToParent();
 
         GuiMappingContext elemObjContext = elementContext.createChildCandidate(elementContext.getTypeElement()); //same type as parent
-        elemObjContext.setRepresentation(new GuiReprValue());
+        elemObjContext.setRepresentation(GuiRepresentation.createValue());
         elemObjContext.addToParent();
 
         context.updateSourceSubTree();
         return listContext;
     }
 
-    public static SpecifierManagerNone NONE = new SpecifierManagerNone();
+    public static SpecifierManagerNone NONE = new SpecifierManagerNone(); //deprecated: use GuiSwingView.specifierManagerRoot()
 
     public static class SpecifierManagerNone implements GuiSwingView.SpecifierManager {
         public SpecifierManagerNone() {}
         @Override
-        public GuiReprValue.ObjectSpecifier getSpecifier() {
+        public GuiReprValue.ObjectSpecifier get() {
             return GuiReprValue.NONE;
         }
 
         @Override
         public String toString() {
-            return "_";
+            return UNNAMED;
         }
     }
 
@@ -134,8 +210,20 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         @Serial private static final long serialVersionUID = 1L;
 
         public LambdaStringPane(Supplier<String> getter, Consumer<String> setter) {
-            super(create(String.class, getter, setter, new GuiReprValueStringField()), NONE);
-            setPreferredSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(100), getPreferredSize().height ));
+            this(UNNAMED, getter, setter);
+        }
+
+        /**
+         * @param name the property name
+         * @param getter the property getter
+         * @param setter the property setter
+         * @since 1.6.3
+         */
+        public LambdaStringPane(String name, Supplier<String> getter, Consumer<String> setter) {
+            super(create(name, String.class, getter, setter, GuiRepresentation.createValueStringField()), GuiSwingView.specifierManagerRoot());
+            SwingUtilities.invokeLater(() ->
+                setPreferredSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(100), getPreferredSize().height )));
+             //try to prevent dead lockking
         }
     }
 
@@ -143,7 +231,19 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         @Serial private static final long serialVersionUID = 1L;
 
         public <T extends Number> LambdaNumberSpinner(Class<T> type, Supplier<T> getter, Consumer<T> setter) {
-            super(create(type, getter, setter, new GuiReprValueNumberSpinner()), NONE);
+            this(UNNAMED, type, getter, setter);
+        }
+
+        /**
+         * @param name the property name
+         * @param type the number type of the property
+         * @param getter the property getter
+         * @param setter the property setter
+         * @param <T>  the number type
+         * @since 1.6.3
+         */
+        public <T extends Number> LambdaNumberSpinner(String name, Class<T> type, Supplier<T> getter, Consumer<T> setter) {
+            super(create(name, type, getter, setter, GuiRepresentation.createValueNumberSpinner()), GuiSwingView.specifierManagerRoot());
         }
     }
 
@@ -151,7 +251,16 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         @Serial private static final long serialVersionUID = 1L;
 
         public LambdaLabel(Supplier<?> getter) {
-            super(create(Object.class, getter, null, new GuiReprValueLabel()), NONE);
+            this(UNNAMED, getter);
+        }
+
+        /**
+         * @param name the property name
+         * @param getter the property getter
+         * @since 1.6.3
+         */
+        public LambdaLabel(String name, Supplier<?> getter) {
+            super(create(name, Object.class, getter, null, GuiRepresentation.createValueLabel()), GuiSwingView.specifierManagerRoot());
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
@@ -170,11 +279,34 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         @Serial private static final long serialVersionUID = 1L;
 
         public <T extends Image> LambdaImagePane(Supplier<T> getter, Consumer<T> setter) {
-            this(BufferedImage.class, getter, setter);
+            this(UNNAMED, getter, setter);
         }
 
         public <T extends Image> LambdaImagePane(Class<? extends Image> imageType, Supplier<T> getter, Consumer<T> setter) {
-            super(create(imageType, getter, setter, new GuiReprValueImagePane()), NONE);
+            this(UNNAMED, imageType, getter, setter);
+        }
+
+        /**
+         * @param name the property name
+         * @param getter the property getter
+         * @param setter the setter
+         * @param <T> the image type
+         * @since 1.6.3
+         */
+        public <T extends Image> LambdaImagePane(String name, Supplier<T> getter, Consumer<T> setter) {
+            this(name, BufferedImage.class, getter, setter);
+        }
+
+        /**
+         * @param name the property name
+         * @param imageType the property image type
+         * @param getter the property getter
+         * @param setter the setter
+         * @param <T> the image type
+         * @since 1.6.3
+         */
+        public <T extends Image> LambdaImagePane(String name, Class<? extends Image> imageType, Supplier<T> getter, Consumer<T> setter) {
+            super(create(name, imageType, getter, setter, new GuiReprValueImagePane()), GuiSwingView.specifierManagerRoot());
         }
     }
 
@@ -182,8 +314,19 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         @Serial private static final long serialVersionUID = 1L;
 
         public LambdaFilePathPane(Supplier<Path> getter, Consumer<Path> setter) {
-            super(create(Path.class, getter, setter, new GuiReprValueFilePathField()), NONE);
-            setPreferredSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(200), getPreferredSize().height ));
+            this(UNNAMED, getter, setter);
+        }
+
+        /**
+         * @param name the property name
+         * @param getter the property getter
+         * @param setter the setter
+         * @since 1.6.3
+         */
+        public LambdaFilePathPane(String name, Supplier<Path> getter, Consumer<Path> setter) {
+            super(create(name, Path.class, getter, setter, GuiRepresentation.createValueFilePathField()), GuiSwingView.specifierManagerRoot());
+            SwingUtilities.invokeLater(() ->
+                setPreferredSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(200), getPreferredSize().height )));
         }
     }
 
@@ -191,7 +334,19 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         @Serial private static final long serialVersionUID = 1L;
 
         public <T extends Enum<?>> LambdaEnumComboBox(Class<T> enumType, Supplier<T> getter, Consumer<T> setter) {
-            super(create(enumType, getter, setter, new GuiReprValueEnumComboBox()), NONE);
+            this(UNNAMED, enumType, getter, setter);
+        }
+
+        /**
+         * @param name the property name
+         * @param enumType  the property enum type
+         * @param getter the property getter
+         * @param setter the setter
+         * @param <T> the enum type
+         * @since 1.6.3
+         */
+        public <T extends Enum<?>> LambdaEnumComboBox(String name, Class<T> enumType, Supplier<T> getter, Consumer<T> setter) {
+            super(create(name, enumType, getter, setter, GuiRepresentation.createValueEnumComboBox()), GuiSwingView.specifierManagerRoot());
         }
     }
 
@@ -199,7 +354,18 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         @Serial private static final long serialVersionUID = 1L;
 
         public LambdaBooleanCheckBox(String label, Supplier<Boolean> getter, Consumer<Boolean> setter) {
-            super(create(Boolean.class, getter, setter, new GuiReprValueBooleanCheckBox()), NONE);
+            this(UNNAMED, label, getter, setter);
+        }
+
+        /**
+         * @param name the property name
+         * @param label  the label for the check-box
+         * @param getter the property getter
+         * @param setter the setter
+         * @since 1.6.3
+         */
+        public LambdaBooleanCheckBox(String name, String label, Supplier<Boolean> getter, Consumer<Boolean> setter) {
+            super(create(name, Boolean.class, getter, setter, GuiRepresentation.createValueBooleanCheckBox()), GuiSwingView.specifierManagerRoot());
             setText(label);
         }
     }
@@ -208,7 +374,16 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         @Serial private static final long serialVersionUID = 1L;
 
         public LambdaDocumentPlainEditorPane(Supplier<? extends Document> getter) {
-            super(create(Document.class, getter, null, new GuiReprValueDocumentEditor()), NONE);
+            this(UNNAMED, getter);
+        }
+
+        /**
+         * @param name the property name
+         * @param getter the property getter
+         * @since 1.6.3
+         */
+        public LambdaDocumentPlainEditorPane(String name, Supplier<? extends Document> getter) {
+            super(create(name, Document.class, getter, null, GuiSwingMapperSet.createValueDocumentEditor()), GuiSwingView.specifierManagerRoot());
         }
     }
 
@@ -218,7 +393,17 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         /** @param getter the getter returns {@link StringBuilder},
          *  {@link javax.swing.text.AbstractDocument.Content}, or {@link StyledDocument} */
         public LambdaDocumentTextPane(Supplier<?> getter) {
-            super(create(Document.class, getter, null, new GuiReprValueDocumentEditor()), NONE);
+            this(UNNAMED, getter);
+        }
+
+        /**
+         * @param name the property name
+         * @param getter the getter returns {@link StringBuilder},
+         *  {@link javax.swing.text.AbstractDocument.Content}, or {@link StyledDocument}
+         * @since 1.6.3
+         *  */
+        public LambdaDocumentTextPane(String name, Supplier<?> getter) {
+            super(create(name, Document.class, getter, null, GuiSwingMapperSet.createValueDocumentEditor()), GuiSwingView.specifierManagerRoot());
         }
     }
 
@@ -228,8 +413,18 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         private boolean finishAdding = false;
 
         public <E> LambdaCollectionTable(Class<E> elementType, Supplier<java.util.List<E>> getter) {
-            super(createList(List.class, elementType, getter, null,
-                    new GuiReprCollectionTable(GuiRepresentation.getDefaultSet())), NONE);
+            this(UNNAMED, elementType, getter);
+        }
+
+        /**
+         * @param name the property name
+         * @param elementType the list ellement type
+         * @param getter the property getter
+         * @param <E> the element type
+         */
+        public <E> LambdaCollectionTable(String name, Class<E> elementType, Supplier<java.util.List<E>> getter) {
+            super(createList(name, List.class, elementType, getter, null,
+                    GuiRepresentation.createCollectionTable(GuiSwingMapperSet.getReprDefaultSet())), GuiSwingView.specifierManagerRoot());
             initRowIndex();
         }
 
@@ -259,7 +454,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         public <E> LambdaCollectionTable addColumnBoolean(String name,
                                                           Function<E, Boolean> getter, BiConsumer<E, Boolean> setter) {
             return addColumn(new GuiSwingTableColumnBoolean()
-                    .createColumn(addColumnContext(name, Boolean.class, getter, setter, new GuiReprValueBooleanCheckBox()),
+                    .createColumn(addColumnContext(name, Boolean.class, getter, setter, GuiRepresentation.createValueBooleanCheckBox()),
                             getRowSpecifier(), getRowSpecifier()));
         }
 
@@ -273,7 +468,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         public <E> LambdaCollectionTable addColumnString(String name,
                                                          Function<E, String> getter, BiConsumer<E, String> setter) {
             return addColumn(new GuiSwingTableColumnString()
-                    .createColumn(addColumnContext(name, String.class, getter, setter, new GuiReprValueStringField()),
+                    .createColumn(addColumnContext(name, String.class, getter, setter, GuiRepresentation.createValueStringField()),
                             getRowSpecifier(), getRowSpecifier()));
         }
 
@@ -288,7 +483,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         public <E, T extends Number> LambdaCollectionTable addColumnNumber(String name, Class<T> numType,
                                                                            Function<E, T> getter, BiConsumer<E, T> setter) {
             return addColumn(new GuiSwingTableColumnNumber()
-                    .createColumn(addColumnContext(name, numType, getter, setter, new GuiReprValueNumberSpinner()),
+                    .createColumn(addColumnContext(name, numType, getter, setter, GuiRepresentation.createValueNumberSpinner()),
                             getRowSpecifier(), getRowSpecifier()));
         }
 
@@ -302,7 +497,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         public <E, T extends Enum<?>> LambdaCollectionTable addColumnEnum(String name, Class<T> enumType,
                                                                           Function<E, T> getter, BiConsumer<E, T> setter) {
             return addColumn(new GuiSwingTableColumnEnum()
-                    .createColumn(addColumnContext(name, enumType, getter, setter, new GuiReprValueEnumComboBox()),
+                    .createColumn(addColumnContext(name, enumType, getter, setter, GuiRepresentation.createValueEnumComboBox()),
                             getRowSpecifier(), getRowSpecifier()));
         }
 
@@ -316,7 +511,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         public <E> LambdaCollectionTable addColumnFilePath(String name,
                                                            Function<E, Path> getter, BiConsumer<E, Path> setter) {
             return addColumn(new GuiSwingTableColumnFilePath()
-                    .createColumn(addColumnContext(name, Path.class, getter, setter, new GuiReprValueFilePathField()),
+                    .createColumn(addColumnContext(name, Path.class, getter, setter, GuiRepresentation.createValueFilePathField()),
                             getRowSpecifier(), getRowSpecifier()));
         }
 
@@ -330,7 +525,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         public <E, T extends Image> LambdaCollectionTable addColumnImage(String name, Class<T> imageType,
                                                                          Function<E, T> getter, BiConsumer<E, T> setter) {
             return addColumn(new GuiSwingTableColumnImage()
-                    .createColumn(addColumnContext(name, imageType, getter, setter, new GuiReprValueImagePane()),
+                    .createColumn(addColumnContext(name, imageType, getter, setter, GuiSwingMapperSet.createValueImagePane(false)),
                             getRowSpecifier(), getRowSpecifier()));
         }
 
@@ -344,7 +539,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         public <E> LambdaCollectionTable addColumnLabel(String name,
                                                           Function<E, ?> getter) {
             return addColumn(new GuiSwingTableColumnLabel()
-                    .createColumn(addColumnContext(name, Object.class, getter, null, new GuiReprValueLabel()),
+                    .createColumn(addColumnContext(name, Object.class, getter, null, GuiRepresentation.createValueLabel()),
                             getRowSpecifier(), getRowSpecifier()));
         }
 
@@ -359,7 +554,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             GuiMappingContext context = getSwingViewContext().createChildCandidate(new GuiTypeMemberActionList(name,
                     new GuiTypeValue(void.class),
                     getSwingViewContext().getTypeElementCollection().getElementType(), (String) null, false));
-            context.setRepresentation(new GuiReprActionList());
+            context.setRepresentation(GuiRepresentation.createActionList());
             context.addToParent();
 
             GuiSwingTableColumnSetDefault.TableSelectionListAction a = new GuiSwingTableColumnSetDefault.TableSelectionListAction(context, this) {

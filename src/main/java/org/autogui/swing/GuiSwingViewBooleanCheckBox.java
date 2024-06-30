@@ -52,7 +52,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         JPanel pane = new GuiSwingViewWrapper.ValueWrappingPane(new FlowLayout(FlowLayout.LEADING));
         pane.setOpaque(false);
         pane.setBorder(BorderFactory.createEmptyBorder());
-        pane.add(new PropertyCheckBox(context, new SpecifierManagerDefault(parentSpecifier)));
+        pane.add(new PropertyCheckBox(context, GuiSwingView.specifierManager(parentSpecifier)));
         return pane;
     }
 

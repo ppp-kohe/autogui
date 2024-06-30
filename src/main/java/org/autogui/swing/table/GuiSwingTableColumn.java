@@ -42,7 +42,7 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
             this.index = index;
         }
 
-        public ObjectSpecifier getTableSpecifier() {
+        public ObjectSpecifier get() {
             return tableSpecifier.get();
         }
 
@@ -80,7 +80,16 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
             return (ObjectTableColumn) this;
         }
 
-        void loadSwingPreferences(GuiPreferences prefs);
+        default void loadSwingPreferences(GuiPreferences prefs) {
+            loadSwingPreferences(prefs, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+        }
+
+        /**
+         * @param prefs the source preferences
+         * @param options processor
+         * @since 1.6.3
+         */
+        void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options);
 
         void saveSwingPreferences(GuiPreferences prefs);
     }

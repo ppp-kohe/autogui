@@ -1,6 +1,6 @@
 package org.autogui.swing.icons;
 
-import org.autogui.swing.GuiSwingViewLabel;
+import org.autogui.swing.util.FocusBorder;
 import org.autogui.swing.util.UIManagerUtil;
 
 import javax.imageio.ImageIO;
@@ -260,7 +260,7 @@ public class GuiSwingIcons {
             int w = ui.getScaledSizeInt(5);
 
             setBorder(BorderFactory.createCompoundBorder(
-                    new GuiSwingViewLabel.FocusBorder(this),
+                    new FocusBorder(this),
                     BorderFactory.createEmptyBorder(h, w, h, w)));
             setFocusPainted(false);
 

@@ -77,7 +77,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     @Override
     public JComponent createView(GuiMappingContext context, Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
-        SpecifierManagerDefault specifierManager = new SpecifierManagerDefault(parentSpecifier);
+        SpecifierManagerDefault specifierManager = GuiSwingView.specifierManager(parentSpecifier);
         ValuePane<Object> text = doc.isStyledDocument(context) ?
                 new PropertyDocumentTextPane(context, specifierManager) :
                 new PropertyDocumentEditorPane(context, specifierManager);
@@ -551,11 +551,13 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
             try {
+                options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
                 GuiSwingView.loadPreferencesDefault(this, prefs, options);
                 GuiPreferences targetPrefs = prefs.getDescendant(context);
-                settingPane.loadFrom(targetPrefs);
+                options.loadFrom(settingPane, targetPrefs);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
+                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -613,18 +615,25 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public TextWrapTextAction(JTextComponent field) {
             putValue(NAME, "Wrap Line");
             this.field = field;
-            putValue(SELECTED_KEY, isWrapLine(scroll(field.getParent())));
+            putValue(SELECTED_KEY, isWrapLineOfFieldParent());
         }
 
         public void updateSelected() {
-            putValue(SELECTED_KEY, isWrapLine(scroll(field.getParent())));
+            putValue(SELECTED_KEY, isWrapLineOfFieldParent());
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            JScrollPane pane = scroll(field.getParent());
-            boolean f = isWrapLine(pane);
-            setWrapLine(pane, !f);
+            boolean f = isWrapLineOfFieldParent();
+            setWrapLine(scroll(field == null ? null : field.getParent()), !f);
+        }
+
+        /**
+         * @return call {@link #isWrapLine(JScrollPane)} for the parent scroll of the field or true if the field is null
+         * @since 1.6.3
+         */
+        public boolean isWrapLineOfFieldParent() {
+            return isWrapLine(scroll(field == null ? null : field.getParent()));
         }
 
         public boolean isWrapLine(JScrollPane pane) {
@@ -651,8 +660,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public void change(boolean f) {
             putValue(SELECTED_KEY, f);
-            JScrollPane pane = scroll(field.getParent());
-            setWrapLine(pane, f);
+            setWrapLine(scroll(field == null ? null : field.getParent()), f);
         }
 
         @Override
@@ -860,9 +868,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 StyleConstants.setFontSize(style, ((Number) fontSize.getValue()).intValue());
                 StyleConstants.setBold(style, (Boolean) styleBold.getValue(Action.SELECTED_KEY));
                 StyleConstants.setItalic(style, (Boolean) styleItalic.getValue(Action.SELECTED_KEY));
-                if (backgroundCustom.isSelected()) {
+                if (backgroundCustom.isSelected() && pane != null) {
                     pane.setBackground(backgroundColor.getColor());
-                } else {
+                } else if (pane != null) {
                     pane.setBackground(getDefaultBackground());
                 }
                 backgroundColor.setEnabled(backgroundCustom.isSelected());
@@ -871,14 +879,18 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 } else {
                     Color c = getDefaultForeground();
                     StyleConstants.setForeground(style, c);
-                    pane.setForeground(c);
+                    if (pane != null) {
+                        pane.setForeground(c);
+                    }
                 }
                 foregroundColor.setEnabled(foregroundCustom.isSelected());
 
                 doc.setParagraphAttributes(0, doc.getLength(), style, true);
                 sendPreferences();
             }
-            pane.repaint();
+            if (pane != null) {
+                pane.repaint();
+            }
         }
 
         /**
@@ -922,7 +934,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                     foregroundColor.setEnabled(foregroundFlag);
                     backgroundColor.setEnabled(backgroundFlag);
 
-                    backgroundColor.setColorWithoutUpdate(pane.getBackground());
+                    if (pane != null) {
+                        backgroundColor.setColorWithoutUpdate(pane.getBackground());
+                    }
                     foregroundColor.setColorWithoutUpdate(StyleConstants.getForeground(style));
                 }
             } finally {
@@ -931,7 +945,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         public StyledDocument getTargetDocument() {
-            if (pane.getDocument() instanceof StyledDocument) {
+            if (pane != null && pane.getDocument() instanceof StyledDocument) {
                 return (StyledDocument) pane.getDocument();
             } else {
                 return null;
@@ -951,38 +965,59 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public void setJson(Object obj) {
             if (obj instanceof Map<?,?>) {
                 Map<String, ?> map = (Map<String, ?>) obj;
-                jsonSet(map, "lineSpacing", Number.class, v -> lineSpacing.setValue(v.doubleValue()));
-                jsonSet(map, "fontFamily", String.class, v -> fontFamily.setSelectedItem(v));
-                jsonSet(map, "fontSize", Number.class, v -> fontSize.setValue(v));
-                jsonSet(map, "bold", Boolean.class, v -> styleBold.putValue(Action.SELECTED_KEY, v));
-                jsonSet(map, "italic", Boolean.class, v -> styleItalic.putValue(Action.SELECTED_KEY,v));
-                Color c = fromJsonColor(map.get("backgroundColor"));
+                jsonSet(map, KEY_LINE_SPACING, Number.class, v -> lineSpacing.setValue(v.doubleValue()));
+                jsonSet(map, KEY_FONT_FAMILY, String.class, v -> fontFamily.setSelectedItem(v));
+                jsonSet(map, KEY_FONT_SIZE, Number.class, v -> fontSize.setValue(v));
+                jsonSet(map, KEY_BOLD, Boolean.class, v -> styleBold.putValue(Action.SELECTED_KEY, v));
+                jsonSet(map, KEY_ITALIC, Boolean.class, v -> styleItalic.putValue(Action.SELECTED_KEY,v));
+                Color c = fromJsonColor(map.get(KEY_BACKGROUND_COLOR));
                 if (c != null) {
                     backgroundColor.setColor(c);
                 }
-                c = fromJsonColor(map.get("foregroundColor"));
+                c = fromJsonColor(map.get(KEY_FOREGROUND_COLOR));
                 if (c != null) {
                     foregroundColor.setColor(c);
                 }
-                jsonSet(map, "backgroundCustom", Boolean.class, backgroundCustom::setSelected);
-                jsonSet(map, "foregroundCustom", Boolean.class, foregroundCustom::setSelected);
-                jsonSet(map, "wrapText", Boolean.class, wrapText::change);
+                jsonSet(map, KEY_BACKGROUND_CUSTOM, Boolean.class, backgroundCustom::setSelected);
+                jsonSet(map, KEY_FOREGROUND_CUSTOM, Boolean.class, foregroundCustom::setSelected);
+                jsonSet(map, KEY_WRAP_TEXT, Boolean.class, wrapText::change);
                 updateStyle();
             }
         }
 
+        /** key for prefs
+         * @since 1.6.3 */ public static final String KEY_LINE_SPACING = "lineSpacing";
+        /** key for prefs
+         * @since 1.6.3 */ public static final String KEY_FONT_FAMILY = "fontFamily";
+        /** key for prefs
+         * @since 1.6.3 */ public static final String KEY_FONT_SIZE = "fontSize";
+        /** key for prefs
+         * @since 1.6.3 */ public static final String KEY_BOLD = "bold";
+        /** key for prefs
+         * @since 1.6.3 */ public static final String KEY_ITALIC = "italic";
+        /** key for prefs
+         * @since 1.6.3 */ public static final String KEY_BACKGROUND_COLOR = "backgroundColor";
+        /** key for prefs
+         * @since 1.6.3 */ public static final String KEY_FOREGROUND_COLOR = "foregroundColor";
+        /** key for prefs
+         * @since 1.6.3 */ public static final String KEY_BACKGROUND_CUSTOM = "backgroundCustom";
+        /** key for prefs
+         * @since 1.6.3 */ public static final String KEY_FOREGROUND_CUSTOM = "foregroundCustom";
+        /** key for prefs
+         * @since 1.6.3 */ public static final String KEY_WRAP_TEXT = "wrapText";
+
         public Map<String,Object> getJson() {
             Map<String, Object> json = new LinkedHashMap<>();
-            json.put("lineSpacing", ((Number) lineSpacing.getValue()).floatValue());
-            json.put("fontFamily", fontFamily.getSelectedItem());
-            json.put("fontSize", ((Number) fontSize.getValue()).intValue());
-            json.put("bold", styleBold.getValue(Action.SELECTED_KEY));
-            json.put("italic", styleItalic.getValue(Action.SELECTED_KEY));
-            json.put("backgroundColor", toJsonColor(backgroundColor.getColor()));
-            json.put("foregroundColor", toJsonColor(foregroundColor.getColor()));
-            json.put("backgroundCustom", backgroundCustom.isSelected());
-            json.put("foregroundCustom", foregroundCustom.isSelected());
-            json.put("wrapText", wrapText.getValue(Action.SELECTED_KEY));
+            json.put(KEY_LINE_SPACING, ((Number) lineSpacing.getValue()).floatValue());
+            json.put(KEY_FONT_FAMILY, fontFamily.getSelectedItem());
+            json.put(KEY_FONT_SIZE, ((Number) fontSize.getValue()).intValue());
+            json.put(KEY_BOLD, styleBold.getValue(Action.SELECTED_KEY));
+            json.put(KEY_ITALIC, styleItalic.getValue(Action.SELECTED_KEY));
+            json.put(KEY_BACKGROUND_COLOR, toJsonColor(backgroundColor.getColor()));
+            json.put(KEY_FOREGROUND_COLOR, toJsonColor(foregroundColor.getColor()));
+            json.put(KEY_BACKGROUND_CUSTOM, backgroundCustom.isSelected());
+            json.put(KEY_FOREGROUND_CUSTOM, foregroundCustom.isSelected());
+            json.put(KEY_WRAP_TEXT, wrapText.getValue(Action.SELECTED_KEY));
             return json;
         }
 
@@ -1029,6 +1064,16 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void loadFrom(GuiPreferences prefs) {
+            setJson(prefsToJson(prefs));
+            updateStyle();
+        }
+
+        /**
+         * @param prefs the source preferences
+         * @return the JSON map restored from prefs, can be passed to {@link #setJson(Object)}
+         * @since 1.6.3
+         */
+        public Map<String, Object> prefsToJson(GuiPreferences prefs) {
             GuiPreferences.GuiValueStore store = prefs.getValueStore();
             Map<String,Object> json = new HashMap<>();
             for (Map.Entry<String,Object> e : getJson().entrySet()) { //JSON has all keys and values
@@ -1050,8 +1095,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                     }
                 }
             }
-            setJson(json);
-            updateStyle();
+            return json;
         }
 
         @Override
