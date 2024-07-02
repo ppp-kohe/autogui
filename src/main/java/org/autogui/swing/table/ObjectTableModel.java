@@ -9,6 +9,7 @@ import org.autogui.swing.util.MenuBuilder;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupExtension.PopupMenuBuilder;
 import org.autogui.swing.util.PopupExtension.PopupMenuFilter;
+import org.autogui.swing.util.SwingDeferredRunner;
 import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
@@ -562,7 +563,7 @@ public class ObjectTableModel extends AbstractTableModel
      * @param task the task
      */
     protected void invokeLater(Runnable task) {
-        SwingUtilities.invokeLater(task);
+        SwingDeferredRunner.invokeLater(task);
     }
 
     @Override

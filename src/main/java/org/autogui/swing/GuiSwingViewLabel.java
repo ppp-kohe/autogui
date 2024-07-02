@@ -2,20 +2,16 @@ package org.autogui.swing;
 
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiReprValue;
-import org.autogui.base.mapping.GuiTaskClock;
 import org.autogui.base.mapping.GuiRepresentation;
+import org.autogui.base.mapping.GuiTaskClock;
 import org.autogui.swing.util.*;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.RoundRectangle2D;
 import java.io.Serial;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -176,7 +172,7 @@ public class GuiSwingViewLabel implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
+            SwingDeferredRunner.invokeLater(() -> setSwingViewValue(newValue, contextClock));
         }
 
         @Override

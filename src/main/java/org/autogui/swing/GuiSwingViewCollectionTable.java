@@ -432,7 +432,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue((List<?>) newValue, contextClock));
+            SwingDeferredRunner.invokeLater(() -> setSwingViewValue((List<?>) newValue, contextClock));
         }
 
         @Override
@@ -550,7 +550,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             //after execution an action, source will be updated by invokeLater
             // change contains info. of the updated source, so the following code intends to be executed after the updating
-            SwingUtilities.invokeLater(() -> {
+            SwingDeferredRunner.invokeLater(() -> {
                 try {
                     //re-selection
                     changeSelection(selectedModelRowsIndices, change);
@@ -748,7 +748,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void updateSwingViewSource() {
             ValuePane.super.updateSwingViewSource();
-            SwingUtilities.invokeLater(getObjectTableModel()::refreshData);
+            SwingDeferredRunner.invokeLater(getObjectTableModel()::refreshData);
         }
 
         /**
@@ -758,7 +758,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void updateSwingViewSourceFromRoot() {
             ValuePane.super.updateSwingViewSourceFromRoot();
-            SwingUtilities.invokeLater(getObjectTableModel()::refreshData);
+            SwingDeferredRunner.invokeLater(getObjectTableModel()::refreshData);
         }
 
         @Override
@@ -1037,7 +1037,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (enabled.isSelected()) {
                 if (radioFit.isSelected()) {
                     fitter.setEnabled(true);
-                    SwingUtilities.invokeLater(fitter::fitAll);
+                    SwingDeferredRunner.invokeLater(fitter::fitAll);
                 } else if (radioFixed.isSelected()) {
                     fitter.setEnabled(false);
                     int height = numModel.getNumber().intValue();

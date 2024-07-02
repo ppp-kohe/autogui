@@ -162,7 +162,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
+            SwingDeferredRunner.invokeLater(() -> setSwingViewValue(newValue, contextClock));
         }
 
         @Override

@@ -467,7 +467,7 @@ public class SearchTextField extends JComponent {
             if (immediate && SwingDeferredRunner.isEventThreadOrDispatchedFromEventThread()) { //to support cell-editor's finish editing
                 updateFieldInEvent(modified, true);
             } else {
-                SwingUtilities.invokeLater(() -> updateFieldInEvent(modified, immediate));
+                SwingDeferredRunner.invokeLater(() -> updateFieldInEvent(modified, immediate));
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -574,7 +574,7 @@ public class SearchTextField extends JComponent {
         if (SwingDeferredRunner.isEventThreadOrDispatchedFromEventThread()) {
             updateFieldInEvent(true, false);
         } else {
-            SwingUtilities.invokeLater(() -> updateFieldInEvent(true, false));
+            SwingDeferredRunner.invokeLater(() -> updateFieldInEvent(true, false));
         }
     }
 
@@ -624,7 +624,7 @@ public class SearchTextField extends JComponent {
         } finally {
             editingRunner.setEnabled(true);
         }
-        SwingUtilities.invokeLater(() -> {
+        SwingDeferredRunner.invokeLater(() -> {
             String str = field.getText();
             field.setSelectionEnd(str.length());
             field.setSelectionStart(str.length());

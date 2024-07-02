@@ -13,6 +13,7 @@ import org.autogui.swing.table.TableTargetColumnAction;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupExtension;
 import org.autogui.swing.util.SettingsWindow;
+import org.autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
 import java.awt.*;
@@ -69,7 +70,7 @@ public class GuiSwingJsonTransfer {
         if (path != null) {
             runner.executeContextTask(json,
                     r -> r.executeIfPresent(
-                            j -> SwingUtilities.invokeLater(() -> JsonWriter.write(j, path.toFile()))));
+                            j -> SwingDeferredRunner.invokeLater(() -> JsonWriter.write(j, path.toFile()))));
         }
     }
 
@@ -135,7 +136,7 @@ public class GuiSwingJsonTransfer {
             executeContextTask(
                     () -> toCopiedJson(value),
                     r -> r.executeIfPresent(
-                            v -> SwingUtilities.invokeLater(() -> copy(v))));
+                            v -> SwingDeferredRunner.invokeLater(() -> copy(v))));
         }
 
 
@@ -153,7 +154,7 @@ public class GuiSwingJsonTransfer {
                             .filter(Objects::nonNull)
                             .collect(Collectors.toList()),
                     r -> r.executeIfPresent(
-                            json -> SwingUtilities.invokeLater(() -> copy(json.size() == 1 ? json.getFirst() : json)))); //if singleton, unwrap the list);
+                            json -> SwingDeferredRunner.invokeLater(() -> copy(json.size() == 1 ? json.getFirst() : json)))); //if singleton, unwrap the list);
         }
 
         @Override
@@ -197,7 +198,7 @@ public class GuiSwingJsonTransfer {
         public void set(Object json) {
             executeContextTask(() -> toValueFromJson(json),
                     r -> r.executeIfPresent(
-                        ret -> SwingUtilities.invokeLater(() ->
+                        ret -> SwingDeferredRunner.invokeLater(() ->
                             ((GuiSwingView.ValuePane<Object>) component).setSwingViewValueWithUpdate(ret))));
         }
 
@@ -446,7 +447,7 @@ public class GuiSwingJsonTransfer {
             executeContextTask(
                     () -> getJson(values),
                     r -> r.executeIfPresent(
-                            json -> SwingUtilities.invokeLater(() -> copy(json))));
+                            json -> SwingDeferredRunner.invokeLater(() -> copy(json))));
         }
 
         public Object getJson(List<Object> values) {
@@ -503,7 +504,7 @@ public class GuiSwingJsonTransfer {
             executeContextTask(
                     () -> getJson(cells),
                     r -> r.executeIfPresent(
-                            json -> SwingUtilities.invokeLater(() -> copy(json))));
+                            json -> SwingDeferredRunner.invokeLater(() -> copy(json))));
         }
 
         /**
@@ -756,7 +757,7 @@ public class GuiSwingJsonTransfer {
                             return fillLoop;
                         },
                         r -> r.executeIfPresent(
-                                fl -> SwingUtilities.invokeLater(() -> target.setCellValues(is, fl))));
+                                fl -> SwingDeferredRunner.invokeLater(() -> target.setCellValues(is, fl))));
             }
         }
 

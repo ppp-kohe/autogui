@@ -190,7 +190,7 @@ public class GuiSwingPreferences {
                 if (e.getColumn() == PreferencesListModel.COLUMN_LAUNCH) {
                     lastSelection = new int[] {e.getLastRow()};
                 }
-                SwingUtilities.invokeLater(this::restoreSelection);
+                SwingDeferredRunner.invokeLater(this::restoreSelection);
             });
             list = new JTable(listModel);
             TableColumn column = list.getColumnModel().getColumn(0);

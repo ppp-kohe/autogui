@@ -7,6 +7,7 @@ import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.swing.table.GuiSwingTableColumnSet;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.GuiListSelectionUpdater;
+import org.autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
 import java.awt.*;
@@ -147,7 +148,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
                         running.set(false);
                         if (resultTarget != null) {
                             r.executeIfPresent(res ->
-                                SwingUtilities.invokeLater(() -> resultTarget.accept(res)));
+                                SwingDeferredRunner.invokeLater(() -> resultTarget.accept(res)));
                         }
                     });
         }

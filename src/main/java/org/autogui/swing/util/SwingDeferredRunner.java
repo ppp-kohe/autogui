@@ -1,6 +1,9 @@
 package org.autogui.swing.util;
 
+import org.autogui.base.mapping.ScheduledTaskRunner;
+
 import javax.swing.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
@@ -30,6 +33,36 @@ public class SwingDeferredRunner {
 
     public static boolean isDispatchedFromEventThread() {
         return dispatchedFromEventThread.get();
+    }
+
+    /**
+     * run the task by {@link SwingUtilities#invokeLater(Runnable)} with wrapping by 
+     *  {@link ScheduledTaskRunner#depthRunner(Runnable)}
+     * @param r the task
+     */
+    public static void invokeLater(Runnable r) {
+        SwingUtilities.invokeLater(ScheduledTaskRunner.depthRunner(r));
+    }
+
+    /**
+     *  run the task by {@link SwingUtilities#invokeAndWait(Runnable)} with wrapping by
+     *   {@link ScheduledTaskRunner#withDepthInfo(String, Runnable)} and 
+     *    {@link ScheduledTaskRunner#depthRunner(Runnable)}
+     * @param r the task
+     * @throws InterruptedException from invokeWait
+     * @throws InvocationTargetException from invokeWait
+     */
+    public static void invokeAndWait(Runnable r) throws InterruptedException, InvocationTargetException {
+        try {
+            ScheduledTaskRunner.withDepthInfo("invokeAndWait", (Callable<Void>) () -> {
+                SwingUtilities.invokeAndWait(ScheduledTaskRunner.depthRunner(r));
+                return null;
+            });
+        } catch (InvocationTargetException|InterruptedException ite) {
+            throw ite;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     public static ExecutorService defaultService;
@@ -84,21 +117,22 @@ public class SwingDeferredRunner {
         if (SwingDeferredRunner.isEventThreadOrDispatchedFromEventThread()) {
             return task.call();
         } else {
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    Object r = task.call();
-                    if (r == null) {
-                        r = TASK_RESULT_NULL;
-                    }
-                    result.put(r);
-                } catch (Throwable t) {
-                    try {
-                        result.put(new TaskResultError(t));
-                    } catch (Exception ex) {
-                        throw new RuntimeException(ex);
-                    }
-                }
-            });
+            ScheduledTaskRunner.withDepthInfo("deferredRunner", () ->
+                        SwingDeferredRunner.invokeLater(() -> {
+                            try {
+                                Object r = task.call();
+                                if (r == null) {
+                                    r = TASK_RESULT_NULL;
+                                }
+                                result.put(r);
+                            } catch (Throwable t) {
+                                try {
+                                    result.put(new TaskResultError(t));
+                                } catch (Exception ex) {
+                                    throw new RuntimeException(ex);
+                                }
+                            }
+                        }));
             Object res = result.poll(300, TimeUnit.MILLISECONDS);
             if (res == null) {
                 //timeout

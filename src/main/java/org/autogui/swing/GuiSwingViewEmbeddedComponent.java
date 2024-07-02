@@ -120,7 +120,7 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
             if (viewClock.isOlderWithSet(contextClock)) { //the source from target precedes other GUI generated values
-                SwingUtilities.invokeLater(() ->
+                SwingDeferredRunner.invokeLater(() ->
                         setSwingViewValueWithoutClockIncrement(newValue));
             }
         }

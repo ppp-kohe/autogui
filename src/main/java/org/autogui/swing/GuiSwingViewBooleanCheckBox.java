@@ -1,10 +1,7 @@
 package org.autogui.swing;
 
 import org.autogui.swing.table.TableTargetColumnAction;
-import org.autogui.swing.util.MenuBuilder;
-import org.autogui.swing.util.PopupCategorized;
-import org.autogui.swing.util.PopupExtension;
-import org.autogui.swing.util.PopupExtensionText;
+import org.autogui.swing.util.*;
 import org.autogui.base.mapping.*;
 
 import javax.swing.*;
@@ -178,7 +175,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue((Boolean) newValue, contextClock));
+            SwingDeferredRunner.invokeLater(() -> setSwingViewValue((Boolean) newValue, contextClock));
         }
 
         @Override

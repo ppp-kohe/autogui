@@ -231,7 +231,7 @@ public class TableRowHeightFitter {
      */
     public void fitByEvent(List<RowHeightUpdate> columns) {
         if (isEnabled()) {
-            SwingUtilities.invokeLater(() -> {
+            SwingDeferredRunner.invokeLater(() -> {
                 Collection<TableColumn> cols = new HashSet<>();
                 List<int[]> rowRanges = new ArrayList<>();
                 boolean allRows = false;

@@ -14,6 +14,7 @@ import org.autogui.swing.table.GuiSwingTableColumnCollection.ObjectTableColumnSi
 import org.autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 import org.autogui.swing.table.ObjectTableModelColumns.DynamicColumnFactory;
 import org.autogui.base.mapping.GuiReprCollectionElement;
+import org.autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -320,7 +321,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                     r -> {
                         running.set(false);
                         r.executeIfPresent(
-                                ret -> SwingUtilities.invokeLater(() ->
+                                ret -> SwingDeferredRunner.invokeLater(() ->
                                         source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret))));
                     });
         }

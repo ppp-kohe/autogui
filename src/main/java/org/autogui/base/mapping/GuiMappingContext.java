@@ -768,7 +768,7 @@ public class GuiMappingContext {
      * @throws Throwable an exception from the task
      * */
     public <T> T execute(Callable<T> task) throws Throwable {
-        return task.call();
+        return ScheduledTaskRunner.withDepthInfo("GMC(" + getName() + ")", task);
     }
 
     /**
@@ -943,7 +943,8 @@ public class GuiMappingContext {
 
         @Override
         public void run() {
-            context.getTaskRunner().execute(this::runBody);
+            ScheduledTaskRunner.withDepthInfo("notify(" + context + ")", () ->
+                context.getTaskRunner().execute(this::runBody));
         }
 
         public void runBody() {
@@ -1121,7 +1122,7 @@ public class GuiMappingContext {
 
         @Override
         public <V> Future<V> submit(Callable<V> v) {
-            return service.submit(v);
+            return service.submit(ScheduledTaskRunner.depthRunner(v));
         }
 
         @Override
@@ -1161,7 +1162,7 @@ public class GuiMappingContext {
 
         @Override
         public <V> Future<V> submit(Callable<V> v) {
-            return pool.submit((ForkJoinTask<V>) new ContextExecutorForkJoinTask<>(v));
+            return pool.submit((ForkJoinTask<V>) new ContextExecutorForkJoinTask<>(ScheduledTaskRunner.depthRunner(v)));
         }
 
         @Override

@@ -1,11 +1,7 @@
 package org.autogui.swing;
 
-import org.autogui.swing.util.MenuBuilder;
-import org.autogui.swing.util.PopupCategorized;
-import org.autogui.swing.util.PopupExtension;
-import org.autogui.swing.util.SearchTextFieldFilePath;
+import org.autogui.swing.util.*;
 import org.autogui.base.mapping.*;
-import org.autogui.swing.util.SearchTextField;
 
 import javax.swing.*;
 import java.io.Serial;
@@ -183,7 +179,7 @@ public class GuiSwingViewFilePathField implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
+            SwingDeferredRunner.invokeLater(() -> setSwingViewValue(newValue, contextClock));
         }
 
         @Override

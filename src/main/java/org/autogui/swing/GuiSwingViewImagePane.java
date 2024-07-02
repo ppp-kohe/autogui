@@ -638,7 +638,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue((Image) newValue, contextClock));
+            SwingDeferredRunner.invokeLater(() -> setSwingViewValue((Image) newValue, contextClock));
         }
 
         public void setImageWithoutContextUpdate(Image image) {

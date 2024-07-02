@@ -1,6 +1,7 @@
 package org.autogui.swing.log;
 
 import org.autogui.base.log.GuiLogEntry;
+import org.autogui.swing.util.SwingDeferredRunner;
 import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
@@ -166,7 +167,7 @@ public class GuiSwingLogStatusBar extends JComponent implements GuiSwingLogManag
 
     @Override
     public void addLogEntry(GuiLogEntry entry) {
-        SwingUtilities.invokeLater(() -> {
+        SwingDeferredRunner.invokeLater(() -> {
             this.entry = entry;
             repaint();
         });

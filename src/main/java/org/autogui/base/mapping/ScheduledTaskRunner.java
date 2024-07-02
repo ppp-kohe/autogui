@@ -1,10 +1,19 @@
 package org.autogui.base.mapping;
 
+import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /** a delayed task executor accumulating subsequent firing events while the specified delay
  *  <pre>
@@ -160,17 +169,244 @@ public class ScheduledTaskRunner<EventType> {
         if (enabled) {
             accumulatedEvents.add(event);
             if (scheduledTask != null) {
+                depthStack.pendingTasks.decrementAndGet();
                 scheduledTask.cancel(false);
             }
-            try {
-                scheduledTask = executor.schedule(this::run, delayMSec, TimeUnit.MILLISECONDS);
-            } catch (RejectedExecutionException re) {
-                if (executorIsShared) {
-                    setExecutor(getSharedExecutor()); //if shutdown, sharedCount is 0
-                    scheduledTask = executor.schedule(this::run, delayMSec, TimeUnit.MILLISECONDS);
-                } else {
-                    throw re;
+            withDepthInfo("event(" + event + ")", () -> {
+                try {
+                    scheduledTask = executor.schedule(depthRunner(this::run), delayMSec, TimeUnit.MILLISECONDS);
+                } catch (RejectedExecutionException re) {
+                    if (executorIsShared) {
+                        setExecutor(getSharedExecutor()); //if shutdown, sharedCount is 0
+                        scheduledTask = executor.schedule(depthRunner(this::run), delayMSec, TimeUnit.MILLISECONDS);
+                    } else {
+                        throw re;
+                    }
                 }
+            });
+        }
+    }
+
+    /** non-null depth-stack */
+    protected static DepthStack depthStack = new DepthStack();
+
+    /** debug features for task-running:
+     * the system-property {@systemProperty org.autogui.base.mapping.debugDepth} can be
+     *  <ul>
+     *      <li>{@code err} : specifies the output to {@link System#err}, or</li>
+     *      <li>a file-path : specifies the output to the file.</li>
+     *  </ul>
+     *  <p>
+     *     {@snippet :
+     *       withDepthInfo("contextInfo", //push the string to the thread-local stack
+     *         () -> executor.execute(depthRunner(task))) // copy the thread-local stack and the wrapper of task hold it.
+     *          //when the task is run by the executor-thread, the stack-info will be set the the thread-local stack
+     *     }
+     *  </p>
+     * */
+    public static class DepthStack {
+        protected ThreadLocal<List<String>> depthStack = ThreadLocal.withInitial(ArrayList::new);
+        protected PrintStream depthDebug;
+        protected AtomicInteger depthDebugMax = new AtomicInteger();
+        protected AtomicInteger pendingTasks = new AtomicInteger();
+        protected AtomicInteger startedTasks = new AtomicInteger();
+        protected AtomicInteger debugLastTasks = new AtomicInteger();
+
+        public DepthStack() {
+            var str = System.getProperty("org.autogui.base.mapping.debugDepth", "");
+            if (str.equals("err")) {
+                System.err.printf("debugDebug: err%n");
+                depthDebug = System.err;
+            } else if (!str.isEmpty()) {
+                try {
+                    System.err.printf("debugDebug: file '%s'%n", str);
+                    var out = Files.newOutputStream(Paths.get(str), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+                    depthDebug = new PrintStream(out, true);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+
+        /**
+         * @return the current stack info
+         */
+        public List<String> getDepthStack() {
+            return new ArrayList<>(depthStack.get());
+        }
+
+        /**
+         * run the body with a new context with the info
+         * @param info the context info, pushed to the stack
+         * @param body the task body
+         */
+        public void withDepthInfo(String info, Runnable body) {
+            try {
+                withDepthInfo(info, (Callable<Void>) () -> {
+                    body.run();
+                    return null;
+                });
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        /**
+         * run the body with a new text with the info
+         * @param info  the context info, pushed to the stack
+         * @param body the task body
+         * @return the returned value of the body
+         * @param <T> the retuned type
+         * @throws Exception thrown by the body
+         */
+        public <T> T withDepthInfo(String info, Callable<T> body) throws Exception {
+            var stack = depthStack.get();
+            stack.add(info);
+            var d = depthDebug;
+            if (d != null && depthDebugMax.get() < stack.size()) {
+                depthDebugMax.set(stack.size());
+                d.printf("[%s] queue[%,d/%,d] stack[%,d]%s%n", Instant.now(),
+                        startedTasks.get(), pendingTasks.get(), stack.size(), String.join( ", ", stack));
+                d.flush();
+            }
+            try {
+                return body.call();
+            } finally {
+                depthStack.get().removeLast();
+            }
+        }
+
+        /** if enabled the debugging output, it checks pending-tasks and writes a log-message if some condition satifeed;
+         *  abs(pendingTasks-(previous pendingTasks)) &gt; 100 or pendingTasks=0 */
+        public void checkQueue() {
+            var d  = depthDebug;
+            var c = pendingTasks.get();
+            var l = debugLastTasks.get();
+            if (d != null && (Math.abs(c - l) > 100 || (l == 0 && c != 0))) {
+                debugLastTasks.set(c);
+
+                d.printf("[%s] queue[%,d/%,d] {%s}%n", Instant.now(), startedTasks.get(), c,
+                        Arrays.stream(Thread.currentThread().getStackTrace()).map(Objects::toString).collect(Collectors.joining(", ")));
+                d.flush();
+            }
+        }
+
+        /**
+         * @param r the task body
+         * @return wrappend body by {@link TaskWithContext}
+         */
+        public Runnable depthRunner(Runnable r) {
+            checkQueue();
+            return new TaskWithContext<Void>(() -> { r.run(); return null; }, getDepthStack());
+        }
+
+        /**
+         * @param r the task body
+         * @return wrapped body by {@link TaskWithContext}
+         * @param <T> the task returned type
+         */
+        public <T> Callable<T> depthRunner(Callable<T> r) {
+            checkQueue();
+            return new TaskWithContext<>(r, getDepthStack());
+        }
+
+        /**
+         * @param r the task body
+         * @return wrapped body by {@link TaskWithContext}
+         * @param <T> the task returned type
+         */
+        public <T> Supplier<T> depthRunner(Supplier<T> r) {
+            checkQueue();
+            return new TaskWithContext<>(r::get, getDepthStack());
+        }
+    }
+
+    /**
+     * @see DepthStack#withDepthInfo(String, Runnable) 
+     */
+    public static void withDepthInfo(String info, Runnable body) {
+        depthStack.withDepthInfo(info, body);
+    }
+
+    /**
+     * @see DepthStack#withDepthInfo(String, Callable) 
+     */
+    public static <T> T withDepthInfo(String info, Callable<T> body) throws Exception {
+        return depthStack.withDepthInfo(info, body);
+    }
+
+    /**
+     * @see DepthStack#depthRunner(Runnable) 
+     */
+    public static Runnable depthRunner(Runnable r) {
+        return depthStack.depthRunner(r);
+    }
+
+    /**
+     * @see DepthStack#depthRunner(Callable) 
+     */
+    public static <T> Callable<T> depthRunner(Callable<T> r) {
+        return depthStack.depthRunner(r);
+    }
+
+    /**
+     * @see DepthStack#depthRunner(Supplier)
+     */
+    public static <T> Supplier<T> depthRunner(Supplier<T> r) {
+        return depthStack.depthRunner(r);
+    }
+
+    /**
+     * a task wrapper for {@link DepthStack}
+     * @param <T> the returned type
+     */
+    public static class TaskWithContext<T> implements Callable<T>, Runnable, Supplier<T> {
+        protected Callable<T> task;
+        protected List<String> contextInfo;
+
+        public TaskWithContext(Callable<T> task, List<String> contextInfo) {
+            this.task = task;
+            this.contextInfo = contextInfo;
+            depthStack.pendingTasks.incrementAndGet();
+        }
+
+        /**
+         * @return a copy of the context-info
+         */
+        public List<String> getContextInfo() {
+            return contextInfo;
+        }
+
+        @Override
+        public T get() {
+            try {
+                return call();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        @Override
+        public void run() {
+            try {
+                call();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        @Override
+        public T call() throws Exception {
+            depthStack.startedTasks.incrementAndGet();
+            var old = depthStack.depthStack.get();
+            try {
+                depthStack.depthStack.set(contextInfo);
+                return task.call();
+            } finally {
+                depthStack.depthStack.set(old);
+                depthStack.pendingTasks.decrementAndGet();
+                depthStack.startedTasks.decrementAndGet();
+                depthStack.checkQueue();
             }
         }
     }

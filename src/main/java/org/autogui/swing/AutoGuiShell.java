@@ -224,7 +224,7 @@ public class AutoGuiShell {
      * @since 1.1
      */
     public void showWindow(Object o, Runnable beforeActionInEvent, Consumer<GuiSwingWindow> afterActionInEvent) {
-        SwingUtilities.invokeLater(() -> {
+        SwingDeferredRunner.invokeLater(() -> {
             if (beforeActionInEvent != null) {
                 beforeActionInEvent.run();
             }
@@ -294,7 +294,7 @@ public class AutoGuiShell {
      */
     public GuiSwingWindow showWindowLive(Object o) {
         GuiSwingWindow w = createWindowRelaxed(o);
-        SwingUtilities.invokeLater(() -> displayLiveWindow(w));
+        SwingDeferredRunner.invokeLater(() -> displayLiveWindow(w));
         return w;
     }
     /**
@@ -361,7 +361,7 @@ public class AutoGuiShell {
         } else {
             AtomicReference<T> res = new AtomicReference<>();
             try {
-                SwingUtilities.invokeAndWait(() -> res.set(factory.get()));
+                SwingDeferredRunner.invokeAndWait(() -> res.set(factory.get()));
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }

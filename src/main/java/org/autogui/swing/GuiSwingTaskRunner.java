@@ -3,6 +3,7 @@ package org.autogui.swing;
 import org.autogui.base.log.GuiLogEntryProgress;
 import org.autogui.base.log.GuiLogManager;
 import org.autogui.base.mapping.GuiMappingContext;
+import org.autogui.base.mapping.ScheduledTaskRunner;
 import org.autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
@@ -109,7 +110,9 @@ public class GuiSwingTaskRunner {
 
             } catch (TimeoutException timeout) {
                 ContextTaskResult<RetType> retValue = fail(true, afterTask);
-                getFutureWaiter().execute(() -> waitCompletion(ret, afterTask));
+                ScheduledTaskRunner.withDepthInfo("timeout(" + context.getName() + ")", () -> {
+                    getFutureWaiter().execute(ScheduledTaskRunner.depthRunner(() -> waitCompletion(ret, afterTask)));
+                });
                 return retValue;
             }
         }

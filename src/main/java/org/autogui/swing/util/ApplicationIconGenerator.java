@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 /** generating an icon image from the name of the app */
 public class ApplicationIconGenerator {
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new ApplicationIconGenerator()::runDemo);
+        SwingDeferredRunner.invokeLater(new ApplicationIconGenerator()::runDemo);
     }
 
     public void runDemo() {

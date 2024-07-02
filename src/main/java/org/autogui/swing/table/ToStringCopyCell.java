@@ -14,6 +14,7 @@ import org.autogui.swing.util.PopupExtension;
 import org.autogui.swing.util.PopupExtensionText;
 import org.autogui.swing.util.SettingsWindow;
 import org.autogui.base.mapping.GuiRepresentation;
+import org.autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
 import java.awt.*;
@@ -119,7 +120,7 @@ public class ToStringCopyCell {
             executeContextTask(
                     () -> getString(cells),
                     r -> r.executeIfPresent(
-                            str -> SwingUtilities.invokeLater(() -> copy(str))));
+                            str -> SwingDeferredRunner.invokeLater(() -> copy(str))));
         }
 
         public List<CellValue> getSelectedCells(TableTargetCell target) {
@@ -335,7 +336,7 @@ public class ToStringCopyCell {
                         return fillLoop;
                     },
                     r -> r.executeIfPresent(
-                            fl -> SwingUtilities.invokeLater(() ->
+                            fl -> SwingDeferredRunner.invokeLater(() ->
                                         target.setCellValues(is, fl))));
         }
 

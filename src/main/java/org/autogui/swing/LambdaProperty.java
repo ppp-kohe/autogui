@@ -7,6 +7,7 @@ import org.autogui.base.mapping.GuiRepresentation;
 import org.autogui.base.type.*;
 import org.autogui.swing.mapping.GuiReprValueImagePane;
 import org.autogui.swing.table.*;
+import org.autogui.swing.util.SwingDeferredRunner;
 import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
@@ -221,7 +222,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
          */
         public LambdaStringPane(String name, Supplier<String> getter, Consumer<String> setter) {
             super(create(name, String.class, getter, setter, GuiRepresentation.createValueStringField()), GuiSwingView.specifierManagerRoot());
-            SwingUtilities.invokeLater(() ->
+            SwingDeferredRunner.invokeLater(() ->
                 setPreferredSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(100), getPreferredSize().height )));
              //try to prevent dead lockking
         }
@@ -325,7 +326,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
          */
         public LambdaFilePathPane(String name, Supplier<Path> getter, Consumer<Path> setter) {
             super(create(name, Path.class, getter, setter, GuiRepresentation.createValueFilePathField()), GuiSwingView.specifierManagerRoot());
-            SwingUtilities.invokeLater(() ->
+            SwingDeferredRunner.invokeLater(() ->
                 setPreferredSize(new Dimension(UIManagerUtil.getInstance().getScaledSizeInt(200), getPreferredSize().height )));
         }
     }

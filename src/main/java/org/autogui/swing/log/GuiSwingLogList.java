@@ -156,7 +156,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
 
     @Override
     public void addLogEntry(GuiLogEntry entry) {
-        SwingUtilities.invokeLater(() -> addLogEntryInEvent(entry, !entry.isActive()));
+        SwingDeferredRunner.invokeLater(() -> addLogEntryInEvent(entry, !entry.isActive()));
     }
 
     public void addLogEntryInEvent(GuiLogEntry entry, boolean lowPriority) {
@@ -219,7 +219,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
      */
     @Override
     public void clearLogEntries() {
-        SwingUtilities.invokeLater(() ->
+        SwingDeferredRunner.invokeLater(() ->
             getLogListModel().removeInactiveEntries());
     }
 

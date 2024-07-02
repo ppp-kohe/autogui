@@ -12,6 +12,7 @@ import org.autogui.swing.GuiSwingViewLabel.PropertyLabel;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 import org.autogui.swing.util.PopupExtensionText;
+import org.autogui.swing.util.SwingDeferredRunner;
 import org.autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
@@ -533,7 +534,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
+            SwingDeferredRunner.invokeLater(() -> setSwingViewValue(newValue, contextClock));
         }
 
         @Override

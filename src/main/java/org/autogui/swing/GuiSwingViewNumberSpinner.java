@@ -344,7 +344,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             if (immediate && SwingDeferredRunner.isEventThreadOrDispatchedFromEventThread()) {
                 updateFromGui(getValue(), viewClock.increment());
             } else {
-                SwingUtilities.invokeLater(() ->
+                SwingDeferredRunner.invokeLater(() ->
                         updateFromGui(getValue(), viewClock.increment()));
             }
             if (immediate) {
@@ -359,7 +359,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue(newValue, contextClock));
+            SwingDeferredRunner.invokeLater(() -> setSwingViewValue(newValue, contextClock));
         }
 
         @Override

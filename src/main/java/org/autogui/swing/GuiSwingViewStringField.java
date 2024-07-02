@@ -4,10 +4,7 @@ import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.mapping.GuiReprValueStringField;
 import org.autogui.base.mapping.GuiTaskClock;
-import org.autogui.swing.util.MenuBuilder;
-import org.autogui.swing.util.PopupCategorized;
-import org.autogui.swing.util.PopupExtension;
-import org.autogui.swing.util.SearchTextField;
+import org.autogui.swing.util.*;
 
 import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
@@ -181,7 +178,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
 
         @Override
         public void update(GuiMappingContext cause, Object newValue, GuiTaskClock contextClock) {
-            SwingUtilities.invokeLater(() -> setSwingViewValue((String) newValue, contextClock));
+            SwingDeferredRunner.invokeLater(() -> setSwingViewValue((String) newValue, contextClock));
         }
 
         @Override
