@@ -3,6 +3,8 @@ package org.autogui.swing;
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.type.GuiTypeBuilder;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.util.ApplicationIconGenerator;
 import org.autogui.swing.util.SettingsWindow;
 import org.autogui.swing.util.UIManagerUtil;
@@ -21,7 +23,7 @@ import java.util.function.Predicate;
 public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootView {
     @Serial private static final long serialVersionUID = 1L;
     protected GuiSwingRootPane contextRootPane;
-    protected GuiSwingPreferences.WindowPreferencesUpdater preferencesUpdater;
+    protected GuiSwingPrefsSupports.WindowPreferencesUpdater preferencesUpdater;
     /** @since 1.1 */
     protected boolean exitAfterDispose;
     /** @since 1.5 */
@@ -111,7 +113,7 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
         }
 
         @Override
-        public GuiSwingWindowCreator withPrefsApplyOptions(GuiSwingPreferences.PrefsApplyOptions prefsApplyOptions) {
+        public GuiSwingWindowCreator withPrefsApplyOptions(GuiSwingPrefsApplyOptions prefsApplyOptions) {
             return (GuiSwingWindowCreator) super.withPrefsApplyOptions(prefsApplyOptions);
         }
     }
@@ -188,7 +190,7 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     }
 
     protected void initPrefsUpdater() {
-        preferencesUpdater = new GuiSwingPreferences.WindowPreferencesUpdater(this, contextRootPane.getContext());
+        preferencesUpdater = new GuiSwingPrefsSupports.WindowPreferencesUpdater(this, contextRootPane.getContext());
         preferencesUpdater.setUpdater(contextRootPane.getPreferences().getUpdateRunner());
         addComponentListener(preferencesUpdater);
         contextRootPane.getPreferences().setRootView(this);
@@ -267,13 +269,13 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     }
 
     @Override
-    public void loadPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
-        options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+    public void loadPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
+        options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
         try {
             contextRootPane.withError(() -> options.apply(preferencesUpdater, prefs));
             contextRootPane.loadPreferences(prefs, options);
         } finally {
-            options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+            options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
         }
     }
 

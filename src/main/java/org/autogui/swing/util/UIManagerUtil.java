@@ -315,15 +315,18 @@ public class UIManagerUtil {
 
     /**
      * <ol>
-     *     <li>#prop:p =&gt; {@link #selectLookAndFeelFromProperty(String, boolean)} with (p,true) </li>
-     *     <li>#special:v =&gt; {@link #selectLookAndFeelFromSpecialName(String)} with (v) </li>
-     *     <li>#default or default =&gt; {@link #selectLookAndFeelDefault(boolean)}</li>
-     *     <li>darklaf =&gt; {@link #installLookAndFeelDarkLaf()}</li>
-     *     <li>#none =&gt; nothing to do. it also clears the "autogui.laf" property
-     *            for preventing changing LAF by the user</li>
-     *     <li>null =&gt; nothing to do </li>
-     *     <li>otherwise =&gt; treats the value as a LAF class-name </li>
+     *     <li>{@code #prop:p} =&gt; rewrite the param by {@link #selectLookAndFeelFromProperty(String, boolean)} with (p,true);
+     *        the method sets the property with {@code #none} for preventing multiple installation of same LAF. Continues with the following steps.</li>
+     *     <li>{@code #special:v} =&gt; rewrite the param by {@link #selectLookAndFeelFromSpecialName(String)} with (v). Continues with the following steps. </li>
+     *     <li>{@code #default}, {@code default} or {@code default-no-darklaf} =&gt; {@link #selectLookAndFeelDefault(boolean)}
+     *       with ({@code false} if {@code default-no-darklaf}, otherwise {@code true} )</li>
+     *     <li>{@code darklaf} or {@code flatlaf}=&gt; {@link #installLookAndFeelFlatlaf()} ()}</li>
+     *     <li>{@code #none} =&gt; nothing to do</li>
+     *     <li>{@code null} =&gt; nothing to do </li>
+     *     <li>otherwise =&gt; treats the value as a LAF class-name; loading by {@link UIManager#setLookAndFeel(String)}.
+     *      If the class-name is {@link UIManager#getSystemLookAndFeelClassName()}, {@link #setLookAndFeelSystemFix()}.</li>
      * </ol>
+     * After the above steps, {@link #setLookAndFeelFix()}.
      * @param lookAndFeelClass the LAF class name or a special configuration name
      *                          starting from <code>#prop:</code>,
      *                          <code>#none</code> or
@@ -344,13 +347,13 @@ public class UIManagerUtil {
                                 laf.equals(LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF))) {
                 laf = selectLookAndFeelDefault(!laf.equals(LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF));
             }
-            if (laf != null && laf.equals(LOOK_AND_FEEL_VALUE_DARKLAF)) {
-                installLookAndFeelDarkLaf();
+            if (laf != null && (laf.equals(LOOK_AND_FEEL_VALUE_DARKLAF) ||
+                                laf.equals(LOOK_AND_FEEL_VALUE_FLATLAF))) {
+                installLookAndFeelFlatlaf();
                 laf = null;
             }
             if (laf != null && laf.equals(LOOK_AND_FEEL_NONE)) {
                 laf = null;
-                System.clearProperty(LOOK_AND_FEEL_PROP_DEFAULT);
             }
             if (laf != null) {
                 UIManager.setLookAndFeel(laf);
@@ -375,9 +378,8 @@ public class UIManagerUtil {
      *    This means that the system accepts the property with a special name like "-Dautogui.laf=system"
      *      and it can resolve the property with an actual class-name which will be read by the swing system.
      * @param prop a nullable property name
-     * @param updateProp if true it updates the prop specified by the laf with the resolved concrete class-name
-     *                    For "darklaf", it clears the property
-     * @return  a resolved class-name from the property or null
+     * @param updateProp if true it sets the prop to {@code #none}
+     * @return  a resolved class-name or a special value from the property or null
      * @since 1.3
      */
     public String selectLookAndFeelFromProperty(String prop, boolean updateProp) {
@@ -387,15 +389,7 @@ public class UIManagerUtil {
             String value = System.getProperty(prop);
             String laf = selectLookAndFeelFromSpecialName(value);
             if (updateProp) {
-                if (laf == null) {
-                    if (value != null && value.isEmpty()) {
-                        System.clearProperty(prop);
-                    }
-                } else if (isLookAndFeelSpecial(laf)) {
-                    System.clearProperty(prop);
-                } else {
-                    System.setProperty(prop, laf);
-                }
+                System.setProperty(prop, LOOK_AND_FEEL_NONE);
             }
             return laf;
         }
@@ -407,6 +401,7 @@ public class UIManagerUtil {
                  LOOK_AND_FEEL_VALUE_SYSTEM.equals(laf) ||
                  LOOK_AND_FEEL_VALUE_DEFAULT.equals(laf) ||
                  LOOK_AND_FEEL_VALUE_DARKLAF.equals(laf) ||
+                 LOOK_AND_FEEL_VALUE_FLATLAF.equals(laf) ||
                  LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF.equals(laf));
     }
 
@@ -416,7 +411,7 @@ public class UIManagerUtil {
      * <li> "nimbus" =&gt; <code>NimbusLookAndFeel</code> </li>
      * <li> "system" =&gt; {@link UIManager#getSystemLookAndFeelClassName()} </li>
      * <li> null, "" or "default"  =&gt; "default" for later processes by {@link #selectLookAndFeelDefault(boolean)} </li>
-     * <li> "darklaf"  =&gt; "darklaf" for later processes by {@link #installLookAndFeelDarkLaf()} </li>
+     * <li> "darklaf"  =&gt; "darklaf" or "flatlaf" for later processes by {@link #installLookAndFeelFlatlaf()} </li>
      * <li> "default-no-darklaf" =&gt; "default-no-darklaf" for later processes. same as "default" except for no darklaf installing </li>
      * <li> "nimbus-custom" =&gt; {@link NimbusLookAndFeelCustomLight}</li>
      * <li> otherwise =&gt; name as is </li>
@@ -448,18 +443,18 @@ public class UIManagerUtil {
     /**
      * process default behavior for the "#default" configuration
      * <ol>
-     *     <li>try to load Darklaf by {@link #installLookAndFeelDarkLaf()}  if the parameter is true</li>
+     *     <li>try to load Flatlaf by {@link #installLookAndFeelFlatlaf()}  if the parameter is true</li>
      *     <li>if macOS environment, use {@link UIManager#getSystemLookAndFeelClassName()}</li>
      *     <li>if Windows environment, use "nimbus" (due to failure of size on HiDPI)</li>
      *     <li>if the GDK_SCALE env is set, use "metal" </li>
      *     <li>otherwise, nothing to do</li>
      * </ol>
-     * @param tryDarklaf if true, call {@link #installLookAndFeelDarkLaf()}
+     * @param tryDarklaf if true, call {@link #installLookAndFeelFlatlaf()}
      * @return a resolved LAF class-name or null
      * @since 1.3
      */
     public String selectLookAndFeelDefault(boolean tryDarklaf) {
-        if (tryDarklaf && installLookAndFeelDarkLaf()) {
+        if (tryDarklaf && installLookAndFeelFlatlaf()) {
             return null;
         } else if (getOsVersion().isMacOS()) {
             return UIManager.getSystemLookAndFeelClassName();
@@ -473,13 +468,20 @@ public class UIManagerUtil {
     }
 
     /**
+     * @see #installLookAndFeelFlatlaf()
+     */
+    public boolean installLookAndFeelDarklaf() {
+        return installLookAndFeelFlatlaf();
+    }
+
+    /**
      * install com.formdev.flatlaf.FlatDarkLaf or .FlatLightLaf by reflection.
      *  Note: currently supporting flatlaf:2.0.1--3.1.1
      *  Since v3, flatlaf supports com.formdev.flatlaf.themes.{FlatMacDarkLaf, FlatMacLightLaf}.
      * @return true if the flatlaf is installed
      * @since 1.3
      */
-    public boolean installLookAndFeelDarkLaf() {
+    public boolean installLookAndFeelFlatlaf() {
         try {
             Class<?> laf;
             if (getOsVersion().isMacOS()) {
@@ -556,6 +558,8 @@ public class UIManagerUtil {
     public static final String LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF = "default-no-darklaf";
     /** @since 1.3 */
     public static final String LOOK_AND_FEEL_VALUE_DARKLAF = "darklaf";
+    /** @since 1.7 */
+    public static final String LOOK_AND_FEEL_VALUE_FLATLAF = "flatlaf";
     /** @since 1.6.1 */
     public static final String LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM = "nimbus-custom";
 

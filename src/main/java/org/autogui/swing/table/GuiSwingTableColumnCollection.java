@@ -7,9 +7,10 @@ import org.autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import org.autogui.base.type.GuiTypeCollection;
 import org.autogui.swing.GuiSwingElement;
 import org.autogui.swing.GuiSwingMapperSet;
-import org.autogui.swing.GuiSwingPreferences;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingView.SpecifierManagerDefault;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.table.GuiSwingTableColumn.ObjectTableColumnWithContext;
 import org.autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import org.autogui.swing.table.GuiSwingTableColumnSet.DynamicColumnHost;
@@ -1051,7 +1052,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             columnWithContext().setPreferencesUpdater(updater);
         }
 
@@ -1061,7 +1062,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
             columnWithContext().loadSwingPreferences(prefs, options);
         }
 

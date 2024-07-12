@@ -1,6 +1,7 @@
 package org.autogui.swing;
 
 import org.autogui.base.mapping.GuiPreferencesLoader;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.util.SwingDeferredRunner;
 import org.autogui.GuiIncluded;
 import org.autogui.swing.util.UIManagerUtil;
@@ -66,7 +67,12 @@ import java.util.function.Supplier;
  *   <p>
  *  For example, the JVM option <code>-Dautogui.laf=metal</code> with the default configuration
  *    resets the property by the concrete MetalLookAndFeel class-name and sets to metal-laf thanks to {@link UIManagerUtil#setLookAndFeel(String)}.
- *
+ *  <p>
+ *   Once {@link UIManagerUtil#setLookAndFeel(String)} with {@code #prop:p} is called, the property p will be {@code #none},
+ *     the special value for ignoring multiple calls of the setLookAndFeel.
+ *   This means that the multiple {@link #setLookAndFeel()} (or {@link #showWindow(Object)}) do not cause re-installation of the same LAF
+ *     through a property (inlcuding the default {@systemProperty autogui.laf}),
+ *     but another way like direct specification of the LAF class will do it.
  */
 public class AutoGuiShell {
     public String lookAndFeelClass = UIManagerUtil.getLookAndFeelProp(UIManagerUtil.LOOK_AND_FEEL_PROP_DEFAULT);
@@ -183,7 +189,7 @@ public class AutoGuiShell {
     public AutoGuiShell withPrefsValuesLoadSkip() {
         GuiSwingWindow.GuiSwingWindowCreator c = (windowCreator instanceof GuiSwingWindow.GuiSwingWindowCreator) ?
                 ((GuiSwingWindow.GuiSwingWindowCreator) windowCreator) : GuiSwingWindow.creator();
-        return withWindowCreator(c.withPrefsApplyOptions(new GuiSwingPreferences.PrefsApplyOptionsDefault(true, true)));
+        return withWindowCreator(c.withPrefsApplyOptions(new GuiSwingPrefsApplyOptions.PrefsApplyOptionsDefault(true, true)));
     }
 
     /**
@@ -195,7 +201,7 @@ public class AutoGuiShell {
     public AutoGuiShell withPrefsValuesLoadArgs(String... args) {
         GuiSwingWindow.GuiSwingWindowCreator c = (windowCreator instanceof GuiSwingWindow.GuiSwingWindowCreator) ?
                 ((GuiSwingWindow.GuiSwingWindowCreator) windowCreator) : GuiSwingWindow.creator();
-        c.withPrefsApplyOptions(new GuiSwingPreferences.PrefsApplyOptionsDefault(true, true));
+        c.withPrefsApplyOptions(new GuiSwingPrefsApplyOptions.PrefsApplyOptionsDefault(true, true));
         return withWindowCreator(obj -> {
             GuiPreferencesLoader.get().parseArgs(obj, Arrays.asList(args));
             return c.createWindow(obj);

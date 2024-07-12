@@ -3,6 +3,8 @@ package org.autogui.swing;
 import org.autogui.base.log.GuiLogManager;
 import org.autogui.base.mapping.*;
 import org.autogui.swing.icons.GuiSwingIcons;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.table.*;
 import org.autogui.swing.table.ToStringCopyCell.ToStringCopyForCellsAction;
 import org.autogui.swing.util.*;
@@ -115,7 +117,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
     public static class CollectionTable extends JTable
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<List<?>>,
-                        GuiSwingTableColumnSet.TableSelectionSource, GuiSwingPreferences.PreferencesUpdateSupport,
+                        GuiSwingTableColumnSet.TableSelectionSource, GuiSwingPrefsSupports.PreferencesUpdateSupport,
                         SettingsWindowClient {
         private static final long sionUID = 1L;
         protected GuiMappingContext context;
@@ -126,7 +128,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected List<Action> actions = new ArrayList<>();
         protected List<GuiSwingTableColumnSetDefault.TableSelectionListAction> autoSelectionActions = new ArrayList<>();
         protected int autoSelectionDepth;
-        protected EditingRunner selectionRunner;
+        protected volatile EditingRunner selectionRunner;
 
         protected TablePreferencesUpdater preferencesUpdater;
         protected List<Integer> lastSelectionActionIndices = Collections.emptyList();
@@ -176,6 +178,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             initPreferencesUpdater();
             initDragDrop();
             initFocus();
+            initAfter();
         }
 
         public void initName() {
@@ -263,6 +266,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void initFocus() {
             GuiSwingView.setupCopyAndPasteActions(this);
             setFocusable(true);
+        }
+
+        public void initAfter() {
+            selectionRunner.setEnabled(true);
         }
 
         @Override
@@ -481,7 +488,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         @Override
-        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             this.preferencesUpdater.setUpdater(updater);
             getObjectTableModel().getColumnsWithContext().setPreferencesUpdater(updater);
         }
@@ -668,16 +675,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
             try {
-                options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
                 GuiSwingView.loadPreferencesDefault(this, prefs, options);
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 options.apply(preferencesUpdater, targetPrefs);
                 getObjectTableModel().getColumnsWithContext().loadSwingPreferences(targetPrefs, options);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
-                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -1225,7 +1232,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected JTable table;
         protected GuiMappingContext context;
         protected PreferencesForTable prefs;
-        protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater;
+        protected Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater;
 
         protected boolean savingDisabled = false;
 
@@ -1256,7 +1263,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             this.prefs = prefs;
         }
 
-        public void setUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             this.updater = updater;
         }
 
@@ -1292,7 +1299,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public void sendToUpdater() {
             if (updater != null) {
-                updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, prefs));
+                updater.accept(new GuiSwingPrefsSupports.PreferencesUpdateEvent(context, prefs));
             }
         }
 
@@ -1334,7 +1341,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
     }
 
-    public static class PreferencesForTable implements GuiSwingPreferences.PreferencesByJsonEntry {
+    public static class PreferencesForTable implements GuiSwingPrefsSupports.PreferencesByJsonEntry {
         protected List<Integer> columnOrder = new ArrayList<>();
         protected List<Integer> columnWidth = new ArrayList<>();
         protected List<PreferencesForTableRowSort> rowSort = new ArrayList<>();
@@ -1542,12 +1549,12 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @SuppressWarnings("unchecked")
         public void setJson(Object json) {
             if (json instanceof Map<?,?> map) {
-                GuiSwingPreferences.setAsList(columnOrder, map, Integer.class, "columnOrder");
-                GuiSwingPreferences.setAsList(columnWidth, map, Integer.class, "columnWidth");
-                GuiSwingPreferences.setAsList(rowSort, map, Map.class, "rowSort", PreferencesForTableRowSort::new);
-                rowCustom = GuiSwingPreferences.getAs(map, Boolean.class, "rowCustom", false);
-                rowFitToContent = GuiSwingPreferences.getAs(map, Boolean.class, "rowFitToContent", false);
-                rowHeight = GuiSwingPreferences.getAs(map, Integer.class, "rowHeight", -1);
+                GuiSwingPrefsSupports.setAsList(columnOrder, map, Integer.class, "columnOrder");
+                GuiSwingPrefsSupports.setAsList(columnWidth, map, Integer.class, "columnWidth");
+                GuiSwingPrefsSupports.setAsList(rowSort, map, Map.class, "rowSort", PreferencesForTableRowSort::new);
+                rowCustom = GuiSwingPrefsSupports.getAs(map, Boolean.class, "rowCustom", false);
+                rowFitToContent = GuiSwingPrefsSupports.getAs(map, Boolean.class, "rowFitToContent", false);
+                rowHeight = GuiSwingPrefsSupports.getAs(map, Integer.class, "rowHeight", -1);
             }
         }
     }
@@ -1561,9 +1568,13 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             this.order = order;
         }
 
+        public PreferencesForTableRowSort(int column, SortOrder order) {
+            this(column, order.name());
+        }
+
         public PreferencesForTableRowSort(Map<?, ?> map) {
-            column = GuiSwingPreferences.getAs(map, Integer.class, "column", 0);
-            order = GuiSwingPreferences.getAs(map, String.class, "order", "");
+            column = GuiSwingPrefsSupports.getAs(map, Integer.class, "column", 0);
+            order = GuiSwingPrefsSupports.getAs(map, String.class, "order", "");
         }
 
         public void setColumn(int column) {

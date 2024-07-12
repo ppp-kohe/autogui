@@ -15,5 +15,6 @@ module org.autogui {
     exports org.autogui.swing.log;
     exports org.autogui.swing.mapping;
     exports org.autogui.swing.table;
+    exports org.autogui.swing.prefs;
     exports org.autogui.swing.util;
 }

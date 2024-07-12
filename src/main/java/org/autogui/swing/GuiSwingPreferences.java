@@ -7,10 +7,10 @@ import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.ScheduledTaskRunner;
 import org.autogui.swing.icons.GuiSwingIcons;
-import org.autogui.swing.table.GuiSwingTableModelCollection;
-import org.autogui.swing.table.ObjectTableColumn;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
+import org.autogui.swing.prefs.GuiSwingPrefsTrees;
 import org.autogui.swing.table.ObjectTableColumnValue;
-import org.autogui.swing.table.ObjectTableModelColumns;
 import org.autogui.swing.util.*;
 
 import javax.swing.*;
@@ -20,26 +20,17 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.font.FontRenderContext;
-import java.awt.font.TextAttribute;
-import java.awt.font.TextLayout;
 import java.io.Serial;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.AttributedString;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -51,7 +42,7 @@ import java.util.stream.IntStream;
  * <h2>GUI properties as preferences</h2>
  *
  *  <ol>
- *      <li>define a custom {@link PreferencesByJsonEntry} (or {@link Preferences}).
+ *      <li>define a custom {@link GuiSwingPrefsSupports.PreferencesByJsonEntry} (or {@link GuiSwingPrefsSupports.Preferences}).
  *         <pre>
  *       class PreferencesForX implements PreferencesByJsonEntry {
  *           protected int prop; //a GUI property
@@ -78,7 +69,7 @@ import java.util.stream.IntStream;
  *       class PropUpdater implements XListener {
  *           GuiMappingContext context;
  *           boolean enabled = true;
- *           Consumer&lt;{@link PreferencesUpdateEvent}&gt; updater;
+ *           Consumer&lt;{@link GuiSwingPrefsSupports.PreferencesUpdateEvent}&gt; updater;
  *           PreferencesForX prefs = new PreferencesForX();
  *
  *           void changed(Event e) { //suppose an event handler
@@ -89,7 +80,7 @@ import java.util.stream.IntStream;
  *           }
  *       }
  *        </pre>
- *        and the GUI component sets up the listener with implementing {@link PreferencesUpdateSupport}
+ *        and the GUI component sets up the listener with implementing {@link GuiSwingPrefsSupports.PreferencesUpdateSupport}
  *         <pre>
  *       class P implements ValuePane, PreferencesUpdateSupport {
  *            PropUpdater updater;
@@ -106,10 +97,11 @@ import java.util.stream.IntStream;
  *      </li>
  *      <li> the GUI component overrides
  *          {@link GuiSwingView.ValuePane#saveSwingPreferences(GuiPreferences)} and
- *           {@link GuiSwingView.ValuePane#loadSwingPreferences(GuiPreferences)} for bulk loading/saving.
+ *           {@link GuiSwingView.ValuePane#loadSwingPreferences(GuiPreferences, GuiSwingPrefsApplyOptions)} for bulk loading/saving.
+ *
  *       <pre>
- *            public void loadSwingPreferences(GuiPreferences p) {
- *                GuiSwingView.loadPreferencesDefault(this, p);
+ *            public void loadSwingPreferences(GuiPreferences p, GuiSwingPrefsApplyOptions options) {
+ *                GuiSwingView.loadPreferencesDefault(this, p, options);
  *                updater.prefs.loadFrom(p.getDescendant(context));
  *                updater.enabled = false;
  *                updater.prefs.applyTo(this);
@@ -136,7 +128,7 @@ public class GuiSwingPreferences {
     protected JEditorPane contentTextPane;
     /* @since 1.3 */
     protected JTree contentTree;
-    protected WindowPreferencesUpdater prefsWindowUpdater;
+    protected GuiSwingPrefsSupports.WindowPreferencesUpdater prefsWindowUpdater;
 
     protected SettingsWindow settingsWindow;
 
@@ -146,16 +138,16 @@ public class GuiSwingPreferences {
         GuiMappingContext getContext();
         JComponent getViewComponent();
         default void loadPreferences(GuiPreferences prefs) {
-            loadPreferences(prefs, APPLY_OPTIONS_DEFAULT);
+            loadPreferences(prefs, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
         }
 
         /**
          * @param prefs the source prefs
          * @param options options for applying
-         *                ({@link #APPLY_OPTIONS_DEFAULT} for {@link #loadPreferences(GuiPreferences)} that are all false)
+         *                ({@link GuiSwingPrefsApplyOptions#APPLY_OPTIONS_DEFAULT} for {@link #loadPreferences(GuiPreferences)} that are all false)
          * @since 1.4
          */
-        void loadPreferences(GuiPreferences prefs, PrefsApplyOptions options);
+        void loadPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options);
         void savePreferences(GuiPreferences prefs);
 
     }
@@ -218,8 +210,7 @@ public class GuiSwingPreferences {
 
             JPanel viewPane = new JPanel(new BorderLayout());
             {
-                contentTree = new JTree(new DefaultMutableTreeNode(""));
-                contentTree.setCellRenderer(new PrefsTreeCellRenderer());
+                contentTree = GuiSwingPrefsTrees.getInstance().createTree();
                 viewPane.add(new JScrollPane(contentTree));
             }
 
@@ -240,7 +231,7 @@ public class GuiSwingPreferences {
             new ToolBarHiddenMenu().addTo(toolBar);
             mainPane.add(toolBar, BorderLayout.PAGE_START);
         }
-        prefsWindowUpdater = new WindowPreferencesUpdater(null, rootContext, "$preferencesWindow");
+        prefsWindowUpdater = new GuiSwingPrefsSupports.WindowPreferencesUpdater(null, rootContext, "$preferencesWindow");
     }
 
     private JButton actionButton(Action action) {
@@ -301,23 +292,23 @@ public class GuiSwingPreferences {
     }
 
     public void applyPreferences() {
-        applyPreferences(APPLY_OPTIONS_DEFAULT);
+        applyPreferences(GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
     }
 
     /**
      * @param options options for applying
      * @since 1.4
      */
-    public void applyPreferences(PrefsApplyOptions options) {
+    public void applyPreferences(GuiSwingPrefsApplyOptions options) {
         GuiPreferences prefs = rootContext.getPreferences();
         try (var lock = prefs.lock()) {
             lock.use();
             if (rootPane != null) {
                 rootPane.loadPreferences(prefs, options);
             } else {
-                if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
+                if (rootComponent instanceof GuiSwingView.ValuePane<?> valuePane) {
                     if (!options.isSkippingValue()) {
-                        ((GuiSwingView.ValuePane<?>) rootComponent).loadSwingPreferences(prefs, options);
+                        valuePane.loadSwingPreferences(prefs, options);
                     }
                 }
                 GuiSwingView.loadChildren(prefs, rootComponent, options);
@@ -329,9 +320,8 @@ public class GuiSwingPreferences {
         if (rootPane != null) {
             rootPane.savePreferences(prefs);
         } else {
-            if (rootComponent instanceof GuiSwingView.ValuePane<?>) {
-                ((GuiSwingView.ValuePane<?>) rootComponent).saveSwingPreferences(
-                        prefs);
+            if (rootComponent instanceof GuiSwingView.ValuePane<?> valuePane) {
+                valuePane.saveSwingPreferences(prefs);
             }
             GuiPreferences rootPrefs = rootContext.getPreferences();
             try (var lock = rootPrefs.lock()) {
@@ -341,7 +331,7 @@ public class GuiSwingPreferences {
         }
     }
 
-    public WindowPreferencesUpdater getPrefsWindowUpdater() {
+    public GuiSwingPrefsSupports.WindowPreferencesUpdater getPrefsWindowUpdater() {
         return prefsWindowUpdater;
     }
 
@@ -360,66 +350,8 @@ public class GuiSwingPreferences {
         if (sels.length > 0) {
             lastSelection = sels;
         }
-        List<GuiPreferences> list = new ArrayList<>(getSelectedSavedPreferencesList());
-        DefaultTreeModel model = new DefaultTreeModel(makeTreeNode(list));
-        contentTree.setModel(model);
-        expandTreeAll(model, (TreeNode) model.getRoot());
-    }
-
-    /**
-     * @param treeModel a model
-     * @param n a node in the model
-     * @since 1.3
-     */
-    public void expandTreeAll(DefaultTreeModel treeModel, TreeNode n) {
-        if (!n.isLeaf()) {
-            contentTree.expandPath(new TreePath(treeModel.getPathToRoot(n)));
-        }
-        for (int i = 0, c = n.getChildCount(); i < c; ++i) {
-            expandTreeAll(treeModel, n.getChildAt(i));
-        }
-    }
-
-    /**
-     *
-     * @param list list of prefs
-     * @return tree-model of list
-     * @since 1.3
-     */
-    public DefaultMutableTreeNode makeTreeNode(List<GuiPreferences> list) {
-        if (list.size() == 1) {
-            return makeTreeNode(list.getFirst());
-        } else {
-            DefaultMutableTreeNode node = new DefaultMutableTreeNode(list.size() + " preferences");
-            list.forEach(p -> node.add(makeTreeNode(p)));
-            return node;
-        }
-    }
-
-    /**
-     * @param prefs a prefs
-     * @return the node for prefs
-     * @since 1.3
-     */
-    public DefaultMutableTreeNode makeTreeNode(GuiPreferences prefs) {
-        return makeTreeNode(prefs.getName(), prefs.copyOnMemoryAsRoot().getValueStore());
-    }
-
-    private DefaultMutableTreeNode makeTreeNode(String key, GuiPreferences.GuiValueStore store) {
-        DefaultMutableTreeNode node = new DefaultMutableTreeNode(new PrefsValueStoreEntry(key, store));
-        Map<String,Object> json = store instanceof GuiPreferences.GuiValueStoreOnMemory ?
-                ((GuiPreferences.GuiValueStoreOnMemory) store).toJson() : null;
-        store.getKeys().stream()
-                .filter(store::hasEntryKey)
-                .map(n -> new DefaultMutableTreeNode(new PrefsValueStoreEntry(n,
-                        json == null ? store.getString(n, "") : json.get(n))))
-                .forEach(node::add);
-
-        store.getKeys().stream()
-                .filter(store::hasNodeKey)
-                .map(n -> makeTreeNode(n, store.getChild(n)))
-                .forEach(node::add);
-        return node;
+        var t = GuiSwingPrefsTrees.getInstance();
+        t.setTreeModel(contentTree, t.createTreeNode(getSelectedSavedPreferencesList()));
     }
 
     public void shutdown() {
@@ -975,7 +907,7 @@ public class GuiSwingPreferences {
                     prefs.clearAll();
                     prefs.fromJson(preferences.toJson());
                 }
-                owner.applyPreferences(new PrefsApplyOptionsDefault(false, false));
+                owner.applyPreferences(new GuiSwingPrefsApplyOptions.PrefsApplyOptionsDefault(false, false));
             }
         }
 
@@ -1012,7 +944,7 @@ public class GuiSwingPreferences {
                     lock.use();
                     prefs.resetAsRoot();
                 }
-                owner.applyPreferences(new PrefsApplyOptionsDefault(true, false));
+                owner.applyPreferences(new GuiSwingPrefsApplyOptions.PrefsApplyOptionsDefault(true, false));
                 owner.reloadList();
             }
         }
@@ -1030,7 +962,7 @@ public class GuiSwingPreferences {
 
     //////////
 
-    protected ScheduledTaskRunner<PreferencesUpdateEvent> updater;
+    protected ScheduledTaskRunner<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater;
 
     public void initRunner() {
         updater = new ScheduledTaskRunner<>(1000, this::runPreferencesUpdate);
@@ -1039,22 +971,22 @@ public class GuiSwingPreferences {
     }
 
     protected void initRunnerToSupports(Component component) {
-        GuiSwingView.forEach(PreferencesUpdateSupport.class, component,
+        GuiSwingView.forEach(GuiSwingPrefsSupports.PreferencesUpdateSupport.class, component,
                 c -> c.setPreferencesUpdater(getUpdateRunner()));
     }
 
-    public ScheduledTaskRunner<PreferencesUpdateEvent> getUpdater() {
+    public ScheduledTaskRunner<GuiSwingPrefsSupports.PreferencesUpdateEvent> getUpdater() {
         return updater;
     }
 
-    public Consumer<PreferencesUpdateEvent> getUpdateRunner() {
+    public Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> getUpdateRunner() {
         return updater::schedule;
     }
 
-    public void runPreferencesUpdate(List<PreferencesUpdateEvent> list) {
+    public void runPreferencesUpdate(List<GuiSwingPrefsSupports.PreferencesUpdateEvent> list) {
         list.stream()
                 .distinct()
-                .forEach(PreferencesUpdateEvent::save);
+                .forEach(GuiSwingPrefsSupports.PreferencesUpdateEvent::save);
         GuiPreferences prefs = rootContext.getPreferences();
         try (var lock = prefs.lock()) {
             lock.use();
@@ -1062,554 +994,6 @@ public class GuiSwingPreferences {
         }
     }
 
-    public static class PreferencesUpdateEvent {
-        protected GuiMappingContext context;
-        protected Preferences prefs;
-
-        public PreferencesUpdateEvent(GuiMappingContext context, Preferences prefs) {
-            this.context = context;
-            this.prefs = prefs;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            PreferencesUpdateEvent that = (PreferencesUpdateEvent) o;
-            return Objects.equals(context, that.context) &&
-                    Objects.equals(prefs, that.prefs);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(context, prefs);
-        }
-
-        public void save() {
-            GuiPreferences cxtPrefs = context.getPreferences();
-            try (var lock = cxtPrefs.lock()) {
-                lock.use();
-                prefs.saveTo(cxtPrefs);
-            }
-        }
-    }
-
-    /** partial updater */
-    public interface PreferencesUpdateSupport {
-        void setPreferencesUpdater(Consumer<PreferencesUpdateEvent> updater);
-    }
-
-    public interface Preferences {
-        void loadFrom(GuiPreferences prefs);
-
-        void saveTo(GuiPreferences prefs);
-    }
-
-    public interface PreferencesByJsonEntry extends Preferences {
-        String getKey();
-        Object toJson();
-        void setJson(Object json);
-
-        default void loadFrom(GuiPreferences prefs) {
-            setJson(JsonReader.create(prefs.getValueStore().getString(getKey(), "null"))
-                    .parseValue());
-        }
-
-        default void saveTo(GuiPreferences prefs) {
-            prefs.getValueStore().putString(getKey(),
-                    JsonWriter.create().withNewLines(false).write(toJson()).toSource());
-        }
-    }
-
-    /**
-     * @param targetList the updated non-null list; cleared and set all elements from the map.
-     * @param map the source map
-     * @param type the element type
-     * @param key the key
-     * @param <E> the element type
-     * @since 1.6.1
-     */
-    public static <E> void setAsList(List<E> targetList, Map<?, ?> map, Class<E> type, String key) {
-        targetList.clear();
-        targetList.addAll(getAsListNonNull(map, type, key));
-    }
-
-    /**
-     * @param targetList the updated non-null list; cleared and set all elements from the map.
-     * @param map the source map
-     * @param type the element type of the JSON map
-     * @param key   the key
-     * @param mapper the mapper from a JSON element to an actual value in the list
-     * @param <E> the element type in the JSON
-     * @param <V> the actual element type of the trgetList
-     */
-    public static <E,V> void setAsList(List<V> targetList, Map<?, ?> map, Class<E> type, String key, Function<E, V> mapper) {
-        targetList.clear();
-        getAsListNonNull(map, type, key).stream()
-                .map(mapper)
-                .forEach(targetList::add);
-    }
-
-    /**
-     * @param targetList the updated non-null list; cleared and set all elements from the list.
-     * @param list the source list
-     * @param type the element type of the JSON map
-     * @param mapper the mapper from a JSON element to an actual value in the list
-     * @param <E> the element type in the JSON
-     * @param <V> the actual element type of the trgetList
-     */
-    public static <E,V> void setAsList(List<V> targetList, Object list, Class<E> type, Function<E, V> mapper) {
-        targetList.clear();
-        getAsListNonNull(list, type).stream()
-                .map(mapper)
-                .forEach(targetList::add);
-    }
-
-
-    /**
-     * supporting method for setting JSON values
-     * @param map the non-null map
-     * @param type the element type
-     * @param key the key for the map
-     * @return a list of map.get(key) that satifies all elements are the type.
-     * @param <E> the element type
-     * @since 1.6.3
-     */
-    @SuppressWarnings("unchecked")
-    public static <E> List<E> getAsListNonNull(Map<?, ?> map, Class<E> type, String key) {
-        return getAsListNonNull(map.get(key), type);
-    }
-
-    /**
-     * @param map
-     * @param type the type instance
-     * @param key the map-key
-     * @param defVal the default value if failure of type check
-     * @return the non-null map.get(key) or defVal
-     * @param <E> the type
-     */
-    public static <E> E getAs(Map<?, ?> map, Class<E> type, String key, E defVal) {
-        var e = map.get(key);
-        if (!type.isInstance(e)) {
-            return defVal;
-        } else {
-            return type.cast(e);
-        }
-    }
-
-    /**
-     * supporting method for setting JSON values
-     * @param list a list (nullable)
-     * @param type the element type
-     * @return the list that satifies all elements are the type, or a new empty list.
-     * @param <E> the element type
-     * @since 1.6.3
-     */
-    @SuppressWarnings("unchecked")
-    public static <E> List<E> getAsListNonNull(Object list, Class<E> type) {
-        if (list != null && list instanceof List<?> l) {
-            if (!l.isEmpty() &&
-                    l.stream().anyMatch(e -> !type.isInstance(e))) { //check type safety of all elements
-                return new ArrayList<>();
-            } else {
-                return (List<E>) l;
-            }
-        } else {
-            return new ArrayList<>();
-        }
-    }
-
-    public static class PreferencesForWindow implements PreferencesByJsonEntry {
-        protected int x;
-        protected int y;
-        protected int width;
-        protected int height;
-        protected String key = "$window";
-
-        public PreferencesForWindow(String key) {
-            this.key = key;
-        }
-
-        public PreferencesForWindow() {}
-
-        public int getX() {
-            return x;
-        }
-
-        public void setX(int x) {
-            this.x = x;
-        }
-
-        public int getY() {
-            return y;
-        }
-
-        public void setY(int y) {
-            this.y = y;
-        }
-
-        public int getWidth() {
-            return width;
-        }
-
-        public void setWidth(int width) {
-            this.width = width;
-        }
-
-        public int getHeight() {
-            return height;
-        }
-
-        public void setHeight(int height) {
-            this.height = height;
-        }
-
-        public void applyTo(Window window) {
-            applyTo(window, APPLY_OPTIONS_DEFAULT);
-        }
-
-        /**
-         *
-         * @param window the target window
-         * @param options options for applying: only setting locations if {@link PrefsApplyOptions#isInit()}
-         * @since 1.4
-         */
-        public void applyTo(Window window, PrefsApplyOptions options) {
-            if (width > 0 && height > 0) {
-                Dimension size = new Dimension(width, height);
-                window.setSize(size);
-            } else {
-                window.pack();
-            }
-            if (x != 0 && y != 0 && options.isInit()) {
-                //we handle (0,0) as the null value: for multi-monitors, negative values can be possible for locations
-                Rectangle screen = getDeviceBoundsOrNull(x, y);
-                if (screen != null) {
-                    window.setLocation(new Point(x, y));
-                } //otherwise, changed devices: nothing happen
-            }
-        }
-
-        /**
-         * @param x the absolute x location; 0 is the left of the main monitor
-         * @param y the absolute y location; 0 is the top of the main monitor
-         * @return rectangle for containing x,y
-         */
-        public static Rectangle getDeviceBoundsOrNull(int x, int y) {
-            GraphicsDevice[] devs = GraphicsEnvironment.getLocalGraphicsEnvironment()
-                    .getScreenDevices();
-            return Arrays.stream(devs)
-                    .map(d -> d.getDefaultConfiguration().getBounds())
-                    .filter(r -> r.contains(x, y))
-                    .findFirst()
-                    .orElse(null);
-        }
-
-        public void setSizeFrom(Window window) {
-            Dimension size = window.getSize();
-            width = size.width;
-            height = size.height;
-        }
-
-        public void setLocationFrom(Window window) {
-            Point p = window.getLocation();
-            x = p.x;
-            y = p.y;
-        }
-
-        @Override
-        public String getKey() {
-            return key;
-        }
-
-        @Override
-        public Object toJson() {
-            Map<String,Object> map = new LinkedHashMap<>();
-            map.put("x", x);
-            map.put("y", y);
-            map.put("width", width);
-            map.put("height", height);
-            return map;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public void setJson(Object json) {
-            if (json instanceof Map<?,?> map) {
-                this.x = GuiSwingPreferences.getAs(map, Integer.class, "x", 0);
-                this.y = GuiSwingPreferences.getAs(map, Integer.class, "y", 0);
-                this.width = GuiSwingPreferences.getAs(map, Integer.class, "width", 0);
-                this.height = GuiSwingPreferences.getAs(map, Integer.class, "height", 0);
-            }
-        }
-    }
-
-    public static class WindowPreferencesUpdater implements ComponentListener, SettingsWindow.SettingSupport {
-        protected Window window;
-        protected GuiMappingContext context;
-        protected PreferencesForWindow prefs;
-        protected Consumer<PreferencesUpdateEvent> updater;
-        protected boolean savingDisabled = false;
-
-        public WindowPreferencesUpdater(Window window, GuiMappingContext context) {
-            this.window = window;
-            this.context = context;
-            prefs = new PreferencesForWindow();
-        }
-
-        public WindowPreferencesUpdater(Window window, GuiMappingContext context, String name) {
-            this.window = window;
-            this.context = context;
-            prefs = new PreferencesForWindow(name);
-        }
-
-        public void setUpdater(Consumer<PreferencesUpdateEvent> updater) {
-            this.updater = updater;
-        }
-
-        public PreferencesForWindow getPrefs() {
-            return prefs;
-        }
-
-        @Override
-        public void resized(JFrame window) {
-            if (!savingDisabled) {
-                prefs.setSizeFrom(window);
-                sendToUpdater();
-            }
-        }
-
-        @Override
-        public void moved(JFrame window) {
-            if (!savingDisabled) {
-                prefs.setLocationFrom(window);
-                sendToUpdater();
-            }
-        }
-
-        @Override
-        public void setup(JFrame window) {
-            savingDisabled = true;
-            try {
-                prefs.applyTo(window); //prefs window always ignore window-locations
-            } finally {
-                savingDisabled = false;
-            }
-        }
-
-        public void apply(GuiPreferences p) {
-            apply(p, APPLY_OPTIONS_DEFAULT);
-        }
-
-        /**
-         * @param p the source prefs
-         * @param options options for applying
-         * @since 1.4
-         */
-        public void apply(GuiPreferences p, PrefsApplyOptions options) {
-            savingDisabled = true;
-            try {
-                prefs.loadFrom(p);
-                if (window != null) {
-                    prefs.applyTo(window, options);
-                }
-            } finally {
-                savingDisabled = false;
-            }
-        }
-
-        public void sendToUpdater() {
-            if (updater != null) {
-                updater.accept(new PreferencesUpdateEvent(context, prefs));
-            }
-        }
-
-        @Override
-        public void componentResized(ComponentEvent e) {
-            if (window != null && !savingDisabled) {
-                prefs.setSizeFrom(window);
-                sendToUpdater();
-            }
-        }
-
-        @Override
-        public void componentMoved(ComponentEvent e) {
-            if (window != null && !savingDisabled) {
-                prefs.setLocationFrom(window);
-                sendToUpdater();
-            }
-        }
-
-        @Override
-        public void componentShown(ComponentEvent e) { }
-
-        @Override
-        public void componentHidden(ComponentEvent e) { }
-    }
-
-    public static class PreferencesForFileDialog implements PreferencesByJsonEntry {
-        protected List<String> fileList = new ArrayList<>();
-        protected String backPath;
-        protected String currentDirectory;
-        protected String key = "$fileDialog";
-
-        public PreferencesForFileDialog() {}
-
-        public void setFileList(List<Path> fileList) {
-            this.fileList = new ArrayList<>(fileList.stream()
-                    .map(Path::toString)
-                    .toList());
-        }
-
-        public void setBackPath(Path path) {
-            this.backPath = (path == null ? null : path.toString());
-        }
-
-        public void setCurrentDirectory(Path path) {
-            this.currentDirectory = (path == null ? null : path.toString());
-        }
-
-        public void applyTo(SettingsWindow.FileDialogManager dialogManager) {
-            dialogManager.setFieList(fileList.stream()
-                    .map(Paths::get)
-                    .collect(Collectors.toList()));
-            if (currentDirectory != null) {
-                dialogManager.setCurrentPath(Paths.get(currentDirectory));
-            }
-            if (backPath != null) {
-                dialogManager.setBackButtonPath(Paths.get(backPath));
-            }
-        }
-
-        @Override
-        public String getKey() {
-            return key;
-        }
-
-        /**
-         * @return the direct reference to the property fileList
-         * @since 1.6.3
-         */
-        public List<String> getFileListDirect() {
-            return fileList;
-        }
-
-        /**
-         * @return the property value or null
-         * @since 1.6.3
-         */
-        public Path getBackPath() {
-            return backPath == null ? null : Paths.get(backPath);
-        }
-
-        /**
-         * @return the property value or null
-         * @since 1.6.3
-         */
-        public Path getCurrentDirectory() {
-            return currentDirectory == null ? null : Paths.get(currentDirectory);
-        }
-
-        @Override
-        public Object toJson() {
-            Map<String,Object> map = new LinkedHashMap<>();
-            map.put("fileList", fileList);
-            map.put("currentDirectory", currentDirectory);
-            map.put("backPath", backPath);
-            return map;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public void setJson(Object json) {
-            if (json instanceof Map<?,?> map) {
-                GuiSwingPreferences.setAsList(fileList, map, String.class,"fileList");
-                currentDirectory = GuiSwingPreferences.getAs(map, String.class, "currentDirectory", null);
-                backPath = GuiSwingPreferences.getAs(map, String.class, "backPath", null);
-            }
-        }
-    }
-
-    public static class FileDialogPreferencesUpdater implements SettingsWindow.FileDialogManagerListener {
-        protected SettingsWindow.FileDialogManager dialogManager;
-        protected GuiMappingContext context;
-        protected Consumer<PreferencesUpdateEvent> updater;
-        protected PreferencesForFileDialog prefs;
-
-        protected boolean savingDisabled;
-
-        public FileDialogPreferencesUpdater(SettingsWindow.FileDialogManager dialogManager, GuiMappingContext context) {
-            this.dialogManager = dialogManager;
-            this.context = context;
-            prefs = new PreferencesForFileDialog();
-        }
-
-        public void setUpdater(Consumer<PreferencesUpdateEvent> updater) {
-            this.updater = updater;
-        }
-
-        public void addToDialogManager() {
-            int len = GuiPreferences.getStoreValueMaxLength(); //8192
-            int maxPathLength = 255 + 4;
-            int jsonSymbols = 47;
-            //suppose the max length of a path is 255 (actually it would be longer),
-            //   then a path string becomes 255 + (2 of \" : 4), with a comma separator
-            // (note: Windows path separators will be escaped)
-            // JSON keys and symbols: {"fileList":[],"currentDirectory":,"backPath":} :47
-            // 8192 = (n + 2) * 259 + (n - 1) + 47;  thus n = (8192 - 259 * 2 + 1 - 47) / 260 =~ 29
-            int maxList = (len - maxPathLength * 2 + 1 - jsonSymbols) / (maxPathLength + 1);
-            dialogManager.setMaxHistoryList(maxList);
-            dialogManager.addListener(this);
-        }
-
-        public void removeFromDialogManager() {
-            dialogManager.removeListener(this);
-        }
-
-        @Override
-        public void updateFileList(SettingsWindow.FileListModel listModel) {
-            if (!savingDisabled) {
-                prefs.setFileList(listModel.getPaths());
-                sendToUpdater();
-            }
-        }
-
-        @Override
-        public void updateCurrentDirectory(Path path) {
-            if (!savingDisabled) {
-                prefs.setCurrentDirectory(path);
-                sendToUpdater();
-            }
-        }
-
-        @Override
-        public void updateBackButton(Path path) {
-            if (!savingDisabled) {
-                prefs.setBackPath(path);
-                sendToUpdater();
-            }
-        }
-
-        public void sendToUpdater() {
-            if (updater != null) {
-                updater.accept(new PreferencesUpdateEvent(context, prefs));
-            }
-        }
-
-        public void apply(GuiPreferences p) {
-            savingDisabled = true;
-            try {
-                prefs.loadFrom(p);
-                prefs.applyTo(dialogManager);
-            } finally {
-                savingDisabled = false;
-            }
-        }
-
-        public PreferencesForFileDialog getPrefs() {
-            return prefs;
-        }
-    }
 
     public static class PrefsApplyMenu extends JMenu {
         @Serial private static final long serialVersionUID = 1L;
@@ -1670,304 +1054,6 @@ public class GuiSwingPreferences {
         @Override
         public void actionPerformed(ActionEvent e) {
             apply(targetPrefs);
-        }
-    }
-
-    ////////////////////////
-
-    /**
-     * tree-model value for prefs-tree
-     * @since 1.3
-     */
-    public static class PrefsValueStoreEntry {
-        String key;
-        Object value;
-
-        public PrefsValueStoreEntry(String key, Object value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        public String toString() {
-            return "ValueStoreEntry{" +
-                    "key='" + key + '\'' +
-                    ", value=" + value +
-                    '}';
-        }
-
-        public String getKey() {
-            return key;
-        }
-
-        public Object getValue() {
-            return value;
-        }
-
-        public boolean isNode() {
-            return value instanceof GuiPreferences.GuiValueStore;
-        }
-    }
-
-    /**
-     * cell-renderer for prefs-tree
-     * @since 1.3
-     */
-    public static class PrefsTreeCellRenderer extends DefaultTreeCellRenderer {
-        @Serial private static final long serialVersionUID = 1L;
-        protected String name;
-        protected String entryValue;
-        protected transient TextCellRenderer.LineInfo nameInfo;
-        protected transient TextCellRenderer.LineInfo valueInfo;
-        protected Map<Color, Map<Color, Color>> colorMap = new HashMap<>();
-        protected boolean selected;
-        protected boolean node;
-
-        public PrefsTreeCellRenderer() {}
-
-        public void setValue(Object value) {
-            node = false;
-            if (value instanceof DefaultMutableTreeNode treeNode) {
-                value = treeNode.getUserObject();
-                node = (treeNode.getChildCount() > 0);
-            }
-            name = "?";
-            entryValue = null;
-            if (value instanceof PrefsValueStoreEntry e) {
-                name = e.getKey();
-                if (e.isNode()) {
-                    node = true;
-                } else {
-                    node = false;
-                    entryValue = Objects.toString(e.getValue());
-                    if (entryValue.isEmpty()) {
-                        entryValue = " ";
-                    }
-                }
-            } else {
-                name = Objects.toString(value);
-            }
-            if (name.isEmpty()) {
-                name = " ";
-            }
-        }
-
-        @Override
-        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-            setValue(value);
-
-            super.getTreeCellRendererComponent(tree, value, sel, expanded, !node, row, hasFocus);
-
-            AttributedString aStr = new AttributedString(name);
-            aStr.addAttribute(TextAttribute.FOREGROUND, new Color(80, 80, 80));
-            nameInfo = new TextCellRenderer.LineInfo(aStr, 0, name.length());
-
-            if (entryValue != null) {
-                aStr = new AttributedString(entryValue);
-                aStr.addAttribute(TextAttribute.FOREGROUND, new Color(50, 50, 140));
-                valueInfo = new TextCellRenderer.LineInfo(aStr, 0, entryValue.length());
-            } else {
-                valueInfo = null;
-            }
-            selected = sel;
-
-            Graphics2D g = (Graphics2D) getGraphics();
-            if (g != null) {
-                paintOrLayout(g, false);
-            }
-            return this;
-        }
-
-        protected void paintOrLayout(Graphics2D g, boolean paint) {
-            Icon icon = getIcon();
-            int x = 0;
-            int h = 0;
-            if (icon != null) {
-                if (paint) {
-                    icon.paintIcon(this, g, 0, 0);
-                }
-                x += icon.getIconWidth();
-                h = Math.max(h, icon.getIconHeight());
-            }
-
-            UIManagerUtil ui = UIManagerUtil.getInstance();
-            Color foreground = getForeground();//or ui.getTextPaneSelectionForeground();
-            Color background = ui.getLabelBackground();//or ui.getTextPaneSelectionBackground();
-            if (paint) {
-                g.setColor(getForeground());
-            }
-            Font font = getFont();
-            g.setFont(font);
-            FontRenderContext frc = g.getFontRenderContext();
-            TextLayout layout;
-
-            x += ui.getScaledSizeInt(3);
-            if (paint) {
-                layout = nameInfo.getLayout(frc, 0, 0, foreground, background,
-                        foreground, background, colorMap);
-                layout.draw(g, x, layout.getAscent());
-            } else {
-                layout = nameInfo.getLayout(frc);
-            }
-            x += (int) layout.getAdvance();
-            h = Math.max(h, (int) (layout.getAscent() + layout.getDescent()));
-
-            if (valueInfo != null) {
-                x += ui.getScaledSizeInt(10);
-
-                if (paint) {
-                    layout = valueInfo.getLayout(frc, 0, 0, foreground, background,
-                            foreground, background, colorMap);
-                    layout.draw(g, x, layout.getAscent());
-                } else {
-                    layout = valueInfo.getLayout(frc);
-                }
-                x += (int) layout.getAdvance();
-                h = Math.max(h, (int) (layout.getAscent() + layout.getDescent()));
-            }
-            if (!paint) {
-                setPreferredSize(new Dimension(x, h));
-            }
-        }
-
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            if (isOpaque()) {
-                g.setColor(getBackground());
-                g.fillRect(0, 0, getWidth(), getHeight());
-            }
-            paintOrLayout((Graphics2D) g, true);
-        }
-    }
-
-    //////
-
-    /**
-     * options at prefs loading
-     * @since 1.4
-     */
-    public interface PrefsApplyOptions {
-        /**
-         * @return true if the loading processing is the initial time; then the window location might be set
-         */
-        boolean isInit();
-
-        /**
-         * @return if true, skipping setting object properties
-         */
-        boolean isSkippingValue();
-
-        default boolean hasHistoryValues(GuiPreferences targetPrefs, GuiPreferences ctxPrefs) {
-            return !targetPrefs.equals(ctxPrefs);
-        }
-
-        default void begin(Object loadingTarget, GuiPreferences prefs, PrefsApplyOptionsLoadingTargetType targetType) {}
-        default void apply(WindowPreferencesUpdater windowPrefs, GuiPreferences prefs) {
-            windowPrefs.apply(prefs, this);
-        }
-        default void loadFromPrefs(WindowPreferencesUpdater windowPrefs, GuiPreferences prefs) {
-            windowPrefs.getPrefs().loadFrom(prefs);
-        }
-        default void apply(FileDialogPreferencesUpdater fileDialogPrefs, GuiPreferences prefs) {
-            fileDialogPrefs.apply(prefs);
-        }
-        default void apply(GuiSwingViewObjectPane.SplitPreferencesUpdater splitPrtefs, GuiPreferences prefs) {
-            splitPrtefs.apply(prefs);
-        }
-        default void apply(GuiSwingViewTabbedPane.TabPreferencesUpdater tabPrefs, GuiPreferences prefs) {
-            tabPrefs.apply(prefs);
-        }
-        default void addHistoryValue(GuiPreferences.HistoryValueEntry entry, GuiPreferences prefs) {
-            prefs.addHistoryValue(entry.getValue(), entry.getTime());
-        }
-        default void loadFrom(GuiSwingViewDocumentEditor.DocumentSettingPane pane, GuiPreferences prefs) {
-            pane.loadFrom(prefs);
-        }
-        default void loadFrom(GuiSwingViewNumberSpinner.TypedSpinnerNumberModel numModel, GuiPreferences prefs) {
-            numModel.loadFrom(prefs);
-        }
-        default void setLastHistoryValueBySwingViewHistoryValue(GuiSwingView.ValuePane<Object> pane, GuiPreferences prefs, Object value) {
-            pane.setSwingViewHistoryValue(value);
-        }
-        default void setLastHistoryValueByPrefsJsonSupported(GuiSwingView.ValuePane<Object> pane, GuiPreferences prefs, Object value) {
-            pane.setPrefsJsonSupported(value);
-        }
-        default void setLastHistoryValueBySwingViewHistoryValue(GuiSwingView.ValuePane<Object> pane, GuiPreferences prefs, GuiPreferences.HistoryValueEntry entry) {
-            Object value = entry.getValue();
-            pane.setSwingViewHistoryValue(value);
-        }
-
-        default void apply(GuiSwingViewCollectionTable.TablePreferencesUpdater tablePrefs, GuiPreferences prefs) {
-            tablePrefs.apply(prefs);
-        }
-
-        default boolean isSavingAsCurrentPreferencesInColumns() {
-            return true;
-        }
-
-        default void loadFrom(GuiSwingTableModelCollection.PreferencesForTableColumnWidthStatic widthPrefs, GuiPreferences prefs) {
-            widthPrefs.loadFrom(prefs);
-        }
-
-        default void loadFrom(GuiSwingTableModelCollection.PreferencesForTableColumnOrderStatic orderPrefs, GuiPreferences prefs) {
-            orderPrefs.loadFrom(prefs);
-        }
-
-        default void applyTo(GuiSwingTableModelCollection.PreferencesForTableColumnWidthStatic widthPrefs, ObjectTableColumn column) {
-            widthPrefs.applyTo(column);
-        }
-
-        default boolean applyTo(GuiSwingTableModelCollection.PreferencesForTableColumnOrderStatic orderPrefs, GuiSwingTableModelCollection.GuiSwingTableModelColumns columns, int modelIndex) {
-            return orderPrefs.applyTo(columns, modelIndex);
-        }
-
-        default void loadFromAndApplyTo(GuiSwingTableModelCollection.PreferencesForTableColumnWidth columnWidthPrefs, ObjectTableColumn column, GuiPreferences prefs) {
-            columnWidthPrefs.loadFrom(prefs);
-            columnWidthPrefs.applyTo(column);
-        }
-
-        default boolean loadFromAndApplyTo(GuiSwingTableModelCollection.PreferencesForTableColumnOrder orderPrefs, ObjectTableModelColumns columns, GuiPreferences prefs) {
-            orderPrefs.loadFrom(prefs);
-            return orderPrefs.applyTo(columns);
-        }
-
-        default void end(Object loadingTarget, GuiPreferences prefs, PrefsApplyOptionsLoadingTargetType targetType) {}
-    }
-
-    public enum PrefsApplyOptionsLoadingTargetType {
-        View,
-        HistoryValues,
-        CurrentValue
-    }
-
-    /**
-     *  default options at prefs loading: non-init, no skipping
-     * @since 1.4
-     */
-    public static PrefsApplyOptionsDefault APPLY_OPTIONS_DEFAULT = new PrefsApplyOptionsDefault(false, false);
-
-    /**
-     * the default impl. of options at prefs loading
-     * @since 1.4
-     */
-    public static class PrefsApplyOptionsDefault implements PrefsApplyOptions {
-        protected boolean init;
-        protected boolean skippingValue;
-
-        public PrefsApplyOptionsDefault(boolean init, boolean skippingValue) {
-            this.init = init;
-            this.skippingValue = skippingValue;
-        }
-
-        @Override
-        public boolean isInit() {
-            return init;
-        }
-
-        @Override
-        public boolean isSkippingValue() {
-            return skippingValue;
         }
     }
 }

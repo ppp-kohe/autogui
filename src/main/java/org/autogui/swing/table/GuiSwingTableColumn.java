@@ -5,10 +5,11 @@ import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifier;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifierIndex;
 import org.autogui.swing.GuiSwingElement;
-import org.autogui.swing.GuiSwingPreferences;
 import org.autogui.swing.GuiSwingView;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingViewWrapper;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.util.ResizableFlowLayout;
 import org.autogui.swing.util.TextCellRenderer;
 import org.autogui.swing.util.UIManagerUtil;
@@ -68,7 +69,7 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
 
     /** interface for {@link ObjectTableColumn} */
     interface ObjectTableColumnWithContext
-            extends GuiSwingPreferences.PreferencesUpdateSupport, GuiSwingView.SettingsWindowClient {
+            extends GuiSwingPrefsSupports.PreferencesUpdateSupport, GuiSwingView.SettingsWindowClient {
         GuiMappingContext getContext();
 
         SpecifierManager getSpecifierManager();
@@ -81,7 +82,7 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
         }
 
         default void loadSwingPreferences(GuiPreferences prefs) {
-            loadSwingPreferences(prefs, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+            loadSwingPreferences(prefs, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
         }
 
         /**
@@ -89,7 +90,7 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
          * @param options processor
          * @since 1.6.3
          */
-        void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options);
+        void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options);
 
         void saveSwingPreferences(GuiPreferences prefs);
     }

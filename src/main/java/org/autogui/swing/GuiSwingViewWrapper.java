@@ -4,6 +4,7 @@ import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.mapping.GuiTaskClock;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupExtension;
 
@@ -91,7 +92,7 @@ public class GuiSwingViewWrapper {
          * @param options options
          */
         @Override
-        default void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) { }
+        default void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) { }
 
     }
 

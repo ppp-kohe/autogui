@@ -68,7 +68,7 @@ public class TableRowHeightFitter {
         }
     }
 
-    protected ScheduledTaskRunner<RowHeightUpdate> columnEventHandler = new ScheduledTaskRunner<>(100, this::fitByEvent,
+    protected volatile ScheduledTaskRunner<RowHeightUpdate> columnEventHandler = new ScheduledTaskRunner<>(100, this::fitByEvent,
             Executors.newScheduledThreadPool(0)); //create another auto closing cached pool
 
     @SuppressWarnings("this-escape")

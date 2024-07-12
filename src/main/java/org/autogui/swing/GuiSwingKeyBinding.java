@@ -539,14 +539,13 @@ public class GuiSwingKeyBinding {
             } else if (pane != null) {
                 JComponent comp = pane.asSwingViewComponent();
                 appendToolTip(comp, newDesc);
-                if (comp.getParent() instanceof NamedPane) {
-                    JComponent namedPane = (JComponent) comp.getParent();
+                if (comp.getParent() instanceof NamedPane namedPane) {
                     appendToolTip(namedPane, newDesc);
-                    if (namedPane.getParent() instanceof JTabbedPane) {
-                        updateToolTipForTab(namedPane, (JTabbedPane) namedPane.getParent(), newDesc);
+                    if (namedPane.getParent() instanceof JTabbedPane tabbedPane) {
+                        updateToolTipForTab(namedPane, tabbedPane, newDesc);
                     }
-                } else if (comp.getParent() instanceof JTabbedPane) {
-                    updateToolTipForTab(comp, (JTabbedPane) comp.getParent(), newDesc);
+                } else if (comp.getParent() instanceof JTabbedPane tabbedPane) {
+                    updateToolTipForTab(comp, tabbedPane, newDesc);
                 }
             }
         }

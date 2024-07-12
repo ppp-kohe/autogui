@@ -8,23 +8,28 @@ import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.mapping.GuiTaskClock;
 import org.autogui.swing.mapping.GuiReprValueDocumentEditor;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.util.*;
 
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Rectangle2D;
 import java.io.Serial;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -48,7 +53,7 @@ import java.util.function.Supplier;
  *       <li>As the delayed task,
  *       {@link #setSwingViewValueDocument(JEditorPane, GuiSwingView.SpecifierManager, GuiMappingContext, Object, Document, boolean, GuiTaskClock)}.
  *          is used. the method updates Document of the pane by {@link JEditorPane#setDocument(Document)}
- *             and calls {@link GuiSwingView.ValuePane#updateFromGui(GuiSwingView.ValuePane, Object, GuiTaskClock)} (if contextUpdate=true) </li>
+ *             and calls {@link GuiSwingView.ValuePane#updateFromGui(ValuePane, Object, GuiTaskClock)} (if contextUpdate=true) </li>
  *      </ul>
  *
  * <h2>history-value</h2>
@@ -61,12 +66,15 @@ import java.util.function.Supplier;
  * <pre>
  *     {
  *         "lineSpacing": Number,
+ *         "spaceAbove": Number,
  *         "fontFamily": String,
  *         "fontSize": Number,
  *         "bold": Boolean,
  *         "italic": Boolean,
  *         "backgroundColor": "[intR, intG, intB, intA]",
  *         "foregroundColor": "[intR, intG, intB, intA]",
+ *         "backgroundCustom": Boolean,
+ *         "foregroundCustom": Boolean,
  *         "wrapText": Boolean
  *     }
  * </pre>
@@ -274,6 +282,31 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         return pane.getDocument();
     }
 
+    /**
+     * an implementation for {@link JTextComponent#getPreferredSize()} supporting wrapping-line;
+     *  checks the horizontal policy of parent {@link JScrollPane} by {@link #isWrapLine(JScrollPane)} and
+     *   calls {@link #getPreferredSize(JTextComponent, boolean)}.
+     *   A text-component can support wrapping-line by overriding {@link JTextComponent#getPreferredSize()} and
+     *    {@link JTextComponent#getScrollableTracksViewportWidth()} with this method and {@link #getScrollableTracksViewportWidth(JTextComponent)}.
+     * @param field the target text-component
+     * @return the preferred-size suitable for the current wrapping-line setting
+     * @see #getScrollableTracksViewportWidth(JTextComponent)
+     * @since 1.7
+     */
+    public static Dimension getPreferredSizeWithParentScrollWrapLine(JTextComponent field) {
+        return getPreferredSize(field, isWrapLine(scrollPane(field)));
+    }
+
+    /**
+     * an implementation for {@link JTextComponent#getScrollableTracksViewportWidth()}
+     * @param field the target text-component
+     * @return true if {@link #isWrapLine(JScrollPane)} of the parent of the field
+     * @since 1.7
+     */
+    public static boolean getScrollableTracksViewportWidth(JTextComponent field) {
+        return isWrapLine(scrollPane(field));
+    }
+
     public static Dimension getPreferredSize(JTextComponent field, boolean wrapLine) {
         Dimension dim = field.getUI().getPreferredSize(field);
         Component parent = SwingUtilities.getUnwrappedParent(field);
@@ -283,9 +316,78 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         return dim;
     }
 
+    /**
+     * @param c the text-component
+     * @return the parent scroll-pane by calling {@link #scrollPaneContainer(Container)} with the parent
+     * @since 1.7
+     */
+    public static JScrollPane scrollPane(JComponent c) {
+        return c != null ? scrollPaneContainer(c.getParent()) : null;
+    }
+
+    /**
+     * @param c the parent container of a text-comonent
+     * @return an upper scroll-pane
+     */
+    public static JScrollPane scrollPaneContainer(Container c) {
+        return switch (c) {
+            case JViewport jViewport -> scrollPaneContainer(c.getParent());
+            case JScrollPane jScrollPane -> jScrollPane;
+            case null, default -> null;
+        };
+    }
+
+    /**
+     * @param pane a scroll-pane or null
+     * @return true if null or horizontal-scroll-bar-policy not "always"; i.e. "never" or "as_needed"
+     */
+    public static boolean isWrapLine(JScrollPane pane) {
+        if (pane == null) {
+            return true;
+        } else {
+            return pane.getHorizontalScrollBarPolicy() != ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS;
+        }
+    }
+
+    /**
+     * @param pane a scroll-pane or null
+     * @param tested the tested wrapping-line property
+     * @return true if the horizonta-scroll-bar-policy is not the tested value; if true, it should update the wrapping-line property and revalidate the layout.
+     */
+    public static boolean isWrapLineNotMatch(JScrollPane pane, boolean tested) {
+        if (pane == null) {
+            return !tested;
+        } else {
+            var policy = pane.getHorizontalScrollBarPolicy();
+            return policy == ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED ||
+                    ((policy == ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS) == tested);
+        }
+    }
+
+    /**
+     * @param pane the target pane
+     * @param f the new property value of wrapping-line
+     * @since 1.7
+     */
+    public static void setWrapLine(JScrollPane pane, boolean f) {
+        pane.setHorizontalScrollBarPolicy(f ?
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER :
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        pane.revalidate();
+    }
+
+    /**
+     * the interface for the target pane of {@link DocumentSettingPane};
+     *  if the pane implements the interface, it will be called at updating the wrapping-line property from the setting pane.
+     * @since 1.7
+     */
+    public interface WrapLineSupport {
+        void setWrapLine(boolean wrapLine);
+    }
+
     public static class PropertyDocumentEditorPane extends JEditorPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
-                SettingsWindowClient { //ValuePane<StringBuilder|Content|Document>
+                SettingsWindowClient, WrapLineSupport { //ValuePane<StringBuilder|Content|Document>
         @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
@@ -375,6 +477,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             return wrapLine;
         }
 
+        @Override
         public void setWrapLine(boolean wrapLine) {
             this.wrapLine = wrapLine;
         }
@@ -421,7 +524,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
     public static class PropertyDocumentTextPane extends JTextPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
-            SettingsWindowClient, GuiSwingPreferences.PreferencesUpdateSupport   { //ValuePane<StringBuilder|Content|Document>
+            SettingsWindowClient, GuiSwingPrefsSupports.PreferencesUpdateSupport, WrapLineSupport { //ValuePane<StringBuilder|Content|Document>
         @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
@@ -515,6 +618,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             return wrapLine;
         }
 
+        @Override
         public void setWrapLine(boolean wrapLine) {
             this.wrapLine = wrapLine;
         }
@@ -549,15 +653,15 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
             try {
-                options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
                 GuiSwingView.loadPreferencesDefault(this, prefs, options);
                 GuiPreferences targetPrefs = prefs.getDescendant(context);
                 options.loadFrom(settingPane, targetPrefs);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
-                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -577,8 +681,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
-            settingPane.setPreferencesUpdater(updater);
+        public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
+            settingPane.setPreferencesUpdaterEventListener(updater);
         }
 
         @Override
@@ -596,84 +700,6 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             viewClock.clear();
         }
     }
-
-    ///////////
-
-
-    public static JScrollPane scroll(Container c) {
-        return switch (c) {
-            case JViewport jViewport -> scroll(c.getParent());
-            case JScrollPane jScrollPane -> jScrollPane;
-            case null, default -> null;
-        };
-    }
-
-    public static class TextWrapTextAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        @Serial private static final long serialVersionUID = 1L;
-        protected JTextComponent field;
-
-        public TextWrapTextAction(JTextComponent field) {
-            putValue(NAME, "Wrap Line");
-            this.field = field;
-            putValue(SELECTED_KEY, isWrapLineOfFieldParent());
-        }
-
-        public void updateSelected() {
-            putValue(SELECTED_KEY, isWrapLineOfFieldParent());
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            boolean f = isWrapLineOfFieldParent();
-            setWrapLine(scroll(field == null ? null : field.getParent()), !f);
-        }
-
-        /**
-         * @return call {@link #isWrapLine(JScrollPane)} for the parent scroll of the field or true if the field is null
-         * @since 1.6.3
-         */
-        public boolean isWrapLineOfFieldParent() {
-            return isWrapLine(scroll(field == null ? null : field.getParent()));
-        }
-
-        public boolean isWrapLine(JScrollPane pane) {
-            if (pane == null) {
-                return true;
-            } else {
-                return pane.getHorizontalScrollBarPolicy() == ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
-            }
-        }
-
-        public void setWrapLine(JScrollPane pane, boolean f) {
-            if (pane != null) {
-                pane.setHorizontalScrollBarPolicy(f ?
-                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER :
-                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-                if (field instanceof PropertyDocumentEditorPane) {
-                    ((PropertyDocumentEditorPane) field).setWrapLine(f);
-                } else if (field instanceof PropertyDocumentTextPane) {
-                    ((PropertyDocumentTextPane) field).setWrapLine(f);
-                }
-                pane.revalidate();
-            }
-        }
-
-        public void change(boolean f) {
-            putValue(SELECTED_KEY, f);
-            setWrapLine(scroll(field == null ? null : field.getParent()), f);
-        }
-
-        @Override
-        public String getCategory() {
-            return PopupExtension.MENU_CATEGORY_PREFS;
-        }
-
-        @Override
-        public String getSubCategory() {
-            return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
-        }
-    }
-
 
     public static class DocumentSettingAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         @Serial private static final long serialVersionUID = 1L;
@@ -713,322 +739,496 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
     }
 
-    public static class DocumentSettingPane extends JPanel implements ItemListener, ChangeListener,
-            GuiSwingPreferences.Preferences {
+    /**
+     * a setting pane for document default stype; a GUI for {@link PreferencesForDocumentSetting}
+     */
+    public static class DocumentSettingPane extends JPanel implements GuiSwingPrefsSupports.Preferences {
         @Serial private static final long serialVersionUID = 1L;
         protected JEditorPane pane;
-        protected Map<String, Font> nameFonts = new HashMap<>();
-
         protected JComboBox<String> fontFamily;
+        protected JToggleButton styleBold;
+        protected JToggleButton styleItalic;
+        protected JToggleButton styleWrapLine;
         protected JSpinner fontSize;
-        protected JPopupMenu fontStyleMenu;
-        protected JSpinner lineSpacing;
+        protected JSpinner spaceAbove;
+        protected JSpinner spaceLine;
 
-        protected StyleSetAction styleItalic;
-        protected StyleSetAction styleBold;
-        protected TextWrapTextAction wrapText;
-        protected boolean updateDisabled;
-
-        /** @since 1.2 */
-        protected JCheckBox backgroundCustom;
         /** @since 1.2 */
         protected JCheckBox foregroundCustom;
-        protected SettingsWindow.ColorButton backgroundColor;
         protected SettingsWindow.ColorButton foregroundColor;
+        /** @since 1.2 */
+        protected JCheckBox backgroundCustom;
+        protected SettingsWindow.ColorButton backgroundColor;
 
-        protected EditingRunner updater;
-        protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> preferencesUpdater;
-
-        protected int defaultFontSize = 14;
+        protected boolean updateDisabled;
+        protected Consumer<PreferencesForDocumentSetting> preferencesUpdater;
+        protected GuiSwingViewDocumentEditor.PreferencesForDocumentSetting prefsObj;
 
         public DocumentSettingPane(JEditorPane pane) {
+            this.pane = pane;
+            init();
+        }
+
+        public void init() {
+            initBorder();
+            initFontFamily();
+            initStyle();
+            initFontSize();
+            initSpace();
+            initColor();
+            initLayout();
+            initPrefsObj();
+            initListener();
+        }
+
+        public void initBorder() {
             UIManagerUtil ui = UIManagerUtil.getInstance();
             int top = ui.getScaledSizeInt(3);
             int size = ui.getScaledSizeInt(10);
             setBorder(BorderFactory.createEmptyBorder(top, size, size, size));
-            this.pane = pane;
+        }
 
-            Style s = getTargetStyle();
-            boolean defaultBold = false;
-            boolean defaultItalic = false;
-            double defaultLineSpace = 1.0;
-            if (s != null) {
-                defaultFontSize = StyleConstants.getFontSize(s);
-                defaultBold = StyleConstants.isBold(s);
-                defaultItalic = StyleConstants.isItalic(s);
-                defaultLineSpace = StyleConstants.getLineSpacing(s);
-            } else {
-                Font font = ui.getEditorPaneFont();
-                defaultFontSize = font.getSize();
-            }
-            //font name
-            GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        public void initFontFamily() {
+            var env = GraphicsEnvironment.getLocalGraphicsEnvironment();
             fontFamily = new JComboBox<>(env.getAvailableFontFamilyNames());
-            fontFamily.setRenderer(new DefaultListCellRenderer() {
-                @Serial private static final long serialVersionUID = 1L;
-                @Override
-                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if (isSelected) {
-                        setFont(getListFont((String) value));
-                    } else {
-                        setFont(null);
-                    }
-                    return this;
+            fontFamily.setEditable(true);
+        }
+
+        public void initStyle() {
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            var styleSize = new Dimension(ui.getScaledSizeInt(28), ui.getScaledSizeInt(28));
+
+            styleBold = new JToggleButton("<html><b>B</b></html>");
+            styleBold.setPreferredSize(styleSize);
+            styleBold.setToolTipText("Bold");
+
+            styleItalic = new JToggleButton("<html><i>I</i></html>");
+            styleItalic.setPreferredSize(styleSize);
+            styleItalic.setToolTipText("Italic");
+
+            styleWrapLine = new JToggleButton("⏎");
+            styleWrapLine.setPreferredSize(styleSize);
+            styleWrapLine.setToolTipText("Wrap Line");
+        }
+
+        public void initFontSize() {
+            fontSize = new JSpinner(new SpinnerNumberModel(12, -1, 400, 1));
+        }
+
+        public void initSpace() {
+            UIManagerUtil ui = UIManagerUtil.getInstance();
+            var size = new Dimension(ui.getScaledSizeInt(72), ui.getScaledSizeInt(22));
+
+            spaceLine = new JSpinner(new SpinnerNumberModel(0.5f, -1f, 5f, 0.05f));
+            spaceLine.setToolTipText("Space factor between lines");
+            spaceLine.setPreferredSize(size);
+
+            spaceAbove = new JSpinner(new SpinnerNumberModel(0.0f, -1f, 1000f, 1f));
+            spaceAbove.setToolTipText("Space points above paragraphs");
+            spaceAbove.setPreferredSize(size);
+        }
+
+        public void initColor() {
+            backgroundCustom = new JCheckBox();
+            backgroundCustom.setToolTipText("Enable the custom background color");
+            backgroundColor = new SettingsWindow.ColorButton(Color.white, c -> updateTargetTextPaneAndPrefsObjFromGui());
+            backgroundColor.setToolTipText("Background color");
+
+            foregroundCustom = new JCheckBox();
+            foregroundCustom.setToolTipText("Enable the custom foreground color");
+            foregroundColor = new SettingsWindow.ColorButton(Color.black, c -> updateTargetTextPaneAndPrefsObjFromGui());
+            foregroundColor.setToolTipText("Foreground color");
+        }
+
+        public void initLayout() {
+            JPanel styleRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            {
+                var styleGroup = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0 ));
+                {
+                    styleGroup.add(styleBold);
+                    styleGroup.add(styleItalic);
+                    styleGroup.add(styleWrapLine);
                 }
-            });
-            fontFamily.addItemListener(this);
+                styleRow.add(styleGroup);
+                styleRow.add(new JLabel("Size:"));
+                styleRow.add(fontSize);
+            }
+            JPanel spaceRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            {
+                spaceRow.add(new JLabel("Above:"));
+                spaceRow.add(spaceAbove);
+                spaceRow.add(new JLabel("Line:"));
+                spaceRow.add(spaceLine);
+            }
+            JPanel colorRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            {
+                JPanel backgroundPane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+                {
+                    backgroundPane.add(new JLabel("Back:"));
+                    backgroundPane.add(backgroundCustom);
+                    backgroundPane.add(backgroundColor);
+                }
+                colorRow.add(backgroundPane);
 
+                colorRow.add(Box.createHorizontalStrut(UIManagerUtil.getInstance().getScaledSizeInt(10)));
 
-            //font size
-            fontSize = new JSpinner(new SpinnerNumberModel(defaultFontSize, 0, 400, 1));
-            fontSize.addChangeListener(this);
+                JPanel foregroundPane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+                {
+                    foregroundPane.add(new JLabel("Text:"));
+                    foregroundPane.add(foregroundCustom);
+                    foregroundPane.add(foregroundColor);
+                }
+                colorRow.add(foregroundPane);
+            }
+            new SettingsWindow.LabelGroup(this)
+                    .addRow("Font:", fontFamily)
+                    .addRow("Style:", styleRow)
+                    .addRow("Space:", spaceRow)
+                    .addRow("Color:", colorRow)
+                    .fitWidth();
+        }
 
-            //font style
-            styleBold = new StyleSetAction("Bold", defaultBold, a -> updateStyle());
-            styleItalic = new StyleSetAction("Italic", defaultItalic, a -> updateStyle());
-            fontStyleMenu = new JPopupMenu();
-            fontStyleMenu.add(new JCheckBoxMenuItem(styleBold));
-            fontStyleMenu.add(new JCheckBoxMenuItem(styleItalic));
+        /**
+         * initialize {@link PreferencesForDocumentSetting} with default (non-null) values;
+         *  also if it has a target text-pane, calls {@link PreferencesForDocumentSetting#setup(JComponent)}
+         *    for reading from the pane settings and set those values to the prefsObj.
+         *   The GUI of the setting-pane is updated by the prefsObj
+         */
+        public void initPrefsObj() {
+            prefsObj = new GuiSwingViewDocumentEditor.PreferencesForDocumentSetting();
+            prefsObj.setUiDefault(); //set default (non-null) props
+            if (pane != null) {
+                prefsObj.setup(pane); //set props only set by the pane
+            }
+            setFrom(prefsObj); //update settings UI
+        }
 
-            wrapText = new TextWrapTextAction(pane);
-            fontStyleMenu.add(new JCheckBoxMenuItem(wrapText));
-            //delay checking after component setting-up
-            Timer timer = new Timer(200, e -> wrapText.updateSelected());
+        /**
+         * setting-up listeners of GUI settings ; the style will be immediately reflected by an UI action.
+         */
+        public void initListener() {
+            updateDisabled = true;
+            fontFamily.addItemListener(this::selectFontFamily);
+            styleBold.addChangeListener(this::styleChanged);
+            styleItalic.addChangeListener(this::styleChanged);
+            styleWrapLine.addChangeListener(this::styleChanged);
+            fontSize.addChangeListener(this::styleChanged);
+            spaceAbove.addChangeListener(this::styleChanged);
+            spaceLine.addChangeListener(this::styleChanged);
+            foregroundCustom.addChangeListener(this::styleChanged);
+            backgroundCustom.addChangeListener(this::styleChanged);
+            updateDisabled = false;
+            initTimerForAfterRendering();
+        }
+
+        /**
+         * called from {@link #initListener()} and starts an one-shot UI timer for {@link #updateGuiAndPrefsObjFromTargetTextPane()};
+         *  intended to update the setting props from the target-pane after displaying it.
+         */
+        public void initTimerForAfterRendering() {
+            Timer timer = new Timer(200, e -> updateGuiAndPrefsObjFromTargetTextPane()); //sync props after component revealed: the pane might change props
             timer.setRepeats(false);
             timer.start();
-
-            JButton styleButton = new JButton("Style");
-            PopupButtonListener buttonListener = new PopupButtonListener(styleButton, fontStyleMenu);
-            styleButton.addActionListener(buttonListener);
-            fontStyleMenu.addPopupMenuListener(buttonListener);
-
-            //line spacing: the model support double instead of float
-            lineSpacing = new JSpinner(new SpinnerNumberModel(defaultLineSpace,
-                    Short.MIN_VALUE, Short.MAX_VALUE, 0.1));
-            lineSpacing.addChangeListener(this);
-
-            updater = new EditingRunner(500, l -> updateStyle());
-
-            //color
-            JPanel backgroundColorPane = new JPanel();
-            JPanel foregroundColorPane = new JPanel();
-            backgroundCustom = new JCheckBox();
-            foregroundCustom = new JCheckBox();
-            backgroundCustom.addActionListener(e -> updateStyle());
-            foregroundCustom.addActionListener(e -> updateStyle());
-            backgroundColor = new SettingsWindow.ColorButton(getDefaultBackground(), updater::schedule);
-            foregroundColor = new SettingsWindow.ColorButton(getDefaultForeground(), updater::schedule);
-            backgroundColor.setEnabled(false);
-            foregroundColor.setEnabled(false);
-
-            backgroundColorPane.add(backgroundCustom);
-            backgroundColorPane.add(backgroundColor);
-            foregroundColorPane.add(foregroundCustom);
-            foregroundColorPane.add(foregroundColor);
-
-            new SettingsWindow.LabelGroup(this)
-                .addRow("Font:", fontFamily)
-                .addRow("Font Size:", fontSize)
-                .addRow("Style:", styleButton)
-                .addRow("Line Spacing:", lineSpacing)
-                .addRowFixed("Font Color:", foregroundColorPane)
-                .addRowFixed("Background:", backgroundColorPane)
-                .fitWidth();
-
-            updateFromStyle();
         }
 
-        public Font getListFont(String family) {
-            return nameFonts.computeIfAbsent(family,
-                    n -> new Font(family, Font.PLAIN, defaultFontSize));
-        }
-
-        @Override
-        public void itemStateChanged(ItemEvent e) {
+        public void selectFontFamily(ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-                updateStyle();
+                updateTargetTextPaneAndPrefsObjFromGui();
             }
         }
 
-        @Override
-        public void stateChanged(ChangeEvent e) {
-            updateStyle();
+        public void styleChanged(ChangeEvent e) {
+            updateTargetTextPaneAndPrefsObjFromGui();
         }
 
-        public void updateStyle() {
-            if (updateDisabled) {
-                return;
+        /** update style from GUI; calls {@link #updateTargetTextPaneAndPrefsObjFromGuiBody()} */
+        public void updateTargetTextPaneAndPrefsObjFromGui() {
+            if (!updateDisabled) {
+                updateTargetTextPaneAndPrefsObjFromGuiBody();
             }
-            StyledDocument doc = getTargetDocument();
-            Style style = getTargetStyle();
-            if (style != null) {
-                StyleConstants.setLineSpacing(style, ((Number) lineSpacing.getValue()).floatValue());
-                StyleConstants.setFontFamily(style, (String) fontFamily.getSelectedItem());
-                StyleConstants.setFontSize(style, ((Number) fontSize.getValue()).intValue());
-                StyleConstants.setBold(style, (Boolean) styleBold.getValue(Action.SELECTED_KEY));
-                StyleConstants.setItalic(style, (Boolean) styleItalic.getValue(Action.SELECTED_KEY));
-                if (backgroundCustom.isSelected() && pane != null) {
-                    pane.setBackground(backgroundColor.getColor());
-                } else if (pane != null) {
-                    pane.setBackground(getDefaultBackground());
-                }
-                backgroundColor.setEnabled(backgroundCustom.isSelected());
-                if (foregroundCustom.isSelected()) {
-                    StyleConstants.setForeground(style, foregroundColor.getColor());
-                } else {
-                    Color c = getDefaultForeground();
-                    StyleConstants.setForeground(style, c);
-                    if (pane != null) {
-                        pane.setForeground(c);
-                    }
-                }
-                foregroundColor.setEnabled(foregroundCustom.isSelected());
+        }
 
-                doc.setParagraphAttributes(0, doc.getLength(), style, true);
-                sendPreferences();
-            }
+        public void updateTargetTextPaneAndPrefsObjFromGuiBody() {
+            setTo(prefsObj);
+            sendPreferences();
             if (pane != null) {
+                prefsObj.applyTo(pane);
                 pane.repaint();
             }
         }
 
         /**
-         * @return the default color for background
-         * @since 1.2
+         * update the prefsObj by current GUI-settings props
+         * @param prefsObj the updated prefsObj
          */
-        protected Color getDefaultBackground() {
-            return UIManagerUtil.getInstance().getTextPaneBackground();
+        public void setTo(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting prefsObj) {
+            var data = prefsObj.getData();
+            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_LINE_SPACING, ((Number) spaceLine.getValue()).floatValue());
+            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_SPACE_ABOVE, ((Number) spaceAbove.getValue()).floatValue());
+            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FONT_FAMILY, fontFamily.getSelectedItem());
+            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FONT_SIZE, ((Number) fontSize.getValue()).intValue());
+            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_BOLD, styleBold.isSelected());
+            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_ITALIC, styleItalic.isSelected());
+            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_BACKGROUND_COLOR, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.toJsonColor(backgroundColor.getColor()));
+            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FOREGROUND_COLOR, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.toJsonColor(foregroundColor.getColor()));
+            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_BACKGROUND_CUSTOM, backgroundCustom.isSelected());
+            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FOREGROUND_CUSTOM, foregroundCustom.isSelected());
+            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_WRAP_TEXT, styleWrapLine.isSelected());
         }
 
         /**
-         * @return the default color for foreground
-         * @since 1.2
+         * update the GUI-settings props by reading the prefsObj
+         * @param prefsObj the source prefsObj
          */
-        protected Color getDefaultForeground() {
-            return UIManagerUtil.getInstance().getTextPaneForeground();
+        public void setFrom(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting prefsObj) {
+            var data = prefsObj.getData();
+            var lineSpacingVal = GuiSwingPrefsSupports.getAs(data, Number.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_LINE_SPACING, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.DEFAULT_NUM);
+            var spaceAboveVal = GuiSwingPrefsSupports.getAs(data, Number.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_SPACE_ABOVE, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.DEFAULT_NUM);
+            var fontFamilyVal = GuiSwingPrefsSupports.getAs(data, String.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FONT_FAMILY, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.DEFAULT_FONT_FAMILY);
+            var fontSizeVal = GuiSwingPrefsSupports.getAs(data, Number.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FONT_SIZE, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.DEFAULT_NUM);
+            var boldVal = GuiSwingPrefsSupports.getAs(data, Boolean.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_BOLD, false);
+            var italicVal = GuiSwingPrefsSupports.getAs(data, Boolean.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_ITALIC, false);
+            var wrapTextVal = GuiSwingPrefsSupports.getAs(data, Boolean.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_WRAP_TEXT, true);
+            var backgroundCustomVal = GuiSwingPrefsSupports.getAs(data, Boolean.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_BACKGROUND_CUSTOM, false);
+            var foregroundCustomVal = GuiSwingPrefsSupports.getAs(data, Boolean.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FOREGROUND_CUSTOM, false);
+            var backgroundColorVal = prefsObj.backgroundColor();
+            var foregroundColorVal = prefsObj.foregroundColor();
+            spaceLine.setValue(lineSpacingVal.floatValue());
+            spaceAbove.setValue(spaceAboveVal.floatValue());
+            fontFamily.setSelectedItem(fontFamilyVal);
+            fontSize.setValue(fontSizeVal.intValue());
+            styleBold.setSelected(boldVal);
+            styleItalic.setSelected(italicVal);
+            styleWrapLine.setSelected(wrapTextVal);
+            backgroundCustom.setSelected(backgroundCustomVal);
+            foregroundCustom.setSelected(foregroundCustomVal);
+            if (backgroundColorVal != null) {
+                backgroundColor.setColor(backgroundColorVal);
+            }
+            if (foregroundColorVal != null) {
+                foregroundColor.setColor(foregroundColorVal);
+            }
         }
 
-        public void updateFromStyle() {
+        public void setPreferencesUpdaterEventListener(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> eventListener) {
+            if (eventListener == null) {
+                this.preferencesUpdater = null;
+            } else {
+                this.preferencesUpdater = preferencesUpdaterForEventListener(pane, eventListener);
+            }
+        }
+
+        public void setPreferencesUpdater(Consumer<PreferencesForDocumentSetting> updater) {
+            this.preferencesUpdater = updater;
+        }
+
+        public static Consumer<PreferencesForDocumentSetting> preferencesUpdaterForEventListener(JComponent pane, Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> eventListener) {
+            return (prefsObj) -> {
+                if (pane instanceof GuiSwingView.ValuePane<?> valuePane && eventListener != null) {
+                    eventListener.accept(
+                            new GuiSwingPrefsSupports.PreferencesUpdateEvent(valuePane.getSwingViewContext(), prefsObj));
+                }
+            };
+        }
+
+        public void sendPreferences() {
+            if (preferencesUpdater != null) {
+                preferencesUpdater.accept(prefsObj);
+            }
+        }
+
+        public void updateGuiAndPrefsObjFromTargetTextPane() {
             if (updateDisabled) {
                 return;
             }
-            updateDisabled = true;
             try {
-                Style style = getTargetStyle();
-                if (style != null) {
-                    lineSpacing.setValue((double) StyleConstants.getLineSpacing(style));
-                    fontFamily.setSelectedItem(StyleConstants.getFontFamily(style));
-                    fontSize.setValue(StyleConstants.getFontSize(style));
-                    styleBold.putValue(Action.SELECTED_KEY, StyleConstants.isBold(style));
-                    styleItalic.putValue(Action.SELECTED_KEY, StyleConstants.isItalic(style));
-
-                    Color foreground = StyleConstants.getForeground(style);
-                    boolean foregroundFlag = !(foreground == null || Objects.equals(foreground, getDefaultForeground()));
-                    foregroundCustom.setSelected(foregroundFlag);
-
-                    Color background = StyleConstants.getForeground(style);
-                    boolean backgroundFlag = !(background == null || Objects.equals(background, getDefaultBackground()));
-                    backgroundCustom.setSelected(backgroundFlag);
-
-                    foregroundColor.setEnabled(foregroundFlag);
-                    backgroundColor.setEnabled(backgroundFlag);
-
-                    if (pane != null) {
-                        backgroundColor.setColorWithoutUpdate(pane.getBackground());
-                    }
-                    foregroundColor.setColorWithoutUpdate(StyleConstants.getForeground(style));
+                updateDisabled = true;
+                if (pane != null) {
+                    prefsObj.setFrom(pane);
                 }
+                setFrom(prefsObj);
             } finally {
                 updateDisabled = false;
             }
         }
 
-        public StyledDocument getTargetDocument() {
-            if (pane != null && pane.getDocument() instanceof StyledDocument) {
-                return (StyledDocument) pane.getDocument();
-            } else {
-                return null;
+        public void updateGuiAndTargetTextPaneFromPrefsObj() {
+            if (updateDisabled) {
+                return;
             }
-        }
-
-        public Style getTargetStyle() {
-            StyledDocument doc = getTargetDocument();
-            if (doc != null) {
-                return doc.getStyle(StyleContext.DEFAULT_STYLE);
-            } else {
-                return null;
-            }
-        }
-
-        @SuppressWarnings("unchecked")
-        public void setJson(Object obj) {
-            if (obj instanceof Map<?,?>) {
-                Map<String, ?> map = (Map<String, ?>) obj;
-                jsonSet(map, KEY_LINE_SPACING, Number.class, v -> lineSpacing.setValue(v.doubleValue()));
-                jsonSet(map, KEY_FONT_FAMILY, String.class, v -> fontFamily.setSelectedItem(v));
-                jsonSet(map, KEY_FONT_SIZE, Number.class, v -> fontSize.setValue(v));
-                jsonSet(map, KEY_BOLD, Boolean.class, v -> styleBold.putValue(Action.SELECTED_KEY, v));
-                jsonSet(map, KEY_ITALIC, Boolean.class, v -> styleItalic.putValue(Action.SELECTED_KEY,v));
-                Color c = fromJsonColor(map.get(KEY_BACKGROUND_COLOR));
-                if (c != null) {
-                    backgroundColor.setColor(c);
+            try {
+                updateDisabled = true;
+                if (pane != null) {
+                    prefsObj.applyTo(pane);
                 }
-                c = fromJsonColor(map.get(KEY_FOREGROUND_COLOR));
-                if (c != null) {
-                    foregroundColor.setColor(c);
-                }
-                jsonSet(map, KEY_BACKGROUND_CUSTOM, Boolean.class, backgroundCustom::setSelected);
-                jsonSet(map, KEY_FOREGROUND_CUSTOM, Boolean.class, foregroundCustom::setSelected);
-                jsonSet(map, KEY_WRAP_TEXT, Boolean.class, wrapText::change);
-                updateStyle();
+                setFrom(prefsObj);
+            } finally {
+                updateDisabled = false;
             }
         }
 
-        /** key for prefs
-         * @since 1.6.3 */ public static final String KEY_LINE_SPACING = "lineSpacing";
-        /** key for prefs
-         * @since 1.6.3 */ public static final String KEY_FONT_FAMILY = "fontFamily";
-        /** key for prefs
-         * @since 1.6.3 */ public static final String KEY_FONT_SIZE = "fontSize";
-        /** key for prefs
-         * @since 1.6.3 */ public static final String KEY_BOLD = "bold";
-        /** key for prefs
-         * @since 1.6.3 */ public static final String KEY_ITALIC = "italic";
-        /** key for prefs
-         * @since 1.6.3 */ public static final String KEY_BACKGROUND_COLOR = "backgroundColor";
-        /** key for prefs
-         * @since 1.6.3 */ public static final String KEY_FOREGROUND_COLOR = "foregroundColor";
-        /** key for prefs
-         * @since 1.6.3 */ public static final String KEY_BACKGROUND_CUSTOM = "backgroundCustom";
-        /** key for prefs
-         * @since 1.6.3 */ public static final String KEY_FOREGROUND_CUSTOM = "foregroundCustom";
-        /** key for prefs
-         * @since 1.6.3 */ public static final String KEY_WRAP_TEXT = "wrapText";
 
-        public Map<String,Object> getJson() {
-            Map<String, Object> json = new LinkedHashMap<>();
-            json.put(KEY_LINE_SPACING, ((Number) lineSpacing.getValue()).floatValue());
-            json.put(KEY_FONT_FAMILY, fontFamily.getSelectedItem());
-            json.put(KEY_FONT_SIZE, ((Number) fontSize.getValue()).intValue());
-            json.put(KEY_BOLD, styleBold.getValue(Action.SELECTED_KEY));
-            json.put(KEY_ITALIC, styleItalic.getValue(Action.SELECTED_KEY));
-            json.put(KEY_BACKGROUND_COLOR, toJsonColor(backgroundColor.getColor()));
-            json.put(KEY_FOREGROUND_COLOR, toJsonColor(foregroundColor.getColor()));
-            json.put(KEY_BACKGROUND_CUSTOM, backgroundCustom.isSelected());
-            json.put(KEY_FOREGROUND_CUSTOM, foregroundCustom.isSelected());
-            json.put(KEY_WRAP_TEXT, wrapText.getValue(Action.SELECTED_KEY));
-            return json;
+        public void shutDown() {
+            backgroundColor.dispose();
+            foregroundColor.dispose();
         }
 
-        public <T> void jsonSet(Map<String,?> json, String key, Class<T> type, Consumer<T> setter) {
-            Object v = json.get(key);
-            if (type.isInstance(v)) {
-                setter.accept(type.cast(v));
-            }
+        public JComboBox<String> getFontFamily() {
+            return fontFamily;
         }
 
-        public Color fromJsonColor(Object o) {
+        public JToggleButton getStyleBold() {
+            return styleBold;
+        }
+
+        public JToggleButton getStyleItalic() {
+            return styleItalic;
+        }
+
+        public JToggleButton getStyleWrapLine() {
+            return styleWrapLine;
+        }
+
+        public JSpinner getFontSize() {
+            return fontSize;
+        }
+
+        public JSpinner getSpaceAbove() {
+            return spaceAbove;
+        }
+
+        public JSpinner getSpaceLine() {
+            return spaceLine;
+        }
+
+        /**
+         * @return the backgroundCustom checkbox
+         * @since 1.2
+         */
+        public JCheckBox getForegroundCustom() {
+            return foregroundCustom;
+        }
+
+        public SettingsWindow.ColorButton getForegroundColor() {
+            return foregroundColor;
+        }
+
+        /**
+         * @return the foregroundCustom checkbox
+         * @since 1.2
+         */
+        public JCheckBox getBackgroundCustom() {
+            return backgroundCustom;
+        }
+
+        public SettingsWindow.ColorButton getBackgroundColor() {
+            return backgroundColor;
+        }
+
+
+        @Override
+        public void loadFrom(GuiPreferences prefs) {
+            prefsObj.loadFrom(prefs);
+            updateGuiAndTargetTextPaneFromPrefsObj();
+        }
+
+        @Override
+        public void saveTo(GuiPreferences prefs) {
+            prefsObj.saveTo(prefs);
+        }
+
+        public JEditorPane getPane() {
+            return pane;
+        }
+
+        public PreferencesForDocumentSetting getPrefsObj() {
+            return prefsObj;
+        }
+    }
+
+    /**
+     * prefs obj for document-settings; currently the settings have properties of entire document styling only for editing plain-texts;
+     *  minimize properties.
+     *  Currently supports the following properties;
+     *   <ul>
+     *       <li>float {@code lineSpacing}: the factor of spaces between lines. {@link StyleConstants#LineSpacing}</li>
+     *       <li>float {@code spaceAbove}: points of spaces before the paragraph. {@link StyleConstants#SpaceAbove}</li>
+     *       <li>String {@code fontFamily}: the name of the font. {@link StyleConstants#FontFamily}</li>
+     *       <li>int {@code fontSize}: points of the font. {@link StyleConstants#FontSize}</li>
+     *       <li>boolean {@code bold}: font-style bold. {@link StyleConstants#Bold}</li>
+     *       <li>boolean {@code italic}: font-style italic. {@link StyleConstants#Italic}</li>
+     *       <li>boolean {@code backgroundCustom}: the flag for enabling {@code backgroundColor}</li>
+     *       <li>boolean {@code foregroundCustom}: the flag for enabling {@code foregroundColor}</li>
+     *       <li>Color {@code backgroundColor}: the background color. available only if {@code backgroundCustom}=true. {@link StyleConstants#Background}</li>
+     *       <li>Color {@code foreground}: the text color. available only if {@code foregrooundCustom}=true. {@link StyleConstants#Foreground}</li>
+     *       <li>boolean {@code wrapText}: the flag for wrapping-line; can be implemented by horizontal-scroll-bar-policy and preferred-size</li>
+     *   </ul>
+     * @since 1.7
+     */
+    public static class PreferencesForDocumentSetting implements GuiSwingPrefsSupports.Preferences {
+        public static final String KEY_LINE_SPACING = "lineSpacing";
+        public static final String KEY_SPACE_ABOVE = "spaceAbove";
+        public static final String KEY_FONT_FAMILY = "fontFamily";
+        public static final String KEY_FONT_SIZE = "fontSize";
+        public static final String KEY_BOLD = "bold";
+        public static final String KEY_ITALIC = "italic";
+        public static final String KEY_BACKGROUND_COLOR = "backgroundColor";
+        public static final String KEY_FOREGROUND_COLOR = "foregroundColor";
+        public static final String KEY_BACKGROUND_CUSTOM = "backgroundCustom";
+        public static final String KEY_FOREGROUND_CUSTOM = "foregroundCustom";
+        public static final String KEY_WRAP_TEXT = "wrapText";
+        protected Map<String, Object> data = new LinkedHashMap<>();
+
+        public static final String DEFAULT_FONT_FAMILY = "";
+        public static final Number DEFAULT_NUM = -1;
+
+        /**
+         * initialized by null-values and black and white colors.
+         */
+        public PreferencesForDocumentSetting() {
+            data.put(KEY_LINE_SPACING, DEFAULT_NUM);
+            data.put(KEY_SPACE_ABOVE, DEFAULT_NUM);
+            data.put(KEY_FONT_FAMILY, DEFAULT_FONT_FAMILY);
+            data.put(KEY_FONT_SIZE, DEFAULT_NUM);
+            data.put(KEY_BOLD, false);
+            data.put(KEY_ITALIC, false);
+            data.put(KEY_BACKGROUND_COLOR, toJsonColor(255, 255, 255, 255));
+            data.put(KEY_FOREGROUND_COLOR, toJsonColor(0, 0, 0, 255));
+            data.put(KEY_BACKGROUND_CUSTOM, false);
+            data.put(KEY_FOREGROUND_CUSTOM, false);
+            data.put(KEY_WRAP_TEXT, true);
+        }
+
+        /**
+         * overwrites properties by values from {@link UIManagerUtil};
+         *  also {@code lineSpacing} is 0.2, {@code spaceAbove} is 2.0, no background and foregorund custom,
+         *    and {@code wrapText} is true.
+         */
+        public void setUiDefault() {
+            var ui = UIManagerUtil.getInstance();
+            var font = ui.getEditorPaneFont();
+            data.put(KEY_LINE_SPACING, ui.getScaledSizeFloat(0.2f));
+            data.put(KEY_SPACE_ABOVE, ui.getScaledSizeFloat(2.0f));
+            data.put(KEY_FONT_FAMILY, font.getFamily());
+            data.put(KEY_FONT_SIZE, font.getSize());
+            data.put(KEY_BOLD, font.isBold());
+            data.put(KEY_ITALIC, font.isItalic());
+            data.put(KEY_BACKGROUND_COLOR, toJsonColor(ui.getTextPaneBackground()));
+            data.put(KEY_FOREGROUND_COLOR, toJsonColor(ui.getTextPaneForeground()));
+            data.put(KEY_BACKGROUND_CUSTOM, false);
+            data.put(KEY_FOREGROUND_CUSTOM, false);
+            data.put(KEY_WRAP_TEXT, true);
+        }
+
+        public static Object toJsonColor(Color c) {
+            return toJsonColor(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
+        }
+
+        public static Object toJsonColor(int r, int g, int b, int a) {
+            return new ArrayList<>(Arrays.asList(r, g, b, a));
+        }
+
+        public static Color fromJsonColor(Object o) {
             if (o != null) {
                 List<?> list = (List<?>) o;
                 int r = !list.isEmpty() ? ((Number) list.get(0)).intValue() : 0;
@@ -1041,42 +1241,256 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             }
         }
 
-        public Object toJsonColor(Color c) {
-            return new ArrayList<>(Arrays.asList(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()));
+        /**
+         * @return the direct reference to the properties
+         */
+        public Map<String, Object> getData() {
+            return data;
         }
 
-        public void shutDown() {
-            updater.shutdown();
-            backgroundColor.dispose();
-            foregroundColor.dispose();
+        /**
+         * set propertis from the given style. if the style has no attribute-value, the property will be the null-value.
+         * @param style the source style can be {@link Style}
+         */
+        public void setFrom(MutableAttributeSet style) {
+            var lineSpacing = style.getAttribute(StyleConstants.LineSpacing);
+            var spaceAbove = style.getAttribute(StyleConstants.SpaceAbove);
+            var fontFamily = style.getAttribute(StyleConstants.FontFamily);
+            var fontSize = style.getAttribute(StyleConstants.FontSize);
+            var bold = style.getAttribute(StyleConstants.Bold);
+            var italic = style.getAttribute(StyleConstants.Italic);
+            var backgroundColor = (Color) style.getAttribute(StyleConstants.Background);
+            var foregroundColor = (Color) style.getAttribute(StyleConstants.Foreground);
+            data.put(KEY_LINE_SPACING, lineSpacing == null ? DEFAULT_NUM : lineSpacing);
+            data.put(KEY_SPACE_ABOVE, spaceAbove == null ? DEFAULT_NUM : spaceAbove);
+            data.put(KEY_FONT_FAMILY, fontFamily == null ? DEFAULT_FONT_FAMILY : fontFamily);
+            data.put(KEY_FONT_SIZE, fontSize == null ? DEFAULT_NUM : fontSize);
+            data.put(KEY_BOLD, bold == null ? false : bold);
+            data.put(KEY_ITALIC, italic == null ? false : italic);
+            data.put(KEY_BACKGROUND_CUSTOM, backgroundColor != null);
+            data.put(KEY_FOREGROUND_CUSTOM, foregroundColor != null);
+            data.put(KEY_BACKGROUND_COLOR, backgroundColor == null ? DEFAULT_NUM : toJsonColor(backgroundColor));
+            data.put(KEY_FOREGROUND_COLOR, foregroundColor == null ? DEFAULT_NUM : toJsonColor(foregroundColor));
         }
 
-        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> preferencesUpdater) {
-            this.preferencesUpdater = preferencesUpdater;
+        /**
+         * @param pane the target-text-pane
+         * @see #setFrom(MutableAttributeSet)
+         */
+        public void setFrom(JComponent pane) {
+            var style = getTargetStyle(pane);
+            if (style != null) {
+                setFrom(style);
+            }
+            var wrapScroll = isWrapLine(scrollPane(pane));
+            data.put(KEY_WRAP_TEXT, wrapScroll);
         }
 
-        public void sendPreferences() {
-            if (pane instanceof ValuePane<?> valuePane && preferencesUpdater != null) {
-                preferencesUpdater.accept(
-                        new GuiSwingPreferences.PreferencesUpdateEvent(valuePane.getSwingViewContext(), this));
+        /**
+         * set properties from the given style; only the properties the style have,
+         *  and {@link #applyTo(MutableAttributeSet)} to reflect the all propertis of the prefs to the target-pane
+         * @param style the source style
+         */
+        public void setup(MutableAttributeSet style) {
+            var lineSpacing = style.getAttribute(StyleConstants.LineSpacing);
+            var spaceAbove = style.getAttribute(StyleConstants.SpaceAbove);
+            var fontFamily = style.getAttribute(StyleConstants.FontFamily);
+            var fontSize = style.getAttribute(StyleConstants.FontSize);
+            var bold = style.getAttribute(StyleConstants.Bold);
+            var italic = style.getAttribute(StyleConstants.Italic);
+            var backgroundColor = (Color) style.getAttribute(StyleConstants.Background);
+            var foregroundColor = (Color) style.getAttribute(StyleConstants.Foreground);
+            if (lineSpacing != null) { data.put(KEY_LINE_SPACING, lineSpacing); }
+            if (spaceAbove != null) { data.put(KEY_SPACE_ABOVE, spaceAbove); }
+            if (fontFamily != null) { data.put(KEY_FONT_FAMILY, fontFamily); }
+            if (fontSize != null) { data.put(KEY_FONT_SIZE, fontSize); }
+            if (bold != null) { data.put(KEY_BOLD, bold); }
+            if (italic != null) { data.put(KEY_ITALIC, italic); }
+            data.put(KEY_BACKGROUND_CUSTOM, (backgroundColor != null));
+            data.put(KEY_FOREGROUND_CUSTOM, (foregroundColor != null));
+            if (backgroundColor != null) { data.put(KEY_BACKGROUND_COLOR, toJsonColor(backgroundColor)); }
+            if (foregroundColor != null) { data.put(KEY_FOREGROUND_COLOR, toJsonColor(foregroundColor)); }
+            applyTo(style);
+        }
+
+        /**
+         * calls {@link #setup(MutableAttributeSet)} for the document of the pane ({@link #getTargetStyle(JComponent)});
+         *  and {@link #applyToDocument(StyledDocument, MutableAttributeSet)} for overwritng the style to the entire text.
+         *  Also update {@code wrapText} and {@link #applyToComponentWithoutDocument(JComponent)}
+         * @param pane the target text-pane
+         * @see #setup(MutableAttributeSet)
+         */
+        public void setup(JComponent pane) {
+            var style = getTargetStyle(pane);
+            if (style != null) {
+                setup(style);
+                applyToDocument(getTargetDocument(pane), style);
+            }
+            var wrapScroll = isWrapLine(scrollPane(pane));
+            data.put(KEY_WRAP_TEXT, wrapScroll);
+            applyToComponentWithoutDocument(pane);
+        }
+
+        /**
+         * update the target style by properties of the prefs, or if remove attributes by null-values
+         * @param style the modified style
+         */
+        public void applyTo(MutableAttributeSet style) {
+            var lineSpacing = GuiSwingPrefsSupports.getAs(data, Number.class, KEY_LINE_SPACING, DEFAULT_NUM);
+            var spaceAbove = GuiSwingPrefsSupports.getAs(data, Number.class, KEY_SPACE_ABOVE, DEFAULT_NUM);
+            var fontFamily = GuiSwingPrefsSupports.getAs(data, String.class, KEY_FONT_FAMILY, DEFAULT_FONT_FAMILY);
+            var fontSize = GuiSwingPrefsSupports.getAs(data, Number.class, KEY_FONT_SIZE, DEFAULT_NUM);
+            var bold = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_BOLD, false);
+            var italic = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_ITALIC, false);
+            var wrapText = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_WRAP_TEXT, true);
+            var backgroundCustom = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_BACKGROUND_CUSTOM, false);
+            var foregroundCustom = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_FOREGROUND_CUSTOM, false);
+            var backgroundColor = backgroundColor();
+            var foregroundColor = foregroundColor();
+
+            if (lineSpacing.equals(DEFAULT_NUM)) {
+                style.removeAttribute(StyleConstants.LineSpacing);
+            } else {
+                StyleConstants.setLineSpacing(style, lineSpacing.floatValue());
+            }
+            if (spaceAbove.equals(DEFAULT_NUM)) {
+                style.removeAttribute(StyleConstants.SpaceAbove);
+            } else {
+                StyleConstants.setSpaceAbove(style, spaceAbove.floatValue());
+            }
+            if (fontFamily.equals(DEFAULT_FONT_FAMILY)) {
+                style.removeAttribute(StyleConstants.FontFamily);
+            } else {
+                StyleConstants.setFontFamily(style, fontFamily);
+            }
+            if (fontSize.equals(DEFAULT_NUM)) {
+                style.removeAttribute(StyleConstants.FontSize);
+            } else {
+                StyleConstants.setFontSize(style, fontSize.intValue());
+            }
+            StyleConstants.setBold(style, bold);
+            StyleConstants.setItalic(style, italic);
+            if (backgroundColor == null) {
+                style.removeAttribute(StyleConstants.Background);
+            } else {
+                StyleConstants.setBackground(style, backgroundColor);
+            }
+            if (foregroundColor == null) {
+                style.removeAttribute(StyleConstants.Foreground);
+            } else {
+                StyleConstants.setForeground(style, foregroundColor);
+            }
+        }
+
+        /**
+         * @return the {@code backgroundColor}-property if the prop is set and {@code backgroundCustom} is true, or null
+         */
+        public Color backgroundColor() {
+            var backgroundCustom = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_BACKGROUND_CUSTOM, false);
+            var backfgroundColor = fromJsonColor(GuiSwingPrefsSupports.getAsListNonNull(data, Number.class, KEY_BACKGROUND_COLOR));
+            if (backgroundCustom && backfgroundColor != null) {
+                return backfgroundColor;
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * @return the {@code foregroundColor}-property if the prop is set and {@code foregroundCustom} is true, or null
+         */
+        public Color foregroundColor() {
+            var foregroundCustom = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_FOREGROUND_CUSTOM, false);
+            var foregroundColor = fromJsonColor(GuiSwingPrefsSupports.getAsListNonNull(data, Number.class, KEY_FOREGROUND_COLOR));
+            if (foregroundCustom && foregroundColor != null) {
+                return foregroundColor;
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * set style of the target-text-pane by {@link #getTargetStyle(JComponent)} and {@link #applyTo(MutableAttributeSet)}
+         *  ,{@link #applyToDocument(StyledDocument, MutableAttributeSet)} and {@link #applyToComponentWithoutDocument(JComponent)}.
+         * @param pane the target text-pane
+         */
+        public void applyTo(JComponent pane) {
+            var style = getTargetStyle(pane);
+            if (style != null) {
+                applyTo(style);
+                applyToDocument(getTargetDocument(pane), style);
+            }
+            applyToComponentWithoutDocument(pane);
+        }
+
+        /**
+         * set the style of the entire-text of the document
+         * @param doc the target-document or null
+         * @param style the stytle to be set
+         */
+        public void applyToDocument(StyledDocument doc, MutableAttributeSet style) {
+            if (doc != null) {
+                doc.setParagraphAttributes(0, doc.getLength(), style, true);
+            }
+        }
+
+        /**
+         * set the background and foreground properties ({@link JComponent#setBackground(Color)} and {@link JComponent#setForeground(Color)})
+         *  and wrapText by {@link #setWrapLine(JScrollPane, JComponent, boolean)}
+         * @param pane the target text-pane
+         */
+        public void applyToComponentWithoutDocument(JComponent pane) {
+            var backfgroundColor = backgroundColor();
+            var foregroundColor = foregroundColor();
+            pane.setBackground(backfgroundColor);
+            pane.setForeground(foregroundColor);
+            var wrapLine = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_WRAP_TEXT, true);
+            setWrapLine(scrollPane(pane), pane, wrapLine);
+        }
+
+        public StyledDocument getTargetDocument(JComponent pane) {
+            if (pane instanceof JTextComponent textPane &&
+                    textPane.getDocument() instanceof StyledDocument doc) {
+                return doc;
+            } else {
+                return null;
+            }
+        }
+
+        public Style getTargetStyle(JComponent pane) {
+            var doc = getTargetDocument(pane);
+            if (doc != null) {
+                return doc.getStyle(StyleContext.DEFAULT_STYLE);
+            } else {
+                return null;
+            }
+        }
+
+        public boolean isWrapLineNotMatch(JScrollPane pane, boolean tested) {
+            return GuiSwingViewDocumentEditor.isWrapLineNotMatch(pane, tested);
+        }
+
+        /**
+         * if parentScroll is non-null and {@link #isWrapLineNotMatch(JScrollPane, boolean)} with f,
+         *  changes the wrapping-line by {@link GuiSwingViewDocumentEditor#setWrapLine(JScrollPane, boolean)}.
+         *  Also if the field is a {@link WrapLineSupport}, call {@link WrapLineSupport#setWrapLine(boolean)}
+         * @param parentScroll the parent pane of the field
+         * @param field the target text-component
+         * @param f the new flag value of {@code wrapText}
+         */
+        public void setWrapLine(JScrollPane parentScroll, JComponent field, boolean f) {
+            if (parentScroll != null && isWrapLineNotMatch(parentScroll, f)) {
+                GuiSwingViewDocumentEditor.setWrapLine(parentScroll, f);
+                if (field instanceof WrapLineSupport editorPane) {
+                    editorPane.setWrapLine(f);
+                }
             }
         }
 
         @Override
         public void loadFrom(GuiPreferences prefs) {
-            setJson(prefsToJson(prefs));
-            updateStyle();
-        }
-
-        /**
-         * @param prefs the source preferences
-         * @return the JSON map restored from prefs, can be passed to {@link #setJson(Object)}
-         * @since 1.6.3
-         */
-        public Map<String, Object> prefsToJson(GuiPreferences prefs) {
             GuiPreferences.GuiValueStore store = prefs.getValueStore();
-            Map<String,Object> json = new HashMap<>();
-            for (Map.Entry<String,Object> e : getJson().entrySet()) { //JSON has all keys and values
+            var json = getData();
+            for (Map.Entry<String,Object> e : json.entrySet()) { //JSON has all keys and values
                 String k = e.getKey();
                 String storeVal = store.getString(k, "");
                 Object exVal = e.getValue();
@@ -1095,13 +1509,12 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                     }
                 }
             }
-            return json;
         }
 
         @Override
         public void saveTo(GuiPreferences prefs) {
             GuiPreferences.GuiValueStore store = prefs.getValueStore();
-            for (Map.Entry<String,Object> e : getJson().entrySet()) {
+            for (Map.Entry<String,Object> e : getData().entrySet()) {
                 String k = e.getKey();
                 Object v = e.getValue();
                 switch (v) {
@@ -1112,58 +1525,6 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                             .withNewLines(false).write(v).toSource());
                 }
             }
-        }
-
-        public JComboBox<String> getFontFamily() {
-            return fontFamily;
-        }
-
-        public JSpinner getFontSize() {
-            return fontSize;
-        }
-
-        public JPopupMenu getFontStyleMenu() {
-            return fontStyleMenu;
-        }
-
-        public JSpinner getLineSpacing() {
-            return lineSpacing;
-        }
-
-        public SettingsWindow.ColorButton getBackgroundColor() {
-            return backgroundColor;
-        }
-
-        /**
-         * @return the backgroundCustom checkbox
-         * @since 1.2
-         */
-        public JCheckBox getBackgroundCustom() {
-            return backgroundCustom;
-        }
-
-        /**
-         * @return the foregroundCustom checkbox
-         * @since 1.2
-         */
-        public JCheckBox getForegroundCustom() {
-            return foregroundCustom;
-        }
-
-        public SettingsWindow.ColorButton getForegroundColor() {
-            return foregroundColor;
-        }
-
-        public StyleSetAction getStyleItalic() {
-            return styleItalic;
-        }
-
-        public StyleSetAction getStyleBold() {
-            return styleBold;
-        }
-
-        public TextWrapTextAction getWrapText() {
-            return wrapText;
         }
     }
 
@@ -1228,8 +1589,5 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             actionPerformed(null);
         }
     }
-
-
-    ///////////////////
 
 }

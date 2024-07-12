@@ -5,11 +5,12 @@ import org.autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifier;
 import org.autogui.swing.GuiSwingActionDefault;
 import org.autogui.swing.GuiSwingJsonTransfer;
-import org.autogui.swing.GuiSwingPreferences;
 import org.autogui.swing.GuiSwingView;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingView.ValuePane;
 import org.autogui.swing.GuiSwingViewLabel.PropertyLabel;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import org.autogui.swing.util.*;
 import org.autogui.swing.util.PopupCategorized.CategorizedMenuItem;
@@ -163,13 +164,13 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     @Override
-    public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
-        setForComponents(GuiSwingPreferences.PreferencesUpdateSupport.class,
+    public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
+        setForComponents(GuiSwingPrefsSupports.PreferencesUpdateSupport.class,
                 p -> p.setPreferencesUpdater(updater), renderer, editor);
     }
 
     @Override
-    public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+    public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
         setForComponents(ValuePane.class,
                 p -> p.loadSwingPreferences(prefs, options), renderer, editor);
     }

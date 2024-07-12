@@ -5,6 +5,8 @@ import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.mapping.GuiReprObjectTabbedPane;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
@@ -101,14 +103,14 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
             try {
-                options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
                 super.loadSwingPreferences(prefs, options);
                 options.apply(tabPreferencesUpdater, prefs.getDescendant(getSwingViewContext()));
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
-                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -123,14 +125,14 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         }
 
         @Override
-        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             super.setPreferencesUpdater(updater);
             tabPreferencesUpdater.setUpdater(updater);
         }
     }
 
     public static class TabPreferencesUpdater implements ChangeListener {
-        protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater;
+        protected Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater;
         protected GuiMappingContext context;
         protected Supplier<JTabbedPane> pane;
         protected PreferencesForTab prefs;
@@ -142,7 +144,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
             prefs = new PreferencesForTab();
         }
 
-        public void setUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             this.updater = updater;
         }
 
@@ -151,7 +153,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
             if (!savingDisabled) {
                 prefs.set(pane.get());
                 if (updater != null) {
-                    updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, prefs));
+                    updater.accept(new GuiSwingPrefsSupports.PreferencesUpdateEvent(context, prefs));
                 }
             }
         }
@@ -171,7 +173,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         }
     }
 
-    public static class PreferencesForTab implements GuiSwingPreferences.PreferencesByJsonEntry {
+    public static class PreferencesForTab implements GuiSwingPrefsSupports.PreferencesByJsonEntry {
         protected int selectedIndex;
 
         public PreferencesForTab() {}
@@ -216,7 +218,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
         @Override
         public void setJson(Object json) {
             if (json instanceof Map<?,?> map) {
-                selectedIndex = GuiSwingPreferences.getAs(map, Integer.class, "selectedIndex", 0);
+                selectedIndex = GuiSwingPrefsSupports.getAs(map, Integer.class, "selectedIndex", 0);
             }
         }
     }

@@ -6,12 +6,13 @@ import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprCollectionTable;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifier;
 import org.autogui.swing.GuiSwingJsonTransfer;
-import org.autogui.swing.GuiSwingPreferences;
-import org.autogui.swing.GuiSwingPreferences.PreferencesUpdateEvent;
-import org.autogui.swing.GuiSwingPreferences.PreferencesUpdateSupport;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports.PreferencesUpdateEvent;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports.PreferencesUpdateSupport;
 import org.autogui.swing.GuiSwingTaskRunner;
 import org.autogui.swing.GuiSwingView.SettingsWindowClient;
 import org.autogui.swing.GuiSwingViewCollectionTable.CollectionTable;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.table.GuiSwingTableColumn.ObjectTableColumnWithContext;
 import org.autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import org.autogui.swing.util.PopupCategorized;
@@ -236,7 +237,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
 
         public void applyPrefsToNonContext(ObjectTableColumn column) {
-            applyPrefsToNonContext(column, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+            applyPrefsToNonContext(column, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
         }
 
         /**
@@ -244,9 +245,9 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
          * @param options processor
          * @since 1.6.3
          */
-        public void applyPrefsToNonContext(ObjectTableColumn column, GuiSwingPreferences.PrefsApplyOptions options) {
+        public void applyPrefsToNonContext(ObjectTableColumn column, GuiSwingPrefsApplyOptions options) {
             try {
-                options.begin(column, null, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.begin(column, null, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
                 options.applyTo(nonContextWidth, column);
                 if (!options.applyTo(nonContextOrder, this, column.getTableColumn().getModelIndex())) {
                     PreferencesForTableColumnOrder o = nonContextOrder.get(column.getTableColumn().getModelIndex());
@@ -255,12 +256,12 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
                     }
                 }
             } finally {
-                options.end(column, null, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.end(column, null, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
         public void loadPrefsTo(GuiPreferences parentPrefs, ObjectTableColumnWithContext column) {
-            loadPrefsTo(parentPrefs, column, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+            loadPrefsTo(parentPrefs, column, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
         }
 
         /**
@@ -269,9 +270,9 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
          * @param options the processor
          * @since 1.6.3
          */
-        public void loadPrefsTo(GuiPreferences parentPrefs, ObjectTableColumnWithContext column, GuiSwingPreferences.PrefsApplyOptions options) {
+        public void loadPrefsTo(GuiPreferences parentPrefs, ObjectTableColumnWithContext column, GuiSwingPrefsApplyOptions options) {
             try {
-                options.begin(column, parentPrefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.begin(column, parentPrefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
                 GuiPreferences prefs = parentPrefs.getDescendant(column.getContext());
                 PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth();
                 options.loadFromAndApplyTo(w, column.asColumn(), prefs);
@@ -284,7 +285,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
                     }
                 }
             } finally {
-                options.end(column, parentPrefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.end(column, parentPrefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -313,7 +314,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
 
         public void loadSwingPreferences(GuiPreferences prefs) {
-            loadSwingPreferences(prefs, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+            loadSwingPreferences(prefs, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
         }
 
         /**
@@ -321,9 +322,9 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
          * @param options the prefs processor
          * @since 1.6.3
          */
-        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
             try {
-                options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
                 if (options.isSavingAsCurrentPreferencesInColumns()) {
                     currentPreferences = prefs;
                 }
@@ -339,7 +340,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
                     }
                 }
             } finally {
-                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -383,7 +384,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
      *    "$columnOrder": { "0": { "modelIndex":m, "viewIndex":i},... }
      * </pre>
      */
-    public static class PreferencesForTableColumnOrderStatic implements GuiSwingPreferences.PreferencesByJsonEntry {
+    public static class PreferencesForTableColumnOrderStatic implements GuiSwingPrefsSupports.PreferencesByJsonEntry {
         protected Map<Integer, PreferencesForTableColumnOrder> modelIndexToOrder = new LinkedHashMap<>();
 
         public PreferencesForTableColumnOrderStatic() {}
@@ -453,7 +454,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
      *     "$columnOrder": { "modelIndex":m, "viewIndex":v}
      * </pre>
      */
-    public static class PreferencesForTableColumnOrder implements GuiSwingPreferences.PreferencesByJsonEntry {
+    public static class PreferencesForTableColumnOrder implements GuiSwingPrefsSupports.PreferencesByJsonEntry {
         protected int modelIndex;
         protected int viewIndex;
 
@@ -532,8 +533,8 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         @Override
         public void setJson(Object json) {
             if (json instanceof Map<?,?> map) {
-                modelIndex = GuiSwingPreferences.getAs(map, Integer.class, "modelIndex", -1);
-                viewIndex = GuiSwingPreferences.getAs(map, Integer.class, "viewIndex", -1);
+                modelIndex = GuiSwingPrefsSupports.getAs(map, Integer.class, "modelIndex", -1);
+                viewIndex = GuiSwingPrefsSupports.getAs(map, Integer.class, "viewIndex", -1);
             }
         }
     }
@@ -544,7 +545,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
      *     "$columnWidth": {"0":{ "width":w },... }
      * </pre>
      */
-    public static class PreferencesForTableColumnWidthStatic implements GuiSwingPreferences.PreferencesByJsonEntry {
+    public static class PreferencesForTableColumnWidthStatic implements GuiSwingPrefsSupports.PreferencesByJsonEntry {
         protected Map<Integer, PreferencesForTableColumnWidth> modelIndexToWidth = new LinkedHashMap<>();
         public PreferencesForTableColumnWidthStatic() {}
         @Override
@@ -605,7 +606,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
      *     "$columnWidth": {"width":w}
      * </pre>
      */
-    public static class PreferencesForTableColumnWidth implements GuiSwingPreferences.PreferencesByJsonEntry {
+    public static class PreferencesForTableColumnWidth implements GuiSwingPrefsSupports.PreferencesByJsonEntry {
         protected int width;
 
         public PreferencesForTableColumnWidth() {
@@ -654,7 +655,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         @Override
         public void setJson(Object json) {
             if (json instanceof Map<?,?> map) {
-                width = GuiSwingPreferences.getAs(map, Integer.class, "width", -1);
+                width = GuiSwingPrefsSupports.getAs(map, Integer.class, "width", -1);
             }
         }
     }

@@ -6,6 +6,7 @@ import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.base.type.GuiTypeObject;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -333,7 +334,7 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
         context.setPreferences(parentPrefs);
 
         GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropInt));
-        i.setPreferencesUpdater(GuiSwingPreferences.PreferencesUpdateEvent::save);
+        i.setPreferencesUpdater(GuiSwingPrefsSupports.PreferencesUpdateEvent::save);
 
         EditWait wait = editWait(i.getEditingRunner());
 

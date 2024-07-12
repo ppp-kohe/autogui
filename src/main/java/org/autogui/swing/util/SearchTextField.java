@@ -57,7 +57,7 @@ public class SearchTextField extends JComponent {
     protected SearchTextFieldModel model;
     protected JButton icon;
     protected JTextField field;
-    protected EditingRunner editingRunner;
+    protected volatile EditingRunner editingRunner;
 
     protected PopupExtensionText popup;
     protected JButton popupButton;
@@ -185,6 +185,7 @@ public class SearchTextField extends JComponent {
         initField();
         initPopup();
         initLayout();
+        initAfter();
     }
 
     public void initIcon() {
@@ -237,6 +238,10 @@ public class SearchTextField extends JComponent {
         field.addActionListener(editingRunner);
         field.addFocusListener(editingRunner);
         field.addInputMethodListener(editingRunner);
+    }
+
+    public void initAfter() {
+        editingRunner.setEnabled(true);
     }
 
     /**

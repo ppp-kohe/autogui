@@ -8,6 +8,7 @@ import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.base.type.GuiTypeObject;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -118,7 +119,7 @@ public class GuiSwingViewTabbedPaneTest extends GuiSwingTestCase {
         GuiPreferences parentPrefs = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
         context.setPreferences(parentPrefs);
         GuiSwingViewTabbedPane.ObjectTabbedPane pane = runGet(this::create);
-        pane.setPreferencesUpdater(GuiSwingPreferences.PreferencesUpdateEvent::save);
+        pane.setPreferencesUpdater(GuiSwingPrefsSupports.PreferencesUpdateEvent::save);
 
         run(() -> pane.getTabbedPane().setSelectedIndex(1));
 

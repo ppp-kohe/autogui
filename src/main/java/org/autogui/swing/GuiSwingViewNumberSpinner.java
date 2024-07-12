@@ -1,6 +1,8 @@
 package org.autogui.swing;
 
 import org.autogui.base.log.GuiLogManager;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.table.TableTargetColumnAction;
 import org.autogui.base.mapping.*;
 import org.autogui.swing.util.*;
@@ -65,7 +67,7 @@ import java.util.stream.Collectors;
  *       }
  *   </pre>
  *
- *   <code>$settingWindow</code> : {@link GuiSwingPreferences.WindowPreferencesUpdater}
+ *   <code>$settingWindow</code> : {@link GuiSwingPrefsSupports.WindowPreferencesUpdater}
  */
 @SuppressWarnings("this-escape")
 public class GuiSwingViewNumberSpinner implements GuiSwingView {
@@ -183,11 +185,11 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
     public static class PropertyNumberSpinner extends InfinityNumberSpinner
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>, SettingsWindowClient,
-            GuiSwingPreferences.PreferencesUpdateSupport {
+            GuiSwingPrefsSupports.PreferencesUpdateSupport {
         @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
-        protected EditingRunner editingRunner;
+        protected volatile EditingRunner editingRunner;
         protected PopupExtensionText popup;
         protected KeyUndoManager undoManager = new KeyUndoManager();
         protected SettingsWindow settingsWindow;
@@ -219,6 +221,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             initPopup();
             initDragDrop();
             initUndo();
+            initAfter();
         }
 
         public void initName() {
@@ -276,6 +279,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public void initUndo() {
             undoManager.putListenersAndActionsTo(getEditorField());
+        }
+
+        public void initAfter() {
+            editingRunner.setEnabled(true);
         }
 
         @Override
@@ -436,7 +443,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
             try {
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 getModelTyped().loadFrom(targetPrefs);
@@ -463,7 +470,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             settingAction.setUpdater(updater);
             modelPreferencesUpdater.setUpdater(updater);
         }
@@ -651,7 +658,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
     }
 
-    public static class TypedSpinnerNumberModel extends SpinnerNumberModel implements GuiSwingPreferences.Preferences {
+    public static class TypedSpinnerNumberModel extends SpinnerNumberModel implements GuiSwingPrefsSupports.Preferences {
         @Serial private static final long serialVersionUID = 1L;
         protected GuiReprValueNumberSpinner.NumberType numberType;
         protected int depth;
@@ -888,21 +895,21 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected GuiMappingContext context;
         protected TypedSpinnerNumberModel model;
 
-        protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater;
+        protected Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater;
 
         public TypedSpinnerNumberModelPreferencesUpdater(GuiMappingContext context, TypedSpinnerNumberModel model) {
             this.context = context;
             this.model = model;
         }
 
-        public void setUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             this.updater = updater;
         }
 
         @Override
         public void stateChanged(ChangeEvent e) {
             if (updater != null) {
-                updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, model));
+                updater.accept(new GuiSwingPrefsSupports.PreferencesUpdateEvent(context, model));
             }
         }
     }
@@ -962,7 +969,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         protected NumberSettingPane pane;
         protected JPanel contentPane;
         protected SettingsWindowClient client;
-        protected GuiSwingPreferences.WindowPreferencesUpdater preferencesUpdater;
+        protected GuiSwingPrefsSupports.WindowPreferencesUpdater preferencesUpdater;
 
         public NumberSettingAction(GuiMappingContext context, SettingsWindowClient client, JComponent label, TypedSpinnerNumberModel model) {
             putValue(NAME, "Settings...");
@@ -977,8 +984,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             contentPane.add(pane, BorderLayout.CENTER);
 
             if (context != null) {
-                preferencesUpdater = new GuiSwingPreferences.WindowPreferencesUpdater(null,
-                        context, "$settingsWindow");
+                preferencesUpdater = new GuiSwingPrefsSupports.WindowPreferencesUpdater(null,
+                        context, NUMBER_SETTING_WINDOW_PREFS_KEY);
             }
         }
 
@@ -996,18 +1003,18 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             return pane;
         }
 
-        public GuiSwingPreferences.WindowPreferencesUpdater getPreferencesUpdater() {
+        public GuiSwingPrefsSupports.WindowPreferencesUpdater getPreferencesUpdater() {
             return preferencesUpdater;
         }
 
-        public void setUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             if (getPreferencesUpdater() != null) {
                 getPreferencesUpdater().setUpdater(updater);
             }
         }
 
         public void loadFrom(GuiPreferences prefs) {
-            loadFrom(prefs, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+            loadFrom(prefs, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
         }
 
         /**
@@ -1015,14 +1022,14 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
          * @param options the processing options
          * @since 1.6.3
          */
-        public void loadFrom(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
-            options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+        public void loadFrom(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
+            options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
             try {
                 if (getPreferencesUpdater() != null) {
                     options.loadFromPrefs(getPreferencesUpdater(), prefs);
                 }
             } finally {
-                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -1042,6 +1049,8 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             return PopupExtension.MENU_SUB_CATEGORY_PREFS_WINDOW;
         }
     }
+
+    public static final String NUMBER_SETTING_WINDOW_PREFS_KEY = "$settingsWindow";
 
     public static class NumberSettingPane extends JPanel {
         @Serial private static final long serialVersionUID = 1L;
@@ -1254,7 +1263,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
     }
 
     public static class PropertyLabelNumber extends GuiSwingViewLabel.PropertyLabel
-            implements SettingsWindowClient, GuiSwingPreferences.PreferencesUpdateSupport {
+            implements SettingsWindowClient, GuiSwingPrefsSupports.PreferencesUpdateSupport {
         @Serial private static final long serialVersionUID = 1L;
         protected TypedSpinnerNumberModel model;
         protected TypedSpinnerNumberModelPreferencesUpdater modelPreferencesUpdater;
@@ -1357,9 +1366,9 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
             try {
-                options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 options.loadFrom(getModelTyped(), targetPrefs);
                 if (settingAction != null) {
@@ -1368,7 +1377,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 GuiSwingView.loadPreferencesDefault(this, prefs, options);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
-                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -1383,7 +1392,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             if (settingAction != null) {
                 settingAction.setUpdater(updater);
             }

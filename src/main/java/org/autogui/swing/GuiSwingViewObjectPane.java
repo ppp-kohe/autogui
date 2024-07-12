@@ -3,6 +3,8 @@ package org.autogui.swing;
 import org.autogui.base.log.GuiLogManager;
 import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.base.mapping.*;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.util.*;
 
 import javax.swing.*;
@@ -142,7 +144,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
      *  </pre>
      */
     public static class ObjectPane extends JPanel implements GuiMappingContext.SourceUpdateListener, ValuePane<Object>,
-        GuiSwingPreferences.PreferencesUpdateSupport {
+            GuiSwingPrefsSupports.PreferencesUpdateSupport {
         @Serial private static final long serialVersionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
@@ -476,14 +478,14 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         }
 
         @Override
-        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
             try {
-                options.begin(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
                 GuiSwingView.loadPreferencesDefault(this, prefs, options);
                 options.apply(preferencesUpdater, prefs.getDescendant(getSwingViewContext()));
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
-                options.end(this, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+                options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
             }
         }
 
@@ -498,7 +500,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         }
 
         @Override
-        public void setPreferencesUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             preferencesUpdater.setUpdater(updater);
         }
 
@@ -600,7 +602,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
     }
 
     public static class SplitPreferencesUpdater implements PropertyChangeListener {
-        protected Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater;
+        protected Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater;
         protected GuiMappingContext context;
         protected Supplier<List<JSplitPane>> panes;
         protected PreferencesForSplit prefs;
@@ -612,7 +614,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             prefs = new PreferencesForSplit();
         }
 
-        public void setUpdater(Consumer<GuiSwingPreferences.PreferencesUpdateEvent> updater) {
+        public void setUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             this.updater = updater;
         }
 
@@ -621,7 +623,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             if (!savingDisabled) {
                 prefs.set(panes.get());
                 if (updater != null) {
-                    updater.accept(new GuiSwingPreferences.PreferencesUpdateEvent(context, prefs));
+                    updater.accept(new GuiSwingPrefsSupports.PreferencesUpdateEvent(context, prefs));
                 }
             }
         }
@@ -641,7 +643,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         }
     }
 
-    public static class PreferencesForSplit implements GuiSwingPreferences.PreferencesByJsonEntry {
+    public static class PreferencesForSplit implements GuiSwingPrefsSupports.PreferencesByJsonEntry {
         protected List<PreferencesForSplitEntry> splits = new ArrayList<>();
         public PreferencesForSplit() {}
         @Override
@@ -686,7 +688,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
-            GuiSwingPreferences.setAsList(splits, json, Map.class, PreferencesForSplitEntry::new);
+            GuiSwingPrefsSupports.setAsList(splits, json, Map.class, PreferencesForSplitEntry::new);
         }
     }
 
@@ -696,12 +698,17 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         public PreferencesForSplitEntry() {}
 
+        public PreferencesForSplitEntry(int dividerLocation, boolean horizontal) {
+            this.dividerLocation = dividerLocation;
+            this.horizontal = horizontal;
+        }
+
         /**
          * @param map the JSON map for the entry containing "divierLocation" and "horizontal"
          */
         public PreferencesForSplitEntry(Map<?, ?> map) {
-            dividerLocation = GuiSwingPreferences.getAs(map, Integer.class, "dividerLocation", 0);
-            horizontal = GuiSwingPreferences.getAs(map, Boolean.class,"horizontal", true);
+            dividerLocation = GuiSwingPrefsSupports.getAs(map, Integer.class, "dividerLocation", 0);
+            horizontal = GuiSwingPrefsSupports.getAs(map, Boolean.class,"horizontal", true);
         }
 
         public Object toJson() {

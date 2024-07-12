@@ -38,7 +38,7 @@ public class ScheduledTaskRunner<EventType> {
     protected List<EventType> accumulatedEvents = new ArrayList<>();
     protected ScheduledFuture<?> scheduledTask;
 
-    protected boolean enabled = true;
+    protected volatile boolean enabled = false;
 
     public static ScheduledExecutorService sharedExecutor;
     public static AtomicInteger sharedCount = new AtomicInteger();
@@ -54,6 +54,11 @@ public class ScheduledTaskRunner<EventType> {
         setExecutor(getSharedExecutor());
         this.consumer = consumer;
         debugInit();
+        enabled = initEnabled();
+    }
+
+    protected boolean initEnabled() {
+        return true;
     }
 
     private void debugInit() {
@@ -80,6 +85,7 @@ public class ScheduledTaskRunner<EventType> {
         setExecutor(executor);
         this.consumer = consumer;
         debugInit();
+        enabled = initEnabled();
     }
 
     /**

@@ -6,6 +6,7 @@ import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.base.type.GuiTypeObject;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -148,28 +149,28 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
             }
         });
 
-        JScrollPane scroll = runGet(() -> GuiSwingViewDocumentEditor.scroll(i.getParent()));
+        JScrollPane scroll = runGet(() -> GuiSwingViewDocumentEditor.scrollPane(i));
 
         Assert.assertEquals("after load prefs: lineSpacing", 1.5,
-                runGet(() -> i.getSettingPane().getLineSpacing().getValue()));
+                runGet(() -> i.getSettingPane().getSpaceLine().getValue()));
         Assert.assertEquals("after load prefs: fontFamily", "Serif",
                 runGet(() -> i.getSettingPane().getFontFamily().getSelectedItem()));
         Assert.assertEquals("after load prefs: fontSize", 24,
                 runGet(() -> i.getSettingPane().getFontSize().getValue()));
         Assert.assertEquals("after load prefs: bold", true,
-                runGet(() -> i.getSettingPane().getStyleBold().getValue(Action.SELECTED_KEY)));
+                runGet(() -> i.getSettingPane().getStyleBold().isSelected()));
         Assert.assertEquals("after load prefs: italic", true,
-                runGet(() -> i.getSettingPane().getStyleItalic().getValue(Action.SELECTED_KEY)));
+                runGet(() -> i.getSettingPane().getStyleItalic().isSelected()));
         Assert.assertEquals("after load prefs: backgroundColor", new Color(0, 11, 12,250),
                 runGet(() -> i.getSettingPane().getBackgroundColor().getColor()));
         Assert.assertEquals("after load prefs: foregroundColor", new Color(255, 244, 233,240),
                 runGet(() -> i.getSettingPane().getForegroundColor().getColor()));
         Assert.assertEquals("after load prefs: backgroundCustom", true,
-                runGet(() -> i.getSettingPane().getWrapText().getValue(Action.SELECTED_KEY)));
+                runGet(() -> i.getSettingPane().getStyleWrapLine().isSelected()));
         Assert.assertEquals("after load prefs: foregroundCustom", true,
-                runGet(() -> i.getSettingPane().getWrapText().getValue(Action.SELECTED_KEY)));
+                runGet(() -> i.getSettingPane().getStyleWrapLine().isSelected()));
         Assert.assertEquals("after load prefs: wrapText", true,
-                runGet(() -> i.getSettingPane().getWrapText().getValue(Action.SELECTED_KEY)));
+                runGet(() -> i.getSettingPane().getStyleWrapLine().isSelected()));
 
         AttributeSet style = runGet(() -> i.getStyledDocument().getStyle(StyleContext.DEFAULT_STYLE));
         Assert.assertEquals("after load prefs: doc lineSpacing", 1.5f,
@@ -201,14 +202,14 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
         contextProp.updateSourceFromRoot();
 
         run(() -> frame.setSize(400, 300));
-        i.setPreferencesUpdater(GuiSwingPreferences.PreferencesUpdateEvent::save);
+        i.setPreferencesUpdater(GuiSwingPrefsSupports.PreferencesUpdateEvent::save);
 
-        run(() -> i.getSettingPane().getLineSpacing().setValue(1.5));
+        run(() -> i.getSettingPane().getSpaceLine().setValue(1.5));
         run(() -> i.getSettingPane().getFontFamily().setSelectedItem("Serif"));
         run(() -> i.getSettingPane().getFontSize().setValue(24));
-        run(() -> i.getSettingPane().getStyleBold().change(true));
-        run(() -> i.getSettingPane().getStyleItalic().change(true));
-        run(() -> i.getSettingPane().getWrapText().change( true));
+        run(() -> i.getSettingPane().getStyleBold().setSelected(true));
+        run(() -> i.getSettingPane().getStyleItalic().setSelected(true));
+        run(() -> i.getSettingPane().getStyleWrapLine().setSelected(true));
         run(() -> i.getSettingPane().getBackgroundCustom().setSelected(true));
         run(() -> i.getSettingPane().getForegroundCustom().setSelected(true));
         run(() -> i.getSettingPane().getBackgroundColor().setColor(new Color(0, 11, 12, 250)));
@@ -216,7 +217,7 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
 
         run(this::runWait);
 
-        JScrollPane scroll = runGet(() -> GuiSwingViewDocumentEditor.scroll(i.getParent()));
+        JScrollPane scroll = runGet(() -> GuiSwingViewDocumentEditor.scrollPane(i));
 
         AttributeSet style = runGet(() -> i.getStyledDocument().getStyle(StyleContext.DEFAULT_STYLE));
         Assert.assertEquals("after set settings: doc lineSpacing", 1.5f,

@@ -18,6 +18,11 @@ public class EditingRunner extends ScheduledTaskRunner<Object>
     }
 
     @Override
+    protected boolean initEnabled() {
+        return false;
+    }
+
+    @Override
     public void insertUpdate(DocumentEvent e) {
         schedule(e);
     }

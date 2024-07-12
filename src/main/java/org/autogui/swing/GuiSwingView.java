@@ -3,6 +3,7 @@ package org.autogui.swing;
 import org.autogui.base.log.GuiLogManager;
 import org.autogui.base.mapping.*;
 import org.autogui.swing.GuiSwingTaskRunner.ContextTaskResult;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.table.TableTargetColumnAction;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupExtension;
@@ -194,13 +195,13 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         /**
-         * {@link #loadSwingPreferences(GuiPreferences, GuiSwingPreferences.PrefsApplyOptions)}
-         *  with {@link GuiSwingPreferences#APPLY_OPTIONS_DEFAULT}.
+         * {@link #loadSwingPreferences(GuiPreferences, GuiSwingPrefsApplyOptions)}
+         *  with {@link GuiSwingPrefsApplyOptions#APPLY_OPTIONS_DEFAULT}.
          *  Do not override the method, instead, implements the same method with options version
          * @param prefs target prefs
          */
         default void loadSwingPreferences(GuiPreferences prefs) {
-            loadSwingPreferences(prefs, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+            loadSwingPreferences(prefs, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
         }
 
         /**
@@ -212,7 +213,7 @@ public interface GuiSwingView extends GuiSwingElement {
          * @param options options for applying
          * @since 1.4
          */
-        default void loadSwingPreferences(GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+        default void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
             loadPreferencesDefault(asSwingViewComponent(), prefs, options);
         }
 
@@ -449,13 +450,13 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     /**
-     * {@link #setLastHistoryValue(GuiPreferences, ValuePane, GuiSwingPreferences.PrefsApplyOptions)}
-     *   with {@link GuiSwingPreferences#APPLY_OPTIONS_DEFAULT}
+     * {@link #setLastHistoryValue(GuiPreferences, ValuePane, GuiSwingPrefsApplyOptions)}
+     *   with {@link GuiSwingPrefsApplyOptions#APPLY_OPTIONS_DEFAULT}
      * @param prefs the source preferences
      * @param pane the target pane
      */
     static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane) {
-        setLastHistoryValue(prefs, pane, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+        setLastHistoryValue(prefs, pane, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
     }
 
     /**
@@ -470,7 +471,7 @@ public interface GuiSwingView extends GuiSwingElement {
      * @param options the options
      * @since 1.4
      */
-    static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane, GuiSwingPreferences.PrefsApplyOptions options) {
+    static void setLastHistoryValue(GuiPreferences prefs, ValuePane<Object> pane, GuiSwingPrefsApplyOptions options) {
         if (options.isSkippingValue()) {
             return;
         }
@@ -481,7 +482,7 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         try {
-            options.begin(pane, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.CurrentValue);
+            options.begin(pane, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.CurrentValue);
             Object v = prefs.getCurrentValue();
             if (v != null || loadAsJson) {
                 if (v != null && pane.isSwingCurrentValueSupported()) {
@@ -497,7 +498,7 @@ public interface GuiSwingView extends GuiSwingElement {
                 }
             }
         } finally {
-            options.end(pane, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.CurrentValue);
+            options.end(pane, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.CurrentValue);
         }
     }
 
@@ -559,13 +560,13 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     /**
-     * {@link #loadPreferencesDefault(JComponent, GuiPreferences, GuiSwingPreferences.PrefsApplyOptions)}
-     *  with {@link GuiSwingPreferences#APPLY_OPTIONS_DEFAULT}
+     * {@link #loadPreferencesDefault(JComponent, GuiPreferences, GuiSwingPrefsApplyOptions)}
+     *  with {@link GuiSwingPrefsApplyOptions#APPLY_OPTIONS_DEFAULT}
      * @param pane a target {@link GuiSwingView.ValuePane}
      * @param prefs a source preferences
      */
     static void loadPreferencesDefault(JComponent pane, GuiPreferences prefs) {
-        loadPreferencesDefault(pane, prefs, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+        loadPreferencesDefault(pane, prefs, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
     }
 
     /**
@@ -576,9 +577,9 @@ public interface GuiSwingView extends GuiSwingElement {
      * @since 1.4
      */
     @SuppressWarnings("unchecked")
-    static void loadPreferencesDefault(JComponent pane, GuiPreferences prefs, GuiSwingPreferences.PrefsApplyOptions options) {
+    static void loadPreferencesDefault(JComponent pane, GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
         try {
-            options.begin(pane, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+            options.begin(pane, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
             if (pane instanceof ValuePane<?> valuePane) {
                 GuiMappingContext context = valuePane.getSwingViewContext();
                 GuiPreferences targetPrefs = prefs.getDescendant(context);
@@ -587,7 +588,7 @@ public interface GuiSwingView extends GuiSwingElement {
                 if (context.isHistoryValueSupported()) {
                     GuiPreferences ctxPrefs = context.getPreferences();
                     if (options.hasHistoryValues(targetPrefs, ctxPrefs)) {
-                        options.begin(targetPrefs.getHistoryValues(), targetPrefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.HistoryValues);
+                        options.begin(targetPrefs.getHistoryValues(), targetPrefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.HistoryValues);
                         try (var lock = targetPrefs.lock();
                             var ctxLock = ctxPrefs.lock()) {
                             lock.use();
@@ -596,25 +597,25 @@ public interface GuiSwingView extends GuiSwingElement {
                                     .sorted(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime))
                                     .forEachOrdered(e -> options.addHistoryValue(e, ctxPrefs));
                         } finally {
-                            options.end(targetPrefs.getHistoryValues(), targetPrefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.HistoryValues);
+                            options.end(targetPrefs.getHistoryValues(), targetPrefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.HistoryValues);
                         }
                     }
                 }
             }
         } catch (Exception ex) {
             GuiLogManager.get().logError(ex);
-            options.end(pane, prefs, GuiSwingPreferences.PrefsApplyOptionsLoadingTargetType.View);
+            options.end(pane, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
         }
     }
 
     /**
-     * {@link #loadChildren(GuiPreferences, JComponent, GuiSwingPreferences.PrefsApplyOptions)}
-     *  with {@link GuiSwingPreferences#APPLY_OPTIONS_DEFAULT}
+     * {@link #loadChildren(GuiPreferences, JComponent, GuiSwingPrefsApplyOptions)}
+     *  with {@link GuiSwingPrefsApplyOptions#APPLY_OPTIONS_DEFAULT}
      * @param prefs a top prefs
      * @param comp a top component
      */
     static void loadChildren(GuiPreferences prefs, JComponent comp) {
-        loadChildren(prefs, comp, GuiSwingPreferences.APPLY_OPTIONS_DEFAULT);
+        loadChildren(prefs, comp, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
     }
 
     /**
@@ -624,7 +625,7 @@ public interface GuiSwingView extends GuiSwingElement {
      * @param options  options for applying
      * @since 1.4
      */
-    static void loadChildren(GuiPreferences prefs, JComponent comp, GuiSwingPreferences.PrefsApplyOptions options) {
+    static void loadChildren(GuiPreferences prefs, JComponent comp, GuiSwingPrefsApplyOptions options) {
         forEach(ValuePane.class, comp, c -> {
             if (c != comp) { //skip top
                 GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) c;
