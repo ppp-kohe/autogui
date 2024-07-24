@@ -14,9 +14,7 @@ import org.autogui.swing.util.*;
 
 import javax.swing.Timer;
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
+import javax.swing.event.*;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -553,6 +551,9 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             }
             super.setDocument(doc);
             installLineNumberPane();
+            if (settingPane != null) {
+                settingPane.updateGuiAndTargetTextPaneFromPrefsObj();
+            }
         }
 
         protected void installLineNumberPane() {
@@ -802,7 +803,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public void initStyle() {
             UIManagerUtil ui = UIManagerUtil.getInstance();
-            var styleSize = new Dimension(ui.getScaledSizeInt(28), ui.getScaledSizeInt(28));
+            var styleSize = new Dimension(ui.getScaledSizeInt(32), ui.getScaledSizeInt(32));
 
             styleBold = new JToggleButton("<html><b>B</b></html>");
             styleBold.setPreferredSize(styleSize);
@@ -1259,11 +1260,15 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         public static Object toJsonColor(Color c) {
-            return toJsonColor(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
+            return c == null ? new ArrayList<>(0) : toJsonColor(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
         }
 
         public static Object toJsonColor(int r, int g, int b, int a) {
             return new ArrayList<>(Arrays.asList(r, g, b, a));
+        }
+
+        public static Color fromJsonColorSource(String src) {
+            return (src == null || src.isEmpty()) ? null : fromJsonColor(JsonReader.create(src).parseValue());
         }
 
         public static Color fromJsonColor(Object o) {
@@ -1410,12 +1415,12 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             }
             StyleConstants.setBold(style, bold);
             StyleConstants.setItalic(style, italic);
-            if (backgroundColor == null) {
+            if (!backgroundCustom || backgroundColor == null) {
                 style.removeAttribute(StyleConstants.Background);
             } else {
                 StyleConstants.setBackground(style, backgroundColor);
             }
-            if (foregroundColor == null) {
+            if (!foregroundCustom || foregroundColor == null) {
                 style.removeAttribute(StyleConstants.Foreground);
             } else {
                 StyleConstants.setForeground(style, foregroundColor);
@@ -1454,10 +1459,13 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
          * @param pane the target text-pane
          */
         public void applyToComponentWithoutDocument(JComponent pane) {
-            var backfgroundColor = getBackgroundColor();
-            var foregroundColor = getForegroundColor();
+            var backfgroundColor = isBackgroundCustom() ? getBackgroundColor() : null;
+            var foregroundColor = isForegroundCustom() ? getForegroundColor() : null;
             pane.setBackground(backfgroundColor);
             pane.setForeground(foregroundColor);
+            if (pane instanceof JTextComponent textPane) {
+                textPane.setCaretColor(foregroundColor);
+            }
             var wrapLine = isWrapText();
             setWrapLine(scrollPane(pane), pane, wrapLine);
         }
@@ -1510,8 +1518,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             var fontSize = store.getString(KEY_FONT_SIZE, null);
             var bold = store.getString(KEY_BOLD, null);
             var italic = store.getString(KEY_ITALIC, null);
-            var backgroundColor = fromJsonColor(JsonReader.create(store.getString(KEY_BACKGROUND_COLOR, null)).parseValue());
-            var foregroundColor = fromJsonColor(JsonReader.create(store.getString(KEY_FOREGROUND_COLOR, null)).parseValue());
+            var backgroundColor = fromJsonColorSource(store.getString(KEY_BACKGROUND_COLOR, null));
+            var foregroundColor = fromJsonColorSource(store.getString(KEY_FOREGROUND_COLOR, null));
             var backgroundCustom = store.getString(KEY_BACKGROUND_CUSTOM, null);
             var foregroundCustom = store.getString(KEY_FOREGROUND_CUSTOM, null);
             var wrapText = store.getString(KEY_WRAP_TEXT, null);
