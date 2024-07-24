@@ -813,7 +813,11 @@ public class GuiMappingContext {
     }
 
     public void clearPreferences() {
-        this.preferences = null;
+        if (!hasParent() && preferences != null) { //root :
+            this.preferences = preferences.copyInitAsRoot();
+        } else {
+            this.preferences = null;
+        }
     }
 
     public void setPreferences(GuiPreferences preferences) {

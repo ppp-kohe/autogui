@@ -653,7 +653,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         /**
          * @return the entry list; modification will be affected to the prefs
-         * @since 1.6.3
+         * @since 1.7
          */
         public List<PreferencesForSplitEntry> getSplits() {
             return splits;

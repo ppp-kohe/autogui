@@ -88,7 +88,7 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
         /**
          * @param prefs the source preferences
          * @param options processor
-         * @since 1.6.3
+         * @since 1.7
          */
         void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options);
 

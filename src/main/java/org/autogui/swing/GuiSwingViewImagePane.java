@@ -59,7 +59,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     /**
      * a base image-pane for rendering an image object
-     * @since 1.6.3
+     * @since 1.7
      */
     public static class ImagePaneBase extends JComponent {
         protected Image image;
@@ -180,7 +180,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
          * checking for the ALT-down mask; Note: macOS trackpad-scrolling will set a Shift-down mask for some gestures that occurs in normal use.
          * @param event an event
          * @return the event is satisfied the condition for updating scale setting; checking ALT down.
-         * @since 1.6.3
+         * @since 1.7
          */
         public boolean isImageScaleChangeByMouseWheel(MouseWheelEvent event) {
             return event.isAltDown();
@@ -1522,7 +1522,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
     /**
      * open the preview-window
-     * @since 1.6.3
+     * @since 1.7
      */
     public static class ImagePreviewAction extends AbstractAction
         implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {

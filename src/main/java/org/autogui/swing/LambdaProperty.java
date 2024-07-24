@@ -70,7 +70,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
      * @param type the property type
      * @param getter the supplier for the property
      * @param setter the consumer for the property
-     * @since 1.6.3
+     * @since 1.7
      */
     public LambdaProperty(String name, Class<?> type, Supplier<T> getter, Consumer<T> setter) {
         super(name);
@@ -85,7 +85,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
      * @param elementType the explicit element type of the list, will be constructed as {@link GuiTypeValue}
      * @param getter the supplier for the entire list property
      * @param setter the consumer for the entire list property
-     * @since 1.6.3
+     * @since 1.7
      */
     @SuppressWarnings("rawtypes")
     public LambdaProperty(String name, Class<? extends java.util.List> listType, Class<?> elementType, Supplier<T> getter, Consumer<T> setter) {
@@ -119,7 +119,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
      * @param setter consumer for the type and update the value returned by the getter
      * @return the context recursively constructed by {@link GuiSwingMapperSet#getReprDefaultSet()}. {@link GuiRepresentation#matchAndSetNotifiersAsInit(GuiMappingContext)}
      * @param <T> the value type; T.class can be {@code Class<T>}
-     * @since 1.6.3
+     * @since 1.7
      */
     public static <T> GuiMappingContext createAndBuild(String name, Class<?> type, Supplier<T> getter, Consumer<T> setter) {
         GuiReprSet reprSet = GuiSwingMapperSet.getReprDefaultSet();
@@ -141,7 +141,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
      * @param repr the representation for the property
      * @return a new context for the property
      * @param <T> the value-type of the property
-     * @since 1.6.3
+     * @since 1.7
      */
     public static <T> GuiMappingContext create(String name, Class<?> type, Supplier<T> getter, Consumer<T> setter, GuiRepresentation repr) {
         GuiMappingContext context = new GuiMappingContext(new LambdaProperty<>(name, type, getter, setter), repr);
@@ -164,7 +164,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
      * @param repr the representation of the element of the list
      * @return a context for the list property
      * @param <T> the list type
-     * @since 1.6.3
+     * @since 1.7
      */
     @SuppressWarnings("rawtypes")
     public static <T> GuiMappingContext createList(String name, Class<? extends java.util.List> listType, Class<?> elementType, Supplier<T> getter, Consumer<T> setter, GuiRepresentation repr) {
@@ -218,7 +218,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
          * @param name the property name
          * @param getter the property getter
          * @param setter the property setter
-         * @since 1.6.3
+         * @since 1.7
          */
         public LambdaStringPane(String name, Supplier<String> getter, Consumer<String> setter) {
             super(create(name, String.class, getter, setter, GuiRepresentation.createValueStringField()), GuiSwingView.specifierManagerRoot());
@@ -241,7 +241,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
          * @param getter the property getter
          * @param setter the property setter
          * @param <T>  the number type
-         * @since 1.6.3
+         * @since 1.7
          */
         public <T extends Number> LambdaNumberSpinner(String name, Class<T> type, Supplier<T> getter, Consumer<T> setter) {
             super(create(name, type, getter, setter, GuiRepresentation.createValueNumberSpinner()), GuiSwingView.specifierManagerRoot());
@@ -258,7 +258,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         /**
          * @param name the property name
          * @param getter the property getter
-         * @since 1.6.3
+         * @since 1.7
          */
         public LambdaLabel(String name, Supplier<?> getter) {
             super(create(name, Object.class, getter, null, GuiRepresentation.createValueLabel()), GuiSwingView.specifierManagerRoot());
@@ -292,7 +292,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
          * @param getter the property getter
          * @param setter the setter
          * @param <T> the image type
-         * @since 1.6.3
+         * @since 1.7
          */
         public <T extends Image> LambdaImagePane(String name, Supplier<T> getter, Consumer<T> setter) {
             this(name, BufferedImage.class, getter, setter);
@@ -304,7 +304,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
          * @param getter the property getter
          * @param setter the setter
          * @param <T> the image type
-         * @since 1.6.3
+         * @since 1.7
          */
         public <T extends Image> LambdaImagePane(String name, Class<? extends Image> imageType, Supplier<T> getter, Consumer<T> setter) {
             super(create(name, imageType, getter, setter, new GuiReprValueImagePane()), GuiSwingView.specifierManagerRoot());
@@ -322,7 +322,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
          * @param name the property name
          * @param getter the property getter
          * @param setter the setter
-         * @since 1.6.3
+         * @since 1.7
          */
         public LambdaFilePathPane(String name, Supplier<Path> getter, Consumer<Path> setter) {
             super(create(name, Path.class, getter, setter, GuiRepresentation.createValueFilePathField()), GuiSwingView.specifierManagerRoot());
@@ -344,7 +344,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
          * @param getter the property getter
          * @param setter the setter
          * @param <T> the enum type
-         * @since 1.6.3
+         * @since 1.7
          */
         public <T extends Enum<?>> LambdaEnumComboBox(String name, Class<T> enumType, Supplier<T> getter, Consumer<T> setter) {
             super(create(name, enumType, getter, setter, GuiRepresentation.createValueEnumComboBox()), GuiSwingView.specifierManagerRoot());
@@ -363,7 +363,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
          * @param label  the label for the check-box
          * @param getter the property getter
          * @param setter the setter
-         * @since 1.6.3
+         * @since 1.7
          */
         public LambdaBooleanCheckBox(String name, String label, Supplier<Boolean> getter, Consumer<Boolean> setter) {
             super(create(name, Boolean.class, getter, setter, GuiRepresentation.createValueBooleanCheckBox()), GuiSwingView.specifierManagerRoot());
@@ -381,7 +381,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         /**
          * @param name the property name
          * @param getter the property getter
-         * @since 1.6.3
+         * @since 1.7
          */
         public LambdaDocumentPlainEditorPane(String name, Supplier<? extends Document> getter) {
             super(create(name, Document.class, getter, null, GuiSwingMapperSet.createValueDocumentEditor()), GuiSwingView.specifierManagerRoot());
@@ -401,7 +401,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
          * @param name the property name
          * @param getter the getter returns {@link StringBuilder},
          *  {@link javax.swing.text.AbstractDocument.Content}, or {@link StyledDocument}
-         * @since 1.6.3
+         * @since 1.7
          *  */
         public LambdaDocumentTextPane(String name, Supplier<?> getter) {
             super(create(name, Document.class, getter, null, GuiSwingMapperSet.createValueDocumentEditor()), GuiSwingView.specifierManagerRoot());

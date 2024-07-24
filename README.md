@@ -1,5 +1,7 @@
 # Autogui: an automatic GUI binding library
 
+English | [日本語](readme-ja.md)
+
 Autogui is a library for automatically creating Java/Swing GUI apps from plain-old Java objects.
 It analyzes class-definitions of given objects through reflection APIs, 
 and composes Swing-based components for each type of property and action defined in the classes.
@@ -20,12 +22,13 @@ cd autogui
 
 The project uses [apache-maven](http://maven.apache.org) and depends on a recent version of Java. 
 
+* 1.7- : Java 21 or later
+* 1.2- : Java 11 or later
 * -1.1.x : Java 8 or later
-* 1.2- : java 11 or later
 
 ```bash
 mvn package
-  # the command will generate target/autogui-1.6.2.jar
+  # the command will generate target/autogui-1.7.jar
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
@@ -39,7 +42,7 @@ To use the library in your apache-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.6.2</version>
+        <version>1.7</version>
     </dependency>
 ```
 
@@ -57,16 +60,16 @@ The library jar is available from Maven Central Repository: [org.autogui:autogui
 The library can be used with `jshell` that is the official REPL-tool bundled with JDK since Java 9.
 To use the library, you first need to include the jar file of the library to your class-path.
 In `jshell`, you can do that by `/env -class-path <path/to/jar>`.
-After launching the tool by the command `jshell`, you can paste the following code.
+After launching the tool by the command `jshell`, you can paste the following code (lines after the `jshell>` prompt. Also suppose that the environment have a JDK, Git and Maven).
 
 ```
 $ git clone https://github.com/ppp-kohe/autogui.git
 $ cd autogui
 $ mvn package
 $ jshell
-|  Welcome to JShell -- Version 11.0.1
+|  Welcome to JShell -- Version 21.0.3
 |  For an introduction type: /help intro
- 
+
 jshell> 
 class Hello {
    String value;
@@ -75,7 +78,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.6.2.jar
+/env -class-path target/autogui-1.7.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
@@ -162,9 +165,9 @@ The displayed window has the following GUI components:
   object and displayed in the pane and assigned to the field.
 
 * The action button *Flip Y*  created from the method `void flipY()` : After dropping an image, you can click the button to flip Y coordinate  of the image. The created `newImage` will be assigned to the `image` field. After the execution of the method, the image pane will show the flipped image.
-* The file name field *Output*  created from the field `File output` : You can put the name of saving the flipped image. The field initially displays "output.png" as the initial value of the field. User input for the text field will change the field value to a new
+* The file name field *Output*  created from the field `File output` : You can put the name of saving the flipped image. The field initially displays "output.png"　in the working directory as the initial value of the field. User input for the text field will change the field value to a new
 [`File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html)   object.
-* The action button *Save*  created from `void save()` : The action can write the flipped image as a new file specified by the Output field in the working directory.
+* The action button *Save*  created from `void save()` : The action can write the flipped image as a new file specified by the Output field.
 
 ### FileRenameDemo
 
@@ -259,7 +262,7 @@ import java.util.*;
 
 * In this demo, the library constructs GUI components by selecting only members attached the annotation `@GuiIncluded`. This is launched by `AutoGuiShell.get().showWindow(...)` as I call *strict mode*.
 * The file-path field *Dir*: When the user edits the field, the new text is set as `File` by invoking `setDir(File)`. The method loads files in the directory and constructs a new `ArrayList` object of `RenameEntry`. `RenameEntry` is the static nested class, and contains `File` and a new name prefixed with an index (by `String.format("%03d-%s",...)`).    The rewriting `entries = es;` will cause updating the table display.
-* The *Entries* table: constructed from the list returned by `getEntries()`. The table columns are defined by the properties *File* and *New Name* of the element type of the list `<RenameEntry>`. Each row of the list corresponds to each element of the list. The updating of the item size in the table will be caused by changing of the identity of the list object returned by the getter method.
+* The *Entries* table: constructed from the list returned by `getEntries()`. The table columns are defined by the properties *File* and *New Name* of the element type of the list `<RenameEntry>`. Each row of the table corresponds to each element of the list. The updating of the item size in the table will be caused by changing of the identity of the list object returned by the getter method.
 * The *Rename* button: created from the `rename()` method for renaming entries.
 
 The table component of collection objects in the library is so powerful to extend the usage of applications.
@@ -481,7 +484,7 @@ A property of
 
 <img src="docs/images/image-image-h.png" srcset="docs/images/image-image-h.png 1x, docs/images/image-image.png 2x" alt="Image pane">
 
-The pane supports drag & drop and zooming by the mouse wheel.
+The pane supports drag & drop and zooming by the mouse wheel with the Alt(option) key.
 For handling images in code, 
 [`java.awt.image.BufferedImage`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/image/BufferedImage.html) and 
 [`javax.imageio.ImageIO`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/imageio/ImageIO.html)
@@ -528,7 +531,7 @@ and its sub-type will be bound to a text-edit pane.
 
 <img src="docs/images/image-document-h.png" srcset="docs/images/image-document-h.png 1x, docs/images/image-document.png 2x" alt="Document editor">
 
-Change of the property value will cause replacing the document of the editor. 
+A change of the property value (changing the identity of the document object) will cause replacing the document of the editor. 
 So the property needs to hold/return a consistent value for maintaining the editing contents by the user.
 
 #### Advice about document properties
@@ -823,7 +826,7 @@ The created table for lists has ability to control selection of item cells.
 
 There are two types of bindings:
 
-* Special methods for actions of changing selected items in the table by returning a list of the items : sepcified by [`@GuiListSelectionUpdater`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiListSelectionUpdater.html)
+* Special methods for actions of changing selected items in the table by returning a list of the items : specified by [`@GuiListSelectionUpdater`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiListSelectionUpdater.html)
 * Special methods for callbacks of user item selection from the table UI: specified by [`@GuiListSelectionCallback`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiListSelectionCallback.html)
 
 ```java
@@ -865,6 +868,9 @@ As another special feature, both annotation types have the boolean argument `ind
 #### Changing cell sizes
 
 The created table has ability to change column and row sizes via the pop-up menu of the table-header.
+
+
+<img src="docs/images/image-collection-columnsize-h.png" srcset="docs/images/image-collection-columnsize-h.png 1x, docs/images/image-collection-columnsize.png 2x" alt="Collection table with setting column size">
 
 * *Set All Column Width to This* : makes all column widths the target column.
 * *Auto Resize Column Width* : automatically sets the all column widths
@@ -971,13 +977,13 @@ Also, *Control + Enter* will display the context menu for the focusing component
 
 ## Active Updating of UI Elements
 
-As default, a GUI component generated by the library automatically updates its display, i.e. it notices changes that requires redisplaying by accessing their properties after some actions happened.
+As default, a GUI component generated by the library automatically updates its display, i.e. it notices changes that requires re-displaying by accessing their properties after some actions happened.
 
 The feature of 
 [`@GuiNotifierSetter`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiNotifierSetter.html)
 enables you to explicitly update a specified GUI element by calling given a 
 [`Runnable`](https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/lang/Runnable.html)
-object. The annotation can be attached to a setter method taking a `Runnable` argument. In your code, you can call the `run()` method of the given `Runnable`  object in order to cause redisplaying of the target GUI element on demand. The target GUI element can be specified by the signature  `set<YourPropertyName>Notifier(Runnable r)`  or by using the annotation parameter `@GuiNotifierSetter(target="yourPropertyName")`.
+object. The annotation can be attached to a setter method taking a `Runnable` argument. In your code, you can call the `run()` method of the given `Runnable`  object in order to cause re-displaying of the target GUI element on demand. The target GUI element can be specified by the signature  `set<YourPropertyName>Notifier(Runnable r)`  or by using the annotation parameter `@GuiNotifierSetter(target="yourPropertyName")`.
 
 ```java
 import java.util.concurrent.*;
@@ -1018,14 +1024,14 @@ The updating is done by the `update()` method; it rewrites `prop`  with the time
 [`Instant.now().toString()`](https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/time/Instant.html#now()) 
 ) and  notifies the change of the field to the text field by explicitly calling `Runnable#run()`  to the updater set by `setPropUpdater(Runnable)`. The setter name specifies the `prop` field as the target of the updater by following the naming rule `set<YourPropertyName>Updater`.
 
-The constructor of the class the `update()` method will be scheduled by 
+In the constructor of the class, the `update()` method will be scheduled by 
 [`ScheduledExecutorService#scheduleWithFixedDelay(this::update, ...)` ](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html#scheduleWithFixedDelay(java.lang.Runnable,long,long,java.util.concurrent.TimeUnit))
 method as a `ScheduledFuture` task.
 
 
 ## Preferences management
 
-The created window has ability to save and reuse a set of property-values of Its binding sub-components.
+The created window has ability to save and reuse a set of property-values of its binding sub-components.
 This feature relies on 
 [`java.util.prefs`](https://docs.oracle.com/en/java/javase/11/docs/api/java.prefs/java/util/prefs/package-summary.html).
 
@@ -1036,9 +1042,32 @@ This feature relies on
    org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
+It automatically saves edited property-values through the binding components as preferences.
+You can see and edit the current saved preferences from the *Preferences...* menu-item in the *Object* menu of the created window.
+
 <img src="docs/images/image-prefs-h.png" srcset="docs/images/image-prefs-h.png 1x, docs/images/image-prefs.png 2x" alt="Preferences">
 
+The menu shows a window for preferences like the above screenshot, and it has a list of saved preferences.
+
+The list contains following preferences:
+
+* *Current* : the default (unnamed) preferences. The values of the preferences will be actively updated by UI operations.
+* *Empty* : a pseudo preferences for resetting.
+* Saved preferences : recorded preferences. It can be added by the *Save* action in the tool-bar; the action collect current values and settings of UI components and saves as a new recorded preferences. You can change the name of the item by double-clicking in the list.
+
+The list can also the check-box column "Apply at Launch". You can select a saved preferences for restoring values at starting-up.
+
+In the tool-bar of the window, the *Delete* and *Duplicate* actions can delete or duplicate the selected saved preferences.
+The *Update* action overwrites the selected preferences by the values from the current UI components.
+The *Apply* action immediately restore the selected preferences to the current UI components.
+The *Write To File...* and *Load From File...* actions can save/load preferences as a JSON file.
+
+From 1.7-, you can see and directly edit the selected preferences values from the right-pane in the window.
+
+Also, the saved preferences will be listed as items in the *Apply Preferences* menu of the *Object* menu, and can be applied by selecting the item.
+
 <img src="docs/images/image-prefs-menu-h.png" srcset="docs/images/image-prefs-menu-h.png 1x, docs/images/image-prefs-menu.png 2x" alt="Preferences">
+
 
 Additionally, [`GuiPreferencesLoader`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/mapping/GuiPreferencesLoader.html) enables you to set properties saved by the feature to an object as non-GUI code.
 
@@ -1051,6 +1080,8 @@ Additionally, [`GuiPreferencesLoader`](https://www.autogui.org/docs/apidocs/late
 
    h.prop //=> "Hello" 
 ```
+
+
 
 ### Custom preferences for embedded components
 
@@ -1101,9 +1132,7 @@ The returned object of `getPrefsJson()` must be one of simple JSON supported typ
 The created window has a status-bar and a list of displaying logging entries. An logging entry  can be one of the following types:
 
 * String message
-
 * Progress 
-
 * Exception
 
 ### Logging string messages
@@ -1223,14 +1252,14 @@ A long running action will be an independent task with displaying an indetermina
 
 ## Dark-mode support
 
-The current Swing GUI (in Java18) does not have automatic support of recent OS's dark-mode switching.
+The current Swing GUI (in Java23) does not have automatic support of recent OS's dark-mode switching.
 
 However, there are some custom look-and-feel libraries for supporting dark-mode such as [darklaf](https://github.com/weisJ/darklaf) and 
 [flatlaf](https://www.formdev.com/flatlaf/).
 
 The library implicitly has code for detecting existence of *flatlaf* and applying its LAF at launching with following OS's current theme. The detection is simply done by accessing to the reflection Class object through `Class.forName`.
 
-For example in macOS, you can launch the library's app with the combination of flatlaf (confirmed by `com.formdev:flatlaf:2.1`) and the JVM option `-Dapple.awt.application.appearance=system`, it will get best experience as modern GUI including displaying Emoji and the dark-mode title-bar.
+For example in macOS, you can launch the library's app with the combination of flatlaf (confirmed by `com.formdev:flatlaf:3.4.1`) and the JVM option `-Dapple.awt.application.appearance=system`, it will get best experience as modern GUI including displaying Emoji and the dark-mode title-bar.
 
 <img src="docs/images/image-dark-h.png" srcset="docs/images/image-dark-h.png 1x, docs/images/image-dark.png 2x" alt="Progress">
 

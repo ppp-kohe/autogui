@@ -13,17 +13,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 
 public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
-    public static void main(String[] args) {
-        GuiSwingViewDocumentEditorTest t = new GuiSwingViewDocumentEditorTest();
-        t.setUp();
-        t.testViewDocLoadSettings();
-    }
 
     GuiTypeBuilder builder;
     GuiTypeObject typeObject;
@@ -151,8 +149,8 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
 
         JScrollPane scroll = runGet(() -> GuiSwingViewDocumentEditor.scrollPane(i));
 
-        Assert.assertEquals("after load prefs: lineSpacing", 1.5,
-                runGet(() -> i.getSettingPane().getSpaceLine().getValue()));
+        Assert.assertEquals("after load prefs: lineSpacing", 1.5f,
+                ((Number) runGet(() -> i.getSettingPane().getSpaceLine().getValue())).floatValue(), 0.1f);
         Assert.assertEquals("after load prefs: fontFamily", "Serif",
                 runGet(() -> i.getSettingPane().getFontFamily().getSelectedItem()));
         Assert.assertEquals("after load prefs: fontSize", 24,
@@ -203,8 +201,30 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
 
         run(() -> frame.setSize(400, 300));
         i.setPreferencesUpdater(GuiSwingPrefsSupports.PreferencesUpdateEvent::save);
+        JScrollPane scroll = runGet(() -> GuiSwingViewDocumentEditor.scrollPane(i));
 
-        run(() -> i.getSettingPane().getSpaceLine().setValue(1.5));
+        run(() -> i.getStyledDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                System.err.println("update " + e);
+                var s = ((StyledDocument) e.getDocument()).getStyle(StyleContext.DEFAULT_STYLE);
+
+                System.err.println("  above=" + StyleConstants.getSpaceAbove(s) + " lineSp=" + StyleConstants.getLineSpacing(s));
+            }
+        }));
+        runWait();
+
+        run(() -> i.getSettingPane().getSpaceLine().setValue(1.5f));
         run(() -> i.getSettingPane().getFontFamily().setSelectedItem("Serif"));
         run(() -> i.getSettingPane().getFontSize().setValue(24));
         run(() -> i.getSettingPane().getStyleBold().setSelected(true));
@@ -215,9 +235,9 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
         run(() -> i.getSettingPane().getBackgroundColor().setColor(new Color(0, 11, 12, 250)));
         run(() -> i.getSettingPane().getForegroundColor().setColor(new Color(255, 244, 233, 240)));
 
-        run(this::runWait);
 
-        JScrollPane scroll = runGet(() -> GuiSwingViewDocumentEditor.scrollPane(i));
+        runWait();
+        runWait();
 
         AttributeSet style = runGet(() -> i.getStyledDocument().getStyle(StyleContext.DEFAULT_STYLE));
         Assert.assertEquals("after set settings: doc lineSpacing", 1.5f,

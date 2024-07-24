@@ -130,7 +130,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
          * the current impl. of {@link GuiReprValueImagePane#getSize(GuiMappingContext, Image)}
          * @param image an image or null
          * @return the size or (1,1)
-         * @since 1.6.3
+         * @since 1.7
          */
         public static Dimension getSizeNonNull(Image image) {
             if (image == null) {
@@ -285,7 +285,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
 
     /**
      * support object for {@link #getRenderedImage(GuiMappingContext, Object)}
-     * @since 1.6.3
+     * @since 1.7
      */
     public interface RenderedImageGetterSupport {
         Dimension size(Image image);
@@ -294,7 +294,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
 
     /**
      * impl of the support interface
-     * @since 1.6.3
+     * @since 1.7
      */
     public static class RenderedImageGetterSupportForContext implements RenderedImageGetterSupport {
         protected GuiReprValueImagePane img;
@@ -321,7 +321,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
      * @param support the non-null support
      * @param source the source image object
      * @return source or if it is not an {@link RenderedImage}, it renders to a temporary buffered-image.
-     * @since 1.6.3
+     * @since 1.7
      */
     public static RenderedImage getRenderedImageWithSupport(RenderedImageGetterSupport support, Object source) {
         if (source instanceof RenderedImage) { //including BufferedImage
@@ -338,7 +338,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
      * @param support the non-null support
      * @param source the source image object
      * @return source or if it is not an {@link RenderedImage}, it renders to a temporary buffered-image.
-     * @since 1.6.3
+     * @since 1.7
      */
     public static BufferedImage getBufferedImageWithSupport(RenderedImageGetterSupport support, Object source) {
         if (source instanceof BufferedImage) {

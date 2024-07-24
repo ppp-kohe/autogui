@@ -907,49 +907,8 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         bar.add(new GuiSwingIcons.ActionButton(getSaveAction()));
         bar.add(new GuiSwingIcons.ActionButton(getClearAction()));
 
-
-        JComponent findPane = new JComponent() {
-            @Serial private static final long serialVersionUID = 1L;
-            final SearchTextField.SearchBackgroundPainterBordered p = new SearchTextField.SearchBackgroundPainterBordered(this);
-            {
-                setLayout(new BorderLayout());
-                setBackground(UIManagerUtil.getInstance().getTextPaneBackground());
-            }
-
-            @Override
-            public Component add(Component comp) {
-                p.setChild((JComponent) comp);
-                return super.add(comp);
-            }
-
-            @Override
-            public void add(Component comp, Object constraints) {
-                p.setChild((JComponent) comp);
-                super.add(comp, constraints);
-            }
-
-            @Override
-            protected void paintComponent(Graphics g) {
-                p.paintComponent(g);
-            }
-        };
-
-        JButton icon = new JButton();
-        UIManagerUtil ui = UIManagerUtil.getInstance();
-        int size = ui.getScaledSizeInt(16);
-        icon.setBorder(BorderFactory.createEmptyBorder());
-        icon.setMargin(new Insets(0, 0, 0, 0));
-        icon.setIcon(GuiSwingIcons.getInstance().getIcon("log-", "find", size, size));
-        icon.setBorderPainted(false);
-        icon.setContentAreaFilled(false);
-        findPane.add(icon, BorderLayout.WEST);
-
-        JTextField field = new JTextField(20);
-        field.setOpaque(true);
-        field.addKeyListener(new LogTextFindAdapter(this, field));
-        findPane.add(field);
-
-        int bSize = ui.getScaledSizeInt(5);
+        var findPane = new SearchFilterTextField(new LogTextFindAdapter(this));
+        int bSize = UIManagerUtil.getInstance().getScaledSizeInt(5);
         bar.add(ResizableFlowLayout.create(true)
                 .withBorder(bSize, bSize)
                 .add(findPane, true).getContainer());
@@ -1016,9 +975,13 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
     /**
      * the key-handler for starting searching
      */
-    public static class LogTextFindAdapter extends KeyAdapter {
+    public static class LogTextFindAdapter extends KeyAdapter implements SearchFilterTextField.SearchRunner {
         protected GuiSwingLogList list;
         protected JTextComponent findText;
+
+        public LogTextFindAdapter(GuiSwingLogList list) {
+            this(list, null);
+        }
 
         public LogTextFindAdapter(GuiSwingLogList list, JTextComponent findText) {
             this.list = list;
@@ -1028,13 +991,27 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         @Override
         public void keyPressed(KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                list.findText(findText.getText(), !e.isShiftDown());
+                if (findText != null) {
+                    action(findText.getText(), e.isShiftDown());
+                }
             }
         }
 
         @Override
         public void keyReleased(KeyEvent e) {
-            list.findText(findText.getText());
+            if (findText != null) {
+                updateText(findText.getText());
+            }
+        }
+
+        @Override
+        public void updateText(String text) {
+            list.findText(text);
+        }
+
+        @Override
+        public void action(String text, boolean shiftDown) {
+            list.findText(text, !shiftDown);
         }
     }
 

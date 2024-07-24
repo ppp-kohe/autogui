@@ -10,12 +10,13 @@ import java.util.Arrays;
 
 /**
  * border for indicating focusing
- * @since 1.6.3
+ * @since 1.7
  */
 public class FocusBorder implements Border {
     protected Color focusColor;
     protected BasicStroke[] strokes;
 
+    @SuppressWarnings("this-escape")
     public FocusBorder(JComponent target) {
         if (target != null) {
             installListener(target);

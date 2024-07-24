@@ -550,9 +550,7 @@ public interface GuiSwingView extends GuiSwingElement {
                         var lock = targetPrefs.lock()) {
                         ctxLock.use();
                         lock.use();
-                        ctxPrefs.getHistoryValues().stream()
-                                .sorted(Comparator.comparing(GuiPreferences.HistoryValueEntry::getTime))
-                                .forEachOrdered(e -> targetPrefs.addHistoryValue(e.getValue(), e.getTime()));
+                        targetPrefs.setHistoryValues(ctxPrefs.getHistoryValues());
                     }
                 }
             }
@@ -1022,7 +1020,7 @@ public interface GuiSwingView extends GuiSwingElement {
 
     /**
      * @return the none
-     * @since 1.6.3
+     * @since 1.7
      */
     static SpecifierManager specifierManagerRoot() {
         return () -> GuiReprValue.NONE;
@@ -1032,7 +1030,7 @@ public interface GuiSwingView extends GuiSwingElement {
      * the default factory
      * @param parentSpecifier the parent specifieler
      * @return a new instance
-     * @since 1.6.3
+     * @since 1.7
      */
     static SpecifierManagerDefault specifierManager(Supplier<GuiReprValue.ObjectSpecifier> parentSpecifier) {
         return new SpecifierManagerDefault(parentSpecifier);

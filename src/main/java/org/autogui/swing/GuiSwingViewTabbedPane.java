@@ -188,7 +188,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
 
         /**
          * @return the selected tab index
-         * @since 1.6.3
+         * @since 1.7
          */
         public int getSelectedIndex() {
             return selectedIndex;
@@ -196,7 +196,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
 
         /**
          * @param selectedIndex updated index
-         * @since 1.6.3
+         * @since 1.7
          */
         public void setSelectedIndex(int selectedIndex) {
             this.selectedIndex = selectedIndex;

@@ -19,6 +19,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class GuiSwingPrefsSupports {
+    protected GuiSwingPrefsSupports() {}
+
     /**
      * @param targetList the updated non-null list; cleared and set all elements from the map.
      * @param map the source map
@@ -70,7 +72,7 @@ public class GuiSwingPrefsSupports {
      * @param key the key for the map
      * @return a list of map.get(key) that satifies all elements are the type.
      * @param <E> the element type
-     * @since 1.6.3
+     * @since 1.7
      */
     @SuppressWarnings("unchecked")
     public static <E> List<E> getAsListNonNull(Map<?, ?> map, Class<E> type, String key) {
@@ -100,7 +102,7 @@ public class GuiSwingPrefsSupports {
      * @param type the element type
      * @return the list that satifies all elements are the type, or a new empty list.
      * @param <E> the element type
-     * @since 1.6.3
+     * @since 1.7
      */
     @SuppressWarnings("unchecked")
     public static <E> List<E> getAsListNonNull(Object list, Class<E> type) {
@@ -412,7 +414,7 @@ public class GuiSwingPrefsSupports {
 
         /**
          * @return the direct reference to the property fileList
-         * @since 1.6.3
+         * @since 1.7
          */
         public List<String> getFileListDirect() {
             return fileList;
@@ -420,7 +422,7 @@ public class GuiSwingPrefsSupports {
 
         /**
          * @return the property value or null
-         * @since 1.6.3
+         * @since 1.7
          */
         public Path getBackPath() {
             return backPath == null ? null : Paths.get(backPath);
@@ -428,7 +430,7 @@ public class GuiSwingPrefsSupports {
 
         /**
          * @return the property value or null
-         * @since 1.6.3
+         * @since 1.7
          */
         public Path getCurrentDirectory() {
             return currentDirectory == null ? null : Paths.get(currentDirectory);

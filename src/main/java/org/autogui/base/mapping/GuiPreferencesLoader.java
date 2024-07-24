@@ -196,7 +196,7 @@ public class GuiPreferencesLoader {
     }
 
     public static String getPrefsName(GuiPreferences savedPrefs) {
-        return savedPrefs.getValueStore().getString("$name", "");
+        return savedPrefs.getValueStore().getString(GuiPreferences.KEY_NAME, "");
     }
 
     public static GuiPreferences findSavedPrefsDefault(GuiPreferences rootPrefs) {

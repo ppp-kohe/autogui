@@ -74,12 +74,12 @@ public class ResizableFlowLayout implements LayoutManager {
         return r.withContainer(pane);
     }
 
-    public ResizableFlowLayout(boolean orientation, int margin) {
+    public ResizableFlowLayout(boolean horizontalOrientation, int margin) {
         this.margin = margin;
-        this.orientation = orientation;
+        this.orientation = horizontalOrientation;
     }
-    public ResizableFlowLayout(boolean orientation) {
-        this.orientation = orientation;
+    public ResizableFlowLayout(boolean horizontalOrientation) {
+        this.orientation = horizontalOrientation;
     }
 
     /**
@@ -181,8 +181,9 @@ public class ResizableFlowLayout implements LayoutManager {
             boolean first = true;
             for (Component c : parent.getComponents()) {
                 if (c.isVisible()) {
+                    Dimension minSize = c.getMinimumSize(); //minimumSize might be larger than preferredSize
                     Dimension size = (minimum ? c.getMinimumSize() : c.getPreferredSize());
-                    int w = orientation ? size.width : size.height;
+                    int w = orientation ? Math.max(minSize.width, size.width) : Math.max(minSize.height, size.height);
                     if (first) {
                         first = false;
                     } else {
@@ -193,7 +194,8 @@ public class ResizableFlowLayout implements LayoutManager {
                     } else {
                         fixedSum += w;
                     }
-                    height = Math.max(orientation ? size.height : size.width, height);
+                    height = Math.max(orientation ? minSize.height : minSize.width,
+                            Math.max(orientation ? size.height : size.width, height));
                 }
             }
             height += orientation ? insetsHeight(insets): insetsWidth(insets);

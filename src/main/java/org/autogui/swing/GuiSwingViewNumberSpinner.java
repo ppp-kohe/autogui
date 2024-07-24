@@ -216,12 +216,12 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             initEditable();
             initModelPreferencesUpdater();
             initContextUpdate();
-            initValue();
             initListener();
             initPopup();
             initDragDrop();
             initUndo();
             initAfter();
+            initValue();
         }
 
         public void initName() {
@@ -381,11 +381,16 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         private void setValueWithoutUpdate(Object value) {
-            editingRunner.setEnabled(false);
+            var editingRunner = this.editingRunner;
+            if (editingRunner != null) { //from initValue()
+                editingRunner.setEnabled(false);
+            }
             try {
                 setValue(value);
             } finally {
-                editingRunner.setEnabled(true);
+                if (editingRunner != null) {
+                    editingRunner.setEnabled(true);
+                }
             }
         }
 
@@ -1020,7 +1025,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         /**
          * @param prefs  the target prefs
          * @param options the processing options
-         * @since 1.6.3
+         * @since 1.7
          */
         public void loadFrom(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
             options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
@@ -1118,13 +1123,17 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 }
             });
 
-            updateFromModel(null);
+            updateFromModel();
             new SettingsWindow.LabelGroup(this)
                     .addRow(minCheckBox, minSpinner)
                     .addRow(maxCheckBox, maxSpinner)
                     .addRow("Step:", stepSpinner)
                     .addRow(formatCheckBox, formatField)
                     .fitWidth();
+        }
+
+        public void updateFromModel() {
+            updateFromModel(null);
         }
 
         public void updateFromModel(ChangeEvent e) {

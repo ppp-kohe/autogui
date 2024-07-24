@@ -12,10 +12,8 @@ import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.io.Serial;
 import java.text.AttributedString;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public class GuiSwingPrefsTrees {
     private static final GuiSwingPrefsTrees instance = new GuiSwingPrefsTrees();
@@ -23,6 +21,8 @@ public class GuiSwingPrefsTrees {
     public static GuiSwingPrefsTrees getInstance() {
         return instance;
     }
+
+    public GuiSwingPrefsTrees() {}
 
     public JTree createTree() {
         var contentTree = new JTree(new DefaultMutableTreeNode(""));
@@ -81,12 +81,14 @@ public class GuiSwingPrefsTrees {
                 ((GuiPreferences.GuiValueStoreOnMemory) store).toJson() : null;
         store.getKeys().stream()
                 .filter(store::hasEntryKey)
+                .sorted()
                 .map(n -> new DefaultMutableTreeNode(new GuiSwingPrefsTrees.PrefsValueStoreEntry(n,
                         json == null ? store.getString(n, "") : json.get(n))))
                 .forEach(node::add);
 
         store.getKeys().stream()
                 .filter(store::hasNodeKey)
+                .sorted()
                 .map(n -> createTreeNode(n, store.getChild(n)))
                 .forEach(node::add);
         return node;

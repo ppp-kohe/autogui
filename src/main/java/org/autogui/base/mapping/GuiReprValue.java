@@ -384,7 +384,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @param newValue the updating new value
      * @param specifier the specifier of the value
      * @param src the source for the context
-     * @since 1.6.3
+     * @since 1.7
      */
     protected void notifyUpdateWithParentSourceNone(GuiMappingContext context, Object newValue, ObjectSpecifier specifier, GuiSourceValue src) {
         //System.err.println("no src: context=" + context.getRepresentation() + " : parent=" + context.getParentRepresentation());

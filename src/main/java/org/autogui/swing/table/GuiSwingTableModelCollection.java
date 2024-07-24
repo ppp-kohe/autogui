@@ -243,7 +243,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         /**
          * @param column the target column
          * @param options processor
-         * @since 1.6.3
+         * @since 1.7
          */
         public void applyPrefsToNonContext(ObjectTableColumn column, GuiSwingPrefsApplyOptions options) {
             try {
@@ -268,7 +268,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
          * @param parentPrefs parent prefs for the column
          * @param column the target column
          * @param options the processor
-         * @since 1.6.3
+         * @since 1.7
          */
         public void loadPrefsTo(GuiPreferences parentPrefs, ObjectTableColumnWithContext column, GuiSwingPrefsApplyOptions options) {
             try {
@@ -320,7 +320,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         /**
          * @param prefs the preferences
          * @param options the prefs processor
-         * @since 1.6.3
+         * @since 1.7
          */
         public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
             try {
@@ -391,7 +391,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
         /**
          * @return the direct reference to the map (LinkedHashMap)
-         * @since 1.6.3
+         * @since 1.7
          */
         public Map<Integer, PreferencesForTableColumnOrder> getModelIndexToOrderDirect() {
             return modelIndexToOrder;
@@ -469,7 +469,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
         /**
          * @return the property value
-         * @since 1.6.3
+         * @since 1.7
          */
         public int getModelIndex() {
             return modelIndex;
@@ -477,7 +477,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
         /**
          * @param modelIndex the new property value
-         * @since 1.6.3
+         * @since 1.7
          */
         public void setModelIndex(int modelIndex) {
             this.modelIndex = modelIndex;
@@ -485,7 +485,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
         /**
          * @return the property value
-         * @since 1.6.3
+         * @since 1.7
          */
         public int getViewIndex() {
             return viewIndex;
@@ -493,7 +493,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
         /**
          * @param viewIndex the new property value
-         * @since 1.6.3
+         * @since 1.7
          */
         public void setViewIndex(int viewIndex) {
             this.viewIndex = viewIndex;
@@ -555,7 +555,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
         /**
          * @return direct reference to the map (actually a LinkedHashMap)
-         * @since 1.6.3
+         * @since 1.7
          */
         public Map<Integer, PreferencesForTableColumnWidth> getModelIndexToWidthDirect() {
             return modelIndexToWidth;
@@ -625,7 +625,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
         /**
          * @return the property value
-         * @since 1.6.3
+         * @since 1.7
          */
         public int getWidth() {
             return width;
@@ -633,7 +633,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
 
         /**
          * @param width update the property value
-         * @since 1.6.3
+         * @since 1.7
          */
         public void setWidth(int width) {
             this.width = width;

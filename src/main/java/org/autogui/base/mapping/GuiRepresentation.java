@@ -205,72 +205,85 @@ public interface GuiRepresentation {
 
     /** @return new representation
      * @param owner the owner which can contains the returned repr itself
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprCollectionElement createCollectionElement(GuiRepresentation owner) {
         return new GuiReprCollectionElement(owner);
     }
     /** @return new representation
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprValueBooleanCheckBox createValueBooleanCheckBox() {
         return new GuiReprValueBooleanCheckBox();
     }
     /** @return new representation
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprValueEnumComboBox createValueEnumComboBox() {
         return new GuiReprValueEnumComboBox();
     }
     /** @return new representation
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprValueFilePathField createValueFilePathField() {
         return new GuiReprValueFilePathField();
     }
-    /** @return new representation
-     * @since 1.6.3 */
+
+    /** @return new representation wihtout a number-type;
+     *    {@link GuiReprValueNumberSpinner#match(GuiMappingContext)} can determine the number-type from the type of the given context.
+     *   Also {@link GuiReprValueNumberSpinner#createNumberSpinner(GuiReprValueNumberSpinner.NumberType)} can re-create with concretizing the number-type.
+     * @see #createValueNumberSpinner(GuiReprValueNumberSpinner.NumberType)
+     * @since 1.7 */
     static GuiReprValueNumberSpinner createValueNumberSpinner() {
         return new GuiReprValueNumberSpinner();
     }
+
+    /**
+     * @param numType the number-type defined in {@link GuiReprValueNumberSpinner}, like {@link GuiReprValueNumberSpinner#INT}
+     * @return new representation with the number-type
+     */
+    static GuiReprValueNumberSpinner createValueNumberSpinner(GuiReprValueNumberSpinner.NumberType numType) {
+        return new GuiReprValueNumberSpinner(numType, null);
+    }
+
     /** @return new representation
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprValueStringField createValueStringField() {
         return new GuiReprValueStringField();
     }
 
     /** @return new representation
      * @param owner the owner which can contains the returned repr itself
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprCollectionTable createCollectionTable(GuiRepresentation owner) {
         return new GuiReprCollectionTable(owner);
     }
     /** @return new representation
      * @param owner the owner which can contains the returned repr itself
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprObjectTabbedPane createObjectTabbedPane(GuiRepresentation owner) {
         return new GuiReprObjectTabbedPane(owner);
     }
     /** @return new representation
      * @param owner the owner which can contains the returned repr itself
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprObjectPane createObjectPane(GuiRepresentation owner) {
         return new GuiReprObjectPane(owner);
     }
     /** @return new representation
      * @param owner the owner which can contains the returned repr itself
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprPropertyPane createPropertyPane(GuiRepresentation owner) {
         return new GuiReprPropertyPane(owner);
     }
     /** @return new representation
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprAction createAction() {
         return new GuiReprAction();
     }
     /** @return new representation
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprActionList createActionList() {
         return new GuiReprActionList();
     }
     /** @return new representation
-     * @since 1.6.3 */
+     * @since 1.7 */
     static GuiReprValueLabel createValueLabel() {
         return new GuiReprValueLabel();
     }
@@ -278,7 +291,7 @@ public interface GuiRepresentation {
     /**
      * the repr type is abstract for any values and it will not be directly included in the default set.
      * @return new representation
-     * @since 1.6.3
+     * @since 1.7
      */
     static GuiReprValue createValue() {
         return new GuiReprValue();

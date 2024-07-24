@@ -1357,7 +1357,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @return the direct reference to the columnOrder list
-         * @since 1.6.3
+         * @since 1.7
          */
         public List<Integer> getColumnOrder() {
             return columnOrder;
@@ -1365,7 +1365,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @return the direct reference to the columnWidth list
-         * @since 1.6.3
+         * @since 1.7
          */
         public List<Integer> getColumnWidth() {
             return columnWidth;
@@ -1373,7 +1373,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @return the direct reference to the rowSort list
-         * @since 1.6.3
+         * @since 1.7
          */
         public List<PreferencesForTableRowSort> getRowSort() {
             return rowSort;
@@ -1381,7 +1381,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @return rowHeight
-         * @since 1.6.3
+         * @since 1.7
          */
         public int getRowHeight() {
             return rowHeight;
@@ -1389,7 +1389,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @param rowHeight a new rowHeight value
-         * @since 1.6.3
+         * @since 1.7
          */
         public void setRowHeight(int rowHeight) {
             this.rowHeight = rowHeight;
@@ -1397,7 +1397,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @return the property value
-         * @since 1.6.3
+         * @since 1.7
          */
         public boolean isRowCustom() {
             return rowCustom;
@@ -1405,7 +1405,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @param rowCustom a new value
-         * @since 1.6.3
+         * @since 1.7
          */
         public void setRowCustom(boolean rowCustom) {
             this.rowCustom = rowCustom;
@@ -1413,7 +1413,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @return the property value
-         * @since 1.6.3
+         * @since 1.7
          */
         public boolean isRowFitToContent() {
             return rowFitToContent;
@@ -1421,7 +1421,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         /**
          * @param rowFitToContent a new value
-         * @since 1.6.3
+         * @since 1.7
          */
         public void setRowFitToContent(boolean rowFitToContent) {
             this.rowFitToContent = rowFitToContent;

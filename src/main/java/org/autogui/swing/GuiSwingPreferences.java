@@ -8,6 +8,7 @@ import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.ScheduledTaskRunner;
 import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsEditor;
 import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.prefs.GuiSwingPrefsTrees;
 import org.autogui.swing.table.ObjectTableColumnValue;
@@ -123,16 +124,16 @@ public class GuiSwingPreferences {
     protected JComponent rootComponent;
     protected JTable list;
     protected PreferencesListModel listModel;
-
-    @Deprecated
-    protected JEditorPane contentTextPane;
     /* @since 1.3 */
     protected JTree contentTree;
+    protected JComponent settingsPane;
     protected GuiSwingPrefsSupports.WindowPreferencesUpdater prefsWindowUpdater;
 
     protected SettingsWindow settingsWindow;
 
     protected int[] lastSelection = new int[0];
+
+    protected Map<GuiPreferences, GuiSwingPrefsEditor> settingsEditors = new HashMap<>();
 
     public interface RootView {
         GuiMappingContext getContext();
@@ -175,62 +176,94 @@ public class GuiSwingPreferences {
     }
 
     protected void init() {
+        initMainPane();
+        initToolBar();
+        initSettingPrefs();
+    }
+
+    protected void initMainPane() {
         mainPane = new JPanel(new BorderLayout());
         {
-            listModel = new PreferencesListModel(this::getRootContext);
-            listModel.addTableModelListener(e -> {
-                if (e.getColumn() == PreferencesListModel.COLUMN_LAUNCH) {
-                    lastSelection = new int[] {e.getLastRow()};
-                }
-                SwingDeferredRunner.invokeLater(this::restoreSelection);
-            });
-            list = new JTable(listModel);
-            TableColumn column = list.getColumnModel().getColumn(0);
-            {
-                column.setHeaderValue("Saved Preferences");
-                column.setCellRenderer(new PreferencesNameRenderer(listModel));
-                column.setCellEditor(new PreferencesNameEditor(listModel));
-            }
-
-            TableColumn columnSelect = list.getColumnModel().getColumn(1);
-            {
-                columnSelect.setHeaderValue("Apply at Launch");
-                columnSelect.setCellRenderer(new PreferencesLaunchApplyRenderer(listModel));
-                columnSelect.setCellEditor(new PreferencesLaunchApplyEditor(listModel));
-            }
-            addSelectionListener(this::showSelectedPrefs);
-            list.setAutoCreateColumnsFromModel(false); //avoid to reset above columns
-
-            UIManagerUtil ui = UIManagerUtil.getInstance();
-
-            JScrollPane listScroll = new JScrollPane(list);
-            listScroll.setPreferredSize(new Dimension(ui.getScaledSizeInt(300), ui.getScaledSizeInt(300)));
-
-            list.setRowHeight(ui.getScaledSizeInt(20));
-
-            JPanel viewPane = new JPanel(new BorderLayout());
-            {
-                contentTree = GuiSwingPrefsTrees.getInstance().createTree();
-                viewPane.add(new JScrollPane(contentTree));
-            }
-
+            var listScroll = initList();
+            var viewPane = initContentTree();
             JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listScroll, viewPane);
             mainPane.add(splitPane, BorderLayout.CENTER);
         }
+    }
+
+    protected JComponent initList() {
+        listModel = new PreferencesListModel(this::getRootContext);
+        listModel.addTableModelListener(e -> {
+            if (e.getColumn() == PreferencesListModel.COLUMN_LAUNCH) {
+                lastSelection = new int[] {e.getLastRow()};
+            }
+            SwingDeferredRunner.invokeLater(this::restoreSelection);
+        });
+        list = new JTable(listModel);
+        TableColumn column = list.getColumnModel().getColumn(0);
         {
-            JToolBar toolBar = new JToolBar();
-            toolBar.setFloatable(false);
-            toolBar.setOpaque(false);
-            toolBar.add(actionButton(new NewPrefsAction(this)));
-            toolBar.add(actionButton(new UpdatePrefsAction(this)));
-            toolBar.add(actionButton(new DeletePrefsAction(this)));
-            toolBar.add(actionButton(new ApplyPrefsAction(this)));
-            toolBar.add(actionButton(new SavePrefsAction(this)));
-            toolBar.add(actionButton(new LoadPrefsAction(this)));
-            toolBar.add(actionButton(new ResetPrefsAction(this)));
-            new ToolBarHiddenMenu().addTo(toolBar);
-            mainPane.add(toolBar, BorderLayout.PAGE_START);
+            column.setHeaderValue("Saved Preferences");
+            column.setCellRenderer(new PreferencesNameRenderer(listModel));
+            column.setCellEditor(new PreferencesNameEditor(listModel));
         }
+
+        TableColumn columnSelect = list.getColumnModel().getColumn(1);
+        {
+            columnSelect.setHeaderValue("Apply at Launch");
+            columnSelect.setCellRenderer(new PreferencesLaunchApplyRenderer(listModel));
+            columnSelect.setCellEditor(new PreferencesLaunchApplyEditor(listModel));
+        }
+        addSelectionListener(this::showSelectedPrefs);
+        list.setAutoCreateColumnsFromModel(false); //avoid to reset above columns
+
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+
+        JScrollPane listScroll = new JScrollPane(list);
+        listScroll.setPreferredSize(new Dimension(ui.getScaledSizeInt(300), ui.getScaledSizeInt(300)));
+        list.setRowHeight(ui.getScaledSizeInt(20));
+
+        return listScroll;
+    }
+
+    protected JComponent initContentTree() {
+        JTabbedPane viewPane = new JTabbedPane(JTabbedPane.BOTTOM);
+        {
+            settingsPane = new JPanel(new BorderLayout());
+            {
+                settingsPane.setOpaque(false);
+                var setttingsMainPane = new JPanel();
+                setttingsMainPane.setOpaque(false);
+                settingsPane.add(setttingsMainPane, BorderLayout.CENTER);
+            }
+            viewPane.addTab("Settings", settingsPane);
+
+            contentTree = GuiSwingPrefsTrees.getInstance().createTree();
+            {
+                viewPane.addChangeListener(e -> updateContentTree());
+            }
+            viewPane.addTab("Tree", new JScrollPane(contentTree));
+
+        }
+        return viewPane;
+    }
+
+    protected void initToolBar() {
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+        toolBar.setOpaque(false);
+        toolBar.add(actionButton(new NewPrefsAction(this)));
+        toolBar.add(actionButton(new UpdatePrefsAction(this)));
+        toolBar.add(actionButton(new DeletePrefsAction(this)));
+        toolBar.add(actionButton(new DuplicatePrefsAction(this)));
+        toolBar.add(actionButton(new ApplyPrefsAction(this)));
+        toolBar.add(actionButton(new SavePrefsAction(this)));
+        toolBar.add(actionButton(new LoadPrefsAction(this)));
+        //toolBar.add(actionButton(new ResetPrefsAction(this)));
+        new ToolBarHiddenMenu().addTo(toolBar);
+        mainPane.add(toolBar, BorderLayout.PAGE_START);
+    }
+
+    protected void initSettingPrefs() {
         prefsWindowUpdater = new GuiSwingPrefsSupports.WindowPreferencesUpdater(null, rootContext, "$preferencesWindow");
     }
 
@@ -249,6 +282,10 @@ public class GuiSwingPreferences {
 
     public GuiMappingContext getRootContext() {
         return rootContext;
+    }
+
+    public boolean isEmpty(GuiPreferences prefs) {
+        return listModel.isEmpty(prefs);
     }
 
     public void reloadList() {
@@ -351,7 +388,29 @@ public class GuiSwingPreferences {
             lastSelection = sels;
         }
         var t = GuiSwingPrefsTrees.getInstance();
-        t.setTreeModel(contentTree, t.createTreeNode(getSelectedSavedPreferencesList()));
+        var prefs = getSelectedSavedPreferences();
+        if (prefs != null) {
+            prefs.load();
+            var editor = settingsEditors.computeIfAbsent(prefs, this::createSettingsPane);
+            settingsPane.removeAll();
+            settingsPane.add(editor.getRootPane(), BorderLayout.CENTER);
+            settingsPane.revalidate();
+            settingsPane.repaint();
+
+            updateContentTree();
+        }
+    }
+
+    public GuiSwingPrefsEditor createSettingsPane(GuiPreferences prefs) {
+        var e = new GuiSwingPrefsEditor();
+        e.create(this.rootPane, prefs);
+        return e;
+    }
+
+    public void updateContentTree() {
+        var t = GuiSwingPrefsTrees.getInstance();
+        var prefs = getSelectedSavedPreferencesList();
+        t.setTreeModel(contentTree, t.createTreeNode(prefs));
     }
 
     public void shutdown() {
@@ -483,9 +542,9 @@ public class GuiSwingPreferences {
 
         public String getName(GuiPreferences prefs) {
             if (isDefault(prefs)) {
-                return "Defaults";
+                return "Current";
             } else {
-                return prefs.getValueStore().getString("$name", "Preferences " + list.indexOf(prefs));
+                return prefs.getValueStore().getString(GuiPreferences.KEY_NAME, "Preferences " + list.indexOf(prefs));
             }
         }
 
@@ -504,10 +563,10 @@ public class GuiSwingPreferences {
             } else if (isEmpty(prefs)) {
                 return "empty";
             } else {
-                String v = prefs.getValueStore().getString("$uuid", "");
+                String v = prefs.getValueStore().getString(GuiPreferences.KEY_UUID, "");
                 if (v.isEmpty()) {
                     v = UUID.randomUUID().toString();
-                    prefs.getValueStore().putString("$uuid", v);
+                    prefs.getValueStore().putString(GuiPreferences.KEY_UUID, v);
                 }
                 return v;
             }
@@ -531,7 +590,7 @@ public class GuiSwingPreferences {
         }
 
         public void setName(GuiPreferences prefs, String name) {
-            prefs.getValueStore().putString("$name", name);
+            prefs.getValueStore().putString(GuiPreferences.KEY_NAME, name);
             update(false);
         }
 
@@ -540,32 +599,43 @@ public class GuiSwingPreferences {
             lastDefault = context.getPreferences();
             try (var lock = lastDefault.lock()) {
                 lock.use();
-                targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
-                targetDefault.getValueStore().putString("$name", "Target Code Values");
-                targetDefault.getValueStore().putString("$uuid", "empty");
-
-                list = new ArrayList<>();
-                list.add(lastDefault); //0
-                list.add(targetDefault); //1
-                if (savedPrefsList == null || loadSavedList) {
-                    savedPrefsList = lastDefault.getSavedStoreListAsRoot();
-                }
-                savedPrefsList.sort(Comparator.comparing(this::getName)); //sort by updated names
-                list.addAll(savedPrefsList);
-
-                String launchPrefsUUID = lastDefault.getLaunchPrefsAsRoot();
-                if (launchPrefsUUID.isEmpty()) { //default
-                    launchPrefs = lastDefault;
-                } else if (launchPrefsUUID.equals("empty")) {
-                    launchPrefs = targetDefault;
-                } else {
-                    launchPrefs = savedPrefsList.stream()
-                            .filter(p -> p.getValueStore().getString("$uuid", "").equals(launchPrefsUUID))
-                            .findFirst()
-                            .orElse(targetDefault);
-                }
+                lastDefault.load();
+                initEmptyPrefs(context);
+                initList(loadSavedList);
+                initLaunchPrefs();
             }
             fireTableDataChanged();
+        }
+
+        protected void initEmptyPrefs(GuiMappingContext context) {
+            targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
+            targetDefault.getValueStore().putString(GuiPreferences.KEY_NAME, "Empty");
+            targetDefault.getValueStore().putString(GuiPreferences.KEY_UUID, "empty");
+        }
+
+        protected void initList(boolean loadSavedList) {
+            list = new ArrayList<>();
+            list.add(lastDefault); //0
+            list.add(targetDefault); //1
+            if (savedPrefsList == null || loadSavedList) {
+                savedPrefsList = lastDefault.getSavedStoreListAsRoot();
+            }
+            savedPrefsList.sort(Comparator.comparing(this::getName)); //sort by updated names
+            list.addAll(savedPrefsList);
+        }
+
+        protected void initLaunchPrefs() {
+            String launchPrefsUUID = lastDefault.getLaunchPrefsAsRoot();
+            if (launchPrefsUUID.isEmpty()) { //default
+                launchPrefs = lastDefault;
+            } else if (launchPrefsUUID.equals("empty")) {
+                launchPrefs = targetDefault;
+            } else {
+                launchPrefs = savedPrefsList.stream()
+                        .filter(p -> p.getValueStore().getString(GuiPreferences.KEY_UUID, "").equals(launchPrefsUUID))
+                        .findFirst()
+                        .orElse(targetDefault);
+            }
         }
     }
 
@@ -655,6 +725,148 @@ public class GuiSwingPreferences {
 
     ///////////////////
 
+    public void doNewPrefs() {
+        GuiPreferences rootPrefs = getRootContext().getPreferences();
+        try (var lock = rootPrefs.lock()) {
+            lock.use();
+            GuiPreferences newStore = rootPrefs.addNewSavedStoreAsRoot();
+            savePreferences(newStore);
+            newStore.getValueStore().flush();
+        }
+        reloadList();
+    }
+
+    public void doUpdatePrefs() {
+        if (!isSelectedPreferencesEditable()) {
+            return;
+        }
+        GuiPreferences pref = getSelectedSavedPreferences();
+        if (pref == null) {
+            return;
+        }
+        try (var lock = pref.lock()) {
+            lock.use();
+            savePreferences(pref);
+            pref.getValueStore().flush();
+        }
+        reloadList();
+    }
+
+    public void doDeletePrefs() {
+        int r = JOptionPane.showConfirmDialog(getMainPane(),
+                "Delete Selected Preferences ?", "Delete Preferences", JOptionPane.OK_CANCEL_OPTION);
+        if (r == JOptionPane.OK_OPTION) {
+            for (GuiPreferences p : getSelectedSavedPreferencesList()) {
+                p.clearAll();
+                settingsEditors.remove(p);
+            }
+            reloadList();
+        }
+    }
+
+    public boolean isSelectedPreferencesEditable() {
+        return getSelectedSavedPreferences() != null && !isEmpty(getSelectedSavedPreferences());
+    }
+
+    public boolean isSelectedPreferencesEditableAll() {
+        return !getSelectedSavedPreferencesList().isEmpty() &&
+                getSelectedSavedPreferencesList().stream()
+                        .noneMatch(this::isEmpty);
+    }
+
+    public void doSavePrefs() {
+        GuiPreferences pref = getSelectedSavedPreferences();
+        if (pref == null) {
+            return;
+        }
+
+        String name = toSafeName(pref.getValueStore().getString(GuiPreferences.KEY_NAME, "pref")) + ".json";
+        SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
+        Path file = fd.showConfirmDialogIfOverwriting(getMainPane(),
+                fd.showSaveDialog(getMainPane(), null, name));
+        if (file != null) {
+            try (Writer w = Files.newBufferedWriter(file)) {
+                new JsonWriter(w).withNewLines(true)
+                        .write(pref.toJson());
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+            System.err.println("saved: " + file);
+        }
+    }
+
+    public String toSafeName(String name) {
+        return name.replaceAll("[\\-:/]", "_");
+    }
+
+    @SuppressWarnings("unchecked")
+    public void doLoadPrefs() {
+        Path file = SettingsWindow.getFileDialogManager().showOpenDialog(getMainPane(), null);
+        if (file != null) {
+            Object json = JsonReader.read(file.toFile());
+            GuiPreferences prefs = getRootContext().getPreferences();
+            try (var lock = prefs.lock()) {
+                lock.use();
+                prefs.addNewSavedStoreAsRoot()
+                        .fromJson((Map<String, Object>) json);
+            }
+            reloadList();
+        }
+    }
+
+    public void doApplyPrefs() {
+        GuiPreferences preferences = getSelectedSavedPreferences();
+        apply(preferences);
+    }
+
+    public void apply(GuiPreferences preferences) {
+        if (preferences != null) {
+            GuiPreferences prefs = getRootContext().getPreferences();
+            try (var lock = prefs.lock()) {
+                lock.use();
+                prefs.overwriteByAnotherPrefs(preferences);
+            }
+            applyPreferences(new GuiSwingPrefsApplyOptions.PrefsApplyOptionsDefault(false, false));
+        }
+    }
+
+//    public void doResetPrefs() {
+//        int r = JOptionPane.showConfirmDialog(getMainPane(),
+//                "Reset Entire Preferences ?", "Reset Entire Preferences", JOptionPane.OK_CANCEL_OPTION);
+//        if (r == JOptionPane.OK_OPTION) {
+//            GuiPreferences prefs = getRootContext().getPreferences();
+//            try (var lock = prefs.lock()) {
+//                lock.use();
+//                prefs.overwriteToEmpty();
+//            }
+//            applyPreferences(new GuiSwingPrefsApplyOptions.PrefsApplyOptionsDefault(true, false));
+//            reloadList();
+//        }
+//    }
+
+    public void doDuplicatePrefs() {
+        GuiPreferences pref = getSelectedSavedPreferences();
+        if (pref == null) {
+            return;
+        }
+        GuiPreferences rootPrefs = getRootContext().getPreferences();
+        try (var lock = rootPrefs.lock()) {
+            lock.use();
+            GuiPreferences newStore = rootPrefs.addNewSavedStoreAsRoot();
+            var name = newStore.getValueStore().getString(GuiPreferences.KEY_NAME, "");
+            var uuid = newStore.getValueStore().getString(GuiPreferences.KEY_UUID, "");
+            newStore.overwriteByAnotherPrefs(pref);
+            if (!name.isEmpty()) {
+                newStore.getValueStore().putString(GuiPreferences.KEY_NAME, name);
+            }
+            if (!uuid.isEmpty()) {
+                newStore.getValueStore().putString(GuiPreferences.KEY_UUID, uuid);
+            }
+            newStore.getValueStore().flush();
+        }
+        reloadList();
+    }
+
     public static class NewPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
@@ -669,20 +881,7 @@ public class GuiSwingPreferences {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            GuiPreferences rootPrefs = owner.getRootContext().getPreferences();
-            try (var lock = rootPrefs.lock()) {
-                lock.use();
-                GuiPreferences newStore = rootPrefs.addNewSavedStoreAsRoot();
-                owner.savePreferences(newStore);
-
-//            Map<String,Object> map = rootPrefs.toJson();
-//            map.remove("$name");
-//            map.remove("$uuid");
-//            newStore.fromJson(map);
-
-                newStore.getValueStore().flush();
-            }
-            owner.reloadList();
+            owner.doNewPrefs();
         }
 
         @Override
@@ -698,7 +897,7 @@ public class GuiSwingPreferences {
 
     /**
      * the action for overwriting an existing prefs
-     * @since 1.6.3
+     * @since 1.7
      */
     public static class UpdatePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         @Serial private static final long serialVersionUID = 1L;
@@ -709,28 +908,24 @@ public class GuiSwingPreferences {
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("update"));
             putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getIcon("update"));
             this.owner = owner;
-            owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
+            owner.addSelectionListener(this::updateEnabled);
+        }
+
+        public void updateEnabled() {
+            setEnabled(owner.isSelectedPreferencesEditable());
         }
 
         @Override
         public boolean isEnabled() {
-            setEnabled(owner.getSelectedSavedPreferences() != null);
+            updateEnabled();
             return enabled;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            GuiPreferences pref = owner.getSelectedSavedPreferences();
-            if (pref == null) {
-                return;
-            }
-            try (var lock = pref.lock()) {
-                lock.use();
-                owner.savePreferences(pref);
-                pref.getValueStore().flush();
-            }
-            owner.reloadList();
+            owner.doUpdatePrefs();
         }
+
         @Override
         public String getCategory() {
             return PopupExtension.MENU_CATEGORY_PREFS;
@@ -752,21 +947,22 @@ public class GuiSwingPreferences {
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("delete"));
             putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("delete"));
             this.owner = owner;
-            owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
+            owner.addSelectionListener(this::updateEnabled);
+        }
+
+        public void updateEnabled() {
+            setEnabled(owner.isSelectedPreferencesEditableAll());
         }
 
         @Override
         public boolean isEnabled() {
-            setEnabled(!owner.getSelectedSavedPreferencesList().isEmpty());
+            updateEnabled();
             return enabled;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            for (GuiPreferences p : owner.getSelectedSavedPreferencesList()) {
-                p.clearAll();
-            }
-            owner.reloadList();
+            owner.doDeletePrefs();
         }
 
         @Override
@@ -780,6 +976,46 @@ public class GuiSwingPreferences {
         }
     }
 
+    public static class DuplicatePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+        @Serial private static final long serialVersionUID = 1L;
+        protected GuiSwingPreferences owner;
+
+        @SuppressWarnings("this-escape")
+        public DuplicatePrefsAction(GuiSwingPreferences owner) {
+            putValue(NAME, "Duplicate");
+            putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("duplicate"));
+            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("duplicate"));
+            this.owner = owner;
+            owner.addSelectionListener(this::updateEnabled);
+        }
+
+        public void updateEnabled() {
+            setEnabled(owner.isSelectedPreferencesEditable());
+        }
+
+        @Override
+        public boolean isEnabled() {
+            updateEnabled();
+            return enabled;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            owner.doDuplicatePrefs();
+        }
+
+        @Override
+        public String getCategory() {
+            return PopupExtension.MENU_CATEGORY_PREFS;
+        }
+
+        @Override
+        public String getSubCategory() {
+            return PopupExtension.MENU_SUB_CATEGORY_COPY;
+        }
+
+    }
+
     public static class SavePrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
         @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingPreferences owner;
@@ -790,41 +1026,23 @@ public class GuiSwingPreferences {
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("save"));
             putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("save"));
             this.owner = owner;
-            owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
+            owner.addSelectionListener(this::updateEnabled);
+        }
+
+        public void updateEnabled() {
+            setEnabled(owner.getSelectedSavedPreferences() != null);
         }
 
         @Override
         public boolean isEnabled() {
-            setEnabled(owner.getSelectedSavedPreferences() != null);
+            updateEnabled();
             return enabled;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            GuiPreferences pref = owner.getSelectedSavedPreferences();
-            if (pref == null) {
-                return;
-            }
-
-            String name = toSafeName(pref.getValueStore().getString("$name", "pref")) + ".json";
-            SettingsWindow.FileDialogManager fd = SettingsWindow.getFileDialogManager();
-            Path file = fd.showConfirmDialogIfOverwriting(owner.getMainPane(),
-                    fd.showSaveDialog(owner.getMainPane(), null, name));
-            if (file != null) {
-                try (Writer w = Files.newBufferedWriter(file)) {
-                    new JsonWriter(w).withNewLines(true)
-                            .write(pref.toJson());
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-                System.err.println("saved: " + file);
-            }
+            owner.doSavePrefs();
         }
-
-        public String toSafeName(String name) {
-            return name.replaceAll("[\\-:/]", "_");
-        }
-
 
         @Override
         public String getCategory() {
@@ -849,20 +1067,9 @@ public class GuiSwingPreferences {
             this.owner = owner;
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public void actionPerformed(ActionEvent e) {
-            Path file = SettingsWindow.getFileDialogManager().showOpenDialog(owner.getMainPane(), null);
-            if (file != null) {
-                Object json = JsonReader.read(file.toFile());
-                GuiPreferences prefs = owner.getRootContext().getPreferences();
-                try (var lock = prefs.lock()) {
-                    lock.use();
-                    prefs.addNewSavedStoreAsRoot()
-                            .fromJson((Map<String, Object>) json);
-                }
-                owner.reloadList();
-            }
+            owner.doLoadPrefs();
         }
 
         @Override
@@ -890,25 +1097,22 @@ public class GuiSwingPreferences {
             putValue(NAME, "Apply");
             putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("apply"));
             putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("apply"));
-            owner.addSelectionListener(() -> setEnabled(!owner.isSelectionEmpty()));
+            owner.addSelectionListener(this::updateEnabled);
+        }
+
+        public void updateEnabled() {
+            setEnabled(owner.getSelectedSavedPreferences() != null);
+        }
+
+        @Override
+        public boolean isEnabled() {
+            updateEnabled();
+            return enabled;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            GuiPreferences preferences = owner.getSelectedSavedPreferences();
-            apply(preferences);
-        }
-
-        public void apply(GuiPreferences preferences) {
-            if (preferences != null) {
-                GuiPreferences prefs = owner.getRootContext().getPreferences();
-                try (var lock = prefs.lock()) {
-                    lock.use();
-                    prefs.clearAll();
-                    prefs.fromJson(preferences.toJson());
-                }
-                owner.applyPreferences(new GuiSwingPrefsApplyOptions.PrefsApplyOptionsDefault(false, false));
-            }
+            owner.doApplyPrefs();
         }
 
         @Override
@@ -921,44 +1125,34 @@ public class GuiSwingPreferences {
             return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
         }
     }
-
-    public static class ResetPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-        @Serial private static final long serialVersionUID = 1L;
-        protected GuiSwingPreferences owner;
-
-        @SuppressWarnings("this-escape")
-        public ResetPrefsAction(GuiSwingPreferences owner) {
-            putValue(NAME, "Reset");
-            putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("reset"));
-            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("reset"));
-            this.owner = owner;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            int r = JOptionPane.showConfirmDialog(owner.getMainPane(),
-                    "Reset Entire Preferences ?");
-            if (r == JOptionPane.OK_OPTION) {
-                GuiPreferences prefs = owner.getRootContext().getPreferences();
-                try (var lock = prefs.lock()) {
-                    lock.use();
-                    prefs.resetAsRoot();
-                }
-                owner.applyPreferences(new GuiSwingPrefsApplyOptions.PrefsApplyOptionsDefault(true, false));
-                owner.reloadList();
-            }
-        }
-
-        @Override
-        public String getCategory() {
-            return PopupExtension.MENU_CATEGORY_PREFS;
-        }
-
-        @Override
-        public String getSubCategory() {
-            return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
-        }
-    }
+//
+//    public static class ResetPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
+//        @Serial private static final long serialVersionUID = 1L;
+//        protected GuiSwingPreferences owner;
+//
+//        @SuppressWarnings("this-escape")
+//        public ResetPrefsAction(GuiSwingPreferences owner) {
+//            putValue(NAME, "Reset");
+//            putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("reset"));
+//            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("reset"));
+//            this.owner = owner;
+//        }
+//
+//        @Override
+//        public void actionPerformed(ActionEvent e) {
+//            owner.doResetPrefs();
+//        }
+//
+//        @Override
+//        public String getCategory() {
+//            return PopupExtension.MENU_CATEGORY_PREFS;
+//        }
+//
+//        @Override
+//        public String getSubCategory() {
+//            return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
+//        }
+//    }
 
     //////////
 
@@ -1053,7 +1247,7 @@ public class GuiSwingPreferences {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            apply(targetPrefs);
+            owner.apply(targetPrefs);
         }
     }
 }

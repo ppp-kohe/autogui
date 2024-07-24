@@ -29,7 +29,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -186,12 +185,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                                                                               MenuBuilder.MenuLabel infoLabel) {
         GuiMappingContext context = pane.getSwingViewContext();
         List<Action> settingActions = Collections.emptyList();
-        if (pane instanceof PropertyDocumentTextPane) {
-            settingActions = Collections.singletonList(
-                    new DocumentSettingAction(
-                            GuiSwingContextInfo.get().getInfoLabel(context),
-                            (SettingsWindowClient) pane,
-                            ((PropertyDocumentTextPane) pane).getSettingPane()));
+        if (pane instanceof PropertyDocumentTextPane textPane) {
+            settingActions = Collections.singletonList(textPane.getSettingAction());
         }
         return PopupCategorized.getMenuItems(
                 Arrays.asList(
@@ -535,13 +530,20 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         protected MenuBuilder.MenuLabel infoLabel;
         protected GuiTaskClock viewClock = new GuiTaskClock(true);
         protected LineNumberPane lineNumberPane;
+        protected DocumentSettingAction settingAction;
 
         public PropertyDocumentTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             this.context = context;
             this.specifierManager = specifierManager;
             settingPane = new DocumentSettingPane(this);
+            settingAction = new DocumentSettingAction(GuiSwingContextInfo.get().getInfoLabel(context),
+                    this, settingPane);
             popup = new TextPaneInitializer(this, context).getPopup();
             infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
+        }
+
+        public DocumentSettingAction getSettingAction() {
+            return settingAction;
         }
 
         @Override
@@ -721,7 +723,11 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            editorPane.getSettingsWindow().show("Document Settings", pane, contentPane);
+            JComponent sender = null;
+            if (editorPane instanceof JComponent comp) {
+                sender = comp;
+            }
+            editorPane.getSettingsWindow().show("Document Settings", sender, contentPane);
         }
 
         @Override
@@ -962,18 +968,17 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
          * @param prefsObj the updated prefsObj
          */
         public void setTo(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting prefsObj) {
-            var data = prefsObj.getData();
-            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_LINE_SPACING, ((Number) spaceLine.getValue()).floatValue());
-            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_SPACE_ABOVE, ((Number) spaceAbove.getValue()).floatValue());
-            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FONT_FAMILY, fontFamily.getSelectedItem());
-            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FONT_SIZE, ((Number) fontSize.getValue()).intValue());
-            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_BOLD, styleBold.isSelected());
-            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_ITALIC, styleItalic.isSelected());
-            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_BACKGROUND_COLOR, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.toJsonColor(backgroundColor.getColor()));
-            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FOREGROUND_COLOR, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.toJsonColor(foregroundColor.getColor()));
-            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_BACKGROUND_CUSTOM, backgroundCustom.isSelected());
-            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FOREGROUND_CUSTOM, foregroundCustom.isSelected());
-            data.put(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_WRAP_TEXT, styleWrapLine.isSelected());
+            prefsObj.setLineSpacing(((Number) spaceLine.getValue()).floatValue());
+            prefsObj.setSpaceAbove(((Number) spaceAbove.getValue()).floatValue());
+            prefsObj.setFontFamily((String) fontFamily.getSelectedItem());
+            prefsObj.setFontSize(((Number) fontSize.getValue()).intValue());
+            prefsObj.setBold(styleBold.isSelected());
+            prefsObj.setItalic(styleItalic.isSelected());
+            prefsObj.setBackgroundColor(backgroundColor.getColor());
+            prefsObj.setForegroundColor(foregroundColor.getColor());
+            prefsObj.setBackgroundCustom(backgroundCustom.isSelected());
+            prefsObj.setForegroundCustom(foregroundCustom.isSelected());
+            prefsObj.setWrapText(styleWrapLine.isSelected());
         }
 
         /**
@@ -981,22 +986,21 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
          * @param prefsObj the source prefsObj
          */
         public void setFrom(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting prefsObj) {
-            var data = prefsObj.getData();
-            var lineSpacingVal = GuiSwingPrefsSupports.getAs(data, Number.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_LINE_SPACING, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.DEFAULT_NUM);
-            var spaceAboveVal = GuiSwingPrefsSupports.getAs(data, Number.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_SPACE_ABOVE, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.DEFAULT_NUM);
-            var fontFamilyVal = GuiSwingPrefsSupports.getAs(data, String.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FONT_FAMILY, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.DEFAULT_FONT_FAMILY);
-            var fontSizeVal = GuiSwingPrefsSupports.getAs(data, Number.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FONT_SIZE, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.DEFAULT_NUM);
-            var boldVal = GuiSwingPrefsSupports.getAs(data, Boolean.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_BOLD, false);
-            var italicVal = GuiSwingPrefsSupports.getAs(data, Boolean.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_ITALIC, false);
-            var wrapTextVal = GuiSwingPrefsSupports.getAs(data, Boolean.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_WRAP_TEXT, true);
-            var backgroundCustomVal = GuiSwingPrefsSupports.getAs(data, Boolean.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_BACKGROUND_CUSTOM, false);
-            var foregroundCustomVal = GuiSwingPrefsSupports.getAs(data, Boolean.class, GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.KEY_FOREGROUND_CUSTOM, false);
-            var backgroundColorVal = prefsObj.backgroundColor();
-            var foregroundColorVal = prefsObj.foregroundColor();
-            spaceLine.setValue(lineSpacingVal.floatValue());
-            spaceAbove.setValue(spaceAboveVal.floatValue());
+            var lineSpacingVal = prefsObj.getLineSpacing();
+            var spaceAboveVal = prefsObj.getSpaceAbove();
+            var fontFamilyVal = prefsObj.getFontFamily();
+            var fontSizeVal = prefsObj.getFontSize();
+            var boldVal = prefsObj.isBold();
+            var italicVal = prefsObj.isItalic();
+            var wrapTextVal = prefsObj.isWrapText();
+            var backgroundCustomVal = prefsObj.isBackgroundCustom();
+            var foregroundCustomVal = prefsObj.isForegroundCustom();
+            var backgroundColorVal = prefsObj.getBackgroundColor();
+            var foregroundColorVal = prefsObj.getForegroundColor();
+            spaceLine.setValue(lineSpacingVal);
+            spaceAbove.setValue(spaceAboveVal);
             fontFamily.setSelectedItem(fontFamilyVal);
-            fontSize.setValue(fontSizeVal.intValue());
+            fontSize.setValue(fontSizeVal);
             styleBold.setSelected(boldVal);
             styleItalic.setSelected(italicVal);
             styleWrapLine.setSelected(wrapTextVal);
@@ -1177,27 +1181,61 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public static final String KEY_BACKGROUND_CUSTOM = "backgroundCustom";
         public static final String KEY_FOREGROUND_CUSTOM = "foregroundCustom";
         public static final String KEY_WRAP_TEXT = "wrapText";
-        protected Map<String, Object> data = new LinkedHashMap<>();
+
+        protected float lineSpacing;
+        protected float spaceAbove;
+        protected String fontFamily;
+        protected int fontSize;
+        protected boolean bold;
+        protected boolean italic;
+        protected Color backgroundColor;
+        protected Color foregroundColor;
+        protected boolean backgroundCustom;
+        protected boolean foregroundCustom;
+        protected boolean wrapText;
 
         public static final String DEFAULT_FONT_FAMILY = "";
-        public static final Number DEFAULT_NUM = -1;
+        public static final int DEFAULT_NUM = -1;
 
         /**
          * initialized by null-values and black and white colors.
          */
         public PreferencesForDocumentSetting() {
-            data.put(KEY_LINE_SPACING, DEFAULT_NUM);
-            data.put(KEY_SPACE_ABOVE, DEFAULT_NUM);
-            data.put(KEY_FONT_FAMILY, DEFAULT_FONT_FAMILY);
-            data.put(KEY_FONT_SIZE, DEFAULT_NUM);
-            data.put(KEY_BOLD, false);
-            data.put(KEY_ITALIC, false);
-            data.put(KEY_BACKGROUND_COLOR, toJsonColor(255, 255, 255, 255));
-            data.put(KEY_FOREGROUND_COLOR, toJsonColor(0, 0, 0, 255));
-            data.put(KEY_BACKGROUND_CUSTOM, false);
-            data.put(KEY_FOREGROUND_CUSTOM, false);
-            data.put(KEY_WRAP_TEXT, true);
+            lineSpacing = DEFAULT_NUM;
+            spaceAbove = DEFAULT_NUM;
+            fontFamily = "";
+            fontSize = DEFAULT_NUM;
+            bold = false;
+            italic = false;
+            backgroundColor = Color.white;
+            foregroundColor = Color.black;
+            backgroundCustom = false;
+            foregroundCustom = false;
+            wrapText = true;
         }
+
+        public float getLineSpacing() { return lineSpacing; }
+        public void setLineSpacing(float lineSpacing) { this.lineSpacing = lineSpacing; }
+        public float getSpaceAbove() {return spaceAbove; }
+        public void setSpaceAbove(float spaceAbove) { this.spaceAbove = spaceAbove; }
+        public String getFontFamily() { return fontFamily; }
+        public void setFontFamily(String fontFamily) { this.fontFamily = fontFamily; }
+        public int getFontSize() { return fontSize; }
+        public void setFontSize(int fontSize) { this.fontSize = fontSize; }
+        public boolean isBold() { return bold; }
+        public void setBold(boolean bold) { this.bold = bold; }
+        public boolean isItalic() { return italic; }
+        public void setItalic(boolean italic) { this.italic = italic; }
+        public Color getBackgroundColor() { return backgroundColor; }
+        public void setBackgroundColor(Color backgroundColor) { this.backgroundColor = backgroundColor; }
+        public Color getForegroundColor() { return foregroundColor; }
+        public void setForegroundColor(Color foregroundColor) { this.foregroundColor = foregroundColor; }
+        public boolean isBackgroundCustom() { return backgroundCustom; }
+        public void setBackgroundCustom(boolean backgroundCustom) { this.backgroundCustom = backgroundCustom; }
+        public boolean isForegroundCustom() { return foregroundCustom; }
+        public void setForegroundCustom(boolean foregroundCustom) { this.foregroundCustom = foregroundCustom; }
+        public boolean isWrapText() { return wrapText; }
+        public void setWrapText(boolean wrapLine) { this.wrapText = wrapLine; }
 
         /**
          * overwrites properties by values from {@link UIManagerUtil};
@@ -1207,17 +1245,17 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public void setUiDefault() {
             var ui = UIManagerUtil.getInstance();
             var font = ui.getEditorPaneFont();
-            data.put(KEY_LINE_SPACING, ui.getScaledSizeFloat(0.2f));
-            data.put(KEY_SPACE_ABOVE, ui.getScaledSizeFloat(2.0f));
-            data.put(KEY_FONT_FAMILY, font.getFamily());
-            data.put(KEY_FONT_SIZE, font.getSize());
-            data.put(KEY_BOLD, font.isBold());
-            data.put(KEY_ITALIC, font.isItalic());
-            data.put(KEY_BACKGROUND_COLOR, toJsonColor(ui.getTextPaneBackground()));
-            data.put(KEY_FOREGROUND_COLOR, toJsonColor(ui.getTextPaneForeground()));
-            data.put(KEY_BACKGROUND_CUSTOM, false);
-            data.put(KEY_FOREGROUND_CUSTOM, false);
-            data.put(KEY_WRAP_TEXT, true);
+            setLineSpacing(ui.getScaledSizeFloat(0.2f));
+            setSpaceAbove(ui.getScaledSizeFloat(2.0f));
+            setFontFamily(font.getFamily());
+            setFontSize(font.getSize());
+            setBold(font.isBold());
+            setItalic(font.isItalic());
+            setBackgroundColor(ui.getTextPaneBackground());
+            setForegroundColor(ui.getTextPaneForeground());
+            setBackgroundCustom(false);
+            setForegroundCustom(false);
+            setWrapText(true);
         }
 
         public static Object toJsonColor(Color c) {
@@ -1230,22 +1268,18 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public static Color fromJsonColor(Object o) {
             if (o != null) {
-                List<?> list = (List<?>) o;
-                int r = !list.isEmpty() ? ((Number) list.get(0)).intValue() : 0;
-                int g = list.size() >= 2 ? ((Number) list.get(1)).intValue() : 0;
-                int b = list.size() >= 3 ? ((Number) list.get(2)).intValue() : 0;
-                int a = list.size() >= 4 ? ((Number) list.get(3)).intValue() : 0;
-                return new Color(r, g, b, a);
+                if (o instanceof List<?> list) {
+                    int r = !list.isEmpty() ? ((Number) list.get(0)).intValue() : 0;
+                    int g = list.size() >= 2 ? ((Number) list.get(1)).intValue() : 0;
+                    int b = list.size() >= 3 ? ((Number) list.get(2)).intValue() : 0;
+                    int a = list.size() >= 4 ? ((Number) list.get(3)).intValue() : 0;
+                    return new Color(r, g, b, a);
+                } else { //-1
+                    return null;
+                }
             } else {
                 return null;
             }
-        }
-
-        /**
-         * @return the direct reference to the properties
-         */
-        public Map<String, Object> getData() {
-            return data;
         }
 
         /**
@@ -1259,18 +1293,40 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             var fontSize = style.getAttribute(StyleConstants.FontSize);
             var bold = style.getAttribute(StyleConstants.Bold);
             var italic = style.getAttribute(StyleConstants.Italic);
-            var backgroundColor = (Color) style.getAttribute(StyleConstants.Background);
-            var foregroundColor = (Color) style.getAttribute(StyleConstants.Foreground);
-            data.put(KEY_LINE_SPACING, lineSpacing == null ? DEFAULT_NUM : lineSpacing);
-            data.put(KEY_SPACE_ABOVE, spaceAbove == null ? DEFAULT_NUM : spaceAbove);
-            data.put(KEY_FONT_FAMILY, fontFamily == null ? DEFAULT_FONT_FAMILY : fontFamily);
-            data.put(KEY_FONT_SIZE, fontSize == null ? DEFAULT_NUM : fontSize);
-            data.put(KEY_BOLD, bold == null ? false : bold);
-            data.put(KEY_ITALIC, italic == null ? false : italic);
-            data.put(KEY_BACKGROUND_CUSTOM, backgroundColor != null);
-            data.put(KEY_FOREGROUND_CUSTOM, foregroundColor != null);
-            data.put(KEY_BACKGROUND_COLOR, backgroundColor == null ? DEFAULT_NUM : toJsonColor(backgroundColor));
-            data.put(KEY_FOREGROUND_COLOR, foregroundColor == null ? DEFAULT_NUM : toJsonColor(foregroundColor));
+            var backgroundColor = style.getAttribute(StyleConstants.Background);
+            var foregroundColor = style.getAttribute(StyleConstants.Foreground);
+            setLineSpacing(floatStyleValue(lineSpacing));
+            setSpaceAbove(floatStyleValue(spaceAbove));
+            setFontFamily(styleValue(String.class, fontFamily, DEFAULT_FONT_FAMILY));
+            setFontSize(intStyleValue(fontSize));
+            setBold(styleValue(Boolean.class, bold, false));
+            setItalic(styleValue(Boolean.class, italic, false));
+            setBackgroundCustom(backgroundColor != null);
+            setForegroundCustom(foregroundColor != null);
+            setBackgroundColor(styleValue(Color.class, backgroundColor, Color.white));
+            setForegroundColor(styleValue(Color.class, foregroundColor, Color.black));
+        }
+
+        private float floatStyleValue(Object value) {
+            if (value instanceof Number num) {
+                return num.floatValue();
+            } else {
+                return DEFAULT_NUM;
+            }
+        }
+        private int intStyleValue(Object value) {
+            if (value instanceof Number num) {
+                return num.intValue();
+            } else {
+                return DEFAULT_NUM;
+            }
+        }
+        private <T> T styleValue(Class<T> type, Object value, T defVal) {
+            if (!type.isInstance(value)) { //include null
+                return defVal;
+            } else {
+                return type.cast(value);
+            }
         }
 
         /**
@@ -1283,7 +1339,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 setFrom(style);
             }
             var wrapScroll = isWrapLine(scrollPane(pane));
-            data.put(KEY_WRAP_TEXT, wrapScroll);
+            setWrapText(wrapScroll);
         }
 
         /**
@@ -1292,24 +1348,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
          * @param style the source style
          */
         public void setup(MutableAttributeSet style) {
-            var lineSpacing = style.getAttribute(StyleConstants.LineSpacing);
-            var spaceAbove = style.getAttribute(StyleConstants.SpaceAbove);
-            var fontFamily = style.getAttribute(StyleConstants.FontFamily);
-            var fontSize = style.getAttribute(StyleConstants.FontSize);
-            var bold = style.getAttribute(StyleConstants.Bold);
-            var italic = style.getAttribute(StyleConstants.Italic);
-            var backgroundColor = (Color) style.getAttribute(StyleConstants.Background);
-            var foregroundColor = (Color) style.getAttribute(StyleConstants.Foreground);
-            if (lineSpacing != null) { data.put(KEY_LINE_SPACING, lineSpacing); }
-            if (spaceAbove != null) { data.put(KEY_SPACE_ABOVE, spaceAbove); }
-            if (fontFamily != null) { data.put(KEY_FONT_FAMILY, fontFamily); }
-            if (fontSize != null) { data.put(KEY_FONT_SIZE, fontSize); }
-            if (bold != null) { data.put(KEY_BOLD, bold); }
-            if (italic != null) { data.put(KEY_ITALIC, italic); }
-            data.put(KEY_BACKGROUND_CUSTOM, (backgroundColor != null));
-            data.put(KEY_FOREGROUND_CUSTOM, (foregroundColor != null));
-            if (backgroundColor != null) { data.put(KEY_BACKGROUND_COLOR, toJsonColor(backgroundColor)); }
-            if (foregroundColor != null) { data.put(KEY_FOREGROUND_COLOR, toJsonColor(foregroundColor)); }
+            setFrom(style);
             applyTo(style);
         }
 
@@ -1321,14 +1360,15 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
          * @see #setup(MutableAttributeSet)
          */
         public void setup(JComponent pane) {
+            var wrapScroll = isWrapLine(scrollPane(pane)); //apparently, the order matters; it seemed to overwrite the default style
+            setWrapText(wrapScroll);
+            applyToComponentWithoutDocument(pane);
+
             var style = getTargetStyle(pane);
             if (style != null) {
                 setup(style);
                 applyToDocument(getTargetDocument(pane), style);
             }
-            var wrapScroll = isWrapLine(scrollPane(pane));
-            data.put(KEY_WRAP_TEXT, wrapScroll);
-            applyToComponentWithoutDocument(pane);
         }
 
         /**
@@ -1336,37 +1376,37 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
          * @param style the modified style
          */
         public void applyTo(MutableAttributeSet style) {
-            var lineSpacing = GuiSwingPrefsSupports.getAs(data, Number.class, KEY_LINE_SPACING, DEFAULT_NUM);
-            var spaceAbove = GuiSwingPrefsSupports.getAs(data, Number.class, KEY_SPACE_ABOVE, DEFAULT_NUM);
-            var fontFamily = GuiSwingPrefsSupports.getAs(data, String.class, KEY_FONT_FAMILY, DEFAULT_FONT_FAMILY);
-            var fontSize = GuiSwingPrefsSupports.getAs(data, Number.class, KEY_FONT_SIZE, DEFAULT_NUM);
-            var bold = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_BOLD, false);
-            var italic = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_ITALIC, false);
-            var wrapText = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_WRAP_TEXT, true);
-            var backgroundCustom = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_BACKGROUND_CUSTOM, false);
-            var foregroundCustom = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_FOREGROUND_CUSTOM, false);
-            var backgroundColor = backgroundColor();
-            var foregroundColor = foregroundColor();
+            var lineSpacing = getLineSpacing();
+            var spaceAbove = getSpaceAbove();
+            var fontFamily = getFontFamily();
+            var fontSize = getFontSize();
+            var bold = isBold();
+            var italic = isItalic();
+            var wrapText = isWrapText();
+            var backgroundCustom = isBackgroundCustom();
+            var foregroundCustom = isForegroundCustom();
+            var backgroundColor = getBackgroundColor();
+            var foregroundColor = getForegroundColor();
 
-            if (lineSpacing.equals(DEFAULT_NUM)) {
+            if (lineSpacing == (DEFAULT_NUM)) {
                 style.removeAttribute(StyleConstants.LineSpacing);
             } else {
-                StyleConstants.setLineSpacing(style, lineSpacing.floatValue());
+                StyleConstants.setLineSpacing(style, lineSpacing);
             }
-            if (spaceAbove.equals(DEFAULT_NUM)) {
+            if (spaceAbove == (DEFAULT_NUM)) {
                 style.removeAttribute(StyleConstants.SpaceAbove);
             } else {
-                StyleConstants.setSpaceAbove(style, spaceAbove.floatValue());
+                StyleConstants.setSpaceAbove(style, spaceAbove);
             }
             if (fontFamily.equals(DEFAULT_FONT_FAMILY)) {
                 style.removeAttribute(StyleConstants.FontFamily);
             } else {
                 StyleConstants.setFontFamily(style, fontFamily);
             }
-            if (fontSize.equals(DEFAULT_NUM)) {
+            if (fontSize == (DEFAULT_NUM)) {
                 style.removeAttribute(StyleConstants.FontSize);
             } else {
-                StyleConstants.setFontSize(style, fontSize.intValue());
+                StyleConstants.setFontSize(style, fontSize);
             }
             StyleConstants.setBold(style, bold);
             StyleConstants.setItalic(style, italic);
@@ -1383,43 +1423,17 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         /**
-         * @return the {@code backgroundColor}-property if the prop is set and {@code backgroundCustom} is true, or null
-         */
-        public Color backgroundColor() {
-            var backgroundCustom = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_BACKGROUND_CUSTOM, false);
-            var backfgroundColor = fromJsonColor(GuiSwingPrefsSupports.getAsListNonNull(data, Number.class, KEY_BACKGROUND_COLOR));
-            if (backgroundCustom && backfgroundColor != null) {
-                return backfgroundColor;
-            } else {
-                return null;
-            }
-        }
-
-        /**
-         * @return the {@code foregroundColor}-property if the prop is set and {@code foregroundCustom} is true, or null
-         */
-        public Color foregroundColor() {
-            var foregroundCustom = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_FOREGROUND_CUSTOM, false);
-            var foregroundColor = fromJsonColor(GuiSwingPrefsSupports.getAsListNonNull(data, Number.class, KEY_FOREGROUND_COLOR));
-            if (foregroundCustom && foregroundColor != null) {
-                return foregroundColor;
-            } else {
-                return null;
-            }
-        }
-
-        /**
          * set style of the target-text-pane by {@link #getTargetStyle(JComponent)} and {@link #applyTo(MutableAttributeSet)}
          *  ,{@link #applyToDocument(StyledDocument, MutableAttributeSet)} and {@link #applyToComponentWithoutDocument(JComponent)}.
          * @param pane the target text-pane
          */
         public void applyTo(JComponent pane) {
+            applyToComponentWithoutDocument(pane); //apparently, the order matters; it seemed to overwrite the default style
             var style = getTargetStyle(pane);
             if (style != null) {
                 applyTo(style);
                 applyToDocument(getTargetDocument(pane), style);
             }
-            applyToComponentWithoutDocument(pane);
         }
 
         /**
@@ -1435,15 +1449,16 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         /**
          * set the background and foreground properties ({@link JComponent#setBackground(Color)} and {@link JComponent#setForeground(Color)})
-         *  and wrapText by {@link #setWrapLine(JScrollPane, JComponent, boolean)}
+         *  and wrapText by {@link #setWrapLine(JScrollPane, JComponent, boolean)}.
+         *  Implementation note: it seemed to change the attributes of the default document-style. So it needs to call the method before updating the style
          * @param pane the target text-pane
          */
         public void applyToComponentWithoutDocument(JComponent pane) {
-            var backfgroundColor = backgroundColor();
-            var foregroundColor = foregroundColor();
+            var backfgroundColor = getBackgroundColor();
+            var foregroundColor = getForegroundColor();
             pane.setBackground(backfgroundColor);
             pane.setForeground(foregroundColor);
-            var wrapLine = GuiSwingPrefsSupports.getAs(data, Boolean.class, KEY_WRAP_TEXT, true);
+            var wrapLine = isWrapText();
             setWrapLine(scrollPane(pane), pane, wrapLine);
         }
 
@@ -1489,42 +1504,55 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         @Override
         public void loadFrom(GuiPreferences prefs) {
             GuiPreferences.GuiValueStore store = prefs.getValueStore();
-            var json = getData();
-            for (Map.Entry<String,Object> e : json.entrySet()) { //JSON has all keys and values
-                String k = e.getKey();
-                String storeVal = store.getString(k, "");
-                Object exVal = e.getValue();
-                if (!storeVal.isEmpty()) {
-                    switch (exVal) {
-                        case String s -> json.put(k, storeVal);
-                        case Boolean b -> json.put(k, storeVal.endsWith("true"));
-                        case Number number -> {
-                            try {
-                                json.put(k, Integer.valueOf(storeVal));
-                            } catch (Exception ex) {
-                                json.put(k, Float.valueOf(storeVal));
-                            }
-                        }
-                        case null, default -> json.put(k, JsonReader.create(storeVal).parseValue());
-                    }
-                }
-            }
+            var lineSpacing = store.getString(KEY_LINE_SPACING, null);
+            var spaceAbove = store.getString(KEY_SPACE_ABOVE, null);
+            var fontFamily = store.getString(KEY_FONT_FAMILY, null);
+            var fontSize = store.getString(KEY_FONT_SIZE, null);
+            var bold = store.getString(KEY_BOLD, null);
+            var italic = store.getString(KEY_ITALIC, null);
+            var backgroundColor = fromJsonColor(JsonReader.create(store.getString(KEY_BACKGROUND_COLOR, null)).parseValue());
+            var foregroundColor = fromJsonColor(JsonReader.create(store.getString(KEY_FOREGROUND_COLOR, null)).parseValue());
+            var backgroundCustom = store.getString(KEY_BACKGROUND_CUSTOM, null);
+            var foregroundCustom = store.getString(KEY_FOREGROUND_CUSTOM, null);
+            var wrapText = store.getString(KEY_WRAP_TEXT, null);
+            setLineSpacing(lineSpacing != null ?  Float.parseFloat(lineSpacing) :  DEFAULT_NUM);
+            setSpaceAbove(spaceAbove != null ?  Float.parseFloat(spaceAbove) : DEFAULT_NUM);
+            setFontFamily(fontFamily != null ?  fontFamily : DEFAULT_FONT_FAMILY);
+            setFontSize(fontSize != null ?  Integer.parseInt(fontSize) : DEFAULT_NUM);
+            setBold(bold != null && bold.equals("true"));
+            setItalic(italic != null && italic.equals("true"));
+            setWrapText(wrapText != null && wrapText.equals("true"));
+            setBackgroundCustom(backgroundCustom != null && backgroundCustom.equals("true"));
+            setForegroundCustom(foregroundCustom != null && foregroundCustom.equals("true"));
+            setBackgroundColor(backgroundColor != null ?  backgroundColor : Color.white);
+            setForegroundColor(foregroundColor != null ?  foregroundColor : Color.black);
         }
 
         @Override
         public void saveTo(GuiPreferences prefs) {
             GuiPreferences.GuiValueStore store = prefs.getValueStore();
-            for (Map.Entry<String,Object> e : getData().entrySet()) {
-                String k = e.getKey();
-                Object v = e.getValue();
-                switch (v) {
-                    case String s -> store.putString(k, s);
-                    case Number number -> store.putString(k, v.toString());
-                    case Boolean b -> store.putString(k, v.equals(Boolean.TRUE) ? "true" : "false");
-                    case null, default -> store.putString(k, JsonWriter.create()
-                            .withNewLines(false).write(v).toSource());
-                }
-            }
+            var lineSpacing = getLineSpacing();
+            var spaceAbove = getSpaceAbove();
+            var fontFamily = getFontFamily();
+            var fontSize = getFontSize();
+            var bold = isBold();
+            var italic = isItalic();
+            var wrapText = isWrapText();
+            var backgroundCustom = isBackgroundCustom();
+            var foregroundCustom = isForegroundCustom();
+            var backgroundColor = getBackgroundColor();
+            var foregroundColor = getForegroundColor();
+            if (lineSpacing != DEFAULT_NUM) { store.putString(KEY_LINE_SPACING, Float.toString(lineSpacing)); } else { store.remove(KEY_LINE_SPACING); };
+            if (spaceAbove != DEFAULT_NUM) { store.putString(KEY_SPACE_ABOVE, Float.toString(spaceAbove)); } else { store.remove(KEY_SPACE_ABOVE); };
+            if (fontFamily != null && !Objects.equals(fontFamily, DEFAULT_FONT_FAMILY)) { store.putString(KEY_FONT_FAMILY, fontFamily); } else { store.remove(KEY_FONT_FAMILY); };
+            if (fontSize != DEFAULT_NUM) { store.putString(KEY_FONT_SIZE, Integer.toString(fontSize)); } else { store.remove(KEY_FONT_SIZE); };
+            store.putString(KEY_BOLD, Boolean.toString(bold));
+            store.putString(KEY_ITALIC, Boolean.toString(italic));
+            store.putString(KEY_BACKGROUND_CUSTOM, Boolean.toString(backgroundCustom));
+            store.putString(KEY_FOREGROUND_CUSTOM, Boolean.toString(foregroundCustom));
+            store.putString(KEY_WRAP_TEXT, Boolean.toString(wrapText));
+            if (backgroundColor != null) { store.putString(KEY_BACKGROUND_COLOR, JsonWriter.create().withNewLines(false).write(toJsonColor(backgroundColor)).toSource()); } else { store.remove(KEY_BACKGROUND_COLOR); };
+            if (foregroundColor != null) { store.putString(KEY_FOREGROUND_COLOR, JsonWriter.create().withNewLines(false).write(toJsonColor(foregroundColor)).toSource()); } else { store.remove(KEY_FOREGROUND_COLOR); };
         }
     }
 

@@ -47,9 +47,30 @@ public class GuiPreferences {
     protected Map<GuiMappingContext, GuiPreferences> children;
     protected GuiValueStore valueStore;
     protected List<HistoryValueEntry> historyValues;
+    protected List<HistoryValueEntry> historyValuesFree;
     protected int historyValueLimit = 10;
     /** @since 1.6 */
     protected PreferencesLock lock;
+    /** the key for the default {@link GuiPreferences} node under the root */
+    public static final String KEY_DEFAULT = "$default";
+    /** the key for {@link GuiPreferences#getCurrentValue()} */
+    public static final String KEY_CURRENT_VALUE = "$value";
+    /** the key for the string uuid refering a saved {@link GuiPreferences} under the root */
+    public static final String KEY_LAUNCH_PREFS = "$launchPrefs";
+    /** the key for saved node containing sub-nodes of {@link GuiPreferences} under the root */
+    public static final String KEY_SAVED = "$saved";
+    /** the key for the string name of {@link GuiPreferences} */
+    public static final String KEY_NAME = "$name";
+    /** the key for the string UUID of {@link GuiPreferences} */
+    public static final String KEY_UUID = "$uuid";
+    /** the key for the history node containing {@link HistoryValueEntry} under {@link GuiPreferences}*/
+    public static final String KEY_HISTORY = "$history";
+    /** the key for the int index of {@link HistoryValueEntry} */
+    public static final String KEY_HISTORY_ENTRY_INDEX = "index";
+    /** the key for the JSON string value of {@link HistoryValueEntry} */
+    public static final String KEY_HISTORY_ENTRY_VALUE = "value";
+    /** the key for the string {@link Instant} value of {@link HistoryValueEntry} */
+    public static final String KEY_HISTORY_ENTRY_TIME = "time";
 
     /**
      * the interface for supporting user-defined prefs:
@@ -145,6 +166,10 @@ public class GuiPreferences {
         this.context = context;
     }
 
+    public GuiPreferences copyInitAsRoot() {
+        return new GuiPreferences(valueStore == null ? null : (valueStore.copyInitAsRoot()), context);
+    }
+
     public static int getStoreValueMaxLength() {
         return Preferences.MAX_VALUE_LENGTH;
     }
@@ -227,7 +252,7 @@ public class GuiPreferences {
 
     public GuiValueStore getValueStoreRootFromRepresentation() {
         GuiValueStore root = getPreferencesNodeAsRoot();
-        return root.getChild("$default");
+        return root.getChild(KEY_DEFAULT);
     }
 
     public GuiValueStore getPreferencesNodeAsRoot() {
@@ -290,15 +315,15 @@ public class GuiPreferences {
         GuiValueStore root = getPreferencesNodeAsRoot();
         try {
             List<GuiPreferences> savedList = new ArrayList<>();
-            if (root.hasNodeKey("$saved")) {
-                GuiValueStore saved = root.getChild("$saved");
+            if (root.hasNodeKey(KEY_SAVED)) {
+                GuiValueStore saved = root.getChild(KEY_SAVED);
                 List<String> stores = saved.getKeys();
 
                 for (String key : stores) {
                     if (saved.hasNodeKey(key)) {
                         GuiPreferences savedPrefs = new GuiPreferences(context);
                         savedPrefs.valueStore = saved.getChild(savedPrefs, key);
-                        if (!savedPrefs.getValueStore().getString("$uuid", "").isEmpty()) {
+                        if (!savedPrefs.getValueStore().getString(KEY_UUID, "").isEmpty()) {
                             savedList.add(savedPrefs);
                         }
                     }
@@ -315,19 +340,19 @@ public class GuiPreferences {
      */
     public String getLaunchPrefsAsRoot() {
         GuiValueStore root = getPreferencesNodeAsRoot();
-        return root.getString("$launchPrefs", "");
+        return root.getString(KEY_LAUNCH_PREFS, "");
     }
 
     public void setLaunchPrefsAsRoot(String uuid) {
         GuiValueStore root = getPreferencesNodeAsRoot();
-        root.putString("$launchPrefs", uuid);
+        root.putString(KEY_LAUNCH_PREFS, uuid);
     }
 
     static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
 
     public GuiPreferences addNewSavedStoreAsRoot() {
         GuiValueStore root = getPreferencesNodeAsRoot();
-        GuiValueStore saved = root.getChild("$saved");
+        GuiValueStore saved = root.getChild(KEY_SAVED);
         try {
             List<String> stores = saved.getKeys().stream()
                     .filter(saved::hasNodeKey)
@@ -343,9 +368,9 @@ public class GuiPreferences {
 
             String name = context.getName();
 
-            newPrefs.valueStore.putString("$name",
+            newPrefs.valueStore.putString(KEY_NAME,
                     String.format("%s %d - %s", name, (n + 1), LocalDateTime.now().format(formatter)));
-            newPrefs.valueStore.putString("$uuid",
+            newPrefs.valueStore.putString(KEY_UUID,
                     UUID.randomUUID().toString());
 
             return newPrefs;
@@ -390,21 +415,14 @@ public class GuiPreferences {
      *  <li>it first loads the existing history if not yet loaded, by {@link #loadHistoryValues()}.</li>
      *  <li>
      *   it finds an existing entry or a create new entry by {@link #getHistoryValue(Object)}.
-     *  </li>
-     *  <li>
-     *    if the entry is a new one (keyIndex==-1), call {@link #replaceMin(Object, HistoryValueEntry)}
-     *      and obtain the oldest entry with replacing the value.
+     *    the entire number of entries always keeps under {@link #historyValueLimit}.
      *  </li>
      *  <li>
      *   The entry moves to the end of the history as the latest value,
-     *    by setting the max index + 1 as it's index, which is a temporarily index.
-     *    The entire history is sorted by the indices.
+     *    by setting the max index + 1 as it's index.
      *  </li>
-     *  <li>
-     *   remove overflowed entries with calling {@link HistoryValueEntry#remove()}.
-     *    (regularly, this step never happens.)
-     *  </li>
-     *  <li>set index and keyIndex (if keyIndex==-1) for all entries, and flush the store.</li>
+     *  <li>set keyIndex if -1; those are new entries and no exsting nodes</li>
+     *  <li>if the max index overs 100 x {@link #historyValueLimit}, reset all indices from 0</li>
      * </ol>
      * @param value the new entry value
      */
@@ -413,46 +431,72 @@ public class GuiPreferences {
     }
 
     public void addHistoryValue(Object value, Instant optionalTime) {
-        if (historyValues == null) {
-            loadHistoryValues();
-        }
         HistoryValueEntry e = getHistoryValue(value);
         if (e == null) {
             return; //value is null or cannot be converted to json
         }
-
-        if (e.getKeyIndex() == -1) {
-            e = replaceMin(e.getValue(), e);
-        }
-
-        int maxIndex = historyValues.stream()
-                .mapToInt(HistoryValueEntry::getIndex)
-                .max()
-                .orElse(-1);
-        e.setIndex(maxIndex + 1); //temporarily index
+        int maxIndex = historyValues.isEmpty() ? -1 : historyValues.getLast().getIndex(); //historyValues are sorted by index
+        e.setIndex(maxIndex + 1);
         if (optionalTime != null) {
             e.setTime(optionalTime);
         }
-        if (!historyValues.contains(e)) {
-            historyValues.add(e);
-        }
+        historyValues.add(e); //add to the tail
+        syncHistoryValues((maxIndex + 1) > ((long) getHistoryValueLimit()) * 100L);
+    }
 
-        historyValues.sort(Comparator.comparing(HistoryValueEntry::getIndex));
+    public int getHistoryValueLimit() {
+        return historyValueLimit;
+    }
 
-        while (historyValues.size() > historyValueLimit) {
-            historyValues
-                    .removeFirst()
-                    .remove();
-        }
+    public void syncHistoryValues() {
+        syncHistoryValues(true);
+    }
 
+    public void syncHistoryValues(boolean resetIndex) {
         for (int i = 0, l = historyValues.size(); i < l; ++i) {
-            e = historyValues.get(i);
+            var e = historyValues.get(i);
+            if (resetIndex) {
+                e.setIndex(i);
+            }
             if (e.getKeyIndex() == -1) { //a new entry will have key=-1 and then the value will be stored
                 e.setKeyIndexWithLoadOrStore(getHistoryValueUnusedKeyIndex());
             }
-            e.setIndex(i);
         }
         getValueStore().flush();
+    }
+
+    /**
+     * sort es by index,
+     * @param es entries from another prefs
+     */
+    public void setHistoryValues(List<HistoryValueEntry> es) {
+        List<HistoryValueEntry> sorted = es.stream()
+                .sorted(Comparator.comparing(HistoryValueEntry::getIndex))
+                .limit(getHistoryValueLimit())
+                .collect(Collectors.toCollection(ArrayList::new));
+        if (historyValues == null) {
+            loadHistoryValues();
+        }
+        var existingRemain = new HashSet<>(getHistoryValues());
+        for (var e : sorted) {
+            var existing = getHistoryValueForStoredValue(e.getValue());
+            if (existing == null) {
+                var created = createHistoryValueEntry(null);
+                created.setValue(e.getValue());
+                created.setIndex(e.getIndex());
+                created.setTime(e.getTime());
+                created.setKeyIndexWithLoadOrStore(getHistoryValueUnusedKeyIndex());
+                historyValues.add(created);
+            } else {
+                existingRemain.remove(existing);
+                existing.setIndex(e.getIndex());
+                existing.setTime(e.getTime());
+                historyValues.add(existing);
+            }
+        }
+        if (!existingRemain.isEmpty()) {
+            removeHistories(existingRemain);
+        }
     }
 
     public int getHistoryValueUnusedKeyIndex() {
@@ -481,6 +525,150 @@ public class GuiPreferences {
         return -1;
     }
 
+    public void overwriteByAnotherPrefs(GuiPreferences prefs) {
+        //keep structure of the self store
+        var storeSelf = this.getValueStore();
+        var storeOthr = prefs.getValueStore();
+        var remainingKeysSelf = new HashSet<>(storeSelf.getKeys());
+        var childrenSelf = this.childrenSet();
+        var chidlrenOthr = prefs.childrenSet();
+        remainingKeysSelf.remove(KEY_HISTORY);
+        for (var key : storeOthr.getKeys()) {
+            if (key.equals(KEY_HISTORY)) {
+                continue; //processed always later
+            } else if (storeOthr.hasEntryKey(key)) {
+                if (storeSelf.hasNodeKey(key)) { //incompatible: the key becomes a sub-node
+                    var childSelf = removeFromChildrenSet(childrenSelf, key);
+                    if (childSelf != null) {
+                        childSelf.overwriteToEmpty();
+                    } else {
+                        storeSelf.remove(key);
+                    }
+                } else { //compatible,  not yet saved, or incompatible: the key disappears
+                    var value = storeOthr.getString(key, "");
+                    storeSelf.putString(key, value);
+                }
+                remainingKeysSelf.remove(key);
+            } else if (storeOthr.hasNodeKey(key)) { //child prefs
+                var childSelf = removeFromChildrenSet(childrenSelf, key);
+                var childOthr = removeFromChildrenSet(chidlrenOthr, key);
+                if (childSelf != null && childOthr != null) {
+                    childSelf.overwriteByAnotherPrefs(childOthr);
+                } else if (childSelf == null && childOthr != null) { //incompatbile: the sub-node disappears
+                    storeSelf.remove(key);
+                } else if (childSelf != null && childOthr == null) { //incompatbile: the unkown structure node becomes a sub-node
+                    childSelf.overwriteToEmpty();
+                } else { //unkown structure node
+                    overwirteStore(storeSelf.getChild(key), storeOthr.getChild(key));
+                }
+                remainingKeysSelf.remove(key);
+            }
+        }
+        for (var key : remainingKeysSelf) {
+            var childSelf = removeFromChildrenSet(childrenSelf, key);
+            if (childSelf != null) {
+                childSelf.overwriteToEmpty();
+            } else {
+                storeSelf.remove(key);
+            }
+        }
+        setHistoryValues(prefs.getHistoryValues());
+    }
+
+    private void overwirteStore(GuiValueStore storeSelf, GuiValueStore storeOthr) {
+        var remainingKeys = new HashSet<>(storeSelf.getKeys());
+        for (var key : storeOthr.getKeys()) {
+            remainingKeys.remove(key);
+            if (storeOthr.hasEntryKey(key)) {
+                if (storeSelf.hasEntryKey(key)) {
+                    var value = storeOthr.getString(key, "");
+                    storeSelf.putString(key, value);
+                } else if (storeSelf.hasNodeKey(key)) { //incompatible
+                    storeSelf.remove(key);
+                } else { //not yet set or incompatible
+                    var value = storeOthr.getString(key, "");
+                    storeSelf.putString(key, value);
+                }
+            } else if (storeOthr.hasNodeKey(key)) {
+                if (storeSelf.hasEntryKey(key)) { //incompatible
+                    storeSelf.remove(key);
+                } else {
+                    overwirteStore(storeSelf.getChild(key), storeOthr.getChild(key));
+                }
+            }
+        }
+        remainingKeys.forEach(storeSelf::remove);
+    }
+
+    public void overwriteToEmpty() {
+        var storeSelf = getValueStore();
+        var childrenSelf = this.childrenSet();
+        for (var key : storeSelf.getKeys()) {
+            if (key.equals(KEY_HISTORY)) {
+                setHistoryValues(List.of());
+            } else if (storeSelf.hasEntryKey(key)) {
+                storeSelf.remove(key);
+            } else if (storeSelf.hasNodeKey(key)) {
+                var childSelf = removeFromChildrenSet(childrenSelf, key);
+                if (childSelf != null) {
+                    childSelf.overwriteToEmpty();
+                } else {
+                    storeSelf.remove(key);
+                }
+            }
+        }
+    }
+
+    private GuiPreferences removeFromChildrenSet(Set<GuiPreferences> children, String key) {
+        var childOpt = children.stream()
+                .filter(e -> e.getName().equals(key))
+                .findFirst();
+        if (childOpt.isPresent()) {
+            var child = childOpt.get();
+            children.remove(child);
+            return child;
+        } else {
+            return null;
+        }
+    }
+
+    public void load() {
+        if (historyValues == null) {
+            loadHistoryValues();
+        }
+        var store = getValueStore();
+        var keys = new HashSet<>(store.getKeys());
+        var children = childrenSet();
+        children.forEach(GuiPreferences::load);
+        children.forEach(child -> keys.remove(child.getName()));
+        loadNodes(store, keys);
+    }
+
+    protected void loadNodes(GuiValueStore store, Collection<String> keys) {
+        for (var key : keys) {
+            if (store.hasNodeKey(key)) {
+                var child = store.getChild(key);
+                loadNodes(child, child.getKeys());
+            }
+        }
+    }
+
+    private Set<GuiPreferences> childrenSet() {
+        return getContext().getChildren().stream()
+                .map(this::getChild)
+                .collect(Collectors.toCollection(HashSet::new));
+    }
+
+    /**
+     * loaded history values
+     * <ul>
+     *     <li>the size of the list is up to {@link #historyValueLimit}</li>
+     *     <li>all entries have valid indices, !=-1, ordered, but might not start from 0</li>
+     *     <li>can be sorted by indices; the larger indices are recent entries</li>
+     *     <li>their keyIndex are meaningless, just unique key for node</li>
+     * </ul>
+     * @return loaded history-values
+     */
     public List<HistoryValueEntry> getHistoryValues() {
         if (historyValues == null) {
             loadHistoryValues();
@@ -489,33 +677,75 @@ public class GuiPreferences {
     }
 
     /**
-     * @param value the entry value
-     * @return a new entry (keyIndex == -1) or an existing entry
+     * @param value the entry value (raw-object)
+     * @return a new entry (keyIndex == -1),
+     *   an existing entry (index!=-1; removed from {@link #historyValues}), or
+     *   an existing free entry (index==-1; removed from {@link #historyValuesFree});
+     *  the value is set to JSON of the given value;
+     *   the obtained entry is temporarly not parted in both historyValues and historyValuesFree.
      * */
     public HistoryValueEntry getHistoryValue(Object value) {
-        HistoryValueEntry e = createHistoryValueEntry(value);
-        Object v = e.getValue(); //it might be converted to JSON
+        HistoryValueEntry created = createHistoryValueEntry(value);
+        Object v = created.getValue(); //it might be converted to JSON
         if (v == null) {
             return null;
         }
-        return historyValues.stream()
-                .filter(entry -> entry.match(v))
-                .findFirst()
-                .orElse(e);
+        var existing = getHistoryValueForStoredValue(v);
+        if (existing == null) {
+            return created;
+        } else {
+            return existing;
+        }
     }
 
-    public HistoryValueEntry replaceMin(Object v, HistoryValueEntry optionalDefault) {
-        HistoryValueEntry e = historyValues.size() > historyValueLimit ?
-                historyValues.stream()
-                    .min(Comparator.comparing(HistoryValueEntry::getIndex))
-                    .orElse(optionalDefault) :
-                optionalDefault;
-        if (e != null) {
-            e.setValue(v);
-            e.setIndex(-1);
-            e.setTime(optionalDefault.getTime());
+    protected HistoryValueEntry getHistoryValueForStoredValue(Object v) {
+        if (historyValues == null) {
+            loadHistoryValues();
         }
-        return e;
+        for (var existing : historyValues) {
+            if (existing.match(v)) { //reuse matched item
+                historyValues.remove(existing);
+                return existing;
+            }
+        }
+        if (historyValues.size() >= getHistoryValueLimit()) { //no free space: oldest item
+            var existing = historyValues.removeFirst();
+            existing.setValue(v);
+            existing.setTime(Instant.now()); //different value: update the time
+            return existing;
+        } else if (!historyValuesFree.isEmpty()) {
+            var existing = historyValuesFree.removeFirst();
+            existing.setValue(v);
+            existing.setTime(Instant.now());
+            return existing;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     *
+     * @return a new entry (keyIndex == -1),
+     *    an existing entry (index!=-1; removed from {@link #historyValues}), or
+     *    an existing free entry (index==-1; removed from {@link #historyValuesFree});
+     *   the obtained entry is temporarly not parted in both historyValues and historyValuesFree.
+     */
+    public HistoryValueEntry getHistoryValueFree() {
+        if (getHistoryValues().size() >= getHistoryValueLimit()) {
+            var existing = historyValues.removeFirst();
+            existing.setTime(Instant.now());
+            return existing;
+        } else if (!historyValuesFree.isEmpty()) {
+            var existing = historyValuesFree.removeFirst();
+            existing.setTime(Instant.now());
+            return existing;
+        } else {
+            return createHistoryValueEntry(null);
+        }
+    }
+
+    public List<HistoryValueEntry> getHistoryValuesFree() {
+        return historyValuesFree;
     }
 
     /**
@@ -523,20 +753,33 @@ public class GuiPreferences {
      * The new entries have -1 indices.
      */
     public void loadHistoryValues() {
-        historyValues = new ArrayList<>();
-        for (int i = 0; i < historyValueLimit; ++i) {
+        var hs = createHistoryValuesByLoad();
+        int l = getHistoryValueLimit();
+        historyValuesFree = new ArrayList<>(l);
+        historyValues = new ArrayList<>(l);
+        for (var entry : hs) {
+            if (entry.getIndex() == -1) {
+                historyValuesFree.add(entry);
+            } else {
+                historyValues.add(entry);
+            }
+        }
+    }
+
+    protected List<HistoryValueEntry> createHistoryValuesByLoad() {
+        int l = getHistoryValueLimit();
+        var historyValues = new ArrayList<HistoryValueEntry>(l);
+        for (int i = 0; i < l; ++i) {
             HistoryValueEntry e = createHistoryValueEntry(null);
             try {
                 e.setKeyIndexWithLoadOrStore(i);
-                if (e.getIndex() != -1) {
-                    historyValues.add(e);
-                }
+                historyValues.add(e);
             } catch (Exception ex) {
                 //failed to load the entry
             }
         }
-
         historyValues.sort(Comparator.comparing(HistoryValueEntry::getIndex));
+        return historyValues;
     }
 
     public HistoryValueEntry createHistoryValueEntry(Object value) {
@@ -557,23 +800,34 @@ public class GuiPreferences {
     }
 
     public void clearHistoriesTree() {
+        clearHistoriesTree(true);
+    }
+
+    public void clearHistoriesTree(boolean clearPrefs) {
         clearHistories();
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiPreferences prefs = subContext.getPreferences();
             try (var lock = prefs.lock()) {
                 lock.use();
-                prefs.clearHistoriesTree();
+                prefs.clearHistoriesTree(clearPrefs);
             }
         }
-        context.clearPreferences();
+        if (clearPrefs) {
+            context.clearPreferences();
+        }
     }
 
     public void clearHistories() {
-        if (historyValues == null) {
-            loadHistoryValues();
-        }
-        historyValues.forEach(HistoryValueEntry::remove);
-        historyValues = null;
+        //move to free-list
+        getHistoryValues().forEach(HistoryValueEntry::remove);
+        historyValuesFree.addAll(historyValues);
+        historyValues.clear();
+    }
+
+    public void removeHistories(Collection<HistoryValueEntry> loadedValuesRemoved) {
+        historyValues.removeAll(loadedValuesRemoved);
+        loadedValuesRemoved.forEach(HistoryValueEntry::remove);
+        historyValuesFree.addAll(loadedValuesRemoved);
     }
 
     /** the abstract definition of key-value store.
@@ -583,7 +837,8 @@ public class GuiPreferences {
      *      <li>an entry can be obtained as a String or a Integer</li>
      *      <li>an Integer entry can be obtained as a String entry</li>
      *      <li>a node is associated with a {@link GuiPreferences}, which might be the preferences of the store
-     *            or a sub-preferences.</li>
+     *            or a sub-preferences.
+     *            if a sub-preferences, the name of the prefs ({@link GuiPreferences#getName()} becomes the node key.</li>
      *  </ul>
      *
      * */
@@ -636,6 +891,8 @@ public class GuiPreferences {
          */
         public abstract void removeThisNode();
         public void flush() { }
+
+        public abstract GuiValueStore copyInitAsRoot();
     }
 
     /** the concrete implementation of the store by {@link Preferences} */
@@ -652,6 +909,7 @@ public class GuiPreferences {
             this.store = store;
         }
 
+        @SuppressWarnings("this-escape")
         public GuiValueStoreDefault(GuiPreferences preferences, Supplier<Preferences> parentStore, String storeName) {
             super(preferences);
             this.parentStore = parentStore;
@@ -660,7 +918,7 @@ public class GuiPreferences {
             try {
                 Preferences parent = parentStore.get();
                 if (parent.nodeExists(storeNameActual)) {
-                    store = parent.node(storeNameActual);
+                    store = withTry(storeName, () -> parent.node(storeNameActual));
                 }
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -673,7 +931,7 @@ public class GuiPreferences {
 
         public Preferences getOrCreateStore() {
             if (store == null) {
-                store = parentStore.get().node(storeNameActual);
+                store = withTry(storeName, () -> parentStore.get().node(storeNameActual));
             }
             return store;
         }
@@ -685,17 +943,30 @@ public class GuiPreferences {
 
         @Override
         public String getString(String key, String def) {
-            return store == null ? def : store.get(toStoreKey(key), def);
+            return store == null ? def : withTry(key, () -> store.get(toStoreKey(key), def));
         }
 
         @Override
         public void putInt(String key, int val) {
-            getOrCreateStore().putInt(toStoreKey(key), val);
+            withTry(key, () -> getOrCreateStore().putInt(toStoreKey(key), val));
         }
 
         @Override
         public int getInt(String key, int def) {
-            return store == null ? def : store.getInt(toStoreKey(key), def);
+            return store == null ? def : withTry(key, () -> store.getInt(toStoreKey(key), def));
+        }
+
+        protected void withTry(String key, Runnable task) {
+            Supplier<Void> s = () -> {task.run(); return null;};
+            withTry(key, s);
+        }
+
+        protected <T> T withTry(String key, Supplier<T> task) {
+            try {
+                return task.get();
+            } catch (Exception ex) {
+                throw new RuntimeException(toStoreKey(key), ex);
+            }
         }
 
         @Override
@@ -766,6 +1037,15 @@ public class GuiPreferences {
                 throw new RuntimeException(ex);
             }
         }
+
+        @Override
+        public GuiValueStore copyInitAsRoot() {
+            if (parentStore == null) {
+                return new GuiValueStoreDefault(null, store);
+            } else {
+                return new GuiValueStoreDefault(null, parentStore, storeName);
+            }
+        }
     }
 
     /**
@@ -779,6 +1059,18 @@ public class GuiPreferences {
      *                "time"  : String //Instant
      *           ...
      * </pre>
+     *<p>
+     * The value has the following stages. Some types have same form in the multiple stages.
+     * <ol>
+     *     <li>rawObject : actual object. the constructor takes it.</li>
+     *     <li>value : the instance-field holds on the memory, {@link #toValueInit(Object)} with rawObject.
+     *           if non-null {@link #isJsonValue()} rawObject, it will be converted as JSON by repr,
+     *           otherwise, rawObject. {@link #setValue(Object)} takes it.
+     *        </li>
+     *     <li>storedJsonValue : a JSON object internally created by {@link #getStoredJsonValue()}.
+     *        if {@link #isJsonValue()}, value itself, otherwise, converted JSON by repr. </li>
+     *     <li>source : JSON source by {@link #getStoredJsonValue()}</li>
+     * </ol>
      */
     public static class HistoryValueEntry {
         protected GuiPreferences preferences;
@@ -819,7 +1111,17 @@ public class GuiPreferences {
         }
 
         public void setValue(Object value) {
+            boolean diff = !Objects.equals(this.value, value);
             this.value = value;
+            if (diff && keyIndex != -1) {
+                storeValue();
+            }
+        }
+
+        protected void storeValue() {
+            GuiValueStore store = getValueStore();
+            String jsonSource = getStoredJsonValue();
+            store.putString(KEY_HISTORY_ENTRY_VALUE, jsonSource);
         }
 
         public int getKeyIndex() {
@@ -838,9 +1140,10 @@ public class GuiPreferences {
         public void remove() {
             if (this.keyIndex != -1) {
                 GuiValueStore store = getValueStore();
-                store.putInt("index", -1);
-                store.putString("value", "null");
-                store.putString("time", "null");
+                store.putInt(KEY_HISTORY_ENTRY_INDEX, -1);
+                store.putString(KEY_HISTORY_ENTRY_VALUE, "null");
+                store.putString(KEY_HISTORY_ENTRY_TIME, "null");
+                store.removeThisNode();
             }
             this.keyIndex = -1;
         }
@@ -870,13 +1173,13 @@ public class GuiPreferences {
          *    */
         public void load() {
             GuiValueStore store = getValueStore();
-            int index = store.getInt("index", -1);
+            int index = store.getInt(KEY_HISTORY_ENTRY_INDEX, -1);
             if (index != -1) {
                 this.index = index;
-                String v = store.getString("value", "null");
+                String v = store.getString(KEY_HISTORY_ENTRY_VALUE, "null");
                 this.value = fromJsonSource(v);
 
-                String timeVal = store.getString("time", null);
+                String timeVal = store.getString(KEY_HISTORY_ENTRY_TIME, null);
                 //Note: the time is stored directly as a string created by Instant#toString()
                  //  thus the following code is probably needless and as a precaution.
                 if (timeVal != null && timeVal.startsWith("\"")) { //it seems that the string is a JSON string.
@@ -921,13 +1224,12 @@ public class GuiPreferences {
         }
 
         public void store() {
+            storeValue();
             GuiValueStore store = getValueStore();
-            String jsonSource = getStoredJsonValue();
-            store.putString("value", jsonSource);
             if (index != -1) {
-                store.putInt("index", index);
+                store.putInt(KEY_HISTORY_ENTRY_INDEX, index);
             }
-            store.putString("time", time.toString());
+            store.putString(KEY_HISTORY_ENTRY_TIME, time.toString());
         }
 
         public String getStoredJsonValue() {
@@ -942,18 +1244,22 @@ public class GuiPreferences {
 
         public GuiValueStore getValueStore() {
             if (valueStore == null) {
-                valueStore = preferences.getValueStore()
-                        .getChild("$history")
+                valueStore = getParent()
                         .getChild("" + keyIndex);
             }
             return valueStore;
+        }
+
+        protected GuiValueStore getParent() {
+            return preferences.getValueStore()
+                    .getChild(KEY_HISTORY);
         }
 
         public void setIndex(int index) {
             if (this.index != index && keyIndex != -1) {
                 //update index
                 GuiValueStore store = getValueStore();
-                store.putInt("index", index);
+                store.putInt(KEY_HISTORY_ENTRY_INDEX, index);
             }
             this.index = index;
         }
@@ -961,7 +1267,7 @@ public class GuiPreferences {
         public void setTime(Instant time) {
             if (!Objects.equals(time, this.time) && time != null && keyIndex != -1) {
                 GuiValueStore store = getValueStore();
-                store.putString("time", time.toString());
+                store.putString(KEY_HISTORY_ENTRY_TIME, time.toString());
             }
             this.time = time;
         }
@@ -969,12 +1275,12 @@ public class GuiPreferences {
         public void storeAsCurrentValue() {
             String jsonSource = getStoredJsonValue();
             if (jsonSource != null) {
-                preferences.getValueStore().putString("$value", jsonSource);
+                preferences.getValueStore().putString(KEY_CURRENT_VALUE, jsonSource);
             }
         }
 
         public Object loadAsCurrentValue() {
-            String jsonSource = preferences.getValueStore().getString("$value", null);
+            String jsonSource = preferences.getValueStore().getString(KEY_CURRENT_VALUE, null);
             if (jsonSource != null && getValueStore() != null) {
                 return this.value = fromJsonSource(jsonSource);
             } else {
@@ -1111,6 +1417,8 @@ public class GuiPreferences {
 
     @SuppressWarnings("unchecked")
     protected void fromJsonChildNodes(GuiValueStore store, Map<String,Object> json) {
+        var existingKeys = store.getKeys();
+
         for (Map.Entry<String,Object> e : json.entrySet()) {
             String key = e.getKey();
             Object val = e.getValue();
@@ -1126,6 +1434,7 @@ public class GuiPreferences {
      * an on-memory impl. of value-store
      */
     public static class GuiValueStoreOnMemory extends GuiValueStore {
+        protected GuiValueStoreOnMemory parent;
         protected Map<String,Object> values;
 
         /** for test purpose: it's preferences can be set by the GuiPreferences constructor that takes the store */
@@ -1134,8 +1443,13 @@ public class GuiPreferences {
         }
 
         public GuiValueStoreOnMemory(GuiPreferences preferences) {
+            this(preferences, null);
+        }
+
+        public GuiValueStoreOnMemory(GuiPreferences preferences, GuiValueStoreOnMemory parent) {
             super(preferences);
-            values = new LinkedHashMap<>();
+            this.parent = parent;
+            this.values = new LinkedHashMap<>();
         }
 
         @Override
@@ -1169,7 +1483,7 @@ public class GuiPreferences {
         @Override
         public GuiValueStore getChild(GuiPreferences preferences, String key) {
             return (GuiValueStore) values.computeIfAbsent(key,
-                    k -> new GuiValueStoreOnMemory(preferences));
+                    k -> new GuiValueStoreOnMemory(preferences, this));
         }
 
         @Override
@@ -1191,6 +1505,9 @@ public class GuiPreferences {
 
         public void putChild(String name, GuiValueStore value) {
             values.put(name, value);
+            if (value instanceof GuiValueStoreOnMemory m) {
+                m.parent = this;
+            }
         }
 
         public Map<String,Object> toJson() {
@@ -1214,6 +1531,18 @@ public class GuiPreferences {
         @Override
         public void removeThisNode() {
             values.clear();
+            if (parent != null) {
+                for (var e : new ArrayList<>(parent.values.entrySet())) {
+                    if (e.getValue() == this) {
+                        parent.values.remove(e.getKey());
+                    }
+                }
+            }
+        }
+
+        @Override
+        public GuiValueStore copyInitAsRoot() {
+            return new GuiValueStoreOnMemory();
         }
     }
 }
