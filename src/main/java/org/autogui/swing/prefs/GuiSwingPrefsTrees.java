@@ -209,9 +209,9 @@ public class GuiSwingPrefsTrees {
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
             setValue(value);
             super.getTreeCellRendererComponent(tree, value, sel, expanded, !node, row, hasFocus);
+            selected = sel;
             setNameInfo(name);
             setEntryValueInfo(entryValue);
-            selected = sel;
 
             Graphics2D g = (Graphics2D) getGraphics();
             if (g != null) {
@@ -222,18 +222,27 @@ public class GuiSwingPrefsTrees {
 
         protected void setNameInfo(String name) {
             AttributedString aStr = new AttributedString(name);
-            aStr.addAttribute(TextAttribute.FOREGROUND, new Color(80, 80, 80));
+            var u = UIManagerUtil.getInstance();
+            var baseColor = getForeground();
+            aStr.addAttribute(TextAttribute.FOREGROUND, colorFromHsb(0.7f, baseColor));
             nameInfo = new TextCellRenderer.LineInfo(aStr, 0, name.length());
         }
 
         protected void setEntryValueInfo(String entryValue) {
             if (entryValue != null) {
                 var aStr = new AttributedString(entryValue);
-                aStr.addAttribute(TextAttribute.FOREGROUND, new Color(50, 50, 140));
+                var u = UIManagerUtil.getInstance();
+                var baseColor = getForeground();
+                aStr.addAttribute(TextAttribute.FOREGROUND, colorFromHsb(0.55f, baseColor));
                 valueInfo = new TextCellRenderer.LineInfo(aStr, 0, entryValue.length());
             } else {
                 valueInfo = null;
             }
+        }
+
+        public static Color colorFromHsb(float hue, Color baseColor) {
+            var hsb = Color.RGBtoHSB(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), null);
+            return Color.getHSBColor(hue,  Math.max(hsb[1], 0.5f), Math.max(hsb[2], 0.35f));
         }
 
         protected void paintOrLayout(Graphics2D g, boolean paint) {

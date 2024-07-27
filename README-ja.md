@@ -3,8 +3,8 @@
 [English](readme.md) | 日本語
 
 AutoguiはJava/SwingのGUIアプリケーションをplain-old Javaオブジェクトから作り出すライブラリです。
-基本的な仕組みはリフレクションAPIを通じて与えられたオブジェクトのクラス構造を解析し、
-クラスに定義されたプロパティとアクションに対応したSwingベースのコンポーネントを組み合わせて作り出します。
+基本的な仕組みは与えられたオブジェクトのクラス構造をリフレクションAPIを通じて解析し、
+クラスに定義されたプロパティとアクションに紐づけられたSwingベースのコンポーネントを組み合わせてユーザーインターフェースを作り出します。
 
 ## ライセンス
 
@@ -19,7 +19,7 @@ git clone https://github.com/ppp-kohe/autogui.git
 cd autogui
 ```
 
-このプロジェクトはビルドのために[apache-maven](http://maven.apache.org)を利用し、Javaの下記のバージョンに依存します。
+本プロジェクトはビルドに[apache-maven](http://maven.apache.org)を利用し、Javaの下記のバージョンに依存します。
 
 * 1.7- : Java 21以降
 * 1.2- : Java 11以降
@@ -28,20 +28,20 @@ cd autogui
 
 ```bash
 mvn package
-  # このコマンドは target/autogui-1.7.jar を生成します。
+  # このコマンドは target/autogui-1.7-SNAPSHOT.jar を生成します。
 ```
 本プロジェクトの主要部分はJDKクラス以外の他のライブラリに依存しません。
 `src/main/java`にあるソースファイル(及び`src/main/resources`にあるリソース)を手動でコンパイルすることもできます。
 
 ## Mavenの利用
 
-本ライブラリをapache-mavenのプロジェクトで利用する場合は、`pom.xml`ファイルに下記の`dependency`セクションを挿入してください。
+本ライブラリを他のapache-mavenのプロジェクトで利用する場合は、`pom.xml`ファイルに下記の`dependency`セクションを挿入してください。
 
 ```xml
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.7</version>
+        <version>1.7-SNAPSHOT</version>
     </dependency>
 ```
 
@@ -56,9 +56,9 @@ mvn package
 ## 簡単な利用方法の説明: jshellでのサンプル
 
 本ライブラリはJava 9以降にJDKに導入された標準のREPLツールである`jshell`コマンド上で利用することができます。
-利用するには、まず、本ライブラリのjarファイルをクラスパスに含める必要があります。
+利用するには、まず本ライブラリのjarファイルをクラスパスに含める必要があります。
 `jshell`では、`/env -class-path <path/to/jar>`コマンドを実行することで可能です。
-`jshell`コマンドで起動したら、下記のコードの`jshell>`プロンプト行以降を貼り付けることで試すことができます。(JDK, Git, Mavenがインストールされている環境を前提としています。)
+`jshell`コマンドを起動したら、下記のコードの`jshell>`プロンプト行以降を貼り付けることで試すことができます。(JDK, Git, Mavenがインストールされている環境を前提としています。)
 
 
 ```
@@ -77,7 +77,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.7.jar
+/env -class-path target/autogui-1.7-SNAPSHOT.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
@@ -263,13 +263,13 @@ import java.util.*;
 * *Entries*テーブル: `getEntries()`メソッドで返される`List`から生成されます。さらにこのテーブルのカラムは`List`の要素型である`<RenameEntry>`の*File*と*New Name*プロパティから生成されます。
 テーブルの各行は`List`オブジェクトの各要素と対応します。
 ゲッターメソッドが返す`List`オブジェクトのアイデンティティが変化するとテーブルが変更されたとみなし、自動的にテーブルの行データの表示が更新されます。
-* *Rename*ボタン: `rename()`メソッドから生成され、エントリのファイル名を更新します。
+* *Rename*ボタン: `rename()`メソッドから生成され、すべてのエントリのファイル名を更新します。
 
 本ライブラリのコレクションオブジェクトからのテーブルコンポーネント生成機能は特に強力で、アプリケーションの適用範囲がとても広くなります。
 
 ## @GuiIncludeを使ったStrictモード
 
-本ライブラリを`main`メソッドから実行するアプリケーションで利用する場合、GUIコンポーネントに対応するメンバーを限定する方が望ましいと言えます。
+本ライブラリを`main`メソッドから実行するアプリケーションで利用する場合、GUIコンポーネントに対応するメンバーを限定する方が望ましいといえます。
 [`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html) と
 [`AutGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html) によってこの制限を得ることができます。
 
@@ -614,7 +614,7 @@ Swingのドキュメントとテキスト編集コンポーネント群は、ど
 本ライブラリの1.2以降では `T prop()` メソッド(例えば`String prop()`)が*ゲッター*として利用できるようになりました。
 これはJava 14で導入された[*レコード型*](https://openjdk.java.net/jeps/359)をサポートするためです。
 この規則は既存のアクションメソッドを意図せずプロパティにしてまう可能性があります(voidでない型を返す場合)。
-アクションメソッドとして認識させたい場合アノーテーションのパラメータ[`@GuiIncluded(action=true)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html#action())を指定することで実現できます。
+アクションメソッドとして認識させたい場合アノーテーションの引数[`@GuiIncluded(action=true)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html#action())を指定することで実現できます。
 
 *セッター*メソッドは名前が`set`で開始し、プロパティの値の型を1つとる定義です。
 
@@ -717,7 +717,7 @@ org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
 そして、フィールドの初期化はイベント駆動スレッドでないスレッド(例えばメインスレッド)で実行される可能性があり注意が必要です。
 
 よって埋め込みコンポーネントのプロパティに対するユーザーコードは*ゲッターメソッドで定義し、返すコンポーネントをフィールドにキャッシュする*というスタイルをとるべきです。
-埋め込みコンポーネントのプロパティには本ライブラリはイベントディスパッチ内で実行します。プロパティから得られた埋め込みコンポーネントはオブジェクトペインのサブコンポーネントとして追加されます。
+埋め込みコンポーネントのプロパティについて本ライブラリはイベント駆動スレッド内で実行します。プロパティから得られた埋め込みコンポーネントはオブジェクトペインのサブコンポーネントとして追加されます。
 
 #### Swingアプリケーションでの埋め込み
 
@@ -856,7 +856,7 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 
 これらの特別なメソッドの対象となるテーブルは、要素の型、すなわち `List<E>`の型引数`E`によって特定されます。もし2つ以上のテーブルが同一の要素型をこれらのメソッドで使っていたら、それらすべてのテーブルがメソッドにより操作されます。
 
-追加の特別な機能として、これらのアノーテーションがたは真偽型の引数`index`を受け取ることができます。このフラグのデフォルト値はfalseで、trueが指定されると、付加された特別なメソッドは`List<Integer>`を取ることを前提するようになります。この整数値は要素型`E`の代わりに行番号を扱うようになります。さらに`List<int[]>`だった場合は{行番号,カラム番号}を意味します。
+追加の特別な機能として、これらのアノーテーションは真偽型の引数`index`を受け取ることができます。このフラグのデフォルト値はfalseで、trueが指定されると、付加された特別なメソッドは`List<Integer>`を取ることを前提するようになります。この整数値は要素型`E`の代わりに行番号を扱うようになります。さらに`List<int[]>`だった場合は{行番号,カラム番号}を意味します。
 
 #### セルのサイズ変更
 
@@ -951,7 +951,7 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
            System.out.println("action " + prop);
        }
        
-       //automatically bound by the method name "action2", like Shift+Cmd+A
+       //"action2"の名前から自動的にキー割り当て: Shift+Cmd+A
        void action2() { 
            System.out.println("action2");
        }
@@ -1009,7 +1009,7 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 
 上記のサンプルはテキストフィールドを表示し、3秒ごとにそのテキスト表示を更新します。
 
-更新は`update()`メソッドで行われます。そこでは`prop`を時刻の文字列 [`Instant.now().toString()`](https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/time/Instant.html#now())  で更新し、`Runnable#run()`を呼び出すことでフィールドの変更を通知します。このRunnableは`setPropUpdater(Runnable)`で設定された本ライブラリから与えられるオブジェクトをupdaterとして保持します。
+更新は`update()`メソッドで行われます。そこでは`prop`を時刻の文字列 [`Instant.now().toString()`](https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/time/Instant.html#now())  で更新し、`Runnable#run()`を呼び出すことでフィールドの変更を通知します。このRunnableは`setPropUpdater(Runnable)`で設定された、本ライブラリから与えられるオブジェクトをupdaterとして保持します。
 このセッターは`set<YourPropertyName>Updater`の名前の規則に従い`prop`フィールドを更新対象として指定しています。
 
 コンストラクタでは`update()`メソッドが定期的に実行されるようスケジュールされます。これは[`ScheduledExecutorService#scheduleWithFixedDelay(this::update, ...)` ](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html#scheduleWithFixedDelay(java.lang.Runnable,long,long,java.util.concurrent.TimeUnit))により`ScheduledFuture`タスクとして生成します。
@@ -1019,7 +1019,6 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 生成されたウィンドウは内包するサブコンポーネントに紐づくプロパティ値を保存して再利用する機能を持ちます。
 この機能は[`java.util.prefs`](https://docs.oracle.com/en/java/javase/11/docs/api/java.prefs/java/util/prefs/package-summary.html)を利用して実現します。
 
-
 ```java
    class Hello {
        String prop;
@@ -1028,7 +1027,7 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 ```
 
 本ライブラリでは、割り当てられたコンポーネントを通じて編集されたプロパティの値が初期設定として自動的に保存されます。
-生成されたウィンドウの*Object*メニューにある*Preferences...*から保存された初期設定を編集することができます。
+生成されたウィンドウの *Object* メニューにある *Preferences...* から保存された初期設定を編集することができます。
 
 <img src="docs/images/image-prefs-h.png" srcset="docs/images/image-prefs-h.png 1x, docs/images/image-prefs.png 2x" alt="Preferences">
 
@@ -1038,18 +1037,18 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 
 * *Current* : デフォルトの(名前のない)初期設定です。この初期設定の値はUI操作で更新されます。
 * *Empty* : リセットのために値がないことを表現する擬似的な初期設定
-* 保存された初期設定 : 保存された初期設定で、ツールバーの*Save*アクションから追加できます。このアクションを実行すると現在のUIコンポーネントから値と設定を収集して新たな初期設定として記録します。リスト上でダブルクリックにより名前を変更できます。
+* 保存された初期設定 : 保存された初期設定で、ツールバーの *Save* アクションから追加できます。このアクションを実行すると現在のUIコンポーネントから値と設定を収集して新たな初期設定として記録します。リスト上でダブルクリックにより名前を変更できます。
 
 初期設定のリストには"Apply at Launch"というチェックボックスのカラムがあります。チェックが入った初期設定が起動時に適用されます。
 
-初期設定ウィンドウのツールバーには*Delete*と*Duplicate*アクションがあり、これらは選択した初期設定を削除/複製することができます。
-*Update*アクションは選択した初期設定を最新のUIコンポーネントの値により上書きします。
-*Apply*アクションは即時に選択された初期設定をUIコンポーネントに適用します。
-*Write To File...*と*Load From File...*アクションは初期設定をJSONファイルに保存/読み込みすることができます。
+初期設定ウィンドウのツールバーには *Delete* と *Duplicate* アクションがあり、これらは選択した初期設定を削除/複製することができます。
+ *Update* アクションは選択した初期設定を最新のUIコンポーネントの値により上書きします。
+ *Apply* アクションは即時に選択された初期設定をUIコンポーネントに適用します。
+ *Write To File...* と *Load From File...* アクションは初期設定をJSONファイルに保存/読み込みすることができます。
 
 本ライブラリの1.7以降では選択された初期設定を画面の右側のペインで直接編集することができます。
 
-また、保存した初期設定は*Object*メニューの*Apply Preferences*メニューの項目にリストされ、選択することで適用できます。
+また、保存した初期設定は *Object* メニューの *Apply Preferences* メニューの項目にリストされ、選択することで適用できます。
 
 <img src="docs/images/image-prefs-menu-h.png" srcset="docs/images/image-prefs-menu-h.png 1x, docs/images/image-prefs-menu.png 2x" alt="Preferences">
 
@@ -1069,9 +1068,11 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 
 ### 埋め込みコンポーネントのカスタム初期設定
 
+カスタムした埋め込みコンポーネントを使う場合、本ライブラリの
+
 本機能を利用する場合、カスタムコンポーネントが[`GuiPreferences.PreferencesJsonSupport`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/mapping/GuiPreferencesLoader.PreferencesJsonSupport.html) インターフェースを実装する必要があります。
 このインターフェースは2つのメソッドの実装を要求します。それぞれ初期設定の生成と設定をJSONオブジェクトとして扱います。
-
+この機能はプロパティメソッドの静的な戻り値型がインターフェースを満たしている場合に有効になります。したがってカスタムした型をメソッド戻り値型に指定する必要があります。
 
 ```java
 import org.autogui.base.mapping.GuiPreferences;

@@ -23,6 +23,27 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * a prefs-visitor for constructing prefs-editor GUI
+ * <ul>
+ * <li>{@link #rootPane} is the top component, aggregating all sub-components of visited prefs,
+ *   creatd by {@link org.autogui.swing.GuiSwingPreferences.RootView#loadPreferences(GuiPreferences, GuiSwingPrefsApplyOptions)}</li>
+ * <li>{@link #contentPane} is the actula aggregation of sub-components, added to the root by {@link #createRootPane()};
+ *    While visiting, {@link #construction} flag is true.</li>
+ * <li>{@link #historyValuesPane} holds the current pane for history-values while construction</li>
+ * <li>creating of actual pane for history-values is done by {@link GuiSwingPrefsHistoryValues}</li>
+ * <li>all sub-components has ability to notify own changes; {@link #updatedListeners} receives those notifications.
+ *   {@link #updated} indicates it has changes.
+ *   This is used for enabling "Revert" button; the reverting feature is implemented by {@link #revertBackupAction}
+ *   which saves preerences as {@link #backupPrefs} as on-memory-store, restores it to the root {@link #preferences}.</li>
+ * <li>each preferences adds labels as showing their names; collected as {@link #labelFields} and those can be searched {@link SearchFilterTextField}</li>
+ * <li>each sub-components have updating feature as collected into {@link #validationCheckers};
+ *  {@link #revalidate()} updates all displayis of sub-components from the current preferences;
+ *  Note references of those preferences are never changed.</li>
+ *  <li>while construction, {@link #namePathToPanes} saves a prefs-path to a created pane;
+ *  sometimes multiple history-store are visited for same prefs-path. This can avoid creation of duplicated panes</li>
+ * </ul>
+ */
 public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     protected JComponent rootPane;
     protected JComponent contentPane;

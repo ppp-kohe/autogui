@@ -28,7 +28,7 @@ The project uses [apache-maven](http://maven.apache.org) and depends on a recent
 
 ```bash
 mvn package
-  # the command will generate target/autogui-1.7.jar
+  # the command will generate target/autogui-1.7-SNAPSHOT.jar
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
@@ -42,7 +42,7 @@ To use the library in your apache-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.7</version>
+        <version>1.7-SNAPSHOT</version>
     </dependency>
 ```
 
@@ -78,7 +78,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.7.jar
+/env -class-path target/autogui-1.7-SNAPSHOT.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
@@ -1089,6 +1089,7 @@ Your custom embedded components can easily interact with preferences mechanism o
 
 To support the feature, a return-type of the property method must be your custom component-type that implements the [`GuiPreferences.PreferencesJsonSupport`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/mapping/GuiPreferencesLoader.PreferencesJsonSupport.html) interface. 
 The interface has 2 methods for generating and setting preferences-data as JSON objects.
+Note that the feature works when the static return-type of the property method satisfies the interface. So you will need to specify the your type into the return type. 
 
 ```java
 import org.autogui.base.mapping.GuiPreferences;

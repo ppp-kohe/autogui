@@ -1,6 +1,8 @@
 package org.autogui.swing.prefs;
 
 import org.autogui.GuiIncluded;
+import org.autogui.base.JsonReader;
+import org.autogui.base.JsonWriter;
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue;
@@ -11,15 +13,20 @@ import org.autogui.base.type.GuiTypeObject;
 import org.autogui.swing.GuiSwingMapperSet;
 import org.autogui.swing.GuiSwingView;
 import org.autogui.swing.LambdaProperty;
+import org.autogui.swing.icons.GuiSwingIcons;
+import org.autogui.swing.mapping.GuiReprEmbeddedComponent;
 import org.autogui.swing.mapping.GuiReprValueImagePane;
 import org.autogui.swing.util.ResizableFlowLayout;
 import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -27,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class GuiSwingPrefsHistoryValues {
@@ -49,6 +57,8 @@ public class GuiSwingPrefsHistoryValues {
         return switch (repr) {
             case GuiReprValueImagePane ignored -> createHistoryImagePrefs(value)
                     .withGuiToSourceUpdater(currentValueSetter);
+            case GuiReprEmbeddedComponent e ->
+                createCurrentValueJsonSupported(prefs);
             case GuiReprValue v -> createObjectSimpleType(value, v.getValueType(prefs.getContext()))
                     .withGuiToSourceUpdater(currentValueSetter);
             default ->  createValue(null);
@@ -121,8 +131,126 @@ public class GuiSwingPrefsHistoryValues {
     public static HistoryPaneResult createTreeJson(Object v) {
         var tree = new TreeWithHistoryValueEntry(v);
         tree.setCellRenderer(new GuiSwingPrefsTrees.PrefsTreeCellRenderer());
-        tree.setBorder(BorderFactory.createLineBorder(Color.GREEN));
         return new HistoryPaneResult(tree, tree::setEntry);
+    }
+
+    public static HistoryPaneResult createCurrentValueJsonSupported(GuiPreferences prefs) {
+        var text = new JsonSourceEditPane(prefs::getCurrentValueAsJsonSupported, prefs::setCurrentValueAsJsonSupported);
+        JScrollPane scroll = new JScrollPane(text);
+        var u = UIManagerUtil.getInstance();
+        scroll.setPreferredSize(new Dimension(u.getScaledSizeInt(500), u.getScaledSizeInt(150)));
+
+        JPanel pane = new JPanel(new BorderLayout());
+        {
+            JPanel tool = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            JLabel label = new JLabel("JSON for embedded component: ");
+            label.setForeground(u.getLabelDisabledForeground());
+            tool.add(label);
+            tool.add(new GuiSwingIcons.ActionButton(new JsonSourceResetAction(text)));
+            pane.add(tool, BorderLayout.NORTH);
+
+            pane.add(scroll, BorderLayout.CENTER);
+        }
+
+        return new HistoryPaneResult(pane) {
+            @Override
+            public void updateLastEntrySource() {
+                super.updateLastEntrySource();
+                text.setTextFromSource(true);
+            }
+        };
+    }
+
+    public static class JsonSourceEditPane extends JTextPane implements DocumentListener {
+        protected Supplier<Object> source;
+        protected Consumer<Object> updater;
+        protected boolean editing;
+        protected int readingSource;
+        @SuppressWarnings("this-escape")
+        public JsonSourceEditPane(Supplier<Object> source, Consumer<Object> updater) {
+            this.source = source;
+            this.updater = updater;
+            getDocument().addDocumentListener(this);
+            setFont(UIManagerUtil.getInstance().getConsoleFont());
+            setTextFromSource(true);
+        }
+
+        public void setEditing(boolean b) {
+            boolean changed = this.editing != b;
+            editing = b;
+            if (changed) {
+                var u = UIManagerUtil.getInstance();
+                setForeground(b ? u.getLabelDisabledForeground() : u.getTextPaneForeground());
+            }
+        }
+
+        public void setTextFromSource(boolean forceWhileEditing) {
+            if (!editing && forceWhileEditing && source != null) {
+                var obj = source.get();
+                var src = JsonWriter.create().withNewLines(true)
+                        .write(obj)
+                        .toSource();
+                try {
+                    ++readingSource;
+                    var doc = getDocument();
+                    if (doc.getLength() > 0) {
+                        doc.remove(0, doc.getLength());
+                    }
+                    doc.insertString(0, src, null);
+                } catch (Exception ex) {
+                    //
+                } finally {
+                    --readingSource;
+                }
+            }
+        }
+
+        protected void updated() {
+            if (readingSource > 0) {
+                return;
+            }
+            var doc = getDocument();
+            if (doc.getLength() > 0) {
+                try {
+                    var text = doc.getText(0, doc.getLength());
+                    var obj = JsonReader.create(text).parseValue();
+                    updater.accept(obj);
+                    setEditing(false);
+                } catch (Exception ex) {
+                    setEditing(true);
+                }
+            }
+        }
+
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            updated();
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            updated();
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            updated();
+        }
+    }
+
+    public static class JsonSourceResetAction extends AbstractAction {
+        protected JsonSourceEditPane pane;
+        @SuppressWarnings("this-escape")
+        public JsonSourceResetAction(JsonSourceEditPane pane) {
+            this.pane = pane;
+            putValue(NAME, "Reset from Preferences");
+            putValue(SMALL_ICON, GuiSwingIcons.getInstance().getUpdateIcon());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            pane.setTextFromSource(true);
+        }
     }
 
     @GuiIncluded  public static class ValueHolder {
@@ -373,7 +501,6 @@ public class GuiSwingPrefsHistoryValues {
             DefaultMutableTreeNode node = new DefaultMutableTreeNode(key);
             map.entrySet().stream()
                     .map(e -> createTreeNodeJson(Objects.toString(e.getKey()), e.getValue()))
-                    .map(DefaultMutableTreeNode::new)
                     .forEach(node::add);
             return node;
         } else if (v instanceof List<?> list) {

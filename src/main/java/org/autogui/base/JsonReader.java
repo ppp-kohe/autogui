@@ -1,12 +1,10 @@
 package org.autogui.base;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,16 +24,10 @@ public class JsonReader {
 
     public static Object read(File file) {
         if (file.exists()) {
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-                String line;
-                StringBuilder buf = new StringBuilder();
-                while ((line = reader.readLine()) != null) {
-                    buf.append(line);
-                }
-
-                String data = buf.toString();
-                return JsonReader.create(data).parseValue();
+            try{
+                var bytes = Files.readAllBytes(file.toPath());
+                var str = new String(bytes, StandardCharsets.UTF_8);
+                return JsonReader.create(str).parseValue();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
@@ -126,9 +118,11 @@ public class JsonReader {
 
     public String parseString() {
         eatSpaces();
-        eat('"'); //non-strict parsing
+        if (!eat('"')) {
+            throw error("No \"");
+        }
         StringBuilder buf = new StringBuilder();
-        while (!eat('"')) {
+        while (canEatNextOrEat('"')) {
             if (eat('\\')) {
                 char c = eatNext();
                 switch (c) {
@@ -170,14 +164,16 @@ public class JsonReader {
         if (eat('{')) {
             HashMap<String, Object> obj = new HashMap<>();
             eatSpaces();
-            while (!eat('}')) {
+            while (canEatNextOrEat('}')) {
                 String str = parseString();
                 eatSpaces();
-                eat(':');
+                if (!eat(':')) {
+                    throw error("No :");
+                }
                 Object v = parseValue();
                 obj.put(str, v);
                 eatSpaces();
-                eat(',');
+                eat(','); //
                 eatSpaces();
             }
             return obj;
@@ -191,7 +187,7 @@ public class JsonReader {
         if (eat('[')) {
             List<Object> ary = new ArrayList<>();
             eatSpaces();
-            while (!eat(']')) {
+            while (canEatNextOrEat(']')) {
                 ary.add(parseValue());
                 eatSpaces();
                 eat(','); //non-strict parsing
@@ -330,7 +326,15 @@ public class JsonReader {
             proceedNext(c);
             return c;
         } else {
-            return (char) 0;
+            throw error("EOF");
+        }
+    }
+
+    public boolean canEatNextOrEat(char c) {
+        if (hasNext()) {
+            return !eat(c);
+        } else {
+            throw error("No " + c);
         }
     }
 
