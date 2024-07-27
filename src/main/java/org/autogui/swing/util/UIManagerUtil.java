@@ -650,7 +650,7 @@ public class UIManagerUtil {
     public static OsVersion initOsVersion() {
         String os = System.getProperty("os.name", "").toLowerCase();
         if (os.startsWith("linux")) {
-            return new OsVersionWin();
+            return new OsVersionLinux();
         } else if (os.startsWith("windows")) {
             return new OsVersionWin();
         } else if (os.startsWith("mac")) {
@@ -847,7 +847,7 @@ public class UIManagerUtil {
         public boolean isDarkTheme() {
             try {
                 //currently only support Gtk
-                return command("gsettings", "get", "org-gnome.desktop.interface", "gtk-theme")
+                return command("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme")
                         .toLowerCase()
                         .contains("dark"); //'Yaru-dark' is the default dark theme?
             } catch (Exception ex) {
