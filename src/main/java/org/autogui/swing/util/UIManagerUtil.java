@@ -447,8 +447,8 @@ public class UIManagerUtil {
      * <ol>
      *     <li>try to load Flatlaf by {@link #installLookAndFeelFlatlaf()}  if the parameter is true</li>
      *     <li>if macOS environment, use {@link UIManager#getSystemLookAndFeelClassName()}</li>
-     *     <li>if Windows environment, use "nimbus" (due to failure of size on HiDPI)</li>
-     *     <li>if the GDK_SCALE env is set, use "metal" </li>
+     *     <li>if Windows environment, use "nimbus-custom" (due to failure of size on HiDPI)</li>
+     *     <li>if the GDK_SCALE env is set, use "nimbus-custom" </li>
      *     <li>otherwise, nothing to do</li>
      * </ol>
      * @param tryDarklaf if true, call {@link #installLookAndFeelFlatlaf()}
@@ -463,7 +463,7 @@ public class UIManagerUtil {
         } else if (getOsVersion().isWindows()) {
             return selectLookAndFeelFromSpecialName(LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM);
         } else if (System.getenv("GDK_SCALE") != null) { //for Unix GNOME with GDK_SCALE=...
-            return selectLookAndFeelFromSpecialName(LOOK_AND_FEEL_VALUE_METAL);
+            return selectLookAndFeelFromSpecialName(LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM);
         } else {
             return null;
         }
