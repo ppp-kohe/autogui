@@ -96,6 +96,20 @@ import java.util.stream.IntStream;
  *        }
  *         </pre>
  *      </li>
+ *      <li> define a new visitor method in {@link GuiSwingPrefsApplyOptions} for applying prefs;
+ *           <pre>
+ *               default public void apply(PropUpdater updater, GuiPreferences prefs, P pane)  {
+ *                   updater.prefs.applyTo(pane);
+ *               }
+ *           </pre>
+ *           this method also need to be overriden in {@link GuiSwingPrefsEditor} for prefs settings pane.
+ *            {@link GuiSwingPrefsEditor#addToContentPaneIfFirst(GuiPreferences, Supplier)} can be usable.
+ *           <pre>
+ *              public void apply(PropUpdater updater, GuiPreferences prefs, P pane)  {
+ *                   addToContentPaneIfFirst(prefs, PreferencesForX::new));
+ *              }
+ *           </pre>
+ *      </li>
  *      <li> the GUI component overrides
  *          {@link GuiSwingView.ValuePane#saveSwingPreferences(GuiPreferences)} and
  *           {@link GuiSwingView.ValuePane#loadSwingPreferences(GuiPreferences, GuiSwingPrefsApplyOptions)} for bulk loading/saving.
@@ -105,7 +119,7 @@ import java.util.stream.IntStream;
  *                GuiSwingView.loadPreferencesDefault(this, p, options);
  *                updater.prefs.loadFrom(p.getDescendant(context));
  *                updater.enabled = false;
- *                updater.prefs.applyTo(this);
+ *                options.apply(updater, updaterprefs, this);
  *                updater.enabled = true;
  *            }
  *            public void saveSwingPreferences(GuiPreferences p) {
@@ -608,7 +622,8 @@ public class GuiSwingPreferences {
         }
 
         protected void initEmptyPrefs(GuiMappingContext context) {
-            targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), context);
+            targetDefault = new GuiPreferences(new GuiPreferences.GuiValueStoreImmutable(Set.of(
+                    GuiPreferences.KEY_NAME, GuiPreferences.KEY_UUID)), context);
             targetDefault.getValueStore().putString(GuiPreferences.KEY_NAME, "Empty");
             targetDefault.getValueStore().putString(GuiPreferences.KEY_UUID, "empty");
         }

@@ -72,10 +72,14 @@ public class GuiSwingPrefsTrees {
      * @since 1.3
      */
     public DefaultMutableTreeNode createTreeNode(GuiPreferences prefs) {
-        return createTreeNode(prefs.getName(), prefs.copyOnMemoryAsRoot().getValueStore());
+        var node = createTreeNode(prefs.getName(), prefs.copyOnMemoryAsRoot().getValueStore());
+        return (node == null) ? new DefaultMutableTreeNode() : node;
     }
 
     public DefaultMutableTreeNode createTreeNode(String key, GuiPreferences.GuiValueStore store) {
+        if (store == null) {
+            return null;
+        }
         DefaultMutableTreeNode node = new DefaultMutableTreeNode(new GuiSwingPrefsTrees.PrefsValueStoreEntry(key, store));
         Map<String,Object> json = store instanceof GuiPreferences.GuiValueStoreOnMemory ?
                 ((GuiPreferences.GuiValueStoreOnMemory) store).toJson() : null;
@@ -90,6 +94,7 @@ public class GuiSwingPrefsTrees {
                 .filter(store::hasNodeKey)
                 .sorted()
                 .map(n -> createTreeNode(n, store.getChild(n)))
+                .filter(Objects::nonNull)
                 .forEach(node::add);
         return node;
     }

@@ -617,7 +617,7 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     /**
-     * traverses descendant components and call {@link GuiSwingView.ValuePane#loadPreferencesDefault(JComponent, GuiPreferences)}
+     * traverses descendant components and call {@link GuiSwingView.ValuePane#loadSwingPreferences(GuiPreferences, GuiSwingPrefsApplyOptions)}
      * @param prefs a top prefs
      * @param comp  a top component
      * @param options  options for applying

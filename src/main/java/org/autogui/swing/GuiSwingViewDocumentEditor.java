@@ -746,6 +746,13 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
     }
 
+    public static final double DOCUMENT_SETTING_PANE_SPACE_ABOBE_MIN = -1f;
+    public static final double DOCUMENT_SETTING_PANE_SPACE_ABOBE_MAX = 1000f;
+    public static final double DOCUMENT_SETTING_PANE_SPACE_LINE_MIN = -1f;
+    public static final double DOCUMENT_SETTING_PANE_SPACE_LINE_MAX = 5f;
+    public static final int DOCUMENT_SETTING_PANE_FONT_SIZE_MIN = -1;
+    public static final int DOCUMENT_SETTING_PANE_FONT_SIZE_MAX = 400;
+
     /**
      * a setting pane for document default stype; a GUI for {@link PreferencesForDocumentSetting}
      */
@@ -803,7 +810,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
 
         public void initStyle() {
             UIManagerUtil ui = UIManagerUtil.getInstance();
-            var styleSize = new Dimension(ui.getScaledSizeInt(32), ui.getScaledSizeInt(32));
+            var styleSize = new Dimension(ui.getScaledSizeInt(46), ui.getScaledSizeInt(32));
 
             styleBold = new JToggleButton("<html><b>B</b></html>");
             styleBold.setPreferredSize(styleSize);
@@ -819,18 +826,18 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         public void initFontSize() {
-            fontSize = new JSpinner(new SpinnerNumberModel(12, -1, 400, 1));
+            fontSize = new JSpinner(new SpinnerNumberModel(12, DOCUMENT_SETTING_PANE_FONT_SIZE_MIN, DOCUMENT_SETTING_PANE_FONT_SIZE_MAX, 1));
         }
 
         public void initSpace() {
             UIManagerUtil ui = UIManagerUtil.getInstance();
             var size = new Dimension(ui.getScaledSizeInt(72), ui.getScaledSizeInt(22));
 
-            spaceLine = new JSpinner(new SpinnerNumberModel(0.5f, -1f, 5f, 0.05f));
+            spaceLine = new JSpinner(new SpinnerNumberModel(0.5f, DOCUMENT_SETTING_PANE_SPACE_LINE_MIN, DOCUMENT_SETTING_PANE_SPACE_LINE_MAX, 0.05f));
             spaceLine.setToolTipText("Space factor between lines");
             spaceLine.setPreferredSize(size);
 
-            spaceAbove = new JSpinner(new SpinnerNumberModel(0.0f, -1f, 1000f, 1f));
+            spaceAbove = new JSpinner(new SpinnerNumberModel(0.0f, DOCUMENT_SETTING_PANE_SPACE_ABOBE_MIN, DOCUMENT_SETTING_PANE_SPACE_ABOBE_MAX, 1f));
             spaceAbove.setToolTipText("Space points above paragraphs");
             spaceAbove.setPreferredSize(size);
         }
@@ -987,31 +994,35 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
          * @param prefsObj the source prefsObj
          */
         public void setFrom(GuiSwingViewDocumentEditor.PreferencesForDocumentSetting prefsObj) {
-            var lineSpacingVal = prefsObj.getLineSpacing();
-            var spaceAboveVal = prefsObj.getSpaceAbove();
-            var fontFamilyVal = prefsObj.getFontFamily();
-            var fontSizeVal = prefsObj.getFontSize();
-            var boldVal = prefsObj.isBold();
-            var italicVal = prefsObj.isItalic();
-            var wrapTextVal = prefsObj.isWrapText();
-            var backgroundCustomVal = prefsObj.isBackgroundCustom();
-            var foregroundCustomVal = prefsObj.isForegroundCustom();
-            var backgroundColorVal = prefsObj.getBackgroundColor();
-            var foregroundColorVal = prefsObj.getForegroundColor();
-            spaceLine.setValue(lineSpacingVal);
-            spaceAbove.setValue(spaceAboveVal);
-            fontFamily.setSelectedItem(fontFamilyVal);
-            fontSize.setValue(fontSizeVal);
-            styleBold.setSelected(boldVal);
-            styleItalic.setSelected(italicVal);
-            styleWrapLine.setSelected(wrapTextVal);
-            backgroundCustom.setSelected(backgroundCustomVal);
-            foregroundCustom.setSelected(foregroundCustomVal);
-            if (backgroundColorVal != null) {
-                backgroundColor.setColor(backgroundColorVal);
-            }
-            if (foregroundColorVal != null) {
-                foregroundColor.setColor(foregroundColorVal);
+            try {
+                var lineSpacingVal = prefsObj.getLineSpacing();
+                var spaceAboveVal = prefsObj.getSpaceAbove();
+                var fontFamilyVal = prefsObj.getFontFamily();
+                var fontSizeVal = prefsObj.getFontSize();
+                var boldVal = prefsObj.isBold();
+                var italicVal = prefsObj.isItalic();
+                var wrapTextVal = prefsObj.isWrapText();
+                var backgroundCustomVal = prefsObj.isBackgroundCustom();
+                var foregroundCustomVal = prefsObj.isForegroundCustom();
+                var backgroundColorVal = prefsObj.getBackgroundColor();
+                var foregroundColorVal = prefsObj.getForegroundColor();
+                spaceLine.setValue(Math.max(DOCUMENT_SETTING_PANE_SPACE_LINE_MIN, Math.min(DOCUMENT_SETTING_PANE_SPACE_LINE_MAX, lineSpacingVal)));
+                spaceAbove.setValue(Math.max(DOCUMENT_SETTING_PANE_SPACE_ABOBE_MIN, Math.min(DOCUMENT_SETTING_PANE_SPACE_ABOBE_MAX, spaceAboveVal)));
+                fontFamily.setSelectedItem(fontFamilyVal);
+                fontSize.setValue(Math.min(DOCUMENT_SETTING_PANE_FONT_SIZE_MIN, Math.min(DOCUMENT_SETTING_PANE_FONT_SIZE_MAX, fontSizeVal)));
+                styleBold.setSelected(boldVal);
+                styleItalic.setSelected(italicVal);
+                styleWrapLine.setSelected(wrapTextVal);
+                backgroundCustom.setSelected(backgroundCustomVal);
+                foregroundCustom.setSelected(foregroundCustomVal);
+                if (backgroundColorVal != null) {
+                    backgroundColor.setColor(backgroundColorVal);
+                }
+                if (foregroundColorVal != null) {
+                    foregroundColor.setColor(foregroundColorVal);
+                }
+            } catch (Exception ex) {
+                System.err.println(ex);
             }
         }
 

@@ -58,7 +58,7 @@ public class GuiSwingPrefsHistoryValues {
             case GuiReprValueImagePane ignored -> createHistoryImagePrefs(value)
                     .withGuiToSourceUpdater(currentValueSetter);
             case GuiReprEmbeddedComponent e ->
-                createCurrentValueJsonSupported(prefs);
+                createJsonEntrySourceForCurrentValue(prefs);
             case GuiReprValue v -> createObjectSimpleType(value, v.getValueType(prefs.getContext()))
                     .withGuiToSourceUpdater(currentValueSetter);
             default ->  createValue(null);
@@ -134,8 +134,34 @@ public class GuiSwingPrefsHistoryValues {
         return new HistoryPaneResult(tree, tree::setEntry);
     }
 
-    public static HistoryPaneResult createCurrentValueJsonSupported(GuiPreferences prefs) {
-        var text = new JsonSourceEditPane(prefs::getCurrentValueAsJsonSupported, prefs::setCurrentValueAsJsonSupported);
+    public HistoryPaneResult createJsonEntrySourceForCurrentValue(GuiPreferences prefs) {
+        return createJsonEntrySource(prefs::getCurrentValueAsJsonSupported, prefs::setCurrentValueAsJsonSupported);
+    }
+
+    /**
+     *
+     * @param prefs the sprefs of the source used as {@link org.autogui.swing.prefs.GuiSwingPrefsSupports.PreferencesByJsonEntry#loadFromAndToJson(GuiPreferences)}
+     *              and {@link org.autogui.swing.prefs.GuiSwingPrefsSupports.PreferencesByJsonEntry#setJsonAndSaveTo(Object, GuiPreferences)}
+     * @param prefsFactory a constructor for creating temporarry object
+     * @return a pane containing JSON source editor
+     * @see #createJsonEntrySource(Supplier, Consumer)
+     */
+    public HistoryPaneResult createJsonEntrySource(GuiPreferences prefs, Supplier<? extends GuiSwingPrefsSupports.PreferencesByJsonEntry> prefsFactory) {
+        return createJsonEntrySource(
+                () -> prefsFactory.get().loadFromAndToJson(prefs),
+                o -> prefsFactory.get().setJsonAndSaveTo(o, prefs));
+    }
+
+    /**
+     * creates a small pane of JSON editor. The retruned pane contains a tool-bar with the "Reset" button, and the editor-pane with a scroll-pane.
+     *  {@link HistoryPaneResult#updateLastEntrySource()} will reload and set the text from the given JSON getter;
+     *    Note it does not have HistoryValueEntry, but it overides the method with updating the text-pane.
+     * @param source the source getter of a JSON object (do not get called often)
+     * @param updater the source setter of a JSON object (immediately called each edits)
+     * @return a pane containg a text-pane for editing JSON source.
+     */
+    public static HistoryPaneResult createJsonEntrySource(Supplier<Object> source, Consumer<Object> updater) {
+        var text = new JsonSourceEditPane(source, updater);
         JScrollPane scroll = new JScrollPane(text);
         var u = UIManagerUtil.getInstance();
         scroll.setPreferredSize(new Dimension(u.getScaledSizeInt(500), u.getScaledSizeInt(150)));
@@ -186,12 +212,12 @@ public class GuiSwingPrefsHistoryValues {
 
         public void setTextFromSource(boolean forceWhileEditing) {
             if (!editing && forceWhileEditing && source != null) {
-                var obj = source.get();
-                var src = JsonWriter.create().withNewLines(true)
-                        .write(obj)
-                        .toSource();
                 try {
                     ++readingSource;
+                    var obj = source.get();
+                    var src = JsonWriter.create().withNewLines(true)
+                            .write(obj)
+                            .toSource();
                     var doc = getDocument();
                     if (doc.getLength() > 0) {
                         doc.remove(0, doc.getLength());

@@ -844,28 +844,32 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         @Override
         public void loadFrom(GuiPreferences prefs) {
-            GuiPreferences.GuiValueStore store = prefs.getValueStore();
-            TypedSpinnerNumberModel model = this;
-            GuiReprValueNumberSpinner.NumberType type = model.getNumberType();
-            String max = store.getString("maximum", "");
-            String min = store.getString("minimum", "");
-            String step = store.getString("stepSize", "");
-            if (!max.isEmpty()) {
-                model.setMaximum(type.fromString(max));
-            }
-            if (!min.isEmpty()) {
-                model.setMinimum(type.fromString(min));
-            }
-            if (!step.isEmpty()) {
-                Comparable<?> c = type.fromString(step);
-                if (c instanceof Number) {
-                    model.setStepSize((Number) c);
+            try {
+                GuiPreferences.GuiValueStore store = prefs.getValueStore();
+                TypedSpinnerNumberModel model = this;
+                GuiReprValueNumberSpinner.NumberType type = model.getNumberType();
+                String max = store.getString("maximum", "");
+                String min = store.getString("minimum", "");
+                String step = store.getString("stepSize", "");
+                if (!max.isEmpty()) {
+                    model.setMaximum(type.fromString(max));
                 }
-            }
+                if (!min.isEmpty()) {
+                    model.setMinimum(type.fromString(min));
+                }
+                if (!step.isEmpty()) {
+                    Comparable<?> c = type.fromString(step);
+                    if (c instanceof Number) {
+                        model.setStepSize((Number) c);
+                    }
+                }
 
-            String format = store.getString("format", "");
-            if (!format.isEmpty()) {
-                setFormatPattern(format);
+                String format = store.getString("format", "");
+                if (!format.isEmpty()) {
+                    setFormatPattern(format);
+                }
+            } catch (Exception ex) {
+                System.err.println(ex);
             }
         }
 

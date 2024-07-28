@@ -138,11 +138,12 @@ public class UIManagerUtil {
     }
 
     /**
+     * (changed to use {@code TextField.foreground} from {@code TextPane.foreground} due to {@link #getTextPaneBackground()})
      * @return the text pane foreground
      * @since 1.2
      */
     public Color getTextPaneForeground() {
-        Color color = UIManager.getColor("TextPane.foreground");
+        Color color = UIManager.getColor("TextField.foreground");
         if (color == null) {
             color = Color.black;
         }
@@ -150,11 +151,12 @@ public class UIManagerUtil {
     }
 
     /**
+     * (changed to use {@code TextField.background} from {@code TextPane.background} due to GTK always returns white)
      * @return the text pane background
      * @since 1.2
      */
     public Color getTextPaneBackground() {
-        Color color = UIManager.getColor("TextPane.background");
+        Color color = UIManager.getColor("TextField.background");
         if (color == null) {
             color = Color.white;
         }

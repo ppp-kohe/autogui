@@ -143,6 +143,16 @@ public class GuiSwingPrefsSupports {
             prefs.getValueStore().putString(getKey(),
                     JsonWriter.create().withNewLines(false).write(toJson()).toSource());
         }
+
+        default Object loadFromAndToJson(GuiPreferences prefs) {
+            loadFrom(prefs);
+            return toJson();
+        }
+
+        default void setJsonAndSaveTo(Object json, GuiPreferences prefs) {
+            setJson(json);
+            saveTo(prefs);
+        }
     }
 
     public static class PreferencesForWindow implements PreferencesByJsonEntry {

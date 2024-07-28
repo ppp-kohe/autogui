@@ -576,6 +576,9 @@ public class GuiPreferences {
     }
 
     private void overwirteStore(GuiValueStore storeSelf, GuiValueStore storeOthr) {
+        if (storeSelf == null) { //immutable store
+            return;
+        }
         var remainingKeys = new HashSet<>(storeSelf.getKeys());
         for (var key : storeOthr.getKeys()) {
             remainingKeys.remove(key);
@@ -1417,6 +1420,9 @@ public class GuiPreferences {
 
     @SuppressWarnings("unchecked")
     protected void fromJsonChildNodes(GuiValueStore store, Map<String,Object> json) {
+        if (store == null) { //immutable
+            return;
+        }
         var existingKeys = store.getKeys();
 
         for (Map.Entry<String,Object> e : json.entrySet()) {
@@ -1543,6 +1549,65 @@ public class GuiPreferences {
         @Override
         public GuiValueStore copyInitAsRoot() {
             return new GuiValueStoreOnMemory();
+        }
+    }
+
+    public static class GuiValueStoreImmutable extends GuiValueStoreOnMemory {
+        protected Set<String> availableEntryKeys = Set.of();
+        public GuiValueStoreImmutable() {
+            super();
+        }
+
+        public GuiValueStoreImmutable(Set<String> availableEntryKeys) {
+            super();
+            this.availableEntryKeys = availableEntryKeys;
+        }
+
+        public GuiValueStoreImmutable(GuiPreferences preferences, Set<String> availableEntryKeys) {
+            super(preferences);
+            this.availableEntryKeys = availableEntryKeys;
+        }
+
+        public GuiValueStoreImmutable(GuiPreferences preferences, GuiValueStoreOnMemory parent, Set<String> availableEntryKeys) {
+            super(preferences, parent);
+            this.availableEntryKeys = availableEntryKeys;
+        }
+
+        @Override public void putString(String key, String val) {
+            if (availableEntryKeys.contains(key)) { super.putString(key, val); }
+        }
+        @Override public String getString(String key, String def) {
+            return availableEntryKeys.contains(key) ? super.getString(key, def) : def;
+        }
+        @Override public void putInt(String key, int val) {
+            if (availableEntryKeys.contains(key)) { super.putInt(key, val); } ;
+        }
+        @Override public int getInt(String key, int def) {
+            return availableEntryKeys.contains(key) ? super.getInt(key, def) : def;
+        }
+
+        @Override
+        public GuiValueStore getChild(GuiPreferences preferences, String key) {
+            return null;
+        }
+
+        @Override public boolean hasEntryKey(String key) {
+            return availableEntryKeys.contains(key) && super.hasEntryKey(key);
+        }
+        @Override public boolean hasNodeKey(String key) { return false; }
+
+        @Override public List<String> getKeys() { return super.getKeys(); }
+        @Override public void remove(String key) { super.remove(key); }
+        @Override public void removeThisNode() { }
+
+        @Override
+        public GuiValueStore copyInitAsRoot() {
+            return new GuiValueStoreImmutable(availableEntryKeys);
+        }
+
+        @Override
+        public GuiValueStore getChild(GuiPreferences preferences) {
+            return new GuiValueStoreImmutable(preferences, Set.of());
         }
     }
 }

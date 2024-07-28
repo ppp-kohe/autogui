@@ -233,12 +233,12 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     @Override
     public void setLastHistoryValueBySwingViewHistoryValue(GuiSwingView.ValuePane<Object> pane, GuiPreferences prefs, Object value) {
         //prefs current value
-        addToContentPaneIfFirst(prefs, TABLE_PREFS_CURRENT_VALUE, p -> createLastHistoryValueBySwingViewHistoryValue(p, value));
+        addToContentPaneIfFirst(prefs, PREFS_CURRENT_VALUE, p -> createLastHistoryValueBySwingViewHistoryValue(p, value));
     }
 
     @Override
     public void setLastHistoryValueByPrefsJsonSupported(GuiSwingView.ValuePane<Object> pane, GuiPreferences prefs, Object value) {
-        addToContentPaneIfFirst(prefs, TABLE_PREFS_CURRENT_VALUE, p -> createLastHistoryValueBySwingViewHistoryValue(p, value));
+        addToContentPaneIfFirst(prefs, PREFS_CURRENT_VALUE, p -> createLastHistoryValueBySwingViewHistoryValue(p, value));
     }
 
     @Override
@@ -323,6 +323,19 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
         return valueList(new ValueListPaneHistoryValueEntry(prefs::getHistoryValues, prefs, saveRunnerForHistory()));
     }
 
+    /**
+     *  1. create a JSON editor via {@link GuiSwingPrefsHistoryValues#createJsonEntrySource(GuiPreferences, Supplier)}
+     *  2. register the editor for the updating mechanism by {@link #createCurrentValuePane(GuiPreferences, String, GuiSwingPrefsHistoryValues.HistoryPaneResult)}
+     *  3. add the editor to the contentPane by {@link #addToContentPaneIfFirst(GuiPreferences, String, Function)}
+     * @param prefs the target source-prefs
+     * @param prefsObjFactory a constructor for the temporary prefs-object; using for obtaining key, loading and saving in the editor
+     * @return the created pane
+     */
+    public JComponent addToContentPaneIfFirst(GuiPreferences prefs, Supplier<? extends GuiSwingPrefsSupports.PreferencesByJsonEntry> prefsObjFactory) {
+        var key = prefsObjFactory.get().getKey();
+        return this.addToContentPaneIfFirst(prefs, key,
+                p -> createCurrentValuePane(p, key, valuePaneFactory.createJsonEntrySource(p, prefsObjFactory)));
+    }
 
     public <PaneType extends JComponent> PaneType addToContentPaneIfFirst(GuiPreferences prefs, GuiSwingPrefsSupports.PreferencesByJsonEntry prefsObj, Function<GuiPreferences, PaneType> paneFactory) {
         return addToContentPaneIfFirst(prefs, prefsObj.getKey(), paneFactory);
@@ -372,7 +385,7 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     public static final String TABLE_PREFS_COLUMN_INDEX = "columnIndex";
     public static final String TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX = "modelIndex";
     public static final String TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX = "viewIndex";
-    public static final String TABLE_PREFS_CURRENT_VALUE = GuiPreferences.KEY_CURRENT_VALUE;
+    public static final String PREFS_CURRENT_VALUE = GuiPreferences.KEY_CURRENT_VALUE;
     public static final String DOCUMENT_PREFS_KEY = "<DocumentSetting>";
     public static final String NUMBER_PREFS_KEY = "<NumberSetting>";
 
@@ -477,15 +490,16 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     }
 
     public JComponent createLastHistoryValueBySwingViewHistoryValue(GuiPreferences prefs, Object value) {
-        var jsonPane = valuePaneFactory.createHistoryObjectPrefs(value, prefs, true);
-        validationCheckers.add(jsonPane::updateLastEntrySource);
-        return createNamed(getName(prefs, TABLE_PREFS_CURRENT_VALUE), jsonPane);
+        return createCurrentValuePane(prefs, PREFS_CURRENT_VALUE, valuePaneFactory.createHistoryObjectPrefs(value, prefs, true));
     }
 
     public JComponent createLastHistoryValueBySwingViewHistoryValue(GuiPreferences prefs, GuiPreferences.HistoryValueEntry entry) {
-        var jsonPane = valuePaneFactory.createHistory(entry, prefs);
+        return createCurrentValuePane(prefs, PREFS_CURRENT_VALUE, valuePaneFactory.createHistory(entry, prefs));
+    }
+
+    public JComponent createCurrentValuePane(GuiPreferences prefs, String key, GuiSwingPrefsHistoryValues.HistoryPaneResult jsonPane) {
         validationCheckers.add(jsonPane::updateLastEntrySource);
-        return createNamed(getName(prefs, TABLE_PREFS_CURRENT_VALUE), jsonPane);
+        return createNamed(getName(prefs, key), jsonPane);
     }
 
     public JComponent createTablePrefs(GuiPreferences prefs) {
