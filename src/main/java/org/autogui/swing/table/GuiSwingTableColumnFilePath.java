@@ -78,7 +78,7 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
         }
     }
 
-    public static class ColumnFilePathPane extends PropertyLabel {
+    public static class ColumnFilePathPane extends GuiSwingTableColumnLabel.PropertyLabelColumn {
         @Serial private static final long serialVersionUID = 1L;
 
         protected Graphics tester;

@@ -1,5 +1,6 @@
 package org.autogui.swing;
 
+import org.autogui.swing.table.GuiSwingTableColumnLabel;
 import org.autogui.swing.table.TableTargetColumnAction;
 import org.autogui.base.mapping.*;
 import org.autogui.swing.util.*;
@@ -467,7 +468,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         }
     }
 
-    public static class PropertyLabelEnum extends GuiSwingViewLabel.PropertyLabel {
+    public static class PropertyLabelEnum extends GuiSwingTableColumnLabel.PropertyLabelColumn {
         @Serial private static final long serialVersionUID = 1L;
 
         public PropertyLabelEnum(GuiMappingContext context, SpecifierManager specifierManager) {

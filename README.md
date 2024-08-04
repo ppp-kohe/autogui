@@ -161,12 +161,12 @@ The program will show a GUI window like the following image:
 The displayed window has the following GUI components:
 
 * The image pane *Image* created from the field `BufferedImage image` : You can drag & drop an image file to supply an input image data. The dropped image will be automatically loaded as a 
-  [`BufferedImage`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/image/BufferedImage.html) 
+  [`BufferedImage`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/image/BufferedImage.html) 
   object and displayed in the pane and assigned to the field.
 
 * The action button *Flip Y*  created from the method `void flipY()` : After dropping an image, you can click the button to flip Y coordinate  of the image. The created `newImage` will be assigned to the `image` field. After the execution of the method, the image pane will show the flipped image.
 * The file name field *Output*  created from the field `File output` : You can put the name of saving the flipped image. The field initially displays "output.png"　in the working directory as the initial value of the field. User input for the text field will change the field value to a new
-[`File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html)   object.
+[`File`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/File.html)   object.
 * The action button *Save*  created from `void save()` : The action can write the flipped image as a new file specified by the Output field.
 
 ### FileRenameDemo
@@ -344,52 +344,52 @@ The recent versions (1.2-) have the `module-info.class` and require Java 11 or l
 
 * Basic value types
   * [String text-field](#string-text-field): 
-    [`java.lang.String`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html)
+    [`java.lang.String`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html)
   * [File text-field](#file-text-field): 
-    [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Path.html) or 
-    [`java.io.File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html)
+    [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html) or 
+    [`java.io.File`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/File.html)
   * [Number spinner](#number-spinner): a primitive numeric(`byte`, `short`, `int`, `long`, `float` or `double`) or a sub-type of
-    [`java.lang.Number`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Number.html)
+    [`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html)
   * [Boolean check-box](#boolean-check-box): `boolean` or 
-    [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html)
+    [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html)
   * [Enum pull-down menu](#enum-pull-down-menu): a sub-type of 
-    [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html)
+    [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html)
   * [Image pane](#image-pane): a sub-type of 
-    [`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html)
+    [`java.awt.Image`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/Image.html)
   * [Document editor](#document-editor): 
-    [`java.lang.StringBuilder`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/StringBuilder.html) or 
-    [`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/Document.html)
+    [`java.lang.StringBuilder`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuilder.html) or 
+    [`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/text/Document.html)
   * [Embedded component](#embedded-component): a sub-type of 
-    [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/JComponent.html)
+    [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JComponent.html)
 * [Object pane](#object-pane): a user-defined object type with composition of properties and actions
   * Object properties: `T getP() {...}`, `T p() {...}` (1.2-) , `void setP(T) {...}` or `T p;`
       * if all members are other user-defined objects, then the enclosing object will be bound to a tabbed-pane
   * Action methods: `void m() {...}`
 * [Collection table](#collection-table): a sub-type of 
-  [`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Collection.html)
+  [`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html)
   or an array `E[]` with columns based `E`
   * Value columns for `E`
       * String column: 
-        [`java.lang.String`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html)
+        [`java.lang.String`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html)
       * File column: 
-        [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Path.html) or 
-        [`java.io.File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html)
+        [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html) or 
+        [`java.io.File`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/File.html)
       * Number column: a primitive numeric or a sub-type of 
-        [`java.lang.Number`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Number.html)
+        [`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html)
       * Boolean column: `boolean` or 
-        [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html)
+        [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html)
       * Enum column: a sub-type of
-        [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html)
+        [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html)
       * Image column: a sub-type of 
-        [`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html)
-      * Embedded component: a sub-type of [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/JComponent.html)
+        [`java.awt.Image`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/Image.html)
+      * Embedded component: a sub-type of [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JComponent.html)
   * [Object rows](#object-rows): A user-defined object-type composing columns from its properties and actions
   * Dynamic Collection table: a nested `Collection<Collection<E>>` or a multi-dimensional array `E[][]`
 
 ### String text-field
 
 A property of 
-[`java.lang.String`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html) 
+[`java.lang.String`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html) 
 will be bound to a text field.
 
 ```java
@@ -404,8 +404,8 @@ will be bound to a text field.
 ### File text-field
 
 A property of 
-[`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Path.html) or 
-[`java.io.File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html) 
+[`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html) or 
+[`java.io.File`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/File.html) 
 will be bound to a text field with an extension for file operations.
 
 ```java
@@ -422,8 +422,8 @@ will be bound to a text field with an extension for file operations.
 
 A property of a numerical type will be bound to a number spinner. 
 Numerical types includes primitive types (`byte`, `short`, `int`, `long`, `float` and `double`) and sub-types of 
-[`java.lang.Number`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Number.html) including 
-[`java.math.BigInteger`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/math/BigInteger.html) and  [`java.math.BigDecimal`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/math/BigDecimal.html) 
+[`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html) including 
+[`java.math.BigInteger`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigInteger.html) and  [`java.math.BigDecimal`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html) 
 
 ```java
   class Hello {
@@ -437,7 +437,7 @@ Numerical types includes primitive types (`byte`, `short`, `int`, `long`, `float
 ### Boolean check-box
 
 A property of `boolean` or 
-[`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html) 
+[`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html) 
  will be bound to a check-box.
 
 ```java
@@ -452,7 +452,7 @@ A property of `boolean` or
 ### Enum pull-down menu
 
 A property of an `enum` type (a sub-type of 
-[`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html) 
+[`java.lang.Enum`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html) 
 ) will be bound to a pull-down menu (non editable combo-box).
 Members of the enum becomes items of the menu.
 
@@ -471,7 +471,7 @@ Members of the enum becomes items of the menu.
 ### Image pane
 
 A property of 
-[`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html) 
+[`java.awt.Image`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/Image.html) 
  or its sub-type will be bound to a pane for image previewing.
 
 ```java
@@ -486,8 +486,8 @@ A property of
 
 The pane supports drag & drop and zooming by the mouse wheel with the Alt(option) key.
 For handling images in code, 
-[`java.awt.image.BufferedImage`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/image/BufferedImage.html) and 
-[`javax.imageio.ImageIO`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/imageio/ImageIO.html)
+[`java.awt.image.BufferedImage`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/image/BufferedImage.html) and 
+[`javax.imageio.ImageIO`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/imageio/ImageIO.html)
 are useful.
 
 ```java
@@ -517,9 +517,9 @@ are useful.
 ### Document editor
 
 A property of 
-[`java.lang.StringBuilder`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/StringBuilder.html)
+[`java.lang.StringBuilder`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuilder.html)
 or 
-[`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/Document.html) 
+[`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/text/Document.html) 
 and its sub-type will be bound to a text-edit pane.
 
 ```java
@@ -546,7 +546,7 @@ Note that the documents and text-edit components in Swing seem to have designed 
 So, **the user code should not modify contents of `StringBuilder` or `Document` of the property value**. 
 
 When the type of the property is 
-[`javax.swing.text.StyledDocument`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/StyledDocument.html) 
+[`javax.swing.text.StyledDocument`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/text/StyledDocument.html) 
 , its sub-type or `StringBuilder`, 
 the user can change its (global) style by settings from the context menu.
 
@@ -627,9 +627,9 @@ The created UI automatically specifies changed properties of the object pane. In
 #### AutoCloseable support
 
 If a user-defined object class implements 
-[`java.lang.AutoCloseable`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/AutoCloseable.html), 
+[`java.lang.AutoCloseable`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html), 
 then 
-[`close()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/AutoCloseable.html#close())
+[`close()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html#close())
 of objects of the class will be called at closing of owner window of those objects.
 
  (A returned window by `AutoGuiShell.showLive(o)` does not automatically call the method by window closing. Use 
@@ -690,7 +690,7 @@ A user-defined object which has only properties of sub user-defined objects with
 ### Embedded component
 
 A property of 
-[`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/JComponent.html)
+[`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JComponent.html)
 or its sub-type will be bound to a pane for embedding the property value as sub-component.
 
 ```java
@@ -744,7 +744,7 @@ To run the example:
 ### Collection table
 
 A property for 
-[`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Collection.html),
+[`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html),
 its sub-type or an array type `E[]`  will be bound to a table pane.
 The column of the table will be created from the type-argument `E`.
 
@@ -791,7 +791,7 @@ If the type-argument`E` of `Collection<E>` is a user-defined object class, then 
 #### Actions for selected rows of Collection table
 
 If a method of the property-owner takes the element-type `E` of  
-[`java.util.List<E>`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html),
+[`java.util.List<E>`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html),
 then the table has a button of a tool-bar for the method. The button executes the method with a list containing objects of selected rows in the table.
 
 If the element object in the collection has an action-method, then the table has a button of a tool-bar for the method. The button executes the method for each objects of selected rows in the table.
@@ -1025,7 +1025,7 @@ The updating is done by the `update()` method; it rewrites `prop`  with the time
 ) and  notifies the change of the field to the text field by explicitly calling `Runnable#run()`  to the updater set by `setPropUpdater(Runnable)`. The setter name specifies the `prop` field as the target of the updater by following the naming rule `set<YourPropertyName>Updater`.
 
 In the constructor of the class, the `update()` method will be scheduled by 
-[`ScheduledExecutorService#scheduleWithFixedDelay(this::update, ...)` ](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html#scheduleWithFixedDelay(java.lang.Runnable,long,long,java.util.concurrent.TimeUnit))
+[`ScheduledExecutorService#scheduleWithFixedDelay(this::update, ...)` ](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html#scheduleWithFixedDelay(java.lang.Runnable,long,long,java.util.concurrent.TimeUnit))
 method as a `ScheduledFuture` task.
 
 
@@ -1033,7 +1033,7 @@ method as a `ScheduledFuture` task.
 
 The created window has ability to save and reuse a set of property-values of its binding sub-components.
 This feature relies on 
-[`java.util.prefs`](https://docs.oracle.com/en/java/javase/11/docs/api/java.prefs/java/util/prefs/package-summary.html).
+[`java.util.prefs`](https://docs.oracle.com/en/java/javase/21/docs/api/java.prefs/java/util/prefs/package-summary.html).
 
 ```java
    class Hello {
@@ -1087,7 +1087,7 @@ Additionally, [`GuiPreferencesLoader`](https://www.autogui.org/docs/apidocs/late
 
 Your custom embedded components can easily interact with preferences mechanism of the library.
 
-To support the feature, a return-type of the property method must be your custom component-type that implements the [`GuiPreferences.PreferencesJsonSupport`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/mapping/GuiPreferencesLoader.PreferencesJsonSupport.html) interface. 
+To support the feature, a return-type of the property method must be your custom component-type that implements the [`GuiPreferences.PreferencesJsonSupport`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/mapping/GuiPreferences.PreferencesJsonSupport.html) interface. 
 The interface has 2 methods for generating and setting preferences-data as JSON objects.
 Note that the feature works when the static return-type of the property method satisfies the interface. So you will need to specify the your type into the return type. 
 
@@ -1139,8 +1139,8 @@ The created window has a status-bar and a list of displaying logging entries. An
 ### Logging string messages
 
 The created window will replace 
-[`System.err`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#err) and 
-[`System.out`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#out) with redirecting its outputs to a status-view and a list-window  on the created window. 
+[`System.err`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/System.html#err) and 
+[`System.out`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/System.html#out) with redirecting its outputs to a status-view and a list-window  on the created window. 
 
 Note: the replacing feature can be controlled by system-properties read in [`GuiSwingLogManager#setupConsoleWithDefaultFlags()`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/log/GuiSwingLogManager.html#setupConsoleWithDefaultFlags). You can dismiss the replacement by `-Dautogui.log.replaceErr=false -Dautogui.log.replaceOut=false`.
 
@@ -1200,14 +1200,14 @@ The progress-bar can also show a message by
 <img src="docs/images/image-log-progress-h.png" srcset="docs/images/image-log-progress-h.png 1x, docs/images/image-log-progress.png 2x" alt="Progress">
 
 The button attached to the right side of the progress-bar causes an interruption of 
-[`Thread`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html)
+[`Thread`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html)
 of calling `logProgress()`.  
 The interruption causes an 
-[`InterruptedException`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/InterruptedException.html)
+[`InterruptedException`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/InterruptedException.html)
 while thread-blocking caused by some APIs such as 
-[`Thread.sleep(n)`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#sleep(long)). 
+[`Thread.sleep(n)`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#sleep(long)). 
 For running code without blocking, you will need to insert
-[`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#interrupted())
+[`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#interrupted())
 in order to explicitly check the interruption.
 
 ### Logging exceptions
@@ -1232,8 +1232,8 @@ can explicitly display the given exception. The displayed exception becomes an i
 ### Long running action and progress-bars	
 
 A long running action will be an independent task with displaying an indeterminate progress-bar. The stop button can cause an interruption resulting in 
-[`InterruptedException`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/InterruptedException.html) or 
-[`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#interrupted()). 
+[`InterruptedException`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/InterruptedException.html) or 
+[`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#interrupted()). 
 
 ```java
   class Hello {
@@ -1250,22 +1250,50 @@ A long running action will be an independent task with displaying an indetermina
 
 <img src="docs/images/image-log-longrunning-h.png" srcset="docs/images/image-log-longrunning-h.png 1x, docs/images/image-log-longrunning.png 2x" alt="Progress">
 
-
-## Dark-mode support
+## Setting Appearance
 
 The current Swing GUI (in Java23) does not have automatic support of recent OS's dark-mode switching.
 
-However, there are some custom look-and-feel libraries for supporting dark-mode such as [darklaf](https://github.com/weisJ/darklaf) and 
+
+However, there are some custom look-and-feel (LAF) libraries for supporting dark-mode such as [darklaf](https://github.com/weisJ/darklaf) and 
 [flatlaf](https://www.formdev.com/flatlaf/).
 
-The library implicitly has code for detecting existence of *flatlaf* and applying its LAF at launching with following OS's current theme. The detection is simply done by accessing to the reflection Class object through `Class.forName`.
+The launching-process of the library sets LAF automatically.
+You can control the specification of LAF by the property `autogui.laf` which can be set by `-Dautogui.laf=...` of the JVM option.
+The property can take the following values. 
+Note [UIManagerUtil.selectLookAndFeelFromSpecialName(String)](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/util/UIManagerUtil.html#selectLookAndFeelFromSpecialName(java.lang.String)) is the corresponding code.
 
-For example in macOS, you can launch the library's app with the combination of flatlaf (confirmed by `com.formdev:flatlaf:3.4.1`) and the JVM option `-Dapple.awt.application.appearance=system`, it will get best experience as modern GUI including displaying Emoji and the dark-mode title-bar.
+
+* No value, the empty string `""`, or `default` 
+    1. [loading flatlaf](#loading-flatlaf), explained later
+    2. In MacOS, and if the current appearance is not dark, then it applies `system`(the system default LAF: AquaLookAndFeel)
+    3. Otherwise, it applies [`nimbus-flat`](#nimbuslookandfeelcustomflat)
+* `default-no-darklaf` : Same as `default`, except no-loading flatlaf
+* `metal`: applies `javax.swing.plaf.metal.MetalLookAndFeel`
+* `nimbus`: applies `javax.swing.plaf.nimbus.NimbusLookAndFeel`
+* `nimbus-flat`: applies [`NimbusLookAndFeelCustomFlat`](#nimbuslookandfeelcustomflat), the original LAF in the library
+* `nimbus-flat-light`: applies the light-theme of `NimbusLookAndFeelCustomFlat`
+* `nimbus-flat-dark`: applies the dark-theme of `NimbusLookAndFeelCustomFlat`
+* `system`: applies OS specific LAF
+* `darklaf`: tries [loading flatlaf](#loading-flatlaf)
+* `none`: nothing to do for LAF
+
+### NimbusLookAndFeelCustomFlat
+
+The LAF [org.autogui.swing.util.NimbusLookAndFeelCustomFlat](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/util/NimbusLookAndFeelCustomFlat.html) specified by `nimbus-flat` is the original implementation in the library (1.7-), which extends the existing NimbusLookAndFeel in JDK, 
+and it can judges the current theme at launching time and applies the light or dark theme.
+
+Though the way of the judging the theme differs by OS, 
+it is achieved by invoking external commands.
+Also, those styles can be specified by `nimbus-flat-light` and `nimbus-flat-dark`.
+
+| `nimbus-flat-light` | `nimbus-flat-dark` |
+|:-----------------:|:----------------:|
+| <img src="docs/images/image-nimbus-flat-light.png" srcset="docs/images/image-nimbus-flat-light-h.png 1x, docs/images/image-nimbus-flat-light.png 2x" alt="NimbusLookAndFeelCustomFlatLight"> | <img src="docs/images/image-nimbus-flat-dark.png" srcset="docs/images/image-nimbus-flat-dark-h.png 1x, docs/images/image-nimbus-flat-dark.png 2x" alt="NimbusLookAndFeelCustomFlatDark"> |
+
+### Loading Flatlaf
+
+The default specification of the library implicitly detects existence of [*flatlaf*](https://www.formdev.com/flatlaf/) (confirmed by `com.formdev:flatlaf:3.4.1`)  and applying its LAF with following the OS's current theme. The detection is simply done by accessing to the reflection Class object through `Class.forName`.
 
 <img src="docs/images/image-dark-h.png" srcset="docs/images/image-dark-h.png 1x, docs/images/image-dark.png 2x" alt="Progress">
-
-You can also control the LAF setting by the JVM option `-Dautogui.laf=...`.
-The value are listed in the document of
-[UIManagerUtil.selectLookAndFeelFromSpecialName(String)](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/util/UIManagerUtil.html#selectLookAndFeelFromSpecialName(java.lang.String)).
-
 

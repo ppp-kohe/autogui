@@ -2,7 +2,7 @@ package org.autogui.swing.util;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.plaf.nimbus.NimbusLookAndFeel;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
@@ -96,8 +96,22 @@ public class UIManagerUtil {
         return b;
     }
 
+    protected Color uiManagerColor(String... names) {
+        for (var name : names) {
+            var c = UIManager.getColor(name);
+            if (c instanceof UIResource) { //in NumbusLAF, the UIResource will be changed by painter's color
+                c = new Color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
+            }
+            if (c != null) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+
     public Color getLabelForeground() {
-        Color color = UIManager.getColor("Label.foreground");
+        Color color = uiManagerColor("Label.foreground");
         if (color == null) {
             color = Color.black;
         }
@@ -105,7 +119,7 @@ public class UIManagerUtil {
     }
 
     public Color getLabelBackground() {
-        Color color = UIManager.getColor("Label.background");
+        Color color = uiManagerColor("Label.background");
         if (color == null) {
             color = new Color(238, 238, 238);
         }
@@ -114,7 +128,7 @@ public class UIManagerUtil {
 
 
     public Color getLabelDisabledForeground() {
-        Color color = UIManager.getColor("Label.disabledForeground");
+        Color color = uiManagerColor("Label.disabledForeground", "Label[Disabled].textForeground");
         if (color == null) {
             color = new Color(128, 128, 128);
         }
@@ -122,7 +136,7 @@ public class UIManagerUtil {
     }
 
     public Color getTextPaneSelectionBackground() {
-        Color color = UIManager.getColor("TextPane.selectionBackground");
+        Color color = uiManagerColor("TextPane.selectionBackground", "nimbusSelectionBackground");
         if (color == null) {
             color = new Color(160, 200, 250);
         }
@@ -130,7 +144,7 @@ public class UIManagerUtil {
     }
 
     public Color getTextPaneSelectionForeground() {
-        Color color = UIManager.getColor("TextPane.selectionForeground");
+        Color color = uiManagerColor("TextPane.selectionForeground", "nimbusSelectedText");
         if (color == null) {
             color = Color.white;
         }
@@ -143,7 +157,7 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getTextPaneForeground() {
-        Color color = UIManager.getColor("TextField.foreground");
+        Color color = uiManagerColor("TextField.foreground");
         if (color == null) {
             color = Color.black;
         }
@@ -156,7 +170,7 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getTextPaneBackground() {
-        Color color = UIManager.getColor("TextField.background");
+        Color color = uiManagerColor("TextField.background");
         if (color == null) {
             color = Color.white;
         }
@@ -164,7 +178,7 @@ public class UIManagerUtil {
     }
 
     public Color getFocusColor() {
-        Color color = UIManager.getColor("Focus.color");
+        Color color = uiManagerColor("Focus.color", "nimbusFocus", "Component.focusColor", "Button.focus");
         if (color == null) {
             color = new Color(150, 150, 150);
         }
@@ -172,7 +186,7 @@ public class UIManagerUtil {
     }
 
     public Color getMenuDisabledForeground() {
-        Color color = UIManager.getColor("MenuItem.disabledForeground");
+        Color color = uiManagerColor("MenuItem.disabledForeground", "MenuItem[Disabled].textForeground");
         if (color == null) {
             color = Color.darkGray;
         }
@@ -184,7 +198,7 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getTableAlternateRowColor() {
-        return UIManager.getColor("Table.alternateRowColor");
+        return uiManagerColor("Table.alternateRowColor");
     }
 
     /**
@@ -192,7 +206,7 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getTableDropCellBackground() {
-        return UIManager.getColor("Table.dropCellBackground");
+        return uiManagerColor("Table.dropCellBackground");
     }
 
     /**
@@ -200,7 +214,7 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getTableDropCellForeground() {
-        return UIManager.getColor("Table.dropCellForeground");
+        return uiManagerColor("Table.dropCellForeground");
     }
 
     /**
@@ -208,7 +222,7 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getTableFocusCellBackground() {
-        return UIManager.getColor("Table.focusCellBackground");
+        return uiManagerColor("Table.focusCellBackground");
     }
 
     /**
@@ -216,7 +230,7 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getTableBackground() {
-        Color color = UIManager.getColor("Table.background");
+        Color color = uiManagerColor("Table.background");
         if (color == null) {
             color = Color.white;
         }
@@ -228,7 +242,7 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getTableFocusCellForeground() {
-        return UIManager.getColor("Table.focusCellForeground");
+        return uiManagerColor("Table.focusCellForeground", "nimbusSelectedText");
     }
 
 
@@ -237,7 +251,8 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getListAlternateRowColor() {
-        return UIManager.getColor("List.alternateRowColor");
+        //return uiManagerColor("List.alternateRowColor");
+        return getTableAlternateRowColor();
     }
 
     /**
@@ -245,7 +260,7 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getListDropCellBackground() {
-        return UIManager.getColor("List.dropCellBackground");
+        return uiManagerColor("List.dropCellBackground");
     }
 
     /**
@@ -253,7 +268,7 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getListDropCellForeground() {
-        return UIManager.getColor("List.dropCellForeground");
+        return uiManagerColor("List.dropCellForeground");
     }
 
     /**
@@ -261,7 +276,8 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getListFocusCellBackground() {
-        return UIManager.getColor("List.focusCellBackground");
+        //return uiManagerColor("List.focusCellBackground");
+        return getTableFocusCellBackground();
     }
 
     /**
@@ -269,7 +285,8 @@ public class UIManagerUtil {
      * @since 1.2
      */
     public Color getListFocusCellForeground() {
-        return UIManager.getColor("List.focusCellForeground");
+        //return uiManagerColor("List.focusCellForeground");
+        return getTableFocusCellForeground();
     }
 
 
@@ -322,7 +339,7 @@ public class UIManagerUtil {
      *     <li>{@code #special:v} =&gt; rewrite the param by {@link #selectLookAndFeelFromSpecialName(String)} with (v). Continues with the following steps. </li>
      *     <li>{@code #default}, {@code default} or {@code default-no-darklaf} =&gt; {@link #selectLookAndFeelDefault(boolean)}
      *       with ({@code false} if {@code default-no-darklaf}, otherwise {@code true} )</li>
-     *     <li>{@code darklaf} or {@code flatlaf}=&gt; {@link #installLookAndFeelFlatlaf()} ()}</li>
+     *     <li>{@code darklaf} or {@code flatlaf}=&gt; {@link #installLookAndFeelFlatlaf()} </li>
      *     <li>{@code #none} =&gt; nothing to do</li>
      *     <li>{@code null} =&gt; nothing to do </li>
      *     <li>otherwise =&gt; treats the value as a LAF class-name; loading by {@link UIManager#setLookAndFeel(String)}.
@@ -330,9 +347,9 @@ public class UIManagerUtil {
      * </ol>
      * After the above steps, {@link #setLookAndFeelFix()}.
      * @param lookAndFeelClass the LAF class name or a special configuration name
-     *                          starting from <code>#prop:</code>,
-     *                          <code>#none</code> or
-     *                          <code>#default</code>
+     *                          starting from {@code #prop:},
+     *                          {@code #none} or
+     *                          {@code #default}
      * @since 1.2
      */
     public void setLookAndFeel(String lookAndFeelClass) {
@@ -409,18 +426,22 @@ public class UIManagerUtil {
 
     /**
      * <ul>
-     * <li>"metal" =&gt; <code>MetalLookAndFeel</code> </li>
-     * <li> "nimbus" =&gt; <code>NimbusLookAndFeel</code> </li>
-     * <li> "system" =&gt; {@link UIManager#getSystemLookAndFeelClassName()} </li>
-     * <li> null, "" or "default"  =&gt; "default" for later processes by {@link #selectLookAndFeelDefault(boolean)} </li>
-     * <li> "darklaf"  =&gt; "darklaf" or "flatlaf" for later processes by {@link #installLookAndFeelFlatlaf()} </li>
-     * <li> "default-no-darklaf" =&gt; "default-no-darklaf" for later processes. same as "default" except for no darklaf installing </li>
-     * <li> "nimbus-custom" =&gt; {@link NimbusLookAndFeelCustomLight}</li>
+     * <li> {@code "metal"} =&gt; the class name of {@code MetalLookAndFeel} </li>
+     * <li> {@code "nimbus"} =&gt; the class name of {@code NimbusLookAndFeel} </li>
+     * <li> {@code "system"} =&gt; {@link UIManager#getSystemLookAndFeelClassName()} </li>
+     * <li> {@code null}, {@code ""} or {@code "default"}  =&gt; {@code "default"} for later processes by {@link #selectLookAndFeelDefault(boolean)} </li>
+     * <li> {@code "darklaf"}  =&gt; {@code "darklaf"} or {@code "flatlaf"} for later processes by {@link #installLookAndFeelFlatlaf()} </li>
+     * <li> {@code "default-no-darklaf"} =&gt; {@code "default-no-darklaf"} for later processes. same as {@code "default"} except for no darklaf installing </li>
+     * <li> {@code "nimbus-flat"} =&gt; {@link NimbusLookAndFeelCustomFlat}</li>
+     * <li> {@code "nimbus-flat-light"} =&gt; {@link org.autogui.swing.util.NimbusLookAndFeelCustomFlat.NimbusLookAndFeelCustomFlatLight}</li>
+     * <li> {@code "nimbus-flat-dark"} =&gt; {@link org.autogui.swing.util.NimbusLookAndFeelCustomFlat.NimbusLookAndFeelCustomFlatDark}</li>
+     * <li> {@code "none} =&gt; {@code "#none"}</li>
      * <li> otherwise =&gt; name as is </li>
      * </ul>
      * @param name a special name or a class-name
      * @return resolved class name or still special name for some names
      * @since 1.3
+     * @see #setLookAndFeel(String) 
      */
     public String selectLookAndFeelFromSpecialName(String name) {
         if (name == null || name.isEmpty()) {
@@ -430,13 +451,19 @@ public class UIManagerUtil {
         } else if (name.equals(LOOK_AND_FEEL_VALUE_NIMBUS)) {
             return "javax.swing.plaf.nimbus.NimbusLookAndFeel";
         } else if (name.equals(LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM)) {
-            return NimbusLookAndFeelCustomLight.class.getName();
+            return NimbusLookAndFeelCustomFlat.class.getName();
+        } else if (name.equals(LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM_LIGHT)) {
+            return NimbusLookAndFeelCustomFlat.NimbusLookAndFeelCustomFlatLight.class.getName();
+        } else if (name.equals(LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM_DARK)) {
+            return NimbusLookAndFeelCustomFlat.NimbusLookAndFeelCustomFlatDark.class.getName();
         } else if (name.equals(LOOK_AND_FEEL_VALUE_SYSTEM)) {
             return UIManager.getSystemLookAndFeelClassName();
         } else if (name.equals(LOOK_AND_FEEL_VALUE_DEFAULT) ||
                     name.equals(LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF) ||
                     name.equals(LOOK_AND_FEEL_VALUE_DARKLAF)) {
             return name;
+        } else if (name.equals(LOOK_AND_FEEL_NONE_NAME)) {
+            return LOOK_AND_FEEL_NONE;
         } else {
             return name;
         }
@@ -446,10 +473,8 @@ public class UIManagerUtil {
      * process default behavior for the "#default" configuration
      * <ol>
      *     <li>try to load Flatlaf by {@link #installLookAndFeelFlatlaf()}  if the parameter is true</li>
-     *     <li>if macOS environment, use {@link UIManager#getSystemLookAndFeelClassName()}</li>
-     *     <li>if Windows environment, use "nimbus-custom" (due to failure of size on HiDPI)</li>
-     *     <li>if the GDK_SCALE env is set, use "nimbus-custom" </li>
-     *     <li>otherwise, nothing to do</li>
+     *     <li>if macOS environment and {@link OsVersion#isDarkTheme()}=false, use {@link UIManager#getSystemLookAndFeelClassName()},
+     *     <li>otherwise, {@link #selectLookAndFeelFromSpecialName(String)} with {@code "nimbus-flat"}</li>
      * </ol>
      * @param tryDarklaf if true, call {@link #installLookAndFeelFlatlaf()}
      * @return a resolved LAF class-name or null
@@ -458,14 +483,10 @@ public class UIManagerUtil {
     public String selectLookAndFeelDefault(boolean tryDarklaf) {
         if (tryDarklaf && installLookAndFeelFlatlaf()) {
             return null;
-        } else if (getOsVersion().isMacOS()) {
+        } else if (getOsVersion().isMacOS() && !getOsVersion().isDarkTheme()) {
             return UIManager.getSystemLookAndFeelClassName();
-        } else if (getOsVersion().isWindows()) {
-            return selectLookAndFeelFromSpecialName(LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM);
-        } else if (System.getenv("GDK_SCALE") != null) { //for Unix GNOME with GDK_SCALE=...
-            return selectLookAndFeelFromSpecialName(LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM);
         } else {
-            return null;
+            return selectLookAndFeelFromSpecialName(LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM);
         }
     }
 
@@ -562,14 +583,21 @@ public class UIManagerUtil {
     public static final String LOOK_AND_FEEL_VALUE_DARKLAF = "darklaf";
     /** @since 1.7 */
     public static final String LOOK_AND_FEEL_VALUE_FLATLAF = "flatlaf";
-    /** @since 1.6.1 */
-    public static final String LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM = "nimbus-custom";
+    /** changed to nimbus-flat for {@link NimbusLookAndFeelCustomFlat}
+     * @since 1.6.1 */
+    public static final String LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM = "nimbus-flat";
+    /** @since 1.7 */
+    public static final String LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM_LIGHT = "nimbus-flat-light";
+    /** @since 1.7 */
+    public static final String LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM_DARK = "nimbus-flat-dark";
 
     /** @since 1.3 */
     public static final String LOOK_AND_FEEL_DEFAULT = "#default";
 
     /** @since 1.3 */
     public static final String LOOK_AND_FEEL_NONE = "#none";
+    /** user specified "none" name @since 1.7 */
+    public static final String LOOK_AND_FEEL_NONE_NAME = "none";
 
     /**
      * @param prop a property name
@@ -772,59 +800,6 @@ public class UIManagerUtil {
             } catch (Exception ex) {
                 return false;
             }
-        }
-    }
-
-    /**
-     * a subclass of {@link NimbusLookAndFeel} with changing colors as suitable for modern Windows.
-     * @since 1.6.1
-     */
-    public static class NimbusLookAndFeelCustomLight extends NimbusLookAndFeel {
-        protected boolean init = false;
-
-        public NimbusLookAndFeelCustomLight() {}
-        @Override
-        public UIDefaults getDefaults() {
-            UIDefaults defaults = super.getDefaults();
-            if (!init) {
-                if (isDarkTheme()) {
-                    initDefaultDark(defaults);
-                } else {
-                    initDefaultLight(defaults);
-                }
-                init = true;
-            }
-            return defaults;
-        }
-
-        protected boolean isDarkTheme() {
-            return UIManagerUtil.getInstance().getOsVersion().isDarkTheme();
-        }
-
-        public void initDefaultDark(UIDefaults defaults) {
-            /* //insufficient settings; menu-bar, scroll-bar, button, table-cells...
-            Color back = new Color(54, 54, 54);
-            Color backLight = new Color(60, 60, 60);
-            Color backSelect = new Color(120, 120, 120);
-            Color disabledText = new Color(100, 100, 100);
-            Color selection = new Color(180, 180, 180);
-            Color text = new Color(200, 200, 200);
-            defaults.put("nimbusBase", back);
-            defaults.put("control", back);
-            defaults.put("nimbusSelectionBackground", selection);
-            defaults.put("nimbusLightBackground", backLight);
-            defaults.put("nimbusSelectedText", backSelect);
-            defaults.put("nimbusDisabledText", disabledText);
-            defaults.put("text", text);
-            defaults.put("background", back);
-             */
-            initDefaultLight(defaults);
-        }
-
-        public void initDefaultLight(UIDefaults defaults) {
-            defaults.put("control", new Color(249, 249, 249));
-            defaults.put("nimbusBase", new Color(140, 140, 180));
-            defaults.put("nimbusSelectionBackground", new Color(88, 101, 102));
         }
     }
 

@@ -9,11 +9,8 @@ import org.autogui.swing.*;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import org.autogui.swing.GuiSwingViewLabel.PropertyLabel;
-import org.autogui.swing.util.PopupCategorized;
+import org.autogui.swing.util.*;
 import org.autogui.swing.util.PopupCategorized.CategorizedMenuItem;
-import org.autogui.swing.util.PopupExtensionText;
-import org.autogui.swing.util.SwingDeferredRunner;
-import org.autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
 import javax.swing.text.*;

@@ -22,10 +22,16 @@ public class GuiSwingTableColumnLabel implements GuiSwingTableColumn {
     public ObjectTableColumn createColumn(GuiMappingContext context, SpecifierManagerIndex rowSpecifier,
                                           SpecifierManager parentSpecifier) {
         SpecifierManager valueSpecifier = new GuiSwingView.SpecifierManagerDefault(parentSpecifier::getSpecifier);
-        PropertyLabel view = new PropertyLabel(context, valueSpecifier);
+        PropertyLabel view = new PropertyLabelColumn(context, valueSpecifier);
         TextCellRenderer.setCellDefaultProperties(view);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier, view)
                 .withBorderType(ObjectTableColumnValue.CellBorderType.Regular)
                 .withComparator(Comparator.comparing(Objects::toString));
+    }
+
+    public static class PropertyLabelColumn extends PropertyLabel {
+        public PropertyLabelColumn(GuiMappingContext context, SpecifierManager specifierManager) {
+            super(context, specifierManager);
+        }
     }
 }

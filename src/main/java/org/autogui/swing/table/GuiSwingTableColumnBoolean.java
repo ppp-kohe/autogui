@@ -96,6 +96,16 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
         public void updateFromGui(Object value, GuiTaskClock viewClock) {
             //nothing
         }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            var back = getBackground();
+            if (back != null) {
+                g.setColor(back);
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+            super.paintComponent(g);
+        }
     }
 
     /**

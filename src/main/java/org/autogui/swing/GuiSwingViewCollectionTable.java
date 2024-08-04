@@ -165,6 +165,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void init() {
+            initColor();
             initName();
             initModel();
             initContextUpdate();
@@ -179,6 +180,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             initDragDrop();
             initFocus();
             initAfter();
+        }
+
+        public void initColor() {
+            UIManagerUtil u = UIManagerUtil.getInstance();
+            //the returned color is not a UIResource; the color will be passed to cell components by ObjectTableColumnValue.setTableColor
+            // and Nimbus LAF painter uses the background-color (if the color is a UIResource, it will be replaced by the style color)
+            setBackground(u.getTableBackground());
+            setForeground(u.getLabelForeground());
         }
 
         public void initName() {

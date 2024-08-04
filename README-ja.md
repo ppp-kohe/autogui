@@ -1068,9 +1068,9 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 
 ### 埋め込みコンポーネントのカスタム初期設定
 
-カスタムした埋め込みコンポーネントを使う場合、本ライブラリの
+カスタムした埋め込みコンポーネントを使う場合、本ライブラリの初期設定の機能を簡単に利用できます。
 
-本機能を利用する場合、カスタムコンポーネントが[`GuiPreferences.PreferencesJsonSupport`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/mapping/GuiPreferencesLoader.PreferencesJsonSupport.html) インターフェースを実装する必要があります。
+本機能を利用する場合、カスタムコンポーネントが[`GuiPreferences.PreferencesJsonSupport`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/mapping/GuiPreferences.PreferencesJsonSupport.html) インターフェースを実装する必要があります。
 このインターフェースは2つのメソッドの実装を要求します。それぞれ初期設定の生成と設定をJSONオブジェクトとして扱います。
 この機能はプロパティメソッドの静的な戻り値型がインターフェースを満たしている場合に有効になります。したがってカスタムした型をメソッド戻り値型に指定する必要があります。
 
@@ -1219,21 +1219,46 @@ GUIアクションの実行が極端に長くなった場合、(最大カウン�
 
 <img src="docs/images/image-log-longrunning-h.png" srcset="docs/images/image-log-longrunning-h.png 1x, docs/images/image-log-longrunning.png 2x" alt="Progress">
 
-## ダークモードのサポート
+## 外観の設定
 
 現在のSwing GUI (Java23) は近年のOSの自動的なダークモードの切り替えに対応していません。
 
-しかし、カスタムルック&フィールのライブラリを使うことでダークモードをサポートすることができます。具体的には
+しかし、カスタムルック&フィール(LAF)のライブラリを使うことでダークモードをサポートすることができます。具体的には
  [darklaf](https://github.com/weisJ/darklaf) や
 [flatlaf](https://www.formdev.com/flatlaf/)があります。
 
-本ライブラリは暗黙のうちに*flatlaf*が実行環境に含まれているかどうかをチェックし、OSの現在のテーマにあったルック&フィール(LAF)を自動的に適用します。このチェックと適用は単純に`Class.forName`を使ってリフレクションAPIにより実現しています。
+本ライブラリのデフォルトの起動プロセスではLAFを自動的に設定します。
+`autogui.laf`プロパティにより設定するLAFを指定できます。JVMの起動オプションで`-Dautogui.laf=...`で設定可能です。このプロパティは下記の値をとります。なお対応するコードは
+[UIManagerUtil.selectLookAndFeelFromSpecialName(String)](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/util/UIManagerUtil.html#selectLookAndFeelFromSpecialName(java.lang.String))です。
+
+* 値設定なし、または空文字`""`か`default` 
+    1. 後述する[flatlafロード](#loading-flatlaf)を行を試す
+    2. MacOSで外観がダークでなければ`system`(システムデフォルトのLAF: AquaLookAndFeel)を適用する
+    3. 上記以外の場合[`nimbus-flat`](#nimbuslookandfeelcustomflat)を適用する
+* `default-no-darklaf` : `default`と同じだがflatlafロードは試さない
+* `metal`: `javax.swing.plaf.metal.MetalLookAndFeel`を適用する
+* `nimbus`: `javax.swing.plaf.nimbus.NimbusLookAndFeel`を適用する
+* `nimbus-flat`: 本ライブラリ独自の [`NimbusLookAndFeelCustomFlat`](#nimbuslookandfeelcustomflat)を適用する
+* `nimbus-flat-light`: 本ライブラリ独自の`NimbusLookAndFeelCustomFlat`のライトテーマを適用する
+* `nimbus-flat-dark`: 本ライブラリ独自の`NimbusLookAndFeelCustomFlat`のダークテーマを適用する
+* `system`: 現在のOSごとに異なるLAF
+* `darklaf`: 後述するflatlafロードを試す
+* `none`: LAFの設定を行いません
+
+### NimbusLookAndFeelCustomFlat
+
+`nimbus-flat` で指定された[org.autogui.swing.util.NimbusLookAndFeelCustomFlat](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/util/NimbusLookAndFeelCustomFlat.html)は本ライブラリが独自に実装するLAF(1.7-)で、JDKに実装されているNimbusLookAndFeelをカスタムし、起動時のテーマによってライトテーマかダークテーマのどちらかを適用します。
+
+テーマの判定はOSによって異なりますが、外部のコマンドを実行することで行います。なお、これらのスタイルは`nimbus-flat-light`または`nimbus-flat-dark`の指定で明示的に指定できます。
+
+| `nimbus-flat-light` | `nimbus-flat-dark` |
+|:-----------------:|:----------------:|
+| <img src="docs/images/image-nimbus-flat-light.png" srcset="docs/images/image-nimbus-flat-light-h.png 1x, docs/images/image-nimbus-flat-light.png 2x" alt="NimbusLookAndFeelCustomFlatLight"> | <img src="docs/images/image-nimbus-flat-dark.png" srcset="docs/images/image-nimbus-flat-dark-h.png 1x, docs/images/image-nimbus-flat-dark.png 2x" alt="NimbusLookAndFeelCustomFlatDark"> |
 
 
-例えばmacOSでは flatlaf(`com.formdev:flatlaf:3.4.1`により確認しています) と VMオプション`-Dapple.awt.application.appearance=system`によりアプリケーションを実行することで絵文字やダークモードのタイトルバーを実現したモダンなGUI体験を得ることができます。
+### Loading Flatlaf
+
+本ライブラリのデフォルトのLAF指定は暗黙のうちに[*flatlaf*](https://www.formdev.com/flatlaf/) (`com.formdev:flatlaf:3.4.1`により確認しています)が実行環境に含まれているかどうかをチェックし、OSの現在のテーマにあったルック&フィール(LAF)を自動的に適用します。このチェックと適用は単純に`Class.forName`を使ってリフレクションAPIにより実現しています。
 
 <img src="docs/images/image-dark-h.png" srcset="docs/images/image-dark-h.png 1x, docs/images/image-dark.png 2x" alt="Progress">
 
-また、LAFの設定はVMオプション`-Dautogui.laf=...`によって設定できます。
-この設定の有効な値は
-[UIManagerUtil.selectLookAndFeelFromSpecialName(String)](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/util/UIManagerUtil.html#selectLookAndFeelFromSpecialName(java.lang.String))のドキュメントを参照してください。

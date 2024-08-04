@@ -326,13 +326,25 @@ public class ObjectTableColumn {
         public NumberRenderer() {
             setHorizontalAlignment(JLabel.RIGHT);
             TextCellRenderer.setCellDefaultProperties(this);
+            setBackground(UIManagerUtil.getInstance().getTableBackground());
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            ObjectTableColumnValue.setTableColor(table, this, isSelected, hasFocus, row, column);
             TextCellRenderer.setCellTableBorderWithMargin(table, this, isSelected, hasFocus, row, column);
             return this;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            var back = getBackground();
+            if (back != null) {
+                g.setColor(back);
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+            super.paintComponent(g);
         }
     }
 

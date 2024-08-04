@@ -11,6 +11,7 @@ import org.autogui.swing.GuiSwingViewNumberSpinner.TypedSpinnerNumberModel;
 import org.autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.TextCellRenderer;
+import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -73,6 +74,7 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         public ColumnNumberPane(GuiMappingContext context, SpecifierManager specifierManager,
                                 PropertyNumberSpinner editor) {
             super(context, specifierManager);
+            setBackground(UIManagerUtil.getInstance().getTableBackground());
             TextCellRenderer.setCellDefaultProperties(this);
             this.editor = editor;
             if (editor != null) {
@@ -215,6 +217,16 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         public void addSwingEditFinishHandler(Runnable eventHandler) {
             finishRunners.add(eventHandler);
             super.addSwingEditFinishHandler(eventHandler);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            var back = getBackground();
+            if (back != null) {
+                g.setColor(back);
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+            super.paintComponent(g);
         }
     }
 }
