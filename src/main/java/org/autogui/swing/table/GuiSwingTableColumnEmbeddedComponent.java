@@ -7,6 +7,7 @@ import org.autogui.swing.GuiSwingViewEmbeddedComponent;
 import org.autogui.swing.util.TextCellRenderer;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
@@ -41,7 +42,7 @@ public class GuiSwingTableColumnEmbeddedComponent implements GuiSwingTableColumn
         ObjectTableColumnValue.ObjectTableCellEditor editor = new ObjectTableColumnValue.ObjectTableCellEditor(new ColumnEditEmbeddedPane(context, repaintManager, valueSpecifier), false, rowSpecifier);
         editor.setClickCount(0);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
-                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEmbeddedPane(context, valueSpecifier, repaintManager), rowSpecifier),
+                new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEmbeddedPane(context, valueSpecifier, repaintManager).withEditor(editor), rowSpecifier),
                 editor)
                 .withBorderType(ObjectTableColumnValue.CellBorderType.Regular)
                 .withEditorForColumnAlwaysApplying(true)
@@ -49,8 +50,11 @@ public class GuiSwingTableColumnEmbeddedComponent implements GuiSwingTableColumn
                 .withComparator(Comparator.comparing(Objects::hash));
     }
 
-    public static class ColumnEmbeddedPane extends GuiSwingViewEmbeddedComponent.PropertyEmbeddedPane {
+    public static class ColumnEmbeddedPane extends GuiSwingViewEmbeddedComponent.PropertyEmbeddedPane implements ObjectTableColumnValue.CellEditorListenerWithStart {
         protected EmbeddedComponentRepaintManager repaintManager;
+        protected Runnable pendingTaskUntilEditingStop;
+        protected int[] editingRowCol;
+
         public ColumnEmbeddedPane(GuiMappingContext context, GuiSwingView.SpecifierManager specifierManager,
                                   EmbeddedComponentRepaintManager repaintManager) {
             super(context, specifierManager);
@@ -58,10 +62,46 @@ public class GuiSwingTableColumnEmbeddedComponent implements GuiSwingTableColumn
             TextCellRenderer.setCellDefaultProperties(this);
         }
 
+        public ColumnEmbeddedPane withEditor(CellEditor editor) {
+            editor.addCellEditorListener(this);
+            return this;
+        }
+
+        @Override
+        public synchronized void editingStarted(JTable table, Object value, boolean isSelected, int row, int column) {
+            this.editingRowCol = new int[] {row, column};
+        }
+
+        @Override
+        public synchronized void editingStopped(ChangeEvent e) {
+            editingRowCol = null;
+            if (pendingTaskUntilEditingStop != null) {
+                pendingTaskUntilEditingStop.run();
+                pendingTaskUntilEditingStop = null;
+            }
+        }
+
+        @Override
+        public void editingCanceled(ChangeEvent e) {
+            editingStopped(e);
+        }
+
         @Override
         public void setSwingViewValueForTable(JTable table, Object value, int row, int column) {
             if (value instanceof JComponent) {
                 repaintManager.putRow(table, (JComponent) value, row, column);
+            }
+            //the value might not be finished editing. So it needs to defer the component removing/adding
+            /* 1. ObjectTableColumnValue.getTableCellEditorComponent : add value to ColumnEditEmbeddedPane -> editingStarted(..., r,c)
+             * 2. ObjectTableCellRenderer.getTableCellRendererComponent : setSwingViewValueForTable (..value, r,c) to this ColumnEmbeddedPane as pendingTaskUntilEditingStop
+             * 3. TableCellEditor.editingStopped -> pendingTaskUntilEditingStop.run()
+             */
+            synchronized (this) {
+                if (editingRowCol != null && editingRowCol[0] == row && editingRowCol[1] == column) { //the setting and repainting processes might be caused for other rows while editing; so it checks the target row-column
+                    //overwrite the existing pending-task
+                    pendingTaskUntilEditingStop = () -> super.setSwingViewValueForTable(table, value, row, column);
+                    return;
+                }
             }
             super.setSwingViewValueForTable(table, value, row, column);
         }
@@ -77,6 +117,16 @@ public class GuiSwingTableColumnEmbeddedComponent implements GuiSwingTableColumn
             } finally {
                 repaintManager.unlockOrphanCandidates();
             }
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            var back = getBackground();
+            if (back != null) {
+                g.setColor(back);
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+            super.paintComponent(g);
         }
     }
 
@@ -103,7 +153,7 @@ public class GuiSwingTableColumnEmbeddedComponent implements GuiSwingTableColumn
 
         @Override
         public void setSwingViewValueComponent(JComponent comp) {
-            if (component == comp) {
+            if (component == comp && isDisplayed(comp)) {
                 return;
             }
             repaintManager.lockOrphanCandidates();
@@ -124,8 +174,22 @@ public class GuiSwingTableColumnEmbeddedComponent implements GuiSwingTableColumn
             }
         }
 
+        protected boolean isDisplayed(JComponent comp) {
+            return comp == null || comp.getParent() == wrapperPane;
+        }
+
         @Override
         public void updateFromGui(Object v, GuiTaskClock viewClock) {}
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            var back = getBackground();
+            if (back != null) {
+                g.setColor(back);
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+            super.paintComponent(g);
+        }
     }
 
     public static class EditWrapperPane extends JPanel {

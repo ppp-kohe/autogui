@@ -43,6 +43,9 @@ public class EmbedPrefsDemo {
             super.paintComponent(g);
             g.setColor(color);
             g.drawString("count=" + count, 20, 20);
+            if (count < 10) {
+                g.drawString("The count & color can be saved as prefs", 40, 40);
+            }
             ++count;
         }
 

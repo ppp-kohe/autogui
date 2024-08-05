@@ -20,6 +20,7 @@ import org.autogui.swing.util.PopupExtension.PopupMenuFilter;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -455,6 +456,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         }
     }
 
+    public interface CellEditorListenerWithStart extends CellEditorListener {
+        void editingStarted(JTable table, Object value, boolean isSelected, int row, int column);
+    }
+
     /**
      * a cell-editor with {@link ValuePane}
      */
@@ -478,8 +483,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             this.component = component;
             this.skipShutDown = skipShutDown;
             this.specifierIndex = specifierIndex;
-            if (component instanceof ValuePane<?>) {
-                ((ValuePane<?>) component).addSwingEditFinishHandler(this::stopCellEditing);
+            if (component instanceof ValuePane<?> pane) {
+                pane.addSwingEditFinishHandler(this::stopCellEditing);
             }
             this.originalBorder = component.getBorder();
         }
@@ -496,8 +501,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         @Override
         public Object getCellEditorValue() {
-            if (component instanceof ValuePane<?>) {
-                return ((ValuePane<?>) component).getSwingViewValue();
+            if (component instanceof ValuePane<?> pane) {
+                return pane.getSwingViewValue();
             } else {
                 return null;
             }
@@ -509,8 +514,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             if (specifierIndex != null) {
                 specifierIndex.setIndex(row);
             }
-            if (component instanceof ValuePane<?>) {
-                ValuePane<Object> pane = (ValuePane<Object>) component;
+            if (component instanceof ValuePane<?> pane) {
                 pane.setSwingViewValueForTable(table, value, row, column);
                 SwingDeferredRunner.invokeLater(pane::requestSwingViewFocus);
 //                if (table.getModel() instanceof ObjectTableModel) {
@@ -524,7 +528,16 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             }
             TextCellRenderer.setCellTableColor(table, component, isSelected, true, row, column);
             setBorders(table, column);
+            notifyEditStart(table, value, isSelected, row, column);
             return component;
+        }
+
+        public void notifyEditStart(JTable table, Object value, boolean isSelected, int row, int column) {
+            for (var l : getCellEditorListeners()) {
+                if (l instanceof CellEditorListenerWithStart ls) {
+                    ls.editingStarted(table, value, isSelected, row, column);
+                }
+            }
         }
 
         /**
@@ -572,14 +585,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         }
 
         @Override
-        public boolean stopCellEditing() {
-            return super.stopCellEditing();
-        }
-
-        @Override
         public boolean isCellEditable(EventObject e) {
-            if (e instanceof MouseEvent) {
-                return ((MouseEvent) e).getClickCount() >= getClickCount();
+            if (e instanceof MouseEvent me) {
+                return me.getClickCount() >= getClickCount();
             } else if (e instanceof KeyEvent ke) {
                 if (KeyHandlerFinishEditing.isKeyEventFinishEditing(ke)) {
                     return true;
