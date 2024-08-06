@@ -44,7 +44,7 @@ public class GuiSwingTableColumnEmbeddedComponent implements GuiSwingTableColumn
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
                 new ObjectTableColumnValue.ObjectTableCellRenderer(new ColumnEmbeddedPane(context, valueSpecifier, repaintManager).withEditor(editor), rowSpecifier),
                 editor)
-                .withBorderType(ObjectTableColumnValue.CellBorderType.Regular)
+                .withBorderType(ObjectTableColumnValue.CellBorderType.SameAsRenderer)
                 .withEditorForColumnAlwaysApplying(true)
                 .withValueType(JComponent.class)
                 .withComparator(Comparator.comparing(Objects::hash));

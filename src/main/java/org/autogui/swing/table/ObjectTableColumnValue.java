@@ -104,7 +104,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         Spinner(new Insets(3, 8, 8, 1)),
         ComboBox(new Insets(3, 4, 8, 8)),
         FilePath(new Insets(8, 10, 8, 8)),
-        EditorPane(new Insets(8, 10, 8, 8));
+        EditorPane(new Insets(8, 10, 8, 8)),
+        SameAsRenderer(new Insets(0, 0, 0, 0));
 
         final Insets insets;
         CellBorderType(Insets insets) {
@@ -122,9 +123,13 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * @since 1.6
      */
     public ObjectTableColumnValue withBorderType(CellBorderType type) {
-        if (editor instanceof ObjectTableCellEditor) {
-            Insets margin = type.getMargin();
-            ((ObjectTableCellEditor) editor).setMarginBorder(BorderFactory.createEmptyBorder(margin.top, margin.left, margin.bottom, margin.right));
+        if (editor instanceof ObjectTableCellEditor objEditor) {
+            if (type.equals(CellBorderType.SameAsRenderer)) {
+                objEditor.setBorderSameAsRenderer(true);
+            } else {
+                Insets margin = type.getMargin();
+                objEditor.setMarginBorder(BorderFactory.createEmptyBorder(margin.top, margin.left, margin.bottom, margin.right));
+            }
         }
         return this;
     }
@@ -473,6 +478,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         protected Border originalBorder;
         /** @since 1.6 */
         protected Border marginBorder;
+        protected boolean borderSameAsRenderer;
+        protected boolean lastTriggerIsSelection;
 
         /**
          * @param component the editor component, must be a {@link ValuePane}
@@ -526,8 +533,13 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 //                    }
 //                }
             }
+            isSelected = isSelected || lastTriggerIsSelection;
             TextCellRenderer.setCellTableColor(table, component, isSelected, true, row, column);
-            setBorders(table, column);
+            if (borderSameAsRenderer) {
+                TextCellRenderer.setCellTableBorderWithMargin(table, component, isSelected, true, row, column);
+            } else {
+                setBorders(table, column);
+            }
             notifyEditStart(table, value, isSelected, row, column);
             return component;
         }
@@ -546,6 +558,15 @@ public class ObjectTableColumnValue extends ObjectTableColumn
          */
         public void setMarginBorder(Border marginBorder) {
             this.marginBorder = marginBorder;
+        }
+
+        /**
+         * @param borderSameAsRenderer if true it will ignore merginBorder and do {@link TextCellRenderer#setCellTableBorderWithMargin(JTable, JComponent, boolean, boolean, int, int)}
+         * @since 1.7
+         */
+        public void setBorderSameAsRenderer(boolean borderSameAsRenderer) {
+            this.borderSameAsRenderer = borderSameAsRenderer;
+            marginBorder = null;
         }
 
         /**
@@ -586,7 +607,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         @Override
         public boolean isCellEditable(EventObject e) {
+            lastTriggerIsSelection = false;
             if (e instanceof MouseEvent me) {
+                lastTriggerIsSelection = (me.getClickCount() > 0); //clicked
                 return me.getClickCount() >= getClickCount();
             } else if (e instanceof KeyEvent ke) {
                 if (KeyHandlerFinishEditing.isKeyEventFinishEditing(ke)) {
