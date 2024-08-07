@@ -6,10 +6,10 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.geom.*;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -110,6 +110,7 @@ public class NimbusLookAndFeelCustomFlat extends NimbusLookAndFeel {
     }
 
     public void initDefault(UIDefaults defaults) {
+        initKeys(defaults);
         initDefaultColors(defaults);
         initDefaultTableHeader(defaults);
         initDefaultMenu(defaults);
@@ -128,6 +129,121 @@ public class NimbusLookAndFeelCustomFlat extends NimbusLookAndFeel {
         initDefaultTable(defaults);
         initDefaultTree(defaults);
         initDefaultList(defaults);
+    }
+
+    protected void initKeys(UIDefaults defaults) {
+        if (isMetaKeyBinding()) {
+            for (var keys = defaults.keys(); keys.hasMoreElements(); ) {
+                var name = keys.nextElement().toString();
+                if (name.endsWith(".focusInputMap")) {
+                    var v = defaults.get(name);
+                    if (v instanceof InputMap im) {
+                        replaceKeys(name, im);
+                    }
+                }
+            }
+        }
+    }
+
+    protected void replaceKeys(String name, InputMap im) {
+        replaceKey(im, "activate-link-action", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_SPACE, InputEvent.META_DOWN_MASK, KeyEvent.VK_SPACE);
+        replaceKey(im, "caret-begin", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_HOME, InputEvent.META_DOWN_MASK, KeyEvent.VK_UP);
+        replaceKey(im, "caret-begin-line", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_A);
+        replaceKey(im, "caret-end", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_END, InputEvent.META_DOWN_MASK, KeyEvent.VK_DOWN);
+        replaceKey(im, "caret-end-line", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_E);
+        replaceKey(im, "caret-next-word", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_RIGHT, InputEvent.ALT_DOWN_MASK, KeyEvent.VK_RIGHT);
+        replaceKey(im, "caret-previous-word", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_LEFT, InputEvent.ALT_DOWN_MASK, KeyEvent.VK_LEFT);
+        replaceKey(im, "clearSelection", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_BACK_SLASH, InputEvent.META_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_A);
+        replaceKey(im, "copy", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_C, InputEvent.META_DOWN_MASK, KeyEvent.VK_C);
+        replaceKey(im, "copy-to-clipboard", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_C, InputEvent.META_DOWN_MASK, KeyEvent.VK_C);
+        replaceKey(im, "cut", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_X, InputEvent.META_DOWN_MASK, KeyEvent.VK_X);
+        replaceKey(im, "cut-to-clipboard", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_X, InputEvent.META_DOWN_MASK, KeyEvent.VK_X);
+        replaceKey(im, "delete-next-word", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_DELETE, InputEvent.ALT_DOWN_MASK, KeyEvent.VK_DELETE);
+        replaceKey(im, "delete-previous", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_H);
+        replaceKey(im, "delete-previous-word", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_BACK_SPACE, InputEvent.ALT_DOWN_MASK, KeyEvent.VK_BACK_SPACE);
+        replaceKey(im, "moveSelectionTo", InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK, KeyEvent.VK_SPACE);
+        replaceKey(im, "next-link-action", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_T, InputEvent.META_DOWN_MASK, KeyEvent.VK_T);
+        replaceKey(im, "paste", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_V, InputEvent.META_DOWN_MASK, KeyEvent.VK_V);
+        replaceKey(im, "paste-from-clipboard", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_V, InputEvent.META_DOWN_MASK, KeyEvent.VK_V);
+        replaceKey(im, "previous-link-action", InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_T, InputEvent.SHIFT_DOWN_MASK | InputEvent.META_DOWN_MASK, KeyEvent.VK_T);
+        replaceKey(im, "select-all", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_A, InputEvent.META_DOWN_MASK, KeyEvent.VK_A);
+        replaceKey(im, "selectAll", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_A, InputEvent.META_DOWN_MASK, KeyEvent.VK_A);
+        replaceKey(im, "selection-begin", InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_HOME, InputEvent.SHIFT_DOWN_MASK | InputEvent.META_DOWN_MASK, KeyEvent.VK_UP);
+        replaceKey(im, "selection-begin-line", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_HOME, InputEvent.SHIFT_DOWN_MASK | InputEvent.META_DOWN_MASK, KeyEvent.VK_LEFT);
+        replaceKey(im, "selection-end", InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_END, InputEvent.SHIFT_DOWN_MASK | InputEvent.META_DOWN_MASK, KeyEvent.VK_DOWN);
+        replaceKey(im, "selection-end-line", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_END, InputEvent.SHIFT_DOWN_MASK | InputEvent.META_DOWN_MASK, KeyEvent.VK_RIGHT);
+        replaceKey(im, "selection-next-word", InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_RIGHT, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK, KeyEvent.VK_RIGHT);
+        replaceKey(im, "selection-page-left", InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_PAGE_UP, InputEvent.SHIFT_DOWN_MASK | InputEvent.META_DOWN_MASK, KeyEvent.VK_PAGE_UP);
+        replaceKey(im, "selection-page-right", InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_PAGE_DOWN, InputEvent.SHIFT_DOWN_MASK | InputEvent.META_DOWN_MASK, KeyEvent.VK_PAGE_DOWN);
+        replaceKey(im, "selection-previous-word", InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_LEFT, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK, KeyEvent.VK_LEFT);
+        replaceKey(im, "selectLastChangeLead", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_DOWN, InputEvent.META_DOWN_MASK, KeyEvent.VK_DOWN);
+        replaceKey(im, "unselect", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_BACK_SLASH, InputEvent.META_DOWN_MASK, KeyEvent.VK_BACK_SLASH);
+
+        replaceKey(im, "page-up", InputEvent.CTRL_DOWN_MASK,  KeyEvent.VK_U); //original binding
+        replaceKey(im, "page-down", InputEvent.CTRL_DOWN_MASK,  KeyEvent.VK_V);
+
+        if (Arrays.stream(im.keys())
+                .map(im::get)
+                .anyMatch(action -> Objects.equals(action, "caret-backward"))) { //text component
+            replaceKey(im, "caret-backward", 0, KeyEvent.VK_KP_LEFT);
+            replaceKey(im, "caret-backward", 0, KeyEvent.VK_LEFT);
+            replaceKey(im, "caret-backward", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_B);
+            replaceKey(im, "caret-begin-line-and-up", InputEvent.ALT_DOWN_MASK, KeyEvent.VK_UP);
+            replaceKey(im, "caret-down", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_N);
+            replaceKey(im, "caret-end-line-and-down", InputEvent.ALT_DOWN_MASK, KeyEvent.VK_DOWN);
+            replaceKey(im, "caret-forward", 0, KeyEvent.VK_KP_RIGHT);
+            replaceKey(im, "caret-forward", 0, KeyEvent.VK_RIGHT);
+            replaceKey(im, "caret-forward", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_F);
+            replaceKey(im, "caret-up", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_P);
+            replaceKey(im, "delete-next", 0, KeyEvent.VK_DELETE);
+            replaceKey(im, "delete-next", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_D);
+            replaceKey(im, "insert-break", 0, KeyEvent.VK_ENTER);
+            replaceKey(im, "insert-tab", 0, KeyEvent.VK_TAB);
+            replaceKey(im, "selection-backward", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_KP_LEFT);
+            replaceKey(im, "selection-backward", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_LEFT);
+            replaceKey(im, "selection-begin-paragraph", InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK, KeyEvent.VK_KP_UP);
+            replaceKey(im, "selection-begin-paragraph", InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK, KeyEvent.VK_UP);
+            replaceKey(im, "selection-down", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_DOWN);
+            replaceKey(im, "selection-down", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_KP_DOWN);
+            replaceKey(im, "selection-end-paragraph", InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK, KeyEvent.VK_DOWN);
+            replaceKey(im, "selection-end-paragraph", InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK, KeyEvent.VK_KP_DOWN);
+            replaceKey(im, "selection-forward", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_KP_RIGHT);
+            replaceKey(im, "selection-forward", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_RIGHT);
+            replaceKey(im, "selection-page-down", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_PAGE_DOWN);
+            replaceKey(im, "selection-page-up", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_PAGE_UP);
+            replaceKey(im, "selection-up", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_KP_UP);
+            replaceKey(im, "selection-up", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_UP);
+        }
+        doReplaceAll();
+    }
+
+    protected List<Runnable> lazyReplaceTasks = new ArrayList<>();
+
+    protected void replaceKey(InputMap im, String action, int newMod, int newKeyCode) {
+        lazyReplaceTasks.add(() -> im.put(KeyStroke.getKeyStroke(newKeyCode, newMod), action));
+    }
+
+    protected void replaceKey(InputMap im, String action, int oldMod, int keyCode, int newMod, int newKeyCode) {
+        var key = KeyStroke.getKeyStroke(keyCode, oldMod);
+        var exAction = im.get(key);
+        if (Objects.equals(exAction, action)) {
+            lazyReplaceTasks.add(() -> {
+                var currentAction = im.get(key);
+                if (Objects.equals(currentAction, action)) { //it might already be overwritten by another task
+                    im.remove(key);
+                }
+                im.put(KeyStroke.getKeyStroke(newKeyCode, newMod), action);
+            });
+        }
+    }
+
+    protected void doReplaceAll() {
+        lazyReplaceTasks.forEach(Runnable::run);
+        lazyReplaceTasks.clear();
+    }
+
+    protected boolean isMetaKeyBinding() {
+        return UIManagerUtil.getInstance().getOsVersion().isMacOS();
     }
 
     protected void initDefaultColors(UIDefaults defaults) {
