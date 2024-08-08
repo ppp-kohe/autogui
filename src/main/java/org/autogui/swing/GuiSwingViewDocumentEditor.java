@@ -14,7 +14,9 @@ import org.autogui.swing.util.*;
 
 import javax.swing.Timer;
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -843,6 +845,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         public void initColor() {
+            var oldUpdateDisabled = updateDisabled;
+            updateDisabled = true;
             backgroundCustom = new JCheckBox();
             backgroundCustom.setToolTipText("Enable the custom background color");
             backgroundColor = new SettingsWindow.ColorButton(Color.white, c -> updateTargetTextPaneAndPrefsObjFromGui());
@@ -852,6 +856,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             foregroundCustom.setToolTipText("Enable the custom foreground color");
             foregroundColor = new SettingsWindow.ColorButton(Color.black, c -> updateTargetTextPaneAndPrefsObjFromGui());
             foregroundColor.setToolTipText("Foreground color");
+            updateDisabled = oldUpdateDisabled;
         }
 
         public void initLayout() {
@@ -909,7 +914,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
          *   The GUI of the setting-pane is updated by the prefsObj
          */
         public void initPrefsObj() {
-            prefsObj = new GuiSwingViewDocumentEditor.PreferencesForDocumentSetting();
+            prefsObj = new GuiSwingViewDocumentEditor.PreferencesForDocumentSetting(pane);
             prefsObj.setUiDefault(); //set default (non-null) props
             if (pane != null) {
                 prefsObj.setup(pane); //set props only set by the pane
@@ -1009,7 +1014,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
                 spaceLine.setValue(Math.max(DOCUMENT_SETTING_PANE_SPACE_LINE_MIN, Math.min(DOCUMENT_SETTING_PANE_SPACE_LINE_MAX, lineSpacingVal)));
                 spaceAbove.setValue(Math.max(DOCUMENT_SETTING_PANE_SPACE_ABOBE_MIN, Math.min(DOCUMENT_SETTING_PANE_SPACE_ABOBE_MAX, spaceAboveVal)));
                 fontFamily.setSelectedItem(fontFamilyVal);
-                fontSize.setValue(Math.min(DOCUMENT_SETTING_PANE_FONT_SIZE_MIN, Math.min(DOCUMENT_SETTING_PANE_FONT_SIZE_MAX, fontSizeVal)));
+                fontSize.setValue(Math.max(DOCUMENT_SETTING_PANE_FONT_SIZE_MIN, Math.min(DOCUMENT_SETTING_PANE_FONT_SIZE_MAX, fontSizeVal)));
                 styleBold.setSelected(boldVal);
                 styleItalic.setSelected(italicVal);
                 styleWrapLine.setSelected(wrapTextVal);
@@ -1209,13 +1214,29 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         public static final String DEFAULT_FONT_FAMILY = "";
         public static final int DEFAULT_NUM = -1;
 
+        protected Color defaultBackground;
+        protected Color defaultForeground;
+
+        protected boolean allowNullValues;
+
         /**
-         * initialized by null-values and black and white colors.
+         * initialize by null-values and black and white colors.
          */
         public PreferencesForDocumentSetting() {
+            this(null);
+        }
+
+        /**
+         * initialize with the target pane (or if null,  it sets default null values).
+         * it has 2 modes,
+         *    1. the property mode with no pane which allows null values for representing saved prefs values,
+         *    2. the practical mode with target pane which (basically) does not allow null-values, instead, it merges actual pane's value if null-values arrived.
+         * @param pane the target text-pane or null
+         */
+        public PreferencesForDocumentSetting(JEditorPane pane) {
             lineSpacing = DEFAULT_NUM;
             spaceAbove = DEFAULT_NUM;
-            fontFamily = "";
+            fontFamily = DEFAULT_FONT_FAMILY;
             fontSize = DEFAULT_NUM;
             bold = false;
             italic = false;
@@ -1224,29 +1245,63 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             backgroundCustom = false;
             foregroundCustom = false;
             wrapText = true;
+            this.defaultBackground = Color.white;
+            this.defaultForeground = Color.black;
+            if (pane != null) {
+                this.defaultBackground = pane.getBackground();
+                this.defaultForeground = pane.getForeground();
+                allowNullValues = false;
+            } else {
+                allowNullValues = true;
+            }
         }
 
         public float getLineSpacing() { return lineSpacing; }
-        public void setLineSpacing(float lineSpacing) { this.lineSpacing = lineSpacing; }
         public float getSpaceAbove() {return spaceAbove; }
-        public void setSpaceAbove(float spaceAbove) { this.spaceAbove = spaceAbove; }
         public String getFontFamily() { return fontFamily; }
-        public void setFontFamily(String fontFamily) { this.fontFamily = fontFamily; }
         public int getFontSize() { return fontSize; }
-        public void setFontSize(int fontSize) { this.fontSize = fontSize; }
         public boolean isBold() { return bold; }
-        public void setBold(boolean bold) { this.bold = bold; }
         public boolean isItalic() { return italic; }
-        public void setItalic(boolean italic) { this.italic = italic; }
         public Color getBackgroundColor() { return backgroundColor; }
-        public void setBackgroundColor(Color backgroundColor) { this.backgroundColor = backgroundColor; }
         public Color getForegroundColor() { return foregroundColor; }
-        public void setForegroundColor(Color foregroundColor) { this.foregroundColor = foregroundColor; }
         public boolean isBackgroundCustom() { return backgroundCustom; }
-        public void setBackgroundCustom(boolean backgroundCustom) { this.backgroundCustom = backgroundCustom; }
         public boolean isForegroundCustom() { return foregroundCustom; }
-        public void setForegroundCustom(boolean foregroundCustom) { this.foregroundCustom = foregroundCustom; }
         public boolean isWrapText() { return wrapText; }
+
+        public void setLineSpacing(float lineSpacing) {
+            if (allowNullValues || lineSpacing != DEFAULT_NUM) {
+                this.lineSpacing = lineSpacing;
+            }
+        }
+        public void setSpaceAbove(float spaceAbove) {
+            if (allowNullValues || spaceAbove != DEFAULT_NUM) {
+                this.spaceAbove = spaceAbove;
+            }
+        }
+        public void setFontFamily(String fontFamily) {
+            if (allowNullValues || (!Objects.equals(fontFamily, DEFAULT_FONT_FAMILY) && fontFamily != null)) {
+                this.fontFamily = fontFamily;
+            }
+        }
+        public void setFontSize(int fontSize) {
+            if (allowNullValues || fontSize != DEFAULT_NUM) {
+                this.fontSize = fontSize;
+            }
+        }
+        public void setBackgroundColor(Color backgroundColor) {
+            if (allowNullValues || backgroundColor != null) {
+                this.backgroundColor = backgroundColor;
+            }
+        }
+        public void setForegroundColor(Color foregroundColor) {
+            if (allowNullValues || foregroundColor != null) {
+                this.foregroundColor = foregroundColor;
+            }
+        }
+        public void setBold(boolean bold) { this.bold = bold; }
+        public void setItalic(boolean italic) { this.italic = italic; }
+        public void setBackgroundCustom(boolean backgroundCustom) { this.backgroundCustom = backgroundCustom; }
+        public void setForegroundCustom(boolean foregroundCustom) { this.foregroundCustom = foregroundCustom; }
         public void setWrapText(boolean wrapLine) { this.wrapText = wrapLine; }
 
         /**
@@ -1313,14 +1368,14 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             var foregroundColor = style.getAttribute(StyleConstants.Foreground);
             setLineSpacing(floatStyleValue(lineSpacing));
             setSpaceAbove(floatStyleValue(spaceAbove));
-            setFontFamily(styleValue(String.class, fontFamily, DEFAULT_FONT_FAMILY));
+            setFontFamily(styleValue(String.class, fontFamily, null));
             setFontSize(intStyleValue(fontSize));
-            setBold(styleValue(Boolean.class, bold, false));
-            setItalic(styleValue(Boolean.class, italic, false));
+            setBold(styleValue(Boolean.class, bold, this.bold));
+            setItalic(styleValue(Boolean.class, italic, this.italic));
             setBackgroundCustom(backgroundColor != null);
             setForegroundCustom(foregroundColor != null);
-            setBackgroundColor(styleValue(Color.class, backgroundColor, Color.white));
-            setForegroundColor(styleValue(Color.class, foregroundColor, Color.black));
+            setBackgroundColor(styleValue(Color.class, backgroundColor, null));
+            setForegroundColor(styleValue(Color.class, foregroundColor, null));
         }
 
         private float floatStyleValue(Object value) {
@@ -1427,15 +1482,13 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             StyleConstants.setBold(style, bold);
             StyleConstants.setItalic(style, italic);
             if (!backgroundCustom || backgroundColor == null) {
-                style.removeAttribute(StyleConstants.Background);
-            } else {
-                StyleConstants.setBackground(style, backgroundColor);
+                backgroundColor = defaultBackground;
             }
+            StyleConstants.setBackground(style, backgroundColor);
             if (!foregroundCustom || foregroundColor == null) {
-                style.removeAttribute(StyleConstants.Foreground);
-            } else {
-                StyleConstants.setForeground(style, foregroundColor);
+                foregroundColor = defaultForeground;
             }
+            StyleConstants.setForeground(style, foregroundColor);
         }
 
         /**
@@ -1470,8 +1523,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
          * @param pane the target text-pane
          */
         public void applyToComponentWithoutDocument(JComponent pane) {
-            var backfgroundColor = isBackgroundCustom() ? getBackgroundColor() : null;
-            var foregroundColor = isForegroundCustom() ? getForegroundColor() : null;
+            var backfgroundColor = isBackgroundCustom() ? getBackgroundColor() : this.defaultBackground;
+            var foregroundColor = isForegroundCustom() ? getForegroundColor() : this.defaultForeground;
             pane.setBackground(backfgroundColor);
             pane.setForeground(foregroundColor);
             if (pane instanceof JTextComponent textPane) {
@@ -1543,8 +1596,8 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             setWrapText(wrapText != null && wrapText.equals("true"));
             setBackgroundCustom(backgroundCustom != null && backgroundCustom.equals("true"));
             setForegroundCustom(foregroundCustom != null && foregroundCustom.equals("true"));
-            setBackgroundColor(backgroundColor != null ?  backgroundColor : Color.white);
-            setForegroundColor(foregroundColor != null ?  foregroundColor : Color.black);
+            setBackgroundColor(backgroundColor);
+            setForegroundColor(foregroundColor);
         }
 
         @Override

@@ -98,10 +98,8 @@ public class UIManagerUtil {
 
     protected Color uiManagerColor(String... names) {
         for (var name : names) {
-            var c = UIManager.getColor(name);
-            if (c instanceof UIResource) { //in NumbusLAF, the UIResource will be changed by painter's color
-                c = new Color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
-            }
+            var c = toConcreteColor(UIManager.getColor(name));
+            //in NumbusLAF, the UIResource will be changed by painter's color
             if (c != null) {
                 return c;
             }
@@ -109,6 +107,13 @@ public class UIManagerUtil {
         return null;
     }
 
+    public Color toConcreteColor(Color c) {
+        if (c instanceof UIResource) {
+            return new Color(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
+        } else {
+            return c;
+        }
+    }
 
     public Color getLabelForeground() {
         Color color = uiManagerColor("Label.foreground");
