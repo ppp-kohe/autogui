@@ -570,6 +570,18 @@ public class GuiSwingPrefsSupports {
             return Objects.hash(context, prefs);
         }
 
+        /**
+         * @return Boolean.TRUE if  it has both context and prefs and {@link #save()}ed. otherwise returns Boolean.FALSE
+         */
+        public Object saveAndGetPostOperation() {
+            if (context != null && prefs != null) {
+                save();
+                return true;
+            } else {
+                return false;
+            }
+        }
+
         public void save() {
             GuiPreferences cxtPrefs = context.getPreferences();
             try (var lock = cxtPrefs.lock()) {

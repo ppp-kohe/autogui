@@ -59,6 +59,7 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     protected GuiPreferences preferences;
     protected GuiPreferences backupPrefs;
     protected List<Runnable> validationCheckers = new ArrayList<>();
+    protected List<PrefsLoader> prefsLoaders = new ArrayList<>();
 
     protected Map<String, JComponent> namePathToPanes = new HashMap<>();
 
@@ -144,6 +145,7 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     }
 
     public void revalidate() {
+        prefsLoaders.forEach(PrefsLoader::clearLoaded);
         validationCheckers.forEach(Runnable::run);
     }
 
@@ -320,7 +322,7 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     }
 
     public ValueListPaneHistoryValueEntry createHistoryValuesPane(GuiPreferences prefs) {
-        return valueList(new ValueListPaneHistoryValueEntry(prefs::getHistoryValues, prefs, saveRunnerForHistory()));
+        return valueList(new ValueListPaneHistoryValueEntry(prefs::getHistoryValues, prefs, saveRunnerForHistory()), validationCheckerAdderWithReloader(null));
     }
 
     /**
@@ -406,7 +408,7 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
                 var uuid = prefs.getValueStore().getString(GuiPreferences.KEY_UUID, "");
                 uuidField.setText(uuid);
             };
-            validationCheckers.add(updater);
+            validationCheckerAdd(updater);
             updater.run();
 
             ResizableFlowLayout.add(pane, new JSeparator(JSeparator.HORIZONTAL), false);
@@ -416,15 +418,15 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
 
     public JComponent createWindowPrefs(String key, GuiPreferences prefs) {
         var prefsObj = new GuiSwingPrefsSupports.PreferencesForWindow(key);
-        prefsObj.loadFrom(prefs);
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
 
         var pane = createPane(true);
         {
             var names = new SettingsWindow.LabelGroup();
-            ResizableFlowLayout.add(pane, createNumberInt(names, WINDOW_PREFS_PROP_X, prefsObj::getX, setterPrefs(prefsObj::setX, prefsObj, prefs), validationCheckers::add), false);
-            ResizableFlowLayout.add(pane, createNumberInt(names, WINDOW_PREFS_PROP_Y, prefsObj::getY, setterPrefs(prefsObj::setY, prefsObj, prefs), validationCheckers::add), false);
-            ResizableFlowLayout.add(pane, createNumberInt(names, WINDOW_PREFS_PROP_WIDTH, prefsObj::getWidth, setterPrefs(prefsObj::setWidth, prefsObj, prefs), validationCheckers::add), false);
-            ResizableFlowLayout.add(pane, createNumberInt(names, WINDOW_PREFS_PROP_HEIGHT, prefsObj::getHeight, setterPrefs(prefsObj::setHeight, prefsObj, prefs), validationCheckers::add), false);
+            ResizableFlowLayout.add(pane, createNumberInt(names, WINDOW_PREFS_PROP_X, prefsObj::getX, setterPrefs(prefsObj::setX, prefsObj, prefs), validationCheckAdder), false);
+            ResizableFlowLayout.add(pane, createNumberInt(names, WINDOW_PREFS_PROP_Y, prefsObj::getY, setterPrefs(prefsObj::setY, prefsObj, prefs), validationCheckAdder), false);
+            ResizableFlowLayout.add(pane, createNumberInt(names, WINDOW_PREFS_PROP_WIDTH, prefsObj::getWidth, setterPrefs(prefsObj::setWidth, prefsObj, prefs), validationCheckAdder), false);
+            ResizableFlowLayout.add(pane, createNumberInt(names, WINDOW_PREFS_PROP_HEIGHT, prefsObj::getHeight, setterPrefs(prefsObj::setHeight, prefsObj, prefs), validationCheckAdder), false);
             names.fitWidth();
         }
         return createNamed(getName(prefs, prefsObj), pane);
@@ -432,33 +434,33 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
 
     public JComponent createTabPrefs(GuiPreferences prefs) {
         var prefsObj = new GuiSwingViewTabbedPane.PreferencesForTab();
-        prefsObj.loadFrom(prefs);
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
 
         var pane = createPane(true);
         {
-            ResizableFlowLayout.add(pane, createNumberInt(null, TAB_PREFS_PROP_SELECTED, prefsObj::getSelectedIndex, setterPrefs(prefsObj::setSelectedIndex, prefsObj, prefs), validationCheckers::add), false);
+            ResizableFlowLayout.add(pane, createNumberInt(null, TAB_PREFS_PROP_SELECTED, prefsObj::getSelectedIndex, setterPrefs(prefsObj::setSelectedIndex, prefsObj, prefs), validationCheckAdder), false);
         }
         return createNamed(getName(prefs, prefsObj), pane);
     }
 
     public JComponent createSplitPrefs(GuiPreferences prefs) {
         var prefsObj = new GuiSwingViewObjectPane.PreferencesForSplit();
-        prefsObj.loadFrom(prefs);
-        return createNamed(getName(prefs, prefsObj), valueList(new ValueListPaneSplitEntry(prefsObj, saveRunner(prefsObj, prefs))));
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
+        return createNamed(getName(prefs, prefsObj), valueList(new ValueListPaneSplitEntry(prefsObj, saveRunner(prefsObj, prefs)), validationCheckAdder));
     }
 
     public JComponent createFileDialogPrefs(GuiPreferences prefs) {
         var prefsObj = new GuiSwingPrefsSupports.PreferencesForFileDialog();
-        prefsObj.loadFrom(prefs);
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
 
         var pane = createPane(false);
         {
             var names = new SettingsWindow.LabelGroup();
-            ResizableFlowLayout.add(pane, createFile(names, FILE_DIALOG_PREFS_PROP_BACK_PATH, prefsObj::getBackPath, setterPrefs(prefsObj::setBackPath, prefsObj, prefs), validationCheckers::add), false);
-            ResizableFlowLayout.add(pane, createFile(names, FILE_DIALOG_PREFS_PROP_CURRENT_DIRECTORY, prefsObj::getCurrentDirectory, setterPrefs(prefsObj::setCurrentDirectory, prefsObj, prefs), validationCheckers::add), false);
+            ResizableFlowLayout.add(pane, createFile(names, FILE_DIALOG_PREFS_PROP_BACK_PATH, prefsObj::getBackPath, setterPrefs(prefsObj::setBackPath, prefsObj, prefs), validationCheckAdder), false);
+            ResizableFlowLayout.add(pane, createFile(names, FILE_DIALOG_PREFS_PROP_CURRENT_DIRECTORY, prefsObj::getCurrentDirectory, setterPrefs(prefsObj::setCurrentDirectory, prefsObj, prefs), validationCheckAdder), false);
             names.fitWidth();
 
-            ResizableFlowLayout.add(pane, createNamed(getName(prefs, prefsObj.getKey() + "." + FILE_DIALOG_PREFS_PROP_FILE_LIST), valueList(new ValueListPaneFileDialogList(prefsObj, saveRunner(prefsObj, prefs)))), false);
+            ResizableFlowLayout.add(pane, createNamed(getName(prefs, prefsObj.getKey() + "." + FILE_DIALOG_PREFS_PROP_FILE_LIST), valueList(new ValueListPaneFileDialogList(prefsObj, saveRunner(prefsObj, prefs)), validationCheckAdder)), false);
         }
 
         return createNamed(getName(prefs, prefsObj), pane);
@@ -466,17 +468,18 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
 
     public JComponent createDocumentSettingPrefs(GuiPreferences prefs) {
         var docPane = new GuiSwingViewDocumentEditor.DocumentSettingPane(null);
-        docPane.loadFrom(prefs);
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(docPane, prefs));
+
         Runnable saveRunner = saveRunner(docPane.getPrefsObj(), prefs);
         docPane.setPreferencesUpdater(p -> saveRunner.run());
-        validationCheckers.add(docPane::updateGuiAndTargetTextPaneFromPrefsObj);
+        validationCheckAdder.accept(docPane::updateGuiAndTargetTextPaneFromPrefsObj);
         return createNamed(getName(prefs, DOCUMENT_PREFS_KEY), docPane);
     }
 
     public JComponent createNumberPrefs(GuiReprValueNumberSpinner.NumberType numType, GuiPreferences prefs) {
         var model = new GuiSwingViewNumberSpinner.TypedSpinnerNumberModel(numType);
         var saveRunner = saveRunner(model, prefs);
-        model.loadFrom(prefs);
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(model, prefs));
         model.addChangeListener(e -> saveRunner.run());
         var pane = new GuiSwingViewNumberSpinner.NumberSettingPane(model);
 
@@ -484,7 +487,7 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
                 .add(pane)
                 .add(createWindowPrefs(GuiSwingViewNumberSpinner.NUMBER_SETTING_WINDOW_PREFS_KEY, prefs))
                 .getContainer();
-        validationCheckers.add(pane::updateFromModel);
+        validationCheckAdder.accept(pane::updateFromModel);
 
         return createNamed(getName(prefs, NUMBER_PREFS_KEY), settingsPane);
     }
@@ -498,71 +501,70 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     }
 
     public JComponent createCurrentValuePane(GuiPreferences prefs, String key, GuiSwingPrefsHistoryValues.HistoryPaneResult jsonPane) {
-        validationCheckers.add(jsonPane::updateLastEntrySource);
+        validationCheckerAdd(jsonPane::updateLastEntrySource);
         return createNamed(getName(prefs, key), jsonPane);
     }
 
     public JComponent createTablePrefs(GuiPreferences prefs) {
         GuiSwingViewCollectionTable.PreferencesForTable prefsObj = new GuiSwingViewCollectionTable.PreferencesForTable();
-        prefsObj.loadFrom(prefs);
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
 
         var pane = createPane(false);
         {
             ResizableFlowLayout.add(pane, createString(null, TABLE_PREFS_COLUMN_ORDER,
                             () -> getIntListString(prefsObj.getColumnOrder()),
-                            setterPrefs(s -> setIntListString(prefsObj.getColumnOrder(), s), prefsObj, prefs), validationCheckers::add), false);
+                            setterPrefs(s -> setIntListString(prefsObj.getColumnOrder(), s), prefsObj, prefs), validationCheckAdder), false);
             ResizableFlowLayout.add(pane, createString(null, TABLE_PREFS_COLUMN_WIDTH,
                             () -> getIntListString(prefsObj.getColumnWidth()),
-                            setterPrefs(s -> setIntListString(prefsObj.getColumnWidth(), s), prefsObj,prefs), validationCheckers::add), false);
+                            setterPrefs(s -> setIntListString(prefsObj.getColumnWidth(), s), prefsObj,prefs), validationCheckAdder), false);
 
             var paneNum = createPane(true);
             {
                 var names = new SettingsWindow.LabelGroup();
                 ResizableFlowLayout.add(paneNum, createNumberInt(names, TABLE_PREFS_ROW_HEIGHT, prefsObj::getRowHeight,
-                        setterPrefs(prefsObj::setRowHeight, prefsObj, prefs), validationCheckers::add), false);
+                        setterPrefs(prefsObj::setRowHeight, prefsObj, prefs), validationCheckAdder), false);
                 ResizableFlowLayout.add(paneNum, createBoolean(names, TABLE_PREFS_ROW_CUSTOM, prefsObj::isRowCustom,
-                                setterPrefs(prefsObj::setRowCustom, prefsObj, prefs), validationCheckers::add), false);
+                                setterPrefs(prefsObj::setRowCustom, prefsObj, prefs), validationCheckAdder), false);
                 ResizableFlowLayout.add(paneNum, createBoolean(names, TABLE_PREFS_ROW_FIT_TO_CONTENT, prefsObj::isRowFitToContent,
-                                setterPrefs(prefsObj::setRowFitToContent, prefsObj, prefs), validationCheckers::add), false);
+                                setterPrefs(prefsObj::setRowFitToContent, prefsObj, prefs), validationCheckAdder), false);
                 names.fitWidth();
             }
             ResizableFlowLayout.add(pane, paneNum, false);
 
-            ResizableFlowLayout.add(pane, createNamed(TABLE_PREFS_ROW_SORT, valueList(new ValueListTableRowSort(prefsObj::getRowSort, saveRunner(prefsObj, prefs)))), false);
+            ResizableFlowLayout.add(pane, createNamed(TABLE_PREFS_ROW_SORT, valueList(new ValueListTableRowSort(prefsObj::getRowSort, saveRunner(prefsObj, prefs)), validationCheckAdder)), false);
         }
         return createNamed(getName(prefs, prefsObj), pane);
     }
 
     public JComponent createTableColumnWidthStatic(GuiPreferences prefs) {
         GuiSwingTableModelCollection.PreferencesForTableColumnWidthStatic prefsObj = new GuiSwingTableModelCollection.PreferencesForTableColumnWidthStatic();
-        prefsObj.loadFrom(prefs);
-        return createNamed(getName(prefs, prefsObj), valueList(new ValueListMapPaneForTableColumnWidthStatic(prefsObj::getModelIndexToWidthDirect, saveRunner(prefsObj, prefs))));
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
+        return createNamed(getName(prefs, prefsObj), valueList(new ValueListMapPaneForTableColumnWidthStatic(prefsObj::getModelIndexToWidthDirect, saveRunner(prefsObj, prefs)), validationCheckAdder));
     }
 
     public JComponent createTableColumnOrderStatic(GuiPreferences prefs) {
         GuiSwingTableModelCollection.PreferencesForTableColumnOrderStatic prefsObj = new GuiSwingTableModelCollection.PreferencesForTableColumnOrderStatic();
-        prefsObj.loadFrom(prefs);
-        return createNamed(getName(prefs, prefsObj), valueList(new ValueListMapPaneForTableColumnOrder(prefsObj::getModelIndexToOrderDirect, saveRunner(prefsObj, prefs))));
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
+        return createNamed(getName(prefs, prefsObj), valueList(new ValueListMapPaneForTableColumnOrder(prefsObj::getModelIndexToOrderDirect, saveRunner(prefsObj, prefs)), validationCheckAdder));
     }
 
     public JComponent createTableColumnWidth(GuiPreferences prefs) {
         GuiSwingTableModelCollection.PreferencesForTableColumnWidth prefsObj = new GuiSwingTableModelCollection.PreferencesForTableColumnWidth();
-        prefsObj.loadFrom(prefs);
-
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
         var pane = createPane(true);
         {
-            ResizableFlowLayout.add(pane, createNumberInt(null, TABLE_PREFS_COLUMN_WIDTH, prefsObj::getWidth, setterPrefs(prefsObj::setWidth, prefsObj, prefs), validationCheckers::add), false);
+            ResizableFlowLayout.add(pane, createNumberInt(null, TABLE_PREFS_COLUMN_WIDTH, prefsObj::getWidth, setterPrefs(prefsObj::setWidth, prefsObj, prefs), validationCheckAdder), false);
         }
         return createNamed(getName(prefs, prefsObj), pane);
     }
 
     public JComponent createTableColumnOrder(GuiPreferences prefs) {
         GuiSwingTableModelCollection.PreferencesForTableColumnOrder prefsObj = new GuiSwingTableModelCollection.PreferencesForTableColumnOrder();
-        prefsObj.loadFrom(prefs);
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
         var pane = createPane(true);
         {
-            ResizableFlowLayout.add(pane, createNumberInt(null, TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX, prefsObj::getModelIndex, setterPrefs(prefsObj::setModelIndex, prefsObj, prefs), validationCheckers::add), false);
-            ResizableFlowLayout.add(pane, createNumberInt(null, TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX, prefsObj::getViewIndex, setterPrefs(prefsObj::setViewIndex, prefsObj, prefs), validationCheckers::add), false);
+            ResizableFlowLayout.add(pane, createNumberInt(null, TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX, prefsObj::getModelIndex, setterPrefs(prefsObj::setModelIndex, prefsObj, prefs), validationCheckAdder), false);
+            ResizableFlowLayout.add(pane, createNumberInt(null, TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX, prefsObj::getViewIndex, setterPrefs(prefsObj::setViewIndex, prefsObj, prefs), validationCheckAdder), false);
         }
         return createNamed(getName(prefs, prefsObj.getKey()), pane);
     }
@@ -684,14 +686,63 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
 
     public static <Pane extends GuiSwingView.ValuePane<?>> Pane valuePane(Pane p, Consumer<Runnable> validationCheckers) {
         if (validationCheckers != null) {
-            validationCheckers.accept(p::updateSwingViewSource);
+            validationCheckers.accept(() -> {
+                p.updateSwingViewSource();
+                p.asSwingViewComponent().repaint();
+            });
         }
         return p;
     }
 
-    protected <Pane extends ValueListPane<?, ?>> Pane valueList(Pane list) {
-        this.validationCheckers.add(list::syncElements);
+    protected <Pane extends ValueListPane<?, ?>> Pane valueList(Pane list, Consumer<Runnable> validationCheckAdder) {
+        validationCheckAdder.accept(list::syncElements);
         return list;
+    }
+
+    public Runnable loadAndReturnsAsReloader(GuiSwingPrefsSupports.Preferences prefsObj, GuiPreferences prefs) {
+        var r = new PrefsLoader(prefsObj, prefs);
+        r.run();
+        prefsLoaders.add(r);
+        return r;
+    }
+
+    public static class PrefsLoader implements Runnable {
+        protected GuiSwingPrefsSupports.Preferences prefsObj;
+        protected GuiPreferences prefs;
+        protected boolean loaded;
+
+        public PrefsLoader(GuiSwingPrefsSupports.Preferences prefsObj, GuiPreferences prefs) {
+            this.prefsObj = prefsObj;
+            this.prefs = prefs;
+        }
+
+        public void clearLoaded() {
+            loaded = true;
+        }
+
+        @Override
+        public void run() {
+            if (loaded) {
+                prefsObj.loadFrom(prefs);
+                loaded = true;
+            }
+        }
+    }
+
+    /**
+     * @param reloader suppose the runner for prefsObj.loadFrom(prefs)
+     * @return the appender for {@link #validationCheckerAdd(Runnable)} with combining the reloader
+     */
+    protected Consumer<Runnable> validationCheckerAdderWithReloader(Runnable reloader) {
+        return r ->
+            validationCheckerAdd(() -> {
+                if (reloader != null) reloader.run();
+                r.run();
+            });
+    }
+
+    protected void validationCheckerAdd(Runnable r) {
+        validationCheckers.add(r);
     }
 
     public static String getName(GuiPreferences prefs, GuiSwingPrefsSupports.PreferencesByJsonEntry prefsObj) {

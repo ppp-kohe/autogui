@@ -185,7 +185,7 @@ public class GuiSwingPrefsTrees {
             node = e.isNode();
             if (!e.isNode()) {
                 entryValue = Objects.toString(e.getValue());
-                if (entryValue.isEmpty()) {
+                if (entryValue == null || entryValue.isEmpty()) {
                     entryValue = " ";
                 }
             } else {

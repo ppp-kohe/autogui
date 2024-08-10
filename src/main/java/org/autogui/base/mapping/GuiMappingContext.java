@@ -698,7 +698,7 @@ public class GuiMappingContext {
      * flag for changing the type of {@link #taskRunner}:
      *  the default is false and then {@link ContextExecutorServiceForkJoin} is used.
      *  If the flag is set to true before the first call of {@link #getTaskRunner()},
-     *    then {@link ContextExecutorServiceSingleThread} is used.
+     *    then {@link ContextExecutorServiceNoThread} is used.
      * @since 1.2
      */
     public static boolean taskRunnerSingleThread = false;
@@ -982,7 +982,19 @@ public class GuiMappingContext {
          * @since 1.6
          */
         default void execute(Runnable task) {
-            submit(() -> {task.run();return (Void) null;});
+            var h = Thread.currentThread().getUncaughtExceptionHandler();
+            submit(() -> {
+                try {
+                    task.run();
+                } catch (Throwable ex) {
+                    if (h != null) {
+                        h.uncaughtException(Thread.currentThread(), ex);
+                    } else {
+                        ex.printStackTrace();
+                    }
+                }
+                return (Void) null;
+            });
         }
 
         /**

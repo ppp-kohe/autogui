@@ -10,7 +10,8 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-/** the subclass of the executor with implementing various listeners */
+/** the subclass of the executor with implementing various listeners.
+ *  Note the accumulation consumer is NOT dispatched on the event thread. */
 public class EditingRunner extends ScheduledTaskRunner<Object>
         implements DocumentListener, KeyListener, ActionListener, FocusListener, ChangeListener, InputMethodListener {
     public EditingRunner(long delay, Consumer<List<Object>> consumer) {

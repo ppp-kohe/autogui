@@ -131,7 +131,7 @@ import java.util.stream.IntStream;
  *      </li>
  *  </ol>
  */
-public class GuiSwingPreferences {
+public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChangeListener {
     protected JPanel mainPane;
     protected GuiMappingContext rootContext;
     protected RootView rootPane;
@@ -235,7 +235,6 @@ public class GuiSwingPreferences {
         JScrollPane listScroll = new JScrollPane(list);
         listScroll.setPreferredSize(new Dimension(ui.getScaledSizeInt(300), ui.getScaledSizeInt(300)));
         list.setRowHeight(ui.getScaledSizeInt(20));
-
         return listScroll;
     }
 
@@ -304,6 +303,7 @@ public class GuiSwingPreferences {
 
     public void reloadList() {
         listModel.reload();
+        initRunnerPrefsDefault(); //the prefs sotre-change-listners might be cleared, so it re-init
     }
 
     public List<GuiPreferences> getSelectedSavedPreferencesList() {
@@ -845,20 +845,6 @@ public class GuiSwingPreferences {
         }
     }
 
-//    public void doResetPrefs() {
-//        int r = JOptionPane.showConfirmDialog(getMainPane(),
-//                "Reset Entire Preferences ?", "Reset Entire Preferences", JOptionPane.OK_CANCEL_OPTION);
-//        if (r == JOptionPane.OK_OPTION) {
-//            GuiPreferences prefs = getRootContext().getPreferences();
-//            try (var lock = prefs.lock()) {
-//                lock.use();
-//                prefs.overwriteToEmpty();
-//            }
-//            applyPreferences(new GuiSwingPrefsApplyOptions.PrefsApplyOptionsDefault(true, false));
-//            reloadList();
-//        }
-//    }
-
     public void doDuplicatePrefs() {
         GuiPreferences pref = getSelectedSavedPreferences();
         if (pref == null) {
@@ -1140,34 +1126,6 @@ public class GuiSwingPreferences {
             return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
         }
     }
-//
-//    public static class ResetPrefsAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {
-//        @Serial private static final long serialVersionUID = 1L;
-//        protected GuiSwingPreferences owner;
-//
-//        @SuppressWarnings("this-escape")
-//        public ResetPrefsAction(GuiSwingPreferences owner) {
-//            putValue(NAME, "Reset");
-//            putValue(LARGE_ICON_KEY, GuiSwingIcons.getInstance().getIcon("reset"));
-//            putValue(GuiSwingIcons.PRESSED_ICON_KEY, GuiSwingIcons.getInstance().getPressedIcon("reset"));
-//            this.owner = owner;
-//        }
-//
-//        @Override
-//        public void actionPerformed(ActionEvent e) {
-//            owner.doResetPrefs();
-//        }
-//
-//        @Override
-//        public String getCategory() {
-//            return PopupExtension.MENU_CATEGORY_PREFS;
-//        }
-//
-//        @Override
-//        public String getSubCategory() {
-//            return PopupExtension.MENU_SUB_CATEGORY_PREFS_CHANGE;
-//        }
-//    }
 
     //////////
 
@@ -1177,6 +1135,7 @@ public class GuiSwingPreferences {
         updater = new ScheduledTaskRunner<>(1000, this::runPreferencesUpdate);
         initRunnerToSupports(rootComponent);
         prefsWindowUpdater.setUpdater(getUpdateRunner());
+        initRunnerPrefsDefault();
     }
 
     protected void initRunnerToSupports(Component component) {
@@ -1192,10 +1151,36 @@ public class GuiSwingPreferences {
         return updater::schedule;
     }
 
+    protected void initRunnerPrefsDefault() {
+        var prefsDefault = rootContext.getPreferences();
+        if (!prefsDefault.getStoreChangeListeners().contains(this)) {
+            prefsDefault.addStoreChangeListener(this);
+        }
+    }
+
+    @Override
+    public void storeChanged(GuiPreferences prefs, String key, Object value) {
+        getUpdater().schedule(new PreferencesStoreChangeEvent());
+    }
+
     public void runPreferencesUpdate(List<GuiSwingPrefsSupports.PreferencesUpdateEvent> list) {
-        list.stream()
-                .distinct()
-                .forEach(GuiSwingPrefsSupports.PreferencesUpdateEvent::save);
+        try {
+            var postOps = list.stream()
+                    .distinct()
+                    .map(GuiSwingPrefsSupports.PreferencesUpdateEvent::saveAndGetPostOperation)
+                    .toList();
+            if (postOps.contains(Boolean.TRUE)) {
+                flushRootPrefs();
+            }
+            if (postOps.contains(Boolean.FALSE)) { //need to update display
+                updateDefaultDisplay();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    protected void flushRootPrefs() {
         GuiPreferences prefs = rootContext.getPreferences();
         try (var lock = prefs.lock()) {
             lock.use();
@@ -1203,6 +1188,25 @@ public class GuiSwingPreferences {
         }
     }
 
+    protected void updateDefaultDisplay() {
+        SwingUtilities.invokeLater(() -> {
+            var prefsDefault = rootContext.getPreferences();
+            var editor = settingsEditors.get(prefsDefault);
+            if (editor != null) {
+                editor.revalidate();
+            }
+            if (Objects.equals(getSelectedSavedPreferences(), prefsDefault)) {
+                updateContentTree();
+            }
+        });
+    }
+
+    /** describe changes of default preferences store */
+    public static class PreferencesStoreChangeEvent extends GuiSwingPrefsSupports.PreferencesUpdateEvent {
+        public PreferencesStoreChangeEvent() {
+            super(null, null); //no save operation
+        }
+    }
 
     public static class PrefsApplyMenu extends JMenu {
         @Serial private static final long serialVersionUID = 1L;
@@ -1258,6 +1262,11 @@ public class GuiSwingPreferences {
 
         protected void initLazy() {
             putValue(NAME, owner.getName(targetPrefs));
+        }
+
+        @Override
+        public void updateEnabled() {
+            setEnabled(targetPrefs != null);
         }
 
         @Override

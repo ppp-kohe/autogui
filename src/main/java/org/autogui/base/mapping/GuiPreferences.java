@@ -49,6 +49,7 @@ public class GuiPreferences {
     protected List<HistoryValueEntry> historyValues;
     protected List<HistoryValueEntry> historyValuesFree;
     protected int historyValueLimit = 10;
+    protected List<PreferencesStoreChangeListener> storeChangeListeners;
     /** @since 1.6 */
     protected PreferencesLock lock;
     /** the key for the default {@link GuiPreferences} node under the root */
@@ -71,6 +72,14 @@ public class GuiPreferences {
     public static final String KEY_HISTORY_ENTRY_VALUE = "value";
     /** the key for the string {@link Instant} value of {@link HistoryValueEntry} */
     public static final String KEY_HISTORY_ENTRY_TIME = "time";
+
+    public interface PreferencesStoreChangeListener {
+        void storeChanged(GuiPreferences prefs, String key, Object value);
+    }
+
+    public enum PreferencesStoreChangeSpecialValue {
+        AddNode, RemoveEntry, RemoveNode
+    }
 
     /**
      * the interface for supporting user-defined prefs:
@@ -535,7 +544,7 @@ public class GuiPreferences {
         remainingKeysSelf.remove(KEY_HISTORY);
         for (var key : storeOthr.getKeys()) {
             if (key.equals(KEY_HISTORY)) {
-                continue; //processed always later
+                //continue; //processed always later
             } else if (storeOthr.hasEntryKey(key)) {
                 if (storeSelf.hasNodeKey(key)) { //incompatible: the key becomes a sub-node
                     var childSelf = removeFromChildrenSet(childrenSelf, key);
@@ -694,11 +703,7 @@ public class GuiPreferences {
             return null;
         }
         var existing = getHistoryValueForStoredValue(v);
-        if (existing == null) {
-            return created;
-        } else {
-            return existing;
-        }
+        return Objects.requireNonNullElse(existing, created);
     }
 
     protected HistoryValueEntry getHistoryValueForStoredValue(Object v) {
@@ -833,6 +838,37 @@ public class GuiPreferences {
         historyValuesFree.addAll(loadedValuesRemoved);
     }
 
+    public void notifyStoreChange(String key, Object value) {
+        notifyStoreChange(this, key, value);
+    }
+
+    public void notifyStoreChange(GuiPreferences preferences, String key, Object value) {
+        if (storeChangeListeners != null) {
+            storeChangeListeners.forEach(l -> l.storeChanged(preferences, key, value));
+        }
+        if (parent != null) {
+            parent.notifyStoreChange(preferences, key, value);
+        }
+    }
+
+    public List<PreferencesStoreChangeListener> getStoreChangeListeners() {
+        return storeChangeListeners == null ? List.of() : storeChangeListeners;
+    }
+
+    public void addStoreChangeListener(PreferencesStoreChangeListener listener) {
+        if (storeChangeListeners == null) {
+            storeChangeListeners = new ArrayList<>(2);
+        }
+        if (!storeChangeListeners.contains(listener)) {
+            storeChangeListeners.add(listener);
+        }
+    }
+    public void removeStoreChangeListener(PreferencesStoreChangeListener listener) {
+        if (storeChangeListeners != null) {
+            storeChangeListeners.remove(listener);
+        }
+    }
+
     /** the abstract definition of key-value store.
      *
      *  <ul>
@@ -934,14 +970,37 @@ public class GuiPreferences {
 
         public Preferences getOrCreateStore() {
             if (store == null) {
-                store = withTry(storeName, () -> parentStore.get().node(storeNameActual));
+                store = getStoreFromParent();
+            } else if (parentStore != null) {
+                try { //the subnode migt be removed ; then all operations will cause exception. so it re-obtains the prefs.
+                    //also, if the paret is too removed, then the parentStore.get()==parent.getOrCreateStore() and recursively re-obtains
+                    if (!parentStore.get().nodeExists(storeNameActual)) {
+                        store = getStoreFromParent();
+                    }
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
             }
             return store;
         }
 
+        protected Preferences getStoreFromParent() {
+            var pStore = parentStore.get();
+            try {
+                boolean hasNode = pStore.nodeExists(storeNameActual);
+                var node = pStore.node(storeNameActual);
+                if (!hasNode && preferences != null) { preferences.notifyStoreChange(storeName, PreferencesStoreChangeSpecialValue.AddNode); }
+                return node;
+            } catch (Exception ex) {
+                throw new RuntimeException(toStoreKey(storeName),  ex);
+            }
+        }
+
         @Override
         public void putString(String key, String val) {
-            getOrCreateStore().put(toStoreKey(key), val);
+            var storeKey = toStoreKey(key);
+            getOrCreateStore().put(storeKey, val);
+            if (preferences != null) { preferences.notifyStoreChange(key, val); }
         }
 
         @Override
@@ -951,7 +1010,9 @@ public class GuiPreferences {
 
         @Override
         public void putInt(String key, int val) {
-            withTry(key, () -> getOrCreateStore().putInt(toStoreKey(key), val));
+            var storeKey = toStoreKey(key);
+            withTry(key, () -> getOrCreateStore().putInt(storeKey, val));
+            if (preferences != null) { preferences.notifyStoreChange(key, val); }
         }
 
         @Override
@@ -1007,13 +1068,15 @@ public class GuiPreferences {
         }
 
         @Override
-        public void remove(String key) {
-            key = toStoreKey(key);
+        public void remove(String rKey) {
+            var key = toStoreKey(rKey);
             if (hasEntryKey(key)) {
                 getOrCreateStore().remove(key);
+                if (preferences != null) preferences.notifyStoreChange(rKey, PreferencesStoreChangeSpecialValue.RemoveEntry);
             } else if (hasNodeKey(key)) {
                 try {
                     getOrCreateStore().node(key).removeNode();
+                    if (preferences != null) preferences.notifyStoreChange(rKey, PreferencesStoreChangeSpecialValue.RemoveNode);
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
@@ -1025,6 +1088,7 @@ public class GuiPreferences {
             try {
                 getOrCreateStore().removeNode();
                 store = null;
+                if (preferences != null) preferences.notifyStoreChange(this.storeName, PreferencesStoreChangeSpecialValue.RemoveNode);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
@@ -1461,6 +1525,7 @@ public class GuiPreferences {
         @Override
         public void putString(String key, String val) {
             values.put(key, val);
+            if (preferences != null) { preferences.notifyStoreChange(key, val); }
         }
 
         @Override
@@ -1475,6 +1540,7 @@ public class GuiPreferences {
         @Override
         public void putInt(String key, int val) {
             values.put(key, Integer.toString(val));
+            if (preferences != null) { preferences.notifyStoreChange(key, val); }
         }
 
         @Override
@@ -1488,8 +1554,11 @@ public class GuiPreferences {
 
         @Override
         public GuiValueStore getChild(GuiPreferences preferences, String key) {
-            return (GuiValueStore) values.computeIfAbsent(key,
-                    k -> new GuiValueStoreOnMemory(preferences, this));
+            boolean hasNode = values.containsKey(key);
+            var store = (GuiValueStore) values.computeIfAbsent(key,
+                k -> new GuiValueStoreOnMemory(preferences, this));
+            if (!hasNode && preferences != null) { preferences.notifyStoreChange(key, PreferencesStoreChangeSpecialValue.AddNode); }
+            return store;
         }
 
         @Override
@@ -1514,6 +1583,7 @@ public class GuiPreferences {
             if (value instanceof GuiValueStoreOnMemory m) {
                 m.parent = this;
             }
+            if (preferences != null) { preferences.notifyStoreChange(name, PreferencesStoreChangeSpecialValue.AddNode); }
         }
 
         public Map<String,Object> toJson() {
@@ -1531,18 +1601,23 @@ public class GuiPreferences {
 
         @Override
         public void remove(String key) {
-            values.remove(key);
+            var v = values.remove(key);
+            if (preferences != null) { preferences.notifyStoreChange(key,
+                    (v instanceof GuiValueStore) ? PreferencesStoreChangeSpecialValue.RemoveNode : PreferencesStoreChangeSpecialValue.RemoveEntry); }
         }
 
         @Override
         public void removeThisNode() {
             values.clear();
             if (parent != null) {
+                String key = null;
                 for (var e : new ArrayList<>(parent.values.entrySet())) {
                     if (e.getValue() == this) {
+                        key = e.getKey();
                         parent.values.remove(e.getKey());
                     }
                 }
+                if (key != null && preferences != null) { preferences.notifyStoreChange(key, PreferencesStoreChangeSpecialValue.RemoveNode); }
             }
         }
 
@@ -1580,7 +1655,7 @@ public class GuiPreferences {
             return availableEntryKeys.contains(key) ? super.getString(key, def) : def;
         }
         @Override public void putInt(String key, int val) {
-            if (availableEntryKeys.contains(key)) { super.putInt(key, val); } ;
+            if (availableEntryKeys.contains(key)) { super.putInt(key, val); }
         }
         @Override public int getInt(String key, int def) {
             return availableEntryKeys.contains(key) ? super.getInt(key, def) : def;
