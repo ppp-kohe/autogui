@@ -1291,6 +1291,10 @@ Also, those styles can be specified by `nimbus-flat-light` and `nimbus-flat-dark
 |:-----------------:|:----------------:|
 | <img src="docs/images/image-nimbus-flat-light.png" srcset="docs/images/image-nimbus-flat-light-h.png 1x, docs/images/image-nimbus-flat-light.png 2x" alt="NimbusLookAndFeelCustomFlatLight"> | <img src="docs/images/image-nimbus-flat-dark.png" srcset="docs/images/image-nimbus-flat-dark-h.png 1x, docs/images/image-nimbus-flat-dark.png 2x" alt="NimbusLookAndFeelCustomFlatDark"> |
 
+In MacOS, you can apply the dark-mode aware windows by appending the JVM option `-J-Dapple.awt.application.appearance=system`.
+
+In HiDPI GNOME environment (including the default Ubuntu), you might get suitable display with the environment variable `GDK_SCALE=2`. 
+
 ### Loading Flatlaf
 
 The default specification of the library implicitly detects existence of [*flatlaf*](https://www.formdev.com/flatlaf/) (confirmed by `com.formdev:flatlaf:3.4.1`)  and applying its LAF with following the OS's current theme. The detection is simply done by accessing to the reflection Class object through `Class.forName`.

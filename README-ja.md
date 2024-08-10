@@ -1255,6 +1255,9 @@ GUIアクションの実行が極端に長くなった場合、(最大カウン�
 |:-----------------:|:----------------:|
 | <img src="docs/images/image-nimbus-flat-light.png" srcset="docs/images/image-nimbus-flat-light-h.png 1x, docs/images/image-nimbus-flat-light.png 2x" alt="NimbusLookAndFeelCustomFlatLight"> | <img src="docs/images/image-nimbus-flat-dark.png" srcset="docs/images/image-nimbus-flat-dark-h.png 1x, docs/images/image-nimbus-flat-dark.png 2x" alt="NimbusLookAndFeelCustomFlatDark"> |
 
+MacOSではJVMのオプション`-J-Dapple.awt.application.appearance=system`を追加することで、ダークモードのウィンドウタイトルバーを適用できます。
+
+GNOME(デフォルトのUbuntuなど)でのHiDPI環境では環境変数`GDK_SCALE=2`を指定することで適切な表示が得られる場合があります。
 
 ### Loading Flatlaf
 
