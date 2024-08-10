@@ -1614,17 +1614,17 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             var foregroundCustom = isForegroundCustom();
             var backgroundColor = getBackgroundColor();
             var foregroundColor = getForegroundColor();
-            if (lineSpacing != DEFAULT_NUM) { store.putString(KEY_LINE_SPACING, Float.toString(lineSpacing)); } else { store.remove(KEY_LINE_SPACING); };
-            if (spaceAbove != DEFAULT_NUM) { store.putString(KEY_SPACE_ABOVE, Float.toString(spaceAbove)); } else { store.remove(KEY_SPACE_ABOVE); };
-            if (fontFamily != null && !Objects.equals(fontFamily, DEFAULT_FONT_FAMILY)) { store.putString(KEY_FONT_FAMILY, fontFamily); } else { store.remove(KEY_FONT_FAMILY); };
-            if (fontSize != DEFAULT_NUM) { store.putString(KEY_FONT_SIZE, Integer.toString(fontSize)); } else { store.remove(KEY_FONT_SIZE); };
+            if (lineSpacing != DEFAULT_NUM) { store.putString(KEY_LINE_SPACING, Float.toString(lineSpacing)); } else { store.remove(KEY_LINE_SPACING); }
+            if (spaceAbove != DEFAULT_NUM) { store.putString(KEY_SPACE_ABOVE, Float.toString(spaceAbove)); } else { store.remove(KEY_SPACE_ABOVE); }
+            if (fontFamily != null && !Objects.equals(fontFamily, DEFAULT_FONT_FAMILY)) { store.putString(KEY_FONT_FAMILY, fontFamily); } else { store.remove(KEY_FONT_FAMILY); }
+            if (fontSize != DEFAULT_NUM) { store.putString(KEY_FONT_SIZE, Integer.toString(fontSize)); } else { store.remove(KEY_FONT_SIZE); }
             store.putString(KEY_BOLD, Boolean.toString(bold));
             store.putString(KEY_ITALIC, Boolean.toString(italic));
             store.putString(KEY_BACKGROUND_CUSTOM, Boolean.toString(backgroundCustom));
             store.putString(KEY_FOREGROUND_CUSTOM, Boolean.toString(foregroundCustom));
             store.putString(KEY_WRAP_TEXT, Boolean.toString(wrapText));
-            if (backgroundColor != null) { store.putString(KEY_BACKGROUND_COLOR, JsonWriter.create().withNewLines(false).write(toJsonColor(backgroundColor)).toSource()); } else { store.remove(KEY_BACKGROUND_COLOR); };
-            if (foregroundColor != null) { store.putString(KEY_FOREGROUND_COLOR, JsonWriter.create().withNewLines(false).write(toJsonColor(foregroundColor)).toSource()); } else { store.remove(KEY_FOREGROUND_COLOR); };
+            if (backgroundColor != null) { store.putString(KEY_BACKGROUND_COLOR, JsonWriter.create().withNewLines(false).write(toJsonColor(backgroundColor)).toSource()); } else { store.remove(KEY_BACKGROUND_COLOR); }
+            if (foregroundColor != null) { store.putString(KEY_FOREGROUND_COLOR, JsonWriter.create().withNewLines(false).write(toJsonColor(foregroundColor)).toSource()); } else { store.remove(KEY_FOREGROUND_COLOR); }
         }
     }
 

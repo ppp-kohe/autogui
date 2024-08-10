@@ -80,7 +80,7 @@ public class GuiSwingPrefsSupports {
     }
 
     /**
-     * @param map
+     * @param map the map for getting
      * @param type the type instance
      * @param key the map-key
      * @param defVal the default value if failure of type check

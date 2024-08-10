@@ -306,6 +306,11 @@ public class NimbusLookAndFeelCustomFlat extends NimbusLookAndFeel {
         defaults.put(radioCheck.withStates(LafState.Enabled, LafState.Selected).toString(),       new CheckBoxMenuItemPainter(false, true, false));
         defaults.put(radioCheck.withStates(LafState.MouseOver, LafState.Selected).toString(),     new CheckBoxMenuItemPainter(false, true, true));
         defaults.put(radioCheck.withStates(LafState.Disabled, LafState.Selected).toString(),      new CheckBoxMenuItemPainter(true, true, false));
+
+        var arrowPainter = LafProp.of("Menu", "arrowIconPainter");
+        defaults.put(arrowPainter.withStates(LafState.Disabled).toString(),                       new ArrowPainter(false, false));
+        defaults.put(arrowPainter.withStates(LafState.Enabled, LafState.Selected).toString(),     new ArrowPainter(false, true));
+        defaults.put(arrowPainter.withStates(LafState.Enabled).toString(),                        new ArrowPainter(false, false));
     }
 
     protected void initDefaultScroll(UIDefaults defaults) {
@@ -1301,6 +1306,29 @@ public class NimbusLookAndFeelCustomFlat extends NimbusLookAndFeel {
                 g.setPaint(colorDraw);
                 draw(g, r2);
             }
+        }
+    }
+
+    public static class ArrowPainter extends BasePainter {
+        protected Color colorFill;
+        public ArrowPainter(boolean disabled, boolean selected) {
+            super(5, 5, 9, 10);
+            colorFill = decodeColor(
+                    selected ? "nimbusSelectedText" :
+                            disabled ? "nimbusDisabledText" :
+                                    "text", 0, 0, 0, 0);
+        }
+
+        @Override
+        protected void doPaint(Graphics2D g, JComponent c, int width, int height, Object[] extendedCacheKeys) {
+            Path2D.Float path = new Path2D.Float();
+            path.moveTo(decodeX(0), decodeY(0.2f));
+            path.lineTo(decodeX(2.7f), decodeY(2.1f));
+            path.lineTo(decodeX(0), decodeY(3f));
+            path.lineTo(decodeX(0), decodeY(0.2f));
+            path.closePath();
+            g.setPaint(colorFill);
+            g.fill(path);
         }
     }
 }
