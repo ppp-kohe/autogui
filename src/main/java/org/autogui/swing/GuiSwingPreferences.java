@@ -1169,12 +1169,14 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
                     .distinct()
                     .map(GuiSwingPrefsSupports.PreferencesUpdateEvent::saveAndGetPostOperation)
                     .toList();
-            if (postOps.contains(Boolean.TRUE)) {
-                flushRootPrefs();
-            }
-            if (postOps.contains(Boolean.FALSE)) { //need to update display
-                updateDefaultDisplay();
-            }
+            SwingUtilities.invokeLater(() -> {
+                if (postOps.contains(Boolean.TRUE)) {
+                    flushRootPrefs();
+                }
+                if (postOps.contains(Boolean.FALSE)) { //need to update display
+                    updateDefaultDisplay();
+                }
+            });
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -1189,16 +1191,14 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
     }
 
     protected void updateDefaultDisplay() {
-        SwingUtilities.invokeLater(() -> {
-            var prefsDefault = rootContext.getPreferences();
-            var editor = settingsEditors.get(prefsDefault);
-            if (editor != null) {
-                editor.revalidate();
-            }
-            if (Objects.equals(getSelectedSavedPreferences(), prefsDefault)) {
-                updateContentTree();
-            }
-        });
+        var prefsDefault = rootContext.getPreferences();
+        var editor = settingsEditors.get(prefsDefault);
+        if (editor != null) {
+            editor.revalidate();
+        }
+        if (Objects.equals(getSelectedSavedPreferences(), prefsDefault)) {
+            updateContentTree();
+        }
     }
 
     /** describe changes of default preferences store */
