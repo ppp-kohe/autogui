@@ -211,7 +211,7 @@ public class GuiSwingPrefsHistoryValues {
         }
 
         public void setTextFromSource(boolean forceWhileEditing) {
-            if (!editing && forceWhileEditing && source != null) {
+            if ((!editing || forceWhileEditing) && source != null) {
                 try {
                     ++readingSource;
                     var obj = source.get();

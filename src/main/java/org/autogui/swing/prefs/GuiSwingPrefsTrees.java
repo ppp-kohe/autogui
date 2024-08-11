@@ -14,6 +14,7 @@ import java.io.Serial;
 import java.text.AttributedString;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GuiSwingPrefsTrees {
     private static final GuiSwingPrefsTrees instance = new GuiSwingPrefsTrees();
@@ -31,9 +32,25 @@ public class GuiSwingPrefsTrees {
     }
 
     public void setTreeModel(JTree contentTree, DefaultMutableTreeNode rootNode) {
+        boolean expandAll = false;
+        Set<String> expandedPaths = Set.of();
+        Set<String> selectedPaths = Set.of();
+        if (contentTree.getModel().getRoot() instanceof DefaultMutableTreeNode oldRoot) {
+            if (Objects.equals(oldRoot.getUserObject(), "")) {
+                expandAll = true;
+            } else {
+                expandedPaths = collectTreeExpanded(contentTree);
+                selectedPaths = collectTreeSelected(contentTree);
+            }
+        }
         DefaultTreeModel model = new DefaultTreeModel(rootNode);
         contentTree.setModel(model);
-        expandTreeAll(contentTree, model, (TreeNode) model.getRoot());
+        if (expandAll) {
+            expandTreeAll(contentTree, model, (TreeNode) model.getRoot());
+        } else {
+            expandTree(contentTree, model, (TreeNode) model.getRoot(), expandedPaths);
+            selectTree(contentTree, model, (TreeNode) model.getRoot(), selectedPaths);
+        }
     }
 
     public JTree createTree(GuiPreferences... prefs) {
@@ -114,6 +131,67 @@ public class GuiSwingPrefsTrees {
         }
     }
 
+    public void expandTree(JTree contentTree, DefaultTreeModel treeModel, TreeNode n, Set<String> expandedPaths) {
+        if (!n.isLeaf()) {
+            var path = new TreePath(treeModel.getPathToRoot(n));
+            if (expandedPaths.contains(toPrefsEntryPath(path))) {
+                contentTree.expandPath(path);
+            }
+        }
+        for (int i = 0, c = n.getChildCount(); i < c; ++i) {
+            expandTree(contentTree, treeModel, n.getChildAt(i), expandedPaths);
+        }
+    }
+
+    public void selectTree(JTree contentTree, DefaultTreeModel treeModel, TreeNode n, Set<String> selectedPaths) {
+        var path = new TreePath(treeModel.getPathToRoot(n));
+        if (selectedPaths.contains(toPrefsEntryPath(path))) {
+            contentTree.addSelectionPath(path);
+        }
+        for (int i = 0, c = n.getChildCount(); i < c; ++i) {
+            selectTree(contentTree, treeModel, n.getChildAt(i), selectedPaths);
+        }
+    }
+
+    public Set<String> collectTreeExpanded(JTree tree) {
+        Set<String> set = new HashSet<>();
+        for (var exps = tree.getExpandedDescendants(new TreePath(tree.getModel().getRoot()));
+             exps.hasMoreElements(); ) {
+            var path = exps.nextElement();
+            set.add(toPrefsEntryPath(path));
+        }
+        return set;
+    }
+
+    public Set<String> collectTreeSelected(JTree tree) {
+        var sels = tree.getSelectionPaths();
+        if (sels != null) {
+            return Arrays.stream(sels)
+                    .map(this::toPrefsEntryPath)
+                    .collect(Collectors.toSet());
+        } else {
+            return Set.of();
+        }
+    }
+
+    public String toPrefsEntryPath(TreePath path) {
+        return Arrays.stream(path.getPath())
+                .filter(DefaultMutableTreeNode.class::isInstance)
+                .map(DefaultMutableTreeNode.class::cast)
+                .map(DefaultMutableTreeNode::getUserObject)
+                .map(this::entryPathName)
+                .collect(Collectors.joining("."));
+    }
+
+    public String entryPathName(Object userObj) {
+        if (userObj instanceof PrefsValueStoreEntry e) {
+            return e.getKey();
+        } else if (userObj instanceof Map.Entry<?,?> e){
+            return Objects.toString(e.getKey());
+        } else {
+            return Objects.toString(userObj);
+        }
+    }
 
     /**
      * tree-model value for prefs-tree

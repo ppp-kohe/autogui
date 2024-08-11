@@ -1311,6 +1311,7 @@ public class NimbusLookAndFeelCustomFlat extends NimbusLookAndFeel {
 
     public static class ArrowPainter extends BasePainter {
         protected Color colorFill;
+        @SuppressWarnings("this-escape")
         public ArrowPainter(boolean disabled, boolean selected) {
             super(5, 5, 9, 10);
             colorFill = decodeColor(

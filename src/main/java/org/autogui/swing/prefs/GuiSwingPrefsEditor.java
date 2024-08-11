@@ -28,11 +28,11 @@ import java.util.stream.Collectors;
  * <ul>
  * <li>{@link #rootPane} is the top component, aggregating all sub-components of visited prefs,
  *   creatd by {@link org.autogui.swing.GuiSwingPreferences.RootView#loadPreferences(GuiPreferences, GuiSwingPrefsApplyOptions)}</li>
- * <li>{@link #contentPane} is the actula aggregation of sub-components, added to the root by {@link #createRootPane()};
+ * <li>{@link #contentPane} is the actul aggregation of sub-components, added to the root by {@link #createRootPane()};
  *    While visiting, {@link #construction} flag is true.</li>
  * <li>{@link #historyValuesPane} holds the current pane for history-values while construction</li>
  * <li>creating of actual pane for history-values is done by {@link GuiSwingPrefsHistoryValues}</li>
- * <li>all sub-components has ability to notify own changes; {@link #updatedListeners} receives those notifications.
+ * <li>all sub-components have ability to notify own changes; {@link #updatedListeners} receives those notifications.
  *   {@link #updated} indicates it has changes.
  *   This is used for enabling "Revert" button; the reverting feature is implemented by {@link #revertBackupAction}
  *   which saves preerences as {@link #backupPrefs} as on-memory-store, restores it to the root {@link #preferences}.</li>
@@ -419,7 +419,6 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     public JComponent createWindowPrefs(String key, GuiPreferences prefs) {
         var prefsObj = new GuiSwingPrefsSupports.PreferencesForWindow(key);
         var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
-
         var pane = createPane(true);
         {
             var names = new SettingsWindow.LabelGroup();
@@ -485,7 +484,7 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
 
         var settingsPane = ResizableFlowLayout.create(false)
                 .add(pane)
-                .add(createWindowPrefs(GuiSwingViewNumberSpinner.NUMBER_SETTING_WINDOW_PREFS_KEY, prefs))
+                //.add(createWindowPrefs(GuiSwingViewNumberSpinner.NUMBER_SETTING_WINDOW_PREFS_KEY, prefs)) //the $settingWindow prefs has another visit call
                 .getContainer();
         validationCheckAdder.accept(pane::updateFromModel);
 
@@ -717,12 +716,12 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
         }
 
         public void clearLoaded() {
-            loaded = true;
+            loaded = false;
         }
 
         @Override
         public void run() {
-            if (loaded) {
+            if (!loaded) {
                 prefsObj.loadFrom(prefs);
                 loaded = true;
             }
