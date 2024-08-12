@@ -1,6 +1,6 @@
 # Autogui: 自動GUIバインディングライブラリ
 
-[English](readme.md) | 日本語
+[English](README.md) | 日本語
 
 AutoguiはJava/SwingのGUIアプリケーションをplain-old Javaオブジェクトから作り出すライブラリです。
 基本的な仕組みは与えられたオブジェクトのクラス構造をリフレクションAPIを通じて解析し、
@@ -148,7 +148,6 @@ public class ImageFlipDemo {
     void save() throws Exception {
         if (output.exists()) {
             System.err.println("File already exists: " + output);
-            return;
         } else {
             ImageIO.write(image, "png", output);
         }

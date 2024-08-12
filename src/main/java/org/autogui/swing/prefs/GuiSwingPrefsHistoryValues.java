@@ -375,7 +375,7 @@ public class GuiSwingPrefsHistoryValues {
             var time = e == null ? null : e.getTime();
             var index = e == null ? -1 : e.getIndex();
             boolean diff = !Objects.equals(this.lastEntry, e) ||
-                    !Objects.equals(lastEntryValue, value) || !Objects.equals(lastEntryTime, time) || (lastEntryIndex != index);;
+                    !Objects.equals(lastEntryValue, value) || !Objects.equals(lastEntryTime, time) || (lastEntryIndex != index);
             if (diff) {
                 this.lastEntryValue = value;
                 this.lastEntryTime = time;

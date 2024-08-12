@@ -1169,7 +1169,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
                     .distinct()
                     .map(GuiSwingPrefsSupports.PreferencesUpdateEvent::saveAndGetPostOperation)
                     .toList();
-            SwingUtilities.invokeLater(() -> {
+            SwingDeferredRunner.invokeLater(() -> {
                 if (postOps.contains(Boolean.TRUE)) {
                     flushRootPrefs();
                 }

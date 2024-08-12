@@ -429,14 +429,18 @@ public class ScheduledTaskRunner<EventType> {
         }
     }
 
-    public synchronized void run() {
+    public void run() {
+        List<EventType> eventsCopy;
+        synchronized (this) {
+            eventsCopy = new ArrayList<>(accumulatedEvents);
+            accumulatedEvents = new ArrayList<>();
+            scheduledTask = null;
+        }
         try {
-            consumer.accept(new ArrayList<>(accumulatedEvents)); //the events list should be only handled within synchronized blocks, but...
+            consumer.accept(eventsCopy); //the events list should be only handled within synchronized blocks, but...
         } catch (Throwable ex) { //the schduled-executors do not output any errors (but hold them within Future)
             handleException(ex);
         }
-        accumulatedEvents = new ArrayList<>();
-        scheduledTask = null;
     }
 
     public void handleException(Throwable ex) {

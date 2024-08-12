@@ -197,7 +197,6 @@ public class NimbusLookAndFeelCustomFlat extends NimbusLookAndFeel {
             replaceKey(im, "caret-up", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_P);
             replaceKey(im, "delete-next", 0, KeyEvent.VK_DELETE);
             replaceKey(im, "delete-next", InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_D);
-            replaceKey(im, "insert-break", 0, KeyEvent.VK_ENTER);
             replaceKey(im, "insert-tab", 0, KeyEvent.VK_TAB);
             replaceKey(im, "selection-backward", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_KP_LEFT);
             replaceKey(im, "selection-backward", InputEvent.SHIFT_DOWN_MASK, KeyEvent.VK_LEFT);

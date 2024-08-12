@@ -1,6 +1,6 @@
 # Autogui: an automatic GUI binding library
 
-English | [日本語](readme-ja.md)
+English | [日本語](README-ja.md)
 
 Autogui is a library for automatically creating Java/Swing GUI apps from plain-old Java objects.
 It analyzes class-definitions of given objects through reflection APIs, 
@@ -146,7 +146,6 @@ public class ImageFlipDemo {
     void save() throws Exception {
         if (output.exists()) {
             System.err.println("File already exists: " + output);
-            return;
         } else {
             ImageIO.write(image, "png", output);
         }
