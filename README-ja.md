@@ -28,7 +28,7 @@ cd autogui
 
 ```bash
 mvn package
-  # このコマンドは target/autogui-1.7-SNAPSHOT.jar を生成します。
+  # このコマンドは target/autogui-1.7.jar を生成します。
 ```
 本プロジェクトの主要部分はJDKクラス以外の他のライブラリに依存しません。
 `src/main/java`にあるソースファイル(及び`src/main/resources`にあるリソース)を手動でコンパイルすることもできます。
@@ -41,7 +41,7 @@ mvn package
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.7-SNAPSHOT</version>
+        <version>1.7</version>
     </dependency>
 ```
 
@@ -77,7 +77,7 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.7-SNAPSHOT.jar
+/env -class-path target/autogui-1.7.jar
 
 import org.autogui.swing.*
 Hello h = new Hello();
