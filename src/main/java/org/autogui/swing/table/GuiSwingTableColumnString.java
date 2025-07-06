@@ -1,14 +1,14 @@
 package org.autogui.swing.table;
 
-import org.autogui.base.mapping.GuiMappingContext;
+import org.autogui.base.log.GuiLogManager;
+import org.autogui.base.mapping.*;
 import org.autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
-import org.autogui.base.mapping.GuiReprValue;
-import org.autogui.base.mapping.GuiReprValueStringField;
-import org.autogui.base.mapping.GuiTaskClock;
 import org.autogui.swing.*;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import org.autogui.swing.GuiSwingViewLabel.PropertyLabel;
+import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
+import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.util.*;
 import org.autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 
@@ -21,6 +21,7 @@ import java.io.Serial;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -350,9 +351,16 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
      * cell component with supporting {@link GuiReprValueStringField} instead of the document
      * @since 1.3
      */
-    public static class MultilineColumnTextPane extends GuiSwingViewDocumentEditor.PropertyDocumentEditorPane {
+    public static class MultilineColumnTextPane extends GuiSwingViewDocumentEditor.PropertyDocumentEditorPane
+        implements ObjectTableColumn.PopupMenuBuilderSourceForHeader, GuiSwingPrefsSupports.PreferencesUpdateSupport {
         @Serial private static final long serialVersionUID = 1L;
         protected List<Runnable> editFinishHandlers = new ArrayList<>(1);
+        /** @since 1.8 */
+        protected boolean editFinishByEnter = true;
+        /** @since 1.8 */
+        protected boolean editor;
+        /** @since 1.8 */
+        protected Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> prefsUpdater;
         public MultilineColumnTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             TextCellRenderer.setCellDefaultProperties(this);
@@ -370,6 +378,27 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         protected void initAction() {
+            if (editFinishByEnter) {
+                switchActionFinishByEnter();
+            } else {
+                switchActionFinishByEnterWithKey();
+            }
+        }
+
+        protected void switchActionFinishByEnter() {
+            InputMap iMap = getInputMap();
+            Action finish = new FinishCellEditAction(editFinishHandlers);
+            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK), DefaultEditorKit.insertBreakAction);
+            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK), DefaultEditorKit.insertTabAction);
+
+            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_DOWN_MASK), DefaultEditorKit.insertBreakAction);
+            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.ALT_DOWN_MASK), DefaultEditorKit.insertTabAction);
+
+            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), finish);
+            iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), finish);
+        }
+
+        protected void switchActionFinishByEnterWithKey() {
             InputMap iMap = getInputMap();
             Action finish = new FinishCellEditAction(editFinishHandlers);
             iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK), finish);
@@ -380,6 +409,104 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
             iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), DefaultEditorKit.insertTabAction);
             iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), DefaultEditorKit.insertBreakAction);
+        }
+
+        /**
+         * @param table the target table
+         * @return a menu for switching enter-key behavior
+         * @since 1.8
+         */
+        @Override
+        public List<CategorizedMenuItem> getHeaderMenuItems(JTable table) {
+            return editor ? List.of(new SwitchEnterBehaviorAction(this)) : List.of();
+        }
+
+        public boolean isEditFinishByEnter() {
+            return editFinishByEnter;
+        }
+
+        public void setEditFinishByEnter(boolean editFinishByEnter) {
+            this.editFinishByEnter = editFinishByEnter;
+            initAction();
+        }
+
+        /**
+         * update the {@link #isEditFinishByEnter()} with sending call-back
+         * @param editFinishByEnter the new flag
+         * @since 1.8
+         */
+        public void setEditFinishByEnterAsUserAction(boolean editFinishByEnter) {
+            setEditFinishByEnter(editFinishByEnter);
+            if (prefsUpdater != null) {
+                prefsUpdater.accept(new GuiSwingPrefsSupports.PreferencesUpdateEvent(context, createCurrentPrefsMultilineColumn()));
+            }
+        }
+
+        @Override
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
+            super.loadSwingPreferences(prefs, options);
+            try {
+                options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
+                GuiSwingView.loadPreferencesDefault(this, prefs, options);
+                options.loadFromAndApplyTo(this, prefs.getDescendant(context));
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+                options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
+            }
+        }
+
+        public void loadFromAndApplyTo(GuiPreferences p) {
+            var prefObj = new PreferencesForMultilineColumn();
+            prefObj.loadFrom(p);
+            setEditFinishByEnter(prefObj.isEditFinishByEnter());
+        }
+
+        @Override
+        public void saveSwingPreferences(GuiPreferences prefs) {
+            try {
+                GuiSwingView.savePreferencesDefault(this, prefs);
+                GuiPreferences targetPrefs = prefs.getDescendant(context);
+                createCurrentPrefsMultilineColumn().saveTo(targetPrefs);
+            } catch (Exception ex) {
+                GuiLogManager.get().logError(ex);
+            }
+        }
+
+        private PreferencesForMultilineColumn createCurrentPrefsMultilineColumn() {
+            var prefObj = new PreferencesForMultilineColumn();
+            prefObj.setEditFinishByEnter(isEditFinishByEnter());
+            return prefObj;
+        }
+
+        @Override
+        public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
+            this.prefsUpdater = updater;
+        }
+
+        /**
+         * @since 1.8
+         */
+        public static class SwitchEnterBehaviorAction extends AbstractAction
+            implements PopupCategorized.CategorizedMenuItemActionCheck {
+            protected MultilineColumnTextPane pane;
+            public SwitchEnterBehaviorAction(MultilineColumnTextPane pane) {
+                this.pane = pane;
+                var os = UIManagerUtil.getInstance().getOsVersion();
+                putValue(NAME, "Finish Editing By " + os.getKeyStrokeString(0, KeyEvent.VK_ENTER) +
+                        " Instead of " + os.getKeyStrokeString(KeyEvent.ALT_DOWN_MASK, KeyEvent.VK_ENTER));
+                setSelectedFromPane();
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                var b = !pane.isEditFinishByEnter();
+                pane.setEditFinishByEnterAsUserAction(b);
+                setSelectedFromPane();
+            }
+
+            protected void setSelectedFromPane() {
+                putValue(SELECTED_KEY, pane.isEditFinishByEnter());
+            }
         }
 
         public static class FinishCellEditAction extends AbstractAction {
@@ -514,6 +641,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         public MultilineColumnScrollPane asEditorPane() {
+            editor = true;
             return new MultilineColumnScrollPane(this);
         }
 
@@ -569,6 +697,36 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         @Override
         public void addSwingEditFinishHandler(Runnable eventHandler) {
             editFinishHandlers.add(eventHandler);
+        }
+    }
+
+    public static class PreferencesForMultilineColumn implements GuiSwingPrefsSupports.PreferencesByJsonEntry  {
+        boolean editFinishByEnter;
+        @Override
+        public String getKey() {
+            return "$multilineColumn";
+        }
+
+        public void setEditFinishByEnter(boolean editFinishByEnter) {
+            this.editFinishByEnter = editFinishByEnter;
+        }
+
+        public boolean isEditFinishByEnter() {
+            return editFinishByEnter;
+        }
+
+        @Override
+        public Object toJson() {
+            Map<String,Object> map = new LinkedHashMap<>();
+            map.put("editFinishByEnter", editFinishByEnter);
+            return map;
+        }
+
+        @Override
+        public void setJson(Object json) {
+            if (json instanceof Map<?,?> map) {
+                editFinishByEnter = GuiSwingPrefsSupports.getAs(map, Boolean.class, "editFinishByEnter", true);
+            }
         }
     }
 

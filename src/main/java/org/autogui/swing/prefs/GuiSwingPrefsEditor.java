@@ -3,6 +3,7 @@ package org.autogui.swing.prefs;
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValueNumberSpinner;
 import org.autogui.swing.*;
+import org.autogui.swing.table.GuiSwingTableColumnString;
 import org.autogui.swing.table.GuiSwingTableModelCollection;
 import org.autogui.swing.table.ObjectTableColumn;
 import org.autogui.swing.table.ObjectTableModelColumns;
@@ -290,6 +291,11 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
         return false;
     }
 
+    @Override
+    public void loadFromAndApplyTo(GuiSwingTableColumnString.MultilineColumnTextPane columnEditor, GuiPreferences prefs) {
+        addToContentPaneIfFirst(prefs, new GuiSwingTableColumnString.PreferencesForMultilineColumn().getKey(), this::createColumnMultilinne);
+    }
+
     public JComponent createRootPane() {
         UIManagerUtil u = UIManagerUtil.getInstance();
         var rootPane = new JPanel(new BorderLayout());
@@ -387,6 +393,7 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     public static final String TABLE_PREFS_COLUMN_INDEX = "columnIndex";
     public static final String TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX = "modelIndex";
     public static final String TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX = "viewIndex";
+    public static final String MULTILINE_COLUMN_PREFS_EDIT_FINISH_BY_ENTER = "editFinishByEnter";
     public static final String PREFS_CURRENT_VALUE = GuiPreferences.KEY_CURRENT_VALUE;
     public static final String DOCUMENT_PREFS_KEY = "<DocumentSetting>";
     public static final String NUMBER_PREFS_KEY = "<NumberSetting>";
@@ -564,6 +571,16 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
         {
             ResizableFlowLayout.add(pane, createNumberInt(null, TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX, prefsObj::getModelIndex, setterPrefs(prefsObj::setModelIndex, prefsObj, prefs), validationCheckAdder), false);
             ResizableFlowLayout.add(pane, createNumberInt(null, TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX, prefsObj::getViewIndex, setterPrefs(prefsObj::setViewIndex, prefsObj, prefs), validationCheckAdder), false);
+        }
+        return createNamed(getName(prefs, prefsObj.getKey()), pane);
+    }
+
+    public JComponent createColumnMultilinne(GuiPreferences prefs) {
+        var prefsObj = new GuiSwingTableColumnString.PreferencesForMultilineColumn();
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
+        var pane = createPane(true);
+        {
+            ResizableFlowLayout.add(pane, createBoolean(null, MULTILINE_COLUMN_PREFS_EDIT_FINISH_BY_ENTER, prefsObj::isEditFinishByEnter, setterPrefs(prefsObj::setEditFinishByEnter, prefsObj, prefs), validationCheckAdder), false);
         }
         return createNamed(getName(prefs, prefsObj.getKey()), pane);
     }

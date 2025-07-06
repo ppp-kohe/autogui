@@ -747,7 +747,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                         new ColumnOrderResetAction(this),
                         rowHeightSetAction
                 ));
-
+            }
+            TableColumn targetColumn;
+            ObjectTableColumn objColumn;
+            if ((targetColumn = popupColumnHeader.getTargetColumn()) != null &&
+                    (objColumn = getObjectTableModel().getColumns().getColumnOrNull(targetColumn.getModelIndex())) != null) {
+                return PopupCategorized.getMenuItems(
+                        columnHeaderMenuItems,
+                        objColumn.getHeaderMenuItems(this));
             }
             return columnHeaderMenuItems;
         }
@@ -902,21 +909,29 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public static String getToolTipText(JTable table, MouseEvent event) {
             if (table != null) {
-                String tableText = table.getToolTipText();
+                List<String> texts = new ArrayList<>(3);
 
-                String rowText = null;
                 Point p = event.getPoint();
                 int col = table.getTableHeader().columnAtPoint(p);
                 if (col != -1) {
                     TableColumn model = table.getColumnModel().getColumn(col);
+                    var hv = model.getHeaderValue();
+                    if (hv != null) {
+                        texts.add(Objects.toString(hv));
+                    }
                     JComponent source = getSourceComponentForToolTip(table, model);
                     if (source != null) {
-                        rowText = source.getToolTipText();
+                        String rowText = source.getToolTipText();
+                        if (rowText != null) {
+                            texts.add(rowText);
+                        }
                     }
                 }
-                return (tableText == null ? "" : tableText) +
-                        (tableText != null && rowText != null ? ": " : "") +
-                        (rowText == null ? "" : rowText);
+                String tableText = table.getToolTipText();
+                if (tableText != null) {
+                    texts.add(tableText);
+                }
+                return String.join(": ", texts);
             } else {
                 return null;
             }
@@ -1665,17 +1680,26 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             PopupCategorized tableActions = new PopupCategorized(items, null,
                                         new ObjectTableModel.MenuBuilderWithEmptySeparator());
             PopupMenuBuilder columnBuilder = new CollectionColumnMenuSupplier(this);
-            PopupMenuBuilder cellBuilder = new CollectionCellMenuSupplier(this);
+            CollectionCellMenuSupplier cellBuilder = new CollectionCellMenuSupplier(this);
 
             setMenuBuilder((filter, m) -> {
-                tableActions.build(filter, m);
                 columnBuilder.build(filter, m);
-                cellBuilder.build(filter, m);
+
+                new PopupCategorized(() -> PopupCategorized.getMenuItems(
+                        List.of(buildTableActionsAsSubMenu(tableActions, filter)),
+                        cellBuilder.buildAsSubMenu(filter)
+                )).build(new MenuSeparator(filter), m);
             });
 
             menu.get().addPopupMenuListener(this);
             showingTimer = new Timer(100, e -> showing = false);
             showingTimer.setRepeats(false);
+        }
+
+        protected JMenu buildTableActionsAsSubMenu(PopupCategorized tableActions, PopupMenuFilter filter) {
+            JMenu subMenu = new JMenu("Table");
+            tableActions.build(filter, new MenuBuilder.MenuAppender(subMenu));
+            return subMenu;
         }
 
         @Override
@@ -1753,19 +1777,14 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public ObjectTableColumn getTargetColumn() {
-            if (targetColumnIndex >= 0 &&
-                    targetColumnIndex < table.getObjectTableModel().getColumnCount()) {
-                return table.getObjectTableModel().getColumns().getColumns().get(targetColumnIndex);
-            } else {
-                return null;
-            }
+            return table.getObjectTableModel().getColumns().getColumnOrNull(targetColumnIndex);
         }
 
         public List<ObjectTableColumn> getTargetColumns() {
             ObjectTableModel model = table.getObjectTableModel();
             return IntStream.of(table.getSelectedColumns())
                     .map(table::convertColumnIndexToModel)
-                    .mapToObj(model.getColumns().getColumns()::get)
+                    .mapToObj(model.getColumns()::getColumnAt)
                     .collect(Collectors.toList());
         }
 
@@ -1832,7 +1851,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             if (src != null) {
                 PopupExtension.PopupMenuBuilder builder = src.getMenuBuilder(popup.getTable());
                 if (builder != null) {
-                    builder.build(new MenuSeparator("Column: " + column.getTableColumn().getHeaderValue(), filter), menu);
+                    builder.build(new MenuSeparator("Column: " + column.getTableColumn().getHeaderValue(), filter).withoutSeparator(), menu);
                 }
             }
         }
@@ -1843,6 +1862,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected PopupExtension.PopupMenuFilter filter;
         protected boolean beforeReturned = false;
         protected String title;
+        /** @since 1.8 */
+        protected boolean separator = true;
 
         public MenuSeparator(PopupExtension.PopupMenuFilter filter) {
             this.filter = filter;
@@ -1851,6 +1872,15 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public MenuSeparator(String title, PopupExtension.PopupMenuFilter filter) {
             this.title = title;
             this.filter = filter;
+        }
+
+        /**
+         * @return this with separator = false
+         * @since 1.8
+         */
+        public MenuSeparator withoutSeparator() {
+            separator = false;
+            return this;
         }
 
         @Override
@@ -1862,7 +1892,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public List<Object> aroundItems(boolean before) {
             if (before && !beforeReturned) {
                 List<Object> bs = new ArrayList<>(filter.aroundItems(true));
-                Object s = filter.convert(new JPopupMenu.Separator());
+                Object s = (separator ? filter.convert(new JPopupMenu.Separator()) : null);
                 if (s != null) {
                     bs.add(s);
                 }
@@ -1885,20 +1915,41 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             this.popup = popup;
         }
 
+        /**
+         * constructs 2 sub-menus by {@link #buildCellsOrRows(PopupExtension.PopupMenuFilter, Consumer, boolean)}
+         * @param filter a menu-filter
+         * @return sub-menus of selected-cells and selected-rows
+         * @since 1.8
+         */
+        public List<JMenu> buildAsSubMenu(PopupExtension.PopupMenuFilter filter) {
+            JMenu cell = new JMenu("Selected Cells");
+            buildCellsOrRows(filter, new MenuBuilder.MenuAppender(cell), false);
+
+            JMenu row = new JMenu("Selected Rows");
+            buildCellsOrRows(filter, new MenuBuilder.MenuAppender(row), true);
+            return List.of(cell, row);
+        }
+
         @Override
         public void build(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu) {
+            buildCellsOrRows(filter, menu, false);
+            buildCellsOrRows(filter, menu, true);
+        }
+
+        /**
+         * @param filter a menu-filter
+         * @param menu the mnu host
+         * @param rows if true, creates menus for selected-rows, instead, menus for selected-cells
+         * @since 1.8
+         */
+        protected void buildCellsOrRows(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu, boolean rows) {
             CollectionTable table = popup.getTable();
-
+            List<ObjectTableColumn> targetCols = rows ?
+                    table.getObjectTableModel().getColumns().getColumns() :
+                    popup.getTargetColumns();
             filter = new ObjectTableModel.CollectionRowsAndCellsActionBuilder(table, filter);
-
-            List<ObjectTableColumn> targetCols = popup.getTargetColumns();
-            table.getObjectTableModel().getBuilderForRowsOrCells(table, targetCols, false)
-                    .build(new MenuSeparator(filter), menu);
-
-            List<ObjectTableColumn> allCols = table.getObjectTableModel().getColumns().getColumns();
-            table.getObjectTableModel().getBuilderForRowsOrCells(table, allCols, true)
-                    .build(new MenuSeparator(filter), menu);
-
+            table.getObjectTableModel().getBuilderForRowsOrCells(table, targetCols, rows)
+                    .build(new MenuSeparator(filter).withoutSeparator(), menu);
         }
     }
 

@@ -4,15 +4,15 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -773,6 +773,54 @@ public class UIManagerUtil {
         public boolean isDarkTheme() {
             return false;
         }
+
+        public String getKeyStrokeString(int mod, int keyCode) {
+            var mods = getKeyStrokeStringModifierTexts();
+            String alt = mods[0];
+            String meta = mods[1];
+            String ctrl = mods[2];
+            String shift = mods[3];
+            List<String> words = new ArrayList<>();
+            if (checkMenuModifiersMask(KeyEvent.CTRL_DOWN_MASK, mod)) {
+                words.add(ctrl);
+            }
+            if (checkMenuModifiersMask(KeyEvent.ALT_DOWN_MASK, mod)) {
+                words.add(alt);
+            }
+            if (checkMenuModifiersMask(KeyEvent.SHIFT_DOWN_MASK, mod)) {
+                words.add(shift);
+            }
+            if (checkMenuModifiersMask(KeyEvent.META_DOWN_MASK, mod)) {
+                words.add(meta);
+            }
+            if (keyCode != KeyEvent.VK_UNDEFINED) {
+                words.add(KeyEvent.getKeyText(keyCode));
+            } else {
+                words.add(KeyEvent.getKeyText(keyCode));
+            }
+            return getKeyStrokeStringJoin(words);
+        }
+
+        protected String[] getKeyStrokeStringModifierTexts() {
+            return new String[] {"Alt" , "Meta" , "Ctrl" , "Shift"};
+        }
+
+        protected String getKeyStrokeStringJoin(List<String> words) {
+            return String.join("+", words);
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    public static boolean checkMenuModifiersMask(int constKey, int testedMods) {
+        int oldKey = switch (constKey) {
+            case InputEvent.SHIFT_DOWN_MASK -> InputEvent.SHIFT_MASK;
+            case InputEvent.CTRL_DOWN_MASK -> InputEvent.CTRL_MASK;
+            case InputEvent.ALT_DOWN_MASK -> InputEvent.ALT_MASK;
+            case InputEvent.META_DOWN_MASK -> InputEvent.META_MASK;
+            default -> constKey;
+        };
+        return (testedMods & oldKey) != 0 ||
+                (testedMods & constKey) != 0;
     }
 
     /**
@@ -895,6 +943,16 @@ public class UIManagerUtil {
             } catch (Exception ex) {
                 return false;
             }
+        }
+
+        @Override
+        protected String[] getKeyStrokeStringModifierTexts() {
+            return new String[] {"⌥", "⌘", "⌃", "⇧"};
+        }
+
+        @Override
+        protected String getKeyStrokeStringJoin(List<String> words) {
+            return String.join("", words);
         }
     }
 

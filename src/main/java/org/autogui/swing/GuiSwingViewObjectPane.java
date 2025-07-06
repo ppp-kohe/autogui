@@ -159,6 +159,9 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
         protected List<JSplitPane> splitPanes = new ArrayList<>();
         protected SplitPreferencesUpdater preferencesUpdater;
         protected SettingsWindow.LabelGroup labelGroup;
+        /** the default setting for the orientation of split-panes
+         * @since 1.5 */
+        protected boolean defaultSplitOrientationHorizontal = true;
 
         /** recording mapping between prop (context) name to subcomponent
          * @since 1.5 */
@@ -183,6 +186,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             initPopup();
             initFocus();
             initDragDrop();
+            initSplitDefaultOrientation();
         }
 
         public void initName() {
@@ -234,6 +238,16 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             GuiSwingView.setupTransferHandler(this, new ToStringTransferHandler(this));
         }
 
+        /**
+         * called from {@link #init()}; set defaultSplitOrientationHorizontal  from the context type
+         * @since 1.8
+         */
+        public void initSplitDefaultOrientation() {
+            if (context != null) {
+                setDefaultSplitOrientationHorizontal(context.getTypeElementValue().getComponentOptions().splitPane().horizontal());
+            }
+        }
+
         @Override
         public List<PopupCategorized.CategorizedMenuItem> getSwingStaticMenuItems() {
             if (menuItems == null) {
@@ -263,6 +277,22 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         public JComponent getResizableSubComponents() {
             return resizableSubComponents;
+        }
+
+        /**
+         * @return the default value is true
+         * @since 1.8
+         */
+        public boolean isDefaultSplitOrientationHorizontal() {
+            return defaultSplitOrientationHorizontal;
+        }
+
+        /**
+         * @param defaultSplitOrientationHorizontal the flag
+         * @since 1.8
+         */
+        public void setDefaultSplitOrientationHorizontal(boolean defaultSplitOrientationHorizontal) {
+            this.defaultSplitOrientationHorizontal = defaultSplitOrientationHorizontal;
         }
 
         @Override
@@ -305,7 +335,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             } else {
                 Component prev = resizableSubComponents.getComponent(0);
                 resizableSubComponents.removeAll();
-                JComponent split = createResizableSplit(true, prev, component);
+                JComponent split = createResizableSplit(defaultSplitOrientationHorizontal, prev, component);
                 resizableSubComponents.add(split);
             }
         }

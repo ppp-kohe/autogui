@@ -1,5 +1,6 @@
 package org.autogui.base.mapping;
 
+import org.autogui.base.annotation.GuiComponentOptionTabbedPane;
 import org.autogui.base.type.GuiTypeCollection;
 import org.autogui.base.type.GuiTypeObject;
 
@@ -35,6 +36,7 @@ public class GuiReprObjectTabbedPane extends GuiReprObjectPane {
     protected boolean matchWithoutSetting(GuiMappingContext context) {
         return super.matchWithoutSetting(context) &&
                 !isRecursiveRepr(context) &&
+                matchWithoutSettingComponentOptions(context) &&
                 matchWithoutSettingSubContexts(context);
     }
 
@@ -48,6 +50,20 @@ public class GuiReprObjectTabbedPane extends GuiReprObjectPane {
             }
         }
         return false;
+    }
+
+    /**
+     * @param context the tested type context
+     * @return true if {@link GuiComponentOptionTabbedPane#noTab()} of the type == false
+     * @since 1.8
+     */
+    public boolean matchWithoutSettingComponentOptions(GuiMappingContext context) {
+        var type = context.getTypeElementValue();
+        if (type != null) {
+            return !type.getComponentOptions().tabbedPane().noTab();
+        } else {
+            return true;
+        }
     }
 
     public boolean matchWithoutSettingSubContexts(GuiMappingContext context) {

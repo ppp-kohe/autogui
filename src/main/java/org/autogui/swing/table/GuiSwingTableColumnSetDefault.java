@@ -1,9 +1,6 @@
 package org.autogui.swing.table;
 
-import org.autogui.base.mapping.GuiMappingContext;
-import org.autogui.base.mapping.GuiReprAction;
-import org.autogui.base.mapping.GuiReprActionList;
-import org.autogui.base.mapping.GuiReprValue;
+import org.autogui.base.mapping.*;
 import org.autogui.swing.*;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingView.SpecifierManagerDefault;
@@ -13,7 +10,6 @@ import org.autogui.swing.table.GuiSwingTableColumnCollection.DynamicColumnFactor
 import org.autogui.swing.table.GuiSwingTableColumnCollection.ObjectTableColumnSizeConcrete;
 import org.autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 import org.autogui.swing.table.ObjectTableModelColumns.DynamicColumnFactory;
-import org.autogui.base.mapping.GuiReprCollectionElement;
 import org.autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
@@ -210,11 +206,15 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                                                         GuiSwingElement view) {
         if (view instanceof GuiSwingTableColumn column) { //a value-type : List<List<String>>
             ObjectTableColumnSizeConcrete c = new ObjectTableColumnSizeConcrete(1, subContext, column, subSpecifier, target);
-            target.addColumnDynamic(c);
-        } else if (view instanceof GuiSwingTableColumnDynamic) { //further collection: List<List<List<...>>>
-            ((GuiSwingTableColumnDynamic) view).createColumnDynamic(subContext, target, rowSpecifier, subSpecifier);
-        } else if (view instanceof GuiSwingTableColumnSet) {   //regular object: List<List<Obj>>
-            ((GuiSwingTableColumnSet) view).createColumnsForDynamicCollection(subContext,
+//            if (target.isUnderMultidimentionalList()) {
+//
+//            } else {
+                target.addColumnDynamic(c);
+//            }
+        } else if (view instanceof GuiSwingTableColumnDynamic viewDyn) { //further collection: List<List<List<...>>>
+            viewDyn.createColumnDynamic(subContext, target, rowSpecifier, subSpecifier);
+        } else if (view instanceof GuiSwingTableColumnSet viewSet) {   //regular object: List<List<Obj>>
+            viewSet.createColumnsForDynamicCollection(subContext,
                     target, rowSpecifier, subSpecifier);
         } else if (subContext.isReprAction() || subContext.isReprActionList()) {
             target.addActionContext(subContext);

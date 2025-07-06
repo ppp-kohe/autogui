@@ -2,6 +2,7 @@ package org.autogui.swing.prefs;
 
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.swing.*;
+import org.autogui.swing.table.GuiSwingTableColumnString;
 import org.autogui.swing.table.GuiSwingTableModelCollection;
 import org.autogui.swing.table.ObjectTableColumn;
 import org.autogui.swing.table.ObjectTableModelColumns;
@@ -96,6 +97,15 @@ public interface GuiSwingPrefsApplyOptions {
     default boolean loadFromAndApplyTo(GuiSwingTableModelCollection.PreferencesForTableColumnOrder orderPrefs, ObjectTableModelColumns columns, GuiPreferences prefs) {
         orderPrefs.loadFrom(prefs);
         return orderPrefs.applyTo(columns);
+    }
+
+    /**
+     * @param columnEditor the actual pane  
+     * @param prefs the source prefs
+     * @since 1.8
+     */
+    default void loadFromAndApplyTo(GuiSwingTableColumnString.MultilineColumnTextPane columnEditor, GuiPreferences prefs) {
+        columnEditor.loadFromAndApplyTo(prefs);
     }
 
     default void end(Object loadingTarget, GuiPreferences prefs, PrefsApplyOptionsLoadingTargetType targetType) {}

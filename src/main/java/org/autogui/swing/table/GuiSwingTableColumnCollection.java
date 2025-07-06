@@ -23,6 +23,7 @@ import org.autogui.swing.table.ObjectTableModelColumns.DynamicColumnContainer;
 import org.autogui.swing.table.ObjectTableModelColumns.DynamicColumnFactory;
 import org.autogui.swing.table.ObjectTableModelColumns.ObjectTableColumnSize;
 import org.autogui.swing.table.ObjectTableModelColumns.ObjectTableColumnSizeComposite;
+import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
@@ -110,8 +111,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         for (GuiMappingContext elementCollection : context.getChildren()) { //always a single-element context
             GuiSwingElement elemView = columnMapperSet.viewTableColumn(elementCollection);
-            if (elemView instanceof GuiSwingTableColumnSet) { //and, usually element-repr machines to the column-set
-                ((GuiSwingTableColumnSet) elemView).createColumnsForDynamicCollection(elementCollection,
+            if (elemView instanceof GuiSwingTableColumnSet elemViewSet) { //and, usually element-repr machines to the column-set
+                elemViewSet.createColumnsForDynamicCollection(elementCollection,
                         col, rowSpecifier, elementSpecifier);
                 /*
             } else {
@@ -142,6 +143,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         public void createColumnDynamic(GuiMappingContext context, TableColumnHost model,
                                                                                 SpecifierManagerIndex rowSpecifier,
                                                                                 SpecifierManager parentSpecifier) {
+            model.isUnderMultidimentionalList(); //TODO
             //GuiReprPropertyPane prop = (GuiReprPropertyPane) context.getRepresentation();
             //if (prop.getSubRepresentations() instanceof GuiReprCollectionTable) { //prop(list(E))
                 SpecifierManager subSpecifier = new SpecifierManagerDefault(parentSpecifier::getSpecifier);
@@ -623,6 +625,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 elementFactory.debugPrint(depth + 1);
             }
         }
+
+        @Override
+        public boolean isUnderMultidimentionalList() {
+            return true;
+        }
     }
 
     /**
@@ -727,6 +734,10 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             return a;
         }
 
+        @Override
+        public boolean isUnderMultidimentionalList() {
+            return false; //root
+        }
     }
 
     /**
@@ -819,6 +830,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             out.println(indent + "   : index=" + elementIndex + ", indexSpecs=" + getIndexSpecifiers());
             factories.forEach(f -> f.debugPrint(depth + 1));
         }
+
+        @Override
+        public boolean isUnderMultidimentionalList() {
+            return model.isUnderMultidimentionalList();
+        }
     }
 
     /**
@@ -879,18 +895,27 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
          * @param indexInSize the index of the created column in the target container
          */
         public void createSingle(DynamicColumnContainer targetContainer, int indexInSize) {
+            targetContainer.add(createSingleColumn(indexInSize));
+        }
+
+        /**
+         * @param indexInSize the index for the column
+         * @return a {@link ObjectTableColumn} or {@link ObjectTableColumnCollectionWrapper}
+         * @since 1.8
+         */
+        public ObjectTableColumn createSingleColumn(int indexInSize) {
             ObjectTableColumn c = column.createColumn(factoryBase.getContext(), null, parentSpecifier);
-            if (c instanceof ObjectTableColumnWithContext) {
+            if (c instanceof ObjectTableColumnWithContext cc) {
                 SpecifierManagerIndex rootRowSpec = getIndexSpecifiers().getFirst(); //top spec is the rowSpecifier
                 Map<SpecifierManagerIndex,Integer> indexInjections = toIndexInjection(indexInSize);
-                factoryBase.setSpecifierManager(((ObjectTableColumnWithContext) c).getSpecifierManager());
-                targetContainer.add(new ObjectTableColumnCollectionWrapper(getHeaderName(indexInjections),
-                        (ObjectTableColumnWithContext) c,
+                factoryBase.setSpecifierManager(cc.getSpecifierManager());
+                return new ObjectTableColumnCollectionWrapper(getHeaderName(indexInjections),
+                        cc,
                         indexInjections,
                         rootRowSpec,
-                        toIndices(indexInjections)));
+                        toIndices(indexInjections));
             } else {
-                targetContainer.add(c);
+                return c;
             }
         }
 
@@ -1195,6 +1220,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             spec.putAll(indexInjection); //all indices
             return spec;
         }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getHeaderMenuItemsInfo() {
+            return column.getHeaderMenuItemsInfo();
+        }
     }
 
     /** the base class for dynamic table-selection-sources */
@@ -1247,7 +1277,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 if (column instanceof ObjectTableColumnCollectionWrapper colWrapper) {
                     if (colWrapper.containsIndexInjections(indexSpecifiers)) {
                         TargetAndSpecifierMap t = new TargetAndSpecifierMap(targetName,
-                                selectSpecifierMapForCollectionWrapper((ObjectTableColumnCollectionWrapper) column, cell, indexSpecifiers));
+                                selectSpecifierMapForCollectionWrapper(colWrapper, cell, indexSpecifiers));
                         if (occurrences.add(t)) {
                             resultGen.accept(t);
                         }

@@ -194,7 +194,7 @@ public class GuiSwingViewWrapper {
         public ValueWrappingPane(Component view) {
             super(new BorderLayout());
             setOpaque(false);
-            add(view, BorderLayout.CENTER);
+            add(view, BorderLayout.CENTER); //call addImpl -> setPane
         }
 
         @SuppressWarnings("unchecked")

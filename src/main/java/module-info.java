@@ -9,6 +9,7 @@ module org.autogui {
     exports org.autogui.base.log;
     exports org.autogui.base.mapping;
     exports org.autogui.base.type;
+    exports org.autogui.base.annotation;
 
     exports org.autogui.swing;
     exports org.autogui.swing.icons;

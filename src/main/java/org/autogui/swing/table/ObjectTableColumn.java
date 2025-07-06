@@ -3,10 +3,8 @@ package org.autogui.swing.table;
 import org.autogui.base.mapping.GuiReprCollectionTable;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifier;
 import org.autogui.swing.GuiSwingView;
-import org.autogui.swing.util.PopupCategorized;
-import org.autogui.swing.util.PopupExtension;
-import org.autogui.swing.util.TextCellRenderer;
-import org.autogui.swing.util.UIManagerUtil;
+import org.autogui.swing.GuiSwingViewWrapper;
+import org.autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -18,6 +16,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -244,6 +243,61 @@ public class ObjectTableColumn {
         }
 
         PopupExtension.PopupMenuBuilder getMenuBuilder(JTable table);
+    }
+
+    /**
+     * @return list of static menu-items for the column header: compound list of both the renderer and the editor
+     * @since 1.8
+     */
+    public List<PopupCategorized.CategorizedMenuItem> getHeaderMenuItems(JTable table) {
+        List<PopupCategorized.CategorizedMenuItem> items =
+                PopupMenuBuilderSourceForHeader.getHeaderMenuItemsUnwrap(table, getTableColumn().getCellRenderer());
+        if (!Objects.equals(getTableColumn().getCellRenderer(), getTableColumn().getCellEditor())) {
+            items = PopupCategorized.getMenuItems(items,
+                    PopupMenuBuilderSourceForHeader.getHeaderMenuItemsUnwrap(table, getTableColumn().getCellEditor()));
+        }
+        return  PopupCategorized.getMenuItems(
+                getHeaderMenuItemsInfo(),
+                items);
+    }
+
+    /**
+     * @return the label info string:  the default value is  string of {@link TableColumn#getHeaderValue()}
+     * @since 1.8
+     */
+    public List<PopupCategorized.CategorizedMenuItem> getHeaderMenuItemsInfo() {
+        return tableColumn == null ? List.of() :
+                List.of(MenuBuilder.get().createLabel("Column: " + tableColumn.getHeaderValue()));
+    }
+
+    /**
+     * a static menu-factory for the column header view;
+     *  as the default, the cell-renderer and the cell-editor that implements it is used
+     * @since 1.8
+     */
+    public interface PopupMenuBuilderSourceForHeader {
+        /**
+         * @param table the target table
+         * @return menu-items for a column in the table
+         * @since 1.8
+         */
+        List<PopupCategorized.CategorizedMenuItem> getHeaderMenuItems(JTable table);
+
+        /**
+         * recursively unwrap the pane as a wrapper and obtains items from the source
+         * @param table the table for header-menu
+         * @param pane the target pane {@link PopupMenuBuilderSourceForHeader} or {@link org.autogui.swing.GuiSwingViewWrapper.ValuePaneWrapper}
+         * @return the header-menu for the unwrapped target or empty
+         */
+        static List<PopupCategorized.CategorizedMenuItem> getHeaderMenuItemsUnwrap(JTable table, Object pane) {
+            if (pane instanceof PopupMenuBuilderSourceForHeader source) {
+                return source.getHeaderMenuItems(table);
+            } else if (pane instanceof GuiSwingViewWrapper.ValuePaneWrapper<?> wrapper) {
+                return getHeaderMenuItemsUnwrap(table, wrapper.getSwingViewWrappedPane());
+            } else {
+                return List.of();
+            }
+        }
     }
 
     ////////////////

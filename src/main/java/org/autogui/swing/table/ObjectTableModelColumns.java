@@ -157,13 +157,13 @@ public class ObjectTableModelColumns
 
     public void addColumnDynamic(DynamicColumnContainer d, ObjectTableColumn c) {
         this.columns.add(c.getTableColumn().getModelIndex(), c);
-        columnAdded(c, d);
         int idx = columnModel.getColumnCount();
         columnModel.addColumn(c.getTableColumn());
         int newIndex = c.getTableColumn().getModelIndex();
         if (idx != newIndex) {
             columnModel.moveColumn(idx, newIndex);
         }
+        columnAdded(c, d);
     }
 
     public void removeColumnsDynamic(List<ObjectTableColumn> columns) {
@@ -223,6 +223,20 @@ public class ObjectTableModelColumns
         return n;
     }
 
+    /**
+     * obtains a {@link ObjectTableColumn}; a safe-version of {@link #getColumnAt(int)}
+     * @param modelIndex a column-index
+     * @return the column at modelIndex if the index is valid, or null
+     * @since 1.8
+     */
+    public ObjectTableColumn getColumnOrNull(int modelIndex) {
+        if (0 <= modelIndex && modelIndex < columnModel.getColumnCount()) {
+            return getColumnAt(modelIndex);
+        } else {
+            return null;
+        }
+    }
+
     @Override
     public void columnMarginChanged(ChangeEvent e) { }
 
@@ -231,6 +245,11 @@ public class ObjectTableModelColumns
 
     public void shutdown() {
         getColumns().forEach(ObjectTableColumn::shutdown);
+    }
+
+    @Override
+    public boolean isUnderMultidimentionalList() {
+        return false;
     }
 
     /** a container of dynamic columns. it constructs a tree.

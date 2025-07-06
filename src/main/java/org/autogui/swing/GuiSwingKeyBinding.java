@@ -626,41 +626,8 @@ public class GuiSwingKeyBinding {
         }
 
         public String getKeyStrokeString() {
-            String alt = "Alt";
-            String meta = "Meta";
-            String ctrl = "Ctrl";
-            String shift = "Shift";
-            boolean mac = UIManagerUtil.getInstance().getOsVersion().isMacOS();
-            if (mac) {
-                alt = "⌥";
-                meta = "⌘";
-                ctrl = "⌃";
-                shift = "⇧";
-            }
-            int mod = stroke.getModifiers();
-            List<String> words = new ArrayList<>();
-            if (checkMenuModifiersMask(KeyEvent.CTRL_DOWN_MASK, mod)) {
-                words.add(ctrl);
-            }
-            if (checkMenuModifiersMask(KeyEvent.ALT_DOWN_MASK, mod)) {
-                words.add(alt);
-            }
-            if (checkMenuModifiersMask(KeyEvent.SHIFT_DOWN_MASK, mod)) {
-                words.add(shift);
-            }
-            if (checkMenuModifiersMask(KeyEvent.META_DOWN_MASK, mod)) {
-                words.add(meta);
-            }
-            if (stroke.getKeyCode() != KeyEvent.VK_UNDEFINED) {
-                words.add(KeyEvent.getKeyText(stroke.getKeyCode()));
-            } else {
-                words.add(Character.toString(stroke.getKeyChar()));
-            }
-            if (mac) {
-                return String.join("", words);
-            } else {
-                return String.join("+", words);
-            }
+            return UIManagerUtil.getInstance().getOsVersion()
+                    .getKeyStrokeString(stroke.getModifiers(), stroke.getKeyCode());
         }
 
         @Override
@@ -796,15 +763,7 @@ public class GuiSwingKeyBinding {
 
     @SuppressWarnings("deprecation")
     public static boolean checkMenuModifiersMask(int constKey, int testedMods) {
-        int oldKey = switch (constKey) {
-            case InputEvent.SHIFT_DOWN_MASK -> InputEvent.SHIFT_MASK;
-            case InputEvent.CTRL_DOWN_MASK -> InputEvent.CTRL_MASK;
-            case InputEvent.ALT_DOWN_MASK -> InputEvent.ALT_MASK;
-            case InputEvent.META_DOWN_MASK -> InputEvent.META_MASK;
-            default -> constKey;
-        };
-        return (testedMods & oldKey) != 0 ||
-                (testedMods & constKey) != 0;
+        return UIManagerUtil.checkMenuModifiersMask(constKey, testedMods);
     }
 
 

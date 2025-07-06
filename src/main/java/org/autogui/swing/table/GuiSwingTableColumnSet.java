@@ -60,6 +60,13 @@ public interface GuiSwingTableColumnSet extends GuiSwingElement {
          * @return  a column of the modelIndex in the table
          */
         ObjectTableColumn getColumnAt(int modelIndex);
+
+        /**
+         *
+         * @return true if it is under the multidimentional list e.g. true for E in List&lt;List&lt;E&gt;&gt;, and false for X in List&lt;Y&gt;, class Y {X e;}
+         * @since 1.8
+         */
+        boolean isUnderMultidimentionalList();
     }
 
     /**

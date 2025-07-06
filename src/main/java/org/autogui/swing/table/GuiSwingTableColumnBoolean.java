@@ -79,6 +79,7 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
                         if (e.getKeyCode() == KeyEvent.VK_SPACE && e.getModifiersEx() == 0) {
                             setSelected(!isSelected());
                             e.consume();
+                            finishRunners.forEach(Runnable::run);
                         }
                     }
                 });

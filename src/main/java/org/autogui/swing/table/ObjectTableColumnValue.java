@@ -4,6 +4,7 @@ import org.autogui.base.mapping.*;
 import org.autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifier;
 import org.autogui.swing.GuiSwingActionDefault;
+import org.autogui.swing.GuiSwingContextInfo;
 import org.autogui.swing.GuiSwingJsonTransfer;
 import org.autogui.swing.GuiSwingView;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
@@ -247,6 +248,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         }
     }
 
+    @Override
+    public List<CategorizedMenuItem> getHeaderMenuItemsInfo() {
+        var list = new ArrayList<CategorizedMenuItem>(2);
+        list.addAll(super.getHeaderMenuItemsInfo());
+        list.add(GuiSwingContextInfo.get().getInfoLabel(context));
+        return list;
+    }
+
     /**
      *
      * @param rowObject the row object at rowIndex
@@ -353,9 +362,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         default <CompType> void setForComponent(Class<CompType> componentType, Consumer<CompType> setter) {
             JComponent c = getComponent();
-            if (!isSkippingSet() && componentType.isInstance(c)) {
-                setter.accept(componentType.cast(c));
-            }
+            GuiSwingView.forEach(componentType, c, setter);
         }
     }
 
@@ -370,7 +377,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     /**
      * a cell renderer with {@link ValuePane}
      */
-    public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource, ObjectTableColumnCellView {
+    public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource, ObjectTableColumnCellView,
+        PopupMenuBuilderSourceForHeader {
         protected JComponent component;
         protected ObjectTableColumn ownerColumn;
         protected SpecifierManagerIndex specifierIndex;
@@ -438,6 +446,17 @@ public class ObjectTableColumnValue extends ObjectTableColumn
                 return null;
             }
         }
+
+        /**
+         *
+         * @param table the target table
+         * @return obtains the list from component if it implements {@link org.autogui.swing.table.ObjectTableColumn.PopupMenuBuilderSourceForHeader}
+         * @since 1.8
+         */
+        @Override
+        public List<CategorizedMenuItem> getHeaderMenuItems(JTable table) {
+            return PopupMenuBuilderSourceForHeader.getHeaderMenuItemsUnwrap(table, getComponent());
+        }
     }
 
 
@@ -468,7 +487,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     /**
      * a cell-editor with {@link ValuePane}
      */
-    public static class ObjectTableCellEditor extends AbstractCellEditor implements TableCellEditor, ObjectTableColumnCellView {
+    public static class ObjectTableCellEditor extends AbstractCellEditor implements TableCellEditor, ObjectTableColumnCellView, PopupMenuBuilderSourceForHeader {
         @Serial private static final long serialVersionUID = 1L;
         protected JComponent component;
         protected int clickCount = 2;
@@ -629,6 +648,17 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         public int getClickCount() {
             return clickCount;
         }
+
+        /**
+         *
+         * @param table the target table
+         * @return obtains the list from component if it implements {@link org.autogui.swing.table.ObjectTableColumn.PopupMenuBuilderSourceForHeader}
+         * @since 1.8
+         */
+        @Override
+        public List<CategorizedMenuItem> getHeaderMenuItems(JTable table) {
+            return PopupMenuBuilderSourceForHeader.getHeaderMenuItemsUnwrap(table, getComponent());
+        }
     }
 
     /**
@@ -729,7 +759,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            table.getColumnModel().getSelectionModel().setSelectionInterval(column, column);
+            int viewCol = table.convertColumnIndexToView(column);
+            table.getColumnModel().getSelectionModel().setSelectionInterval(viewCol, viewCol);
             table.getSelectionModel().setSelectionInterval(0, table.getRowCount());
         }
 
