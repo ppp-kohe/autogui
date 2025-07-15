@@ -1,6 +1,8 @@
 package org.autogui.base.type;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
+import org.autogui.base.annotation.GuiDefaultInits;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
@@ -10,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * a type information about a property.
@@ -302,6 +305,20 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
         return e != null && e.isAnnotationPresent(GuiIncluded.class) ?
                 e.getAnnotation(GuiIncluded.class).keyStroke() :
                 "";
+    }
+
+    /**
+     * @return the first non-null instance attached to field, getter, or setter, or the default instance
+     * @since 1.8
+     */
+    public GuiInits getInits() {
+        return Stream.of(
+                GuiDefaultInits.getOrNull(getField()),
+                GuiDefaultInits.getOrNull(getGetter()),
+                GuiDefaultInits.getOrNull(getSetter()))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElseGet(GuiDefaultInits::get);
     }
 
     /**

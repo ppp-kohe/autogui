@@ -1,7 +1,10 @@
 package org.autogui.swing;
 
+import org.autogui.GuiInits;
+import org.autogui.base.annotation.GuiDefaultInits;
 import org.autogui.base.log.GuiLogManager;
 import org.autogui.base.mapping.*;
+import org.autogui.base.type.GuiTypeMemberProperty;
 import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.prefs.GuiSwingPrefsSupports;
@@ -256,6 +259,30 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void initRowHeight() {
             setRowHeight(getRowHeight() + UIManagerUtil.getInstance().getScaledSizeInt(16)); //adding margin top+bottom: later ObjectTableModel.initTableRowHeight updates the value based on columns
             rowHeightSetAction = new RowHeightSetAction(this);
+            initRowHeightDefault();
+        }
+
+        /**
+         * set initial row-height settings from {@link GuiInits}; reusing setting methods of {@link PreferencesForTable}
+         * @since 1.8
+         */
+        protected void initRowHeightDefault() {
+            PreferencesForTable.createRowHeightFromInits(getInits())
+                    .applyRowHeightTo(this);
+        }
+
+        /**
+         * @return {@link GuiInits} attached to the (parent) table property context, or default
+         * @since 1.8
+         */
+        protected GuiInits getInits() {
+            GuiTypeMemberProperty prop = null;
+            if (context.isTypeElementProperty()) {
+                prop = context.getTypeElementAsProperty();
+            } else if (context.isParentPropertyPane()) {
+                prop = context.getParent().getTypeElementAsProperty();
+            }
+            return prop == null ? GuiDefaultInits.get() : prop.getInits();
         }
 
         public void initValue() {
@@ -355,7 +382,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         protected boolean isAutoResizeOff() {
-            return !getObjectTableModel().getColumns().isStaticColumns();
+            return !getInits().table().dynamicColumnAutoResize() &&
+                    !getObjectTableModel().getColumns().isStaticColumns();
         }
 
         public JToolBar initActionToolBar(List<Action> actions) {
@@ -396,8 +424,13 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void runAutoSelectionActions(List<Object> es) {
-            this.autoSelectionActions.forEach(
-                    GuiSwingTableColumnSetDefault.TableSelectionListAction::actionPerformedBySelection);
+            ActionEvent e = es.stream()
+                    .filter(ActionEvent.class::isInstance)
+                    .map(ActionEvent.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            this.autoSelectionActions.forEach(a ->
+                    a.actionPerformedBySelection(e));
         }
 
         public void initAction(JToolBar actionToolBar, Action action) {
@@ -1377,6 +1410,19 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         /** @since 1.6 */
         protected boolean rowFitToContent;
 
+        /**
+         * @param inits the source inits
+         * @return creates and sets settings related to the row-height; can be set by {@link #applyRowHeightTo(JTable)}
+         * @since 1.8
+         */
+        public static PreferencesForTable createRowHeightFromInits(GuiInits inits) {
+            PreferencesForTable t = new PreferencesForTable();
+            t.setRowCustom(inits.table().rowFitToContent() || inits.table().rowHeight() > 0);
+            t.setRowFitToContent(inits.table().rowFitToContent());
+            t.setRowHeight(inits.table().rowHeight());
+            return t;
+        }
+
         public PreferencesForTable() {}
 
         /**
@@ -1483,7 +1529,9 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     keys.add(new RowSorter.SortKey(row.getColumn(), order));
                 }
             }
-            table.getRowSorter().setSortKeys(keys);
+            if (!keys.isEmpty()) {
+                table.getRowSorter().setSortKeys(keys);
+            }
         }
 
         /**

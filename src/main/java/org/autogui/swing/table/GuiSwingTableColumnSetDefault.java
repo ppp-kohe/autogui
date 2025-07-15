@@ -18,6 +18,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * the default implementation of table-column-set associated with {@link GuiReprCollectionElement}.
@@ -281,42 +282,48 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            actionPerformedAround(false, this.targetSpecifier.getSpecifier());
+            actionPerformedAround(false, this.targetSpecifier.getSpecifier(), e);
         }
 
         @Override
         public void actionPerformedWithoutCheckingRunning(ActionEvent e) {
-            actionPerformedAroundWithoutCheckingRunning(false,
-                    this.targetSpecifier.getSpecifier());
+            actionPerformedAroundWithoutCheckingRunning(false, this.targetSpecifier.getSpecifier(), e);
+        }
+
+        /** action runner for automatic selection */
+        public void actionPerformedBySelection() {
+            actionPerformedBySelection(null);
         }
 
         /**
          * action runner for automatic selection
+         * @param e an optional action-event
+         * @since 1.8
          */
-        public void actionPerformedBySelection() {
+        public void actionPerformedBySelection(ActionEvent e) {
             actionPerformedAroundWithoutCheckingRunning(true,
-                    this.targetSpecifier.getSpecifier());
+                    this.targetSpecifier.getSpecifier(), e);
         }
 
         @Override
-        public Object executeAction(GuiReprValue.ObjectSpecifier specifier) {
-            return actionPerformedAround(false, specifier);
+        public Object executeAction(GuiReprValue.ObjectSpecifier specifier, ActionEvent e) {
+            return actionPerformedAround(false, specifier, e);
         }
 
-        protected Object actionPerformedAround(boolean autoSelection, GuiReprValue.ObjectSpecifier targetSpec) {
+        protected Object actionPerformedAround(boolean autoSelection, GuiReprValue.ObjectSpecifier targetSpec, ActionEvent e) {
             if (!running.getAndSet(true)) {
                 source.selectionActionPrepare();
-                return actionPerformedAroundWithoutCheckingRunning(autoSelection, targetSpec);
+                return actionPerformedAroundWithoutCheckingRunning(autoSelection, targetSpec, e);
             } else {
                 System.err.printf("already running action \"%s\" \n", getValue(NAME));
                 return null;
             }
         }
 
-        public Object actionPerformedAroundWithoutCheckingRunning(boolean autoSelection, GuiReprValue.ObjectSpecifier targetSpec) {
+        public Object actionPerformedAroundWithoutCheckingRunning(boolean autoSelection, GuiReprValue.ObjectSpecifier targetSpec, ActionEvent e) {
             List<?> selection = source.getSelectedItems();
             String targetName = source.getTargetName();
-            return executeContextTask(
+            Supplier<Object> body = () -> executeContextTask(
                     () -> actionPerformedBody(selection, targetName, targetSpec),
                     r -> {
                         running.set(false);
@@ -324,6 +331,14 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                                 ret -> SwingDeferredRunner.invokeLater(() ->
                                         source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret))));
                     });
+            if (!autoSelection && needToConfirm) {
+                return executeWithConfirmReturn(e, body, () -> {
+                    running.set(false);
+                    return null;
+                });
+            } else {
+                return body.get();
+            }
         }
 
         protected Object actionPerformedBody(List<?> selection, String targetName, GuiReprValue.ObjectSpecifier targetSpec) {

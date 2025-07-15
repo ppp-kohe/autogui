@@ -393,7 +393,7 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     public static final String TABLE_PREFS_COLUMN_INDEX = "columnIndex";
     public static final String TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX = "modelIndex";
     public static final String TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX = "viewIndex";
-    public static final String MULTILINE_COLUMN_PREFS_EDIT_FINISH_BY_ENTER = "editFinishByEnter";
+    public static final String MULTILINE_COLUMN_PREFS_EDIT_FINISH_BY_ENTER_AND_KEY = "editFinishByEnterAndKey";
     public static final String PREFS_CURRENT_VALUE = GuiPreferences.KEY_CURRENT_VALUE;
     public static final String DOCUMENT_PREFS_KEY = "<DocumentSetting>";
     public static final String NUMBER_PREFS_KEY = "<NumberSetting>";
@@ -580,7 +580,7 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
         var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
         var pane = createPane(true);
         {
-            ResizableFlowLayout.add(pane, createBoolean(null, MULTILINE_COLUMN_PREFS_EDIT_FINISH_BY_ENTER, prefsObj::isEditFinishByEnter, setterPrefs(prefsObj::setEditFinishByEnter, prefsObj, prefs), validationCheckAdder), false);
+            ResizableFlowLayout.add(pane, createBoolean(null, MULTILINE_COLUMN_PREFS_EDIT_FINISH_BY_ENTER_AND_KEY, prefsObj::isEditFinishByEnterAndKey, setterPrefs(prefsObj::setEditFinishByEnterAndKey, prefsObj, prefs), validationCheckAdder), false);
         }
         return createNamed(getName(prefs, prefsObj.getKey()), pane);
     }

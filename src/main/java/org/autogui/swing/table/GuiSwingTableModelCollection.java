@@ -1,5 +1,6 @@
 package org.autogui.swing.table;
 
+import org.autogui.GuiInits;
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiMappingContext.GuiSourceValue;
 import org.autogui.base.mapping.GuiPreferences;
@@ -114,8 +115,70 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
     public void columnAdded(ObjectTableColumn column) {
         super.columnAdded(column);
         JTable table = getTable();
-        if (table instanceof CollectionTable) {
-            ((CollectionTable) table).getPopup().setupCompositeKeyMapByAddingColumn(column);
+        if (table instanceof CollectionTable collectionTable) {
+            collectionTable.getPopup().setupCompositeKeyMapByAddingColumn(column);
+        }
+        initColumnDefault(column);
+    }
+
+    /**
+     *  called from {@link #columnAdded(ObjectTableColumn)},
+     *   sets up {@link org.autogui.GuiInits} attached to the column propertty
+     * @param column the new column
+     * @since 1.8
+     */
+    protected void initColumnDefault(ObjectTableColumn column) {
+        if (column instanceof ObjectTableColumnWithContext columnContext) {
+            var colInits = columnContext.getInits();
+            if (colInits.tableColumn().width() > 0) {
+                column.getTableColumn().setPreferredWidth(colInits.tableColumn().width());
+            }
+            var sortKey = toRowSorterKeyDefault(columnContext);
+            if (sortKey != null) {
+                addRowSorterKeys(List.of(sortKey));
+            }
+        }
+    }
+
+    @Override
+    public void initTableRowSorter(JTable table) {
+        super.initTableRowSorter(table);
+        addRowSorterKeys(getColumns().getColumns().stream()
+                .filter(ObjectTableColumnWithContext.class::isInstance)
+                .map(ObjectTableColumnWithContext.class::cast)
+                .map(this::toRowSorterKeyDefault)
+                .filter(Objects::nonNull)
+                .toList());
+    }
+
+    /**
+     *
+     * @param column the column
+     * @return  obtains {@link GuiInits} attached to the context property and returns a key if the setting is not default (unsorted), or null.
+     * @since 1.8
+     */
+    public RowSorter.SortKey toRowSorterKeyDefault(ObjectTableColumnWithContext column) {
+        var inits = column.getInits();
+        var newOrder = inits.tableColumn().sortOrder();
+        return !newOrder.equals(SortOrder.UNSORTED) ?
+                new RowSorter.SortKey(column.asColumn().getTableColumn().getModelIndex(), newOrder) :
+                null;
+    }
+
+    /**
+     * replace or add the sorter-keys
+     * @param keys the new keys
+     * @since 1.8
+     */
+    protected void addRowSorterKeys(List<RowSorter.SortKey> keys) {
+        var sorter = getTable().getRowSorter();
+        if (sorter != null && !keys.isEmpty()) {
+            var exKeys = new ArrayList<RowSorter.SortKey>(sorter.getSortKeys());
+            exKeys.removeIf(exKey ->
+                    keys.stream()
+                            .anyMatch(newKey -> newKey.getColumn() == exKey.getColumn()));
+            exKeys.addAll(keys);
+            sorter.setSortKeys(exKeys);
         }
     }
 

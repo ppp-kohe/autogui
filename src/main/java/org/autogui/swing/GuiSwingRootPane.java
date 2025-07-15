@@ -340,6 +340,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         initLog();
         initFileDialogPrefsUpdater();
         initContextUpdate(); //set context sources
+        initDefaultSize();
         initPrefsLoad();  //may update properties of context sources
         initSettingWindow();
     }
@@ -447,6 +448,22 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
     protected void initContextUpdate() {
         context.updateSourceFromRoot();
+    }
+
+    /**
+     * access {@link org.autogui.base.annotation.GuiInitWindow} of the type of the context and set preferredSize if it has valid values
+     * @since 1.8
+     */
+    protected void initDefaultSize() {
+        var type = getContext().getTypeElementValue();
+        if (type != null) {
+            var inits = type.getInits();
+            int w = inits.window().width();
+            int h = inits.window().height();
+            if (w > 32 && h > 32) {
+                setPreferredSize(new Dimension(w, h));
+            }
+        }
     }
 
     protected void initPrefsLoad() {

@@ -1,6 +1,8 @@
 package org.autogui.demo;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
+import org.autogui.base.annotation.GuiInitWindow;
 import org.autogui.swing.AutoGuiShell;
 
 import javax.swing.*;
@@ -10,6 +12,7 @@ import java.io.Serial;
 import java.util.prefs.Preferences;
 
 @GuiIncluded
+@GuiInits(window = @GuiInitWindow(width = 400, height = 200))
 public class EmbeddedTreeDemo {
     public static void main(String[] args) {
         AutoGuiShell.get().showWindow(new EmbeddedTreeDemo());

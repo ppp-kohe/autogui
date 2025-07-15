@@ -1,8 +1,8 @@
 package org.autogui.base.type;
 
-import org.autogui.GuiComponentOptions;
+import org.autogui.GuiInits;
 import org.autogui.GuiIncluded;
-import org.autogui.base.annotation.GuiComponentOptionsDefault;
+import org.autogui.base.annotation.GuiDefaultInits;
 
 import java.util.Objects;
 
@@ -69,17 +69,17 @@ public class GuiTypeValue implements GuiTypeElement {
      * @return obtains attached options for the type or the default instance
      * @since 1.8
      */
-    public GuiComponentOptions getComponentOptions() {
+    public GuiInits getInits() {
         Class<?> cls = getType();
         if (cls != null) {
-            GuiComponentOptions options = cls.getAnnotation(GuiComponentOptions.class);
+            GuiInits options = cls.getAnnotation(GuiInits.class);
             if (options != null) {
                 return options;
             } else {
-                return GuiComponentOptionsDefault.get();
+                return GuiDefaultInits.get();
             }
         } else {
-            return GuiComponentOptionsDefault.get();
+            return GuiDefaultInits.get();
         }
     }
 

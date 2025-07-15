@@ -1,13 +1,19 @@
 package org.autogui.demo;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
+import org.autogui.base.annotation.GuiInitAction;
+import org.autogui.base.annotation.GuiInitTable;
+import org.autogui.base.annotation.GuiInitTableColumn;
+import org.autogui.base.annotation.GuiInitWindow;
 import org.autogui.swing.AutoGuiShell;
 
+import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @GuiIncluded
+@GuiInits(window = @GuiInitWindow(width = 400, height = 150))
 public class TableSubPropDemo {
     List<Elem> elems = new ArrayList<>();
 
@@ -29,14 +35,21 @@ public class TableSubPropDemo {
         return str;
     }
 
-    @GuiIncluded
+    @GuiIncluded(description = "add a new item")
+//    @GuiInits(action = @GuiInitAction(confirm = true))
     public void addItem() {
         elems.add(new Elem(str));
         elems = new ArrayList<>(elems);
     }
 
+    @GuiInits(table = @GuiInitTable(rowFitToContent = true, dynamicColumnAutoResize = true))
     @GuiIncluded public List<Elem> elems() {
         return elems;
+    }
+
+    @GuiInits(action = @GuiInitAction(confirm = true))
+    @GuiIncluded public void selectAction(List<Elem> es) {
+        System.err.println("selected " + es);
     }
 
     @GuiIncluded
@@ -50,7 +63,6 @@ public class TableSubPropDemo {
             subElem = new SubElem((name.length() % 2) == 0, name.length());
             dynSubElems = List.of(new DynSubElem(name.toUpperCase()), new DynSubElem(name.toLowerCase()));
         }
-
 
         @GuiIncluded(index = 10) public SubElem getSubElem() {
             return subElem;
@@ -73,6 +85,7 @@ public class TableSubPropDemo {
         public SubElem(boolean flag, int num) {
             this.flag = flag;
             this.num = num;
+            s = String.format("%x", num);
         }
 
         @GuiIncluded public boolean isFlag() {
@@ -87,6 +100,7 @@ public class TableSubPropDemo {
             this.s = s;
         }
 
+        @GuiInits(tableColumn = @GuiInitTableColumn(width = 300, sortOrder = SortOrder.ASCENDING))
         @GuiIncluded  public String getS() {
             return s;
         }
@@ -106,6 +120,10 @@ public class TableSubPropDemo {
 
         @GuiIncluded public void setStr(String str) {
             this.str = str;
+        }
+        @GuiInits(action = @GuiInitAction(confirm = true))
+        @GuiIncluded public void dynamicAction() {
+            System.err.println("action " + this);
         }
     }
 }

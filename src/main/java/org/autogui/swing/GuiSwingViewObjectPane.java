@@ -244,7 +244,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
          */
         public void initSplitDefaultOrientation() {
             if (context != null) {
-                setDefaultSplitOrientationHorizontal(context.getTypeElementValue().getComponentOptions().splitPane().horizontal());
+                setDefaultSplitOrientationHorizontal(!context.getTypeElementValue().getInits().splitPane().vertical());
             }
         }
 

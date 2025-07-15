@@ -1,6 +1,6 @@
 package org.autogui.base.mapping;
 
-import org.autogui.base.annotation.GuiComponentOptionTabbedPane;
+import org.autogui.base.annotation.GuiInitTabbedPane;
 import org.autogui.base.type.GuiTypeCollection;
 import org.autogui.base.type.GuiTypeObject;
 
@@ -54,13 +54,13 @@ public class GuiReprObjectTabbedPane extends GuiReprObjectPane {
 
     /**
      * @param context the tested type context
-     * @return true if {@link GuiComponentOptionTabbedPane#noTab()} of the type == false
+     * @return true if {@link GuiInitTabbedPane#noTab()} of the type == false
      * @since 1.8
      */
     public boolean matchWithoutSettingComponentOptions(GuiMappingContext context) {
         var type = context.getTypeElementValue();
         if (type != null) {
-            return !type.getComponentOptions().tabbedPane().noTab();
+            return !type.getInits().tabbedPane().noTab();
         } else {
             return true;
         }

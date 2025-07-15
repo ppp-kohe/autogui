@@ -35,7 +35,9 @@ public class TableTargetCellForJTable implements GuiReprCollectionTable.TableTar
     }
 
     public IntStream getSelectedRowsView() {
-        return IntStream.of(table.getSelectedRows());
+        int rows = table.getRowCount();
+        return IntStream.of(table.getSelectedRows())
+                .filter(r -> 0 <= r && r < rows);
     }
 
     @Override

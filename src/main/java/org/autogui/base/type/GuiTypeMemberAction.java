@@ -1,8 +1,10 @@
 package org.autogui.base.type;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
 import org.autogui.GuiListSelectionCallback;
 import org.autogui.GuiListSelectionUpdater;
+import org.autogui.base.annotation.GuiDefaultInits;
 
 import java.lang.reflect.Method;
 
@@ -144,5 +146,9 @@ public class GuiTypeMemberAction extends GuiTypeMember {
             }
         }
         return "";
+    }
+
+    public GuiInits getInits() {
+        return GuiDefaultInits.get(getMethod());
     }
 }

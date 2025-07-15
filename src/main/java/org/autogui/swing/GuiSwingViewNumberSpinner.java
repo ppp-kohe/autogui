@@ -995,6 +995,34 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             if (context != null) {
                 preferencesUpdater = new GuiSwingPrefsSupports.WindowPreferencesUpdater(null,
                         context, NUMBER_SETTING_WINDOW_PREFS_KEY);
+                initDefault(context);
+            }
+        }
+
+        protected void initDefault(GuiMappingContext context) {
+            if (context.isTypeElementProperty()) {
+                var numInits = context.getTypeElementAsProperty().getInits().numberSpinner();
+                var model = pane.getModel();
+                if (!numInits.format().isEmpty() && pane.validFormat(numInits.format())) {
+                    model.setFormatPattern(numInits.format());
+                }
+                initDefaultsSetNumber(Comparable.class, model::setMaximum, numInits.maximum());
+                initDefaultsSetNumber(Comparable.class, model::setMinimum, numInits.minimum());
+                initDefaultsSetNumber(Number.class, model::setStepSize, numInits.stepSize());
+            }
+        }
+
+        private <T> void initDefaultsSetNumber(Class<T> type, Consumer<T> setter, String src) {
+            if (!src.isEmpty()) {
+                try {
+                    var model = pane.getModel();
+                    var num = model.getNumberType().parse(model.getNumberType().getFormat(), src);
+                    if (type.isInstance(num)) {
+                        setter.accept(type.cast(num));
+                    }
+                } catch (Exception ex) {
+                    System.err.printf("%s%n", ex);
+                }
             }
         }
 

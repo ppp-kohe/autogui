@@ -307,7 +307,9 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
     }
 
     public List<GuiPreferences> getSelectedSavedPreferencesList() {
+        int rows = list.getRowCount();
         return IntStream.of(list.getSelectedRows())
+                .filter(r -> 0 <= r && r < rows)
                 .map(list::convertRowIndexToModel)
                 .mapToObj(listModel.getList()::get)
                 .collect(Collectors.toList());

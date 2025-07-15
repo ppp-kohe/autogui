@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * an implementation of action factory for {@link GuiReprAction}.
@@ -105,6 +106,8 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         protected Consumer<Object> resultTarget;
         protected AtomicBoolean running = new AtomicBoolean(false);
         protected GuiSwingView.SpecifierManager targetSpecifier;
+        protected boolean needToConfirm;
+        protected String confirmDescription;
 
         @SuppressWarnings("this-escape")
         public ExecutionAction(GuiMappingContext context, GuiSwingView.SpecifierManager targetSpecifier) {
@@ -125,6 +128,17 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             if (!desc.isEmpty()) {
                 putValue(Action.SHORT_DESCRIPTION, desc);
             }
+
+            initNeedToConfirmDefault();
+        }
+
+        protected void initNeedToConfirmDefault() {
+            if (getContext().isTypeElementAction() ||
+                    getContext().isTypeElementActionList()) {
+                var inits = getContext().getTypeElementAsAction().getInits();
+                needToConfirm = inits.action().confirm();
+                confirmDescription = getContext().getDescription();
+            }
         }
 
         public void setResultTarget(Consumer<Object> resultTarget) {
@@ -141,23 +155,71 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         }
 
         public void actionPerformedWithoutCheckingRunning(ActionEvent e) {
-            ActionPreparation.prepareAction(e);
-            GuiReprValue.ObjectSpecifier specifier = targetSpecifier.getSpecifier();
-            executeContextTask(() -> executeAction(specifier),
-                    r -> {
-                        running.set(false);
-                        if (resultTarget != null) {
-                            r.executeIfPresent(res ->
-                                SwingDeferredRunner.invokeLater(() -> resultTarget.accept(res)));
-                        }
-                    });
+            Runnable body = () -> {
+                ActionPreparation.prepareAction(e);
+                GuiReprValue.ObjectSpecifier specifier = targetSpecifier.getSpecifier();
+                executeContextTask(() -> executeAction(specifier, e),
+                        r -> {
+                            running.set(false);
+                            if (resultTarget != null) {
+                                r.executeIfPresent(res ->
+                                        SwingDeferredRunner.invokeLater(() -> resultTarget.accept(res)));
+                            }
+                        });
+            };
+            if (needToConfirm) {
+                executeWithConfirm(e, body, () -> running.set(false));
+            } else {
+                body.run();
+            }
         }
 
         public String getIconName() {
             return getContext().getIconName();
         }
 
+        public void  executeWithConfirm(ActionEvent e, Runnable action, Runnable cancelAction) {
+            this.<Void>executeWithConfirmReturn(e, () -> {
+                action.run();
+                return null;
+            }, () -> {
+                if (cancelAction != null) {
+                    cancelAction.run();
+                }
+                return null;
+            });
+        }
+
+        public <RetType> RetType executeWithConfirmReturn(ActionEvent e, Supplier<RetType> action, Supplier<RetType> cancelAction) {
+            String name = Objects.toString(getValue(NAME));
+            int res = JOptionPane.showConfirmDialog(componentForDialogParent(e),
+                    String.format("Run action \"%s\"?%s", name,
+                            (confirmDescription == null || confirmDescription.isEmpty() ? "" : (" : \n  " + confirmDescription))), name, JOptionPane.OK_CANCEL_OPTION);
+            if (res == JOptionPane.OK_OPTION) {
+                return action.get();
+            } else {
+                return cancelAction.get();
+            }
+        }
+
+        private JComponent componentForDialogParent(ActionEvent e) {
+            if (e.getSource() instanceof JComponent comp) {
+                return SwingUtilities.getRootPane(comp);
+            } else {
+                return null;
+            }
+        }
+
         public Object executeAction(GuiReprValue.ObjectSpecifier specifier) {
+            return executeAction(specifier, null);
+        }
+
+        /**
+         * @param specifier a specifier for the target object
+         * @param e an optional action event
+         * @since 1.8
+         */
+        public Object executeAction(GuiReprValue.ObjectSpecifier specifier, ActionEvent e) {
             return getContext().executeAction(specifier);
         }
 

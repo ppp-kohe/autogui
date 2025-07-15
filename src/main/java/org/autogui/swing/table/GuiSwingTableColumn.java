@@ -1,5 +1,7 @@
 package org.autogui.swing.table;
 
+import org.autogui.GuiInits;
+import org.autogui.base.annotation.GuiDefaultInits;
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifier;
@@ -93,6 +95,19 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
         void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options);
 
         void saveSwingPreferences(GuiPreferences prefs);
+
+        /**
+         * @return obtains attached inits to the context, or the default instance
+         * @since 1.8
+         */
+        default GuiInits getInits() {
+            var context = getContext();
+            if (context.isTypeElementProperty()) {
+                return context.getTypeElementAsProperty().getInits();
+            } else {
+                return GuiDefaultInits.get();
+            }
+        }
     }
 
     /**

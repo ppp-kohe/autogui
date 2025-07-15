@@ -1,6 +1,8 @@
 package org.autogui.demo;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
+import org.autogui.base.annotation.GuiInitAction;
 import org.autogui.swing.AutoGuiShell;
 
 import java.io.File;
@@ -47,6 +49,7 @@ public class FileRenameDemo {
         @GuiIncluded public void setNewName(String newName) { this.newName = newName; }
     }
 
+    @GuiInits(action = @GuiInitAction(confirm = true))
     @GuiIncluded public void rename() {
         for (RenameEntry e : entries) {
             File newFile = new File(e.getFile().getParentFile(), e.getNewName());

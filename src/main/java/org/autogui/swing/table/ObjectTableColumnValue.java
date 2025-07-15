@@ -1051,20 +1051,23 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             PopupMenuBuilderSource source = (column == null ? null : column.getMenuBuilderSource());
             Consumer<Object> valuePane = (source == null ? null : source.getMenuTargetPane());
 
+            int rows = table.getRowCount();
             for (int row : table.getSelectedRows()) {
-                Object prev;
-                if (valuePane != null) {
-                    int modelRow = table.convertRowIndexToModel(row);
-                    prev = table.getModel().getValueAt(modelRow, column.getTableColumn().getModelIndex());
-                    valuePane.accept(prev);
-                }
-                if (action instanceof GuiSwingActionDefault.ExecutionAction) {
-                    ((GuiSwingActionDefault.ExecutionAction) action).actionPerformedWithoutCheckingRunning(e);
-                } else {
-                    action.actionPerformed(e);
-                }
-                if (valuePane != null) {
-                    //Object next = valuePane.getSwingViewValue();
+                if (0 <= row && row < rows) {
+                    Object prev;
+                    if (valuePane != null) {
+                        int modelRow = table.convertRowIndexToModel(row);
+                        prev = table.getModel().getValueAt(modelRow, column.getTableColumn().getModelIndex());
+                        valuePane.accept(prev);
+                    }
+                    if (action instanceof GuiSwingActionDefault.ExecutionAction) {
+                        ((GuiSwingActionDefault.ExecutionAction) action).actionPerformedWithoutCheckingRunning(e);
+                    } else {
+                        action.actionPerformed(e);
+                    }
+                    if (valuePane != null) {
+                        //Object next = valuePane.getSwingViewValue();
+                    }
                 }
             }
         }
