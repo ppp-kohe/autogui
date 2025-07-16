@@ -7,9 +7,6 @@ import org.autogui.swing.AutoGuiShell;
 
 import javax.swing.*;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,12 +35,9 @@ public class CsvTableDemo {
     @GuiIncluded(description = "Obtains the local temprature data from JMA (Japan Meteorological Agency)")
     @GuiInits(action = @GuiInitAction(confirm = true))
     public void download() {
-        try (var client = HttpClient.newBuilder()
-                .build()) {
-            var res = client.send(HttpRequest.newBuilder(URI.create(source))
-                    .GET()
-                    .build(), HttpResponse.BodyHandlers.ofString(Charset.forName("SJIS")));
-            String data = res.body();
+        try (var stream = URI.create(source).toURL().openStream()) {
+            var res = stream.readAllBytes();
+            String data = new String(res, Charset.forName("SJIS"));
             String[] lines = data.split("[\\r\\n]+");
             tempraturesAll = Arrays.stream(lines)
                             .skip(1)
@@ -133,6 +127,7 @@ public class CsvTableDemo {
             return location.getStringForFilter() + " " + locationEn.getStringForFilter();
         }
 
+        /* sub-objects composite for table-columns currently implemented as dynamic columns */
         @GuiIncluded(index = 10)
         public LocationInfo getLocation() {
             return location;

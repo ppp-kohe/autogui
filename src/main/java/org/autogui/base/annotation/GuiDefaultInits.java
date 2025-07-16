@@ -11,6 +11,9 @@ import java.lang.reflect.AnnotatedElement;
  */
 @GuiInits
 public class GuiDefaultInits {
+
+    public GuiDefaultInits() {}
+
     /**
      * @return the default instance of options
      */

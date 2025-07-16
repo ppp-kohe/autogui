@@ -702,6 +702,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
     public static class PreferencesForMultilineColumn implements GuiSwingPrefsSupports.PreferencesByJsonEntry  {
         boolean editFinishByEnterAndKey;
+        public PreferencesForMultilineColumn() {}
         @Override
         public String getKey() {
             return "$multilineColumn";
