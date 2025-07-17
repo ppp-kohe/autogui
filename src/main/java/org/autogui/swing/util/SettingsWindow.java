@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /** a shared window manager for the setting panel.
@@ -406,9 +407,13 @@ public class SettingsWindow {
             fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
             int r = fileChooser.showOpenDialog(dialogComponent(sender));
             if (r == JFileChooser.APPROVE_OPTION) {
-                Path p = fileChooser.getSelectedFile().toPath();
-                addFileListPath(p);
-                return p;
+                Path p = getPathFromFileChooserFileOrNull(fileChooser.getSelectedFile());
+                if (p != null) {
+                    addFileListPath(p);
+                    return p;
+                } else {
+                    return null;
+                }
             } else {
                 return null;
             }
@@ -431,9 +436,13 @@ public class SettingsWindow {
             }
             int r = fileChooser.showSaveDialog(dialogComponent(sender));
             if (r == JFileChooser.APPROVE_OPTION) {
-                Path p = fileChooser.getSelectedFile().toPath();
-                addFileListPath(p);
-                return p;
+                Path p = getPathFromFileChooserFileOrNull(fileChooser.getSelectedFile());
+                if (p != null) {
+                    addFileListPath(p);
+                    return p;
+                } else {
+                    return null;
+                }
             } else {
                 return null;
             }
@@ -535,7 +544,7 @@ public class SettingsWindow {
             removeAction = new FileListRemoveAction(historyList);
             popupMenu.add(removeAction);
             popupMenu.addSeparator();
-            popupMenu.add(new FileListAddAction(historyListModel, fileChooser));
+            popupMenu.add(new FileListAddAction(historyListModel, fileChooser, this::getPathFromFileChooserFileOrNull));
             popupMenu.add(new FileListClearAction(historyList));
 
             historyList.setComponentPopupMenu(popupMenu);
@@ -563,8 +572,12 @@ public class SettingsWindow {
                 return;
             }
             if (setDirByUser) {
-                backAction.setPath(fileChooser.getCurrentDirectory().toPath());
-                listeners.forEach(l -> l.updateBackButton(backAction.getPath()));
+                var currentDirFile = fileChooser.getCurrentDirectory();
+                var currentDir = getPathFromFileChooserFileOrNull(currentDirFile);
+                backAction.setPath(currentDirFile);
+                if (currentDir != null) {
+                    listeners.forEach(l -> l.updateBackButton(currentDir));
+                }
             }
             setDirByUser = false;
             settingDirBySystem++;
@@ -582,13 +595,38 @@ public class SettingsWindow {
             }
         }
 
+        /**
+         *
+         * @param file the file returned by {@link JFileChooser#getCurrentDirectory()} or {@link JFileChooser#getSelectedFile()}
+         *              ,including special directories like "PC" (My Computer).
+         *              Those dirs cannot be transformed to Path objects. The method checks and returns null for those dirs .
+         * @return a file path of the arg, or null
+         * @since 1.8
+         */
+        public Path getPathFromFileChooserFileOrNull(File file) {
+            var view = fileChooser.getFileSystemView();
+            if (file == null) {
+                return null;
+            } else if (view.isComputerNode(file) || !view.isFileSystem(file)) {
+                return null;
+            } else {
+                try {
+                    return file.toPath();
+                } catch (Exception ex) {
+                    return null;
+                }
+            }
+        }
+
         public void currentDirectoryChanged(PropertyChangeEvent e) {
             if (settingDirBySystem <= 0) {
                 setDirByUser = true;
                 historyList.getSelectionModel().clearSelection();
             }
-            Path path = fileChooser.getCurrentDirectory().toPath();
-            listeners.forEach(l -> l.updateCurrentDirectory(path));
+            Path path = getPathFromFileChooserFileOrNull(fileChooser.getCurrentDirectory());
+            if (path != null) {
+                listeners.forEach(l -> l.updateCurrentDirectory(path));
+            }
         }
 
         public void updateListModel() {
@@ -631,7 +669,7 @@ public class SettingsWindow {
         public void setBackButtonPath(Path path) {
             init();
             if (path != null) {
-                backAction.setPath(path);
+                backAction.setPath(path.toFile());
             }
         }
 
@@ -657,34 +695,42 @@ public class SettingsWindow {
     public static class FileBackAction extends AbstractAction {
         @Serial private static final long serialVersionUID = 1L;
         protected JFileChooser fileChooser;
-        protected Path path;
+        protected File path;
         protected FileSystemView iconSource;
 
         public FileBackAction(JFileChooser fileChooser) {
             this.fileChooser = fileChooser;
             iconSource = FileSystemView.getFileSystemView();
-            setPath(fileChooser.getCurrentDirectory().toPath());
+            setPath(fileChooser.getCurrentDirectory());
         }
 
-        public void setPath(Path path) {
+        /**
+         * @param path the selected directory
+         * @since 1.8
+         */
+        public void setPath(File path) {
             this.path = path;
             String name = "";
             if (path != null) {
-                Path fileName = path.getFileName();
-                name = Objects.requireNonNullElse(fileName, path).toString();
+                String fileName = path.getName();
+                name = fileName.isEmpty() ? path.toString() : fileName;
             }
             putValue(NAME, name);
-            putValue(LARGE_ICON_KEY, path == null ? null : iconSource.getSystemIcon(path.toFile()));
+            putValue(LARGE_ICON_KEY, path == null ? null : iconSource.getSystemIcon(path));
         }
 
-        public Path getPath() {
+        /**
+         * @return the selected directory
+         * @since 1.8
+         */
+        public File getPath() {
             return path;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
             if (path != null) {
-                fileChooser.setCurrentDirectory(path.toFile());
+                fileChooser.setCurrentDirectory(path);
             }
         }
     }
@@ -882,10 +928,17 @@ public class SettingsWindow {
         @Serial private static final long serialVersionUID = 1L;
         protected FileListModel listModel;
         protected JFileChooser chooser;
+        /** customizable function for File to Path
+         * @since 1.8 */
+        protected Function<File, Path> fileToPath;
 
         public FileListAddAction(FileListModel listModel, JFileChooser chooser) {
+            this(listModel, chooser, File::toPath);
+        }
+        public FileListAddAction(FileListModel listModel, JFileChooser chooser, Function<File, Path> fileToPath) {
             this.listModel = listModel;
             this.chooser = chooser;
+            this.fileToPath = fileToPath;
             putValue(NAME, "Add Current");
         }
 
@@ -895,8 +948,9 @@ public class SettingsWindow {
             if (f == null) {
                 f = chooser.getCurrentDirectory();
             }
-            if (f != null) {
-                listModel.addPath(f.toPath());
+            Path p = f == null ? null : fileToPath.apply(f);
+            if (p != null) {
+                listModel.addPath(p);
             }
         }
     }
