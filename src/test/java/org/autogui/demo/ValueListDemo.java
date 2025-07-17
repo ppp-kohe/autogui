@@ -1,7 +1,9 @@
 package org.autogui.demo;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
 import org.autogui.GuiListSelectionUpdater;
+import org.autogui.base.annotation.GuiInitTableColumnString;
 import org.autogui.swing.AutoGuiShell;
 
 import java.awt.*;
@@ -58,6 +60,7 @@ public class ValueListDemo {
         }
 
         @GuiIncluded(index = 1, description = "str property")
+        @GuiInits(tableColumnString = @GuiInitTableColumnString(editFinishByEnterAndKey = true))
         public String getStr() {
             return str;
         }

@@ -49,6 +49,7 @@ import java.util.function.Supplier;
  * <p>
  *  configured by the field {@link #lookAndFeelClass} which can be set by the following withLookAndFeel... methods.
  *    The default value is <code>#prop:autogui.laf</code>.
+ *    Direct calls to most of those methods prevent user settings by the property <code>autogui.laf</code> (also <code>swing.defaultlaf</code> ; except for {@link #withLookAndFeelNone()})
  *   <ul>
  *       <li>{@link #withLookAndFeelClass(String)} : directly set the argument</li>
  *       <li>{@link #withLookAndFeelProperty(String)} : <code>#prop:</code><i>p</i>.
@@ -56,9 +57,15 @@ import java.util.function.Supplier;
  *         The absence of the property is equivalent to the special name <code>"default"</code>
  *       </li>
  *       <li>{@link #withLookAndFeelSpecial(String)} : <code>#special:</code><i>v</i>.
- *         The value <i>v</i> will passed to {@link UIManagerUtil#selectLookAndFeelFromSpecialName(String)}</li>
+ *         The value <i>v</i> will passed to {@link UIManagerUtil#selectLookAndFeelFromSpecialName(String)}
+ *         <ul>
+ *             <li>{@link #withLookAndFeelDefaultWithoutProp()} : <code>#special:default</code> . currently nimbus-flat or flatlaf (if åvaialable) </li>
+ *             <li>{@link #withLookAndFeelDefaultNoFlatlafWithoutProp()} : <code>#special:default-no-darklaf</code> . currently nimbus-flat </li>
+ *         </ul>
+ *         </li>
  *       <li>{@link #withCrossPlatformLookAndFeel()} : a cross platform class</li>
- *       <li>{@link #withLookAndFeelNone()} : <code>#none</code> </li>
+ *       <li>{@link #withLookAndFeelNone()} : <code>#none</code> . No LAF setting in the {@link UIManagerUtil#setLookAndFeel(String)},
+ *           and it will be affected by the <code>swing.defaultlaf</code> property.</li>
  *       <li>{@link #withLookAndFeelClassFromFunction(Function)} : the function will be invoked immediately.
  *          It can be used for custom LAF installation.
  *          The function can return a value for {@link #lookAndFeelClass} (nullable) </li>
@@ -114,6 +121,26 @@ public class AutoGuiShell {
 
     public AutoGuiShell withCrossPlatformLookAndFeel() {
         return withLookAndFeelClass(UIManager.getCrossPlatformLookAndFeelClassName());
+    }
+
+    /**
+     * @return specify the LAF as nimbus-flat; same as {@link #withLookAndFeelSpecial(String)} with {@link UIManagerUtil#LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF}.
+     *  this means that the LAF setting does not read the proeprty "autogui.laf" and also suppresses slient loading the Flatlaf library;
+     *   currently nimbus-flat will be applied.
+     * @since 1.8
+     */
+    public AutoGuiShell withLookAndFeelDefaultNoFlatlafWithoutProp() {
+        return withLookAndFeelSpecial(UIManagerUtil.LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF);
+    }
+
+    /**
+     * @return specify the LAF as nimbus-flat; same as {@link #withLookAndFeelSpecial(String)} with {@link UIManagerUtil#LOOK_AND_FEEL_VALUE_DEFAULT}.
+     *  this means that the LAF setting does not read the proeprty "autogui.laf";
+     *   currently nimbus-flat will be applied, or will load and apply flatlaf if the code can access it.
+     * @since 1.8
+     */
+    public AutoGuiShell withLookAndFeelDefaultWithoutProp() {
+        return withLookAndFeelSpecial(UIManagerUtil.LOOK_AND_FEEL_VALUE_DEFAULT);
     }
 
     /**

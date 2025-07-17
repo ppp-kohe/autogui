@@ -370,11 +370,22 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
         protected void init() {
             initEditorKit();
+            initDefault();
             initAction();
         }
 
         protected void initEditorKit() {
             setEditorKit(new MultilineColumnEditorKit());
+        }
+
+        /**
+         * setting {@link #editFinishByEnterAndKey} from the inits annotaiton attached to the context property
+         * @since 1.8
+         */
+        protected void initDefault() {
+            if (context.isTypeElementProperty()) {
+                editFinishByEnterAndKey = context.getTypeElementAsProperty().getInits().tableColumnString().editFinishByEnterAndKey();
+            }
         }
 
         protected void initAction() {
@@ -458,7 +469,9 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         public void loadFromAndApplyTo(GuiPreferences p) {
             var prefObj = new PreferencesForMultilineColumn();
             prefObj.loadFrom(p);
-            setEditFinishByEnterAndKey(prefObj.isEditFinishByEnterAndKey());
+            if (prefObj.hasEditFinishByEnterAndKey()) {
+                setEditFinishByEnterAndKey(prefObj.isEditFinishByEnterAndKey());
+            }
         }
 
         @Override
@@ -499,7 +512,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                var b = pane.isEditFinishByEnterAndKey();
+                var b = !pane.isEditFinishByEnterAndKey();
                 pane.setEditFinishByEnterAndKeyAsUserAction(b);
                 setSelectedFromPane();
             }
@@ -701,7 +714,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
     }
 
     public static class PreferencesForMultilineColumn implements GuiSwingPrefsSupports.PreferencesByJsonEntry  {
-        boolean editFinishByEnterAndKey;
+        Boolean editFinishByEnterAndKey;
         public PreferencesForMultilineColumn() {}
         @Override
         public String getKey() {
@@ -713,20 +726,27 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         public boolean isEditFinishByEnterAndKey() {
-            return editFinishByEnterAndKey;
+            return editFinishByEnterAndKey != null && editFinishByEnterAndKey;
+        }
+
+        /**
+         * @return ture if {@link #setJson(Object)} has no property for it
+         */
+        public boolean hasEditFinishByEnterAndKey() {
+            return editFinishByEnterAndKey != null;
         }
 
         @Override
         public Object toJson() {
             Map<String,Object> map = new LinkedHashMap<>();
-            map.put("editFinishByEnterAndKey", editFinishByEnterAndKey);
+            map.put("editFinishByEnterAndKey", isEditFinishByEnterAndKey());
             return map;
         }
 
         @Override
         public void setJson(Object json) {
             if (json instanceof Map<?,?> map) {
-                editFinishByEnterAndKey = GuiSwingPrefsSupports.getAs(map, Boolean.class, "editFinishByEnterAndKey", true);
+                editFinishByEnterAndKey = GuiSwingPrefsSupports.getAs(map, Boolean.class, "editFinishByEnterAndKey", null);
             }
         }
     }

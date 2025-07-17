@@ -683,10 +683,10 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         /**
          * @param e the tested event
-         * @return true if alt+enter
+         * @return true if enter
          */
         public static boolean isKeyEventFinishEditing(KeyEvent e) {
-            return e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiersEx() == KeyEvent.ALT_DOWN_MASK;
+            return e.getKeyCode() == KeyEvent.VK_ENTER;
         }
 
         /**

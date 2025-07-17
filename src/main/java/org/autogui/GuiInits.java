@@ -47,6 +47,7 @@ public @interface GuiInits {
 
     GuiInitTable table() default  @GuiInitTable();
     GuiInitTableColumn tableColumn() default @GuiInitTableColumn();
+    GuiInitTableColumnString tableColumnString() default @GuiInitTableColumnString();
     GuiInitNumberSpinner numberSpinner() default @GuiInitNumberSpinner();
     GuiInitAction action() default @GuiInitAction();
 }

@@ -3,10 +3,10 @@ package org.autogui.base.annotation;
 import javax.swing.*;
 
 /**
- *
+ * initial settings for any type of table columns
  * <pre>
  *     &#64;GuiIncluded
- *     public class MyApp {  //the size of the created GUI window for the class becomes 300x500.
+ *     public class MyApp {
  *          public List&lt;MyElem&gt; getMyTable() { ... }
  *     }
  *

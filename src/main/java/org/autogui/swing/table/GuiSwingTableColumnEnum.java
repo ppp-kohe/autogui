@@ -85,7 +85,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
             setBorder(BorderFactory.createEmptyBorder());
             putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
             setOpaque(false);
-            ObjectTableColumnValue.KeyHandlerFinishEditing.installFinishEditingKeyHandler(this, finishRunners);
+            //the default handler already supports select a focused item + finish editing by enter
         }
 
         @Override
