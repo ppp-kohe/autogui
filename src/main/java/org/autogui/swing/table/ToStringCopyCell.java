@@ -66,6 +66,11 @@ public class ToStringCopyCell {
             return toHumanReadableStringTree(value).toString();
         }
 
+        /**
+         * @param value a string source value
+         * @return the tree-string of value
+         * @since 1.8
+         */
         public GuiRepresentation.TreeString toHumanReadableStringTree(Object value) {
             if (context == null) {
                 return new GuiRepresentation.TreeStringValue("" + value);

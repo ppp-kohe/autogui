@@ -575,6 +575,12 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
         return createNamed(getName(prefs, prefsObj.getKey()), pane);
     }
 
+    /**
+     * @param prefs the source prefs
+     * @return the component for multiline string column settings;
+     *  a pane including the checkbox of {@link #MULTILINE_COLUMN_PREFS_EDIT_FINISH_BY_ENTER_AND_KEY}
+     * @since 1.8
+     */
     public JComponent createColumnMultilinne(GuiPreferences prefs) {
         var prefsObj = new GuiSwingTableColumnString.PreferencesForMultilineColumn();
         var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));

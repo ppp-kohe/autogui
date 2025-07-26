@@ -774,6 +774,12 @@ public class UIManagerUtil {
             return false;
         }
 
+        /**
+         * @param mod KeyEvent modifier-keys
+         * @param keyCode KeyEvent key-code
+         * @return the platform independent key-string
+         * @since 1.8
+         */
         public String getKeyStrokeString(int mod, int keyCode) {
             var mods = getKeyStrokeStringModifierTexts();
             String alt = mods[0];
@@ -801,15 +807,33 @@ public class UIManagerUtil {
             return getKeyStrokeStringJoin(words);
         }
 
+        /**
+         * @return 4 names of modifier-keys; a sub-class can overrides
+         * @since 1.8
+         */
         protected String[] getKeyStrokeStringModifierTexts() {
             return new String[] {"Alt" , "Meta" , "Ctrl" , "Shift"};
         }
 
+        /**
+         * @param words key strings
+         * @return combined word of given-words
+         * @since 1.8
+         */
         protected String getKeyStrokeStringJoin(List<String> words) {
             return String.join("+", words);
         }
     }
 
+    /**
+     * @param constKey  {@link InputEvent#SHIFT_DOWN_MASK},
+     *                    {@link InputEvent#CTRL_DOWN_MASK},
+     *                    {@link InputEvent#ALT_DOWN_MASK},
+     *                    {@link InputEvent#META_DOWN_MASK}
+     * @param testedMods tested modifiers keys
+     * @return true if constKey has testedMods
+     * @since 1.8
+     */
     @SuppressWarnings("deprecation")
     public static boolean checkMenuModifiersMask(int constKey, int testedMods) {
         int oldKey = switch (constKey) {

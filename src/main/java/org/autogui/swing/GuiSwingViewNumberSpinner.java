@@ -1021,6 +1021,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             }
         }
 
+        /**
+         * @param context the given context; checked attached annotation of numberSpinner
+         * @since 1.8
+         */
         protected void initDefault(GuiMappingContext context) {
             if (context.isTypeElementProperty()) {
                 var numInits = context.getTypeElementAsProperty().getInits().numberSpinner();

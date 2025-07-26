@@ -499,23 +499,29 @@ public class SearchTextFieldFilePath extends SearchTextField {
             //explorer.exe /select,path
             //nautilus path
             //in Java9: Desktop.browseFileDirectory(File)
-            if (Desktop.isDesktopSupported()) {
+            Desktop desk;
+            if (Desktop.isDesktopSupported() && (desk = Desktop.getDesktop()).isSupported(Desktop.Action.BROWSE_FILE_DIR)) {
                 try {
-                    Desktop desk = Desktop.getDesktop();
                     command = path -> desk.browseFileDirectory(path.toFile());
                 } catch (Exception ex) {
-                    Function<Path,List<String>> commandGenerator;
-                    UIManagerUtil.OsVersion os = UIManagerUtil.getInstance().getOsVersion();
-                    if (os.isMacOS()) {
-                        commandGenerator = (path) -> Arrays.asList("open", "-R", path.toString());
-                    } else if (os.isWindows()) {
-                        commandGenerator = (path) -> Arrays.asList("explorer", "/select," + path.toString());
-                    } else {
-                        commandGenerator = (path) -> Arrays.asList("nautilus", path.toString());
-                    }
-                    command = processCommand(commandGenerator);
+                    initCommandNonDesktop();
                 }
+            } else {
+                initCommandNonDesktop();
             }
+        }
+
+        private void initCommandNonDesktop() {
+            Function<Path,List<String>> commandGenerator;
+            UIManagerUtil.OsVersion os = UIManagerUtil.getInstance().getOsVersion();
+            if (os.isMacOS()) {
+                commandGenerator = (path) -> Arrays.asList("open", "-R", path.toString());
+            } else if (os.isWindows()) {
+                commandGenerator = (path) -> Arrays.asList("explorer", "/select," + path.toString());
+            } else {
+                commandGenerator = (path) -> Arrays.asList("nautilus", path.toString());
+            }
+            command = processCommand(commandGenerator);
         }
 
         public Consumer<Path> processCommand(Function<Path, List<String>> commandGenerator) {

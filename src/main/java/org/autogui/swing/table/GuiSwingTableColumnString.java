@@ -730,6 +730,11 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
     }
 
+    /**
+     *  preferences for a multiline text field column;
+     *   {"editFinishByEnterAndKey": false}
+     * @since 1.8
+     */
     public static class PreferencesForMultilineColumn implements GuiSwingPrefsSupports.PreferencesByJsonEntry  {
         Boolean editFinishByEnterAndKey;
         public PreferencesForMultilineColumn() {}

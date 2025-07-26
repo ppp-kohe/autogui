@@ -106,7 +106,11 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         protected Consumer<Object> resultTarget;
         protected AtomicBoolean running = new AtomicBoolean(false);
         protected GuiSwingView.SpecifierManager targetSpecifier;
+        /** if true, the action shows a confirmation dialog before executing
+         * @since 1.8 */
         protected boolean needToConfirm;
+        /** the message of the confirmation dialog showen when {@link #needToConfirm}
+         * @since 1.8 */
         protected String confirmDescription;
 
         @SuppressWarnings("this-escape")
@@ -132,6 +136,10 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             initNeedToConfirmDefault();
         }
 
+        /**
+         * set {@link #needToConfirm} and {@link #confirmDescription} from init-annotation attached to the action method
+         * @since 1.8
+         */
         protected void initNeedToConfirmDefault() {
             if (getContext().isTypeElementAction() ||
                     getContext().isTypeElementActionList()) {
@@ -178,6 +186,13 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             return getContext().getIconName();
         }
 
+        /**
+         * the void returning version of {@link #executeWithConfirmReturn(ActionEvent, Supplier, Supplier)}
+         * @param e the action-event used for showing the confirmation dialog
+         * @param action the action code body; non-null
+         * @param cancelAction the action executed when the user selects canceling, or null
+         * @since 1.8
+         */
         public void  executeWithConfirm(ActionEvent e, Runnable action, Runnable cancelAction) {
             this.<Void>executeWithConfirmReturn(e, () -> {
                 action.run();
@@ -190,6 +205,16 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             });
         }
 
+        /**
+         * show a confirmation dialog and run the action if the user selects OK of the dialog
+         * @param e the action-event used for showing the confirmation dialog;
+         *          obtaining the root-pane of a source component and used for the dialog parent
+         * @param action the action code body; non-null
+         * @param cancelAction the action when cancelled ; non-null
+         * @return the returned value of the action (or calcelAction)
+         * @param <RetType> the returned type of the action
+         * @since 1.8
+         */
         public <RetType> RetType executeWithConfirmReturn(ActionEvent e, Supplier<RetType> action, Supplier<RetType> cancelAction) {
             String name = Objects.toString(getValue(NAME));
             int res = JOptionPane.showConfirmDialog(componentForDialogParent(e),

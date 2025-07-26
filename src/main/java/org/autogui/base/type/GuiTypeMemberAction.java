@@ -148,6 +148,10 @@ public class GuiTypeMemberAction extends GuiTypeMember {
         return "";
     }
 
+    /**
+     * @return obtains the attached annotation to the method or default value
+     * @since 1.8
+     */
     public GuiInits getInits() {
         return GuiDefaultInits.get(getMethod());
     }
