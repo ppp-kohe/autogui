@@ -259,8 +259,8 @@ public class GuiReprValueImagePane extends GuiReprValue {
     }
 
     @Override
-    public String toHumanReadableString(GuiMappingContext context, Object source) {
-        return (String) toJson(context, source);
+    public TreeString toHumanReadableStringTree(GuiMappingContext context, Object source) {
+        return new TreeStringValue((String) toJson(context, source));
     }
 
     @Override

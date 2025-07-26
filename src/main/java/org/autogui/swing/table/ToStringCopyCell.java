@@ -3,6 +3,7 @@ package org.autogui.swing.table;
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiReprCollectionTable.CellValue;
 import org.autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
+import org.autogui.base.mapping.GuiRepresentation;
 import org.autogui.swing.GuiSwingJsonTransfer;
 import org.autogui.swing.GuiSwingTaskRunner;
 import org.autogui.swing.GuiSwingView.ValuePane;
@@ -13,7 +14,6 @@ import org.autogui.swing.util.PopupCategorized.CategorizedMenuItem;
 import org.autogui.swing.util.PopupExtension;
 import org.autogui.swing.util.PopupExtensionText;
 import org.autogui.swing.util.SettingsWindow;
-import org.autogui.base.mapping.GuiRepresentation;
 import org.autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
@@ -63,10 +63,14 @@ public class ToStringCopyCell {
         }
 
         public String toHumanReadableString(Object value) {
+            return toHumanReadableStringTree(value).toString();
+        }
+
+        public GuiRepresentation.TreeString toHumanReadableStringTree(Object value) {
             if (context == null) {
-                return "" + value;
+                return new GuiRepresentation.TreeStringValue("" + value);
             } else {
-                return context.getRepresentation().toHumanReadableString(context, value);
+                return context.getRepresentation().toHumanReadableStringTree(context, value);
             }
         }
     }
@@ -132,16 +136,16 @@ public class ToStringCopyCell {
         public String getString(List<CellValue> cells) {
             //follow the visual ordering
             int prevLine = -1;
-            List<String> cols = new ArrayList<>();
-            List<String> lines = new ArrayList<>();
+            List<GuiRepresentation.TreeString> cols = new ArrayList<>();
+            List<GuiRepresentation.TreeString> lines = new ArrayList<>();
             for (CellValue cell : cells) {
                 TableMenuCompositeToStringCopy col = getMenuCompositeForCell(cell);
                 if (col != null) {
                     if (prevLine != cell.getRow() && prevLine != -1) {
-                        lines.add(String.join("\t", cols));
-                        cols.clear();
+                        lines.add(new GuiRepresentation.TreeStringComposite(cols, false));
+                        cols = new ArrayList<>();
                     }
-                    String colStr = col.toHumanReadableString(cell.getValue());
+                    GuiRepresentation.TreeString colStr = col.toHumanReadableStringTree(cell.getValue());
                     if (colStr != null) {
                         cols.add(colStr);
                     }
@@ -149,10 +153,10 @@ public class ToStringCopyCell {
                 }
             }
             if (!cols.isEmpty()) {
-                lines.add(String.join("\t", cols));
+                lines.add(new GuiRepresentation.TreeStringComposite(cols, false));
             }
 
-            return String.join("\n", lines);
+            return new GuiRepresentation.TreeStringComposite(lines, true).toString();
         }
 
         public TableMenuCompositeToStringCopy getMenuCompositeForCell(CellValue cell) {
@@ -279,8 +283,6 @@ public class ToStringCopyCell {
     public static class ToStringPasteForCellsAction extends PopupExtensionText.TextPasteAllAction implements TableTargetCellAction {
         @Serial private static final long serialVersionUID = 1L;
         protected List<TableMenuCompositeToStringPaste> activeComposites;
-        protected String lineSeparator = "\\n"; //regex
-        protected String columnSeparator = "\\t"; //regex
         protected boolean onlyApplyingSelectedColumns;
 
         protected GuiSwingTaskRunner runner;
@@ -325,7 +327,7 @@ public class ToStringCopyCell {
             runner.executeContextTask(() -> {
                         int rowIndex = 0;
                         GuiSwingJsonTransfer.JsonFillLoop fillLoop = new GuiSwingJsonTransfer.JsonFillLoop();
-                        for (String line : str.split(lineSeparator, -1)) {
+                        for (String line : GuiRepresentation.splitTableToLinesForTabSeparatedValues(str)) {
                             if (fillLoop.addRow(runLine(line, rowIndex))) {
                                 ++rowIndex;
                             }
@@ -345,7 +347,7 @@ public class ToStringCopyCell {
             boolean rowSpecified = false;
             int rowIndex = targetRow;
             int c = 0;
-            for (String col : line.split(columnSeparator, -1)) {
+            for (String col : GuiRepresentation.splitLineToColumnsForTabSeparatedValues(line)) {
                 TableMenuCompositeToStringPaste composite = activeComposites.get(c % activeComposites.size());
                 if (composite.isIndexColumn()) { //specify the row index
                     try {

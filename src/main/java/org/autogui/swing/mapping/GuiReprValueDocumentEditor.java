@@ -200,9 +200,9 @@ public class GuiReprValueDocumentEditor extends GuiReprValue {
     }
 
     @Override
-    public String toHumanReadableString(GuiMappingContext context, Object source) {
+    public TreeString toHumanReadableStringTree(GuiMappingContext context, Object source) {
         Object j = toJson(context, source);
-        return j == null ? "" : j.toString();
+        return new TreeStringValue(j == null ? "" : j.toString());
     }
 
     @Override

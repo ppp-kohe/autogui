@@ -29,8 +29,8 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.Objects;
+import java.util.function.*;
 import java.util.stream.Collectors;
 
 
@@ -843,34 +843,56 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        public void loadFrom(GuiPreferences prefs) {
+        public boolean loadFromAndChanged(GuiPreferences prefs) {
             try {
                 GuiPreferences.GuiValueStore store = prefs.getValueStore();
-                TypedSpinnerNumberModel model = this;
-                GuiReprValueNumberSpinner.NumberType type = model.getNumberType();
-                String max = store.getString("maximum", "");
-                String min = store.getString("minimum", "");
-                String step = store.getString("stepSize", "");
-                if (!max.isEmpty()) {
-                    model.setMaximum(type.fromString(max));
-                }
-                if (!min.isEmpty()) {
-                    model.setMinimum(type.fromString(min));
-                }
-                if (!step.isEmpty()) {
-                    Comparable<?> c = type.fromString(step);
-                    if (c instanceof Number) {
-                        model.setStepSize((Number) c);
+                boolean updateMax = loadAndUpdateModel(store, "maximum", TypedSpinnerNumberModel::getMaximum, (m, c) -> {
+                    m.setMaximum(c);
+                    return true;
+                });
+                boolean updateMin = loadAndUpdateModel(store, "minimum", TypedSpinnerNumberModel::getMinimum, (m, c) -> {
+                    m.setMinimum(c);
+                    return true;
+                });
+                boolean updateStep = loadAndUpdateModel(store, "stepSize", m -> (Comparable<?>) m.getStepSize(), (m, c) -> {
+                    if (c instanceof Number n) {
+                        m.setStepSize(n);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+
+                boolean updateFormat = false;
+                String format = store.getString("format", "");
+                if (!format.isEmpty()) {
+                    var currentFormat = getFormatPattern();
+                    if (!Objects.equals(currentFormat, format)) {
+                        setFormatPattern(format);
+                        updateFormat = true;
                     }
                 }
 
-                String format = store.getString("format", "");
-                if (!format.isEmpty()) {
-                    setFormatPattern(format);
-                }
+                return updateMax || updateMin || updateStep || updateFormat;
             } catch (Exception ex) {
                 System.err.println(ex);
+                return false;
             }
+        }
+
+        private boolean loadAndUpdateModel(GuiPreferences.GuiValueStore store, String propName,
+                                           Function<TypedSpinnerNumberModel, Comparable<?>> getter,
+                                           BiFunction<TypedSpinnerNumberModel, Comparable<?>, Boolean> setter) {
+            TypedSpinnerNumberModel model = this;
+            GuiReprValueNumberSpinner.NumberType type = model.getNumberType();
+            String src = store.getString(propName, "");
+            if (!src.isEmpty()) {
+                var nextVal = type.fromString(src);
+                if (!Objects.equals(getter.apply(model), nextVal)) {
+                    return setter.apply(model, nextVal);
+                }
+            }
+            return false;
         }
 
         public void setFormatPattern(String formatPattern) {

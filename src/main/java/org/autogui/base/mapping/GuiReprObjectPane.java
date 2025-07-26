@@ -204,8 +204,8 @@ public class GuiReprObjectPane extends GuiReprValue {
      * @return the representation of the source
      */
     @Override
-    public String toHumanReadableString(GuiMappingContext context, Object source) {
-        return toHumanReadableStringFromObject(context, source);
+    public TreeString toHumanReadableStringTree(GuiMappingContext context, Object source) {
+        return toHumanReadableStringTreeFromObject(context, source);
     }
 
     /**
@@ -220,7 +220,18 @@ public class GuiReprObjectPane extends GuiReprValue {
      * @return the representation of the source
      */
     public static String toHumanReadableStringFromObject(GuiMappingContext context, Object source) {
-        List<String> strings = new ArrayList<>(context.getChildren().size());
+        return toHumanReadableStringTreeFromObject(context, source).toString();
+    }
+
+    /**
+     * called from {@link #toHumanReadableStringFromObject(GuiMappingContext, Object)}
+     * @param context the object context
+     * @param source the source object mapped by the context
+     * @return a tree-string of source
+     * @since 1.8
+     */
+    public static TreeString  toHumanReadableStringTreeFromObject(GuiMappingContext context, Object source) {
+        List<TreeString> strings = new ArrayList<>(context.getChildren().size());
         BiConsumer<GuiMappingContext, Object> processor = getAddingHumanReadableStringToList(strings);
         for (GuiMappingContext subContext : context.getChildren()) {
             if (subContext.isTypeElementCollection()) {
@@ -229,15 +240,15 @@ public class GuiReprObjectPane extends GuiReprValue {
                 runSubPropertyValue(subContext, source, processor);
             }
         }
-        return String.join("\t", strings);
+        return new TreeStringComposite(strings, false);
     }
 
-    public static BiConsumer<GuiMappingContext, Object> getAddingHumanReadableStringToList(List<String> list) {
+    public static BiConsumer<GuiMappingContext, Object> getAddingHumanReadableStringToList(List<TreeString> list) {
         return (s, n) -> {
-            if (n instanceof NamedValue) {
-                n = ((NamedValue) n).value;
+            if (n instanceof NamedValue nv) {
+                n = nv.value;
             }
-            list.add(s.getRepresentation().toHumanReadableString(s, n));
+            list.add(s.getRepresentation().toHumanReadableStringTree(s, n));
         };
     }
 
@@ -277,7 +288,7 @@ public class GuiReprObjectPane extends GuiReprValue {
             throw new RuntimeException(ex);
         }
 
-        String[] cols = str.split("\\t", -1);
+        List<String> cols = GuiRepresentation.splitLineToColumnsForTabSeparatedValues(str);
 
         List<GuiMappingContext> subs = context.getChildren();
         int i = 0;

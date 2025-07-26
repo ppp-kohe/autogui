@@ -63,7 +63,8 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
     }
 
     public static class ColumnNumberPane extends GuiSwingViewNumberSpinner.PropertyLabelNumber
-            implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget {
+            implements ObjectTableColumnValue.ColumnViewUpdateSource, ObjectTableColumnValue.ColumnViewUpdateTarget,
+            ObjectTableColumn.PopupMenuBuilderSourceForHeader {
         @Serial private static final long serialVersionUID = 1L;
         protected PropertyNumberSpinner editor;
 
@@ -174,6 +175,11 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
                     ), getEditorActions(), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
             }
             return menuItems;
+        }
+
+        @Override
+        public List<PopupCategorized.CategorizedMenuItem> getHeaderMenuItems(JTable table) {
+            return List.of(settingAction);
         }
     }
 

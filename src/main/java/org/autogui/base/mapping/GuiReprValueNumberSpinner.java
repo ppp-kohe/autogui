@@ -173,16 +173,16 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
      * @return formatted string by {@link NumberFormat} returned by {@link #getFormat()}
      */
     @Override
-    public String toHumanReadableString(GuiMappingContext context, Object source) {
+    public TreeString toHumanReadableStringTree(GuiMappingContext context, Object source) {
         NumberType type = getType(context);
         NumberFormat fmt = getFormat();
         if (fmt == null) {
             fmt = type.getFormat();
         }
-        if (source instanceof Comparable<?>) {
-            return type.format(fmt, (Comparable<?>) source);
+        if (source instanceof Comparable<?> comp) {
+            return new TreeStringValue(type.format(fmt, comp));
         } else {
-            return "" + source;
+            return new TreeStringValue("" + source);
         }
     }
 

@@ -124,7 +124,15 @@ public class GuiSwingPrefsSupports {
     }
 
     public interface Preferences {
-        void loadFrom(GuiPreferences prefs);
+        /**
+         * @param prefs the laoding source
+         * @return true if a part of the preferences is actually changed
+         * @since 1.8
+         */
+        boolean loadFromAndChanged(GuiPreferences prefs);
+        default void loadFrom(GuiPreferences prefs) {
+            loadFromAndChanged(prefs);
+        }
 
         void saveTo(GuiPreferences prefs);
     }
@@ -134,11 +142,28 @@ public class GuiSwingPrefsSupports {
         Object toJson();
         void setJson(Object json);
 
-        default void loadFrom(GuiPreferences prefs) {
-            setJson(JsonReader.create(prefs.getValueStore().getString(getKey(), "null"))
-                    .parseValue());
+        @Override
+        default boolean loadFromAndChanged(GuiPreferences prefs) {
+            var nextObj = JsonReader.create(prefs.getValueStore().getString(getKey(), "null"))
+                    .parseValue();
+            if (compareChanged(nextObj)) {
+                setJson(nextObj);
+                return true;
+            } else {
+                return false;
+            }
         }
 
+        /**
+         * @param nextObj a new JSON object
+         * @return true if the nextObj changes any property
+         * @since 1.8
+         */
+        default boolean compareChanged(Object nextObj) {
+            return !Objects.deepEquals(nextObj, toJson());
+        }
+
+        @Override
         default void saveTo(GuiPreferences prefs) {
             prefs.getValueStore().putString(getKey(),
                     JsonWriter.create().withNewLines(false).write(toJson()).toSource());

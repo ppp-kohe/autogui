@@ -161,6 +161,50 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             }
             return menuItems;
         }
+
+        /**
+         *
+         * @return {@link #getSwingStaticMenuItems()} + {@link ColumnFileInfoItem}
+         * @since 1.8
+         */
+        public List<CategorizedMenuItem> getMenuItems() {
+            return PopupCategorized.getMenuItems(getSwingStaticMenuItems(),
+                    List.of(new ColumnFileInfoItem()));
+        }
+
+        @Override
+        public void initPopup() {
+            popup = new PopupExtension(this, new PopupCategorized(this::getMenuItems));
+            setInheritsPopupMenu(true);
+        }
+    }
+
+    /**
+     * a sub-class of {@link org.autogui.swing.util.SearchTextFieldFilePath.FileInfoItem}
+     *   for supporting coversion with the table-target column.
+     *    It only avaialbe if the selected cell is just one.
+     * @since 1.8
+     */
+    public static class ColumnFileInfoItem extends SearchTextFieldFilePath.FileInfoItem implements TableTargetMenu {
+        public ColumnFileInfoItem() {
+            super(null);
+        }
+
+        @Override
+        public Object convert(GuiReprCollectionTable.TableTargetColumn target) {
+            var vs = target.getSelectedCells();
+            if (vs.size() == 1) {
+                var obj = vs.getFirst().getValue();
+                if (obj instanceof Path p) {
+                    this.path = p;
+                    return MenuBuilder.get().createLabel(getName());
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        }
     }
 
     public static class ColumnFileCopyAction extends SearchTextFieldFilePath.FileCopyAllAction {

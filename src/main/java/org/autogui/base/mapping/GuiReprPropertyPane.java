@@ -152,13 +152,13 @@ public class GuiReprPropertyPane extends GuiReprValue {
     }
 
     @Override
-    public String toHumanReadableString(GuiMappingContext context, Object source) {
-        List<String> list = new ArrayList<>(1);
+    public TreeString toHumanReadableStringTree(GuiMappingContext context, Object source) {
+        List<TreeString> list = new ArrayList<>(1);
         BiConsumer<GuiMappingContext, Object> adder = GuiReprObjectPane.getAddingHumanReadableStringToList(list);
         for (GuiMappingContext child : context.getChildren()) {
             adder.accept(child, source);
         }
-        return String.join("\t", list);
+        return new TreeStringComposite(list, false);
     }
 
     @Override

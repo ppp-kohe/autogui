@@ -13,5 +13,9 @@ public interface TableTargetMenu {
      */
     String MENU_COLUMN_ROWS = "Column Rows ";
 
-    JMenu convert(GuiReprCollectionTable.TableTargetColumn target);
+    /**
+     * @param target the target accessor used by the returned menu-element
+     * @return a menu-element including JMenu, JMenuItem, or JComponent
+     */
+    Object convert(GuiReprCollectionTable.TableTargetColumn target);
 }

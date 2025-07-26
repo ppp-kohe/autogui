@@ -1146,11 +1146,14 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             return backgroundColor;
         }
 
-
         @Override
-        public void loadFrom(GuiPreferences prefs) {
-            prefsObj.loadFrom(prefs);
-            updateGuiAndTargetTextPaneFromPrefsObj();
+        public boolean loadFromAndChanged(GuiPreferences prefs) {
+            if (prefsObj.loadFromAndChanged(prefs)) {
+                updateGuiAndTargetTextPaneFromPrefsObj();
+                return true;
+            } else {
+                return false;
+            }
         }
 
         @Override
@@ -1574,7 +1577,7 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
         }
 
         @Override
-        public void loadFrom(GuiPreferences prefs) {
+        public boolean loadFromAndChanged(GuiPreferences prefs) {
             GuiPreferences.GuiValueStore store = prefs.getValueStore();
             var lineSpacing = store.getString(KEY_LINE_SPACING, null);
             var spaceAbove = store.getString(KEY_SPACE_ABOVE, null);
@@ -1587,17 +1590,28 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             var backgroundCustom = store.getString(KEY_BACKGROUND_CUSTOM, null);
             var foregroundCustom = store.getString(KEY_FOREGROUND_CUSTOM, null);
             var wrapText = store.getString(KEY_WRAP_TEXT, null);
-            setLineSpacing(lineSpacing != null ?  Float.parseFloat(lineSpacing) :  DEFAULT_NUM);
-            setSpaceAbove(spaceAbove != null ?  Float.parseFloat(spaceAbove) : DEFAULT_NUM);
-            setFontFamily(fontFamily != null ?  fontFamily : DEFAULT_FONT_FAMILY);
-            setFontSize(fontSize != null ?  Integer.parseInt(fontSize) : DEFAULT_NUM);
-            setBold(bold != null && bold.equals("true"));
-            setItalic(italic != null && italic.equals("true"));
-            setWrapText(wrapText != null && wrapText.equals("true"));
-            setBackgroundCustom(backgroundCustom != null && backgroundCustom.equals("true"));
-            setForegroundCustom(foregroundCustom != null && foregroundCustom.equals("true"));
-            setBackgroundColor(backgroundColor);
-            setForegroundColor(foregroundColor);
+            boolean updateLineSpacing = updateProp(this::setLineSpacing, getLineSpacing(), (lineSpacing != null ?  Float.parseFloat(lineSpacing) :  DEFAULT_NUM));
+            boolean updateSpaceAbove = updateProp(this::setSpaceAbove, getSpaceAbove(), (spaceAbove != null ?  Float.parseFloat(spaceAbove) : DEFAULT_NUM));
+            boolean updateFontFamily = updateProp(this::setFontFamily, getFontFamily(), (fontFamily != null ?  fontFamily : DEFAULT_FONT_FAMILY));
+            boolean updateFontSize = updateProp(this::setFontSize, getFontSize(), (fontSize != null ?  Integer.parseInt(fontSize) : DEFAULT_NUM));
+            boolean updateBold = updateProp(this::setBold, isBold(), (bold != null && bold.equals("true")));
+            boolean updateItalic = updateProp(this::setItalic, isItalic(), (italic != null && italic.equals("true")));
+            boolean updateWrapText = updateProp(this::setWrapText, isWrapText(), (wrapText != null && wrapText.equals("true")));
+            boolean updateBackgroundCustom = updateProp(this::setBackgroundCustom, isBackgroundCustom(), (backgroundCustom != null && backgroundCustom.equals("true")));
+            boolean updateForegroundCustom = updateProp(this::setForegroundCustom, isForegroundCustom(), (foregroundCustom != null && foregroundCustom.equals("true")));
+            boolean updateBackgroundColor = updateProp(this::setBackgroundColor, getBackgroundColor(), (backgroundColor));
+            boolean updateForegroundColor = updateProp(this::setForegroundColor, getForegroundColor(), (foregroundColor));
+            return updateLineSpacing || updateSpaceAbove || updateFontFamily || updateFontSize || updateBold || updateItalic ||
+                    updateWrapText || updateBackgroundCustom || updateForegroundCustom || updateBackgroundColor || updateForegroundColor;
+        }
+
+        private <T> boolean updateProp(Consumer<T> setter, T current, T next) {
+            if (!Objects.equals(current, next)) {
+                setter.accept(next);
+                return true;
+            } else {
+                return false;
+            }
         }
 
         @Override

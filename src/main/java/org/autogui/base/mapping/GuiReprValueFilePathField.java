@@ -139,8 +139,8 @@ public class GuiReprValueFilePathField extends GuiReprValue {
      * @return a path string
      */
     @Override
-    public String toHumanReadableString(GuiMappingContext context, Object source) {
-        return Objects.toString(toJson(context, source));
+    public TreeString toHumanReadableStringTree(GuiMappingContext context, Object source) {
+        return new TreeStringValue(Objects.toString(toJson(context, source)));
     }
 
     /**

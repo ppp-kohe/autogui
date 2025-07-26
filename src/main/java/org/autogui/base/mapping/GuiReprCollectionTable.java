@@ -407,21 +407,21 @@ public class GuiReprCollectionTable extends GuiReprValue {
     }
 
     @Override
-    public String toHumanReadableString(GuiMappingContext context, Object source) {
+    public TreeString toHumanReadableStringTree(GuiMappingContext context, Object source) {
         List<?> list = (List<?>) source;
-        List<String> res = new ArrayList<>(list.size());
+        List<TreeString> res = new ArrayList<>(list.size());
         GuiMappingContext elementContext = getElementContext(context);
         for (Object o : list) {
-            res.add(elementContext.getRepresentation().toHumanReadableString(elementContext, o));
+            res.add(elementContext.getRepresentation().toHumanReadableStringTree(elementContext, o));
         }
-        return String.join("\n", res);
+        return new TreeStringComposite(res, true);
     }
 
     @Override
     public Object fromHumanReadableString(GuiMappingContext context, String str) {
-        String[] lines = str.split("\\n", 0);
+        List<String> lines = GuiRepresentation.splitTableToLinesForTabSeparatedValues(str);
         GuiMappingContext elementContext = getElementContext(context);
-        List<Object> res = new ArrayList<>(lines.length);
+        List<Object> res = new ArrayList<>(lines.size());
         for (String line : lines) {
             res.add(elementContext.getRepresentation().fromHumanReadableString(elementContext, line));
         }

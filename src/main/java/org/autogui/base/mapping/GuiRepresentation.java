@@ -1,7 +1,11 @@
 package org.autogui.base.mapping;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /** abstract GUI component:
  *    most methods of the interface always take  a {@link GuiMappingContext},
@@ -130,14 +134,24 @@ public interface GuiRepresentation {
     }
 
     /** method for constructing "toString" copy operations:
-     *   the returned string will be separated by tabs and new-lines
-     *
+     *   the returned string will be separated by tabs and new-lines.
+     *  The default impl. calls {@link #toHumanReadableStringTree(GuiMappingContext, Object)} .toString()
      * @param context the context of the repr.
      * @param source converted to string
      * @return a string representation of the source
      */
     default String toHumanReadableString(GuiMappingContext context, Object source) {
-        return "" + source;
+        return toHumanReadableStringTree(context, source).toString();
+    }
+
+    /**
+     * @param context the context of the repr
+     * @param source convert to string
+     * @return tree string of source, can be encoded by {@link Object#toString()} (used by {@link #toHumanReadableString(GuiMappingContext, Object)}
+     * @since 1.8
+     */
+    default TreeString toHumanReadableStringTree(GuiMappingContext context, Object source) {
+        return new TreeStringValue(Objects.toString(source));
     }
 
     default Object fromHumanReadableString(GuiMappingContext context, String str) {
@@ -316,4 +330,280 @@ public interface GuiRepresentation {
      * @param target the target object, obtained from source value of the context
      */
     default void shutdown(GuiMappingContext context, Object target) { }
+
+    /**
+     * intermediate repesentation of table string; composition of {@link TreeStringValue} and {@link TreeStringComposite}.
+     * toString() returns multiline-strings of tab-separated columns with quoting columns by double-quotation ({@link #quoteForTabSeparatedValues(String)}).
+     * <pre>
+     *     //example
+     *     r1c1    r1c2    r1c3
+     *     r2c1    r2c2    r2c3
+     * 
+     *      C={@link TreeStringComposite}, V={@link TreeStringValue}
+     *    //pattern 1 : collection(col1, col2, col3)
+     *     C(lines=true, hasLines=false,
+     *     {C(lines=false, hasLines=false, {V("r1c1"), V("r1c2"), V("r1c3")}),
+     *      C(lines=false, hasLines=false, {V("r2c1"), V("r2c2"), V("r2c3")})})
+     *        .toString() // lines=true, and join sub-composites by new-line,
+     *           //and the sub-composites has no lines but under-line and thus join elements by tab
+     *
+     *    //pattern 2 : object(collection(col1,col2,col3))
+     *    C(lines=false, hasLines=true,{
+     *     C(lines=true, hasLines=false,
+     *     {C(lines=false, hasLines=false, {V("r1c1"), V("r1c2"), V("r1c3")}),
+     *      C(lines=false, hasLines=false, {V("r2c1"), V("r2c2"), V("r2c3")})}) })
+     *      .toString() // the top composite lines=false but hasLines=true, thus join lines of sub-composite by new-line
+     *       // and the sub-composite lines=true and same as pattern 1
+     *
+     *   //pattern 3 : object(object(col1, col2, col3), object(col1, col2, col3))
+     *     C(lines=false, hasLines=false,
+     *     {C(lines=false, hasLines=false, {V("r1c1"), V("r1c2"), V("r1c3")}),
+     *      C(lines=false, hasLines=false, {V("r2c1"), V("r2c2"), V("r2c3")})})
+     *     .toString() // lines=false and hasLines=false, thus join columns of sub-composites by tab
+     *       //the sub-composites also join columns by tab
+     *       =&gt; "r1c1\tr1c2\tr1c3\tr2c1\tr2c2\tr2c3"
+     *
+     * </pre>
+     * @since 1.8
+     */
+    interface TreeString {
+        /**
+         * @return collect sub-items as columns
+         */
+        default List<String> toColumns() {
+            List<String> s = new ArrayList<>();
+            collect(s);
+            return s;
+        }
+
+        /**
+         * @param underLine if the upper call has a lines=true node
+         * @return joins sub-items as lines
+         */
+        List<String> toLines(boolean underLine);
+
+        /**
+         * @param cols the list for appending elements
+         */
+        void collect(List<String> cols);
+
+        /**
+         * @return true if the tree contains a line-seaprated item
+         */
+        boolean hasLine();
+    }
+
+    /**
+     * a string value implementing {@link TreeString},
+     *   supposing TSV and the contexts will be quoted by {@link #quoteForTabSeparatedValues(String)}
+     * @since 1.8
+     */
+    class TreeStringValue implements TreeString {
+        /** the content string */
+        protected String value;
+        public TreeStringValue(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public void collect(List<String> cols) {
+            cols.add(quoteForTabSeparatedValues(value));
+        }
+
+        @Override
+        public List<String> toLines(boolean underLine) {
+            return toColumns();
+        }
+
+        @Override
+        public boolean hasLine() {
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return value;
+        }
+    }
+
+    /**
+     * a node impl. of {@link TreeString}
+     * @since 1.8
+     */
+    class TreeStringComposite implements TreeString {
+        /** sub-nodes */
+        protected List<TreeString> children;
+        /** the flag for joining children by new-lines: will happen only the top line of upper nodes */
+        protected boolean lines;
+        /** the flag for the sub-nodes has a node of lines=true */
+        protected boolean hasLines;
+        public TreeStringComposite(List<TreeString> children, boolean lines) {
+            this.children = (children == null ? List.of() : children);
+            this.lines = lines;
+            this.hasLines = this.children.stream()
+                    .anyMatch(TreeString::hasLine);
+        }
+
+        @Override
+        public boolean hasLine() {
+            return lines || hasLines;
+        }
+
+        @Override
+        public void collect(List<String> cols) {
+            children.forEach(c ->
+                    c.collect(cols));
+        }
+
+        @Override
+        public List<String> toLines(boolean underLine) {
+            if (underLine) {
+                return List.of(children.stream()
+                        .flatMap(c -> c.toColumns().stream())
+                        .collect(Collectors.joining("\t")));
+            } else {
+                boolean nextUnderLine = (underLine || lines);
+                return children.stream()
+                        .flatMap(c -> c.toLines(nextUnderLine).stream())
+                        .toList();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return String.join(hasLine() ? "\n" : "\t", toLines( false));
+        }
+    }
+
+    /**
+     * @param str the checked string
+     * @return str or quoted string by "" (if the str contains a new-line, a tab, a top-double-quote, or a tail-double-quote)
+     *   e.g. <ul>
+     *       <li><code>A \n " \t B</code> =&gt; <code>"A \n "" \t B"</code> (quoted by new-lines or tabs, also escape double-quotations)</li>
+     *       <li><code>" A B "</code> =&gt; <code>""" A B """</code> (quoted by top or tail dobule-quotation)  </li>
+     *       <li><code>A " B</code> =&gt; <code>A " B</code> (no quoation)  </li>
+     *       <li>null =&gt; <code></code> (null to empty-string) </li>
+     *   </ul>
+     * @since 1.8
+     */
+    static String quoteForTabSeparatedValues(String str) {
+        if (str == null) {
+            return "";
+        }
+        int len = str.length();
+        var buf = new StringBuilder(Math.max(10, len + len / 2));
+        boolean aroundQuote = (len > 0 && (str.charAt(0) == '"' || str.charAt(len - 1) == '"')) //check top or tail
+                || str.chars().anyMatch(ch ->
+                    ch == '\t' || ch == '\r' || ch == '\n');  //check new-lines or tabs
+        if (aroundQuote) {
+            buf.append('"');
+        }
+        for (int i = 0; i < len; ++i) {
+            char ch = str.charAt(i);
+            if (aroundQuote && ch == '"') {
+                buf.append('"');
+            }
+            buf.append(ch);
+        }
+        if (aroundQuote) {
+            buf.append('"');
+        }
+        return buf.toString();
+    }
+
+    /**
+     * @param line a splitted-line
+     * @return parsed columns separated by tabs; recognize quoted column
+     * @since 1.8
+     */
+    static List<String> splitLineToColumnsForTabSeparatedValues(String line) {
+        if (line == null) {
+            return List.of();
+        }
+        boolean cellStart = true;
+        boolean quoted = false;
+        List<String> cols = new ArrayList<>();
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0, len = line.length(); i < len; ++i) {
+            char ch = line.charAt(i);
+            if (cellStart && ch == '"') {
+                quoted = true;
+                cellStart = false;
+            } else if (!quoted && ch == '\t') {
+                cols.add(buf.toString());
+                buf = new StringBuilder();
+                cellStart = true;
+            } else if (quoted && ch == '\"') {
+                if (i + 1 == len) { //the " is quote-end
+                    quoted = false;
+                } else {
+                    char nch = line.charAt(i + 1);
+                    if (nch == '"') { //the " is escaped
+                        buf.append('"');
+                        i++; //skip the next "
+                    } else if (nch == '\t') { //the " is quote-end
+                        quoted = false;
+                    } else {
+                        buf.append('"');
+                    }
+                }
+                cellStart = false;
+            } else {
+                buf.append(ch);
+                cellStart = false;
+            }
+        }
+        if (cellStart || !buf.isEmpty()) {
+            cols.add(buf.toString());
+        }
+        return cols;
+    }
+
+    /**
+     * @param str the tab-separated lines with quoted cells by ""
+     * @return parsed lines of str
+     * @since 1.8
+     */
+    static List<String> splitTableToLinesForTabSeparatedValues(String str) {
+        if (str == null) {
+            return List.of();
+        }
+        boolean cellStart = true;
+        boolean quote = false;
+        StringBuilder buf = new StringBuilder();
+        List<String> lines = new ArrayList<>();
+        for (int i = 0, len = str.length(); i < len; ++i) {
+            char ch = str.charAt(i);
+            if (cellStart && ch == '"') {
+                quote = true;
+                buf.append(ch);
+            } else if (!quote && (ch == '\n' || ch == '\r')) {
+                lines.add(buf.toString());
+                buf = new StringBuilder();
+                cellStart = true;
+                if (ch == '\r' && i + 1 < len && str.charAt(i + 1) == '\n') {
+                    i++; //skip CRLF
+                }
+            } else if (!quote && ch == '\t') {
+                buf.append(ch);
+                cellStart = true;
+            } else if (quote && ch == '"' && (i + 1 == len || isEnd(str.charAt(i + 1)))) {
+                buf.append(ch);
+                cellStart = false;
+                quote = false;
+            } else {
+                buf.append(ch);
+                cellStart = false;
+            }
+        }
+        if (cellStart || !buf.isEmpty()) {
+            lines.add(buf.toString());
+        }
+        return lines;
+    }
+
+    private static boolean isEnd(char ch) {
+        return ch == '\n' || ch == '\r' || ch == '\t';
+    }
+
 }

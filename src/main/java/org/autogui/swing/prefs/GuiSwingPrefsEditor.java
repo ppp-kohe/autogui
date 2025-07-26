@@ -17,10 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -410,10 +407,13 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
 
             Runnable updater = () -> {
                 var name = prefs.getValueStore().getString(GuiPreferences.KEY_NAME, "");
-                nameField.setText(name);
-
+                if (!Objects.equals(name, nameField.getText())) {
+                    nameField.setText(name);
+                }
                 var uuid = prefs.getValueStore().getString(GuiPreferences.KEY_UUID, "");
-                uuidField.setText(uuid);
+                if (!Objects.equals(uuid, uuidField.getText())) {
+                    uuidField.setText(uuid);
+                }
             };
             validationCheckerAdd(updater);
             updater.run();
@@ -715,14 +715,14 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
         return list;
     }
 
-    public Runnable loadAndReturnsAsReloader(GuiSwingPrefsSupports.Preferences prefsObj, GuiPreferences prefs) {
+    public BooleanSupplier loadAndReturnsAsReloader(GuiSwingPrefsSupports.Preferences prefsObj, GuiPreferences prefs) {
         var r = new PrefsLoader(prefsObj, prefs);
-        r.run();
+        r.getAsBoolean();
         prefsLoaders.add(r);
         return r;
     }
 
-    public static class PrefsLoader implements Runnable {
+    public static class PrefsLoader implements BooleanSupplier {
         protected GuiSwingPrefsSupports.Preferences prefsObj;
         protected GuiPreferences prefs;
         protected boolean loaded;
@@ -737,23 +737,27 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
         }
 
         @Override
-        public void run() {
+        public boolean getAsBoolean() {
             if (!loaded) {
-                prefsObj.loadFrom(prefs);
+                boolean updated = prefsObj.loadFromAndChanged(prefs);
                 loaded = true;
+                return updated;
+            } else {
+                return false;
             }
         }
     }
 
     /**
-     * @param reloader suppose the runner for prefsObj.loadFrom(prefs)
+     * @param reloader suppose the runner for prefsObj.loadFromAndChanged(prefs)
      * @return the appender for {@link #validationCheckerAdd(Runnable)} with combining the reloader
      */
-    protected Consumer<Runnable> validationCheckerAdderWithReloader(Runnable reloader) {
+    protected Consumer<Runnable> validationCheckerAdderWithReloader(BooleanSupplier reloader) {
         return r ->
             validationCheckerAdd(() -> {
-                if (reloader != null) reloader.run();
-                r.run();
+                if (reloader != null && reloader.getAsBoolean()) {
+                    r.run();
+                }
             });
     }
 

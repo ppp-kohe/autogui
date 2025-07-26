@@ -802,8 +802,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         @Override
         public Object convert(Object o) {
             Object r = switch (o) {
-                case Action a -> convertAction(a);
                 case TableTargetMenu t -> t.convert(target);
+                case Action a -> convertAction(a);
                 case JMenuItem mi -> convertAction(mi.getAction());
                 case null, default -> o;
             };

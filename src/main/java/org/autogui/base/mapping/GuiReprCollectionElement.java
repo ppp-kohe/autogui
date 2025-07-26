@@ -172,8 +172,8 @@ public class GuiReprCollectionElement extends GuiReprValue {
     }
 
     @Override
-    public String toHumanReadableString(GuiMappingContext context, Object source) {
-        return getRepresentation().toHumanReadableString(context, source);
+    public TreeString toHumanReadableStringTree(GuiMappingContext context, Object source) {
+        return getRepresentation().toHumanReadableStringTree(context, source);
     }
 
     @Override

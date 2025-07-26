@@ -48,8 +48,8 @@ public class GuiReprValueBooleanCheckBox extends GuiReprValue {
     }
 
     @Override
-    public String toHumanReadableString(GuiMappingContext context, Object source) {
-        return Objects.toString(source);
+    public TreeString toHumanReadableStringTree(GuiMappingContext context, Object source) {
+        return new TreeStringValue(Objects.toString(source));
     }
 
     /**

@@ -315,6 +315,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                         Arrays.asList(
                                 infoLabel,
                                 new ContextRefreshAction(context, this),
+                                new ToStringCopyAction(this, context),
                                 new SelectAllAction(this),
                                 new UnSelectAction(this)),
                         getActions());
@@ -1725,23 +1726,54 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
             this.table = pane;
 
-            PopupCategorized tableActions = new PopupCategorized(items, null,
+            var tableActions = new PopupCategorized(items, null,
                                         new ObjectTableModel.MenuBuilderWithEmptySeparator());
-            PopupMenuBuilder columnBuilder = new CollectionColumnMenuSupplier(this);
-            CollectionCellMenuSupplier cellBuilder = new CollectionCellMenuSupplier(this);
-
-            setMenuBuilder((filter, m) -> {
-                columnBuilder.build(filter, m);
-
-                new PopupCategorized(() -> PopupCategorized.getMenuItems(
-                        List.of(buildTableActionsAsSubMenu(tableActions, filter)),
-                        cellBuilder.buildAsSubMenu(filter)
-                )).build(new MenuSeparator(filter), m);
-            });
+            var columnBuilder = new CollectionColumnMenuSupplier(this);
+            var cellBuilder = new CollectionCellMenuSupplier(this);
+            setMenuBuilder((filter, m) -> builder(filter, m, tableActions, columnBuilder, cellBuilder));
 
             menu.get().addPopupMenuListener(this);
             showingTimer = new Timer(100, e -> showing = false);
             showingTimer.setRepeats(false);
+        }
+
+        /**
+         * the building impl. for a collection-table; will be set {@link #setMenuBuilder(PopupMenuBuilder)} with sub-builders
+         * @param filter the given filter
+         * @param m the target menu
+         * @param tableActions  the action builder for "Table"
+         * @param columnBuilder the action builder for "Target Column"
+         * @param cellBuilder   the action builder for "Selected Cells" and "Selected Rows"
+         * @since 1.8
+         */
+        protected void builder(PopupMenuFilter filter, Consumer<Object> m,
+                               PopupCategorized tableActions, CollectionColumnMenuSupplier columnBuilder, CollectionCellMenuSupplier cellBuilder) {
+            if (table.getSelectedColumnCount() > 1) {
+                cellBuilder.buildCells(filter, m);
+                buildPopup(m,
+                        menuToItems(
+                                columnBuilder.buildAsSubMenu(filter),
+                                buildTableActionsAsSubMenu(tableActions, filter),
+                                cellBuilder.buildRowsAsSubMenu(filter)));
+            } else {
+                columnBuilder.build(filter, m);
+                buildPopup(m,
+                        menuToItems(
+                                buildTableActionsAsSubMenu(tableActions, filter),
+                                cellBuilder.buildCellsAsSubMenu(filter),
+                                cellBuilder.buildRowsAsSubMenu(filter)));
+            }
+        }
+
+        private List<? extends PopupCategorized.CategorizedMenuItem> menuToItems(JMenu... menu) {
+            return Arrays.stream(menu)
+                    .map(PopupCategorized.CategorizedMenuItemComponentDefault::new)
+                    .toList();
+        }
+
+        private void buildPopup(Consumer<Object> menu, List<?>... items) {
+            new PopupCategorized(() -> PopupCategorized.getMenuItems(items))
+                    .build(new MenuSeparator(filter), menu);
         }
 
         protected JMenu buildTableActionsAsSubMenu(PopupCategorized tableActions, PopupMenuFilter filter) {
@@ -1892,7 +1924,18 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             this.popup = popup;
         }
 
-        @Override
+        /**
+         * @param filter the given filter
+         * @return a created JMenu including items created by {@link #build(PopupExtension.PopupMenuFilter, Consumer)}
+         * @since 1.8
+         */
+        public JMenu buildAsSubMenu(PopupExtension.PopupMenuFilter filter) {
+            JMenu colMenu = new JMenu("Target Column");
+            build(filter, new MenuBuilder.MenuAppender(colMenu));
+            return colMenu;
+        }
+
+            @Override
         public void build(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu) {
             ObjectTableColumn column = popup.getTargetColumn();
             ObjectTableColumn.PopupMenuBuilderSource src = (column == null ? null : column.getMenuBuilderSource());
@@ -1964,18 +2007,37 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         /**
-         * constructs 2 sub-menus by {@link #buildCellsOrRows(PopupExtension.PopupMenuFilter, Consumer, boolean)}
-         * @param filter a menu-filter
-         * @return sub-menus of selected-cells and selected-rows
+         * constructs menu-items for "Selected Cells"
+         * @param filter the given filter
+         * @param menu the target item holder
          * @since 1.8
          */
-        public List<JMenu> buildAsSubMenu(PopupExtension.PopupMenuFilter filter) {
-            JMenu cell = new JMenu("Selected Cells");
-            buildCellsOrRows(filter, new MenuBuilder.MenuAppender(cell), false);
+        public void buildCells(PopupExtension.PopupMenuFilter filter, Consumer<Object> menu) {
+            buildCellsOrRows(filter, menu, false);
+        }
 
+        /**
+         * @param filter the given filter
+         * @return a created JMenu including items by {@link #buildCellsOrRows(PopupExtension.PopupMenuFilter, Consumer, boolean)}
+         *  with false: "Selected Cells"
+         * @since 1.8
+         */
+        public JMenu buildCellsAsSubMenu(PopupExtension.PopupMenuFilter filter) {
+            JMenu row = new JMenu("Selected Cells");
+            buildCellsOrRows(filter, new MenuBuilder.MenuAppender(row), false);
+            return row;
+        }
+
+        /**
+         * @param filter the given filter
+         * @return a created JMenu including items by {@link #buildCellsOrRows(PopupExtension.PopupMenuFilter, Consumer, boolean)}
+         *  with true: "Selected Rows"
+         * @since 1.8
+         */
+        public JMenu buildRowsAsSubMenu(PopupExtension.PopupMenuFilter filter) {
             JMenu row = new JMenu("Selected Rows");
             buildCellsOrRows(filter, new MenuBuilder.MenuAppender(row), true);
-            return List.of(cell, row);
+            return row;
         }
 
         @Override

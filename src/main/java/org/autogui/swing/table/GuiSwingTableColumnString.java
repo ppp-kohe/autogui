@@ -361,6 +361,9 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         protected boolean editor;
         /** @since 1.8 */
         protected Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> prefsUpdater;
+        /** @since 1.8 */
+        protected SwitchEnterBehaviorAction editFinishAction;
+
         public MultilineColumnTextPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             TextCellRenderer.setCellDefaultProperties(this);
@@ -394,6 +397,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             } else {
                 switchActionFinishByEnter();
             }
+            editFinishAction = new SwitchEnterBehaviorAction(this);
         }
 
         protected void switchActionFinishByEnter() {
@@ -429,7 +433,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
          */
         @Override
         public List<CategorizedMenuItem> getHeaderMenuItems(JTable table) {
-            return editor ? List.of(new SwitchEnterBehaviorAction(this)) : List.of();
+            return editor ? List.of(editFinishAction) : List.of();
         }
 
         public boolean isEditFinishByEnterAndKey() {
@@ -519,6 +523,16 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
 
             protected void setSelectedFromPane() {
                 putValue(SELECTED_KEY, !pane.isEditFinishByEnterAndKey());
+            }
+
+            @Override
+            public String getCategory() {
+                return PopupExtension.MENU_CATEGORY_PREFS;
+            }
+
+            @Override
+            public String getSubCategory() {
+                return PopupExtension.MENU_SUB_CATEGORY_PREFS_WINDOW;
             }
         }
 
@@ -667,6 +681,9 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         public List<CategorizedMenuItem> getSwingStaticMenuItems() {
             List<CategorizedMenuItem> items = new ArrayList<>(super.getSwingStaticMenuItems());
             items.add(new GuiSwingHistoryMenu<>(this, getSwingViewContext()));
+            if (editor) {
+                items.add(editFinishAction);
+            }
             return items;
         }
 
