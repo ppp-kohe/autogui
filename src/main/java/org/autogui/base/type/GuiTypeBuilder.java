@@ -20,6 +20,11 @@ public class GuiTypeBuilder {
             Float.class, Double.class, CharSequence.class);
 
     protected List<Class<?>> valueTypes = new ArrayList<>(langValueTypes);
+    /** for supporting {@link CharSequence}, extracting it from {@link #valueTypes} @since 1.8 */
+    protected List<Class<?>> valueInterfaceTypes = new ArrayList<>(
+            valueTypes.stream()
+                    .filter(Class::isInterface)
+                    .toList());
 
     public GuiTypeBuilder() {
     }
@@ -120,7 +125,7 @@ public class GuiTypeBuilder {
         if (cls.isArray()) {
             return isIncludedClass(cls.getComponentType());
         } else {
-            return isValueType(cls) || !isExcludedType(cls);
+            return isValueType(cls)  || !isExcludedType(cls);
         }
     }
 
@@ -265,7 +270,9 @@ public class GuiTypeBuilder {
      * @param cls the tested class
      * @return primitive or {@link #valueTypes} */
     public boolean isValueType(Class<?> cls) {
-        return cls.isPrimitive() || valueTypes.contains(cls);
+        return cls.isPrimitive() || valueTypes.contains(cls) ||
+             valueInterfaceTypes.stream()
+                .anyMatch(it -> it.isAssignableFrom(cls));
     }
 
     public boolean isExcludedType(Class<?> cls) {
