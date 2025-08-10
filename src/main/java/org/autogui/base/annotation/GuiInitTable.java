@@ -9,6 +9,7 @@ package org.autogui.base.annotation;
  *         ...
  *     }
  * </pre>
+ * @see org.autogui.GuiInits
  * @since 1.8
  */
 public @interface GuiInitTable {

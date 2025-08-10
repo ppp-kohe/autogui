@@ -218,7 +218,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         public <RetType> RetType executeWithConfirmReturn(ActionEvent e, Supplier<RetType> action, Supplier<RetType> cancelAction) {
             String name = Objects.toString(getValue(NAME));
             int res = JOptionPane.showConfirmDialog(componentForDialogParent(e),
-                    String.format("Run action \"%s\"?%s", name,
+                    String.format("Run the action \"%s\"?%s", name,
                             (confirmDescription == null || confirmDescription.isEmpty() ? "" : (" : \n  " + confirmDescription))), name, JOptionPane.OK_CANCEL_OPTION);
             if (res == JOptionPane.OK_OPTION) {
                 return action.get();

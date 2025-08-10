@@ -3,7 +3,7 @@
 [English](README.md) | 日本語
 
 AutoguiはJava/SwingのGUIアプリケーションをplain-old Javaオブジェクトから作り出すライブラリです。
-基本的な仕組みは与えられたオブジェクトのクラス構造をリフレクションAPIを通じて解析し、
+基本的な仕組みは、与えられたオブジェクトのクラス構造をリフレクションAPIを通じて解析し、
 クラスに定義されたプロパティとアクションに紐づけられたSwingベースのコンポーネントを組み合わせてユーザーインターフェースを作り出します。
 
 ## ライセンス
@@ -28,8 +28,11 @@ cd autogui
 
 ```bash
 mvn package
-  # このコマンドは target/autogui-1.7.jar を生成します。
+  # このコマンドは target/autogui-1.8.jar を生成します。
+mvn install
+  # このコマンドはビルドしたライブラリをローカルの他のプロジェクトで利用できるように配置します
 ```
+
 本プロジェクトの主要部分はJDKクラス以外の他のライブラリに依存しません。
 `src/main/java`にあるソースファイル(及び`src/main/resources`にあるリソース)を手動でコンパイルすることもできます。
 
@@ -41,7 +44,7 @@ mvn package
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.7</version>
+        <version>1.8</version>
     </dependency>
 ```
 
@@ -57,9 +60,30 @@ mvn package
 
 本ライブラリはJava 9以降にJDKに導入された標準のREPLツールである`jshell`コマンド上で利用することができます。
 利用するには、まず本ライブラリのjarファイルをクラスパスに含める必要があります。
-`jshell`では、`/env -class-path <path/to/jar>`コマンドを実行することで可能です。
-`jshell`コマンドを起動したら、下記のコードの`jshell>`プロンプト行以降を貼り付けることで試すことができます。(JDK, Git, Mavenがインストールされている環境を前提としています。)
+`jshell`では`/env -class-path <path/to/jar>`コマンドによりクラスパスに含めることができます。
 
+本ライブラリの`jshell`での具体的な利用手順は以下のようになります。
+
+1. ターミナルから[ソースからのビルド](#ソースからのビルド)で説明したように、`autogui`ディレクトリ直下に移動し、ビルドを行います。 (JDK, Git, Mavenがインストールされている環境を前提としています。)
+2. `jshell`を起動します。
+3. `/env -class-path target/autogui-1.8.jar` を入力し、本ライブラリを利用可能にします。
+4. 続けて以下のコードを入力します: `Hello`クラスが定義されます。
+   ```java
+   class Hello {
+       String value;
+       void action() {
+           System.out.println(value);
+       }
+   }
+   ```
+5. さらに以下の3行を入力します: 本ライブラリを利用しウィンドウが表示されます。
+   ```java
+   import org.autogui.swing.*;
+   Hello h = new Hello();
+   AutoGuiShell.showLive(h);
+   ```
+
+上記の手順のターミナル表示は概ね下記のようになります。
 
 ```
 $ git clone https://github.com/ppp-kohe/autogui.git
@@ -70,6 +94,8 @@ $ jshell
 |  For an introduction type: /help intro
 
 jshell> 
+/env -class-path target/autogui-1.8.jar
+
 class Hello {
    String value;
    void action() {
@@ -77,12 +103,9 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.7.jar
-
-import org.autogui.swing.*
+import org.autogui.swing.*;
 Hello h = new Hello();
-AutoGuiShell.showLive(h)
-
+AutoGuiShell.showLive(h);
 ```
 
 上記のコードはまず`Hello`クラスを定義します。`Hello`クラスは1つのインスタンスフィールドとメソッドを定義しています。
@@ -112,8 +135,7 @@ AutoGuiShell.showLive(h)
 下記のコードは以下のコマンドで実行できます: 
 
 ```bash
- mvn test-compile exec:java -Dexec.classpathScope=test \
-    -Dexec.mainClass=org.autogui.demo.ImageFlipDemo
+ mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.ImageFlipDemo
 ```
 
 この `ImageFlipDemo.java`は多少意味のある実用的なサンプルです。
@@ -171,8 +193,7 @@ public class ImageFlipDemo {
 この例はライブラリのテーブル生成機能のデモアプリケーションです。
 
 ```bash
-mvn test-compile exec:java -Dexec.classpathScope=test \
-    -Dexec.mainClass=org.autogui.demo.FileRenameDemo
+mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.FileRenameDemo
 ```
 
 上記のコマンドは下図のようなGUIウィンドウを表示します:
@@ -257,7 +278,7 @@ import java.util.*;
 ```
 
 * このデモにおいて、本ライブラリは`@GuiIncluded`アノテーションがついたメンバからのみGUIコンポーネントを生成します。この利用形態を*Strictモード*と呼んでおり、`AutoGuiShell.get().showWindow(...)`によって起動します。
-* ファイルパスフィールド*Dir*: 文字列を編集すると`File`オブジェクトを生成して`setDir(File)`メソッドの引数に与えて呼び出します。このメソッドは引数のディレクトリからファイル一覧を取得し、`RenameEntry`オブジェクトとして`ArrayList`に生成して追加します。
+* ファイルパスフィールド*Dir*: 文字列を編集すると`File`オブジェクトを生成して`setDir(File)`メソッドの引数に与えて呼び出します。このメソッドは引数のディレクトリからファイル一覧を取得し、`RenameEntry`オブジェクトとして生成して`ArrayList`に追加します。
 `RenameEntry`はstaticなネストクラスで、`File`オブジェクトとインデックス番号を持つ新しいファイル名のプレフィックス文字列を保持します(`String.format("%03d-%s",...)`によって設定)。
 * *Entries*テーブル: `getEntries()`メソッドで返される`List`から生成されます。さらにこのテーブルのカラムは`List`の要素型である`<RenameEntry>`の*File*と*New Name*プロパティから生成されます。
 テーブルの各行は`List`オブジェクトの各要素と対応します。
@@ -270,7 +291,7 @@ import java.util.*;
 
 本ライブラリを`main`メソッドから実行するアプリケーションで利用する場合、GUIコンポーネントに対応するメンバーを限定する方が望ましいといえます。
 [`@GuiIncluded`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html) と
-[`AutGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html) によってこの制限を得ることができます。
+[`AutGuiShell.get().showWindow(o)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html) によってStrictモードと呼ぶ、この制限を有効にできます。
 
 Strictモードは...
 
@@ -320,7 +341,7 @@ Java 9以降に導入されたモジュールシステム上で本ライブラ�
 
 本ライブラリのモジュール名は`org.autogui`です。以下の記述を`module-info.java`に追加する必要があります:
 
-1. `open`修飾子を利用したいモジュール宣言に追加する。もしくは、`exports`(または`opens`) 利用したいパッケージ `to org.autogui;`　を追加する。
+1. `open`修飾子を利用したいモジュール宣言に追加する。もしくは、`exports`(または`opens`) <利用したいパッケージ> `to org.autogui;`　を追加する。
 2. `requires org.autogui;`
 
 
@@ -355,7 +376,7 @@ open module your.module { //"open"を自分のモジュールyour.moduleに追�
   * [Boolean check-box](#boolean-check-box): (ブーリアンチェックボックス) `boolean` もしくは
     [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html)
   * [Enum pull-down menu](#enum-pull-down-menu): (列挙プルダウン) 
-    [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html)のサブタイプ
+    [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html)のサブタイプ (`enum`タイプ)
   * [Image pane](#image-pane): (画像ペイン)
     [`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html)のサブタイプ
   * [Document editor](#document-editor): (ドキュメントエディター)
@@ -573,11 +594,21 @@ Swingのドキュメントとテキスト編集コンポーネント群は、ど
 
 あるブジェクトのクラスは他のオブジェクトクラスのプロパティを持つことができ、それらは各オブジェクトに対応したサブペインとなります。
 
+#### Action method
+
 オブジェクトクラスのメンバーはアクションメソッドを含むことができ、それらはツールバーのボタンとなります。
 これらのメソッドの条件としてその名前は`get`, `is`, `set`で開始せず、引数を1つも取らない必要があります。
 
 そのようなアクションメソッドは(当然)オブジェクトのプロパティを読み書きすることができます。もし、アクションメソッドがオブジェクトのプロパティを変更した場合、メソッド実行後、本ライブラリのUIは自動的に変更されたプロパティを特定し、プロパティに紐づいたUIコンポーネントを更新します。
 
+メソッド名からボタンのアイコンが設定される場合があります。これはあらかじめ用意された単語に対応するアイコン群から設定されます。
+例えば`add`という単語には「+」マークのアイコンを用意しており、`addItem()`のようなアクションメソッドに対応します。
+また、単語には類義語(synonyms)が設定されており、`insert`や`append`に対しても`add`と同じアイコンが設定されます。
+本ライブラリが提供するすべてのアイコンと対応する単語は`IconListDemo`を実行すると確認できます。
+
+```bash
+ mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.IconListDemo
+```
 
 #### プロパティ定義
 
@@ -728,8 +759,7 @@ org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
 サンプル実行:
 
 ```bash
- mvn test-compile exec:java -Dexec.classpathScope=test \
-    -Dexec.mainClass=org.autogui.demo.ObjectEmbeddedDemo
+ mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.ObjectEmbeddedDemo
 ```
 
 ### Collection table
@@ -786,7 +816,7 @@ org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
 メソッドを実行します。
 
 もし、コレクションの要素オブジェクトがアクションメソッドを持つ場合、その場合もテーブルがツールバーにメソッドに紐づいたボタンを持ちます。
-このボタンはテーブル上で選択された行に対応するオブジェクトにそれぞれ対してメソッドを実行します。
+このボタンはテーブル上で選択された行に対応するオブジェクトそれぞれに対してメソッドを実行します。
 
 
 ```java
@@ -1109,9 +1139,51 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 `getPrefsJson()`で返されるオブジェクトは単純なJSONの型の組み合わせでなければなりません(Map、List、String、Number、Boolean)。
 また、初期設定ストアに保存できるように十分に小さいデータサイズである必要があります。
 
+## コード上でのデフォルト設定値の提供
+
+バージョン1.8から[`@GuiInits`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html)というアノーテーションによっていくつかのコンポーネントの初期設定のデフォルト設定値をコード上で設定できるようになりました。
+
+```java
+import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
+import org.autogui.base.annotation.*;
+import org.autogui.swing.AutoGuiShell;
+import javax.swing.text.*;
+
+@GuiInits(window = @GuiInitWindow(width = 400, height = 300))
+public class MyEditor {
+    DefaultStyledDocument doc = new DefaultStyledDocument();
+
+    @GuiInits(action = @GuiInitAction(confirm = true))
+    public void clear() throws Exception {
+        doc.replace(0, doc.getLength(), "", null);
+    }
+}
+org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
+```
+
+上記のコードはテキストペインと"Clear"アクションボタンを持つウィンドウを表示しますが、ウィンドウの初期サイズが400 x 300に設定されます。そして"Clear"アクションボタンを押すと、アクション実行前に確認ダイアログを表示します。
+
+<img src="docs/images/image-inits-h.png" srcset="docs/images/image-inits-h.png 1x, docs/images/image-inits.png 2x" alt="Default Settings by Annotations">
+
+これらはそれぞれクラスに付加された`@GuiInits(window = ...)`と、メソッドに付加された`@GuiInits(action = ...)`のデフォルト設定によるものです。
+`@GuiInits`アノーテーションはこの機能で設定可能なすべての項目をそのプロパティ(`window = ...`や`action = ...`)として定義しています。実際に定義可能な設定の項目は`@GuiInits`のプロパティに設定されるアノーテーション、`org.autogui.base.annotation`パッケージの`@GuiInitWindow`や`@GuiInitAction`に定義されています。
+
+| プロパティ                                                                                             |　値型                                                                                                                     |　付加対象                                                           | 設定内容                    | 
+| -                                                                                                    | -                                                                                                                        | -                                                                  | -                         |
+|        [`tabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tabbedPane())        |        [`@GuiInitTabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTabbedPane.html)        |  parent type of [object tabbed pane](#object-tabbed-pane)          | タブ化抑制                  | 
+|         [`splitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#splitPane())         |         [`@GuiInitSplitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitSplitPane.html)         |  parent [object pane](#object-pane) type of splitted-components    | 縦方向分割指定               | 
+|            [`window`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#window())            |            [`@GuiInitWindow`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitWindow.html)            |  root [object pane](#object-pane) type                             | サイズ                      | 
+|             [`table`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#table())             |             [`@GuiInitTable`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTable.html)             |  [Collection table](#collection-table) property                    | 行高さ指定、動的カラムリサイズ  | 
+|       [`tableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumn())       |       [`@GuiInitTableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumn.html)       |  table column property                                             | カラム幅、ソート順            | 
+| [`tableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumnString()) | [`@GuiInitTableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumnString.html) |  table column string property                                      | エンターキー確定/改行切替      | 
+|     [`numberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#numberSpinner())     |     [`@GuiInitNumberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitNumberSpinner.html)     |  [number property](#number-spinner)                                | フォーマット、最大、最小、ステップ設定 | 
+|            [`action`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#action())            |            [`@GuiInitAction`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitAction.html)            |  [action method](#action-method)                                   | 確認ダイアログ表示            | 
+
+
 ## ロギング
 
-生成されたウィンドウはステータスバーとログエントリを表示するリスト表示の機能を持っています。ロギングエントリは以下の種類があります:
+生成されたウィンドウはステータスバーとログエントリを表示するリスト表示の機能を持っています。ログエントリは以下の種類があります:
 
 * 文字列メッセージ
 * 進捗バー
@@ -1124,7 +1196,7 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 [`System.out`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#out)を置き換えます。置き換えられたこれらのストリームからの出力はステータスバーとリストウィンドウにも表示されます。
 
 この置き換えは[`GuiSwingLogManager#setupConsoleWithDefaultFlags()`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/log/GuiSwingLogManager.html#setupConsoleWithDefaultFlags)の実行で読み取られるシステムプロパティにより設定にできます。
-`-Dautogui.log.replaceErr=false -Dautogui.log.replaceOut=false`のようなVMオプションを追加することで向こうにできます。
+`-Dautogui.log.replaceErr=false -Dautogui.log.replaceOut=false`のようなVMオプションを追加することで無効にできます。
 
 また、ユーザーコードからは[`GuiLogManager`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/log/GuiLogManager.html)を使って直接表示することもできます。
 
@@ -1260,7 +1332,25 @@ GNOME(デフォルトのUbuntuなど)でのHiDPI環境では環境変数`GDK_SCA
 
 ### Loading Flatlaf
 
-本ライブラリのデフォルトのLAF指定は暗黙のうちに[*flatlaf*](https://www.formdev.com/flatlaf/) (`com.formdev:flatlaf:3.4.1`により確認しています)が実行環境に含まれているかどうかをチェックし、OSの現在のテーマにあったルック&フィール(LAF)を自動的に適用します。このチェックと適用は単純に`Class.forName`を使ってリフレクションAPIにより実現しています。
+本ライブラリのデフォルトのLAF指定は暗黙のうちに[*flatlaf*](https://www.formdev.com/flatlaf/) (`com.formdev:flatlaf:3.6`により確認しています)が実行環境に含まれているかどうかをチェックし、OSの現在のテーマにあったルック&フィール(LAF)を自動的に適用します。このチェックと適用は単純に`Class.forName`を使ってリフレクションAPIにより実現しています。
 
 <img src="docs/images/image-dark-h.png" srcset="docs/images/image-dark-h.png 1x, docs/images/image-dark.png 2x" alt="Progress">
 
+### コード上の外観の制御
+
+[`AutoGuiShell`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html) クラスに定義されたメソッドを呼び出してLAFの設定を制御することができます。
+例えば`Hello`クラスのオブジェクトを起動する前に下記のようなコードでLAF設定を制御することができます。
+
+```java
+  AutoGuiShell.get()
+    .withLookAndFeelDefaultWithoutProp() //プロパティの設定を無効にし, nimbus-flatまたはflatlafを利用する
+    .showWindow(new Hello());
+
+  AutoGuiShell.get()
+    .withLookAndFeelDefaultNoFlatlafWithoutProp() //プロパティの設定を無効にし, nimbus-flatを利用する
+    .showWindow(new Hello());
+
+  AutoGuiShell.get()
+    .withLookAndFeelSpecial("metal") //autogui.lafに"metal"を設定した場合と同様
+    .showWindow(new Hello());
+```

@@ -19,6 +19,7 @@ package org.autogui.base.annotation;
  *                                             // and typing the Enter key will insert a new-line.
  *     }
  * </pre>
+ * @see org.autogui.GuiInits
  * @since 1.8
  */
 public @interface GuiInitTableColumnString {

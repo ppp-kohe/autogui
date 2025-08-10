@@ -18,6 +18,7 @@ import javax.swing.*;
  *         public String getColumn1() { ... }  //the width of the column associated to the property becomes 300, and the column is selected as the sorting key.
  *     }
  * </pre>
+ * @see org.autogui.GuiInits
  * @since 1.8
  */
 public @interface GuiInitTableColumn {

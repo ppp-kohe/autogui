@@ -28,13 +28,16 @@ The project uses [apache-maven](http://maven.apache.org) and depends on a recent
 
 ```bash
 mvn package
-  # the command will generate target/autogui-1.7.jar
+  # the command will generate target/autogui-1.8.jar
+
+mvn install
+  # the command makes the built library available locally to other projects. 
 ```
 
 Note that the main part of the project does not depend on any libraries other than JDK classes. 
 So you can manually compile source files placed in `src/main/java` (also `src/main/resources` for resources).
 
-## Maven Usage
+## Maven usage
 
 To use the library in your apache-maven project, you can insert the following `dependency` section into `pom.xml`.
 
@@ -42,7 +45,7 @@ To use the library in your apache-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.7</version>
+        <version>1.8</version>
     </dependency>
 ```
 
@@ -60,7 +63,29 @@ The library jar is available from Maven Central Repository: [org.autogui:autogui
 The library can be used with `jshell` that is the official REPL-tool bundled with JDK since Java 9.
 To use the library, you first need to include the jar file of the library to your class-path.
 In `jshell`, you can do that by `/env -class-path <path/to/jar>`.
-After launching the tool by the command `jshell`, you can paste the following code (lines after the `jshell>` prompt. Also suppose that the environment have a JDK, Git and Maven).
+
+Simple steps for using the library with `jshell` is like following.
+
+1. In the terminal, as described in [Building from source](#building-from-source), move to the directory `autogui` and build the library. (supposing the environment JDK, Git and Maven are installed)
+2. start `jshell`
+3. type `/env -class-path target/autogui-1.8.jar` in order to enable accessing the library.
+4. next, type the following lines of code: it defines the class `Hello`.
+   ```java
+   class Hello {
+       String value;
+       void action() {
+           System.out.println(value);
+       }
+   }
+   ```
+5. also, type the following 3 lines of code: it uses the library and a window will be displayed.
+   ```java
+   import org.autogui.swing.*;
+   Hello h = new Hello();
+   AutoGuiShell.showLive(h);
+   ```
+
+After following the steps above, the terminal should look something like this:
 
 ```
 $ git clone https://github.com/ppp-kohe/autogui.git
@@ -78,12 +103,11 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.7.jar
+/env -class-path target/autogui-1.8.jar
 
-import org.autogui.swing.*
+import org.autogui.swing.*;
 Hello h = new Hello();
-AutoGuiShell.showLive(h)
-
+AutoGuiShell.showLive(h);
 ```
 
 The above code defines the class `Hello` with an instance field and a method.
@@ -110,8 +134,7 @@ You can execute the code in the directory, by `mvn test-compile exec:java  -Dexe
 For example:
 
 ```bash
- mvn test-compile exec:java -Dexec.classpathScope=test \
-    -Dexec.mainClass=org.autogui.demo.ImageFlipDemo
+ mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.ImageFlipDemo
 ```
 
  `ImageFlipDemo.java` is a bit interesting and useful example:
@@ -173,8 +196,7 @@ The displayed window has the following GUI components:
 Here is another example for demonstrating table feature of the library.
 
 ```bash
-mvn test-compile exec:java -Dexec.classpathScope=test \
-    -Dexec.mainClass=org.autogui.demo.FileRenameDemo
+mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.FileRenameDemo
 ```
 
 The command will show a GUI window like the following image:
@@ -352,7 +374,7 @@ The recent versions (1.2-) have the `module-info.class` and require Java 11 or l
   * [Boolean check-box](#boolean-check-box): `boolean` or 
     [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html)
   * [Enum pull-down menu](#enum-pull-down-menu): a sub-type of 
-    [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html)
+    [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html) (an `enum` type)
   * [Image pane](#image-pane): a sub-type of 
     [`java.awt.Image`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/Image.html)
   * [Document editor](#document-editor): 
@@ -577,10 +599,23 @@ A property of a user-defined object class will be bound to a pane composing memb
 
 An object class can contains properties of some other object classes which will be bound to sub-panes for the objects. 
 
+#### Action method
+
 The members of the object class can include action-methods bound to tool-bar buttons.
 Names of those methods does not start with `get`, `is` or `set` and does not take any arguments.
 
 Such action-method can read and write properties of the object. If the action-method changed a property of the object, after the execution fo the method the UI automatically specifies changed property and updates the bound UI component.
+
+There are cases of buttons has specific icons determined from their method names.
+Those icons are chosen from a predefined set in the library and determined by a word in the name.
+For instance, the library has a "+" mark icon for the word `add`, and the button of the action method `addItem()` will has the icon.
+Also, a word has predefined synonyms; for example, `insert` and `append` will have same icon for `add`.
+The predefined set of icons and associated words can be viewed by running `IconListDemo`.
+
+```bash
+ mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.IconListDemo
+```
+
 
 #### Property definition 
 
@@ -736,8 +771,7 @@ Please see
 To run the example:
 
 ```bash
- mvn test-compile exec:java -Dexec.classpathScope=test \
-    -Dexec.mainClass=org.autogui.demo.ObjectEmbeddedDemo
+ mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.ObjectEmbeddedDemo
 ```
 
 ### Collection table
@@ -974,7 +1008,7 @@ For actions, shortcut keys cause execution of the target action.
 For properties, shortcut keys cause UI to focus on the target component.
 Also, *Control + Enter* will display the context menu for the focusing component.
 
-## Active Updating of UI Elements
+## Active updating of UI elements
 
 As default, a GUI component generated by the library automatically updates its display, i.e. it notices changes that requires re-displaying by accessing their properties after some actions happened.
 
@@ -1126,6 +1160,50 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 The returned object of `getPrefsJson()` must be one of simple JSON supported types (Map, List, String, Number, Boolean) and sufficiently small for storing preferences-store.
 
 
+## Providing default setting values in code
+
+Since the version 1.8, the library introduces the annotation [`@GuiInits`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html) in order to enable providing the default values of several preferences of components in code.
+
+
+```java
+import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
+import org.autogui.base.annotation.*;
+import org.autogui.swing.AutoGuiShell;
+import javax.swing.text.*;
+
+@GuiInits(window = @GuiInitWindow(width = 400, height = 300))
+public class MyEditor {
+    DefaultStyledDocument doc = new DefaultStyledDocument();
+
+    @GuiInits(action = @GuiInitAction(confirm = true))
+    public void clear() throws Exception {
+        doc.replace(0, doc.getLength(), "", null);
+    }
+}
+org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
+```
+
+The above code will show a window with a text pane and the "Clear" aciton button, and the initial size of the window will become 300 x 400. 
+Also, when the user clicks the "Clear" action, it will display a confirmation dialog before running the action.
+
+<img src="docs/images/image-inits-h.png" srcset="docs/images/image-inits-h.png 1x, docs/images/image-inits.png 2x" alt="Default Settings by Annotations">
+
+Those effects are thanks to the default settings by both  `@GuiInits(window = ...)` attached to the class and `@GuiInits(action = ...)` attached to the method.
+The annotation `@GuiInits` has comprehensive definitions for all available items in this feature, as properties (like `window = ...` `action = ...`).
+The actional setting items are defined in the annotations set for the properties of `@GuiInits`, like `@GuiInitWindow` and `@GuiInitAction` in the package `org.autogui.base.annotation`.
+
+| Property                                                                                             |　Value type                                                                                                              |　Target                                                             | Setting items                                    | 
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ | -                                                |
+|        [`tabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tabbedPane())        |        [`@GuiInitTabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTabbedPane.html)        |  parent type of [object tabbed pane](#object-tabbed-pane)          | Suppressing tabbing                               | 
+|         [`splitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#splitPane())         |         [`@GuiInitSplitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitSplitPane.html)         |  parent [object pane](#object-pane) type of splitted-components    | Specifying  vertical orientaiton                  | 
+|            [`window`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#window())            |            [`@GuiInitWindow`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitWindow.html)            |  root [object pane](#object-pane) type                             | Size                                              | 
+|             [`table`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#table())             |             [`@GuiInitTable`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTable.html)             |  [Collection table](#collection-table) property                    | Specifying row height, and dynamic column size    | 
+|       [`tableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumn())       |       [`@GuiInitTableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumn.html)       |  table column property                                             | Column width and sorting order                    | 
+| [`tableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumnString()) | [`@GuiInitTableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumnString.html) |  table column string property                                      | Swinging enter-key input/inserting a new line     | 
+|     [`numberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#numberSpinner())     |     [`@GuiInitNumberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitNumberSpinner.html)     |  [number property](#number-spinner)                                | Format, maximum, minimum and stepping size        | 
+|            [`action`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#action())            |            [`@GuiInitAction`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitAction.html)            |  [action method](#action-method)                                   | Displaying a confirmation dialog                  | 
+
 
 ## Logging 
 
@@ -1249,7 +1327,7 @@ A long running action will be an independent task with displaying an indetermina
 
 <img src="docs/images/image-log-longrunning-h.png" srcset="docs/images/image-log-longrunning-h.png 1x, docs/images/image-log-longrunning.png 2x" alt="Progress">
 
-## Setting Appearance
+## Setting appearance
 
 The current Swing GUI (in Java23) does not have automatic support of recent OS's dark-mode switching.
 
@@ -1296,7 +1374,25 @@ In HiDPI GNOME environment (including the default Ubuntu), you might get suitabl
 
 ### Loading Flatlaf
 
-The default specification of the library implicitly detects existence of [*flatlaf*](https://www.formdev.com/flatlaf/) (confirmed by `com.formdev:flatlaf:3.4.1`)  and applying its LAF with following the OS's current theme. The detection is simply done by accessing to the reflection Class object through `Class.forName`.
+The default specification of the library implicitly detects existence of [*flatlaf*](https://www.formdev.com/flatlaf/) (confirmed by `com.formdev:flatlaf:3.6`)  and applying its LAF with following the OS's current theme. The detection is simply done by accessing to the reflection Class object through `Class.forName`.
 
 <img src="docs/images/image-dark-h.png" srcset="docs/images/image-dark-h.png 1x, docs/images/image-dark.png 2x" alt="Progress">
 
+### Controlling appearance by code
+
+By calling a method defined in the class [`AutoGuiShell`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html), you can control the LAF settings.
+For example, before running the object of the class `Hello`, the following code can control the LAF settings.
+
+```java
+  AutoGuiShell.get()
+    .withLookAndFeelDefaultWithoutProp() //diable settings by the property, and using nimbus-flat or flatlaf
+    .showWindow(new Hello());
+
+  AutoGuiShell.get()
+    .withLookAndFeelDefaultNoFlatlafWithoutProp() //disable settings by the property, and using nimbus-flat
+    .showWindow(new Hello());
+
+  AutoGuiShell.get()
+    .withLookAndFeelSpecial("metal") //same as set "metal" to the property "autogui.laf"
+    .showWindow(new Hello());
+```

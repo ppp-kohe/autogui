@@ -13,6 +13,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * dwonload CSV from the specified URL and show extracted table data about temperature numbers obtained from multiple observatories.
+ *  The data suppose temperature stats from <a href="https://www.data.jma.go.jp/stats/data/mdrr/tem_rct/alltable/mxtemsadext0810.html">JMA (in Japanese)</a>.
+ *   The table format is like the following:
+ *   <pre>
+ *       observatory-number, prefecture-and-area(!), location (KATAKANA) (!), loca-num, year, month, day, hour, minute, max-Celcius-in-10-days (!), ...
+ *   </pre>
+ *   The class extract above (!) columns and translate Japanese location names to alphabet characters.
+ *   Note the data is encoded by Japanese Shift-JIS.
+ */
 @GuiIncluded
 @GuiInits(window = @GuiInitWindow(width = 500, height = 800))
 public class CsvTableDemo {

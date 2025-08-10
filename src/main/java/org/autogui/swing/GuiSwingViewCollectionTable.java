@@ -1776,6 +1776,13 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     .build(new MenuSeparator(filter), menu);
         }
 
+        /**
+         *
+         * @param tableActions the given actions
+         * @param filter  the for building the actions
+         * @return a new sub-menu with building the tableActions with the filter
+         * @since 1.8
+         */
         protected JMenu buildTableActionsAsSubMenu(PopupCategorized tableActions, PopupMenuFilter filter) {
             JMenu subMenu = new JMenu("Table");
             tableActions.build(filter, new MenuBuilder.MenuAppender(subMenu));

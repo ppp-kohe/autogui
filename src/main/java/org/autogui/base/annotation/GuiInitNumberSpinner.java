@@ -2,11 +2,12 @@ package org.autogui.base.annotation;
 
 /**
  * <pre>
- *     &#64;GuiIncluded(description="help message")
+ *     &#64;GuiIncluded
  *     &#64;GuiInits(numberSpinner = &#64;{@link GuiInitNumberSpinner}(format="#,##0.0"))
  *        //the annotation can specify the number format of the spinner; e.g. 54.321 -&gt; 54.3.
  *     public float getMyNum() { ... }
  * </pre>
+ * @see org.autogui.GuiInits
  * @since 1.8
  */
 public @interface GuiInitNumberSpinner {

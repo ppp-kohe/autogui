@@ -1,6 +1,5 @@
 package org.autogui.base.annotation;
 
-import org.autogui.GuiIncluded;
 import org.autogui.GuiInits;
 
 import java.lang.reflect.AnnotatedElement;
@@ -27,7 +26,7 @@ public class GuiDefaultInits {
      * @return the attached or the default
      */
     public static GuiInits getOrNull(AnnotatedElement e) {
-        return e != null && e.isAnnotationPresent(GuiIncluded.class) ?
+        return e != null && e.isAnnotationPresent(GuiInits.class) ?
                 e.getAnnotation(GuiInits.class) : null;
     }
 

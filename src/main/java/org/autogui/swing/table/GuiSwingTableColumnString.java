@@ -400,6 +400,17 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             editFinishAction = new SwitchEnterBehaviorAction(this);
         }
 
+        /**
+         * sets-up action mappings as
+         *  <ul>
+         *      <li>enter + shift, enter + alt : insert a new-line</li>
+         *      <li>tab + shift, tab + alt : insert a tab</li>
+         *      <li>enter : edit-finish</li>
+         *      <li>tab : edit-finish</li>
+         *  </ul>
+         *   called from {@link #initAction()} when {@link #editFinishByEnterAndKey}=false
+         * @since 1.8
+         */
         protected void switchActionFinishByEnter() {
             InputMap iMap = getInputMap();
             Action finish = new FinishCellEditAction(editFinishHandlers);
@@ -413,6 +424,17 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), finish);
         }
 
+        /**
+         * sets-up action mappings as
+         *  <ul>
+         *      <li>enter + shift, enter + alt : edit-finish</li>
+         *      <li>tab + shift, tab + alt : edit-finish</li>
+         *      <li>enter : insert a new-line</li>
+         *      <li>tab : insert a tab</li>
+         *  </ul>
+         *   called from {@link #initAction()} when {@link #editFinishByEnterAndKey}=true
+         * @since 1.8
+         */
         protected void switchActionFinishByEnterWithKey() {
             InputMap iMap = getInputMap();
             Action finish = new FinishCellEditAction(editFinishHandlers);
@@ -436,10 +458,19 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             return editor ? List.of(editFinishAction) : List.of();
         }
 
+        /**
+         * @return {@link #editFinishByEnterAndKey}
+         * @since 1.8
+         */
         public boolean isEditFinishByEnterAndKey() {
             return editFinishByEnterAndKey;
         }
 
+        /**
+         * set the flag and call {@link #initAction()}
+         * @param editFinishByEnterAndKey the flag set to {@link #editFinishByEnterAndKey}
+         * @since 1.8
+         */
         public void setEditFinishByEnterAndKey(boolean editFinishByEnterAndKey) {
             this.editFinishByEnterAndKey = editFinishByEnterAndKey;
             initAction();
@@ -470,6 +501,11 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             }
         }
 
+        /**
+         * load preferences by {@link PreferencesForMultilineColumn} and if it has a flag, {@link #setEditFinishByEnterAndKeyAsUserAction(boolean)} with the prefs
+         * @param p the source prefs
+         * @since 1.8
+         */
         public void loadFromAndApplyTo(GuiPreferences p) {
             var prefObj = new PreferencesForMultilineColumn();
             prefObj.loadFrom(p);

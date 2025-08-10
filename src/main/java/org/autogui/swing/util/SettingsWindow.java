@@ -935,6 +935,14 @@ public class SettingsWindow {
         public FileListAddAction(FileListModel listModel, JFileChooser chooser) {
             this(listModel, chooser, File::toPath);
         }
+
+        /**
+         * construcotr with file-to-path function
+         * @param listModel a non-null model
+         * @param chooser a non-null chooser
+         * @param fileToPath a non-null function file to path; some items selected by the chooser might invalid as a path.
+         * @since 1.8
+         */
         public FileListAddAction(FileListModel listModel, JFileChooser chooser, Function<File, Path> fileToPath) {
             this.listModel = listModel;
             this.chooser = chooser;
