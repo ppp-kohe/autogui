@@ -49,10 +49,10 @@ To use the library in your apache-maven project, you can insert the following `d
     </dependency>
 ```
 
-The library jar is available from Maven Central Repository: [org.autogui:autogui](https://search.maven.org/artifact/org.autogui/autogui/).
+The library jar is available from Maven Central Repository: [org.autogui:autogui](https://central.sonatype.com/artifact/org.autogui/autogui/).
 
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.autogui/autogui/badge.svg?color=44aa44)](https://maven-badges.herokuapp.com/maven-central/org.autogui/autogui)
+[![Maven Central](https://maven-badges.sml.io/sonatype-central/org.autogui/autogui/badge.svg?color=44aa44)](https://maven-badges.sml.io/sonatype-central/org.autogui/autogui)
 
 ## API documents
 
@@ -610,7 +610,7 @@ There are cases of buttons has specific icons determined from their method names
 Those icons are chosen from a predefined set in the library and determined by a word in the name.
 For instance, the library has a "+" mark icon for the word `add`, and the button of the action method `addItem()` will has the icon.
 Also, a word has predefined synonyms; for example, `insert` and `append` will have same icon for `add`.
-The predefined set of icons and associated words can be viewed by running `IconListDemo`.
+The predefined set of icons and associated words can be viewed by running [`src/test/java/org/autogui/demo/IconListDemo.java`](https://github.com/ppp-kohe/autogui/tree/master/src/test/java/org/autogui/demo/IconListDemo.java).
 
 ```bash
  mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.IconListDemo

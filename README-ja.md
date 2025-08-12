@@ -48,9 +48,10 @@ mvn install
     </dependency>
 ```
 
-本ライブラリはMaven Central Repositoryから取得できます: [org.autogui:autogui](https://search.maven.org/artifact/org.autogui/autogui/)
+本ライブラリはMaven Central Repositoryから取得できます: [org.autogui:autogui](https://central.sonatype.com/artifact/org.autogui/autogui/).
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.autogui/autogui/badge.svg?color=44aa44)](https://maven-badges.herokuapp.com/maven-central/org.autogui/autogui)
+
+[![Maven Central](https://maven-badges.sml.io/sonatype-central/org.autogui/autogui/badge.svg?color=44aa44)](https://maven-badges.sml.io/sonatype-central/org.autogui/autogui)
 
 ## APIドキュメント
 
@@ -604,7 +605,7 @@ Swingのドキュメントとテキスト編集コンポーネント群は、ど
 メソッド名からボタンのアイコンが設定される場合があります。これはあらかじめ用意された単語に対応するアイコン群から設定されます。
 例えば`add`という単語には「+」マークのアイコンを用意しており、`addItem()`のようなアクションメソッドに対応します。
 また、単語には類義語(synonyms)が設定されており、`insert`や`append`に対しても`add`と同じアイコンが設定されます。
-本ライブラリが提供するすべてのアイコンと対応する単語は`IconListDemo`を実行すると確認できます。
+本ライブラリが提供するすべてのアイコンと対応する単語は[`src/test/java/org/autogui/demo/IconListDemo.java`](https://github.com/ppp-kohe/autogui/tree/master/src/test/java/org/autogui/demo/IconListDemo.java)を実行すると確認できます。
 
 ```bash
  mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.IconListDemo
