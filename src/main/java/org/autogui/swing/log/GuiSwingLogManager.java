@@ -409,7 +409,7 @@ public class GuiSwingLogManager extends GuiLogManager {
             UIManagerUtil ui = UIManagerUtil.getInstance();
             //list
             list = new GuiSwingLogList(manager);
-            list.setEntryLimit(10000);
+            list.setEntryLimit(10_0000);
             JScrollPane scrollPane = new JScrollPane(list,
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.getVerticalScrollBar().setUnitIncrement(ui.getScaledSizeInt(16));

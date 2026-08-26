@@ -18,6 +18,7 @@ import java.text.AttributedCharacterIterator.Attribute;
 import java.time.Instant;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -32,7 +33,8 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
     protected String lines;
     protected Map<Integer, List<StackTraceAttributesForLine>> lineToAttrs;
 
-    protected SizeCache rendererToSizeCache;
+    protected Cache<float[]> rendererToSizeCache;
+    protected LinesCache linesCache = new LinesCache();
 
     public GuiSwingLogEntryException(Throwable exception) {
         super(exception);
@@ -44,7 +46,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
 
     public float[] sizeCache(Object r, Supplier<float[]> src) {
         if (rendererToSizeCache == null) {
-            rendererToSizeCache = new SizeCache(5);
+            rendererToSizeCache = new Cache<>(5);
         }
         return rendererToSizeCache.computeIfAbsent(r, _r -> src.get());
     }
@@ -95,6 +97,29 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
     @Override
     public void setSelected(boolean selected) {
         this.selected = selected;
+    }
+
+    public static class LinesCache extends Cache<LinesCacheEntry> {
+        public LinesCache() {
+            super(5);
+        }
+
+        @Override
+        protected boolean equalsKey(Object existing, Object given) {
+            return Objects.equals(existing, given);
+        }
+    }
+
+    public record LinesCacheKey(Object renderer, String text) {}
+    public record LinesCacheEntry(int width, List<TextCellRenderer.LineInfo> lines) {}
+
+    public LinesCacheEntry buildLines(Object renderer, String text, Function<List<TextCellRenderer.LineInfo>, Integer> builder) {
+        return linesCache.computeIfAbsent(new LinesCacheKey(renderer, text),
+                _k -> {
+                    var lines = new ArrayList<TextCellRenderer.LineInfo>();
+                    int maxWidth = builder.apply(lines);
+                    return new LinesCacheEntry(maxWidth, lines);
+                });
     }
 
     /** a renderer for exception stack-traces */
@@ -504,6 +529,18 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             super.buildFromValue();
             expandedStackSize = buildSize();
             collapsedStackSize = getCollapsedSize();
+        }
+
+        @Override
+        public int buildLines(String text, List<LineInfo> lines) {
+           if (value instanceof GuiSwingLogEntryException e) {
+               lines.clear();
+               var res = e.buildLines(this, text, targetList -> super.buildLines(text, targetList));
+               lines.addAll(res.lines());
+               return res.width();
+           } else {
+               return super.buildLines(text, lines);
+           }
         }
 
         @Override

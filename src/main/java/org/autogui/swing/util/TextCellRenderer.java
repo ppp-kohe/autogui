@@ -628,12 +628,24 @@ public class TextCellRenderer<ValueType> extends JPanel
         int maxWidth = 0;
         int lineIndex = 0;
         LineInfo prev = null;
-        for (String line : text.split("\\n", -1)) {
+        int lineStart = 0;
+        int len;
+        for (i = 0, len = text.length(); i < len; i++) {
+            char c = text.charAt(i);
+            if (c == '\n') {
+                var line = text.substring(lineStart, i);
+                LineInfo info = createLine(prev, lineIndex, i, line);
+                lines.add(info);
+                prev = info;
+                lineIndex++;
+                maxWidth = Math.max(maxWidth, info.getWidth());
+                lineStart = i + 1;
+            }
+        }
+        if (lineStart < len) {
+            var line = text.substring(lineStart, i);
             LineInfo info = createLine(prev, lineIndex, i, line);
             lines.add(info);
-            prev = info;
-            i += line.length() + 1;
-            ++lineIndex;
             maxWidth = Math.max(maxWidth, info.getWidth());
         }
         return maxWidth;

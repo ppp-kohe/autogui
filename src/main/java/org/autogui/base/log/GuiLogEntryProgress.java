@@ -291,6 +291,11 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
     }
 
     @Override
+    public boolean canBeActive() {
+        return true;
+    }
+
+    @Override
     public String toString() {
         return "[" + getTime() + "] # " +
                 getValue() +"/(" + getMinimum() + ".." + getMaximum() +"): " +

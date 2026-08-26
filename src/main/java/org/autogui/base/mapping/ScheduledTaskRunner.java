@@ -35,7 +35,7 @@ public class ScheduledTaskRunner<EventType> {
     protected boolean executorIsShared;
     protected Consumer<List<EventType>> consumer;
 
-    protected List<EventType> accumulatedEvents = new ArrayList<>();
+    protected List<EventType> accumulatedEvents;
     protected ScheduledFuture<?> scheduledTask;
 
     protected volatile boolean enabled = false;
@@ -50,11 +50,50 @@ public class ScheduledTaskRunner<EventType> {
      * @param consumer the actual task runner as taking accumulated events
      */
     public ScheduledTaskRunner(long delay, Consumer<List<EventType>> consumer) {
+        this(delay, consumer, getSharedExecutor());
+    }
+
+    /**
+     * creates a new-runner with an executor
+     * @param delay the delay milliseconds for launching a task
+     * @param consumer the actual task runner as taking accumulated events
+     * @param executor the custom executor
+     */
+    public ScheduledTaskRunner(long delay, Consumer<List<EventType>> consumer, ScheduledExecutorService executor) {
+        accumulatedEventsInit();
         this.delay = delay;
-        setExecutor(getSharedExecutor());
+        setExecutor(executor);
         this.consumer = consumer;
         debugInit();
         enabled = initEnabled();
+    }
+
+    /**
+     * initialize {@link #accumulatedEvents}; called from the constructor
+     * @since 1.9
+     */
+    protected synchronized void accumulatedEventsInit() {
+        accumulatedEvents = new ArrayList<>();
+    }
+
+    /**
+     * adding a new event
+     * @param e the new event added to {@link #accumulatedEvents}
+     * @since 1.9
+     */
+    protected synchronized void accumulatedEventsAdd(EventType e) {
+        accumulatedEvents.add(e);
+    }
+
+    /**
+     * clear the list of scheduled events
+     * @return the old list copy of {@link #accumulatedEvents}
+     * @since 1.9
+     */
+    protected synchronized List<EventType> accumulatedEventsClear() {
+        var current = new ArrayList<>(accumulatedEvents);
+        accumulatedEvents = new ArrayList<>();
+        return current;
     }
 
     protected boolean initEnabled() {
@@ -78,14 +117,6 @@ public class ScheduledTaskRunner<EventType> {
             buf.append(" : ").append(consumer);
             System.err.println(buf);
         }
-    }
-
-    public ScheduledTaskRunner(long delay, Consumer<List<EventType>> consumer, ScheduledExecutorService executor) {
-        this.delay = delay;
-        setExecutor(executor);
-        this.consumer = consumer;
-        debugInit();
-        enabled = initEnabled();
     }
 
     /**
@@ -173,7 +204,7 @@ public class ScheduledTaskRunner<EventType> {
      */
     public synchronized void schedule(EventType event, long delayMSec) {
         if (enabled) {
-            accumulatedEvents.add(event);
+            accumulatedEventsAdd(event);
             if (scheduledTask != null) {
                 depthStack.pendingTasks.decrementAndGet();
                 scheduledTask.cancel(false);
@@ -419,7 +450,7 @@ public class ScheduledTaskRunner<EventType> {
 
     public synchronized void runImmediately(EventType event) {
         if (enabled) {
-            accumulatedEvents.add(event);
+            accumulatedEventsAdd(event);
             if (scheduledTask != null) {
                 if (!scheduledTask.cancel(false)) {
                     return;
@@ -432,8 +463,7 @@ public class ScheduledTaskRunner<EventType> {
     public void run() {
         List<EventType> eventsCopy;
         synchronized (this) {
-            eventsCopy = new ArrayList<>(accumulatedEvents);
-            accumulatedEvents = new ArrayList<>();
+            eventsCopy = accumulatedEventsClear();
             scheduledTask = null;
         }
         try {

@@ -6,4 +6,9 @@ public interface GuiLogEntry {
     default boolean isActive() {
         return false;
     }
+
+    /** @return if true, {@link #isActive()} can be true */
+    default boolean canBeActive() {
+        return false;
+    }
 }

@@ -2,11 +2,14 @@ package org.autogui.swing.log;
 
 import org.autogui.base.log.GuiLogEntry;
 import org.autogui.base.log.GuiLogManagerConsole;
+import org.autogui.base.mapping.ScheduledTaskRunner;
 import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.swing.util.*;
 
 import javax.swing.Timer;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -23,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 /**
@@ -34,6 +38,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
     protected GuiSwingLogManager manager;
     protected Timer activePainter;
     protected GuiSwingLogEventDispatcher eventDispatcher;
+    protected GuiSwingLogScrollManager scrollManager;
 
     protected LogListSaveAction saveAction;
     protected LogListClearAction clearAction;
@@ -78,6 +83,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         if (addManagerAsView) {
             managerKey = manager.addView(this);
         }
+        scrollManager = new GuiSwingLogScrollManager(this);
     }
 
     public void removeFromManager() {
@@ -169,7 +175,6 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
             model.fireRowChangedAt(index);
             return;
         }
-        Rectangle beforeScrollTarget = getTargetEntryRectForScroll(getRowCount() - 1);
         LogListInsertResult res = model.addLogEntry(entry, lowPriority);
 
         if (res.hasSelectionChange()) {
@@ -186,19 +191,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
             });
             getSelectionModel().setValueIsAdjusting(false);
         }
-
-        Rectangle scrollTarget = getTargetEntryRectForScroll(getRowCount() - 1);
-        Rectangle visibleRect = getVisibleRect();
-        if (!visibleRect.contains(scrollTarget) && visibleRect.contains(beforeScrollTarget)) {
-            scrollRectToVisible(scrollTarget);
-        }
-
-//        int first = getFirstVisibleIndex(); //the operation is slow?
-//        int last = getLastVisibleIndex();
-//        if (!(first <= index && index <= last + 1) || index >= getRowCount() - res.newHighPriorityActives) { //invisible or last item
-//            int target = Math.max(model.getRowCount() - 1, last + 1);
-//            scrollRectToVisible(getTargetEntryRectForScroll(target));
-//        }
+        scrollManager.scroll();
     }
 
     public void updateSelectionToSelectionModel(GuiSwingLogEntry e, int index) {
@@ -331,6 +324,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         protected int entryLimit = -1;
         protected java.util.List<GuiLogEntry> entries = new ArrayList<>();
         protected int highPriorityActives = 0;
+        protected Set<GuiLogEntry> entriesMaybeActive = new HashSet<>();
 
         public GuiSwingLogListModel() {}
 
@@ -375,7 +369,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         }
 
         public boolean hasActiveEntries() {
-            return entries.stream()
+            return entriesMaybeActive.stream()
                     .anyMatch(GuiLogEntry::isActive);
         }
 
@@ -399,6 +393,27 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         }
 
         public LogListInsertResult addLogEntry(GuiLogEntry entry, boolean lowPriority) {
+            addLogEntryOverflow();
+            LogListInsertResult res = new LogListInsertResult();
+            int endOfNonActive = addLogEntryMoveActives(res);
+            int index;
+            if (entry.isActive() && !lowPriority) {
+                index = entries.size();
+                highPriorityActives++;
+            } else {
+                index = endOfNonActive;
+            }
+            if (entry.canBeActive()) {
+                entriesMaybeActive.add(entry);
+            }
+            entries.add(index, entry);
+            fireTableRowsInserted(index, entries.size() - 1);
+            res.index = index;
+            res.newHighPriorityActives = highPriorityActives;
+            return res;
+        }
+
+        private void addLogEntryOverflow() {
             if (entryLimit > 0 && entries.size() >= entryLimit) {
                 int removeIndex = -1;
                 for (int i = 0, s = entries.size(); i < s; ++i) {
@@ -410,19 +425,20 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
                 if (removeIndex < 0) {
                     removeIndex = 0;
                 }
-                entries.remove(removeIndex);
+                var e = entries.remove(removeIndex);
+                if (e.canBeActive()) {
+                    entriesMaybeActive.remove(e);
+                }
                 fireIntervalRemoved(this, removeIndex, removeIndex);
             }
+        }
+
+        private int addLogEntryMoveActives(LogListInsertResult res) {
             //collect finished items of added as !lowPriority
-            List<GuiLogEntry> movedActives = new ArrayList<>(highPriorityActives);
             int highPriorityActivesStart = Math.max(0, entries.size() - highPriorityActives);
-            for (int i = highPriorityActivesStart, l = entries.size(); i < l; ++i) {
-                GuiLogEntry e = entries.get(i);
-                if (e.isActive()) {
-                    movedActives.add(e);
-                }
-            }
-            LogListInsertResult res = new LogListInsertResult();
+            List<GuiLogEntry> movedActives = entries.subList(highPriorityActivesStart, entries.size()).stream()
+                    .filter(GuiLogEntry::isActive)
+                    .toList();
             int endOfNonActive = entries.size() - movedActives.size();
             if (movedActives.size() != highPriorityActives) { //there are finished entries
                 entries.removeAll(movedActives); //remove and
@@ -430,32 +446,25 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
                 fireContentsChanged(this, highPriorityActivesStart, entries.size() - 1);
 
                 //collect information about selection changes
-                res.changedSelectedItems = new ArrayList<>(highPriorityActives);
-                res.changedNonSelectedItems = new ArrayList<>(highPriorityActives);
-                for (int i = highPriorityActivesStart, l = entries.size(); i < l; ++i) {
-                    GuiLogEntry e = entries.get(i);
-                    if (e instanceof GuiSwingLogEntry) {
-                        if (((GuiSwingLogEntry) e).isSelected()) {
-                            res.changedSelectedItems.add(i);
-                        } else {
-                            res.changedNonSelectedItems.add(i);
-                        }
-                    }
-                }
+                addLogEntryMoveActivesSetupChanged(res, highPriorityActivesStart);
                 highPriorityActives = movedActives.size();
             }
-            int index;
-            if (entry.isActive() && !lowPriority) {
-                index = entries.size();
-                highPriorityActives++;
-            } else {
-                index = endOfNonActive;
+            return endOfNonActive;
+        }
+
+        private void addLogEntryMoveActivesSetupChanged(LogListInsertResult res, int highPriorityActivesStart) {
+            res.changedSelectedItems = new ArrayList<>(highPriorityActives);
+            res.changedNonSelectedItems = new ArrayList<>(highPriorityActives);
+            for (int i = highPriorityActivesStart, l = entries.size(); i < l; ++i) {
+                GuiLogEntry e = entries.get(i);
+                if (e instanceof GuiSwingLogEntry log) {
+                    if (log.isSelected()) {
+                        res.changedSelectedItems.add(i);
+                    } else {
+                        res.changedNonSelectedItems.add(i);
+                    }
+                }
             }
-            entries.add(index, entry);
-            fireTableRowsInserted(index, entries.size() - 1);
-            res.index = index;
-            res.newHighPriorityActives = highPriorityActives;
-            return res;
         }
 
         public void fireTableRowsInserted(int from, int to) {
@@ -490,6 +499,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
 
         public void clearEntries() {
             entries.clear();
+            entriesMaybeActive.clear();
             fireTableDataChanged();
         }
     }
@@ -510,6 +520,85 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
 
         public boolean hasSelectionChange() {
             return !changedSelectedItems.isEmpty() || !changedNonSelectedItems.isEmpty();
+        }
+    }
+    /**
+     * The class observes the position changes of the component contained in a viewport,
+     *  and if the position.y is bottom of the viewport, sets the sticky to true.
+     *  When {@link #scroll()} is called, it schedules scrolling the component against size-changes if the sticky flag is set.
+     *   The number of {@link #scroll()} calls can be large, as it just schdules the scrolling later.
+     * @since 1.9
+     */
+    public static class GuiSwingLogScrollManager implements HierarchyListener, ChangeListener {
+        protected JComponent component;
+        protected JViewport currentParentViewport;
+        protected Point position = new Point(0, 0);
+        protected boolean sticky = true;
+        protected ScheduledTaskRunner<Object> scroller;
+
+        public GuiSwingLogScrollManager(JComponent component) {
+            this.component = component;
+            if (component != null) {
+                component.addHierarchyListener(this);
+            }
+            scroller = new ScheduledTaskRunner<>(100, this::scrollDelayed, Executors.newScheduledThreadPool(0)) {
+                @Override
+                protected synchronized void accumulatedEventsAdd(Object e) {
+                    //nothing
+                }
+            };
+        }
+
+        @Override
+        public void hierarchyChanged(HierarchyEvent e) {
+            if (Objects.equals(e.getChanged(), component) && !Objects.equals(e.getChangedParent(), currentParentViewport)) {
+                if (currentParentViewport != null) {
+                    currentParentViewport.removeChangeListener(this);
+                }
+                if (e.getChangedParent() instanceof JViewport view) {
+                    currentParentViewport = view;
+                    position = new Point(0, 0);
+                    sticky = true;
+                    view.addChangeListener(this);
+                } else {
+                    currentParentViewport = null;
+                }
+            }
+        }
+
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            if (currentParentViewport != null) {
+                var newPosition = currentParentViewport.getViewPosition();
+                boolean posChanged = !newPosition.equals(position);
+                if (posChanged) {
+                    position = newPosition;
+                }
+                int height = component.getHeight();
+                int viewHeight = currentParentViewport.getHeight();
+                double p = (((double) newPosition.y) / (height - viewHeight));
+                if (posChanged) {
+                    sticky = (height <= viewHeight) || (p >= 0.99999);
+                }
+            }
+        }
+
+        public boolean isSticky() {
+            return sticky;
+        }
+
+        public void scroll() {
+            scroller.schedule(null);
+        }
+
+        public void scrollDelayed(List<Object> v) {
+            if (sticky) {
+                SwingUtilities.invokeLater(() -> {
+                    Rectangle rect = component.getVisibleRect();
+                    rect.y = component.getHeight();
+                    component.scrollRectToVisible(rect);
+                });
+            }
         }
     }
 

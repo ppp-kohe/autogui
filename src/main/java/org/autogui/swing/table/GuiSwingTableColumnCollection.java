@@ -1690,7 +1690,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         @Override
         public DynamicColumnFactory getSelectionFactory(DynamicColumnFactoryList argumentFactory) {
-            return argumentFactory.getElementFactory(); //for each candidate, required specs become its specifiers: {...targetSpecs,...argListSpec,argElemRowSpec,argElemIdxAsColumnSpec|,...}
+            var argElem = argumentFactory.getElementFactory();
+            return argElem == null ? argumentFactory : argElem; //for each candidate, required specs become its specifiers: {...targetSpecs,...argListSpec,argElemRowSpec,argElemIdxAsColumnSpec|,...}
         }
 
         @Override

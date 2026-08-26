@@ -8,6 +8,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.event.*;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 /** the subclass of the executor with implementing various listeners.
@@ -15,7 +16,7 @@ import java.util.function.Consumer;
 public class EditingRunner extends ScheduledTaskRunner<Object>
         implements DocumentListener, KeyListener, ActionListener, FocusListener, ChangeListener, InputMethodListener {
     public EditingRunner(long delay, Consumer<List<Object>> consumer) {
-        super(delay, consumer);
+        super(delay, consumer, Executors.newScheduledThreadPool(0));
     }
 
     @Override

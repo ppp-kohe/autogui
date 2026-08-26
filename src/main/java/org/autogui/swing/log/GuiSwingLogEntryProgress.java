@@ -29,7 +29,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
     protected boolean selected;
     protected int interruptCount;
 
-    protected SizeCache rendererToSizeCache;
+    protected Cache<float[]> rendererToSizeCache;
 
     public GuiSwingLogEntryProgress() {
         selections = new HashMap<>(2);
@@ -42,7 +42,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
     @Override
     public float[] sizeCache(Object renderer, Supplier<float[]> src) {
         if (rendererToSizeCache == null) {
-            rendererToSizeCache = new SizeCache(3);
+            rendererToSizeCache = new Cache<>(3);
         }
         return rendererToSizeCache.computeIfAbsent(renderer, _r -> src.get());
     }

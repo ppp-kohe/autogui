@@ -27,13 +27,21 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
     protected int selectionTo;
     protected boolean selected;
 
-    protected SizeCache rendererToSizeCache;
+    protected Cache<float[]> rendererToSizeCache;
+    protected Cache<String> rendererToFormattedString;
 
     public float[] sizeCache(Object r, Supplier<float[]> src) {
         if (rendererToSizeCache == null) {
-            rendererToSizeCache = new SizeCache(3);
+            rendererToSizeCache = new Cache<>(3);
         }
         return rendererToSizeCache.computeIfAbsent(r, _r -> src.get());
+    }
+
+    public String formatByRenderer(Object r, Supplier<String> src) {
+        if (rendererToFormattedString == null) {
+            rendererToFormattedString = new Cache<>(3);
+        }
+        return rendererToFormattedString.computeIfAbsent(r, _r -> src.get());
     }
 
     public GuiSwingLogEntryString(String data) {
@@ -238,13 +246,19 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
 
         @Override
         public String format(GuiLogEntry value) {
-            if (value instanceof GuiLogEntryString str) {
-                return formatPreProcess(String.format("%s %s",
-                        manager.formatTime(str.getTime()),
-                        str.getData()));
+            if (value instanceof GuiSwingLogEntryString sStr) {
+                return sStr.formatByRenderer(this, () -> formatLogStr(sStr));
+            } else if (value instanceof GuiLogEntryString str) {
+                return formatLogStr(str);
             } else {
                 return super.format(value);
             }
+        }
+
+        private String formatLogStr(GuiLogEntryString str) {
+            return formatPreProcess(String.format("%s %s",
+                    manager.formatTime(str.getTime()),
+                    str.getData()));
         }
 
         @Override

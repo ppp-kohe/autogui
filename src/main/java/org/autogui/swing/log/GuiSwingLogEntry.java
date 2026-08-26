@@ -105,35 +105,59 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
      * the light-weight map between Object to float[].
      * it supposes the table size is small.
      * @since 1.5
+     * @deprecated
      */
-    class SizeCache {
-        private Object[] keys;
-        private float[][] values;
+    class SizeCache extends Cache<float[]> {
         public SizeCache(int capacity) {
+            super(capacity);
+        }
+    }
+
+    /**
+     * the light-weight map between Object to ValueType.
+     * it supposes the table size is small.
+     * @param <ValueType> the cached value type
+     * @since 1.9
+     */
+    class Cache<ValueType> {
+        private Object[] keys;
+        private Object[] values;
+        public Cache(int capacity) {
             keys = new Object[capacity];
-            values = new float[capacity][];
+            values = new Object[capacity];
         }
 
-        public float[] computeIfAbsent(Object key, Function<Object, float[]> keyToValue) {
+        @SuppressWarnings("unchecked")
+        public ValueType computeIfAbsent(Object key, Function<Object, ValueType> keyToValue) {
             int len = keys.length;
             for (int i = 0; i < len; ++i) {
                 Object ek = keys[i];
                 if (ek == null) {
                     return putAt(key, keyToValue, i);
-                } else if (ek == key) {
-                    return values[i];
+                } else if (equalsKey(ek, key)) {
+                    return (ValueType) values[i];
                 }
             }
+            return putAtWithExpand(key, keyToValue);
+        }
+
+        protected boolean equalsKey(Object existing, Object given) {
+            return existing == given;
+        }
+
+        private ValueType putAtWithExpand(Object key, Function<Object, ValueType> keyToValue) {
+            int len = keys.length;
             keys = Arrays.copyOf(keys, len * 2);
             values = Arrays.copyOf(values, len * 2);
             return putAt(key, keyToValue, len);
         }
 
-        private float[] putAt(Object key, Function<Object, float[]> keyToValue, int i) {
+        private ValueType putAt(Object key, Function<Object, ValueType> keyToValue, int i) {
             keys[i] = key;
-            float[] v = keyToValue.apply(key);
-            values[i] = v;
+            ValueType v = keyToValue.apply(key);
+            values[i] = (Object) v; //the cast is important
             return v;
         }
+
     }
 }
