@@ -107,6 +107,7 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
      * @since 1.5
      * @deprecated
      */
+    @Deprecated
     class SizeCache extends Cache<float[]> {
         public SizeCache(int capacity) {
             super(capacity);

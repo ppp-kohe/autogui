@@ -3,7 +3,7 @@ package org.autogui.demo;
 import org.autogui.GuiIncluded;
 import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.swing.AutoGuiShell;
-import org.autogui.swing.GuiSwingViewDocumentEditor;
+import org.autogui.swing.util.TextPaneBuilder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,7 +53,7 @@ public class EmbedPrefsDemo {
         public Map<String, Object> getPrefsJson() {
             var map = new HashMap<String, Object>();
             map.put("count", count);
-            map.put("color", GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.toJsonColor(color));
+            map.put("color", TextPaneBuilder.PreferencesForDocumentSettingBase.toJsonColor(color));
             return map;
         }
 
@@ -67,7 +67,7 @@ public class EmbedPrefsDemo {
                 count = n.intValue();
             }
             if (map.get("color") instanceof List<?> l) {
-                color = GuiSwingViewDocumentEditor.PreferencesForDocumentSetting.fromJsonColor(l);
+                color = TextPaneBuilder.PreferencesForDocumentSettingBase.fromJsonColor(l);
             }
         }
     }

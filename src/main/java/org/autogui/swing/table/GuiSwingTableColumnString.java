@@ -709,8 +709,8 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         }
 
         @Override
-        protected void installLineNumberPane() {
-            //no line numbering
+        protected LineNumberPane createLineNumberPane() {
+            return null; //no line numbering
         }
 
         @Override

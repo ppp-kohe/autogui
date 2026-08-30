@@ -2,14 +2,13 @@ package org.autogui.swing.util;
 
 import javax.swing.*;
 import javax.swing.event.*;
-import javax.swing.text.Document;
-import javax.swing.text.JTextComponent;
+import javax.swing.text.*;
 import java.awt.*;
+import java.awt.font.TextLayout;
+import java.awt.geom.Rectangle2D;
 import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.ListIterator;
 
 /**
  * a line-numbers display.
@@ -88,10 +87,25 @@ public class LineNumberPane extends JComponent implements DocumentListener {
     }
 
     public void install() {
-        field.getDocument().addDocumentListener(this);
+        var doc = field.getDocument();
+        if (doc != null) {
+            doc.addDocumentListener(this);
+        }
         field.addCaretListener(caretRepaintListener);
         field.addAncestorListener(fieldInstallListener);
         installToScrollPane(scroll(field.getParent()));
+        installForDocumentChange();
+    }
+
+    public void installForDocumentChange() {
+        field.addPropertyChangeListener("document", e -> {
+            if (e.getOldValue() instanceof Document doc) {
+                doc.removeDocumentListener(LineNumberPane.this);
+            }
+            if (e.getNewValue() instanceof Document doc) {
+                doc.addDocumentListener(LineNumberPane.this);
+            }
+        });
     }
 
     public void installToScrollPane(JScrollPane scrollPane) {
@@ -102,7 +116,10 @@ public class LineNumberPane extends JComponent implements DocumentListener {
     }
 
     public void uninstall() {
-        field.getDocument().removeDocumentListener(this);
+        var doc = field.getDocument();
+        if (doc != null) {
+            doc.removeDocumentListener(this);
+        }
         field.removeCaretListener(caretRepaintListener);
         field.removeAncestorListener(fieldInstallListener);
         uninstallFromScrollPane(scroll(field.getParent()));
@@ -304,6 +321,7 @@ public class LineNumberPane extends JComponent implements DocumentListener {
             int selfOffsetY = selfRect.y - textRect.y;
 
             g.setFont(getFont());
+            metricsCache.clear();
 
             int lineIndex = Math.max(0, findPosition(startIndex) - 1);
             int lines = linePosition.size();
@@ -322,6 +340,8 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         }
     }
 
+    protected Map<Font, Float> metricsCache = new HashMap<>();
+
     public void paintLine(Graphics2D g, int i, int lines, int selStart, int selEnd, int selfOffsetY) throws Exception {
         int lineStart = linePosition.get(i);
         int lineEnd = i + 1 < lines ? linePosition.get(i + 1) - 1 : Integer.MAX_VALUE;
@@ -336,9 +356,40 @@ public class LineNumberPane extends JComponent implements DocumentListener {
             g.setColor(noOverlappingColor);
         }
         Rectangle lineRect = PopupExtensionText.textComponentModelToView(field, lineStart);
-        int y = lineRect.y + selfOffsetY;
+        float y = lineRect.y + selfOffsetY;
+
         UIManagerUtil ui = UIManagerUtil.getInstance();
-        g.drawString(Integer.toString(i + 1), ui.getScaledSizeFloat(4), y + ui.getScaledSizeInt(12));
+        TextLayout lineNumText = new TextLayout(Integer.toString(i + 1), g.getFont(), g.getFontRenderContext());
+        Rectangle2D lineNumBounds = lineNumText.getBounds();
+
+        y += adjustY(lineNumBounds, lineStart);
+        lineNumText.draw(g,
+                (float) (getWidth() - lineNumBounds.getWidth() - ui.getScaledSizeFloat(4)),
+                y);
+    }
+
+    protected float adjustY(Rectangle2D lineNumBounds, int lineStart) {
+        Font font = null;
+        if (field.getDocument() instanceof StyledDocument styledDoc) {
+            var style = styledDoc.getLogicalStyle(lineStart);
+            if (style == null) {
+                style = styledDoc.getStyle(StyleContext.DEFAULT_STYLE);
+            }
+            if (style != null) {
+                int size = StyleConstants.getFontSize(style);
+                font = styledDoc.getFont(style);
+            }
+        } else {
+            font = field.getFont();
+        }
+        if (font != null) {
+            return metricsCache.computeIfAbsent(font, f -> {
+                var fm = field.getFontMetrics(f);
+                return fm.getLeading() + (fm.getAscent() * 0.9f);
+            });
+        } else {
+            return (float) lineNumBounds.getHeight();
+        }
     }
 
     private boolean overlap(int s1, int e1, int s2, int e2) {

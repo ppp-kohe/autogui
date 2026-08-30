@@ -962,4 +962,18 @@ public class SettingsWindow {
             }
         }
     }
+
+    /**
+     * the base interface for holding the setting-window
+     * @since 1.9
+     */
+    public interface SettingsWindowClientBase {
+        /**
+         * at initialization of the root-pane, the method will be called for existing sub-panes.
+         *   a dynamically created view needs to be manually set by those panes.
+         * @param settingWindow a settings-window from the root-pane, which will be disposed at closing of the main window
+         */
+        void setSettingsWindow(SettingsWindow settingWindow);
+        SettingsWindow getSettingsWindow();
+    }
 }

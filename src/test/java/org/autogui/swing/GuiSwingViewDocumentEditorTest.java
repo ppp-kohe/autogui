@@ -7,6 +7,7 @@ import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.base.type.GuiTypeObject;
 import org.autogui.swing.prefs.GuiSwingPrefsSupports;
+import org.autogui.swing.util.TextPaneBuilder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -147,7 +148,7 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
             }
         });
 
-        JScrollPane scroll = runGet(() -> GuiSwingViewDocumentEditor.scrollPane(i));
+        JScrollPane scroll = runGet(() -> TextPaneBuilder.scrollPane(i));
 
         Assert.assertEquals("after load prefs: lineSpacing", 1.5f,
                 ((Number) runGet(() -> i.getSettingPane().getSpaceLine().getValue())).floatValue(), 0.1f);
@@ -201,7 +202,7 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
 
         run(() -> frame.setSize(400, 300));
         i.setPreferencesUpdater(GuiSwingPrefsSupports.PreferencesUpdateEvent::save);
-        JScrollPane scroll = runGet(() -> GuiSwingViewDocumentEditor.scrollPane(i));
+        JScrollPane scroll = runGet(() -> TextPaneBuilder.scrollPane(i));
 
         run(() -> i.getStyledDocument().addDocumentListener(new DocumentListener() {
             @Override

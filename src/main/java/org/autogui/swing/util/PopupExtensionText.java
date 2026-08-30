@@ -156,17 +156,82 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
      *    and open-browser
      */
     public static List<Action> getEditActions(JTextComponent textComponent) {
-        return Arrays.asList(
-                new TextCutAction(textComponent),
-                new TextCopyAction(textComponent),
-                new TextCopyAllAction(textComponent),
-                new TextPasteAction(textComponent),
-                new TextPasteAllAction(textComponent),
-                new TextClearAction(textComponent),
-                new TextSelectAllAction(textComponent),
-                new TextLoadAction(textComponent),
-                new TextSaveAction(textComponent),
-                new TextOpenBrowserAction(textComponent));
+        return new EditActionSet(textComponent).toActions();
+    }
+
+    /**
+     * the set of text-actions obtained by {@link #getEditActions(JTextComponent)}
+     * @since 1.9
+     */
+    public static class EditActionSet {
+        protected TextCutAction cutAction;
+        protected TextCopyAction copyAction;
+        protected TextCopyAllAction copyAllAction;
+        protected TextPasteAction pasteAction;
+        protected TextPasteAllAction pasteAllAction;
+        protected TextClearAction clearAction;
+        protected TextSelectAllAction selectAllAction;
+        protected TextLoadAction loadAction;
+        protected TextSaveAction saveAction;
+        protected TextOpenBrowserAction openBrowserAction;
+
+        public EditActionSet(JTextComponent textComponent) {
+            cutAction = new TextCutAction(textComponent);
+            copyAction = new TextCopyAction(textComponent);
+            copyAllAction = new TextCopyAllAction(textComponent);
+            pasteAction = new TextPasteAction(textComponent);
+            pasteAllAction = new TextPasteAllAction(textComponent);
+            clearAction = new TextClearAction(textComponent);
+            selectAllAction = new TextSelectAllAction(textComponent);
+            loadAction = new TextLoadAction(textComponent);
+            saveAction = new TextSaveAction(textComponent);
+            openBrowserAction = new TextOpenBrowserAction(textComponent);
+        }
+
+        public List<Action> toActions() {
+            return List.of(
+                    cutAction,
+                    copyAction,
+                    copyAllAction,
+                    pasteAction,
+                    pasteAllAction,
+                    clearAction,
+                    selectAllAction,
+                    loadAction,
+                    saveAction,
+                    openBrowserAction);
+        }
+
+        public TextCutAction cutAction() {
+            return cutAction;
+        }
+        public TextCopyAction copyAction() {
+            return copyAction;
+        }
+        public TextCopyAllAction copyAllAction() {
+            return copyAllAction;
+        }
+        public TextPasteAction pasteAction() {
+            return pasteAction;
+        }
+        public TextPasteAllAction pasteAllAction() {
+            return pasteAllAction;
+        }
+        public TextClearAction clearAction() {
+            return clearAction;
+        }
+        public TextSelectAllAction selectAllAction() {
+            return selectAllAction;
+        }
+        public TextLoadAction loadAction() {
+            return loadAction;
+        }
+        public TextSaveAction saveAction() {
+            return saveAction;
+        }
+        public TextOpenBrowserAction openBrowserAction() {
+            return openBrowserAction;
+        }
     }
 
     //////////////

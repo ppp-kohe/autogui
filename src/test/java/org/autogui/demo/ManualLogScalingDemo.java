@@ -12,9 +12,9 @@ import java.awt.event.ActionEvent;
 import java.time.Duration;
 import java.time.Instant;
 
-public class LogScalingDemo {
+public class ManualLogScalingDemo {
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new LogScalingDemo()::init);
+        SwingUtilities.invokeLater(new ManualLogScalingDemo()::init);
     }
 
     GuiSwingLogManager manager;
@@ -24,6 +24,7 @@ public class LogScalingDemo {
     GuiSwingLogList list;
     void init() {
         frame = new JFrame("Test");
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         {
             JPanel pane = new JPanel(new BorderLayout());
             {
@@ -83,17 +84,17 @@ public class LogScalingDemo {
                 list.getModel().addListDataListener(new ListDataListener() {
                     @Override
                     public void intervalAdded(ListDataEvent e) {
-                        SwingDeferredRunner.invokeLater(LogScalingDemo.this::updateInfo);
+                        SwingDeferredRunner.invokeLater(ManualLogScalingDemo.this::updateInfo);
                     }
 
                     @Override
                     public void intervalRemoved(ListDataEvent e) {
-                        SwingDeferredRunner.invokeLater(LogScalingDemo.this::updateInfo);
+                        SwingDeferredRunner.invokeLater(ManualLogScalingDemo.this::updateInfo);
                     }
 
                     @Override
                     public void contentsChanged(ListDataEvent e) {
-                        SwingDeferredRunner.invokeLater(LogScalingDemo.this::updateInfo);
+                        SwingDeferredRunner.invokeLater(ManualLogScalingDemo.this::updateInfo);
                     }
                 });
             }

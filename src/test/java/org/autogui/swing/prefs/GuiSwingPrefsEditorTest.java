@@ -8,6 +8,7 @@ import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.swing.*;
 import org.autogui.swing.mapping.GuiReprValueImagePane;
 import org.autogui.swing.table.GuiSwingTableModelCollection;
+import org.autogui.swing.util.TextPaneBuilder;
 import org.autogui.swing.util.UIManagerUtil;
 import org.junit.After;
 import org.junit.Assert;
@@ -240,7 +241,7 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         frame = createFrame(pane);
         runWait(600);
 
-        var docPane = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewDocumentEditor.DocumentSettingPane.class, p -> true));
+        var docPane = runGet(() -> GuiSwingView.findComponent(pane, TextPaneBuilder.DocumentSettingPaneBase.class, p -> true));
         Assert.assertEquals("init background", new Color(10, 20, 30, 40), runGet(() -> docPane.getBackgroundColor().getColor()));
         Assert.assertEquals("init foreground", new Color(50, 60, 70, 80), runGet(() -> docPane.getForegroundColor().getColor()));
         Assert.assertTrue("init bold", runGet(() -> docPane.getStyleBold().isSelected()));
