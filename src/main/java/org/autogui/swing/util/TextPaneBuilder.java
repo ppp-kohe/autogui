@@ -45,15 +45,15 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
     protected DocumentSettingAction settingAction;
     protected SettingsWindow settingsWindow;
 
-    protected DocumentCharSequence contents;
+    protected DocumentCharSequence<Document> contents;
 
     public TextPaneBuilder(JEditorPane pane) {
         this.pane = pane;
     }
 
-    public DocumentCharSequence getContents() {
+    public DocumentCharSequence<Document> getContents() {
         if (contents == null) {
-            contents = new DocumentCharSequence(pane.getDocument());
+            contents = new DocumentCharSequence<>(pane.getDocument());
         }
         return contents;
     }
@@ -1221,8 +1221,8 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
         }
     }
 
-    public static DocumentCharSequence charSequence(Document doc) {
-        return new DocumentCharSequence(doc);
+    public static <DocType extends Document> DocumentCharSequence<DocType> charSequence(DocType doc) {
+        return new DocumentCharSequence<>(doc);
     }
 
     /**
@@ -1230,14 +1230,16 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
      * it also supports {@link Appendable} and some methods defined in {@link StringBuilder}.
      * <p>
      * it can be careated by {@link TextPaneBuilder#charSequence(Document)}
+     *
+     * @param <DocType> the concrete {@link Document} type
      * @since 1.9
      */
-    public static class DocumentCharSequence implements CharSequence, Appendable {
-        protected Document document;
+    public static class DocumentCharSequence<DocType extends Document> implements CharSequence, Appendable {
+        protected DocType document;
         protected int cacheOffset = -1;
         protected String cache;
 
-        public DocumentCharSequence(Document doc) {
+        public DocumentCharSequence(DocType doc) {
             this.document = doc;
             setCache(null, -1);
             doc.addDocumentListener(new DocumentListener() {
@@ -1254,6 +1256,10 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
                     updateAsInvalidAfter(e.getOffset());
                 }
             });
+        }
+
+        public DocType document() {
+            return document;
         }
 
         protected final void updateAsInvalidAfter(int off) {
@@ -1331,21 +1337,21 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
         }
 
         @Override
-        public DocumentCharSequence append(CharSequence csq) {
+        public DocumentCharSequence<DocType> append(CharSequence csq) {
             return insert(length(), csq.toString());
         }
 
         @Override
-        public DocumentCharSequence append(CharSequence csq, int start, int end)  {
+        public DocumentCharSequence<DocType> append(CharSequence csq, int start, int end)  {
             return append(csq.subSequence(start, end));
         }
 
         @Override
-        public DocumentCharSequence append(char c)  {
+        public DocumentCharSequence<DocType> append(char c)  {
             return append(String.valueOf(c));
         }
 
-        public DocumentCharSequence delete(int start, int end) {
+        public DocumentCharSequence<DocType> delete(int start, int end) {
             try {
                 document.remove(start, end - start);
             } catch (BadLocationException e) {
@@ -1354,7 +1360,7 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
             return this;
         }
 
-        public DocumentCharSequence deleteCharAt(int index) {
+        public DocumentCharSequence<DocType> deleteCharAt(int index) {
             return delete(index, index + 1);
         }
 
@@ -1363,23 +1369,7 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
         }
 
         public int indexOf(String str, int fromIndex) {
-            int segmentLen = Math.min(Math.max(str.length(), cacheLength()), length());
-            if (str.length() < segmentLen) {
-                return -1;
-            }
-            for (int i = fromIndex, len = document.getLength(); 0 <= i && i < len; i += segmentLen) {
-                int segmentNextLen = Math.min(i + segmentLen, length()) - i;
-                try {
-                    String segmentStr = document.getText(i, segmentNextLen);
-                    int n = segmentStr.indexOf(str);
-                    if (n >= 0) {
-                        return i + n;
-                    }
-                } catch (BadLocationException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            return -1;
+            return toString().indexOf(str, fromIndex);
         }
 
         public int lastIndexOf(String str) {
@@ -1387,27 +1377,10 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
         }
 
         public int lastIndexOf(String str, int fromIndex) {
-            int segmentLen = Math.min(Math.max(str.length(), cacheLength()), length());
-            if (str.length() < segmentLen) {
-                return -1;
-            }
-            for (int i = fromIndex, len = document.getLength(); 0 <= i && i < len; i -= segmentLen) {
-                int segmentStart = Math.max(0, i - segmentLen);
-                int segmentNextLen = i - segmentStart;
-                try {
-                    String segmentStr = document.getText(segmentStart, segmentNextLen);
-                    int n = segmentStr.lastIndexOf(str);
-                    if (n >= 0) {
-                        return segmentStart + n;
-                    }
-                } catch (BadLocationException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            return -1;
+            return toString().lastIndexOf(str, fromIndex);
         }
 
-        public DocumentCharSequence insert(int offset, String s) {
+        public DocumentCharSequence<DocType> insert(int offset, String s) {
             try {
                 document.insertString(offset, s, null);
             } catch (BadLocationException e) {
@@ -1416,13 +1389,13 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
             return this;
         }
 
-        public DocumentCharSequence setCharAt(int index, char c) {
+        public DocumentCharSequence<DocType> setCharAt(int index, char c) {
             deleteCharAt(index);
             insert(index, String.valueOf(c));
             return this;
         }
 
-        public DocumentCharSequence replace(int start, int end, String s) {
+        public DocumentCharSequence<DocType> replace(int start, int end, String s) {
             delete(start, end);
             return insert(start, s);
         }
@@ -1431,7 +1404,7 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
             return indexOf(str) != -1;
         }
 
-        public DocumentCharSequence set(String str) {
+        public DocumentCharSequence<DocType> set(String str) {
             delete(0, length());
             return insert(0, str);
         }
