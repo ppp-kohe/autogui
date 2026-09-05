@@ -78,7 +78,7 @@ public class ManualTextPaneDemo {
     }
 
     public void appendTime() {
-        builder.getContents().append(" " + LocalDateTime.now());
+        builder.getContents().append(" ").append(LocalDateTime.now().toString());
     }
 
     public void updateTime() {

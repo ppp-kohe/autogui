@@ -685,7 +685,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         public void changeSelectionIndicesRowAndColumns(int[] selectedModelRowsIndices, GuiSwingTableColumnSet.TableSelectionChangeIndicesRowAndColumn change) {
             ListSelectionModel sel = getSelectionModel();
-            Collection<int[]> is = change.indices;
+            Collection<int[]> is = (change.indices != null ? change.indices : List.of());
             int rows = getRowCount();
             int cols = getColumnCount();
             sel.setValueIsAdjusting(true);

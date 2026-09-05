@@ -150,14 +150,19 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
 
     public void initSettingPane() {
         settingPane = createSettingPane();
-        settingAction = new DocumentSettingAction(createSettingPaneLabel(), getSettingsWindowClient(), settingPane);
-        pane.addPropertyChangeListener("document", e -> {
-            if (settingPane != null) {
-                settingPane.updateGuiAndTargetTextPaneFromPrefsObj();
-            }
-        });
+        if (settingPane != null) {
+            settingAction = new DocumentSettingAction(createSettingPaneLabel(), getSettingsWindowClient(), settingPane);
+            pane.addPropertyChangeListener("document", e -> {
+                if (settingPane != null) {
+                    settingPane.updateGuiAndTargetTextPaneFromPrefsObj();
+                }
+            });
+        }
     }
 
+    /**
+     * @return a setting-pane or null; if null, the feature will be disabled
+     */
     protected DocumentSettingPaneBase createSettingPane() {
         return new DocumentSettingPaneBase(pane);
     }
@@ -174,6 +179,9 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
         editActionSet = new PopupExtensionText.EditActionSet(pane);
     }
 
+    /**
+     * to disable the feature, override the method and fill with empty
+     */
     public void initPopup() {
         popup = new PopupExtensionText(pane, PopupExtension.getDefaultKeyMatcher(), createPopupMenuBuilder());
         pane.setInheritsPopupMenu(true);
@@ -246,6 +254,11 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
         return settingAction;
     }
 
+    /**
+     *
+     * @param pane the {@link #pane} field
+     * @return the line-numbering pane for the pane or null; if null, the feature will be disabled.
+     */
     protected LineNumberPane createLineNumberPane(JEditorPane pane) {
         var lineNumberPane = new LineNumberPane(pane);
         lineNumberPane.install();

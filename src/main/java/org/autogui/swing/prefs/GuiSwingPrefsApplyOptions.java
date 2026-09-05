@@ -108,6 +108,15 @@ public interface GuiSwingPrefsApplyOptions {
         columnEditor.loadFromAndApplyTo(prefs);
     }
 
+    /**
+     * @param pane the actual pane
+     * @param prefs the source prefs
+     * @since 1.9
+     */
+    default void apply(GuiSwingViewStringField.PropertyStringPane pane,  GuiPreferences prefs) {
+        pane.apply(prefs);
+    }
+
     default void end(Object loadingTarget, GuiPreferences prefs, PrefsApplyOptionsLoadingTargetType targetType) {}
 
     enum PrefsApplyOptionsLoadingTargetType {

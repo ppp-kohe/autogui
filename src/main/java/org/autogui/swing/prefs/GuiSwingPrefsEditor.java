@@ -293,6 +293,11 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
         addToContentPaneIfFirst(prefs, new GuiSwingTableColumnString.PreferencesForMultilineColumn().getKey(), this::createColumnMultilinne);
     }
 
+    @Override
+    public void apply(GuiSwingViewStringField.PropertyStringPane pane, GuiPreferences prefs) {
+        addToContentPaneIfFirst(prefs, new GuiSwingViewStringField.PreferencesForStringField().getKey(), this::createStringField);
+    }
+
     public JComponent createRootPane() {
         UIManagerUtil u = UIManagerUtil.getInstance();
         var rootPane = new JPanel(new BorderLayout());
@@ -394,6 +399,7 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
     public static final String PREFS_CURRENT_VALUE = GuiPreferences.KEY_CURRENT_VALUE;
     public static final String DOCUMENT_PREFS_KEY = "<DocumentSetting>";
     public static final String NUMBER_PREFS_KEY = "<NumberSetting>";
+    public static final String FIELD_PROP_DISPLAY_LINES = "displayLines";
 
     public JComponent createPrefsInfo(GuiPreferences prefs) {
         var pane = createPane(false);
@@ -587,6 +593,23 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
         var pane = createPane(true);
         {
             ResizableFlowLayout.add(pane, createBoolean(null, MULTILINE_COLUMN_PREFS_EDIT_FINISH_BY_ENTER_AND_KEY, prefsObj::isEditFinishByEnterAndKey, setterPrefs(prefsObj::setEditFinishByEnterAndKey, prefsObj, prefs), validationCheckAdder), false);
+        }
+        return createNamed(getName(prefs, prefsObj.getKey()), pane);
+    }
+
+    /**
+     *
+     * @param prefs the source prefs
+     * @return the component for string-field display-lines settings;
+     *  a pane including the number spinner of {@link #FIELD_PROP_DISPLAY_LINES}
+     * @since 1.9
+     */
+    public JComponent createStringField(GuiPreferences prefs) {
+        var prefsObj = new GuiSwingViewStringField.PreferencesForStringField();
+        var validationCheckAdder = validationCheckerAdderWithReloader(loadAndReturnsAsReloader(prefsObj, prefs));
+        var pane = createPane(true);
+        {
+            ResizableFlowLayout.add(pane, createNumberInt(null, FIELD_PROP_DISPLAY_LINES, prefsObj::getDisplayLines, setterPrefs(prefsObj::setDisplayLines, prefsObj, prefs), validationCheckAdder), false);
         }
         return createNamed(getName(prefs, prefsObj.getKey()), pane);
     }

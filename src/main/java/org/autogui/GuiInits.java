@@ -83,4 +83,13 @@ public @interface GuiInits {
      * public void action() { ... }
      * </pre> */
     GuiInitAction action() default @GuiInitAction();
+
+    /**
+     * atached to a property method or field of a string-field <pre>
+     *     &#64;GuiInits(stringField = &#64;{@link GuiInitStringField}(displayLines=5))
+     *     public String prop() { ... }
+     * </pre>
+     * @since 1.9
+     */
+    GuiInitStringField stringField() default @GuiInitStringField();
 }

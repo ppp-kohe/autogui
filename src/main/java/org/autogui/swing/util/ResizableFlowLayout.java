@@ -53,7 +53,7 @@ import java.util.Set;
 public class ResizableFlowLayout implements LayoutManager {
     protected int margin = 1;
     protected boolean orientation;
-    protected boolean fitHeight = false;
+    /** @since 1.9 */ protected Alignment alignment = Alignment.Mininum;
     protected Set<Component> resizable = new HashSet<>();
 
     public static ResizableFlowLayout.LayoutAppender<JPanel> create(boolean horizontalOrientation) {
@@ -84,15 +84,47 @@ public class ResizableFlowLayout implements LayoutManager {
 
     /**
      * Here, the word "height" means opposite orientation of lining orientation.
+     * it mens {@link #setAlignment(Alignment)} with {@link Alignment#Filling}.
      * @param fitHeight the flag
      * @return this
      */
     public ResizableFlowLayout setFitHeight(boolean fitHeight) {
-        this.fitHeight = fitHeight;
-        return this;
+        return setAlignment(fitHeight ? Alignment.Filling : Alignment.Center);
     }
     public boolean isFitHeight() {
-        return fitHeight;
+        return alignment.equals(Alignment.Filling);
+    }
+
+    /**
+     * @return the current alignment. the default value is {@link Alignment#Mininum}
+     * @since 1.9
+     */
+    public Alignment getAlignment() {
+        return alignment;
+    }
+
+    /**
+     * @param alignment the setting of the alignment of all components
+     * @return this
+     * @since 1.9
+     */
+    public ResizableFlowLayout setAlignment(Alignment alignment) {
+        this.alignment = alignment;
+        return this;
+    }
+
+    /**
+     * @since 1.9
+     */
+    public enum Alignment {
+        /** centering */
+        Center,
+        /** top or left */
+        Mininum,
+        /** bottom or right */
+        Maximum,
+        /** change height or width to the max size */
+        Filling,
     }
 
     public boolean isVertical() {
@@ -132,12 +164,14 @@ public class ResizableFlowLayout implements LayoutManager {
         Insets insets = parent.getInsets();
         ResizedWidth rw = new ResizedWidth(parent, false);
 
-        float resizedResSum = (orientation ? parent.getWidth() : parent.getHeight()) - rw.fixedSum;
-        int x = orientation ? insets.left : insets.top;
+        boolean isHorizontal = orientation;
+
+        float resizedResSum = (isHorizontal ? parent.getWidth() : parent.getHeight()) - rw.fixedSum;
+        int x = isHorizontal ? insets.left : insets.top;
         boolean first = true;
         for (Component c : parent.getComponents()) {
             Dimension size = c.getPreferredSize();
-            int w = orientation ? size.width : size.height;
+            int w = isHorizontal ? size.width : size.height;
             if (first) {
                 first = false;
             } else {
@@ -145,21 +179,27 @@ public class ResizableFlowLayout implements LayoutManager {
             }
             int y;
             int h;
-            if (fitHeight) {
-                y = orientation ? insets.top : insets.left;
-                h = (orientation ? parent.getHeight() : parent.getWidth())
-                        - (orientation ? insetsHeight(insets) : insetsWidth(insets));
+            if (alignment.equals(Alignment.Filling)) {
+                y = isHorizontal ? insets.top : insets.left;
+                h = (isHorizontal ? parent.getHeight() : parent.getWidth())
+                        - (isHorizontal ? insetsHeight(insets) : insetsWidth(insets));
             } else {
-                y = (rw.height / 2) - ((orientation ? size.height : size.width) / 2);
-                h = orientation ? size.height : size.width;
+                if (alignment.equals(Alignment.Mininum)) {
+                    y = 0;
+                } else if (alignment.equals(Alignment.Maximum)) {
+                    y = rw.height - (isHorizontal ? size.height : size.width);
+                } else {
+                    y = (rw.height / 2) - ((isHorizontal ? size.height : size.width) / 2);
+                }
+                h = isHorizontal ? size.height : size.width;
             }
-            c.setLocation(orientation ? x : y, orientation ? y : x);
+            c.setLocation(isHorizontal ? x : y, isHorizontal ? y : x);
             if (isResizable(c)) {
-                w = ((int) ((resizedResSum / rw.resSum) * (orientation ? size.getWidth() : size.getHeight())));
+                w = ((int) ((resizedResSum / rw.resSum) * (isHorizontal ? size.getWidth() : size.getHeight())));
             }
-            c.setSize(Math.max(c.getMinimumSize().width, (orientation ? w : h)),
-                    Math.max(c.getMinimumSize().height, (orientation ? h : w)));
-            x += orientation ? c.getWidth() : c.getHeight();
+            c.setSize(Math.max(c.getMinimumSize().width, (isHorizontal ? w : h)),
+                    Math.max(c.getMinimumSize().height, (isHorizontal ? h : w)));
+            x += isHorizontal ? c.getWidth() : c.getHeight();
         }
     }
 

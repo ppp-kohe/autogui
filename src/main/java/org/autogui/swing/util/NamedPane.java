@@ -1,6 +1,7 @@
 package org.autogui.swing.util;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.Serial;
 
 /**
@@ -62,6 +63,7 @@ public class NamedPane extends JComponent {
 
     public void initNameLabel() {
         label = new JLabel(displayName + ":");
+        label.setBorder(BorderFactory.createEmptyBorder(UIManagerUtil.getInstance().getScaledSizeInt(6), 0, 0, 0));
         label.setHorizontalAlignment(JLabel.RIGHT);
         ResizableFlowLayout.add(this, label, false);
     }

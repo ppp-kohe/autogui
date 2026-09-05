@@ -56,7 +56,7 @@ public class SearchTextField extends JComponent {
     @Serial private static final long serialVersionUID = 1L;
     protected SearchTextFieldModel model;
     protected JButton icon;
-    protected JTextField field;
+    protected JTextComponent field;
     protected volatile EditingRunner editingRunner;
 
     protected PopupExtensionText popup;
@@ -216,18 +216,7 @@ public class SearchTextField extends JComponent {
 
     public void initField() {
         editingRunner = new EditingRunner(getEditingRunnerDelay(), this::updateField);
-        field = new JTextField() {
-            @Serial private static final long serialVersionUID = 1L;
-            @Override
-            public Dimension getPreferredSize() {
-                Dimension dim = super.getPreferredSize();
-                int w = UIManagerUtil.getInstance().getScaledSizeInt(100);
-                if (dim.width < w) {
-                    dim.width = w;
-                }
-                return dim;
-            }
-        };
+        field = createField();
         field.setOpaque(false);
         setOpaque(false);
 
@@ -235,9 +224,41 @@ public class SearchTextField extends JComponent {
         undoManager.putListenersAndActionsTo(field);
 
         field.getDocument().addDocumentListener(editingRunner);
-        field.addActionListener(editingRunner);
         field.addFocusListener(editingRunner);
         field.addInputMethodListener(editingRunner);
+        if (field instanceof JTextField textField) {
+            textField.addActionListener(editingRunner);
+        }
+    }
+
+    /**
+     * @return a non-null new text-component;
+     *   whose {@link JTextComponent#getPreferredSize()} can be calling {@link #getPreferredSizeFor(JTextComponent, Dimension)} with the field and super.getPreferredSize()
+     * @since 1.9
+     */
+    protected JTextComponent createField() {
+        return new JTextField() {
+            @Serial private static final long serialVersionUID = 1L;
+            @Override
+            public Dimension getPreferredSize() {
+                return getPreferredSizeFor(this, super.getPreferredSize());
+            }
+        };
+    }
+
+    /**
+     *
+     * @param field the target field
+     * @param superPreferredSize the result of super.getPreferredSize of the field
+     * @return a modified size
+     * @since 1.9
+     */
+    public static Dimension getPreferredSizeFor(JTextComponent field, Dimension superPreferredSize) {
+        int w = UIManagerUtil.getInstance().getScaledSizeInt(100);
+        if (superPreferredSize.width < w) {
+            superPreferredSize.width = w;
+        }
+        return superPreferredSize;
     }
 
     public void initAfter() {
@@ -290,6 +311,9 @@ public class SearchTextField extends JComponent {
         PopupExtensionText.putUnregisteredEditActions(field);
         popup = new PopupExtensionText(field, PopupExtensionText.getDefaultKeyMatcher(), categorized);
         popupButton = new JButton(popup.getAction());
+        if (popup.getAction().getValue(GuiSwingIcons.PRESSED_ICON_KEY) instanceof Icon pressedIcon) {
+            popupButton.setPressedIcon(pressedIcon);
+        }
         popupButton.setBorder(BorderFactory.createEmptyBorder());
         popupButton.setMargin(new Insets(0, 0, 0, 0));
         popupButton.setContentAreaFilled(false);
@@ -348,15 +372,26 @@ public class SearchTextField extends JComponent {
         initBackgroundPainter();
 
         setLayout(new BorderLayout());
-        add(icon, BorderLayout.WEST);
-        add(field, BorderLayout.CENTER);
-
+        initLayoutIcon();
+        initLayoutField();
         initLayoutButtonsPane();
-        if (buttonsPane != null) {
-            initLayoutButtons()
-                    .forEach(buttonsPane::add);
-            add(buttonsPane, BorderLayout.EAST);
-        }
+        initLayoutButtonsPaneAfter();
+    }
+
+    /**
+     * adding {@link #icon}
+     * @since 1.9
+     */
+    protected void initLayoutIcon() {
+        add(icon, BorderLayout.WEST);
+    }
+
+    /**
+     * adding {@link #field}
+     * @since 1.9
+     */
+    protected void initLayoutField() {
+        add(field, BorderLayout.CENTER);
     }
 
     /**
@@ -368,6 +403,18 @@ public class SearchTextField extends JComponent {
         this.buttonsPane = new JPanel(new FlowLayout(FlowLayout.LEFT, g, 0));
         this.buttonsPane.setBorder(BorderFactory.createEmptyBorder());
         buttonsPane.setOpaque(false);
+    }
+
+    /**
+     * setting-up {@link #buttonsPane}; adding {@link #initLayoutButtons()} to the pane and add the pane to this
+     * @since 1.9
+     */
+    protected void initLayoutButtonsPaneAfter() {
+        if (buttonsPane != null) {
+            initLayoutButtons()
+                    .forEach(buttonsPane::add);
+            add(buttonsPane, BorderLayout.EAST);
+        }
     }
 
     /**
@@ -428,7 +475,7 @@ public class SearchTextField extends JComponent {
         return icon;
     }
 
-    public JTextField getField() {
+    public JTextComponent getField() {
         return field;
     }
 
@@ -528,10 +575,11 @@ public class SearchTextField extends JComponent {
      * @since 1.5
      */
     protected void doActionButtons() {
+        var buttonsPane = getButtonsPane();
         if (buttonsPane != null && buttonsPane.isShowing()) {
             for (Component child : buttonsPane.getComponents()) {
-                if (child instanceof JButton && child != popupButton) {
-                    ((JButton) child).doClick();
+                if (child instanceof JButton button && button != popupButton) {
+                    button.doClick();
                 }
             }
         }
@@ -738,7 +786,7 @@ public class SearchTextField extends JComponent {
         protected void setToComponent() {
             component.setLayout(new BorderLayout());
             UIManagerUtil ui = UIManagerUtil.getInstance();
-            int h = ui.getScaledSizeInt(7);
+            int h = ui.getScaledSizeInt(5);
             int w = ui.getScaledSizeInt(5);
             component.setBorder(BorderFactory.createEmptyBorder(h, w, h, w));
         }

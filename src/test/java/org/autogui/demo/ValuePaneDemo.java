@@ -1,6 +1,8 @@
 package org.autogui.demo;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
+import org.autogui.base.annotation.GuiInitStringField;
 import org.autogui.swing.AutoGuiShell;
 
 import javax.imageio.ImageIO;
@@ -56,6 +58,7 @@ public class ValuePaneDemo {
         protected Image image;
 
         @GuiIncluded(index = 1)
+        @GuiInits(stringField = @GuiInitStringField(displayLines = 5))
         public String getStr() {
             return str;
         }
@@ -113,6 +116,11 @@ public class ValuePaneDemo {
 
     @GuiIncluded
     public static class EditablePane extends NonEditablePane {
+
+        @GuiIncluded
+        public void strAction() {
+            System.err.println("strAction: " + str);
+        }
 
         @GuiIncluded @Override
         public void setStr(String str) {
