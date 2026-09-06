@@ -764,11 +764,10 @@ public class SearchTextField extends JComponent {
     }
 
     public static Color getFocusColor() {
-        Color focusColor = UIManagerUtil.getInstance().getFocusColor();
-        float[] hsb = new float[3];
-        hsb = Color.RGBtoHSB(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), hsb);
-        focusColor = Color.getHSBColor(hsb[0] * 0.97f, hsb[1] * 0.53f, hsb[2]);
-        return focusColor;
+        return UIManagerUtil.getInstance().getFocusColor();
+//        float[] hsb = new float[3];
+//        hsb = Color.RGBtoHSB(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), hsb);
+//        focusColor = Color.getHSBColor(hsb[0] * 0.97f, hsb[1] * 0.53f, hsb[2]);
     }
 
     /** the painter impl. */
@@ -813,8 +812,8 @@ public class SearchTextField extends JComponent {
         }
 
         public void initStrokes() {
-            strokes = new BasicStroke[3];
-            Arrays.fill(strokes, new BasicStroke(strokes.length / 2.0f));
+            strokes = new BasicStroke[1];
+            Arrays.fill(strokes, new BasicStroke(UIManagerUtil.getInstance().getScaledSizeFloat(2)));
         }
 
         public Color getGradientColor(float p) {
@@ -884,9 +883,14 @@ public class SearchTextField extends JComponent {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             RoundRectangle2D rr = new RoundRectangle2D.Double(x, y, width - ((double) x /2), height - ((double) y /2), arc, arc);
 
+            boolean hasFocus = hasFocusChild(component);
+            if (!hasFocus) {
+                paintFocusStrokes(g2, rr, component.getBackground());
+            }
+
             paintGradientColors(g2, rr);
 
-            if (hasFocusChild(component)) {
+            if (hasFocus) {
                 paintFocusStrokes(g2, rr);
             }
         }
@@ -902,6 +906,7 @@ public class SearchTextField extends JComponent {
             //g2.setPaint(Color.white);
             //g2.fill(rr);
             Color[] cs = gradientColors;
+            g2.setStroke(new BasicStroke(size));
             for (int i = 0, l = cs.length; i < l; ++i) {
                 g2.setPaint(cs[i]);
                 RoundRectangle2D rp = new RoundRectangle2D.Double(x + i, y + i, width - (2 * i), height - (2 * i), arcW, arcH);
@@ -913,18 +918,21 @@ public class SearchTextField extends JComponent {
         }
 
         public void paintFocusStrokes(Graphics2D g2, RoundRectangle2D rr) {
-            Color color2 = new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 150);
-            g2.setColor(color2);
-            for (BasicStroke s : strokes) {
-                g2.setStroke(s);
+            paintFocusStrokes(g2, rr, focusColor);
+        }
+
+        public void paintFocusStrokes(Graphics2D g2, RoundRectangle2D rr, Color color) {
+            g2.setColor(color);
+            if (strokes.length > 0) {
+                g2.setStroke(strokes[0]);
                 g2.draw(rr);
             }
         }
 
         public boolean hasFocusChild(Component c) {
-            if (!c.hasFocus()) {
-                if (c instanceof Container) {
-                    return Arrays.stream(((Container) c).getComponents())
+            if (!c.isFocusOwner()) {
+                if (c instanceof Container cont) {
+                    return Arrays.stream(cont.getComponents())
                             .anyMatch(this::hasFocusChild);
                 } else {
                     return false;

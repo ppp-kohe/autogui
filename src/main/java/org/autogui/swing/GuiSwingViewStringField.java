@@ -215,6 +215,12 @@ public class GuiSwingViewStringField implements GuiSwingView {
                 public Dimension getPreferredSize() {
                     return heightInfo.editPreferredSize(super.getPreferredSize());
                 }
+
+                @Override
+                public void addFocusListener(FocusListener l) {
+                    super.addFocusListener(l);
+                    getViewport().getView().addFocusListener(l);
+                }
             };
             add(scrollPane, BorderLayout.CENTER);
         }
@@ -304,6 +310,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
                 resizeButton.setContentAreaFilled(false);
                 resizeButton.setHorizontalAlignment(SwingConstants.RIGHT);
                 resizeButton.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 9));
+                resizeButton.setFocusable(false);
                 ResizeHeightMouseAdapter.install(this, resizeButton);
             }
 
