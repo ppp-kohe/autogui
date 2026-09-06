@@ -283,6 +283,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
         public void initAfter() {
             editingRunner.setEnabled(true);
+            setFocusable(false);
         }
 
         @Override

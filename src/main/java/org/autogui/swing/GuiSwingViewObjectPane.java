@@ -591,6 +591,7 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             setBorder(BorderFactory.createEmptyBorder());
             setMargin(new Insets(0, 0, 0, 0));
             setHideActionText(true);
+            setFocusable(false);
             updateIcon(this::getIcon, this::setIcon);
             updateIcon(this::getPressedIcon, this::setPressedIcon);
         }

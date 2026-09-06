@@ -16,8 +16,10 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.io.Serial;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -96,19 +98,23 @@ public class GuiSwingViewStringField implements GuiSwingView {
             initDefaultDisplayLines();
         }
 
+        /**
+         * @since 1.9
+         */
+        public static class EditorPaneForPropertyString extends JEditorPane {
+            public boolean getScrollableTracksViewportWidth() {
+                return true;
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return TextPaneBuilder.getPreferredSize(this, true);
+            }
+        }
+
         @Override
         protected JTextComponent createField() {
-            return new TextPaneBuilder(new JEditorPane() {
-                @Override
-                public boolean getScrollableTracksViewportWidth() {
-                    return true;
-                }
-
-                @Override
-                public Dimension getPreferredSize() {
-                    return TextPaneBuilder.getPreferredSize(this, true);
-                }
-            }) {
+            return new TextPaneBuilder(new EditorPaneForPropertyString()) {
                 @Override
                 public void initBorder() { }
 
@@ -206,22 +212,32 @@ public class GuiSwingViewStringField implements GuiSwingView {
             }
         }
 
+        /**
+         * @since 1.9
+         */
+        public static class ScrollPaneForPropertyString extends JScrollPane {
+            protected Supplier<HeightInfo> heightInfoSupplier;
+            public ScrollPaneForPropertyString(JComponent pane, Supplier<HeightInfo> heightSupplier) {
+                super(pane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                this.heightInfoSupplier = heightSupplier;
+                setFocusable(false);
+            }
+            public Dimension getPreferredSize() {
+                return heightInfoSupplier.get().editPreferredSize(super.getPreferredSize());
+            }
+
+            @Override
+            public void addFocusListener(FocusListener l) {
+                super.addFocusListener(l);
+                getViewport().getView().addFocusListener(l);
+            }
+        }
+
         @Override
         protected void initLayoutField() {
             heightInfo.init(field);
 
-            scrollPane = new JScrollPane(field, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) {
-                @Override
-                public Dimension getPreferredSize() {
-                    return heightInfo.editPreferredSize(super.getPreferredSize());
-                }
-
-                @Override
-                public void addFocusListener(FocusListener l) {
-                    super.addFocusListener(l);
-                    getViewport().getView().addFocusListener(l);
-                }
-            };
+            scrollPane = new ScrollPaneForPropertyString(field, this::getHeightInfo);
             add(scrollPane, BorderLayout.CENTER);
         }
 
@@ -283,7 +299,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         protected void initLayoutButtonsPaneAfterWrap() {
             originalButtonPane = buttonsPane;
             initLayoutButtons().forEach(originalButtonPane::add);
-            buttonsPane = new JPanel(new BorderLayout());
+            buttonsPane = new ButtonPaneForSearchText(new BorderLayout());
             var ui = UIManagerUtil.getInstance();
             buttonsPane.setBorder(BorderFactory.createEmptyBorder(0, 0, ui.getScaledSizeInt(5), 0));
             buttonsPane.add(originalButtonPane, BorderLayout.NORTH);
@@ -306,7 +322,6 @@ public class GuiSwingViewStringField implements GuiSwingView {
                 var icon2 = GuiSwingIcons.getInstance().getPressedIcon("vertical-", "handle", ui.getScaledSizeInt(16), ui.getScaledSizeInt(16));
                 resizeButton.setIcon(icon1);
                 resizeButton.setPressedIcon(icon2);
-                resizeButton.setBorder(BorderFactory.createEmptyBorder());
                 resizeButton.setContentAreaFilled(false);
                 resizeButton.setHorizontalAlignment(SwingConstants.RIGHT);
                 resizeButton.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 9));

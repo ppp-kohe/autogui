@@ -7,10 +7,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.Serial;
@@ -263,6 +260,7 @@ public class SearchTextField extends JComponent {
 
     public void initAfter() {
         editingRunner.setEnabled(true);
+        setFocusable(false);
     }
 
     /**
@@ -399,10 +397,43 @@ public class SearchTextField extends JComponent {
      * @since 1.5
      */
     protected void initLayoutButtonsPane() {
-        int g = UIManagerUtil.getInstance().getScaledSizeInt(5);
-        this.buttonsPane = new JPanel(new FlowLayout(FlowLayout.LEFT, g, 0));
-        this.buttonsPane.setBorder(BorderFactory.createEmptyBorder());
-        buttonsPane.setOpaque(false);
+        this.buttonsPane = new ButtonPaneForSearchText();
+    }
+
+    /**
+     * @since 1.9
+     */
+    public static class ButtonPaneForSearchText extends JPanel {
+        public ButtonPaneForSearchText() {
+            this(new FlowLayout(FlowLayout.LEFT, UIManagerUtil.getInstance().getScaledSizeInt(5), 0));
+        }
+        public ButtonPaneForSearchText(LayoutManager layout) {
+            super(layout);
+            setBorder(BorderFactory.createEmptyBorder());
+            setOpaque(false);
+            setFocusable(false);
+            addContainerListener(new ContainerListener() {
+                @Override
+                public void componentAdded(ContainerEvent e) {
+                    Arrays.stream(e.getContainer().getFocusListeners())
+                            .forEach(e.getComponent()::addFocusListener);
+                }
+
+                @Override
+                public void componentRemoved(ContainerEvent e) {
+                    Arrays.stream(e.getContainer().getFocusListeners())
+                            .forEach(e.getComponent()::removeFocusListener);
+                }
+            });
+        }
+
+        @Override
+        public void addFocusListener(FocusListener l) {
+            super.addFocusListener(l);
+            for (Component child : getComponents()) {
+                child.addFocusListener(l);
+            }
+        }
     }
 
     /**
@@ -770,12 +801,40 @@ public class SearchTextField extends JComponent {
 //        focusColor = Color.getHSBColor(hsb[0] * 0.97f, hsb[1] * 0.53f, hsb[2]);
     }
 
+    /**
+     * @since 1.9
+     */
+    public static class FocusBorderForSearch extends FocusBorder {
+        public FocusBorderForSearch(JComponent target) {
+            super(target);
+        }
+
+        public void setChild(JComponent child) {
+            installListener(child);
+        }
+
+        @Override
+        protected boolean hasFocus(Component c) {
+            if (!c.isFocusOwner()) {
+                if (c instanceof Container cont) {
+                    return Arrays.stream(cont.getComponents())
+                            .anyMatch(this::hasFocus);
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+    }
+
     /** the painter impl. */
     public static class SearchBackgroundPainterBordered extends SearchBackgroundPainter {
         protected JComponent component;
         protected Color[] gradientColors;
         protected Color focusColor;
         protected BasicStroke[] strokes;
+        protected FocusBorderForSearch focusBorder;
 
         public SearchBackgroundPainterBordered(JComponent component) {
             this.component = component;
@@ -787,7 +846,8 @@ public class SearchTextField extends JComponent {
             UIManagerUtil ui = UIManagerUtil.getInstance();
             int h = ui.getScaledSizeInt(5);
             int w = ui.getScaledSizeInt(5);
-            component.setBorder(BorderFactory.createEmptyBorder(h, w, h, w));
+            focusBorder = new FocusBorderForSearch(component);
+            component.setBorder(focusBorder);
         }
 
         public void init() {
@@ -836,25 +896,8 @@ public class SearchTextField extends JComponent {
         //////////
 
         public void setChild(JComponent comp) {
-            setChildFocusListener(comp);
+            focusBorder.setChild(comp);
             setChildEmptyBorder(comp);
-        }
-
-        public void setChildFocusListener(Component comp) {
-            comp.addFocusListener(new FocusRepaint());
-        }
-
-        public class FocusRepaint implements FocusListener {
-            public FocusRepaint() {}
-            @Override
-            public void focusGained(FocusEvent e) {
-                component.repaint();
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                component.repaint();
-            }
         }
 
         public void setChildEmptyBorder(JComponent comp) {
@@ -882,17 +925,7 @@ public class SearchTextField extends JComponent {
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             RoundRectangle2D rr = new RoundRectangle2D.Double(x, y, width - ((double) x /2), height - ((double) y /2), arc, arc);
-
-            boolean hasFocus = hasFocusChild(component);
-            if (!hasFocus) {
-                paintFocusStrokes(g2, rr, component.getBackground());
-            }
-
             paintGradientColors(g2, rr);
-
-            if (hasFocus) {
-                paintFocusStrokes(g2, rr);
-            }
         }
 
         public void paintGradientColors(Graphics2D g2, RoundRectangle2D rr) {
@@ -915,31 +948,6 @@ public class SearchTextField extends JComponent {
             g2.setColor(new Color(180, 180, 180));
             g2.setStroke(new BasicStroke(UIManagerUtil.getInstance().getScaledSizeFloat(0.7f)));
             g2.draw(rr);
-        }
-
-        public void paintFocusStrokes(Graphics2D g2, RoundRectangle2D rr) {
-            paintFocusStrokes(g2, rr, focusColor);
-        }
-
-        public void paintFocusStrokes(Graphics2D g2, RoundRectangle2D rr, Color color) {
-            g2.setColor(color);
-            if (strokes.length > 0) {
-                g2.setStroke(strokes[0]);
-                g2.draw(rr);
-            }
-        }
-
-        public boolean hasFocusChild(Component c) {
-            if (!c.isFocusOwner()) {
-                if (c instanceof Container cont) {
-                    return Arrays.stream(cont.getComponents())
-                            .anyMatch(this::hasFocusChild);
-                } else {
-                    return false;
-                }
-            } else {
-                return true;
-            }
         }
     }
 

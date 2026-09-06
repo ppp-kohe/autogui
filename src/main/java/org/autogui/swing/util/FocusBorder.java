@@ -15,9 +15,11 @@ import java.util.Arrays;
 public class FocusBorder implements Border {
     protected Color focusColor;
     protected BasicStroke[] strokes;
+    /** @since 1.9 */ protected JComponent component;
 
     @SuppressWarnings("this-escape")
     public FocusBorder(JComponent target) {
+        this.component = target;
         if (target != null) {
             installListener(target);
         }
@@ -31,14 +33,28 @@ public class FocusBorder implements Border {
         target.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                target.repaint();
+                repainTarget();
             }
 
             @Override
             public void focusLost(FocusEvent e) {
-                target.repaint();
+                repainTarget();
             }
         });
+    }
+
+    /**
+     * @since 1.9
+     */
+    protected void repainTarget() {
+        if (component != null) {
+            var p = SwingUtilities.getUnwrappedParent(component);
+            if (p != null) {
+                p.repaint();
+            } else {
+                component.repaint();
+            }
+        }
     }
 
     public void initFocusColor() {
@@ -63,18 +79,41 @@ public class FocusBorder implements Border {
         if (strokes == null){
             initStrokes();
         }
-
-        if (c.hasFocus()) {
+        if (hasFocus(c)) {
             paintStrokes(g, x, y, width, height);
         }
     }
 
+    /**
+     * @param c the target component
+     * @return true if the c has focus
+     * @since 1.9
+     */
+    protected boolean hasFocus(Component c) {
+        return c.isFocusOwner();
+    }
+
+
     public void paintStrokes(Graphics g, int x, int y, int width, int height) {
-        double ss = getStrokeSize();
-        RoundRectangle2D rr = new RoundRectangle2D.Double(x + ss / 2f, y + ss / 2f, width - ss, height - ss, ss * 1.3f, ss * 1.3f);
-        Graphics2D g2 = (Graphics2D) g;
         Color color2 = new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 150);
-        g2.setColor(color2);
+        paintStrokes(g, x, y, width, height, color2);
+    }
+
+    /**
+     * draws a rect with all strokes
+     * @param g the graphics context
+     * @param x  the left of the rect
+     * @param y  the top of the rect
+     * @param width the width of the rect
+     * @param height the height of the rect
+     * @param color painitng color
+     * @since 1.9
+     */
+    public void paintStrokes(Graphics g, int x, int y, int width, int height, Color color) {
+        Graphics2D g2 = (Graphics2D) g;
+        double ss = getStrokeSize();
+        g2.setColor(color);
+        RoundRectangle2D rr = new RoundRectangle2D.Double(x + ss / 2f, y + ss / 2f, width - ss, height - ss, ss * 1.3f, ss * 1.3f);
         for (BasicStroke s : strokes) {
             g2.setStroke(s);
             g2.draw(rr);
