@@ -6,6 +6,7 @@ import org.autogui.GuiListSelectionUpdater;
 import org.autogui.base.annotation.GuiInitTableColumnString;
 import org.autogui.swing.AutoGuiShell;
 
+import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ public class ValueListDemo {
         EnumVal selection;
         Path path;
         Image image;
+        JComponent component;
 
         public Row() { }
 
@@ -118,6 +120,20 @@ public class ValueListDemo {
         @GuiIncluded
         public void setImage(Image image) {
             this.image = image;
+        }
+
+        @GuiIncluded(index = 7)
+        public JComponent getComponent() {
+            if (component == null) {
+                JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                var btn = new JButton("Hello");
+                btn.addActionListener(e -> {
+                    System.out.println("hello " + this);
+                });
+                pane.add(btn);
+                component = pane;
+            }
+            return component;
         }
 
         @Override

@@ -133,12 +133,11 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
 
         @Override
         public boolean isCellEditable(EventObject e) {
-            if (e instanceof MouseEvent && ((MouseEvent) e).getComponent() instanceof JTable) {
+            if (e instanceof MouseEvent me && me.getComponent() instanceof JTable table) {
                 if (isComponentCheckBoxCenter()) {
                     //alignment of component is CENTER,
                     // and its bounds are sized by preferred size, that might be smaller than the cell.
-                    JTable table = (JTable) ((MouseEvent) e).getComponent();
-                    Point p = ((MouseEvent) e).getPoint();
+                    Point p = me.getPoint();
                     int row = table.rowAtPoint(p);
                     int col = table.columnAtPoint(p);
                     Rectangle cellRect = table.getCellRect(row, col, true);
@@ -164,10 +163,10 @@ public class GuiSwingTableColumnBoolean implements GuiSwingTableColumn {
          * @since 1.6
          */
         public AbstractButton getComponentAsCheckBox() {
-            if (component instanceof GuiSwingViewWrapper.ValueWrappingPane<?>) {
-                return ((GuiSwingViewWrapper.ValueWrappingPane<?>) component).getSwingViewWrappedPaneAsTypeOrNull(AbstractButton.class);
+            if (component instanceof GuiSwingViewWrapper.ValueWrappingPane<?> wrapper) {
+                return wrapper.getSwingViewWrappedPaneAsTypeOrNull(AbstractButton.class);
             } else {
-                return (component instanceof AbstractButton) ? ((AbstractButton) component) : null;
+                return (component instanceof AbstractButton btn) ? btn : null;
             }
         }
 

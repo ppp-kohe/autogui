@@ -1,9 +1,9 @@
 package org.autogui.swing;
 
 import org.autogui.base.mapping.GuiMappingContext;
+import org.autogui.base.type.*;
 import org.autogui.swing.util.MenuBuilder;
 import org.autogui.swing.util.PopupCategorized;
-import org.autogui.base.type.*;
 
 /**
  * a label factory for context target info.

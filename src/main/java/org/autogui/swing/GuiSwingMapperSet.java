@@ -1,11 +1,11 @@
 package org.autogui.swing;
 
+import org.autogui.base.mapping.*;
 import org.autogui.swing.mapping.GuiReprEmbeddedComponent;
 import org.autogui.swing.mapping.GuiReprValueDocumentEditor;
 import org.autogui.swing.mapping.GuiReprValueImagePane;
 import org.autogui.swing.table.*;
 import org.autogui.swing.table.GuiSwingTableColumnCollection.GuiSwingTableColumnProperty;
-import org.autogui.base.mapping.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;

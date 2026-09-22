@@ -3,6 +3,7 @@ package org.autogui.swing;
 import org.autogui.base.log.GuiLogManager;
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiPreferences;
+import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.swing.log.GuiSwingLogManager;
 import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
@@ -19,7 +20,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.Serial;
-import java.util.Objects;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -31,7 +32,7 @@ import java.util.function.Supplier;
  *  The pane can be created by {@link #createForObject(Object)}, {@link #createForObject(Object)},
  *    or {@link GuiSwingRootPaneCreator} obtained by {@link #creator()}.
  */
-public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.RootView {
+public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.RootView, GuiSwingFeature {
     @Serial private static final long serialVersionUID = 1L;
     protected GuiMappingContext context;
     protected GuiSwingView view;

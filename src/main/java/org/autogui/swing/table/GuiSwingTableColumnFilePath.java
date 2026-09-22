@@ -19,8 +19,8 @@ import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
 import java.io.Serial;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * a column factory for {@link java.io.File} or {@link Path}.

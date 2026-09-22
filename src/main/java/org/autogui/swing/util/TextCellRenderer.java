@@ -14,8 +14,8 @@ import java.io.Serial;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -91,8 +91,8 @@ public class TextCellRenderer<ValueType> extends JPanel
             if (e == -1) {
                 e = text.length();
             }
-            e = Math.max(0, Math.min(e, text.length()));
-            s = Math.max(s, Math.min(s, e));
+            e = Math.clamp(e, 0, text.length());
+            s = Math.clamp(s, s, e);
             return text.substring(s, e);
         }
     }
@@ -799,7 +799,7 @@ public class TextCellRenderer<ValueType> extends JPanel
     public Object getFocusNextFound(ValueType value, Object prevIndex, boolean forward) {
         setValue(value, false);
         if (!(prevIndex instanceof LineInfoMatch m) || //null
-                !((LineInfoMatch) prevIndex).sameKeys(this, value)) {
+                !m.sameKeys(this, value)) {
             if (forward) {
                 int i = 0;
                 for (LineInfo line : lines) {
@@ -1284,8 +1284,8 @@ public class TextCellRenderer<ValueType> extends JPanel
                 selectionStart = selectionEnd;
                 selectionEnd = tmp;
             }
-            int ss = Math.min(Math.max(selectionStart, start), end);
-            int se = Math.min(Math.max(selectionEnd, start), end + 1);
+            int ss = Math.clamp(selectionStart, start, end);
+            int se = Math.clamp(selectionEnd, start, end + 1);
 
             List<Object> newLayoutState = Arrays.asList(ss, se, foreground, background, selectionForeground, selectionBackground);
             if (layout != null && newLayoutState.equals(layoutState)) {

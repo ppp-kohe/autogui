@@ -1,7 +1,6 @@
 package org.autogui.swing.util;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.Serial;
 
 /**

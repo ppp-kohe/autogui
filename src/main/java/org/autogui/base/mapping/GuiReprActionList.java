@@ -1,11 +1,11 @@
 package org.autogui.base.mapping;
 
+import org.autogui.GuiListSelectionCallback;
+import org.autogui.GuiListSelectionUpdater;
 import org.autogui.base.type.GuiTypeCollection;
 import org.autogui.base.type.GuiTypeCollectionArray;
 import org.autogui.base.type.GuiTypeElement;
 import org.autogui.base.type.GuiTypeValue;
-import org.autogui.GuiListSelectionCallback;
-import org.autogui.GuiListSelectionUpdater;
 
 import java.util.List;
 import java.util.concurrent.Callable;

@@ -74,7 +74,7 @@ public class GuiSwingViewPropertyPaneTest extends GuiSwingTestCase {
     public GuiSwingViewPropertyPane.PropertyPane create() {
         JComponent c = prop.createView(contextProp, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
-        return GuiSwingView.findChildByType(c,
+        return GuiSwingView.findDescendantByType(c,
                 GuiSwingViewPropertyPane.PropertyPane.class);
 
     }
@@ -83,7 +83,7 @@ public class GuiSwingViewPropertyPaneTest extends GuiSwingTestCase {
     public void testViewPropPaneUpdate() {
         GuiSwingViewPropertyPane.PropertyPane pane = create();
 
-        GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findChildByType(pane,
+        GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findDescendantByType(pane,
                 GuiSwingViewStringField.PropertyStringPane.class));
 
         obj.value = "Hello";
@@ -104,7 +104,7 @@ public class GuiSwingViewPropertyPaneTest extends GuiSwingTestCase {
         GuiSwingViewPropertyPane.PropertyPane pane = create();
 
         obj.value = "Hello";
-        GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findChildByType(pane,
+        GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findDescendantByType(pane,
                 GuiSwingViewStringField.PropertyStringPane.class));
 
         EditWait wait = editWait(strPane.getEditingRunner());
@@ -126,7 +126,7 @@ public class GuiSwingViewPropertyPaneTest extends GuiSwingTestCase {
         GuiSwingViewPropertyPane.PropertyPane pane = create();
 
         obj.value = "Hello";
-        GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findChildByType(pane,
+        GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findDescendantByType(pane,
                 GuiSwingViewStringField.PropertyStringPane.class));
 
         EditWait wait = editWait(strPane.getEditingRunner());
@@ -149,7 +149,7 @@ public class GuiSwingViewPropertyPaneTest extends GuiSwingTestCase {
         withClipLock(() -> {
             GuiSwingViewPropertyPane.PropertyPane pane = create();
 
-            GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findChildByType(pane,
+            GuiSwingViewStringField.PropertyStringPane strPane = runGet(() -> GuiSwingView.findDescendantByType(pane,
                     GuiSwingViewStringField.PropertyStringPane.class));
             run(() -> strPane.setSwingViewValue("Hello"));
 

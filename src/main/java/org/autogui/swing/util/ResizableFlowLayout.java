@@ -185,11 +185,13 @@ public class ResizableFlowLayout implements LayoutManager {
                         - (isHorizontal ? insetsHeight(insets) : insetsWidth(insets));
             } else {
                 if (alignment.equals(Alignment.Mininum)) {
-                    y = 0;
+                    y = isHorizontal ? insets.top : insets.left;
                 } else if (alignment.equals(Alignment.Maximum)) {
-                    y = rw.height - (isHorizontal ? size.height : size.width);
+                    y = rw.height - (isHorizontal ? insets.bottom : insets.right) - (isHorizontal ? size.height : size.width);
                 } else {
-                    y = (rw.height / 2) - ((isHorizontal ? size.height : size.width) / 2);
+                    int topInset = (isHorizontal ? insets.top : insets.left);
+                    int hNoInsets = rw.height - topInset - (isHorizontal ? insets.bottom : insets.right);
+                    y = topInset + (hNoInsets / 2) - ((isHorizontal ? size.height : size.width) / 2);
                 }
                 h = isHorizontal ? size.height : size.width;
             }

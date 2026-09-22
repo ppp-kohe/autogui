@@ -2,8 +2,6 @@ package org.autogui.swing.table;
 
 import org.autogui.base.mapping.GuiReprCollectionTable;
 
-import javax.swing.*;
-
 /**
  * a menu factory for selected column-rows
  */

@@ -1,8 +1,8 @@
 package org.autogui.swing;
 
+import org.autogui.base.mapping.*;
 import org.autogui.swing.table.GuiSwingTableColumnLabel;
 import org.autogui.swing.table.TableTargetColumnAction;
-import org.autogui.base.mapping.*;
 import org.autogui.swing.util.*;
 
 import javax.swing.*;

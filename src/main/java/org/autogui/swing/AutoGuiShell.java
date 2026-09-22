@@ -1,9 +1,9 @@
 package org.autogui.swing;
 
+import org.autogui.GuiIncluded;
 import org.autogui.base.mapping.GuiPreferencesLoader;
 import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.util.SwingDeferredRunner;
-import org.autogui.GuiIncluded;
 import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;

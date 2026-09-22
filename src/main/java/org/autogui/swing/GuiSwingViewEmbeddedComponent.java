@@ -7,8 +7,8 @@ import org.autogui.base.mapping.GuiTaskClock;
 import org.autogui.swing.mapping.GuiReprEmbeddedComponent;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.PopupExtension;
-import org.autogui.swing.util.UIManagerUtil;
 import org.autogui.swing.util.SwingDeferredRunner;
+import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import java.awt.*;

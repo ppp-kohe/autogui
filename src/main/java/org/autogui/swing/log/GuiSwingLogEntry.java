@@ -102,19 +102,6 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
     boolean isSelected();
 
     /**
-     * the light-weight map between Object to float[].
-     * it supposes the table size is small.
-     * @since 1.5
-     * @deprecated
-     */
-    @Deprecated
-    class SizeCache extends Cache<float[]> {
-        public SizeCache(int capacity) {
-            super(capacity);
-        }
-    }
-
-    /**
      * the light-weight map between Object to ValueType.
      * it supposes the table size is small.
      * @param <ValueType> the cached value type

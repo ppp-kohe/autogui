@@ -18,8 +18,8 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.Serial;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * a column factory for {@link Image}.

@@ -101,7 +101,7 @@ public class GuiSwingViewEmbeddedComponentTest extends GuiSwingTestCase {
     public GuiSwingViewEmbeddedComponent.PropertyEmbeddedPane create() {
         JComponent c = comp.createView(contextProp, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
-        return GuiSwingView.findChildByType(c, GuiSwingViewEmbeddedComponent.PropertyEmbeddedPane.class);
+        return GuiSwingView.findDescendantByType(c, GuiSwingViewEmbeddedComponent.PropertyEmbeddedPane.class);
     }
 
     @Test
@@ -117,6 +117,8 @@ public class GuiSwingViewEmbeddedComponentTest extends GuiSwingTestCase {
 
     @Test
     public void testViewEmbeddedUpdateWithWait() {
+        timeFactor = 1;
+
         GuiSwingViewEmbeddedComponent.PropertyEmbeddedPane c = runGet(this::create);
         obj.waitTime = 2000;
         contextProp.updateSourceFromRoot();

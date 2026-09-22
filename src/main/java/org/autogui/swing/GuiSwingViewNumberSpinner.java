@@ -1,10 +1,10 @@
 package org.autogui.swing;
 
 import org.autogui.base.log.GuiLogManager;
+import org.autogui.base.mapping.*;
 import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.table.TableTargetColumnAction;
-import org.autogui.base.mapping.*;
 import org.autogui.swing.util.*;
 
 import javax.swing.*;
@@ -30,7 +30,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.*;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 

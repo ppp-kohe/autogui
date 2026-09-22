@@ -640,10 +640,10 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
                 var foregroundCustomVal = prefsObj.isForegroundCustom();
                 var backgroundColorVal = prefsObj.getBackgroundColor();
                 var foregroundColorVal = prefsObj.getForegroundColor();
-                spaceLine.setValue(Math.max(DOCUMENT_SETTING_PANE_SPACE_LINE_MIN, Math.min(DOCUMENT_SETTING_PANE_SPACE_LINE_MAX, lineSpacingVal)));
-                spaceAbove.setValue(Math.max(DOCUMENT_SETTING_PANE_SPACE_ABOBE_MIN, Math.min(DOCUMENT_SETTING_PANE_SPACE_ABOBE_MAX, spaceAboveVal)));
+                spaceLine.setValue(Math.clamp(lineSpacingVal, DOCUMENT_SETTING_PANE_SPACE_LINE_MIN, DOCUMENT_SETTING_PANE_SPACE_LINE_MAX));
+                spaceAbove.setValue(Math.clamp(spaceAboveVal, DOCUMENT_SETTING_PANE_SPACE_ABOBE_MIN, DOCUMENT_SETTING_PANE_SPACE_ABOBE_MAX));
                 fontFamily.setSelectedItem(fontFamilyVal);
-                fontSize.setValue(Math.max(DOCUMENT_SETTING_PANE_FONT_SIZE_MIN, Math.min(DOCUMENT_SETTING_PANE_FONT_SIZE_MAX, fontSizeVal)));
+                fontSize.setValue(Math.clamp(fontSizeVal, DOCUMENT_SETTING_PANE_FONT_SIZE_MIN, DOCUMENT_SETTING_PANE_FONT_SIZE_MAX));
                 styleBold.setSelected(boldVal);
                 styleItalic.setSelected(italicVal);
                 styleWrapLine.setSelected(wrapTextVal);

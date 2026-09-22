@@ -16,8 +16,8 @@ import java.awt.geom.RoundRectangle2D;
 import java.io.Serial;
 import java.text.AttributedCharacterIterator.Attribute;
 import java.time.Instant;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -560,7 +560,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
                 for (StackTraceAttributesForLine a : lineAttrs.get(lineIndex)) {
                     if (a.attributes != null && a.start < a.end) {
                         int e = Math.min(line.length(), a.end);
-                        int s = Math.min(Math.max(a.start, 0), e);
+                        int s = Math.clamp(a.start, 0, e);
                         if (s < e) {
                             info.attributedString.addAttributes(a.attributes,
                                     s, e);

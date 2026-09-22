@@ -157,10 +157,10 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             Dimension size = viewport.getViewSize();
             Point newPos = viewport.getViewPosition();
             if (size.width > extentSize.width) {
-                newPos.x = Math.min(size.width, Math.max(0, newPos.x - dx));
+                newPos.x = Math.clamp(newPos.x - dx, 0, size.width);
             }
             if (size.height > extentSize.height) {
-                newPos.y = Math.min(size.height, Math.max(0, newPos.y - dy));
+                newPos.y = Math.clamp(newPos.y - dy, 0, size.height);
             }
             viewport.setViewPosition(newPos);
         }
@@ -822,7 +822,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
             if (event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL &&
                 pane.isImageScaleChangeByMouseWheel(event)) {
                 float amount = (event.getUnitsToScroll() / 100.0f) * 4.0f;
-                setCurrentZoom(Math.min(Math.max(0.1f, amount + currentZoom), 20f));
+                setCurrentZoom(Math.clamp(amount + currentZoom, 0.1f, 20f));
             }
         }
 

@@ -1,7 +1,7 @@
 package org.autogui.swing;
 
-import org.autogui.swing.util.*;
 import org.autogui.base.mapping.*;
+import org.autogui.swing.util.*;
 
 import javax.swing.*;
 import java.io.Serial;

@@ -1142,44 +1142,6 @@ public class GuiMappingContext {
     }
 
     /**
-     * a simple executor-service wrapping single-thread executor
-     *  by {@link Executors#newSingleThreadScheduledExecutor(ThreadFactory)}
-     * @deprecated
-     * @since 1.2
-     */
-    @Deprecated
-    public static class ContextExecutorServiceSingleThread implements ContextExecutorService {
-        protected ExecutorService service;
-
-        public ContextExecutorServiceSingleThread(ExecutorService service) {
-            this.service = service;
-        }
-
-        public ContextExecutorServiceSingleThread() {
-            this(Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-                final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
-                @Override
-                public Thread newThread(Runnable r) {
-                    Thread th = defaultFactory.newThread(r);
-                    th.setDaemon(true);
-                    th.setName(GuiMappingContext.class.getSimpleName() + "-" + th.getName());
-                    return th;
-                }
-            }));
-        }
-
-        @Override
-        public <V> Future<V> submit(Callable<V> v) {
-            return service.submit(ScheduledTaskRunner.depthRunner(v));
-        }
-
-        @Override
-        public void shutdown() {
-            service.shutdown();
-        }
-    }
-
-    /**
      * a {@link ForkJoinPool} based executor:
      *   the fork-join pool have ability of work-stealing:
      *      i.e. a running task in the pool can invoke another new task

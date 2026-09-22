@@ -812,11 +812,6 @@ public class GuiSwingKeyBinding {
         });
     }
 
-    @Deprecated
-    public void setDispatcher() {
-        setDispatcher(null);
-    }
-
     /**
      * @param component the root pane
      * @since 1.4
@@ -837,11 +832,6 @@ public class GuiSwingKeyBinding {
         }
     }
 
-
-    @Deprecated
-    public void unbind() {
-        unbind(null);
-    }
 
     /**
      * @param component the root pane, the former parameter of {@link #setDispatcher(JComponent)}

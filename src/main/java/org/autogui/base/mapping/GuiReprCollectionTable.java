@@ -2,7 +2,6 @@ package org.autogui.base.mapping;
 
 import org.autogui.base.mapping.GuiMappingContext.GuiSourceValue;
 import org.autogui.base.type.*;
-import org.autogui.base.type.GuiUpdatedValue;
 
 import java.lang.reflect.Array;
 import java.util.AbstractList;

@@ -2,7 +2,6 @@ package org.autogui.swing;
 
 import org.autogui.base.log.GuiLogManager;
 import org.autogui.base.mapping.*;
-import org.autogui.swing.GuiSwingTaskRunner.ContextTaskResult;
 import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.table.TableTargetColumnAction;
 import org.autogui.swing.util.PopupCategorized;
@@ -20,9 +19,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.Serial;
-import java.util.List;
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;

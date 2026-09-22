@@ -119,12 +119,6 @@ public class ApplicationIconGenerator {
         }
     }
 
-    @Deprecated
-    public void setMacApplicationIcon(JFrame frame, Image image) {
-        frame.setIconImage(image);
-        setAppIcon(image);
-    }
-
     public BufferedImage getImage() {
         BufferedImage img = new BufferedImage((int) width, (int) height, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g = img.createGraphics();

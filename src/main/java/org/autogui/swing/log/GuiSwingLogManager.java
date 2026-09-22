@@ -1,9 +1,9 @@
 package org.autogui.swing.log;
 
+import org.autogui.base.log.*;
 import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.swing.util.PopupExtension;
 import org.autogui.swing.util.UIManagerUtil;
-import org.autogui.base.log.*;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;

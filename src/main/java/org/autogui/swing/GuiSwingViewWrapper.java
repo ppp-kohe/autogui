@@ -13,7 +13,6 @@ import java.awt.*;
 import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public class GuiSwingViewWrapper {
     public GuiSwingViewWrapper() {}

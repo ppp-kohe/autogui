@@ -1,13 +1,13 @@
 package org.autogui.swing.table;
 
 import org.autogui.base.mapping.GuiMappingContext;
+import org.autogui.base.mapping.GuiReprAction;
+import org.autogui.base.mapping.GuiReprCollectionElement;
 import org.autogui.swing.GuiSwingElement;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import org.autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 import org.autogui.swing.table.ObjectTableModelColumns.DynamicColumnFactory;
-import org.autogui.base.mapping.GuiReprAction;
-import org.autogui.base.mapping.GuiReprCollectionElement;
 
 import javax.swing.*;
 import java.util.Collection;

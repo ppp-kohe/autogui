@@ -1,8 +1,8 @@
 package org.autogui.swing;
 
 import org.autogui.base.log.GuiLogManager;
-import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.base.mapping.*;
+import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.util.*;
