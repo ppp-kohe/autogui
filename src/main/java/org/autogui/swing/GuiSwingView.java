@@ -44,7 +44,17 @@ public interface GuiSwingView extends GuiSwingElement {
      *     a pane will need to manage a {@link GuiTaskClock} as the view-clock.
      * @param <ValueType> the type of the bound value
      */
-    interface ValuePane<ValueType> {
+    interface ValuePane<ValueType> extends GuiSwingFeature {
+        @Override
+        default List<?> getSwingViewSubNodes() {
+            return getSwingViewSubNodesSameDisplay();
+        }
+
+        @Override
+        default List<?> getSwingViewSubNodesSameDisplay() {
+            return Arrays.asList(asSwingViewComponent().getComponents());
+        }
+
         /** @return basically, the source value of the context, held by the component without touching the context.  */
         ValueType getSwingViewValue();
 
@@ -94,34 +104,6 @@ public interface GuiSwingView extends GuiSwingElement {
         void setSwingViewValueWithUpdate(ValueType value, GuiTaskClock clock);
 
         /**
-         * notifies property update to the component.
-         * getter will be called and GUI display will be updated.
-         *  the method just calls {@link GuiMappingContext#updateSourceSubTree()}.
-         * @since 1.1
-         */
-        default void updateSwingViewSource() {
-            getSwingViewContext().updateSourceSubTree();
-        }
-
-        /**
-         * notifies property update to the component and enclosing other components.
-         * For single case, {@link #updateSwingViewSource()} is sufficient.
-         * If the component is part of tree of value-panes, the method will be effective.
-         *  the method just calls {@link GuiMappingContext#updateSourceFromRoot()}.
-         * @since 1.1
-         */
-        default void updateSwingViewSourceFromRoot() {
-            getSwingViewContext().updateSourceFromRoot();
-        }
-
-        /**
-         * the method is used for table cell-editors, in order to observe the completion of editing.
-         * the default impl. is empty.
-         * @param eventHandler the handler called when the editing is finished
-         */
-        default void addSwingEditFinishHandler(Runnable eventHandler) { }
-
-        /**
          * a typical implementation becomes like the following code:
          *  <pre>
          *      if (menuItems == null) { menuItems = {@link PopupCategorized}.getMenuItems(actions, menus); }
@@ -166,8 +148,6 @@ public interface GuiSwingView extends GuiSwingElement {
             return new GuiSwingViewWrapper.ValueWrappingPane<>(asSwingViewComponent());
         }
 
-        GuiMappingContext getSwingViewContext();
-
         default GuiSwingViewPropertyPane.PropertyPane wrapSwingProperty() {
             return new GuiSwingViewPropertyPane.PropertyWrapperPane(getSwingViewContext(), true, this);
         }
@@ -191,40 +171,24 @@ public interface GuiSwingView extends GuiSwingElement {
          *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
          */
         default void saveSwingPreferences(GuiPreferences prefs) {
-            savePreferencesDefault(asSwingViewComponent(), prefs);
-        }
-
-        /**
-         * {@link #loadSwingPreferences(GuiPreferences, GuiSwingPrefsApplyOptions)}
-         *  with {@link GuiSwingPrefsApplyOptions#APPLY_OPTIONS_DEFAULT}.
-         *  Do not override the method, instead, implements the same method with options version
-         * @param prefs target prefs
-         */
-        default void loadSwingPreferences(GuiPreferences prefs) {
-            loadSwingPreferences(prefs, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
+            GuiSwingView.savePreferencesDefault(asSwingViewComponent(), prefs);
         }
 
         /**
          * a sub-class which wraps another value-pane should overrides the method
          *   in order to omit needless value setting.
-         *   it can use {@link #loadPreferencesDefault(JComponent, GuiPreferences)}
+         *   it can use {@link GuiSwingView#loadPreferencesDefault(JComponent, GuiPreferences)}
          * @param prefs target prefs or ancestor of the target;
          *              actual target can be obtained by {@link GuiPreferences#getDescendant(GuiMappingContext)}
          * @param options options for applying
          * @since 1.4
          */
         default void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
-            loadPreferencesDefault(asSwingViewComponent(), prefs, options);
+            GuiSwingView.loadPreferencesDefault(asSwingViewComponent(), prefs, options);
         }
 
-        /**
-         * for each component, at the end of the process, this method will be called
-         */
-        default void shutdownSwingView() { }
-
-        default boolean isSwingEditable() {
-            GuiMappingContext context = getSwingViewContext();
-            return !context.isReprValue() || context.getReprValue().isEditable(context);
+        default void requestSwingViewFocus() {
+            asSwingViewComponent().requestFocusInWindow();
         }
 
         /**
@@ -235,80 +199,6 @@ public interface GuiSwingView extends GuiSwingElement {
         }
 
         /**
-         * @param context the searched context, a descendant child of the context of the pane
-         * @return a descendant value pane holding the context, or null.
-         *     wrappers holding the same context are avoided.
-         */
-        default ValuePane<Object> getDescendantByContext(GuiMappingContext context) {
-            return GuiSwingView.findChild(asSwingViewComponent(), p ->
-                    Objects.equals(context, p.getSwingViewContext()));
-        }
-
-        /**
-         * @param value the searched value
-         * @return a descendant value pane holding the value, or null.
-         *    wrappers holding the same context are avoided.
-         */
-        default ValuePane<Object> getDescendantByValue(Object value) {
-            return GuiSwingView.findChild(asSwingViewComponent(),
-                    p -> Objects.equals(p.getSwingViewValue(), value));
-        }
-
-        /**
-         * @param valuePredicate the condition holds the searched value
-         * @return a first descendant value pane holding a value matched by the predicate, or null.
-         *    wrappers holding the same context are avoided.
-         */
-        default ValuePane<Object> getDescendantByValueIf(Predicate<Object> valuePredicate) {
-            return GuiSwingView.findChild(asSwingViewComponent(),
-                    p -> valuePredicate.test(p.getSwingViewValue()));
-        }
-
-        /**
-         * @param name the searched context name
-         * @return a child (or descendant for wrappers) value pane holding the named context, or null.
-         *    wrappers holding the same context are avoided.
-         */
-        default ValuePane<Object> getChildByName(String name) {
-            return GuiSwingView.getChild(asSwingViewComponent(),
-                    p -> p.getSwingViewContext() != null &&
-                            Objects.equals(p.getSwingViewContext().getName(), name));
-        }
-
-        /**
-         * @param name the context name of the action
-         * @return an action defined in the context of the pane. as the default implementation,
-         *    it searches {@link #getSwingStaticMenuItems()}
-         */
-        default GuiSwingActionDefault.ExecutionAction getActionByName(String name) {
-            return getActionDefault(this,
-                    e ->  e.getContext() != null && e.getContext().getName().equals(name));
-        }
-
-        default GuiSwingActionDefault.ExecutionAction getActionByContext(GuiMappingContext context) {
-            return getActionDefault(this, e ->  Objects.equals(e.getContext(), context));
-        }
-
-        default GuiSwingActionDefault.ExecutionAction getDescendantActionByContext(GuiMappingContext context) {
-            return findNonNullByFunction(asSwingViewComponent(), p -> getActionByContext(context));
-        }
-
-        /**
-         * @return the specifier for the context value, typically obtained from {@link GuiSwingView.SpecifierManager}
-         */
-        GuiReprValue.ObjectSpecifier getSpecifier();
-
-        default void requestSwingViewFocus() {
-            asSwingViewComponent().requestFocusInWindow();
-        }
-
-        /**
-         * set the key-stroke info. to the pane as a guide
-         * @param keyStrokeString the key stroke info to be set.
-         */
-        default void setKeyStrokeString(String keyStrokeString) { }
-
-        /**
          * called from a value history menu. the default impl. just calls {@link #setSwingViewValueWithUpdate(Object)}.
          * @param value the new value. usually a ValueType.
          */
@@ -317,66 +207,102 @@ public interface GuiSwingView extends GuiSwingElement {
             setSwingViewValueWithUpdate((ValueType) value);
         }
 
-        /**
-         * for each component, the method is called before refreshing in order to clear the view-clock.
-         */
-        void prepareForRefresh();
-
         default boolean isSwingCurrentValueSupported() {
             return getSwingViewContext().isHistoryValueSupported();
         }
-
-        /**
-         *
-         * @param task the task
-         * @param afterTask the task executed for deferred value
-         * @param <RetType> the value type
-         * @return {@link GuiSwingTaskRunner#executeContextTask(Supplier, Consumer)}
-         */
-        default <RetType> ContextTaskResult<RetType> executeContextTask(Supplier<RetType> task,
-                                                                        Consumer<ContextTaskResult<RetType>> afterTask) {
-            return new GuiSwingTaskRunner(getSwingViewContext()).executeContextTask(task, afterTask);
-        }
-
-        /**
-         * prepare, clear and update via the context
-         * @since 1.5
-         */
-        default void refreshByContext() {
-            prepareForRefresh();
-            GuiSwingActionDefault.ActionPreparation.prepareAction(asSwingViewComponent());
-            GuiMappingContext context = getSwingViewContext();
-            context.clearSourceSubTree();
-            context.updateSourceSubTree();
-        }
-
-        /**
-         * @return prefs JSON
-         * @since 1.5
-         */
-        default Object getPrefsJsonSupported() {
-            Object o = getSwingViewValue();
-            if (o instanceof GuiPreferences.PreferencesJsonSupport) {
-                return ((GuiPreferences.PreferencesJsonSupport) o).getPrefsJson();
-            } else {
-                return null;
-            }
-        }
-
-        /**
-         * @param json prefs JSON
-         * @since 1.5
-         */
-        @SuppressWarnings("unchecked")
-        default void setPrefsJsonSupported(Object json) {
-            Object o = getSwingViewValue();
-            if (o instanceof GuiPreferences.PreferencesJsonSupport && json instanceof Map<?,?>) {
-                ((GuiPreferences.PreferencesJsonSupport) o).setPrefsJson(
-                        (Map<String,Object>) json);
-            }
-        }
     }
 
+    /**
+     * @param target the target component
+     * @param value the searched value
+     * @return a descendant value pane holding the value, or null.
+     *    wrappers holding the same context are avoided.
+     */
+    @SuppressWarnings("unchecked")
+    static ValuePane<Object> getDescendantByValue(Object target, Object value) {
+        return GuiSwingFeature.traverseFindFirstIf(target, ValuePane.class,
+                p -> Objects.equals(p.getSwingViewValue(), value), GuiSwingFeature.TraversalOption.NonTop);
+    }
+
+    /**
+     * @param target the target component
+     * @param valuePredicate the condition holds the searched value
+     * @return a first descendant value pane holding a value matched by the predicate, or null.
+     *    wrappers holding the same context are avoided.
+     */
+    @SuppressWarnings("unchecked")
+    static ValuePane<Object> getDescendantByValueIf(Object target, Predicate<Object> valuePredicate) {
+        return GuiSwingFeature.traverseFindFirstIf(target, ValuePane.class,
+                p -> valuePredicate.test(p.getSwingViewValue()), GuiSwingFeature.TraversalOption.NonTop);
+    }
+
+    @SuppressWarnings("unchecked")
+    static ValuePane<Object> getDescendantByName(Object target, String name) {
+        return GuiSwingFeature.traverseFindFirstIf(target, ValuePane.class,
+                p -> p.getSwingViewContext().getName().equals(name), GuiSwingFeature.TraversalOption.NonTop);
+    }
+
+    /**
+     * @param target the target component
+     * @param name the searched context name
+     * @return a child (or descendant for wrappers) value pane holding the named context, or null.
+     *    wrappers holding the same context are avoided.
+     */
+    @SuppressWarnings("unchecked")
+    static ValuePane<Object> getChildByName(Object target, String name) {
+        return GuiSwingFeature.getChildByName(target, ValuePane.class, name);
+    }
+
+    /**
+     * @param name the context name of the action
+     * @return an action defined in the context of the pane. as the default implementation,
+     *    it searches {@link ValuePane#getSwingStaticMenuItems()}
+     */
+    static GuiSwingActionDefault.ExecutionAction getActionByName(Object target, String name) {
+        return getActionDefault(target, e ->  e.getContext() != null && Objects.equals(e.getContext().getName(), name));
+    }
+
+    static GuiSwingActionDefault.ExecutionAction getActionByContext(Object target, GuiMappingContext context) {
+        return getActionDefault(target, e ->  Objects.equals(e.getContext(), context));
+    }
+
+    static GuiSwingActionDefault.ExecutionAction getDescendantActionByContext(Object target, GuiMappingContext context) {
+        return GuiSwingFeature.traverseFindFirst(target, ValuePane.class, getActionMapper(e -> Objects.equals(e.getContext(), context)));
+    }
+
+    static GuiSwingActionDefault.ExecutionAction getActionDefault(Object target, Predicate<GuiSwingActionDefault.ExecutionAction> predicate) {
+        return GuiSwingFeature.findFirstChild(target, ValuePane.class, getActionMapper(predicate), GuiSwingFeature.TraversalOption.OncePertContext);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private static Function<ValuePane, GuiSwingActionDefault.ExecutionAction> getActionMapper(Predicate<GuiSwingActionDefault.ExecutionAction> predicate) {
+        return pane -> {
+            for (var item : pane.getSwingStaticMenuItems()) {
+                if (item instanceof GuiSwingActionDefault.ExecutionAction a && predicate.test(a)) {
+                    return a;
+                }
+            }
+            return null;
+        };
+    };
+
+    ///////////////////////////////
+
+    static <RetType extends Component> RetType findDescendantByType(Object obj, Class<RetType> type) {
+        return findDescendantByType(obj, type, p -> true);
+    }
+
+    static <RetType extends Component> RetType findDescendantByType(Object obj, Class<RetType> type, Predicate<RetType> condition) {
+        return GuiSwingFeature.traverseFindFirstIf(obj, type, condition);
+    }
+
+    static <RetType extends ValuePane<?>> RetType findDescendantValuePaneByType(Object obj, Class<RetType> type) {
+        return findDescendantValuePaneByType(obj, type, p -> true);
+    }
+
+    static <RetType extends ValuePane<?>> RetType findDescendantValuePaneByType(Object obj, Class<RetType> type, Predicate<RetType> condition) {
+        return GuiSwingFeature.traverseFindFirstIf(obj, type, condition);
+    }
 
     ///////////////////////////////
 
@@ -424,23 +350,6 @@ public interface GuiSwingView extends GuiSwingElement {
     interface SettingsWindowClient extends SettingsWindow.SettingsWindowClientBase {
     }
 
-    /**
-     * recursively traverses components and if a component is an instance of the type, call f.
-     * @param type type for a component
-     * @param comp the searched component
-     * @param f a process for each found component
-     * @param <T> any type a component might belong to
-     */
-    static <T> void forEach(Class<T> type, Component comp, Consumer<T> f) {
-        if (type.isInstance(comp)) {
-            f.accept(type.cast(comp));
-        }
-        if (comp instanceof Container) {
-            for (Component sub : ((Container) comp).getComponents()) {
-                forEach(type, sub, f);
-            }
-        }
-    }
 
     /**
      * {@link #setLastHistoryValue(GuiPreferences, ValuePane, GuiSwingPrefsApplyOptions)}
@@ -493,33 +402,6 @@ public interface GuiSwingView extends GuiSwingElement {
         } finally {
             options.end(pane, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.CurrentValue);
         }
-    }
-
-    /**
-     * traverse descendant components and call {@link GuiSwingView.ValuePane#saveSwingPreferences(GuiPreferences)} for each component.
-     * the root pane calls the method.
-     * @param prefs the preferences for the comp
-     * @param comp the top component
-     */
-    static void saveChildren(GuiPreferences prefs, JComponent comp) {
-        forEach(ValuePane.class, comp, e -> {
-            GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) e;
-            if (valuePane != comp) { //skip top
-                var subPrefs = prefs.getDescendant(valuePane.getSwingViewContext());
-                try {
-                    valuePane.saveSwingPreferences(
-                            subPrefs);
-                } catch (IllegalArgumentException iaex) {
-                    if (iaex.getMessage().contains("Value too long")) {
-                        GuiLogManager.get().logFormat("saveChildren(%s): Value too long", subPrefs.getName());
-                    } else {
-                        GuiLogManager.get().logError(iaex);
-                    }
-                } catch (Exception ex) {
-                    GuiLogManager.get().logError(ex);
-                }
-            }
-        });
     }
 
     /**
@@ -600,178 +482,13 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
     /**
-     * {@link #loadChildren(GuiPreferences, JComponent, GuiSwingPrefsApplyOptions)}
-     *  with {@link GuiSwingPrefsApplyOptions#APPLY_OPTIONS_DEFAULT}
-     * @param prefs a top prefs
-     * @param comp a top component
-     */
-    static void loadChildren(GuiPreferences prefs, JComponent comp) {
-        loadChildren(prefs, comp, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
-    }
-
-    /**
-     * traverses descendant components and call {@link GuiSwingView.ValuePane#loadSwingPreferences(GuiPreferences, GuiSwingPrefsApplyOptions)}
-     * @param prefs a top prefs
-     * @param comp  a top component
-     * @param options  options for applying
-     * @since 1.4
-     */
-    static void loadChildren(GuiPreferences prefs, JComponent comp, GuiSwingPrefsApplyOptions options) {
-        forEach(ValuePane.class, comp, c -> {
-            if (c != comp) { //skip top
-                GuiSwingView.ValuePane<?> valuePane = (GuiSwingView.ValuePane<?>) c;
-                try {
-                    valuePane.loadSwingPreferences(
-                            prefs.getDescendant(valuePane.getSwingViewContext()), options);
-                } catch (Exception ex) {
-                    GuiLogManager.get().logError(ex);
-                }
-            }
-        });
-    }
-
-    static <PaneType extends ValuePane<?>> PaneType findChildByType(Component component, Class<PaneType> paneType) {
-        return paneType.cast(findChild(component, paneType::isInstance));
-    }
-
-    static ValuePane<Object> findChild(Component component, Predicate<ValuePane<Object>> predicate) {
-        return findNonNullByFunction(component, p -> predicate.test(p) ? p : null);
-    }
-
-    static List<ValuePane<Object>> collectChildren(Component component, Predicate<ValuePane<Object>> predicate) {
-        return collectNonNullByFunction(component, p -> predicate.test(p) ? p : null);
-    }
-
-    static GuiSwingView.ValuePane<Object> getChild(Component component, Predicate<ValuePane<Object>> predicate) {
-        if (component instanceof Container) {
-            for (Component child : ((Container) component).getComponents()) {
-                GuiSwingView.ValuePane<Object> r = checkNonNull(child, p -> predicate.test(p) ? p : null);
-                if (r != null) {
-                    return r;
-                }
-                //descendant for non value pane
-                if (!(child instanceof ValuePane<?>)) {
-                    r = getChild(child, predicate);
-                    if (r != null) {
-                        return r;
-                    }
-                }
-            }
-        }
-        //descendant for wrapper
-        if (component instanceof GuiSwingViewWrapper.ValuePaneWrapper<?> wrapper) {
-            if (wrapper.isSwingViewWrappedPaneSameContext()) {
-                return getChild(wrapper.getSwingViewWrappedPaneAsTypeOrNull(JComponent.class), predicate);
-            }
-        }
-        return null;
-    }
-
-    static <T> T findNonNullByFunction(Component component, Function<ValuePane<Object>, T> f) {
-        T r = checkNonNull(component, f);
-        if (r != null) {
-            return r;
-        }
-        if (component instanceof Container) {
-            for (Component child : ((Container) component).getComponents()) {
-                T t = findNonNullByFunction(child, f);
-                if (t != null) {
-                    return t;
-                }
-            }
-        }
-        return null;
-    }
-
-    static <T> List<T> collectNonNullByFunction(Component component, Function<ValuePane<Object>, T> f) {
-        T r = checkNonNull(component, f);
-        if (r != null) {
-            return Collections.singletonList(r);
-        }
-        if (component instanceof Container) {
-            return Arrays.stream(((Container) component).getComponents())
-                    .flatMap(c -> collectNonNullByFunction(c, f).stream())
-                    .collect(Collectors.toList());
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    static <T> T checkNonNull(Component component, Function<ValuePane<Object>,T> f) {
-        if (component instanceof ValuePane<?>) {
-            ValuePane<Object> vp = (ValuePane<Object>) component;
-            T t = f.apply(vp);
-            if (t != null) {
-                if (component instanceof GuiSwingViewWrapper.ValuePaneWrapper<?> &&
-                        ((GuiSwingViewWrapper.ValuePaneWrapper<Object>) component).isSwingViewWrappedPaneSameContext()) {
-                    GuiSwingView.ValuePane<Object> wrapped = ((GuiSwingViewWrapper.ValuePaneWrapper<Object>) component).getSwingViewWrappedPane();
-                    if (wrapped == null) {
-                        return t;
-                    } else {
-                        T wrappedResult = checkNonNull(wrapped.asSwingViewComponent(), f);
-                        //not matched with the wrapped pane, so return the wrapper's one
-                        return Objects.requireNonNullElse(wrappedResult, t);
-                    }
-                } else {
-                    return t;  //different context
-                }
-            }
-        }
-        return null;
-    }
-
-    static GuiSwingActionDefault.ExecutionAction getActionDefault(ValuePane<?> p, Predicate<GuiSwingActionDefault.ExecutionAction> predicate) {
-        return p.getSwingStaticMenuItems().stream()
-                .filter(GuiSwingActionDefault.ExecutionAction.class::isInstance)
-                .map(GuiSwingActionDefault.ExecutionAction.class::cast)
-                .filter(predicate)
-                .findFirst()
-                .orElse(null);
-    }
-
-    /**
      * a refresh-action calls the method in order to clear view-clocks of sub-panes
      * @param pane a root component
      */
     @SuppressWarnings("rawtypes")
-    static void prepareForRefresh(ValuePane<?> pane) {
-        forEach(ValuePane.class,
-                pane.asSwingViewComponent(),
-                ValuePane::prepareForRefresh);
+    static void prepareForRefresh(GuiSwingFeature pane) {
+        GuiSwingFeature.traverse(pane, GuiSwingFeature.class, GuiSwingFeature::prepareForRefresh);
     }
-
-
-    /////////////////////////
-
-    static <T extends Component> T findComponent(Component component, Class<T> type, Predicate<T> predicate) {
-        if (type.isInstance(component) && predicate.test(type.cast(component))) {
-            return type.cast(component);
-        }
-        if (component instanceof Container) {
-            for (Component sub : ((Container) component).getComponents()) {
-                T t = findComponent(sub, type, predicate);
-                if (t != null) {
-                    return t;
-                }
-            }
-        }
-        return null;
-    }
-
-    static <T extends Component> List<T> collectComponents(Component component, Class<T> type, Predicate<T> predicate) {
-        List<T> ts = new ArrayList<>();
-        if (type.isInstance(component) && predicate.test(type.cast(component))) {
-            ts.add(type.cast(component));
-        }
-        if (component instanceof Container) {
-            for (Component sub : ((Container) component).getComponents()) {
-                ts.addAll(collectComponents(sub, type, predicate));
-            }
-        }
-        return ts;
-    }
-
 
     /////////////////////////
 
@@ -1057,6 +774,4 @@ public interface GuiSwingView extends GuiSwingElement {
             return String.format("<%x>", System.identityHashCode(this));
         }
     }
-
-
 }

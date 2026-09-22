@@ -67,6 +67,8 @@ public class GuiTypeMemberPropertyNotifier extends GuiTypeMemberProperty {
             } else {
                 return annotationName;
             }
+        } else if (e != null) {
+            return getNamePrefix("Notifier", getName());
         } else {
             return null;
         }
@@ -82,6 +84,9 @@ public class GuiTypeMemberPropertyNotifier extends GuiTypeMemberProperty {
             } else {
                 return "";
             }
+        } else if (name != null && name.length() == tail.length() && tail.length() > 1 &&
+            name.equals(Character.toLowerCase(tail.charAt(0)) + tail.substring(1))) {
+            return ""; //same as tail
         } else {
             return null;
         }

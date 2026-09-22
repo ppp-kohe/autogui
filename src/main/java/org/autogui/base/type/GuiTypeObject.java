@@ -51,9 +51,13 @@ public class GuiTypeObject extends GuiTypeValue {
      * @return nullable
      * */
     public GuiTypeMember getMemberByName(String name) {
-        return Stream.concat(getProperties().stream(), getActions().stream())
+        return memberStream()
                 .filter(m -> m.getName().equals(name))
                 .findFirst().orElse(null);
+    }
+
+    protected Stream<GuiTypeMember> memberStream() {
+        return Stream.concat(Stream.concat(getProperties().stream(), getActions().stream()), getNotifiers().stream());
     }
 
     public void setProperties(List<GuiTypeMemberProperty> properties) {
@@ -76,7 +80,7 @@ public class GuiTypeObject extends GuiTypeValue {
     /** @return properties and actions */
     @Override
     public List<GuiTypeElement> getChildren() {
-        return Stream.concat(getProperties().stream(), getActions().stream())
+        return memberStream()
                 .collect(Collectors.toList());
     }
 

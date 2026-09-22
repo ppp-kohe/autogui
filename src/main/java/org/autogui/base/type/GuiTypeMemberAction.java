@@ -7,6 +7,7 @@ import org.autogui.GuiListSelectionUpdater;
 import org.autogui.base.annotation.GuiDefaultInits;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * a type information for
@@ -19,6 +20,7 @@ public class GuiTypeMemberAction extends GuiTypeMember {
     protected String methodName;
     protected Method method;
     protected GuiTypeElement returnType;
+    /** @since 1.9 */ protected EditFeature editFeature;
 
     public GuiTypeMemberAction(String name, GuiTypeElement returnType, String methodName) {
         super(name);
@@ -34,7 +36,7 @@ public class GuiTypeMemberAction extends GuiTypeMember {
     public Method getMethod() {
         if (method == null) {
             GuiTypeBuilder b = new GuiTypeBuilder();
-            method = findOwnerMethod(methodName, b::isActionMethod);
+            method = findOwnerMethod(methodName, hasEditFeature() ? b::isActionEditMethod : b::isActionMethod);
         }
         return method;
     }
@@ -154,5 +156,113 @@ public class GuiTypeMemberAction extends GuiTypeMember {
      */
     public GuiInits getInits() {
         return GuiDefaultInits.get(getMethod());
+    }
+
+    /**
+     * @param editFeature the edit feature
+     * @since 1.9
+     */
+    public void setEditFeature(EditFeature editFeature) {
+        this.editFeature = editFeature;
+    }
+
+    /**
+     * @return if non-null value, the edit feature is enabled
+     * @since 1.9
+     */
+    public EditFeature getEditFeature() {
+        return editFeature;
+    }
+
+    public boolean hasEditFeature() {
+        return editFeature != null;
+    }
+
+    /**
+     * @since 1.9
+     */
+    public static class EditFeature {
+        protected String editedMethodName;
+        protected Method editedMethod;
+
+        public EditFeature() {
+            this(null, null);
+        }
+
+        /**
+         * @param editedMethod a method called after editing
+         * @param editedMethodName the name of the editedMethod
+         */
+        public EditFeature(String editedMethodName, Method editedMethod) {
+            this.editedMethodName = editedMethodName;
+            this.editedMethod = editedMethod;
+        }
+
+        public EditFeature(String editedMethodName) {
+            this(editedMethodName, null);
+        }
+
+        public boolean hasEditedMethod() {
+            return editedMethod != null && editedMethodName != null;
+        }
+
+        public boolean isEditedMethodTakingOk() {
+            return editedMethod != null && editedMethod.getParameterCount() == 2 && editedMethod.getParameterTypes()[1].equals(boolean.class);
+        }
+
+        public String editedMethodName() {
+            return editedMethodName;
+        }
+
+        public Method editedMethod() {
+            return editedMethod;
+        }
+
+        public void setEditedMethod(Method editedMethod) {
+            this.editedMethod = editedMethod;
+        }
+
+        public boolean hasEditedMethodWithSet(GuiTypeMemberAction owner) {
+            return editedMethodWithSet(owner) != null;
+        }
+
+        public Method editedMethodWithSet(GuiTypeMemberAction owner) {
+            if (editedMethodName != null && editedMethod == null) {
+                GuiTypeBuilder b = new GuiTypeBuilder();
+                editedMethod = owner.findOwnerMethod(editedMethodName, b::isEditedMethod);
+            }
+            return editedMethod;
+        }
+    }
+
+    @Override
+    public List<GuiTypeElement> getChildren() {
+        if (getEditFeature() != null) {
+            return List.of(returnType);
+        } else {
+            return List.of();
+        }
+    }
+
+    public boolean hasEditedMethod() {
+        return hasEditFeature() && getEditFeature().hasEditedMethodWithSet(this);
+    }
+
+    public void executeEcited(Object target, Object editor, boolean ok) throws Exception {
+        if (editFeature != null && editFeature.hasEditedMethodWithSet(this)) {
+            if (editFeature.isEditedMethodTakingOk()) {
+                executeEditedWithOk(target, editor, ok, editFeature);
+            } else {
+                executeEdited(target, editor, editFeature);
+            }
+        }
+    }
+
+    protected void executeEditedWithOk(Object target, Object editor, boolean ok, EditFeature f) throws Exception {
+        f.editedMethodWithSet(this).invoke(target, editor, ok);
+    }
+
+    protected void executeEdited(Object target, Object editor, EditFeature f) throws Exception {
+        f.editedMethodWithSet(this).invoke(target, editor);
     }
 }

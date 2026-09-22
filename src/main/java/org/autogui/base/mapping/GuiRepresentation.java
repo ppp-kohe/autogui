@@ -209,7 +209,7 @@ public interface GuiRepresentation {
                 createObjectTabbedPane(set),
                 createObjectPane(set),
                 createPropertyPane(set),
-                createAction(),
+                createAction(set),
                 createActionList());
 
         set.add(createValueLabel());
@@ -290,6 +290,9 @@ public interface GuiRepresentation {
      * @since 1.7 */
     static GuiReprAction createAction() {
         return new GuiReprAction();
+    }
+    static GuiReprAction createAction(GuiRepresentation owner) {
+        return new GuiReprAction(owner);
     }
     /** @return new representation
      * @since 1.7 */

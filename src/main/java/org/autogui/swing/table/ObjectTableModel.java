@@ -2,6 +2,7 @@ package org.autogui.swing.table;
 
 import org.autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import org.autogui.base.mapping.GuiReprValue;
+import org.autogui.swing.GuiSwingElement;
 import org.autogui.swing.GuiSwingTaskRunner;
 import org.autogui.swing.GuiSwingTaskRunner.ContextTaskResult;
 import org.autogui.swing.table.ObjectTableColumn.TableMenuComposite;
@@ -18,8 +19,8 @@ import javax.swing.table.DefaultTableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.Serial;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
  * a table-model based on a list of row objects
  */
 public class ObjectTableModel extends AbstractTableModel
-        implements ObjectTableModelColumns.ObjectTableModelColumnsListener {
+        implements ObjectTableModelColumns.ObjectTableModelColumnsListener, GuiSwingElement.FeatureCollection {
     @Serial private static final long serialVersionUID = 1L;
     protected JTable table;
     protected Supplier<Object> source;
@@ -52,6 +53,11 @@ public class ObjectTableModel extends AbstractTableModel
     public ObjectTableModel(GuiSwingTaskRunner runner) {
         this.runner = runner;
         initColumns();
+    }
+
+    @Override
+    public List<?> getSwingViewSubNodes() {
+        return List.of(columns);
     }
 
     public void initColumns() {

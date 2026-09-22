@@ -206,6 +206,19 @@ public class GuiMappingContext {
         setSource(source);
     }
 
+    public GuiMappingContext copyDetachedTree() {
+        return copyDetachedTree(null);
+    }
+
+    protected GuiMappingContext copyDetachedTree(GuiMappingContext newParent) {
+        var context = new GuiMappingContext(typeElement, representation, newParent, NO_SOURCE);
+        context.addToParent();
+        for (GuiMappingContext child : getChildren()) {
+            child.copyDetachedTree(context);
+        }
+        return context;
+    }
+
     public GuiTaskClock getContextClock() {
         return contextClock;
     }
@@ -627,7 +640,7 @@ public class GuiMappingContext {
     }
 
     public GuiReprValue getParentValuePane() {
-        return hasParent() ? getParent().getReprValue() : null;
+        return isParentValuePane() ? getParent().getReprValue() : null;
     }
 
     public GuiReprCollectionTable getParentCollectionTable() {

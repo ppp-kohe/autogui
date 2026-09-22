@@ -6,6 +6,7 @@ import org.autogui.GuiNotifierSetter;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -26,6 +27,8 @@ public class GuiTypeBuilder {
             valueTypes.stream()
                     .filter(Class::isInterface)
                     .toList());
+    public static final String PREFIX_EDIT = "edit";
+    public static final String PREFIX_EDITED = "edited";
 
     public GuiTypeBuilder() {
     }
@@ -208,13 +211,7 @@ public class GuiTypeBuilder {
 
         listMethods(cls).stream()
                 .filter(this::isMemberMethod)
-                .forEachOrdered(m -> definitionsMap.computeIfAbsent(getMemberNameFromMethod(m), MemberDefinitions::new)
-                        .methods.add(m));
-
-        listMethods(cls).stream()
-                .filter(this::isNotifierSetterMethod)
-                .forEachOrdered(m -> definitionsMap.computeIfAbsent(getMemberNameFromMethod(m), MemberDefinitionsForNotifier::new)
-                        .methods.add(m));
+                .forEachOrdered(m -> addMethodToDefinition(definitionsMap, m));
 
         definitionsMap.values()
                 .forEach(d -> createMember(objType, d));
@@ -230,6 +227,14 @@ public class GuiTypeBuilder {
         return objType;
     }
 
+    private void addMethodToDefinition(Map<String, MemberDefinitions> definitionsMap, Method m) {
+        if (isEditedMethodPrefixed(m)) {
+            definitionsMap.computeIfAbsent(getMemberNameFromMethodEditedForActionEdit(m), MemberDefinitions::new).supplementaryMethods.add(m);
+        } else {
+            definitionsMap.computeIfAbsent(getMemberNameFromMethod(m), MemberDefinitions::new).methods.add(m);
+        }
+    }
+
     public List<Field> listFields(Class<?> cls) {
         return Arrays.asList(cls.getFields());
     }
@@ -241,8 +246,9 @@ public class GuiTypeBuilder {
     /** a temporarily created member group in {@link #createObjectFromClass(Class,Type)} */
     public static class MemberDefinitions {
         public String name;
-        public List<Method> methods = new ArrayList<>();
-        public List<Field> fields = new ArrayList<>();
+        public List<Method> methods = new ArrayList<>(3);
+        public List<Field> fields = new ArrayList<>(1);
+        public List<Method> supplementaryMethods = new ArrayList<>(1);
 
         public MemberDefinitions(String name) {
             this.name = name;
@@ -255,6 +261,16 @@ public class GuiTypeBuilder {
         public Method getLast(Predicate<Method> builder) {
             Method g = null;
             for (Method m : methods) {
+                if (builder.test(m)) {
+                    g = m;
+                }
+            }
+            return g;
+        }
+
+        public Method getLastSupplimentary(Predicate<Method> builder) {
+            Method g = null;
+            for (Method m : supplementaryMethods) {
                 if (builder.test(m)) {
                     g = m;
                 }
@@ -282,12 +298,14 @@ public class GuiTypeBuilder {
 
     /**
      * @param e the target member
-     * @return true if e has the annotation {@link GuiIncluded#value()}==true
+     * @return true if e has the annotation {@link GuiIncluded#value()}==true or e has annotation {{@link GuiNotifierSetter}}
      * @since 1.2
      */
     public boolean isGuiIncludedEnabled(AnnotatedElement e) {
         return e.isAnnotationPresent(GuiIncluded.class) &&
-                e.getAnnotation(GuiIncluded.class).value();
+                e.getAnnotation(GuiIncluded.class).value() ||
+                (!e.isAnnotationPresent(GuiIncluded.class) && //exclude GuiIncluded(false)
+                        e.isAnnotationPresent(GuiNotifierSetter.class));
     }
 
     /** if the definitions has a field, a getter or a setter, create a property.
@@ -306,17 +324,20 @@ public class GuiTypeBuilder {
         Method setter = definitions.getLast(this::isSetterMethod);
         if (fld != null || setter != null || getter != null) {
             //property
-            if (definitions instanceof MemberDefinitionsForNotifier) {
+            if (setter != null && isNotifierSetterMethod(setter)) {
                 createMemberPropertyNotifier(objType, definitions.name, fld, getter, setter);
             } else {
                 createMemberProperty(objType, definitions.name, fld, getter, setter);
             }
         } else {
             for (Method method : definitions.methods) {
+                var name = getMemberNameFromMethodForAction(method);
+                boolean isEdit = isActionEditMethodPrefixed(method);
+                var editedMethod = isEdit ? definitions.getLastSupplimentary(this::isEditedMethodPrefixed) : null;
                 if (isActionMethod(method)) {
-                    createMemberAction(objType, getMemberNameFromMethodForAction(method), method, false);
+                    createMemberAction(objType, name, method, false, isEdit, editedMethod);
                 } else if (isActionListMethod(method)) {
-                    createMemberAction(objType, getMemberNameFromMethodForAction(method), method, true);
+                    createMemberAction(objType, name, method, true, isEdit, editedMethod);
                 }
             }
         }
@@ -384,6 +405,20 @@ public class GuiTypeBuilder {
     }
 
     public void createMemberAction(GuiTypeObject objType, String name, Method method, boolean isList) {
+        createMemberAction(objType, name, method, isList, false, null);
+    }
+
+    /**
+     *
+     * @param objType the owner type
+     * @param name the naame of the action (can be different from the method name)
+     * @param method the method of the action
+     * @param isList true if the method takes a list
+     * @param isEdit true if the method returns a editing object and "edit" method; then the editedMethod mgiht be not null
+     * @param editedMethod a supplementary "edited" method for an isEdit action
+     * @since 1.9
+     */
+    public void createMemberAction(GuiTypeObject objType, String name, Method method, boolean isList, boolean isEdit, Method editedMethod) {
         GuiTypeMemberAction action;
         GuiTypeElement retType = get(method.getGenericReturnType());
         if (isList) {
@@ -392,6 +427,9 @@ public class GuiTypeBuilder {
                     method.getParameterCount() == 2);
         } else {
             action = new GuiTypeMemberAction(name, retType, method);
+        }
+        if (isEdit) {
+            action.setEditFeature(new GuiTypeMemberAction.EditFeature(editedMethod == null ? null : editedMethod.getName(), editedMethod));
         }
         action.setOwner(objType);
         objType.getActions().add(action);
@@ -403,38 +441,32 @@ public class GuiTypeBuilder {
      * @param f the tested field
      * @return true if {@link GuiIncluded} is attached and non-static */
     public boolean isMemberField(Field f) {
-        return isGuiIncludedEnabled(f) && !Modifier.isStatic(f.getModifiers());
+        return isGuiIncludedEnabled(f) && isMemberFieldWithoutAnnotation(f);
+    }
+
+    public boolean isMemberFieldWithoutAnnotation(Field f) {
+        return !Modifier.isStatic(f.getModifiers());
     }
 
     /**
      * @param f the field
      * @return the field name itself or attached {@link GuiIncluded#name()} */
     public String getMemberNameFromField(Field f) {
-        GuiIncluded included = f.getAnnotation(GuiIncluded.class);
-        if (included == null || included.name().isEmpty()) {
-            return f.getName();
-        } else {
-            return included.name();
-        }
+        return getNameFromAnnotationOr(f, Field::getName);
     }
 
     /**
      * @param m the tested method
-     * @return true if {@link GuiIncluded} attached and non-static with excluding {@link #isNotifierSetterMethod(Method)} */
+     * @return true if {@link GuiIncluded} attached and non-static */
     public boolean isMemberMethod(Method m) {
-        return isGuiIncludedEnabled(m) && !Modifier.isStatic(m.getModifiers()) && !isNotifierSetterMethod(m);
+        return isGuiIncludedEnabled(m) && !Modifier.isStatic(m.getModifiers());
     }
 
     /**
      * @param m a method
      * @return {@link #getMemberNameFromMethodName(String)} or attached {@link GuiIncluded#name()}*/
     public String getMemberNameFromMethod(Method m) {
-        GuiIncluded included = m.getAnnotation(GuiIncluded.class);
-        if (included == null || included.name().isEmpty()) {
-            return getMemberNameFromMethodName(m.getName());
-        } else {
-            return included.name();
-        }
+        return getNameFromAnnotationOr(m, mth -> getMemberNameFromMethodName(mth.getName()));
     }
 
     /**
@@ -442,12 +474,43 @@ public class GuiTypeBuilder {
      * @return the name of the method or attached {@link GuiIncluded#name()}
      */
     public String getMemberNameFromMethodForAction(Method m) {
-        GuiIncluded included = m.getAnnotation(GuiIncluded.class);
+        return getNameFromAnnotationOr(m, Method::getName);
+    }
+
+    protected <TargetType extends AnnotatedElement> String getNameFromAnnotationOr(TargetType element, Function<TargetType, String> elementGetter) {
+        GuiIncluded included = element.getAnnotation(GuiIncluded.class);
         if (included == null || included.name().isEmpty()) {
-            return m.getName();
+            return elementGetter.apply(element);
         } else {
             return included.name();
         }
+    }
+
+    /**
+     *  There are 2 cases for the method:
+     * <ol>
+     *  <li><code>  &#64;GuiIncluded(name="tgtAct") public void edited(R a)</code> : <code>"tgtAct"</code>.
+     *    The edit-method always needs to have the prefix "edit",
+     *      so if the edit-method has no GuiIncluded tag,
+     *       the member-name from the method name will be "edit..." that never match to the name unless it has the "edit" prefix.
+     *  </li>
+     *  <li><code>  public void editedTgtAct(R a)</code> : <code>"editTgtAct"</code>
+     *  </li>
+     * </ol>
+     * @param editedMethod the edited method; e.g. "void editTgtAct(R r)"
+     * @return the member-name for the edit-method
+     * @since 1.9
+     */
+    public String getMemberNameFromMethodEditedForActionEdit(Method editedMethod) {
+        return getNameFromAnnotationOr(editedMethod, m -> {
+            var suffix = getNameSuffix(PREFIX_EDITED, m.getName());
+            if (suffix == null) {
+                suffix = m.getName().equals(PREFIX_EDITED) ? "" : m.getName();
+            } else if (!suffix.isEmpty()) {
+                suffix = Character.toUpperCase(suffix.charAt(0)) + suffix.substring(1);
+            }
+            return PREFIX_EDIT + suffix;
+        });
     }
 
     /**
@@ -524,10 +587,10 @@ public class GuiTypeBuilder {
     public boolean isActionListMethod(Method m) {
         if (m.getParameterCount() == 1 || m.getParameterCount() == 2) {
             Type t = m.getGenericParameterTypes()[0];
-            if (t instanceof ParameterizedType) {
+            if (t instanceof ParameterizedType pType) {
                 Class<?> rawType = getClass(t);
                 if (rawType.isAssignableFrom(List.class) && !rawType.equals(Object.class) &&
-                            ((ParameterizedType) t).getActualTypeArguments().length == 1) {
+                            pType.getActualTypeArguments().length == 1) {
                     if (m.getParameterCount() == 2) {
                         return m.getParameterTypes()[1].equals(String.class);
                     } else {
@@ -542,6 +605,38 @@ public class GuiTypeBuilder {
         } else {
             return false;
         }
+    }
+
+    /**
+     * @param m tested method
+     * @return true if m is an edit action; an action method that has non-value and non-array returned type with the "edit" prefix
+     * @since 1.9
+     */
+    public boolean isActionEditMethodPrefixed(Method m) {
+        return isActionEditMethod(m) &&
+                m.getName().startsWith(PREFIX_EDIT); //not the property-name but the method-name has the prefix "edit"
+    }
+    public boolean isActionEditMethod(Method m) {
+        return isActionMethod(m) &&
+                !isValueType(m.getReturnType()) && !m.getReturnType().isArray() && isIncludedClass(m.getReturnType());
+    }
+
+    /**
+     * @param m tested method
+     * @return true if m is an edited method; void edited(R o) or void edited(R o, boolean ok)
+     * @since 1.9
+     */
+    public boolean isEditedMethod(Method m) {
+        if ((m.getParameterCount() == 1 || m.getParameterCount() == 2) && m.getReturnType().equals(void.class)) {
+            var pType = m.getParameterTypes()[0];
+            return (!isValueType(pType) && !pType.isArray()) &&
+                    (m.getParameterCount() == 1) || (m.getParameterCount() == 2 && m.getParameterTypes()[1].equals(boolean.class));
+        } else {
+            return false;
+        }
+    }
+    public boolean isEditedMethodPrefixed(Method m) {
+        return m.getName().startsWith(PREFIX_EDITED) && isEditedMethod(m);
     }
 
     /** {@link Class},
@@ -611,12 +706,6 @@ public class GuiTypeBuilder {
                 m.getParameterTypes()[0].equals(Runnable.class);
     }
 
-    public static class MemberDefinitionsForNotifier extends MemberDefinitions {
-        public MemberDefinitionsForNotifier(String name) {
-            super(name);
-        }
-    }
-
     /**
      * another type-builder with relaxed rules:
      *   including non-public (without access-modifiers) members.
@@ -630,6 +719,11 @@ public class GuiTypeBuilder {
                      cls.getName().startsWith("javax.") ||
                      cls.getName().startsWith("sun.") ||
                      cls.getName().startsWith("com.sun."));
+        }
+
+        @Override
+        public boolean isAccessorMethod(Method m) {
+            return super.isAccessorMethod(m) && !m.getName().startsWith(PREFIX_EDIT);
         }
 
         @Override
@@ -705,8 +799,7 @@ public class GuiTypeBuilder {
         public boolean isMemberMethod(Method m) {
             return isMemberModifiers(m.getModifiers()) &&
                    ((!m.getDeclaringClass().equals(Object.class) && isGuiIncludedEnabledRelaxed(m))
-                    || isGuiIncludedEnabled(m))
-                     && !isNotifierSetterMethod(m);
+                    || isGuiIncludedEnabled(m));
         }
 
         /**

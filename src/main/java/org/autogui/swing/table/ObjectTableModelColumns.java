@@ -2,6 +2,8 @@ package org.autogui.swing.table;
 
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
+import org.autogui.swing.GuiSwingElement;
+import org.autogui.swing.GuiSwingFeature;
 import org.autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import org.autogui.swing.table.GuiSwingTableColumnSet.TableSelectionSource;
 import org.autogui.swing.table.ObjectTableColumn.TableMenuComposite;
@@ -22,7 +24,7 @@ import java.util.stream.IntStream;
 /** column managing part of {@link ObjectTableModel} */
 @SuppressWarnings("this-escape")
 public class ObjectTableModelColumns
-        implements GuiSwingTableColumnSet.TableColumnHost, TableColumnModelListener {
+        implements GuiSwingTableColumnSet.TableColumnHost, TableColumnModelListener, GuiSwingElement.FeatureCollection {
     protected DefaultTableColumnModel columnModel;
     protected List<ObjectTableColumn> columns = new ArrayList<>();
     protected List<ObjectTableColumn> staticColumns = new ArrayList<>();
@@ -49,6 +51,11 @@ public class ObjectTableModelColumns
 
     public DefaultTableColumnModel getColumnModel() {
         return columnModel;
+    }
+
+    @Override
+    public List<?> getSwingViewSubNodes() {
+        return List.of(columnModel);
     }
 
     @Override
@@ -170,7 +177,7 @@ public class ObjectTableModelColumns
         this.columns.removeAll(columns);
         columns.forEach(c ->
                 columnModel.removeColumn(c.getTableColumn()));
-        columns.forEach(ObjectTableColumn::shutdown);
+        GuiSwingFeature.traverse(columns, GuiSwingFeature.class, GuiSwingFeature::shutdownSwingView);
     }
 
 
@@ -242,10 +249,6 @@ public class ObjectTableModelColumns
 
     @Override
     public void columnSelectionChanged(ListSelectionEvent e) { }
-
-    public void shutdown() {
-        getColumns().forEach(ObjectTableColumn::shutdown);
-    }
 
     @Override
     public boolean isUnderMultidimentionalList() {

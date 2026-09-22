@@ -1502,8 +1502,8 @@ public class GuiSwingPrefsEditor implements GuiSwingPrefsApplyOptions {
         @Override
         public void updateValueForce(Integer integer, GuiSwingTableModelCollection.PreferencesForTableColumnOrder preferencesForTableColumnOrder) {
             keyPane.updateSwingViewSource();
-            GuiSwingView.collectNonNullByFunction(this.valueComponent, Function.identity())
-                    .forEach(GuiSwingView.ValuePane::updateSwingViewSource);
+            GuiSwingFeature.traverse(this.valueComponent, GuiSwingFeature.class, GuiSwingFeature::updateSwingViewSource,
+                    GuiSwingFeature.TraversalOption.OncePertContext);
         }
     }
 

@@ -118,7 +118,7 @@ public class GuiSwingKeyBinding {
      */
     public <T extends Component> GuiSwingKeyBinding putTraverse(Class<T> type, Predicate<T> predicate, BiConsumer<GuiSwingKeyBinding, T> put) {
         return addTraverseFunction((self, comp) -> {
-            T t = GuiSwingView.findComponent(comp, type, predicate);
+            T t = GuiSwingFeature.traverseFindFirstIf(comp, type, predicate);
             if (t != null) {
                 put.accept(self, t);
             }

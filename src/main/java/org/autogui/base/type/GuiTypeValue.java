@@ -16,7 +16,7 @@ public class GuiTypeValue implements GuiTypeElement {
     protected Class<?> type;
 
     public GuiTypeValue(Class<?> type) {
-        this(type.getSimpleName());
+        this(type.getName());
         this.type = type;
     }
 

@@ -320,13 +320,27 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     @Override
-    public GuiMappingContext getContext() {
+    public GuiMappingContext getSwingViewContext() {
         return context;
     }
 
     @Override
+    public GuiMappingContext getContextForPreferences() {
+        return context;
+    }
+
     public JComponent getViewComponent() {
         return viewComponent;
+    }
+
+    @Override
+    public JComponent getViewComponentForPreferences() {
+        return getViewComponent();
+    }
+
+    @Override
+    public List<?> getSwingViewSubNodes() {
+        return List.of(getComponents());
     }
 
     protected void init() {
@@ -410,8 +424,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         objectMenu.add(showPreferencesAction);
         objectMenu.add(prefsApplyMenu);
         objectMenu.addSeparator();
-        if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
-            ((GuiSwingView.ValuePane<?>) viewComponent).getSwingMenuBuilder()
+        if (viewComponent instanceof GuiSwingView.ValuePane<?> vp) {
+            vp.getSwingMenuBuilder()
                     .build(PopupExtension.MENU_FILTER_IDENTITY,
                             new MenuBuilder.MenuAppender(objectMenu));
             objectMenu.addSeparator();
@@ -455,7 +469,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
      * @since 1.8
      */
     protected void initDefaultSize() {
-        var type = getContext().getTypeElementValue();
+        var type = getSwingViewContext().getTypeElementValue();
         if (type != null) {
             var inits = type.getInits();
             int w = inits.window().width();
@@ -476,7 +490,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
             settingsWindow = new SettingsWindow();
         }
         preferences.setSettingsWindow(settingsWindow);
-        GuiSwingView.forEach(GuiSwingView.SettingsWindowClient.class, viewComponent,
+        GuiSwingFeature.traverse(viewComponent, GuiSwingView.SettingsWindowClient.class,
                 c -> c.setSettingsWindow(settingsWindow));
     }
 
@@ -569,8 +583,8 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     @SuppressWarnings("rawtypes")
     public void cleanUp() {
         context.shutdown();
-        GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
-                GuiSwingView.ValuePane::shutdownSwingView);
+        GuiSwingFeature.traverse(viewComponent, GuiSwingFeature.class,
+                GuiSwingFeature::shutdownSwingView);
         preferences.shutdown();
         if (logWindow != null) {
             logWindow.dispose();
@@ -596,10 +610,10 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
             });
             withError(() -> options.apply(fileDialogPreferencesUpdater, prefs));
 
-            if (viewComponent instanceof GuiSwingView.ValuePane<?> valuePane) {
+            if (viewComponent instanceof GuiSwingFeature valuePane) {
                 withError(() -> valuePane.loadSwingPreferences(prefs, options));
             }
-            GuiSwingView.loadChildren(prefs, viewComponent, options);
+            GuiSwingFeature.loadChildren(prefs, viewComponent, options);
         } finally {
             options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
         }
@@ -623,93 +637,18 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         });
         withError(() -> fileDialogPreferencesUpdater.getPrefs().saveTo(prefs));
 
-        if (viewComponent instanceof GuiSwingView.ValuePane<?> valuePane) {
+        if (viewComponent instanceof GuiSwingFeature valuePane) {
             withError(() -> valuePane.saveSwingPreferences(prefs));
         }
-        GuiSwingView.saveChildren(prefs, viewComponent);
+        GuiSwingFeature.saveChildren(prefs, viewComponent);
     }
 
     @SuppressWarnings("unchecked")
     public GuiSwingView.ValuePane<Object> getViewValuePane() {
-        if (viewComponent instanceof GuiSwingView.ValuePane<?>) {
-            return (GuiSwingView.ValuePane<Object>) viewComponent;
+        if (viewComponent instanceof GuiSwingView.ValuePane<?> vp) {
+            return (GuiSwingView.ValuePane<Object>) vp;
         }
         return null;
-    }
-
-    /**
-     *
-     * @param context the searched context
-     * @return a descendant value pane holding the context, or null.
-     *            wrappers which have the same context are avoided.
-     */
-    public GuiSwingView.ValuePane<Object> getDescendantByContext(GuiMappingContext context) {
-        return GuiSwingView.findChild(getViewComponent(), p ->
-                Objects.equals(context, p.getSwingViewContext()));
-    }
-
-    /**
-     * @param value the searched value
-     * @return a descendant value pane holding the value, or null.
-     *    wrappers holding the same context are avoided.
-     */
-    public GuiSwingView.ValuePane<Object> getDescendantByValue(Object value) {
-        return GuiSwingView.findChild(getViewComponent(),
-                p -> Objects.equals(p.getSwingViewValue(), value));
-    }
-
-
-    /**
-     * @param valuePredicate the condition holds the searched value
-     * @return a first descendant value pane holding a value matched by the predicate, or null.
-     *    wrappers holding the same context are avoided.
-     */
-    public GuiSwingView.ValuePane<Object> getDescendantByValueIf(Predicate<Object> valuePredicate) {
-        return GuiSwingView.findChild(getViewComponent(),
-                p -> valuePredicate.test(p.getSwingViewValue()));
-    }
-
-
-    /**
-     * @param name the searched context name
-     * @return a child (or descendant for wrappers) value pane holding the named context, or null.
-     *    wrappers holding the same context are avoided.
-     */
-    public GuiSwingView.ValuePane<Object> getChildByName(String name) {
-        return GuiSwingView.getChild(getViewComponent(),
-                p -> p.getSwingViewContext() != null &&
-                        Objects.equals(p.getSwingViewContext().getName(), name));
-    }
-
-    public GuiSwingActionDefault.ExecutionAction getActionByName(String name) {
-        GuiSwingView.ValuePane<Object> v = getViewValuePane();
-        if (v != null) {
-            return v.getActionByName(name);
-        } else {
-            return null;
-        }
-    }
-
-    public GuiSwingActionDefault.ExecutionAction getActionByContext(GuiMappingContext context) {
-        GuiSwingView.ValuePane<Object> v = getViewValuePane();
-        if (v != null) {
-            return v.getActionByContext(context);
-        } else {
-            return null;
-        }
-    }
-
-    public GuiSwingActionDefault.ExecutionAction getDescendantActionByContext(GuiMappingContext context) {
-        return GuiSwingView.findNonNullByFunction(getViewComponent(), p -> p.getActionByContext(context));
-    }
-
-    /**
-     * notify changes of source values to sub-components the pane and update display,
-     *   by {@link GuiMappingContext#updateSourceFromRoot()} .
-     * @since 1.1
-     */
-    public void updateSwingViewSourceFromRoot() {
-        getContext().updateSourceFromRoot();
     }
 
     /**
@@ -718,8 +657,18 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
      */
     @SuppressWarnings("rawtypes")
     public void refreshByContext() {
-        GuiSwingView.forEach(GuiSwingView.ValuePane.class, viewComponent,
-                GuiSwingView.ValuePane::refreshByContext);
+        GuiSwingFeature.traverse(viewComponent, GuiSwingFeature.class,
+                GuiSwingFeature::refreshByContext);
+    }
+
+    @Override
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return GuiReprValue.NONE;
+    }
+
+    @Override
+    public void prepareForRefresh() {
+        GuiSwingView.prepareForRefresh(this);
     }
 
     public static class ShowPreferencesAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction {

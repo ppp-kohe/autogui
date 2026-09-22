@@ -3,10 +3,7 @@ package org.autogui.swing.table;
 import org.autogui.base.mapping.*;
 import org.autogui.base.mapping.GuiReprCollectionTable.TableTargetColumn;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifier;
-import org.autogui.swing.GuiSwingActionDefault;
-import org.autogui.swing.GuiSwingContextInfo;
-import org.autogui.swing.GuiSwingJsonTransfer;
-import org.autogui.swing.GuiSwingView;
+import org.autogui.swing.*;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingView.ValuePane;
 import org.autogui.swing.GuiSwingViewLabel.PropertyLabel;
@@ -29,8 +26,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.Serial;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -94,6 +91,18 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         if (renderer instanceof ObjectTableCellRenderer) {
             ((ObjectTableCellRenderer) renderer).setOwnerColumn(this);
         }
+    }
+
+    @Override
+    public GuiMappingContext getSwingViewContext() {
+        return context;
+    }
+
+    @Override
+    public List<?> getSwingViewSubNodes() {
+        return editor == null ?
+                (renderer == null ? List.of() : List.of(renderer)) :
+                (renderer == null ? List.of(editor) : List.of(renderer, editor));
     }
 
     /**
@@ -171,30 +180,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     @Override
-    public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
-        setForComponents(GuiSwingPrefsSupports.PreferencesUpdateSupport.class,
-                p -> p.setPreferencesUpdater(updater), renderer, editor);
-    }
-
-    @Override
-    public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
-        setForComponents(ValuePane.class,
-                p -> p.loadSwingPreferences(prefs, options), renderer, editor);
-    }
-
-    @Override
-    public void saveSwingPreferences(GuiPreferences prefs) {
-        setForComponents(ValuePane.class,
-                p -> p.saveSwingPreferences(prefs), renderer, editor);
-    }
-
-    @Override
-    @SuppressWarnings("rawtypes")
-    public void shutdown() {
-        super.shutdown();
-        setForComponents(ValuePane.class,
-                ValuePane::shutdownSwingView, renderer, editor);
-    }
+    public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) { }
 
     @Override
     public void setColumnViewUpdater(Consumer<ObjectTableColumn> updater) {
@@ -224,11 +210,6 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      */
     public interface ColumnViewUpdateTarget {
         void columnViewUpdateAsDynamic(ObjectTableColumn source);
-    }
-
-    @Override
-    public GuiMappingContext getContext() {
-        return context;
     }
 
     public int getContextIndex() {
@@ -338,10 +319,9 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     @Override
     public Object fromActionValue(Object value) {
         //special handling for FilePath
-        if (context.getRepresentation() instanceof GuiReprValueFilePathField &&
-            value instanceof Path) {
-            return ((GuiReprValueFilePathField) context.getRepresentation())
-                    .toValueFromPath(context, (Path) value);
+        if (context.getRepresentation() instanceof GuiReprValueFilePathField pathField &&
+            value instanceof Path path) {
+            return pathField.toValueFromPath(context, path);
         } else {
             return super.fromActionValue(value);
         }
@@ -353,8 +333,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     }
 
     /** interface for renderer and editor, in order to set up some properties like preferences and setting-windows */
-    public interface ObjectTableColumnCellView {
+    public interface ObjectTableColumnCellView extends GuiSwingElement.FeatureCollection {
         JComponent getComponent();
+
+        @Override
+        default List<?> getSwingViewSubNodes() {
+            var comp = getComponent();
+            return comp == null ? List.of() : List.of(comp);
+        }
 
         default boolean isSkippingSet() {
             return false;
@@ -362,14 +348,14 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         default <CompType> void setForComponent(Class<CompType> componentType, Consumer<CompType> setter) {
             JComponent c = getComponent();
-            GuiSwingView.forEach(componentType, c, setter);
+            GuiSwingFeature.traverse(c, componentType, setter);
         }
     }
 
     public static <CompType> void setForComponents(Class<CompType> componentType, Consumer<CompType> setter, Object... views) {
         for (Object view : views) {
-            if (view instanceof ObjectTableColumnCellView) {
-                ((ObjectTableColumnCellView) view).setForComponent(componentType, setter);
+            if (view instanceof ObjectTableColumnCellView cellView) {
+                cellView.setForComponent(componentType, setter);
             }
         }
     }

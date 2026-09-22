@@ -112,16 +112,12 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
         @Override
         public void columnViewUpdateAsDynamic(ObjectTableColumn source) {
             TableCellRenderer renderer = source.getTableColumn().getCellRenderer();
-            if (renderer instanceof ObjectTableCellRenderer) {
-                JComponent comp = ((ObjectTableCellRenderer) renderer).getComponent();
-                if (comp instanceof ColumnNumberPane numPane) {
-                    setCurrentFormat(numPane.getCurrentFormat(), numPane.getEditor());
-                }
-            } else if (source instanceof ObjectTableColumnWithContext) {
-                GuiMappingContext context = ((ObjectTableColumnWithContext) source).getContext();
-                if (context.getRepresentation() instanceof GuiReprValueNumberSpinner spinner) {
-                    setCurrentFormat(spinner.getFormat(), null);
-                }
+            if (renderer instanceof ObjectTableCellRenderer objRenderer &&
+                objRenderer.getComponent() instanceof ColumnNumberPane numPane) {
+                setCurrentFormat(numPane.getCurrentFormat(), numPane.getEditor());
+            } else if (source instanceof ObjectTableColumnWithContext colContext &&
+                colContext.getSwingViewContext().getRepresentation() instanceof GuiReprValueNumberSpinner spinner) {
+                setCurrentFormat(spinner.getFormat(), null);
             }
         }
 

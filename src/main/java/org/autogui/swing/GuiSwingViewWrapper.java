@@ -46,34 +46,6 @@ public class GuiSwingViewWrapper {
             return null;
         }
 
-        default boolean isSwingViewWrappedPaneSameContext() {
-            GuiSwingView.ValuePane<Object> p = getSwingViewWrappedPane();
-            return p != null && Objects.equals(p.getSwingViewContext(), getSwingViewContext());
-        }
-
-        @Override
-        default GuiSwingActionDefault.ExecutionAction getActionByName(String name) {
-            if (isSwingViewWrappedPaneSameContext()) {
-                GuiSwingActionDefault.ExecutionAction a = getSwingViewWrappedPane().getActionByName(name);
-                if (a != null) {
-                    return a;
-                }
-            }
-            return GuiSwingView.getActionDefault(this,
-                    e ->  e.getContext() != null && e.getContext().getName().equals(name));
-        }
-
-        @Override
-        default GuiSwingActionDefault.ExecutionAction getActionByContext(GuiMappingContext context) {
-            if (isSwingViewWrappedPaneSameContext()) {
-                GuiSwingActionDefault.ExecutionAction a = getSwingViewWrappedPane().getActionByContext(context);
-                if (a != null) {
-                    return a;
-                }
-            }
-            return GuiSwingView.getActionDefault(this, e ->  Objects.equals(e.getContext(), context));
-        }
-
         @Override
         default KeyStroke getSwingFocusKeyStroke() {
             return null;
@@ -181,9 +153,6 @@ public class GuiSwingViewWrapper {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return pane == null ? GuiReprValue.NONE : pane.getSpecifier();
         }
-
-        @Override
-        public void prepareForRefresh() { }
     }
 
     public static class ValueWrappingPane<ValueType> extends JPanel implements ValuePaneWrapper<ValueType> {
@@ -279,8 +248,5 @@ public class GuiSwingViewWrapper {
         public GuiReprValue.ObjectSpecifier getSpecifier() {
             return pane == null ? GuiReprValue.NONE : pane.getSpecifier();
         }
-
-        @Override
-        public void prepareForRefresh() { }
     }
 }

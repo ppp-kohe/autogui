@@ -71,10 +71,14 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
 
     /** interface for {@link ObjectTableColumn} */
     interface ObjectTableColumnWithContext
-            extends GuiSwingPrefsSupports.PreferencesUpdateSupport, GuiSwingView.SettingsWindowClient {
-        GuiMappingContext getContext();
+            extends GuiSwingPrefsSupports.PreferencesUpdateSupport, GuiSwingView.SettingsWindowClient, GuiSwingFeature {
 
         SpecifierManager getSpecifierManager();
+
+        @Override
+        default ObjectSpecifier getSpecifier() {
+            return getSpecifierManager().get();
+        }
 
         /**
          * @return always this
@@ -83,25 +87,12 @@ public interface GuiSwingTableColumn extends GuiSwingElement {
             return (ObjectTableColumn) this;
         }
 
-        default void loadSwingPreferences(GuiPreferences prefs) {
-            loadSwingPreferences(prefs, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
-        }
-
-        /**
-         * @param prefs the source preferences
-         * @param options processor
-         * @since 1.7
-         */
-        void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options);
-
-        void saveSwingPreferences(GuiPreferences prefs);
-
         /**
          * @return obtains attached inits to the context, or the default instance
          * @since 1.8
          */
         default GuiInits getInits() {
-            var context = getContext();
+            var context = getSwingViewContext();
             if (context.isTypeElementProperty()) {
                 return context.getTypeElementAsProperty().getInits();
             } else {

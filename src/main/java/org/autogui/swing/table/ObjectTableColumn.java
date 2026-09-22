@@ -2,6 +2,7 @@ package org.autogui.swing.table;
 
 import org.autogui.base.mapping.GuiReprCollectionTable;
 import org.autogui.base.mapping.GuiReprValue.ObjectSpecifier;
+import org.autogui.swing.GuiSwingElement;
 import org.autogui.swing.GuiSwingView;
 import org.autogui.swing.GuiSwingViewWrapper;
 import org.autogui.swing.util.*;
@@ -28,13 +29,18 @@ import java.util.stream.Collectors;
  * a table-column with additional info.
  *
  */
-public class ObjectTableColumn {
+public class ObjectTableColumn implements GuiSwingElement.FeatureCollection {
     protected TableColumn tableColumn;
     protected int rowHeight;
     protected Comparator<?> comparator;
     protected Class<?> valueType = String.class;
 
     public ObjectTableColumn() {}
+
+    @Override
+    public List<?> getSwingViewSubNodes() {
+        return List.of();
+    }
 
     public TableColumn getTableColumn() {
         return tableColumn;
@@ -59,8 +65,6 @@ public class ObjectTableColumn {
     public void setComparator(Comparator<?> comparator) {
         this.comparator = comparator;
     }
-
-    public void shutdown() { }
 
     public Class<?> getValueType() {
         return valueType;

@@ -231,7 +231,7 @@ public class GuiSwingMapperSet {
                 GuiRepresentation.createObjectTabbedPane(reprSet),
                 GuiRepresentation.createObjectPane(reprSet),
                 GuiRepresentation.createPropertyPane(reprSet),
-                GuiRepresentation.createAction(),
+                GuiRepresentation.createAction(reprSet),
                 GuiRepresentation.createActionList());
 
         reprSet.add(GuiRepresentation.createValueLabel());
@@ -300,7 +300,7 @@ public class GuiSwingMapperSet {
                 .addReprClassTableColumn(GuiReprPropertyPane.class, new GuiSwingTableColumnProperty(viewSet))
                 .addReprClassTableColumn(GuiReprValue.class, new GuiSwingTableColumnLabel())
                 .addReprClass(GuiReprActionList.class, null) //nothing: handled by a sibling GuiSwingViewCollectionTable
-                .addReprClassTableColumn(GuiReprAction.class, new GuiSwingActionDefault());
+                .addReprClassTableColumn(GuiReprAction.class, new GuiSwingActionDefault(viewSet));
 
         viewSet.addReprClass(GuiReprValueBooleanCheckBox.class, new GuiSwingViewBooleanCheckBox())
                 .addReprClass(GuiReprEmbeddedComponent.class, new GuiSwingViewEmbeddedComponent())
@@ -314,7 +314,7 @@ public class GuiSwingMapperSet {
                 .addReprClass(GuiReprPropertyPane.class, new GuiSwingViewPropertyPane(viewSet))
                 .addReprClass(GuiReprObjectTabbedPane.class, new GuiSwingViewTabbedPane(viewSet))
                 .addReprClass(GuiReprObjectPane.class, new GuiSwingViewObjectPane(viewSet))
-                .addReprClass(GuiReprAction.class, new GuiSwingActionDefault())
+                .addReprClass(GuiReprAction.class, new GuiSwingActionDefault(viewSet))
                 .addReprClass(GuiReprValue.class, new GuiSwingViewLabel());
     }
 }

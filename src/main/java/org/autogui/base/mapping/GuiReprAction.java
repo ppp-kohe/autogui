@@ -21,15 +21,34 @@ import java.util.concurrent.Callable;
  * an action can be selection-updater by attaching {@link GuiListSelectionUpdater}
  */
 public class GuiReprAction implements GuiRepresentation {
-    public GuiReprAction() {}
+    protected GuiRepresentation subRepresentation;
+
+    public GuiReprAction(GuiRepresentation subRepresentation) {
+        this.subRepresentation = subRepresentation;
+    }
+
+    public GuiReprAction() {
+        this(GuiRepresentation.NONE);
+    }
+
     @Override
     public boolean match(GuiMappingContext context) {
         if (context.isTypeElementAction()) {
             context.setRepresentation(this);
+            for (GuiMappingContext child : context.createChildCandidates()) {
+                if (subRepresentation.match(child)) {
+                    child.addToParent();
+                }
+            }
             return true;
         } else {
             return false;
         }
+    }
+
+    @Override
+    public boolean continueCheckAndUpdateSourceForChildren(GuiMappingContext context, boolean parentUpdate) {
+        return false;
     }
 
     @Override
@@ -73,6 +92,18 @@ public class GuiReprAction implements GuiRepresentation {
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
             return results;
+        }
+    }
+
+    public void executedEditedAction(GuiMappingContext context, GuiReprValue.ObjectSpecifier targetSpecifier, Object editor, boolean ok) {
+        try {
+            Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), targetSpecifier);
+            context.execute(() -> {
+                context.getTypeElementAsAction().executeEcited(target, editor, ok);
+                return null;
+            });
+        } catch (Throwable ex) {
+            context.errorWhileUpdateSource(ex);
         }
     }
 
@@ -142,5 +173,18 @@ public class GuiReprAction implements GuiRepresentation {
     public boolean isSelectionChangeRowAndColumnIndicesAction(GuiMappingContext context, GuiMappingContext tableContext) {
         return GuiReprActionList.isSelectionChangeRowAndColumnIndicesActionForActions(context) &&
                 GuiReprActionList.isSelectionChangeTargetForActions(context, tableContext);
+    }
+
+    /**
+     * @param context the target action context
+     * @return true if the action-type has an edit feature
+     * @since 1.9
+     */
+    public boolean isEditAction(GuiMappingContext context) {
+        return context.isTypeElementAction() && context.getTypeElementAsAction().getEditFeature() != null;
+    }
+
+    public boolean isEditActionWithEdited(GuiMappingContext context) {
+        return isEditAction(context) && context.getTypeElementAsAction().getEditFeature().hasEditedMethod();
     }
 }

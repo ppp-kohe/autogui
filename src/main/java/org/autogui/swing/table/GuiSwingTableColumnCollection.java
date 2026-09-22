@@ -1052,8 +1052,13 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public GuiMappingContext getContext() {
-            return columnWithContext().getContext();
+        public GuiMappingContext getSwingViewContext() {
+            return columnWithContext().getSwingViewContext();
+        }
+
+        @Override
+        public List<?> getSwingViewSubNodes() {
+            return List.of(column);
         }
 
         @Override
@@ -1161,11 +1166,6 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         @Override
         public void setComparator(Comparator<?> comparator) {
             column.setComparator(comparator);
-        }
-
-        @Override
-        public void shutdown() {
-            column.shutdown();
         }
 
         @Override

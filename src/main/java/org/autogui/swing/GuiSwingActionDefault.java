@@ -1,17 +1,20 @@
 package org.autogui.swing;
 
+import org.autogui.GuiListSelectionUpdater;
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiReprAction;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.swing.table.GuiSwingTableColumnSet;
 import org.autogui.swing.util.PopupCategorized;
-import org.autogui.GuiListSelectionUpdater;
 import org.autogui.swing.util.SwingDeferredRunner;
+import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.Serial;
 import java.util.*;
 import java.util.List;
@@ -25,16 +28,36 @@ import java.util.function.Supplier;
  * An instance of the class is also registered for table-column, but the instance will not be used.
  */
 public class GuiSwingActionDefault implements GuiSwingAction {
+    protected GuiSwingMapperSet mapperSet;
+
+    public GuiSwingActionDefault(GuiSwingMapperSet mapperSet) {
+        this.mapperSet = mapperSet;
+    }
+
     public GuiSwingActionDefault() {}
     @Override
     public Action createAction(GuiMappingContext context, GuiSwingView.ValuePane<?> pane,
                                List<GuiSwingViewCollectionTable.CollectionTable> tables) {
+        List<ResultAction> resultActions = new ArrayList<>();
+        resultActions.addAll(getTableConversions(context, tables));
+        resultActions.addAll(getEditStart(context, pane));
 
-        List<TableSelectionConversion> conversions = getTableConversions(context, tables);
         ExecutionAction a = new ExecutionAction(context, pane::getSpecifier);
-        a.setResultTarget(r ->
-            conversions.forEach(c -> c.run(r)));
+        a.setResultActions(resultActions);
         return a;
+    }
+
+    public List<ResultAction> getEditStart(GuiMappingContext context, GuiSwingView.ValuePane<?> pane) {
+        if (context.isReprAction() && context.getReprAction().isEditAction(context) && mapperSet != null &&
+            !context.getChildren().isEmpty()) {
+            var sourceContext = context.getChildren().getFirst();
+            var editorContext = sourceContext.copyDetachedTree();
+            editorContext.setPreferences(sourceContext.getPreferences());
+            if (mapperSet.view(editorContext) instanceof GuiSwingView paneSource) {
+                return List.of(new ResultActionEditFinish(context, editorContext, paneSource.createView(editorContext, GuiSwingView.specifierManagerRoot())));
+            }
+        }
+        return Collections.emptyList();
     }
 
     /**
@@ -58,14 +81,24 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         List<TableSelectionConversion> conversions = new ArrayList<>();
         for (GuiSwingViewCollectionTable.CollectionTable table : tables) {
             if (action.isSelectionChangeRowIndicesAction(context, table.getSwingViewContext())) {
-                conversions.add(new TableSelectionConversion(table, GuiSwingTableColumnSet::createChangeIndices));
+                conversions.add(new TableSelectionConversion(context, table, GuiSwingTableColumnSet::createChangeIndices));
             } else if (action.isSelectionChangeRowAndColumnIndicesAction(context, table.getSwingViewContext())) {
-                conversions.add(new TableSelectionConversion(table, GuiSwingTableColumnSet::createChangeIndicesRowAndColumn));
+                conversions.add(new TableSelectionConversion(context, table, GuiSwingTableColumnSet::createChangeIndicesRowAndColumn));
             } else if (action.isSelectionChangeAction(context, table.getSwingViewContext())) {
-                conversions.add(new TableSelectionConversion(table, GuiSwingTableColumnSet::createChangeValues));
+                conversions.add(new TableSelectionConversion(context, table, GuiSwingTableColumnSet::createChangeValues));
             }
         }
         return conversions;
+    }
+
+    /**
+     * @since 1.9
+     */
+    public interface ResultAction extends GuiSwingFeature {
+        default void run(GuiReprValue.ObjectSpecifier objectSpecifier, ActionEvent originalEvent, Object o) {
+            run(o);
+        }
+        void run(Object o);
     }
 
     /**
@@ -80,18 +113,39 @@ public class GuiSwingActionDefault implements GuiSwingAction {
      *      }
      *  </pre>
      */
-    public static class TableSelectionConversion {
+    public static class TableSelectionConversion implements ResultAction {
+        protected GuiMappingContext context;
         public GuiSwingTableColumnSet.TableSelectionSource table;
         public Function<Object, GuiSwingTableColumnSet.TableSelectionChange> conversion;
 
-        public TableSelectionConversion(GuiSwingTableColumnSet.TableSelectionSource table,
+        public TableSelectionConversion(GuiMappingContext context, GuiSwingTableColumnSet.TableSelectionSource table,
                                         Function<Object, GuiSwingTableColumnSet.TableSelectionChange> conversion) {
+            this.context = context;
             this.table = table;
             this.conversion = conversion;
         }
 
+        @Override
         public void run(Object o) {
             table.selectionActionFinished(false, conversion.apply(o));
+        }
+
+        @Override
+        public GuiMappingContext getSwingViewContext() {
+            return context;
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return GuiReprValue.NONE;
+        }
+
+        @Override
+        public void prepareForRefresh() { }
+
+        @Override
+        public List<?> getSwingViewSubNodes() {
+            return List.of();
         }
     }
 
@@ -100,7 +154,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
      * the icon will be automatically determined by the name of the context via {@link GuiSwingIcons}
      */
     public static class ExecutionAction extends GuiSwingTaskRunner.ContextAction implements PopupCategorized.CategorizedMenuItemAction,
-            GuiSwingKeyBinding.RecommendedKeyStroke {
+            GuiSwingKeyBinding.RecommendedKeyStroke, GuiSwingFeature {
         @Serial private static final long serialVersionUID = 1L;
 
         protected Consumer<Object> resultTarget;
@@ -112,6 +166,8 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         /** the message of the confirmation dialog showen when {@link #needToConfirm}
          * @since 1.8 */
         protected String confirmDescription;
+
+        /** @since 1.9 */protected List<ResultAction> resultActions = Collections.emptyList();
 
         @SuppressWarnings("this-escape")
         public ExecutionAction(GuiMappingContext context, GuiSwingView.SpecifierManager targetSpecifier) {
@@ -153,6 +209,15 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             this.resultTarget = resultTarget;
         }
 
+        public void setResultActions(List<ResultAction> resultActions) {
+            this.resultActions = resultActions;
+        }
+
+        @Override
+        public List<?> getSwingViewSubNodes() {
+            return resultActions;
+        }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             if (!running.getAndSet(true)) {
@@ -169,9 +234,14 @@ public class GuiSwingActionDefault implements GuiSwingAction {
                 executeContextTask(() -> executeAction(specifier, e),
                         r -> {
                             running.set(false);
-                            if (resultTarget != null) {
+                            if (resultTarget != null || !resultActions.isEmpty()) {
                                 r.executeIfPresent(res ->
-                                        SwingDeferredRunner.invokeLater(() -> resultTarget.accept(res)));
+                                        SwingDeferredRunner.invokeLater(() -> {
+                                            if (resultTarget != null) {
+                                                resultTarget.accept(res);
+                                            }
+                                            resultActions.forEach(c -> c.run(specifier, e, res));
+                                        }));
                             }
                         });
             };
@@ -245,7 +315,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
          * @since 1.8
          */
         public Object executeAction(GuiReprValue.ObjectSpecifier specifier, ActionEvent e) {
-            return getContext().executeAction(specifier);
+            return getSwingViewContext().executeAction(specifier);
         }
 
         @Override
@@ -259,16 +329,26 @@ public class GuiSwingActionDefault implements GuiSwingAction {
 
         @Override
         public KeyStroke getRecommendedKeyStroke() {
-            return GuiSwingKeyBinding.getKeyStroke(getContext().getAcceleratorKeyStroke());
+            return GuiSwingKeyBinding.getKeyStroke(getSwingViewContext().getAcceleratorKeyStroke());
         }
 
         @Override
         public GuiSwingKeyBinding.KeyPrecedenceSet getRecommendedKeyPrecedence() {
-            if (getContext().isAcceleratorKeyStrokeSpecified()) {
+            if (getSwingViewContext().isAcceleratorKeyStrokeSpecified()) {
                 return new GuiSwingKeyBinding.KeyPrecedenceSet(GuiSwingKeyBinding.PRECEDENCE_FLAG_USER_SPECIFIED);
             } else {
                 return new GuiSwingKeyBinding.KeyPrecedenceSet();
             }
+        }
+
+        @Override
+        public GuiMappingContext getSwingViewContext() {
+            return this.getContext();
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return targetSpecifier.getSpecifier();
         }
     }
 
@@ -319,6 +399,140 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             if (c != null) {
                 get(c).prepareAction();
             }
+        }
+    }
+
+    public static class ResultActionEditFinish implements ResultAction {
+        protected GuiMappingContext actionContext;
+        protected GuiMappingContext editorContext;
+        protected JComponent rootPane;
+        protected JFrame frame;
+
+        protected GuiReprValue.ObjectSpecifier objectSpecifier;
+        protected Object currentTarget;
+
+        public ResultActionEditFinish(GuiMappingContext actionContext, GuiMappingContext editorContext, JComponent rootPane) {
+            this.actionContext = actionContext;
+            this.editorContext = editorContext;
+            this.rootPane = rootPane;
+        }
+
+        @Override
+        public void run(GuiReprValue.ObjectSpecifier objectSpecifier, ActionEvent e, Object o) {
+            if (frame == null) {
+                initFrame();
+            }
+            setupObject(objectSpecifier, o);
+            show(e);
+        }
+
+        protected void initFrame() {
+            frame = new JFrame();
+            frame.setType(Window.Type.UTILITY);
+            JPanel content = new JPanel(new BorderLayout());
+            {
+                content.add(rootPane, BorderLayout.CENTER);
+                var s = UIManagerUtil.getInstance().getScaledSizeInt(5);
+                content.setBorder(BorderFactory.createEmptyBorder(s, s, s, s));
+
+                initButtonPane(content);
+            }
+            frame.setContentPane(content);
+            frame.setTitle(editorContext.getDisplayName());
+            frame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    finishEdit(false);
+                }
+            });
+            frame.pack();
+        }
+
+        protected void initButtonPane(JPanel content) {
+            var actionRepr = actionContext.getReprAction();
+            if (actionRepr.isEditActionWithEdited(actionContext)) {
+                var actionType = actionContext.getTypeElementAsAction();
+                JPanel buttonPane = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+                if (actionType.getEditFeature().isEditedMethodTakingOk()) {
+                    buttonPane.add(new JButton(new EditFinishAction(false, this::finishEdit)));
+                }
+                buttonPane.add(new JButton(new EditFinishAction(true, this::finishEdit)));
+                content.add(buttonPane, BorderLayout.SOUTH);
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        protected void setupObject(GuiReprValue.ObjectSpecifier objectSpecifier, Object o) {
+            this.objectSpecifier = objectSpecifier;
+            if (rootPane instanceof GuiSwingView.ValuePane<?> vp) {
+                var v = (GuiSwingView.ValuePane<Object>) vp;
+                v.setSwingViewValueWithUpdate(o);
+            }
+            this.currentTarget = o;
+        }
+
+        protected void show(ActionEvent e) {
+            if (e != null && e.getSource() instanceof Component component) {
+                var pos = component.getLocationOnScreen();
+                pos.x += (int) (component.getWidth() * 0.5);
+                pos.y += (int) (component.getHeight() * 0.7);
+                frame.setLocation(pos);
+            }
+            frame.setVisible(true);
+        }
+
+        @Override
+        public void run(Object o) {
+            run(objectSpecifier, null, o);
+        }
+
+        @Override
+        public void shutdownSwingView() {
+            frame.dispose();
+            editorContext.shutdown();
+        }
+
+        public void finishEdit(boolean ok) {
+            if (currentTarget != null) {
+                actionContext.getReprAction().executedEditedAction(actionContext, objectSpecifier, currentTarget, ok);
+                actionContext.updateSourceFromRoot();
+            }
+            currentTarget = null;
+            frame.setVisible(false);
+        }
+
+        @Override
+        public GuiMappingContext getSwingViewContext() {
+            return editorContext;
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return objectSpecifier;
+        }
+
+        @Override
+        public void prepareForRefresh() { }
+
+        @Override
+        public List<?> getSwingViewSubNodes() {
+            return List.of();
+        }
+    }
+
+    public static class EditFinishAction extends AbstractAction {
+        protected boolean ok;
+        protected Consumer<Boolean> callback;
+        @SuppressWarnings("this-escape")
+        public EditFinishAction(boolean ok, Consumer<Boolean> callback) {
+            this.ok = ok;
+            this.callback = callback;
+            putValue(NAME, ok ? "OK" : "Cancel");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            callback.accept(ok);
         }
     }
 }

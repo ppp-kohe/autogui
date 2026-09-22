@@ -4,10 +4,7 @@ import org.autogui.GuiIncluded;
 import org.autogui.GuiInits;
 import org.autogui.base.annotation.GuiDefaultInits;
 
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -61,11 +58,15 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     }
 
     public GuiTypeMemberProperty(String name, Method setter, Method getter, Field field, GuiTypeElement type) {
-        this(name, setter.getName(), getter.getName(), field.getName(), type);
+        this(name, name(setter), name(getter), name(field), type);
         this.setter = setter;
         this.getter = getter;
         this.field = field;
         this.type = type;
+    }
+
+    private static String name(Member member) {
+        return member == null ? null : member.getName();
     }
 
     public void setSetter(Method setter) {
@@ -97,13 +98,13 @@ public class GuiTypeMemberProperty extends GuiTypeMember {
     }
 
     public Field getField() {
-        if (field != null && fieldName != null && getOwner() != null) {
+        if (field == null && fieldName != null && getOwner() != null) {
             Class<?> type = getOwner().getType();
             if (type != null) {
                 GuiTypeBuilder b = new GuiTypeBuilder();
                 field = Arrays.stream(type.getFields())
                         .filter(f -> f.getName().equals(fieldName))
-                        .filter(b::isMemberField)
+                        .filter(b::isMemberFieldWithoutAnnotation)
                         .findFirst()
                         .orElse(null);
             }

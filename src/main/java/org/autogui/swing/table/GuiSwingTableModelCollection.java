@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * a table-model with {@link GuiMappingContext}
  */
 @SuppressWarnings("this-escape")
-public class GuiSwingTableModelCollection extends ObjectTableModel {
+public class GuiSwingTableModelCollection extends ObjectTableModel implements GuiSwingFeature {
     @Serial private static final long serialVersionUID = 1L;
     protected GuiMappingContext elementContext;
     protected Supplier<ObjectSpecifier> tableSpecifier;
@@ -50,7 +50,8 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         setSource(source);
     }
 
-    public GuiMappingContext getContext() {
+    @Override
+    public GuiMappingContext getSwingViewContext() {
         return runner.getContext();
     }
 
@@ -59,12 +60,17 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         columns = new GuiSwingTableModelColumns(this);
     }
 
+    @Override
+    public ObjectSpecifier getSpecifier() {
+        return tableSpecifier.get();
+    }
+
     public GuiSwingTableModelColumns getColumnsWithContext() {
         return (GuiSwingTableModelColumns) columns;
     }
 
     protected void setElementContextFromContext() {
-        GuiMappingContext context = getContext();
+        GuiMappingContext context = getSwingViewContext();
         elementContext = context.getReprCollectionTable().getElementContext(context);
     }
 
@@ -227,10 +233,10 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
 
         public GuiMappingContext getPrefsContextForColumn(ObjectTableColumn column) {
-            if (column instanceof ObjectTableColumnWithContext) {
-                return ((ObjectTableColumnWithContext) column).getContext();
+            if (column instanceof ObjectTableColumnWithContext columnContext) {
+                return columnContext.getSwingViewContext();
             } else {
-                return tableModel.getContext();
+                return tableModel.getSwingViewContext();
             }
         }
 
@@ -245,7 +251,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
                 ((PreferencesUpdateSupport) column).setPreferencesUpdater(prefsUpdater);
             }
             if (currentPreferences != null && column instanceof ObjectTableColumnWithContext) {
-                ((ObjectTableColumnWithContext) column).loadSwingPreferences(currentPreferences);
+                ((ObjectTableColumnWithContext) column).loadSwingPreferences(currentPreferences, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
             }
 
             pendingOrders.removeIf(o -> o.applyTo(this));
@@ -281,7 +287,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         }
 
         public void applyPrefsTo(ObjectTableColumnWithContext column, DynamicColumnContainer d) {
-            GuiPreferences prefs = column.getContext().getPreferences();
+            GuiPreferences prefs = column.getSwingViewContext().getPreferences();
             try (var lock = prefs.lock()) {
                 lock.use();
                 PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth();
@@ -336,7 +342,7 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
         public void loadPrefsTo(GuiPreferences parentPrefs, ObjectTableColumnWithContext column, GuiSwingPrefsApplyOptions options) {
             try {
                 options.begin(column, parentPrefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
-                GuiPreferences prefs = parentPrefs.getDescendant(column.getContext());
+                GuiPreferences prefs = parentPrefs.getDescendant(column.getSwingViewContext());
                 PreferencesForTableColumnWidth w = new PreferencesForTableColumnWidth();
                 options.loadFromAndApplyTo(w, column.asColumn(), prefs);
 
@@ -418,16 +424,16 @@ public class GuiSwingTableModelCollection extends ObjectTableModel {
                 if (mi != vi) {
                     o = new PreferencesForTableColumnOrder(mi, vi);
                 }
-                if (!(c instanceof ObjectTableColumnWithContext)) {
-                    nonContextWidth.put(mi, w);
-                    if (o != null) {
-                        nonContextOrder.put(mi, o);
-                    }
-                } else {
-                    GuiPreferences subPref = prefs.getDescendant(((ObjectTableColumnWithContext) c).getContext());
+                if (c instanceof ObjectTableColumnWithContext colContext) {
+                    GuiPreferences subPref = prefs.getDescendant(colContext.getSwingViewContext());
                     w.saveTo(subPref);
                     if (o != null) {
                         o.saveTo(subPref);
+                    }
+                } else {
+                    nonContextWidth.put(mi, w);
+                    if (o != null) {
+                        nonContextOrder.put(mi, o);
                     }
                 }
             }

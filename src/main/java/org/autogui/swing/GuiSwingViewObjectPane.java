@@ -83,14 +83,13 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
     public List<GuiSwingViewCollectionTable.CollectionTable> collectTables(GuiMappingContext context, ObjectPane pane) {
         List<GuiMappingContext> tableContexts = new ArrayList<>();
         findCollectionTables(context, tableContexts);
-        return GuiSwingView.collectNonNullByFunction(pane, p -> {
-            if (((ValuePane<?>) p) instanceof GuiSwingViewCollectionTable.CollectionTable &&
-                    tableContexts.contains(p.getSwingViewContext())) {
-                return (GuiSwingViewCollectionTable.CollectionTable) ((ValuePane<?>) p);
-            } else {
-                return null;
+        List<GuiSwingViewCollectionTable.CollectionTable> results = new ArrayList<>();
+        GuiSwingFeature.traverse(pane, GuiSwingViewCollectionTable.CollectionTable.class, table -> {
+            if (tableContexts.contains(table.getSwingViewContext())) {
+                results.add(table);
             }
         });
+        return results;
     }
 
     public void findCollectionTables(GuiMappingContext context, List<GuiMappingContext> tables) {
@@ -265,6 +264,15 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
 
         public List<Action> getActions() {
             return actions;
+        }
+
+        @Override
+        public List<?> getSwingViewSubNodes() {
+            var panes = ValuePane.super.getSwingViewSubNodes();
+            List<Object> list = new ArrayList<>(panes.size() + getActions().size());
+            list.addAll(panes);
+            list.addAll(getActions());
+            return list;
         }
 
         public JComponent getContentPane() {

@@ -133,9 +133,9 @@ import java.util.stream.IntStream;
  */
 public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChangeListener {
     protected JPanel mainPane;
-    protected GuiMappingContext rootContext;
+//    protected GuiMappingContext rootContext;
     protected RootView rootPane;
-    protected JComponent rootComponent;
+//    protected JComponent rootComponent;
     protected JTable list;
     protected PreferencesListModel listModel;
     /* @since 1.3 */
@@ -150,11 +150,8 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
     protected Map<GuiPreferences, GuiSwingPrefsEditor> settingsEditors = new HashMap<>();
 
     public interface RootView {
-        GuiMappingContext getContext();
-        JComponent getViewComponent();
-        default void loadPreferences(GuiPreferences prefs) {
-            loadPreferences(prefs, GuiSwingPrefsApplyOptions.APPLY_OPTIONS_DEFAULT);
-        }
+        GuiMappingContext getContextForPreferences();
+        JComponent getViewComponentForPreferences();
 
         /**
          * @param prefs the source prefs
@@ -164,7 +161,48 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
          */
         void loadPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options);
         void savePreferences(GuiPreferences prefs);
+    }
 
+    public static class RootViewComponent implements RootView {
+        protected GuiMappingContext rootContext;
+        protected JComponent rootComponent;
+
+        public RootViewComponent(GuiMappingContext rootContext, JComponent rootComponent) {
+            this.rootContext = rootContext;
+            this.rootComponent = rootComponent;
+        }
+
+        @Override
+        public GuiMappingContext getContextForPreferences() {
+            return rootContext;
+        }
+
+        @Override
+        public JComponent getViewComponentForPreferences() {
+            return rootComponent;
+        }
+
+        @Override
+        public void loadPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
+            if (rootComponent instanceof GuiSwingView.ValuePane<?> valuePane) {
+                if (!options.isSkippingValue()) {
+                    valuePane.loadSwingPreferences(prefs, options);
+                }
+            }
+            GuiSwingFeature.loadChildren(prefs, rootComponent, options);
+        }
+
+        @Override
+        public void savePreferences(GuiPreferences prefs) {
+            if (rootComponent instanceof GuiSwingView.ValuePane<?> valuePane) {
+                valuePane.saveSwingPreferences(prefs);
+            }
+            GuiPreferences rootPrefs = rootContext.getPreferences();
+            try (var lock = rootPrefs.lock()) {
+                lock.use();
+                GuiSwingFeature.saveChildren(rootPrefs, rootComponent);
+            }
+        }
     }
 
     @SuppressWarnings("this-escape")
@@ -177,15 +215,10 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
     @SuppressWarnings("this-escape")
 
     public GuiSwingPreferences(GuiMappingContext rootContext, JComponent rootComponent) {
-        this.rootContext = rootContext;
-        this.rootComponent = rootComponent;
-        init();
-        initRunner();
+        this(new RootViewComponent(rootContext, rootComponent));
     }
 
     public void setRootView(RootView rootPane) {
-        this.rootContext = rootPane.getContext();
-        this.rootComponent = rootPane.getViewComponent();
         this.rootPane = rootPane;
     }
 
@@ -277,7 +310,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
     }
 
     protected void initSettingPrefs() {
-        prefsWindowUpdater = new GuiSwingPrefsSupports.WindowPreferencesUpdater(null, rootContext, "$preferencesWindow");
+        prefsWindowUpdater = new GuiSwingPrefsSupports.WindowPreferencesUpdater(null, rootPane.getContextForPreferences(), "$preferencesWindow");
     }
 
     private JButton actionButton(Action action) {
@@ -294,7 +327,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
     }
 
     public GuiMappingContext getRootContext() {
-        return rootContext;
+        return rootPane.getContextForPreferences();
     }
 
     public boolean isEmpty(GuiPreferences prefs) {
@@ -353,35 +386,15 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
      * @since 1.4
      */
     public void applyPreferences(GuiSwingPrefsApplyOptions options) {
-        GuiPreferences prefs = rootContext.getPreferences();
+        GuiPreferences prefs = rootPane.getContextForPreferences().getPreferences();
         try (var lock = prefs.lock()) {
             lock.use();
-            if (rootPane != null) {
-                rootPane.loadPreferences(prefs, options);
-            } else {
-                if (rootComponent instanceof GuiSwingView.ValuePane<?> valuePane) {
-                    if (!options.isSkippingValue()) {
-                        valuePane.loadSwingPreferences(prefs, options);
-                    }
-                }
-                GuiSwingView.loadChildren(prefs, rootComponent, options);
-            }
+            rootPane.loadPreferences(prefs, options);
         }
     }
 
     public void savePreferences(GuiPreferences prefs) {
-        if (rootPane != null) {
-            rootPane.savePreferences(prefs);
-        } else {
-            if (rootComponent instanceof GuiSwingView.ValuePane<?> valuePane) {
-                valuePane.saveSwingPreferences(prefs);
-            }
-            GuiPreferences rootPrefs = rootContext.getPreferences();
-            try (var lock = rootPrefs.lock()) {
-                lock.use();
-                GuiSwingView.saveChildren(rootPrefs, rootComponent);
-            }
-        }
+        rootPane.savePreferences(prefs);
     }
 
     public GuiSwingPrefsSupports.WindowPreferencesUpdater getPrefsWindowUpdater() {
@@ -1135,13 +1148,13 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
 
     public void initRunner() {
         updater = new ScheduledTaskRunner<>(1000, this::runPreferencesUpdate);
-        initRunnerToSupports(rootComponent);
+        initRunnerToSupports(rootPane.getViewComponentForPreferences());
         prefsWindowUpdater.setUpdater(getUpdateRunner());
         initRunnerPrefsDefault();
     }
 
     protected void initRunnerToSupports(Component component) {
-        GuiSwingView.forEach(GuiSwingPrefsSupports.PreferencesUpdateSupport.class, component,
+        GuiSwingFeature.traverse(component, GuiSwingPrefsSupports.PreferencesUpdateSupport.class,
                 c -> c.setPreferencesUpdater(getUpdateRunner()));
     }
 
@@ -1154,7 +1167,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
     }
 
     protected void initRunnerPrefsDefault() {
-        var prefsDefault = rootContext.getPreferences();
+        var prefsDefault = getRootContext().getPreferences();
         if (!prefsDefault.getStoreChangeListeners().contains(this)) {
             prefsDefault.addStoreChangeListener(this);
         }
@@ -1185,7 +1198,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
     }
 
     protected void flushRootPrefs() {
-        GuiPreferences prefs = rootContext.getPreferences();
+        GuiPreferences prefs = getRootContext().getPreferences();
         try (var lock = prefs.lock()) {
             lock.use();
             prefs.getValueStore().flush();
@@ -1193,7 +1206,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
     }
 
     protected void updateDefaultDisplay() {
-        var prefsDefault = rootContext.getPreferences();
+        var prefsDefault = getRootContext().getPreferences();
         var editor = settingsEditors.get(prefsDefault);
         if (editor != null) {
             editor.revalidate();

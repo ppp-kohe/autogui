@@ -2,6 +2,7 @@ package org.autogui.swing;
 
 import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiPreferences;
+import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.prefs.GuiSwingPrefsSupports;
@@ -14,13 +15,13 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.Serial;
+import java.util.List;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * a root window wrapping a {@link GuiSwingRootPane}.
  */
-public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootView {
+public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootView, GuiSwingFeature {
     @Serial private static final long serialVersionUID = 1L;
     protected GuiSwingRootPane contextRootPane;
     protected GuiSwingPrefsSupports.WindowPreferencesUpdater preferencesUpdater;
@@ -134,8 +135,13 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     }
 
     @Override
-    public GuiMappingContext getContext() {
-        return contextRootPane.getContext();
+    public GuiMappingContext getSwingViewContext() {
+        return contextRootPane.getSwingViewContext();
+    }
+
+    @Override
+    public GuiMappingContext getContextForPreferences() {
+        return contextRootPane.getContextForPreferences();
     }
 
     public GuiSwingRootPane getContextRootPane() {
@@ -143,8 +149,8 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     }
 
     @Override
-    public JComponent getViewComponent() {
-        return contextRootPane.getViewComponent();
+    public JComponent getViewComponentForPreferences() {
+        return contextRootPane.getViewComponentForPreferences();
     }
 
     protected void init() {
@@ -184,13 +190,13 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
 
     protected void initIcon() {
         int wh = UIManagerUtil.getInstance().getScaledSizeInt(256);
-        ApplicationIconGenerator gen = new ApplicationIconGenerator(wh, wh, GuiMappingContext.nameSplit(contextRootPane.getContext().getName(), true));
+        ApplicationIconGenerator gen = new ApplicationIconGenerator(wh, wh, GuiMappingContext.nameSplit(contextRootPane.getSwingViewContext().getName(), true));
         appIcon = gen.getImage();
         updateAppIcon();
     }
 
     protected void initPrefsUpdater() {
-        preferencesUpdater = new GuiSwingPrefsSupports.WindowPreferencesUpdater(this, contextRootPane.getContext());
+        preferencesUpdater = new GuiSwingPrefsSupports.WindowPreferencesUpdater(this, contextRootPane.getSwingViewContext());
         preferencesUpdater.setUpdater(contextRootPane.getPreferences().getUpdateRunner());
         addComponentListener(preferencesUpdater);
         contextRootPane.getPreferences().setRootView(this);
@@ -290,61 +296,25 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
     }
 
     /**
-     *
-     * @param context the searched context
-     * @return a descendant value pane holding the context, or null.
-     *            wrappers which have the same context are avoided.
-     */
-    public GuiSwingView.ValuePane<Object> getDescendantByContext(GuiMappingContext context) {
-        return contextRootPane.getDescendantByContext(context);
-    }
-
-    /**
-     * @param value the searched value
-     * @return a descendant value pane holding the value, or null.
-     *    wrappers holding the same context are avoided.
-     */
-    public GuiSwingView.ValuePane<Object> getDescendantByValue(Object value) {
-        return contextRootPane.getDescendantByValue(value);
-    }
-
-
-    /**
-     * @param valuePredicate the condition holds the searched value
-     * @return a first descendant value pane holding a value matched by the predicate, or null.
-     *    wrappers holding the same context are avoided.
-     */
-    public GuiSwingView.ValuePane<Object> getDescendantByValueIf(Predicate<Object> valuePredicate) {
-        return contextRootPane.getDescendantByValueIf(valuePredicate);
-    }
-
-
-    /**
-     * @param name the searched context name
-     * @return a child (or descendant for wrappers) value pane holding the named context, or null.
-     *    wrappers holding the same context are avoided.
-     */
-    public GuiSwingView.ValuePane<Object> getChildByName(String name) {
-        return contextRootPane.getChildByName(name);
-    }
-
-    public GuiSwingActionDefault.ExecutionAction getActionByName(String name) {
-        return contextRootPane.getActionByName(name);
-    }
-
-    public GuiSwingActionDefault.ExecutionAction getActionByContext(GuiMappingContext context) {
-        return contextRootPane.getActionByContext(context);
-    }
-
-    public GuiSwingActionDefault.ExecutionAction getDescendantActionByContext(GuiMappingContext context) {
-        return contextRootPane.getDescendantActionByContext(context);
-    }
-
-    /**
      * the convenient method for refreshing the pane
      * @since 1.5
      */
     public void refreshByContext() {
         contextRootPane.refreshByContext();
+    }
+
+    @Override
+    public GuiReprValue.ObjectSpecifier getSpecifier() {
+        return contextRootPane.getSpecifier();
+    }
+
+    @Override
+    public void prepareForRefresh() {
+        contextRootPane.prepareForRefresh();
+    }
+
+    @Override
+    public List<?> getSwingViewSubNodes() {
+        return List.of(getComponents());
     }
 }

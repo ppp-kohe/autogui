@@ -447,7 +447,16 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void setSettingsWindow(SettingsWindow settingsWindow) {
             this.settingsWindow = settingsWindow;
-            getObjectTableModel().getColumnsWithContext().setSettingsWindow(settingsWindow);
+        }
+
+        @Override
+        public List<?> getSwingViewSubNodes() {
+            List<?> views = ValuePane.super.getSwingViewSubNodes();
+            List<Object> objs = new ArrayList<>(views.size() + 1 + getActions().size());
+            objs.addAll(views);
+            objs.add(getObjectTableModel());
+            objs.addAll(getActions());
+            return objs;
         }
 
         @Override
@@ -533,12 +542,10 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         public void setPreferencesUpdater(Consumer<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater) {
             this.preferencesUpdater.setUpdater(updater);
-            getObjectTableModel().getColumnsWithContext().setPreferencesUpdater(updater);
         }
 
         @Override
         public void shutdownSwingView() {
-            getObjectTableModel().getColumns().shutdown();
             selectionRunner.shutdown();
         }
 
@@ -724,7 +731,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 GuiSwingView.loadPreferencesDefault(this, prefs, options);
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 options.apply(preferencesUpdater, targetPrefs);
-                getObjectTableModel().getColumnsWithContext().loadSwingPreferences(targetPrefs, options);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
                 options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
@@ -738,7 +744,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                 GuiPreferences targetPrefs = prefs.getDescendant(getSwingViewContext());
                 PreferencesForTable p = preferencesUpdater.getPrefs();
                 p.saveTo(targetPrefs);
-                getObjectTableModel().getColumnsWithContext().saveSwingPreferences(targetPrefs);
             } catch (Exception ex) {
                 GuiLogManager.get().logError(ex);
             }
