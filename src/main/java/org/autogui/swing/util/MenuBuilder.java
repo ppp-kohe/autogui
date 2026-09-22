@@ -180,17 +180,26 @@ public class MenuBuilder {
         protected String subCategory = "";
         protected JLabel label;
         protected String name;
+        protected UIManagerUtil.CachedColor disabledColor;
         @SuppressWarnings("this-escape")
         public MenuLabel(String name, String subCategory) {
             super(new FlowLayout(FlowLayout.LEADING, 3, 3));
             this.name = name;
             label = new JLabel(name);
+            disabledColor = UIManagerUtil.cachedColor(() -> UIManagerUtil.getInstance().getMenuDisabledForeground());
+            initLabel();
+            add(label);
+            setOpaque(false);
+            this.subCategory = subCategory;
+        }
+
+        protected void initLabel() {
             UIManagerUtil ui = UIManagerUtil.getInstance();
             int h = ui.getScaledSizeInt(1);
             int l = ui.getScaledSizeInt(15);
             int r = ui.getScaledSizeInt(10);
 
-            Color color = ui.getMenuDisabledForeground();
+            Color color = disabledColor.color();
 
             if (subCategory.equals(PopupCategorized.SUB_CATEGORY_LABEL_VALUE)) {
                 label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
@@ -217,9 +226,6 @@ public class MenuBuilder {
                 label.setBorder(BorderFactory.createEmptyBorder(h, l, h, r));
                 label.setForeground(convertColor(color, this::changeBrightness));
             }
-            add(label);
-            setOpaque(false);
-            this.subCategory = subCategory;
         }
 
         private void changeSaturation(float[] fs) {
@@ -261,6 +267,14 @@ public class MenuBuilder {
         @Override
         public String getSubCategory() {
             return subCategory;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            if (disabledColor.isUpdated()) {
+                initLabel();
+            }
+            super.paintComponent(g);
         }
     }
 

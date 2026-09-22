@@ -197,17 +197,21 @@ public class GuiSwingPrefsHistoryValues {
             this.source = source;
             this.updater = updater;
             getDocument().addDocumentListener(this);
-            setFont(UIManagerUtil.getInstance().getConsoleFont());
+
             setTextFromSource(true);
         }
 
+        @Override
+        protected void paintComponent(Graphics g) {
+            var u = UIManagerUtil.getInstance();
+            setForeground(editing ? u.getLabelDisabledForeground() : u.getTextPaneForeground());
+            setFont(u.getConsoleFont());
+
+            super.paintComponent(g);
+        }
+
         public void setEditing(boolean b) {
-            boolean changed = this.editing != b;
             editing = b;
-            if (changed) {
-                var u = UIManagerUtil.getInstance();
-                setForeground(b ? u.getLabelDisabledForeground() : u.getTextPaneForeground());
-            }
         }
 
         public void setTextFromSource(boolean forceWhileEditing) {

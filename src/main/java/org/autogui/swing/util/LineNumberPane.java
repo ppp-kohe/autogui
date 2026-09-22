@@ -6,6 +6,7 @@ import javax.swing.text.*;
 import java.awt.*;
 import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeListener;
 import java.io.Serial;
 import java.util.*;
 import java.util.List;
@@ -25,8 +26,6 @@ public class LineNumberPane extends JComponent implements DocumentListener {
 
     protected static boolean debug = false;
 
-    protected Color noOverlappingColor;
-
     protected CaretListener caretRepaintListener;
     protected ChangeListener viewportRepaintListener;
     protected AncestorListener fieldInstallListener;
@@ -39,25 +38,15 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         };
     }
 
+    protected PropertyChangeListener documentChangeListener;
+    protected PropertyChangeListener uiChangeListener;
+
     @SuppressWarnings("this-escape")
     public LineNumberPane(JTextComponent field) {
         this.field = field;
         setOpaque(true);
-        UIManagerUtil ui = UIManagerUtil.getInstance();
-        setBackground(ui.getLabelBackground());
-        setForeground(ui.getLabelForeground());
-        Color fc = getForeground();
-        Color bc = getBackground();
-
-        noOverlappingColor = new Color(getCenter(fc.getRed(), bc.getRed()),
-                    getCenter(fc.getBlue(), bc.getGreen()),
-                    getCenter(fc.getBlue(), bc.getBlue()),
-                    fc.getAlpha());
-
-        Font font = UIManagerUtil.getInstance().getEditorPaneFont();
-        font = font.deriveFont(font.getSize2D() * 0.84f);
-        setFont(font);
-
+        initColor();
+        uiChangeListener = e -> initColor();
         caretRepaintListener = e -> repaint();
         viewportRepaintListener = e -> repaint();
         fieldInstallListener = new AncestorListener() {
@@ -74,7 +63,14 @@ public class LineNumberPane extends JComponent implements DocumentListener {
             @Override
             public void ancestorMoved(AncestorEvent event) { }
         };
-
+        documentChangeListener = e -> {
+            if (e.getOldValue() instanceof Document doc) {
+                doc.removeDocumentListener(LineNumberPane.this);
+            }
+            if (e.getNewValue() instanceof Document doc) {
+                doc.addDocumentListener(LineNumberPane.this);
+            }
+        };
         build();
     }
 
@@ -86,6 +82,16 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         }
     }
 
+    protected void initColor() {
+        UIManagerUtil ui = UIManagerUtil.getInstance();
+        setBackground(ui.getLabelBackground());
+        setForeground(ui.getLabelForeground());
+
+        Font font = UIManagerUtil.getInstance().getEditorPaneFont();
+        font = font.deriveFont(font.getSize2D() * 0.84f);
+        setFont(font);
+    }
+
     public void install() {
         var doc = field.getDocument();
         if (doc != null) {
@@ -94,18 +100,8 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         field.addCaretListener(caretRepaintListener);
         field.addAncestorListener(fieldInstallListener);
         installToScrollPane(scroll(field.getParent()));
-        installForDocumentChange();
-    }
-
-    public void installForDocumentChange() {
-        field.addPropertyChangeListener("document", e -> {
-            if (e.getOldValue() instanceof Document doc) {
-                doc.removeDocumentListener(LineNumberPane.this);
-            }
-            if (e.getNewValue() instanceof Document doc) {
-                doc.addDocumentListener(LineNumberPane.this);
-            }
-        });
+        field.addPropertyChangeListener("document", documentChangeListener);
+        field.addPropertyChangeListener("UI", uiChangeListener);
     }
 
     public void installToScrollPane(JScrollPane scrollPane) {
@@ -122,6 +118,8 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         }
         field.removeCaretListener(caretRepaintListener);
         field.removeAncestorListener(fieldInstallListener);
+        field.removePropertyChangeListener("document", documentChangeListener);
+        field.removePropertyChangeListener("UI", uiChangeListener);
         uninstallFromScrollPane(scroll(field.getParent()));
     }
 
@@ -299,11 +297,21 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         setPreferredSize(new Dimension(width, 1));
     }
 
+    private Color noOverlappingColor() {
+        Color fc = getForeground();
+        Color bc = getBackground();
+        return new Color(getCenter(fc.getRed(), bc.getRed()),
+                getCenter(fc.getBlue(), bc.getGreen()),
+                getCenter(fc.getBlue(), bc.getBlue()),
+                fc.getAlpha());
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         super.paintComponent(g);
+        Color noOverlappingColor = noOverlappingColor();
         try {
             int selStart = field.getSelectionStart();
             int selEnd = field.getSelectionEnd();
@@ -329,10 +337,10 @@ public class LineNumberPane extends JComponent implements DocumentListener {
             if (lineIndex == 0) {
                 paintLine(g2, 0, 0,
                         overlap(0, lines == 0 ? Integer.MAX_VALUE : linePosition.getFirst() - 1, selStart, selEnd),
-                        selfOffsetY);
+                        selfOffsetY, noOverlappingColor);
             }
             for (int i = lineIndex; i < endLineIndex; ++i) {
-                paintLine(g2, i, lines, selStart, selEnd, selfOffsetY);
+                paintLine(g2, i, lines, selStart, selEnd, selfOffsetY, noOverlappingColor);
             }
 
         } catch (Exception ex) {
@@ -342,14 +350,14 @@ public class LineNumberPane extends JComponent implements DocumentListener {
 
     protected Map<Font, Float> metricsCache = new HashMap<>();
 
-    public void paintLine(Graphics2D g, int i, int lines, int selStart, int selEnd, int selfOffsetY) throws Exception {
+    public void paintLine(Graphics2D g, int i, int lines, int selStart, int selEnd, int selfOffsetY, Color noOverlappingColor) throws Exception {
         int lineStart = linePosition.get(i);
         int lineEnd = i + 1 < lines ? linePosition.get(i + 1) - 1 : Integer.MAX_VALUE;
         boolean overlap = overlap(lineStart, lineEnd, selStart, selEnd);
-        paintLine(g, i + 1, lineStart, overlap, selfOffsetY);
+        paintLine(g, i + 1, lineStart, overlap, selfOffsetY, noOverlappingColor);
     }
 
-    public void paintLine(Graphics2D g, int i, int lineStart, boolean overlap, int selfOffsetY) throws Exception {
+    public void paintLine(Graphics2D g, int i, int lineStart, boolean overlap, int selfOffsetY, Color noOverlappingColor) throws Exception {
         if (overlap) {
             g.setColor(getForeground());
         } else {

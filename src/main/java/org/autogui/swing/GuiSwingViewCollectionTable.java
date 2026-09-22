@@ -191,6 +191,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             // and Nimbus LAF painter uses the background-color (if the color is a UIResource, it will be replaced by the style color)
             setBackground(u.getTableBackground());
             setForeground(u.getLabelForeground());
+            setGridColor(getAutoGridColor());
         }
 
         public void initName() {
@@ -223,7 +224,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void initGrid() {
             var ui = UIManagerUtil.getInstance();
             customHighlighting = ui.isTableCustomHighlighting();
-            setGridColor(getAutoGridColor());
             setShowVerticalLines(false);
             setShowHorizontalLines(true);
             setRowMargin(Math.max(1, ui.getScaledSizeInt(1)));
@@ -746,6 +746,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
 
         @Override
         protected void paintComponent(Graphics g) {
+            initColor();
             super.paintComponent(g);
             if (customHighlighting) {
                 Graphics2D g2 = (Graphics2D) g;

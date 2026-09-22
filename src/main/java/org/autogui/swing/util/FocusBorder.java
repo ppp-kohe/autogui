@@ -13,7 +13,6 @@ import java.util.Arrays;
  * @since 1.7
  */
 public class FocusBorder implements Border {
-    protected Color focusColor;
     protected BasicStroke[] strokes;
     /** @since 1.9 */ protected JComponent component;
 
@@ -57,10 +56,6 @@ public class FocusBorder implements Border {
         }
     }
 
-    public void initFocusColor() {
-        focusColor = SearchTextField.getFocusColor();
-    }
-
     public void initStrokes() {
         strokes = new BasicStroke[3];
         Arrays.fill(strokes, new BasicStroke(strokes.length / 2.0f));
@@ -73,14 +68,11 @@ public class FocusBorder implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        if (focusColor == null) {
-            initFocusColor();
-        }
         if (strokes == null){
             initStrokes();
         }
         if (hasFocus(c)) {
-            paintStrokes(g, x, y, width, height);
+            paintStrokesFocusColor(g, x, y, width, height, SearchTextField.getFocusColor());
         }
     }
 
@@ -94,7 +86,7 @@ public class FocusBorder implements Border {
     }
 
 
-    public void paintStrokes(Graphics g, int x, int y, int width, int height) {
+    public void paintStrokesFocusColor(Graphics g, int x, int y, int width, int height, Color focusColor) {
         Color color2 = new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 150);
         paintStrokes(g, x, y, width, height, color2);
     }

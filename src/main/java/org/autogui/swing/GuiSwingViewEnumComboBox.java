@@ -283,11 +283,9 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
         @Serial private static final long serialVersionUID = 1L;
 
         protected GuiMappingContext context;
-        protected Color disabledForeground;
 
         public PropertyEnumListRenderer(GuiMappingContext context) {
             this.context = context;
-            disabledForeground = UIManagerUtil.getInstance().getLabelDisabledForeground();
         }
 
         @Override
@@ -302,7 +300,7 @@ public class GuiSwingViewEnumComboBox implements GuiSwingView {
                 setText(((GuiReprValueEnumComboBox) context.getRepresentation()).getDisplayName(context, (Enum<?>) value));
             } else if (value == null) {
                 setText("null");
-                setForeground(disabledForeground);
+                setForeground(UIManagerUtil.getInstance().getLabelDisabledForeground());
             }
             return this;
         }

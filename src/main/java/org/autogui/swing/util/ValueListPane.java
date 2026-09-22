@@ -1015,7 +1015,7 @@ public abstract class ValueListPane<ValueType, PaneType extends JComponent> exte
                 public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
                     super.paintBorder(c, g, x, y, width, height);
                     if (isSelected()) {
-                        paintStrokes(g, x, y, width, height);
+                        paintStrokesFocusColor(g, x, y, width, height, SearchTextField.getFocusColor());
                     }
                 }
             };

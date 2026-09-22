@@ -43,6 +43,43 @@ public class NimbusLookAndFeelCustomFlat extends NimbusLookAndFeel {
         }
     }
 
+    protected static LookAndFeelThemeSwitcher switcher;
+    protected static Class<?> switcherClass;
+    public static int switcherPollingTime = 60_000;
+
+    @Override
+    public void initialize() {
+        super.initialize();
+        synchronized (NimbusLookAndFeelCustomFlat.class) {
+            var cls = getClass();
+            if (getDarkLight().equals(DarkLight.System) && (switcher == null || Objects.equals(switcherClass, cls))) {
+                switcherClass = cls;
+                switcher = new LookAndFeelThemeSwitcher(switcherPollingTime, b -> createAnotherInstance(cls));
+                switcher.install();
+            }
+        }
+    }
+
+    public static LookAndFeel createAnotherInstance(Class<? extends LookAndFeel> cls) {
+        try {
+            return cls.getConstructor().newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void uninitialize() {
+        super.uninitialize();
+        synchronized (NimbusLookAndFeelCustomFlat.class) {
+            if (getDarkLight().equals(DarkLight.System) && switcher != null && Objects.equals(switcherClass, getClass())) {
+                switcher.uninstall();
+                switcher = null;
+                switcherClass = null;
+            }
+        }
+    }
+
     public DarkLight getDarkLight() {
         return darkLight;
     }
@@ -57,11 +94,15 @@ public class NimbusLookAndFeelCustomFlat extends NimbusLookAndFeel {
         return defaults;
     }
 
+    protected boolean isDarkThemeSystem() {
+        return UIManagerUtil.getInstance().getOsVersion().isDarkTheme();
+    }
+
     protected boolean isDarkTheme() {
         return switch (darkLight) {
             case Dark -> true;
             case Light -> false;
-            default -> UIManagerUtil.getInstance().getOsVersion().isDarkTheme();
+            default -> isDarkThemeSystem();
         };
     }
 

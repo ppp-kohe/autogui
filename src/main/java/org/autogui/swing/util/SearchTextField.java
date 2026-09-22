@@ -183,6 +183,7 @@ public class SearchTextField extends JComponent {
         initPopup();
         initLayout();
         initAfter();
+        initColor();
     }
 
     public void initIcon() {
@@ -195,7 +196,16 @@ public class SearchTextField extends JComponent {
         icon.setOpaque(false);
         icon.setFocusable(false);
         icon.setContentAreaFilled(false);
-        icon.setBackground(getBackground());
+    }
+
+    protected void initColor() {
+        setBackgroundWithoutInit(UIManagerUtil.getInstance().getTextPaneBackground());
+        if (icon != null) {
+            icon.setBackground(getBackground());
+        }
+        if (popupButton != null) {
+            popupButton.setBackground(getBackground());
+        }
     }
 
     public Icon getEmptyIcon() {
@@ -366,7 +376,6 @@ public class SearchTextField extends JComponent {
     }
 
     public void initLayout() {
-        setBackgroundWithoutInit(UIManagerUtil.getInstance().getTextPaneBackground());
         initBackgroundPainter();
 
         setLayout(new BorderLayout());
@@ -473,6 +482,7 @@ public class SearchTextField extends JComponent {
 
     @Override
     protected void paintComponent(Graphics g) {
+        initColor();
         backgroundPainter.paintComponent(g, super::paintComponent);
     }
 
@@ -832,7 +842,8 @@ public class SearchTextField extends JComponent {
     public static class SearchBackgroundPainterBordered extends SearchBackgroundPainter {
         protected JComponent component;
         protected Color[] gradientColors;
-        protected Color focusColor;
+        protected UIManagerUtil.CachedColor focusColor;
+        protected UIManagerUtil.CachedColor backgroundColor;
         protected BasicStroke[] strokes;
         protected FocusBorderForSearch focusBorder;
 
@@ -848,15 +859,17 @@ public class SearchTextField extends JComponent {
             int w = ui.getScaledSizeInt(5);
             focusBorder = new FocusBorderForSearch(component);
             component.setBorder(focusBorder);
+            focusColor = UIManagerUtil.cachedColor(SearchTextField::getFocusColor);
+            backgroundColor = UIManagerUtil.cachedColor(() -> component.getBackground());
         }
 
         public void init() {
             initGradientColors();
-            initFocusColor();
             initStrokes();
         }
 
         public void initGradientColors() {
+            backgroundColor.isUpdated();
             int gradMax = 3;
 
             List<Color> cs = new ArrayList<>();
@@ -867,25 +880,14 @@ public class SearchTextField extends JComponent {
             gradientColors = cs.toArray(new Color[0]);
         }
 
-        public void initFocusColor() {
-            focusColor = getFocusColor();
-        }
-
         public void initStrokes() {
             strokes = new BasicStroke[1];
             Arrays.fill(strokes, new BasicStroke(UIManagerUtil.getInstance().getScaledSizeFloat(2)));
         }
 
         public Color getGradientColor(float p) {
-            Color max = component.getBackground();
-            if (max == null) {
-                max = Color.white;
-            }
-            int red = max.getRed();
-            int green = max.getGreen();
-            int blue = max.getBlue();
-            int alpha = max.getAlpha();
-            return new Color(getColorComponent(red, p), getColorComponent(green, p), getColorComponent(blue, p), alpha);
+            int[] max = UIManagerUtil.toComponentsRGBA(backgroundColor.color());
+            return new Color(getColorComponent(max[0], p), getColorComponent(max[1], p), getColorComponent(max[2], p), max[3]);
         }
 
         public int getColorComponent(int max, float p) {
@@ -915,6 +917,8 @@ public class SearchTextField extends JComponent {
         public void paintComponent(Graphics g) {
             if (gradientColors == null) {
                 init();
+            } else {
+                initGradientColors();
             }
             UIManagerUtil ui = UIManagerUtil.getInstance();
             int x = ui.getScaledSizeInt(2);

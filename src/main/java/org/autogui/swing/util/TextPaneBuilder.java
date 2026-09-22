@@ -157,6 +157,11 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
                     settingPane.updateGuiAndTargetTextPaneFromPrefsObj();
                 }
             });
+            pane.addPropertyChangeListener("UI", e -> {
+                if (settingPane != null) {
+                    settingPane.setDefaultColorFromPane();
+                }
+            });
         }
     }
 
@@ -534,6 +539,13 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
             return new PreferencesForDocumentSettingBase(pane);
         }
 
+        public void setDefaultColorFromPane() {
+            if (prefsObj != null) {
+                prefsObj.setDefaultColor(pane);
+                prefsObj.applyTo(pane);
+            }
+        }
+
         /**
          * setting-up listeners of GUI settings ; the style will be immediately reflected by an UI action.
          */
@@ -838,11 +850,17 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
             this.defaultBackground = Color.white;
             this.defaultForeground = Color.black;
             if (pane != null) {
-                this.defaultBackground = pane.getBackground();
-                this.defaultForeground = pane.getForeground();
+                setDefaultColor(pane);
                 allowNullValues = false;
             } else {
                 allowNullValues = true;
+            }
+        }
+
+        public void setDefaultColor(JComponent pane) {
+            if (pane != null) {
+                this.defaultBackground = pane.getBackground();
+                this.defaultForeground = pane.getForeground();
             }
         }
 
@@ -962,10 +980,14 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
             setFontSize(intStyleValue(fontSize));
             setBold(styleValue(Boolean.class, bold, this.bold));
             setItalic(styleValue(Boolean.class, italic, this.italic));
-            setBackgroundCustom(backgroundColor != null);
-            setForegroundCustom(foregroundColor != null);
+            setBackgroundCustom(nonNullDifferentColor(backgroundColor, defaultBackground));
+            setForegroundCustom(nonNullDifferentColor(foregroundColor, defaultForeground));
             setBackgroundColor(styleValue(Color.class, backgroundColor, null));
             setForegroundColor(styleValue(Color.class, foregroundColor, null));
+        }
+
+        private boolean nonNullDifferentColor(Object color, Color defaultColor) {
+            return color != null && !Objects.equals(color, defaultColor);
         }
 
         private float floatStyleValue(Object value) {

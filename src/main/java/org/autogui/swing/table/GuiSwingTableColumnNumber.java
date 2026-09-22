@@ -193,8 +193,6 @@ public class GuiSwingTableColumnNumber implements GuiSwingTableColumn {
             setCurrentValueSupported(false);
             getEditorField().setBorder(BorderFactory.createEmptyBorder());
             TextCellRenderer.setCellDefaultProperties(getEditorField());
-            setBorder(BorderFactory.createEmptyBorder());
-            //setBorder(TextCellRenderer.createBorder(4, 0, 0, 0));
             var h = ObjectTableColumnValue.KeyHandlerFinishEditing.installFinishEditingKeyHandler(this, finishRunners);
             for (Component sub : getComponents()) {
                 if (sub.isFocusable()) {

@@ -13,17 +13,11 @@ import org.autogui.swing.prefs.GuiSwingPrefsSupports;
 import org.autogui.swing.util.*;
 
 import javax.swing.*;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.Serial;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -246,78 +240,6 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
     public static boolean getScrollableTracksViewportWidth(JTextComponent field) {
         return TextPaneBuilder.isWrapLine(TextPaneBuilder.scrollPane(field));
     }
-
-    /**
-     * @param field the target field
-     * @param wrapLine the flag for wrapping-lines
-     * @return size
-     * @deprecated moved to {@link TextPaneBuilder#getPreferredSize(JTextComponent, boolean)}
-     */
-    @Deprecated
-    public static Dimension getPreferredSize(JTextComponent field, boolean wrapLine) {
-        return TextPaneBuilder.getPreferredSize(field, wrapLine);
-    }
-    /**
-     * @param c the text-component
-     * @return the parent scroll-pane by calling {@link #scrollPaneContainer(Container)} with the parent
-     * @since 1.7
-     * @deprecated moved to {@link TextPaneBuilder#scrollPane(JComponent)}
-     */
-    @Deprecated
-    public static JScrollPane scrollPane(JComponent c) {
-        return TextPaneBuilder.scrollPane(c);
-    }
-
-    /**
-     * @param c the parent container of a text-comonent
-     * @return an upper scroll-pane
-     * @deprecated moved to {@link TextPaneBuilder#scrollPaneContainer(Container)}
-     */
-    @Deprecated
-    public static JScrollPane scrollPaneContainer(Container c) {
-        return TextPaneBuilder.scrollPaneContainer(c);
-    }
-    /**
-     * @param pane a scroll-pane or null
-     * @return true if null or horizontal-scroll-bar-policy not "always"; i.e. "never" or "as_needed"
-     * @deprecated moved to {@link TextPaneBuilder#isWrapLine(JScrollPane)}
-     */
-    @Deprecated
-    public static boolean isWrapLine(JScrollPane pane) {
-        return TextPaneBuilder.isWrapLine(pane);
-    }
-    /**
-     * @param pane a scroll-pane or null
-     * @param tested the tested wrapping-line property
-     * @return true if the horizonta-scroll-bar-policy is not the tested value; if true, it should update the wrapping-line property and revalidate the layout.
-     * @deprecated  moved to {@link TextPaneBuilder#isWrapLineNotMatch(JScrollPane, boolean)}
-     */
-    @Deprecated
-    public static boolean isWrapLineNotMatch(JScrollPane pane, boolean tested) {
-        return TextPaneBuilder.isWrapLineNotMatch(pane, tested);
-    }
-    /**
-     * @param pane the target pane
-     * @param f the new property value of wrapping-line
-     * @since 1.7
-     * @deprecated  moved to {@link TextPaneBuilder#setWrapLine(JScrollPane, boolean)}
-     */
-    @Deprecated
-    public static void setWrapLine(JScrollPane pane, boolean f) {
-        TextPaneBuilder.setWrapLine(pane, f);
-    }
-
-    /**
-     * the interface for the target pane of {@link DocumentSettingPane};
-     *  if the pane implements the interface, it will be called at updating the wrapping-line property from the setting pane.
-     * @since 1.7
-     * @deprecated moved to {@link TextPaneBuilder.WrapLineSupport}
-     */
-    @Deprecated
-    public interface WrapLineSupport extends TextPaneBuilder.WrapLineSupport {
-        void setWrapLine(boolean wrapLine);
-    }
-
 
     public static class PropertyDocumentEditorPane extends JEditorPane
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<Object>,
@@ -750,46 +672,6 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             store.putString(KEY_WRAP_TEXT, Boolean.toString(wrapText));
             if (backgroundColor != null) { store.putString(KEY_BACKGROUND_COLOR, JsonWriter.create().withNewLines(false).write(toJsonColor(backgroundColor)).toSource()); } else { store.remove(KEY_BACKGROUND_COLOR); }
             if (foregroundColor != null) { store.putString(KEY_FOREGROUND_COLOR, JsonWriter.create().withNewLines(false).write(toJsonColor(foregroundColor)).toSource()); } else { store.remove(KEY_FOREGROUND_COLOR); }
-        }
-    }
-
-    @Deprecated
-    public static class PopupButtonListener implements ActionListener, PopupMenuListener {
-        protected Instant cancelTime = Instant.EPOCH;
-        protected JComponent button;
-        protected JPopupMenu menu;
-
-        public PopupButtonListener(JComponent button, JPopupMenu menu) {
-            this.button = button;
-            this.menu = menu;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Duration d = Duration.between(cancelTime, Instant.now());
-            if (d.compareTo(Duration.ofMillis(100)) > 0) {
-                menu.show(button, 0, button.getHeight());
-            }
-        }
-
-        @Override
-        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-            cancelTime = Instant.EPOCH;
-        }
-
-        @Override
-        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) { }
-
-        @Override
-        public void popupMenuCanceled(PopupMenuEvent e) {
-            cancelTime = Instant.now();
-        }
-    }
-
-    @Deprecated
-    public static class StyleSetAction extends TextPaneBuilder.StyleSetAction {
-        public StyleSetAction(String name, boolean initVal, Consumer<TextPaneBuilder.StyleSetAction> callback) {
-            super(name, initVal, callback);
         }
     }
 }

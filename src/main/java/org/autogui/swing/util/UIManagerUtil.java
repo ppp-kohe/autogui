@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,6 +46,13 @@ public class UIManagerUtil {
             instance = new UIManagerUtil();
         }
         return instance;
+    }
+
+    public static int[] toComponentsRGBA(Color color) {
+        if (color == null) {
+            color = Color.white;
+        }
+        return new int[] {color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha()};
     }
 
     public Font getConsoleFont() {
@@ -1006,6 +1014,53 @@ public class UIManagerUtil {
             return result.get(1, TimeUnit.SECONDS);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
+        }
+    }
+
+    public static CachedColor cachedColor(Supplier<Color> source) {
+        return new CachedColor(source);
+    }
+
+    @SafeVarargs
+    public static CachedColor[] cachedColors(Supplier<Color>... source) {
+        return Arrays.stream(source)
+                .map(UIManagerUtil::cachedColor)
+                .toArray(CachedColor[]::new);
+    }
+
+    public static boolean isUpdated(CachedColor... colors) {
+        boolean updated = false;
+        for (CachedColor color : colors) {
+            if (color.isUpdated()) {
+                updated = true;
+            }
+        }
+        return updated;
+    }
+
+    public static class CachedColor {
+        protected Color color;
+        protected int[] data;
+        protected Supplier<Color> source;
+        public CachedColor(Supplier<Color> source) {
+            this.source = source;
+            color = source.get();
+            data = toComponentsRGBA(color);
+        }
+
+        public boolean isUpdated() {
+            var newColor = source.get();
+            var newData = toComponentsRGBA(newColor);
+            var eq = Arrays.equals(data, newData);
+            if (!eq) {
+                this.data = newData;
+                this.color = newColor;
+            }
+            return !eq;
+        }
+
+        public Color color() {
+            return color;
         }
     }
 }
