@@ -242,7 +242,7 @@ public class GuiLogManager {
      * @since 1.1
      */
     public GuiLogEntryString logString(String str, boolean fromStandard) {
-        return new GuiLogEntryString(str, fromStandard);
+        return logCreated(new GuiLogEntryString(str, fromStandard));
     }
 
     /**
@@ -259,7 +259,11 @@ public class GuiLogManager {
      * @return the created entry
      * */
     public GuiLogEntryException logError(Throwable ex) {
-        return new GuiLogEntryException(ex);
+        return logCreated(new GuiLogEntryException(ex));
+    }
+
+    protected <LogType extends GuiLogEntry> LogType logCreated(LogType log) {
+        return log;
     }
 
     /**
@@ -286,7 +290,7 @@ public class GuiLogManager {
     public GuiLogEntryProgress logProgress() {
         GuiLogEntryProgress p = new GuiLogEntryProgress();
         p.addListener(this::updateProgress);
-        return p;
+        return logCreated(p);
     }
 
     /**
@@ -296,7 +300,7 @@ public class GuiLogManager {
         GuiLogEntryProgress p = logProgress();
         p.setMaximum(max);
         p.setIndeterminate(false);
-        return p;
+        return logCreated(p);
     }
 
     public void updateProgress(GuiLogEntryProgress p) { }
@@ -361,7 +365,7 @@ public class GuiLogManager {
         if (t > 0) {
             ZoneId id = ZoneId.systemDefault();
             Period period = Period.between(LocalDateTime.ofInstant(from, id).toLocalDate(),
-                    LocalDateTime.ofInstant(from, id).toLocalDate());
+                    LocalDateTime.ofInstant(to, id).toLocalDate());
             long days = period.getDays();
             long months = period.getMonths();
             long years = period.getYears();

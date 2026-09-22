@@ -20,25 +20,28 @@ public class GuiTypeBuilder {
             Integer.class, Short.class, Byte.class, Long.class, Character.class, Boolean.class,
             Float.class, Double.class, CharSequence.class);
 
-    protected List<Class<?>> valueTypes = new ArrayList<>(langValueTypes);
+    protected List<Class<?>> valueTypes;
     /** for supporting {@link CharSequence}, extracting it from {@link #valueTypes}
      * @since 1.8 */
-    protected List<Class<?>> valueInterfaceTypes = new ArrayList<>(
-            valueTypes.stream()
-                    .filter(Class::isInterface)
-                    .toList());
+    protected List<Class<?>> valueInterfaceTypes;
+
     public static final String PREFIX_EDIT = "edit";
     public static final String PREFIX_EDITED = "edited";
 
     public GuiTypeBuilder() {
+        setValueTypes(langValueTypes);
     }
 
     public GuiTypeBuilder(List<Class<?>> valueTypes) {
-        this.valueTypes = valueTypes;
+        setValueTypes(valueTypes);
     }
 
     public void setValueTypes(List<Class<?>> valueTypes) {
-        this.valueTypes = valueTypes;
+        this.valueTypes = new ArrayList<>(valueTypes);
+        valueInterfaceTypes = new ArrayList<>(
+                valueTypes.stream()
+                        .filter(Class::isInterface)
+                        .toList());
     }
 
     /**
@@ -581,7 +584,7 @@ public class GuiTypeBuilder {
 
     /**
      * @param m  the tested method
-     * @return m(L&lt;E&gt; ) and L is a super type of {@link List} except for Object.
+     * @return m(L&lt;E&gt; ) and L is a super type of {@link List} except for Object (SequencedCollection, Colleciton, Iterable).
      *          or, m(L&lt;E&gt;, String)
      *   */
     public boolean isActionListMethod(Method m) {

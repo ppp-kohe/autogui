@@ -1,11 +1,14 @@
 package org.autogui.base.type;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiNotifierSetter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class GuiTypeBuilderRelaxedTest {
@@ -62,6 +65,18 @@ public class GuiTypeBuilderRelaxedTest {
         public String subExcluded() {return "!";}
     }
 
+    private <FromType, RetType> Set<RetType> toSet(Collection<FromType> col, Function<FromType, RetType> func) {
+        return col.stream()
+                .map(func)
+                .collect(Collectors.toSet());
+    }
+    private <FromType, RetType> Set<RetType> toSet(Collection<FromType> col, Predicate<FromType> p, Function<FromType, RetType> func) {
+        return col.stream()
+                .filter(p)
+                .map(func)
+                .collect(Collectors.toSet());
+    }
+
     @Test
     public void testCreateMethods() {
         type = builder.create(Hello.class);
@@ -69,10 +84,8 @@ public class GuiTypeBuilderRelaxedTest {
                 type instanceof GuiTypeObject);
         GuiTypeObject typeObj = (GuiTypeObject) type;
         Assert.assertEquals("public and package private, and non interface method",
-                new HashSet<>(Arrays.asList("action", "pubAction")),
-                typeObj.getActions().stream()
-                .map(m -> m.getMethod().getName())
-                .collect(Collectors.toSet()));
+                Set.of("action", "pubAction"),
+                toSet(typeObj.getActions(), m -> m.getMethod().getName()));
     }
 
     @Test
@@ -82,10 +95,8 @@ public class GuiTypeBuilderRelaxedTest {
                 type instanceof GuiTypeObject);
         GuiTypeObject typeObj = (GuiTypeObject) type;
         Assert.assertEquals("public and package private fields",
-                new HashSet<>(Arrays.asList("prop", "pubProp")),
-                typeObj.getProperties().stream()
-                        .map(f -> f.getField().getName())
-                        .collect(Collectors.toSet()));
+                Set.of("prop", "pubProp"),
+                toSet(typeObj.getProperties(), f -> f.getField().getName()));
     }
 
     @Test
@@ -95,10 +106,8 @@ public class GuiTypeBuilderRelaxedTest {
                 type instanceof GuiTypeObject);
         GuiTypeObject typeObj = (GuiTypeObject) type;
         Assert.assertEquals("public and package private declared methods without overriding JDK methods",
-                new HashSet<>(Arrays.asList("hello", "world")),
-                typeObj.getActions().stream()
-                        .map(f -> f.getMethod().getName())
-                        .collect(Collectors.toSet()));
+                Set.of("hello", "world"),
+                toSet(typeObj.getActions(), f -> f.getMethod().getName()));
     }
 
     @Test
@@ -108,10 +117,8 @@ public class GuiTypeBuilderRelaxedTest {
                 type instanceof GuiTypeObject);
         GuiTypeObject typeObj = (GuiTypeObject) type;
         Assert.assertEquals("public and package private declared methods with overriding non-JDK methods",
-                new HashSet<>(Arrays.asList("hello", "world", "anotherAction")),
-                typeObj.getActions().stream()
-                        .map(f -> f.getMethod().getName())
-                        .collect(Collectors.toSet()));
+                Set.of("hello", "world", "anotherAction"),
+                toSet(typeObj.getActions(), f -> f.getMethod().getName()));
     }
 
     @Test
@@ -121,10 +128,89 @@ public class GuiTypeBuilderRelaxedTest {
                 type instanceof GuiTypeObject);
         GuiTypeObject typeObj = (GuiTypeObject) type;
         Assert.assertEquals("public and package private declared fields with overriding non-JDK methods",
-                new HashSet<>(Arrays.asList("prop", "subProp")),
-                typeObj.getProperties().stream()
-                        .filter(f -> f.getField() != null) //exclude toString()
-                        .map(f -> f.getField().getName())
-                        .collect(Collectors.toSet()));
+                Set.of("prop", "subProp"),
+                toSet(typeObj.getProperties(), f -> f.getField() != null, //exclude toString()
+                        f -> f.getField().getName()));
+    }
+
+    record ExampleRecord(String hello, int world) {
+        String prop() {return "a";}
+        void action() {}
+    }
+
+    static class ExampleEdit {
+        String prop() { return "a"; }
+
+        ExampleEditTarget edit() { return new ExampleEditTarget(); }
+        void edited(ExampleEditTarget e, boolean ok) {}
+
+        void action() {}
+
+        void setXNotifier(Runnable r) {}
+
+        @GuiNotifierSetter
+        void setPropNotifier(Runnable r) {}
+
+        void actionList(List<String> items, String name) {}
+    }
+
+    static class ExampleEditTarget { }
+
+    @Test
+    public void testCreateRecord() {
+        var rec = builder.create(ExampleRecord.class);
+
+        Assert.assertTrue("relaxed builder creates record",
+                rec instanceof GuiTypeObject);
+
+        var typeObj = (GuiTypeObject) rec;
+        Assert.assertEquals("props incldues primary fields and methods with getters",
+                Set.of("hello", "world", "prop"),
+                toSet(typeObj.getProperties(), f -> f.getGetter().getName()));
+
+        Assert.assertEquals("actions",
+                Set.of("action"),
+                toSet(typeObj.getActions(), f -> f.getMethod().getName()));
+    }
+
+    @Test
+    public void testCreateEdit() {
+        var rec = builder.create(ExampleEdit.class);
+
+        Assert.assertTrue("obj with edit",
+                rec instanceof GuiTypeObject);
+
+        var typeObj = (GuiTypeObject) rec;
+        Assert.assertEquals("edit is not a prop",
+                Set.of("prop"),
+                toSet(typeObj.getProperties(), m -> m.getGetter() != null,
+                        m -> m.getGetter().getName()));
+
+        Assert.assertEquals("notifier needs annotation",
+                Set.of("setXNotifier"),
+                toSet(typeObj.getProperties(), m -> m.getSetter() != null,
+                        m -> m.getSetter().getName()));
+
+        Assert.assertEquals("annotated notifier",
+                Set.of("setPropNotifier"),
+                toSet(typeObj.getNotifiers(), m -> m.getSetter().getName()));
+
+        Assert.assertEquals("actions",
+                Set.of("action", "edit", "actionList"),
+                toSet(typeObj.getActions(), m -> m.getMethod().getName()));
+
+        var edit = typeObj.getActions().stream()
+                .filter(m -> m.getMethod().getName().equals("edit"))
+                .findFirst().orElse(null);
+
+        Assert.assertTrue("edited", edit.hasEditedMethod());
+        Assert.assertEquals("edited", "edited", edit.getEditFeature().editedMethod().getName());
+
+        var actionList = typeObj.getActions().stream()
+                .filter(m -> m.getMethod().getName().equals("actionList"))
+                .findFirst().orElse(null);
+
+        Assert.assertTrue("action list", actionList instanceof GuiTypeMemberActionList);
+        Assert.assertTrue("action list takes name", ((GuiTypeMemberActionList) actionList).isTakingTargetName());
     }
 }

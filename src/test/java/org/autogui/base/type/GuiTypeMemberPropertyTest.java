@@ -166,4 +166,13 @@ public class GuiTypeMemberPropertyTest {
                 "X",
                 propertyMethod.getAcceleratorKeyStroke());
     }
+
+    @Test
+    public void testPropGetField() {
+        var p = new GuiTypeMemberProperty("str", null, null, "str", new GuiTypeValue(String.class));
+        p.setOwner(new GuiTypeObject(TestObj.class));
+        var fld = p.getField();
+        Assert.assertEquals("getField from name", "str", fld.getName());
+        Assert.assertEquals("getField from name String", String.class, fld.getType());
+    }
 }

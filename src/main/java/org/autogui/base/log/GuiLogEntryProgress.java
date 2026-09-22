@@ -33,8 +33,12 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
     protected List<Consumer<GuiLogEntryProgress>> listeners;
 
     public GuiLogEntryProgress() {
-        time = Instant.now();
-        thread = Thread.currentThread();
+        this(Instant.now(), Thread.currentThread());
+    }
+
+    public GuiLogEntryProgress(Instant time, Thread thread) {
+        this.thread = thread;
+        this.time = time;
     }
 
     /** copy fields of p. p can be null

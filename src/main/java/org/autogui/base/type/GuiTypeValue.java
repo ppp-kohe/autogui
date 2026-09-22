@@ -1,7 +1,7 @@
 package org.autogui.base.type;
 
-import org.autogui.GuiInits;
 import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
 import org.autogui.base.annotation.GuiDefaultInits;
 
 import java.util.Objects;

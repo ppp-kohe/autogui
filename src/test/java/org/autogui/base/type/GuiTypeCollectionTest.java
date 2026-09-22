@@ -83,6 +83,13 @@ public class GuiTypeCollectionTest {
                 GuiUpdatedValue.NO_UPDATE,
                 typeCollection.executeGetElement(null, 1));
     }
+    @Test
+    public void testCollectionExecuteGetElementNullPrev() {
+        Assert.assertEquals("collection executeGetElement with null returns no-update",
+                GuiUpdatedValue.NO_UPDATE,
+                typeCollection.executeGetElement(null, 1, obj.col));
+    }
+
 
     @Test
     public void testCollectionExecuteGetElementPrevSame() {
@@ -117,5 +124,45 @@ public class GuiTypeCollectionTest {
                 obj.col.get(1).longValue());
     }
 
+    @Test
+    public void testCollectionGetChildren() {
+        Assert.assertEquals("collection children", 1, typeCollection.getChildren().size());
+        Assert.assertEquals("collection element integer", new GuiTypeValue(Integer.class), typeCollection.getChildren().getFirst());
+    }
 
+    @Test
+    public void testCollectionGetChildrenEmpty() {
+        var col = new GuiTypeCollection(List.class);
+        Assert.assertEquals("collection children is empty", 0, col.getChildren().size());
+    }
+
+    @Test
+    public void testCollectionEquals() {
+        Assert.assertEquals("collection equals", new GuiTypeCollection(List.class, new GuiTypeValue(Integer.class)), new GuiTypeCollection(List.class, new GuiTypeValue(Integer.class)));
+        Assert.assertEquals("collection equals identity", typeCollection, typeCollection);
+    }
+
+    @Test
+    public void testCollectionCompareGetElement() {
+        Assert.assertEquals("collection compareGetElement",
+                GuiUpdatedValue.NO_UPDATE,
+                typeCollection.compareGetElement(List.of(1, 2), List.of(1, 2)));
+    }
+
+    @Test
+    public void testCollectionExecuteAddElements() {
+        var a = new ArrayList<Object>(List.of(1,2));
+        Assert.assertEquals("add elements returns added list",
+                List.of(100, 200),
+                typeCollection.executeAddElements(a, List.of(100, 200)));
+
+        Assert.assertNull("null add elements returns null",
+                typeCollection.executeAddElements(null, List.of(100, 200)));
+    }
+
+    @Test
+    public void testCollectionGetSize() {
+        Assert.assertEquals("size", 3, typeCollection.getSize(List.of(1,2,3)));
+        Assert.assertEquals("size null 0", 0, typeCollection.getSize(null));
+    }
 }
