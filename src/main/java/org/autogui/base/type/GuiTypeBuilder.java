@@ -28,10 +28,12 @@ public class GuiTypeBuilder {
     public static final String PREFIX_EDIT = "edit";
     public static final String PREFIX_EDITED = "edited";
 
+    @SuppressWarnings("this-escape")
     public GuiTypeBuilder() {
         setValueTypes(langValueTypes);
     }
 
+    @SuppressWarnings("this-escape")
     public GuiTypeBuilder(List<Class<?>> valueTypes) {
         setValueTypes(valueTypes);
     }

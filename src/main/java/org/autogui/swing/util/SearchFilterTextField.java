@@ -68,10 +68,15 @@ public class SearchFilterTextField extends JComponent {
         initLayout();
         initIconButton();
         initField();
+        initColor();
+        initChange();
     }
 
     protected void initLayout() {
         painter = new SearchTextField.SearchBackgroundPainterBordered(this);
+    }
+
+    protected void initColor() {
         setBackground(UIManagerUtil.getInstance().getTextPaneBackground());
     }
 
@@ -92,6 +97,10 @@ public class SearchFilterTextField extends JComponent {
             @Override public void keyPressed(KeyEvent e) { enterText(e); }
         });
         add(textField, BorderLayout.CENTER);
+    }
+
+    protected void initChange() {
+        addPropertyChangeListener("UI", e -> initColor());
     }
 
     @Override

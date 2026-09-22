@@ -835,6 +835,7 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
          *    2. the practical mode with target pane which (basically) does not allow null-values, instead, it merges actual pane's value if null-values arrived.
          * @param pane the target text-pane or null
          */
+        @SuppressWarnings("this-escape")
         public PreferencesForDocumentSettingBase(JEditorPane pane) {
             lineSpacing = DEFAULT_NUM;
             spaceAbove = DEFAULT_NUM;

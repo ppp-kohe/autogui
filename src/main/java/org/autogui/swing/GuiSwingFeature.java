@@ -426,6 +426,7 @@ public interface GuiSwingFeature extends GuiSwingElement.FeatureCollection {
     }
 
     abstract class Visitor {
+        public Visitor() {}
         public List<Object> stack = new ArrayList<>();
         boolean visitBefore(Object next) {
             return true;

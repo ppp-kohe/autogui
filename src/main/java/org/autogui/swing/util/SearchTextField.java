@@ -184,6 +184,7 @@ public class SearchTextField extends JComponent {
         initLayout();
         initAfter();
         initColor();
+        initChange();
     }
 
     public void initIcon() {
@@ -271,6 +272,11 @@ public class SearchTextField extends JComponent {
     public void initAfter() {
         editingRunner.setEnabled(true);
         setFocusable(false);
+    }
+
+    protected void initChange() {
+        addPropertyChangeListener("UI", e ->
+            initColor());
     }
 
     /**

@@ -17,6 +17,7 @@ public class LookAndFeelThemeSwitcher implements AppForegroundListener {
 
     protected Function<Boolean, LookAndFeel> lookAndFeelFunction;
 
+    @SuppressWarnings("this-escape")
     public LookAndFeelThemeSwitcher(int pollingMillis, Function<Boolean, LookAndFeel> lookAndFeelFunction) {
         this.pollingMillis = pollingMillis;
         this.darkTheme = isDarkTheme();

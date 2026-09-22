@@ -57,7 +57,7 @@ public class GuiTypeObject extends GuiTypeValue {
     }
 
     protected Stream<GuiTypeMember> memberStream() {
-        return Stream.concat(Stream.concat(getProperties().stream(), getActions().stream()), getNotifiers().stream());
+        return Stream.concat(getProperties().stream(), getActions().stream()); //notifiers are excluded
     }
 
     public void setProperties(List<GuiTypeMemberProperty> properties) {

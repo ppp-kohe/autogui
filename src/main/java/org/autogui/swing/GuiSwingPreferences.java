@@ -156,7 +156,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
         /**
          * @param prefs the source prefs
          * @param options options for applying
-         *                ({@link GuiSwingPrefsApplyOptions#APPLY_OPTIONS_DEFAULT} for {@link #loadPreferences(GuiPreferences)} that are all false)
+         *                ({@link GuiSwingPrefsApplyOptions#APPLY_OPTIONS_DEFAULT} that are all false)
          * @since 1.4
          */
         void loadPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options);

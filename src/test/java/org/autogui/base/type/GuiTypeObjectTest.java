@@ -45,6 +45,6 @@ public class GuiTypeObjectTest {
 
         Assert.assertEquals("prop by name", p, t.getMemberByName("name"));
         Assert.assertEquals("action by name", a, t.getMemberByName("action"));
-        Assert.assertEquals("notifier by name", n, t.getMemberByName("notifier"));
+        Assert.assertNull("notifiers are excluded", t.getMemberByName("notifier"));
     }
 }

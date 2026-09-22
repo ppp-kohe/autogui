@@ -1022,6 +1022,7 @@ public class UIManagerUtil {
     }
 
     @SafeVarargs
+    @SuppressWarnings({"unchecked", "varargs"})
     public static CachedColor[] cachedColors(Supplier<Color>... source) {
         return Arrays.stream(source)
                 .map(UIManagerUtil::cachedColor)
