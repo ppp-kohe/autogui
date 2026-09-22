@@ -93,7 +93,7 @@ public class GuiSwingViewImagePaneTest extends GuiSwingTestCase {
         JComponent c = img.createView(contextProp, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
         frame.setSize(300, 300);
-        return GuiSwingView.findChildByType(c, GuiSwingViewImagePane.PropertyImagePane.class);
+        return GuiSwingView.findDescendantByType(c, GuiSwingViewImagePane.PropertyImagePane.class);
     }
 
     public BufferedImage getImage() {

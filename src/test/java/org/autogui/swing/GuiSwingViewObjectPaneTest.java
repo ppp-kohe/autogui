@@ -39,6 +39,7 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
 
     @Before
     public void setUp() {
+        timeFactor = 1;
         builder = new GuiTypeBuilder();
         typeObject = (GuiTypeObject) builder.get(TestObj.class);
 
@@ -94,7 +95,7 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
     public GuiSwingViewObjectPane.ObjectPane create() {
         JComponent c = objPane.createView(context, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
-        return GuiSwingView.findChildByType(c, GuiSwingViewObjectPane.ObjectPane.class);
+        return GuiSwingView.findDescendantByType(c, GuiSwingViewObjectPane.ObjectPane.class);
     }
 
     @Test
@@ -102,10 +103,10 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         GuiSwingViewObjectPane.ObjectPane pane = create();
 
         GuiSwingViewStringField.PropertyStringPane strPane = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
 
         GuiSwingViewBooleanCheckBox.PropertyCheckBox boolBox = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
 
         Assert.assertEquals("string property",
                 "hello",
@@ -126,10 +127,10 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         GuiSwingViewObjectPane.ObjectPane pane = create();
 
         GuiSwingViewStringField.PropertyStringPane strPane = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
 
         GuiSwingViewBooleanCheckBox.PropertyCheckBox boolBox = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
 
         obj.hello = "Hello";
         obj.world = true;
@@ -149,10 +150,10 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         GuiSwingViewObjectPane.ObjectPane pane = create();
 
         GuiSwingViewStringField.PropertyStringPane strPane = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
 
         GuiSwingViewBooleanCheckBox.PropertyCheckBox boolBox = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
 
         TestObj o = new TestObj();
         o.hello = "HELLO";
@@ -173,10 +174,10 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         GuiSwingViewObjectPane.ObjectPane pane = create();
 
         GuiSwingViewStringField.PropertyStringPane strPane = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
 
         GuiSwingViewBooleanCheckBox.PropertyCheckBox boolBox = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
 
         run(() -> strPane.setSwingViewValueWithUpdate("Hello"));
         run(() -> boolBox.setSwingViewValueWithUpdate(true));
@@ -197,21 +198,21 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
             GuiSwingViewObjectPane.ObjectPane pane = create();
 
             GuiSwingViewStringField.PropertyStringPane strPane = runGet(() ->
-                    GuiSwingView.findChildByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
+                    GuiSwingView.findDescendantByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
 
             GuiSwingViewBooleanCheckBox.PropertyCheckBox boolBox = runGet(() ->
-                    GuiSwingView.findChildByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
+                    GuiSwingView.findDescendantByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
 
-            GuiSwingView.ValuePane<Object> subPane1 = GuiSwingView.findChild(pane,
+            GuiSwingView.ValuePane<?> subPane1 = GuiSwingView.findDescendantValuePaneByType(pane, GuiSwingView.ValuePane.class,
                     v -> v.getSwingViewContext().getName().equals("obj1"));
-            GuiSwingView.ValuePane<Object> subPane2 = GuiSwingView.findChild(pane,
+            GuiSwingView.ValuePane<?> subPane2 = GuiSwingView.findDescendantValuePaneByType(pane, GuiSwingView.ValuePane.class,
                     v -> v.getSwingViewContext().getName().equals("obj2"));
 
             GuiSwingViewStringField.PropertyStringPane subStrPane1 = runGet(() ->
-                    GuiSwingView.findChildByType(subPane1.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
+                    GuiSwingView.findDescendantByType(subPane1.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
 
             GuiSwingViewStringField.PropertyStringPane subStrPane2 = runGet(() ->
-                    GuiSwingView.findChildByType(subPane2.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
+                    GuiSwingView.findDescendantByType(subPane2.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
 
             run(() -> boolBox.setSwingViewValueWithUpdate(true));
             run(() -> strPane.setSwingViewValueWithUpdate("value1"));
@@ -273,7 +274,7 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
     public void testViewObjAction() {
         GuiSwingViewObjectPane.ObjectPane pane = create();
         GuiSwingViewStringField.PropertyStringPane strPane = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
         run(() -> strPane.setSwingViewValueWithUpdate("Hello"));
         runWait();
 
@@ -329,21 +330,21 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
         GuiSwingViewObjectPane.ObjectPane pane = create();
 
         GuiSwingViewStringField.PropertyStringPane strPane = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
 
         GuiSwingViewBooleanCheckBox.PropertyCheckBox boolBox = runGet(() ->
-                GuiSwingView.findChildByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
 
-        GuiSwingView.ValuePane<Object> subPane1 = GuiSwingView.findChild(pane,
+        GuiSwingView.ValuePane<?> subPane1 = GuiSwingView.findDescendantValuePaneByType(pane, GuiSwingView.ValuePane.class,
                 v -> v.getSwingViewContext().getName().equals("obj1"));
-        GuiSwingView.ValuePane<Object> subPane2 = GuiSwingView.findChild(pane,
+        GuiSwingView.ValuePane<?> subPane2 = GuiSwingView.findDescendantValuePaneByType(pane, GuiSwingView.ValuePane.class,
                 v -> v.getSwingViewContext().getName().equals("obj2"));
 
         GuiSwingViewStringField.PropertyStringPane subStrPane1 = runGet(() ->
-                GuiSwingView.findChildByType(subPane1.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
+                GuiSwingView.findDescendantByType(subPane1.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
 
         GuiSwingViewStringField.PropertyStringPane subStrPane2 = runGet(() ->
-                GuiSwingView.findChildByType(subPane2.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
+                GuiSwingView.findDescendantByType(subPane2.asSwingViewComponent(), GuiSwingViewStringField.PropertyStringPane.class));
 
         GuiSwingPreferences swingPrefs = runGet(() -> new GuiSwingPreferences(context, pane));
 

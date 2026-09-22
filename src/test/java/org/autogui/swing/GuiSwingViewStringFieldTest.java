@@ -35,6 +35,7 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
 
     @Before
     public void setUp() {
+        timeFactor = 1;
         builder = new GuiTypeBuilder();
         typeObject = (GuiTypeObject) builder.get(TestObj.class);
 
@@ -68,7 +69,7 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
     public GuiSwingViewStringField.PropertyStringPane create() {
         JComponent c = field.createView(contextProp, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
-        return GuiSwingView.findChildByType(c, GuiSwingViewStringField.PropertyStringPane.class);
+        return GuiSwingView.findDescendantByType(c, GuiSwingViewStringField.PropertyStringPane.class);
     }
 
     @Test

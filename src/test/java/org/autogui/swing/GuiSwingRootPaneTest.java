@@ -55,16 +55,16 @@ public class GuiSwingRootPaneTest extends GuiSwingTestCase {
         frame = runGet(() -> createFrame(rootPane));
 
         obj.prop = "hello";
-        rootPane.getContext().updateSourceFromRoot();
+        rootPane.getSwingViewContext().updateSourceFromRoot();
         runWait();
 
         Assert.assertEquals("root source",
                 obj,
-                runGet(() -> rootPane.getContext().getSource().getValue()));
+                runGet(() -> rootPane.getSwingViewContext().getSource().getValue()));
 
         Assert.assertEquals("prop is child of rootPane after update",
                 "hello",
-                runGet(() -> rootPane.getChildByName("prop").getSwingViewValue()));
+                runGet(() -> GuiSwingView.getDescendantByName(rootPane, "prop")).getSwingViewValue());
     }
 
     @Test
@@ -74,7 +74,7 @@ public class GuiSwingRootPaneTest extends GuiSwingTestCase {
         frame = runGet(() -> createFrame(rootPane));
 
         Assert.assertNull("no key binding",
-                runGet(() -> rootPane.getActionByName("action").getValue(Action.ACCELERATOR_KEY))); //it has recommended key meta-a
+                runGet(() -> GuiSwingView.getActionByName(rootPane, "action").getValue(Action.ACCELERATOR_KEY))); //it has recommended key meta-a
         Assert.assertTrue("no key bindings",
                 rootPane.getKeyBinding().getAssignedFromDispatcher().isEmpty());
     }
@@ -85,16 +85,16 @@ public class GuiSwingRootPaneTest extends GuiSwingTestCase {
         frame = runGet(() -> createFrame(rootPane));
 
         objPrivate.prop = "hello";
-        rootPane.getContext().updateSourceFromRoot();
+        rootPane.getSwingViewContext().updateSourceFromRoot();
         runWait();
 
         Assert.assertEquals("root source",
                 objPrivate,
-                runGet(() -> rootPane.getContext().getSource().getValue()));
+                runGet(() -> rootPane.getSwingViewContext().getSource().getValue()));
 
         Assert.assertEquals("prop is child of rootPane after update",
                 "hello",
-                runGet(() -> rootPane.getChildByName("prop").getSwingViewValue()));
+                runGet(() -> GuiSwingView.getDescendantByName(rootPane, "prop").getSwingViewValue()));
     }
 
     @Test
@@ -114,7 +114,7 @@ public class GuiSwingRootPaneTest extends GuiSwingTestCase {
         frame = runGet(() -> createFrame(rootPane));
 
         Assert.assertTrue("store on memory",
-                runGet(() -> rootPane.getContext().getPreferences().getValueStore() instanceof GuiPreferences.GuiValueStoreOnMemory));
+                runGet(() -> rootPane.getSwingViewContext().getPreferences().getValueStore() instanceof GuiPreferences.GuiValueStoreOnMemory));
     }
 
     @SuppressWarnings("unchecked")
@@ -123,9 +123,9 @@ public class GuiSwingRootPaneTest extends GuiSwingTestCase {
         GuiSwingRootPane rootPane = runGet(() -> GuiSwingRootPane.creator().create(obj));
         frame = runGet(() -> createFrame(rootPane));
         obj.prop = "hello!!!";
-        run(() -> rootPane.getContext().updateSourceFromRoot());
+        run(() -> rootPane.getSwingViewContext().updateSourceFromRoot());
 
-        GuiPreferences prefs = runGet(() -> new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), rootPane.getContext()));
+        GuiPreferences prefs = runGet(() -> new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), rootPane.getSwingViewContext()));
         run(() -> rootPane.savePreferences(prefs));
         Map<String,Object> map = prefs.toJson();
         Assert.assertTrue("save $preferencesWindow", map.containsKey("$preferencesWindow"));

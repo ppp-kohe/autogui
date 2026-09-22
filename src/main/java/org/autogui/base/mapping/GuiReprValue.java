@@ -176,7 +176,7 @@ public class GuiReprValue implements GuiRepresentation {
     public Object toParentSource(GuiMappingContext context, GuiSourceValue v) {
         Object o;
         if (context.hasParent()) {
-            if (context.getParent().isReprCollectionElement() && context.getParent().hasParent()) {
+            if (context.getParent().isReprCollectionElement() && context.getParent().isParentValuePane()) {
                 o = context.getParent().getParent().getReprValue().toSource(v.getValue());
             } else {
                 o = context.getParent().getReprValue().toSource(v.getValue());
@@ -281,7 +281,7 @@ public class GuiReprValue implements GuiRepresentation {
      * @throws Throwable the action might cause an error
      */
     public GuiSourceValue getParentSource(GuiMappingContext context, ObjectSpecifier parentSpecifier) throws Throwable {
-        if (context.hasParent()) {
+        if (context.isParentValuePane()) {
             return context.getParent().getReprValue().getUpdatedSource(context.getParent(), parentSpecifier);
         } else {
             return context.getParentSource();

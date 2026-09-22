@@ -85,7 +85,7 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
     public GuiSwingViewNumberSpinner.PropertyNumberSpinner create(GuiMappingContext contextProp) {
         JComponent c = spinner.createView(contextProp, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
-        return GuiSwingView.findChildByType(c, GuiSwingViewNumberSpinner.PropertyNumberSpinner.class);
+        return GuiSwingView.findDescendantByType(c, GuiSwingViewNumberSpinner.PropertyNumberSpinner.class);
     }
 
 
@@ -184,6 +184,7 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
 
     @Test
     public void testViewUpdateBigDecField() throws Exception {
+        timeFactor = 1;
         GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropBigDec));
         EditWait wait = editWait(i.getEditingRunner());
         wait.await();
@@ -204,6 +205,7 @@ public class GuiSwingViewNumberSpinnerTest extends GuiSwingTestCase {
 
     @Test
     public void testViewUpdateByteField() throws Exception {
+        timeFactor = 1;
         GuiSwingViewNumberSpinner.PropertyNumberSpinner i = runGet(() -> create(contextPropByte));
         EditWait wait = editWait(i.getEditingRunner());
         i.getEditorField().setText("554") ; //0b10_0010_1010 -> 0b0010_1010 =42

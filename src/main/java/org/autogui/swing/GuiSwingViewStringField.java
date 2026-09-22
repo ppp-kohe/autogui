@@ -102,6 +102,8 @@ public class GuiSwingViewStringField implements GuiSwingView {
          * @since 1.9
          */
         public static class EditorPaneForPropertyString extends JEditorPane {
+            public EditorPaneForPropertyString() {}
+
             public boolean getScrollableTracksViewportWidth() {
                 return true;
             }
@@ -217,6 +219,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
          */
         public static class ScrollPaneForPropertyString extends JScrollPane {
             protected Supplier<HeightInfo> heightInfoSupplier;
+            @SuppressWarnings("this-escape")
             public ScrollPaneForPropertyString(JComponent pane, Supplier<HeightInfo> heightSupplier) {
                 super(pane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
                 this.heightInfoSupplier = heightSupplier;

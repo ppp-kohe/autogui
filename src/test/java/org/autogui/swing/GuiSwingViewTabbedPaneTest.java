@@ -80,7 +80,7 @@ public class GuiSwingViewTabbedPaneTest extends GuiSwingTestCase {
     public GuiSwingViewTabbedPane.ObjectTabbedPane create() {
         JComponent comp = tabbedPane.createView(context, GuiReprValue.getNoneSupplier());
         frame = createFrame(comp);
-        return GuiSwingView.findChildByType(comp, GuiSwingViewTabbedPane.ObjectTabbedPane.class);
+        return GuiSwingView.findDescendantByType(comp, GuiSwingViewTabbedPane.ObjectTabbedPane.class);
     }
 
     /////////////////////////
@@ -88,13 +88,13 @@ public class GuiSwingViewTabbedPaneTest extends GuiSwingTestCase {
     @Test
     public void testTabPropUpdate() {
         GuiSwingViewTabbedPane.ObjectTabbedPane pane = runGet(this::create);
-        GuiSwingViewObjectPane.ObjectPane obj1 = runGet(() -> GuiSwingView.findChildByType(
+        GuiSwingViewObjectPane.ObjectPane obj1 = runGet(() -> GuiSwingView.findDescendantByType(
                 pane.getTabbedPane().getComponentAt(0), GuiSwingViewObjectPane.ObjectPane.class));
 
         obj.tab1.prop = "hello";
         context.updateSourceFromRoot();
 
-        GuiSwingView.ValuePane<?> propPane = obj1.getChildByName("prop");
+        GuiSwingView.ValuePane<?> propPane = GuiSwingView.getDescendantByName(obj1, "prop");
         Assert.assertEquals("after update prop in tab",
                 "hello",
                 runGet(propPane::getSwingViewValue));

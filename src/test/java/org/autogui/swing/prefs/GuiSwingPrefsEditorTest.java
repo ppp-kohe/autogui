@@ -42,6 +42,7 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
 
     @Before
     public void setUp() {
+        timeFactor = 1;
         typeBuilder = new GuiTypeBuilder();
         editor = new GuiSwingPrefsEditor();
 
@@ -143,22 +144,22 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         pane.setPreferredSize(new Dimension(u.getScaledSizeInt(600), u.getScaledSizeInt(800)));
         frame = createFrame(pane);
 
-        var list = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingPrefsEditor.ValueListPaneSplitEntry.class, t -> true));
+        var list = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingPrefsEditor.ValueListPaneSplitEntry.class));
         Assert.assertEquals("init size",  (Integer) 1, runGet(() -> list.getModel().getSize()));
         var contentPane = runGet(() -> list.getModel().getElementAt(0).contentPane());
         runWait();
         Assert.assertEquals("init dividerLocation", (Integer) 10, runGet(() -> contentPane.getEntry().dividerLocation));
         Assert.assertTrue("init horizontal", runGet(() -> contentPane.getEntry().horizontal));
 
-        run(() -> GuiSwingView.findComponent(contentPane, GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> true).getEditorField().setValue(123));
+        run(() -> GuiSwingView.findDescendantByType(contentPane, GuiSwingViewNumberSpinner.PropertyNumberSpinner.class).getEditorField().setValue(123));
 
         run(list::addNewElement);
         run(list::addNewElement);
         Assert.assertEquals("after add size",  (Integer) 3, runGet(() -> list.getModel().getSize()));
         var contentPaneAdded = runGet(() -> list.getModel().getElementAt(2).contentPane());
 
-        run(() -> GuiSwingView.findComponent(contentPaneAdded, GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> true).getEditorField().setValue(456));
-        run(() -> GuiSwingView.findComponent(contentPaneAdded, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, t -> true).setSwingViewValueWithUpdate(true));
+        run(() -> GuiSwingView.findDescendantByType(contentPaneAdded, GuiSwingViewNumberSpinner.PropertyNumberSpinner.class).getEditorField().setValue(456));
+        run(() -> GuiSwingView.findDescendantByType(contentPaneAdded, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class).setSwingViewValueWithUpdate(true));
         runWait();
 
         run(() -> list.getList().clearSelection());
@@ -191,11 +192,11 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
 
         var pane = runGet(() -> editor.createFileDialogPrefs(prefs));
 
-        var backPathPane = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewFilePathField.PropertyFilePathPane.class,
+        var backPathPane = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingViewFilePathField.PropertyFilePathPane.class,
                 t -> t.getName().equals(GuiSwingPrefsEditor.FILE_DIALOG_PREFS_PROP_BACK_PATH)));
-        var currDirPane = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewFilePathField.PropertyFilePathPane.class,
+        var currDirPane = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingViewFilePathField.PropertyFilePathPane.class,
                 t -> t.getName().equals(GuiSwingPrefsEditor.FILE_DIALOG_PREFS_PROP_CURRENT_DIRECTORY)));
-        var fileListPane = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingPrefsEditor.ValueListPaneFileDialogList.class, t -> true));
+        var fileListPane = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingPrefsEditor.ValueListPaneFileDialogList.class));
         runWait();
         Assert.assertEquals("init backPath", path1, runGet(backPathPane::getFile));
         Assert.assertEquals("init currentDirectory", path2, runGet(currDirPane::getFile));
@@ -241,7 +242,7 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         frame = createFrame(pane);
         runWait(600);
 
-        var docPane = runGet(() -> GuiSwingView.findComponent(pane, TextPaneBuilder.DocumentSettingPaneBase.class, p -> true));
+        var docPane = runGet(() -> GuiSwingView.findDescendantByType(pane, TextPaneBuilder.DocumentSettingPaneBase.class));
         Assert.assertEquals("init background", new Color(10, 20, 30, 40), runGet(() -> docPane.getBackgroundColor().getColor()));
         Assert.assertEquals("init foreground", new Color(50, 60, 70, 80), runGet(() -> docPane.getForegroundColor().getColor()));
         Assert.assertTrue("init bold", runGet(() -> docPane.getStyleBold().isSelected()));
@@ -294,7 +295,7 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         var pane = runGet(() -> editor.createNumberPrefs(GuiReprValueNumberSpinner.DOUBLE, prefs));
         frame = createFrame(pane);
 
-        var settings = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewNumberSpinner.NumberSettingPane.class, t -> true));
+        var settings = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingViewNumberSpinner.NumberSettingPane.class));
         Assert.assertEquals("init pattern", "##_###.####", runGet(() -> settings.getModel().getFormatPattern()));
         Assert.assertEquals("init max", 1000.0, ((Number) runGet(() -> settings.getModel().getMaximum())).doubleValue(), 0.01);
         Assert.assertEquals("init min", -3000.0, ((Number) runGet(() -> settings.getModel().getMinimum())).doubleValue(), 0.01);
@@ -331,12 +332,12 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
 
         var pane = runGet(() -> editor.createTablePrefs(prefs));
         frame = createFrame(pane);
-        var colOrder = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewStringField.PropertyStringPane.class, t -> t.getName().equals(GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER)));
-        var colWidth = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewStringField.PropertyStringPane.class, t -> t.getName().equals(GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_WIDTH)));
-        var rowHeight = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> t.getName().equals(GuiSwingPrefsEditor.TABLE_PREFS_ROW_HEIGHT)));
-        var rowCustom = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, t -> t.getName().equals(GuiSwingPrefsEditor.TABLE_PREFS_ROW_CUSTOM)));
-        var fitToContent = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, t -> t.getName().equals(GuiSwingPrefsEditor.TABLE_PREFS_ROW_FIT_TO_CONTENT)));
-        var rowSort = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingPrefsEditor.ValueListTableRowSort.class, t -> true));
+        var colOrder = runGet(() -> GuiSwingView.findDescendantByType(pane,  GuiSwingViewStringField.PropertyStringPane.class, t -> t.getName().equals(GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER)));
+        var colWidth = runGet(() -> GuiSwingView.findDescendantByType(pane,  GuiSwingViewStringField.PropertyStringPane.class, t -> t.getName().equals(GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_WIDTH)));
+        var rowHeight = runGet(() -> GuiSwingView.findDescendantByType(pane,  GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> t.getName().equals(GuiSwingPrefsEditor.TABLE_PREFS_ROW_HEIGHT)));
+        var rowCustom = runGet(() -> GuiSwingView.findDescendantByType(pane,  GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, t -> t.getName().equals(GuiSwingPrefsEditor.TABLE_PREFS_ROW_CUSTOM)));
+        var fitToContent = runGet(() -> GuiSwingView.findDescendantByType(pane,  GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, t -> t.getName().equals(GuiSwingPrefsEditor.TABLE_PREFS_ROW_FIT_TO_CONTENT)));
+        var rowSort = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingPrefsEditor.ValueListTableRowSort.class));
 
         Assert.assertEquals("init colOrder", "10 20", runGet(colOrder::getSwingViewValue));
         Assert.assertEquals("init colWidth", "100 200", runGet(colWidth::getSwingViewValue));
@@ -385,21 +386,21 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         var pane = runGet(() -> editor.createTableColumnWidthStatic(prefs));
         frame = createFrame(pane);
 
-        var mapPane = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingPrefsEditor.ValueListMapPaneForTableColumnWidthStatic.class, t -> true));
+        var mapPane = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingPrefsEditor.ValueListMapPaneForTableColumnWidthStatic.class));
         Assert.assertEquals("init size", 2, ((Number) runGet(() -> mapPane.getModel().getSize())));
 
-        var item1 = runGet(() -> GuiSwingView.findComponent(mapPane.getModel().getElementAt(0).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_WIDTH)));
-        var item2 = runGet(() -> GuiSwingView.findComponent(mapPane.getModel().getElementAt(1).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_WIDTH)));
+        var item1 = runGet(() -> GuiSwingView.findDescendantByType(mapPane.getModel().getElementAt(0).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_WIDTH)));
+        var item2 = runGet(() -> GuiSwingView.findDescendantByType(mapPane.getModel().getElementAt(1).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_WIDTH)));
         Assert.assertEquals("init 0 key", 123, runGet(item1::getValue));
         Assert.assertEquals("init 1 key", 456, runGet(item2::getValue));
 
         run(() -> item2.setSwingViewValueWithUpdate(100));
         run(mapPane::addNewElement);
-        var item3 = runGet(() -> GuiSwingView.findComponent(mapPane.getModel().getElementAt(2).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_WIDTH)));
+        var item3 = runGet(() -> GuiSwingView.findDescendantByType(mapPane.getModel().getElementAt(2).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_WIDTH)));
         run(() -> item3.setSwingViewValueWithUpdate(200));
         runWait();
 
-        var item3key = runGet(() -> GuiSwingView.findComponent(mapPane.getModel().getElementAt(2).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_INDEX)));
+        var item3key = runGet(() -> GuiSwingView.findDescendantByType(mapPane.getModel().getElementAt(2).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_INDEX)));
         run(() -> item3key.setSwingViewValueWithUpdate(3));
         runWait();
 
@@ -429,13 +430,13 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         var pane = runGet(() -> editor.createTableColumnOrderStatic(prefs));
         frame = createFrame(pane);
 
-        var mapPane = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingPrefsEditor.ValueListMapPaneForTableColumnOrder.class, t -> true));
+        var mapPane = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingPrefsEditor.ValueListMapPaneForTableColumnOrder.class));
         Assert.assertEquals("init size", 2, ((Number) runGet(() -> mapPane.getModel().getSize())));
 
-        var itemModel1 = runGet(() -> GuiSwingView.findComponent(mapPane.getModel().getElementAt(0).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX)));
-        var itemModel2 = runGet(() -> GuiSwingView.findComponent(mapPane.getModel().getElementAt(1).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX)));
-        var itemView1 = runGet(() -> GuiSwingView.findComponent(mapPane.getModel().getElementAt(0).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX)));
-        var itemView2 = runGet(() -> GuiSwingView.findComponent(mapPane.getModel().getElementAt(1).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX)));
+        var itemModel1 = runGet(() -> GuiSwingView.findDescendantByType(mapPane.getModel().getElementAt(0).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX)));
+        var itemModel2 = runGet(() -> GuiSwingView.findDescendantByType(mapPane.getModel().getElementAt(1).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX)));
+        var itemView1 = runGet(() -> GuiSwingView.findDescendantByType(mapPane.getModel().getElementAt(0).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX)));
+        var itemView2 = runGet(() -> GuiSwingView.findDescendantByType(mapPane.getModel().getElementAt(1).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX)));
         Assert.assertEquals("init 0 key modelIndex", 10, runGet(itemModel1::getValue));
         Assert.assertEquals("init 1 key modelIndex", 20, runGet(itemModel2::getValue));
         Assert.assertEquals("init 0 key viewIndex", 123, runGet(itemView1::getValue));
@@ -444,13 +445,13 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         run(() -> itemView2.setSwingViewValueWithUpdate(200));
         run(mapPane::addNewElement);
 
-        var itemModel3 = runGet(() -> GuiSwingView.findComponent(mapPane.getModel().getElementAt(2).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX)));
+        var itemModel3 = runGet(() -> GuiSwingView.findDescendantByType(mapPane.getModel().getElementAt(2).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_MODEL_INDEX)));
         run(() -> itemModel3.setSwingViewValueWithUpdate(300));
-        var itemView3 = runGet(() -> GuiSwingView.findComponent(mapPane.getModel().getElementAt(2).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX)));
+        var itemView3 = runGet(() -> GuiSwingView.findDescendantByType(mapPane.getModel().getElementAt(2).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_ORDER_VIEW_INDEX)));
         run(() -> itemView3.setSwingViewValueWithUpdate(400));
         runWait();
 
-        var item3key = runGet(() -> GuiSwingView.findComponent(mapPane.getModel().getElementAt(2).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_INDEX)));
+        var item3key = runGet(() -> GuiSwingView.findDescendantByType(mapPane.getModel().getElementAt(2).contentPane(), GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> Objects.equals(t.getName(), GuiSwingPrefsEditor.TABLE_PREFS_COLUMN_INDEX)));
         run(() -> item3key.setSwingViewValueWithUpdate(3));
         runWait();
 
@@ -527,7 +528,7 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         var pane = runGet(() -> editor.createLastHistoryValueBySwingViewHistoryValue(prefs, prefs.getCurrentValue()));
         frame = createFrame(pane);
 
-        var text = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewStringField.PropertyStringPane.class, t -> true));
+        var text = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingViewStringField.PropertyStringPane.class));
         runWait();
         Assert.assertEquals("init text", "HelloWorld", runGet(text::getSwingViewValue));
 
@@ -547,7 +548,7 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         var pane = runGet(() -> editor.createLastHistoryValueBySwingViewHistoryValue(prefs, prefs.getCurrentValue()));
         frame = createFrame(pane);
 
-        var value = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class, t -> true));
+        var value = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingViewBooleanCheckBox.PropertyCheckBox.class));
         runWait();
         Assert.assertEquals("init boolean", Boolean.TRUE, runGet(value::getSwingViewValue));
 
@@ -568,7 +569,7 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         var pane = runGet(() -> editor.createLastHistoryValueBySwingViewHistoryValue(prefs, prefs.getCurrentValue()));
         frame = createFrame(pane);
 
-        var value = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> true));
+        var value = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingViewNumberSpinner.PropertyNumberSpinner.class));
         runWait();
         Assert.assertEquals("init float", 10.234f, ((Number)runGet(value::getSwingViewValue)).floatValue(), 0.001f);
 
@@ -611,7 +612,7 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         var pane = runGet(() -> editor.createLastHistoryValueBySwingViewHistoryValue(prefs, prefs.getCurrentValue()));
         frame = createFrame(pane);
 
-        var value = runGet(() -> GuiSwingView.findComponent(pane, GuiSwingViewImagePane.PropertyImagePane.class, t -> true));
+        var value = runGet(() -> GuiSwingView.findDescendantByType(pane, GuiSwingViewImagePane.PropertyImagePane.class));
         runWait();
 
         Assert.assertEquals("init image", toStr(img), toStr((BufferedImage) runGet(value::getImage)));
@@ -639,8 +640,8 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
         frame = createFrame(pane);
         runWait();
 
-        var item0 = runGet(() -> GuiSwingView.findComponent(pane.getModel().getElementAt(0).contentPane(), GuiSwingViewStringField.PropertyStringPane.class, t -> true));
-        var item1 = runGet(() -> GuiSwingView.findComponent(pane.getModel().getElementAt(1).contentPane(), GuiSwingViewStringField.PropertyStringPane.class, t -> true));
+        var item0 = runGet(() -> GuiSwingView.findDescendantByType(pane.getModel().getElementAt(0).contentPane(), GuiSwingViewStringField.PropertyStringPane.class));
+        var item1 = runGet(() -> GuiSwingView.findDescendantByType(pane.getModel().getElementAt(1).contentPane(), GuiSwingViewStringField.PropertyStringPane.class));
 
         Assert.assertEquals("init 0", "hello", runGet(item0::getSwingViewValue));
         Assert.assertEquals("init 1", "world", runGet(item1::getSwingViewValue));
@@ -668,6 +669,6 @@ public class GuiSwingPrefsEditorTest extends GuiSwingTestCase {
 
     public GuiSwingViewNumberSpinner.PropertyNumberSpinner runGetNumber(JComponent pane, String name) {
         return this.runGet(() ->
-                GuiSwingView.findComponent(pane, GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> t.getName().equals(name)));
+                GuiSwingView.findDescendantByType(pane, GuiSwingViewNumberSpinner.PropertyNumberSpinner.class, t -> t.getName().equals(name)));
     }
 }

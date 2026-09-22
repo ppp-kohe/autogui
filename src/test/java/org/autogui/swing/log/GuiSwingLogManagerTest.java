@@ -53,6 +53,7 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
 
     @Before
     public void setUp() {
+        timeFactor = 1;
         manager = new GuiSwingLogManager();
 
         window = runGet(manager::createWindow);
@@ -288,7 +289,7 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
                         progress1.addValueP(0.1);
                         progressQueue.add(true);
                         try {
-                            Thread.sleep(100_0000);
+                            sleep(100_0000);
                             progress1EndQueue.add(false);
                         } catch (Exception ex) {
                             //
@@ -308,7 +309,7 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
                         progress2.addValueP(0.2);
                         progressQueue.add(true);
                         try {
-                            Thread.sleep(100_0000);
+                            sleep(100_0000);
 
                             progress2EndQueue.add(false);
                         } catch (Exception ex) {

@@ -32,6 +32,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
 
     @Before
     public void setUp() {
+        timeFactor = 1;
 
     }
 

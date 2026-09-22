@@ -1,12 +1,17 @@
 package org.autogui.base.mapping;
 
 import org.autogui.GuiIncluded;
+import org.autogui.base.log.GuiLogEntry;
+import org.autogui.base.log.GuiLogEntryString;
+import org.autogui.base.log.GuiLogManager;
 import org.autogui.base.type.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class GuiReprValueStringFieldTest {
 
@@ -23,9 +28,14 @@ public class GuiReprValueStringFieldTest {
     TestObjRepr obj;
 
     GuiMappingContext contextValue;
+    GuiMappingContext contextValueNoPrefs;
     GuiMappingContext contextProp;
 
     GuiMappingContext contextReadOnly;
+
+    GuiPreferences prefs;
+
+    List<GuiLogEntry> logEntries = new ArrayList<>();
 
     public GuiReprValueStringFieldTest() {}
 
@@ -46,10 +56,33 @@ public class GuiReprValueStringFieldTest {
         obj = new TestObjRepr();
         obj.value = "hello";
 
+
         contextValue = new GuiReprObjectPaneTest.GuiMappingContextForDebug(type, fld);
+        prefs = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory(), contextValue);
+        contextValue.setPreferences(prefs);
+
         contextProp = new GuiReprObjectPaneTest.GuiMappingContextForDebug(property, fld);
 
+        contextValueNoPrefs = new GuiReprObjectPaneTest.GuiMappingContextForDebug(type, fld, contextProp, GuiMappingContext.GuiSourceValue.of(obj));
+        contextValueNoPrefs.addToParent();
+        prefs = new GuiPreferences(new GuiPreferences.GuiValueStoreOnMemory() {
+            @Override
+            public void flush() {
+                throw new IllegalArgumentException("flush");
+            }
+        }, contextValueNoPrefs);
+        contextValueNoPrefs.setPreferences(prefs);
+
+
         contextReadOnly = new GuiMappingContext(propertyReadOnly, fld);
+
+        GuiLogManager.setManager(new GuiLogManager() {
+            @Override
+            protected <LogType extends GuiLogEntry> LogType logCreated(LogType log) {
+                logEntries.add(log);
+                return super.logCreated(log);
+            }
+        });
     }
 
     @GuiIncluded
@@ -364,5 +397,33 @@ public class GuiReprValueStringFieldTest {
                 fld.fromHumanReadableString(contextValue, null));
     }
 
+    //////
 
+    @Test
+    public void testAddHistoryValueError() {
+        fld.addHistoryValue(contextValueNoPrefs, "INVALID");
+
+        Assert.assertEquals("flush cause error for test", 1, logEntries.size());
+        Assert.assertTrue("string log for illegal argument", logEntries.getFirst() instanceof GuiLogEntryString);
+    }
+
+    @Test
+    public void testCheckAndUpdateSource() {
+        contextProp.setSource(GuiMappingContext.GuiSourceValue.of(new TestObjRepr()));
+
+        contextValueNoPrefs.setSource(GuiMappingContext.GuiSourceValue.of("hello"));
+        fld.checkAndUpdateSource(contextValueNoPrefs);
+
+        Assert.assertEquals("flush cause error for test", 1, logEntries.size());
+        Assert.assertTrue("string log for illegal argument", logEntries.getFirst() instanceof GuiLogEntryString);
+    }
+
+    @Test
+    public void testAddHistoryValue() {
+        fld.addHistoryValue(contextValue, "hello");
+        Assert.assertEquals("histories", 1, contextValue.getPreferences().getHistoryValues().size());
+
+        var hist = contextValue.getPreferences().getHistoryValues().getFirst();
+        Assert.assertEquals("histroy value", "hello", hist.getValue());
+    }
 }

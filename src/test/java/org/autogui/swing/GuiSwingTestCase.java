@@ -16,6 +16,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 public class GuiSwingTestCase {
+    protected double timeFactor = 0.1;
+
+    public void sleep(long millis) throws InterruptedException {
+        double m = Math.max(1, millis * timeFactor);
+        Thread.sleep((long) m);
+    }
 
     public GuiSwingTestCase() {}
     public JFrame createFrame(JComponent pane) {
@@ -35,7 +41,7 @@ public class GuiSwingTestCase {
 
     public void runWait(long ms) {
         try {
-            Thread.sleep(ms);
+            sleep(ms);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -55,7 +61,7 @@ public class GuiSwingTestCase {
 
     public <T> T runGet(final Callable<T> r) {
         try {
-            Thread.sleep(300);
+            sleep(300);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -69,7 +75,7 @@ public class GuiSwingTestCase {
             }
         });
         try {
-            Thread.sleep(200);
+            sleep(200);
             GuiResponse<T> o = q.poll(10, TimeUnit.MINUTES);
             if (o == null) {
                 throw new RuntimeException("timeout");
@@ -209,7 +215,7 @@ public class GuiSwingTestCase {
             int i = 0;
             while (flag != runner.hasScheduledTask() && i < 20) {
                 try {
-                    Thread.sleep(100);
+                    sleep(100);
                 } catch (Exception ex) {
                     //
                 }
@@ -217,5 +223,19 @@ public class GuiSwingTestCase {
             }
             runWait();
         }
+    }
+
+    public static void printTree(Object rootPane) {
+        GuiSwingFeature.walk(rootPane, new GuiSwingFeature.Visitor() {
+            @Override
+            boolean visitBefore(Object next) {
+                String info = "";
+                if (next instanceof GuiSwingView.ValuePane<?> vp) {
+                    info = " :" + vp.getSwingViewContext().toString();
+                }
+                System.out.printf("%s%s %s%n", "  ".repeat(stack.size()), next.getClass().getSimpleName(), info);
+                return true;
+            }
+        });
     }
 }

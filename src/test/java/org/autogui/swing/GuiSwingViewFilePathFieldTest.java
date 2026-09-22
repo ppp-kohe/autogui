@@ -66,7 +66,7 @@ public class GuiSwingViewFilePathFieldTest extends GuiSwingTestCase {
     public GuiSwingViewFilePathField.PropertyFilePathPane create(GuiMappingContext contextProp) {
         JComponent c = field.createView(contextProp, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
-        return GuiSwingView.findChildByType(c, GuiSwingViewFilePathField.PropertyFilePathPane.class);
+        return GuiSwingView.findDescendantByType(c, GuiSwingViewFilePathField.PropertyFilePathPane.class);
     }
 
     @Test
@@ -107,6 +107,7 @@ public class GuiSwingViewFilePathFieldTest extends GuiSwingTestCase {
 
     @Test
     public void testViewUpdateFileFieldText() {
+        timeFactor = 1;
         GuiSwingViewFilePathField.PropertyFilePathPane p = runGet(() -> create(contextPropFile));
         run(() -> p.getField().setText(homePath.toString()));
 

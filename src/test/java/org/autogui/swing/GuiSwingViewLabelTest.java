@@ -90,7 +90,7 @@ public class GuiSwingViewLabelTest extends GuiSwingTestCase {
     public GuiSwingViewLabel.PropertyLabel create() {
         JComponent c = label.createView(contextProp, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
-        return GuiSwingView.findChildByType(c, GuiSwingViewLabel.PropertyLabel.class);
+        return GuiSwingView.findDescendantByType(c, GuiSwingViewLabel.PropertyLabel.class);
     }
 
     @Test

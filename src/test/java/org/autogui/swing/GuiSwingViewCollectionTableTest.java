@@ -181,7 +181,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
     public GuiSwingViewCollectionTable.CollectionTable create() {
         JComponent comp = table.createView(propContext, GuiReprValue.getNoneSupplier());
         GuiSwingViewCollectionTable.CollectionTable view =
-                GuiSwingView.findChildByType(comp,
+                GuiSwingView.findDescendantByType(comp,
                         GuiSwingViewCollectionTable.CollectionTable.class);
         frame = createFrame(comp);
         frame.setSize(300, 500);
@@ -191,7 +191,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
     public GuiSwingViewCollectionTable.CollectionTable createValues() {
         JComponent comp = table.createView(valuesPropContext, GuiReprValue.getNoneSupplier());
         GuiSwingViewCollectionTable.CollectionTable view =
-                GuiSwingView.findChildByType(comp,
+                GuiSwingView.findDescendantByType(comp,
                         GuiSwingViewCollectionTable.CollectionTable.class);
         frame = createFrame(comp);
         frame.setSize(300, 500);
@@ -201,7 +201,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
     public GuiSwingViewCollectionTable.CollectionTable createMatrix() {
         JComponent comp = table.createView(matrixPropContext, GuiReprValue.getNoneSupplier());
         GuiSwingViewCollectionTable.CollectionTable view =
-                GuiSwingView.findChildByType(comp,
+                GuiSwingView.findDescendantByType(comp,
                         GuiSwingViewCollectionTable.CollectionTable.class);
         frame = createFrame(comp);
         frame.setSize(300, 500);
@@ -211,7 +211,7 @@ public class GuiSwingViewCollectionTableTest extends  GuiSwingTestCase {
     public GuiSwingViewCollectionTable.CollectionTable createObjMatrix() {
         JComponent comp = table.createView(objMatrixPropContext, GuiReprValue.getNoneSupplier());
         GuiSwingViewCollectionTable.CollectionTable view =
-                GuiSwingView.findChildByType(comp,
+                GuiSwingView.findDescendantByType(comp,
                         GuiSwingViewCollectionTable.CollectionTable.class);
         frame = createFrame(comp);
         frame.setSize(300, 500);

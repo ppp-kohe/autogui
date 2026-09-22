@@ -72,7 +72,7 @@ public class GuiSwingViewDocumentEditorTest extends GuiSwingTestCase {
     public GuiSwingViewDocumentEditor.PropertyDocumentTextPane create() {
         JComponent c = doc.createView(contextProp, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
-        return GuiSwingView.findChildByType(c, GuiSwingViewDocumentEditor.PropertyDocumentTextPane.class);
+        return GuiSwingView.findDescendantByType(c, GuiSwingViewDocumentEditor.PropertyDocumentTextPane.class);
     }
 
     @Test

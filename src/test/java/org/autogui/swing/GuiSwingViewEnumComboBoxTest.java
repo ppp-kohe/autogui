@@ -75,7 +75,7 @@ public class GuiSwingViewEnumComboBoxTest extends GuiSwingTestCase {
     public GuiSwingViewEnumComboBox.PropertyEnumComboBox create() {
         JComponent c = box.createView(contextProp, GuiReprValue.getNoneSupplier());
         frame = createFrame(c);
-        return GuiSwingView.findChildByType(c, GuiSwingViewEnumComboBox.PropertyEnumComboBox.class);
+        return GuiSwingView.findDescendantByType(c, GuiSwingViewEnumComboBox.PropertyEnumComboBox.class);
     }
 
     @Test

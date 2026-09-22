@@ -64,6 +64,7 @@ public class GuiMappingContext {
     protected GuiPreferences preferences;
     protected ScheduledTaskRunner<DelayedTask> delayedTaskRunner;
 
+    protected String name;
     protected String displayName;
     protected String iconName;
 
@@ -293,7 +294,25 @@ public class GuiMappingContext {
 
     /** @return the name of {@link #typeElement} */
     public String getName() {
-        return typeElement.getName();
+        if (name == null) {
+            name = getNameFromTypeElement();
+        }
+        return name;
+    }
+
+    private String getNameFromTypeElement() {
+        String typeName = typeElement.getName();
+        int i;
+        if ((i = typeName.lastIndexOf('.')) >= 0) {
+            var nm = typeName.substring(i + 1);
+            if ((i = nm.lastIndexOf('$')) >= 0) {
+                return nm.substring(i + 1);
+            } else {
+                return nm;
+            }
+        } else {
+            return typeName;
+        }
     }
 
     public String getDescription() {

@@ -47,7 +47,7 @@ public class GuiSwingWindowTest extends GuiSwingTestCase {
         w.setVisible(true);
         Assert.assertEquals("source value",
                 obj,
-                runGet(() -> w.getContext().getSource().getValue()));
+                runGet(() -> w.getSwingViewContext().getSource().getValue()));
         frame = w;
     }
 }
