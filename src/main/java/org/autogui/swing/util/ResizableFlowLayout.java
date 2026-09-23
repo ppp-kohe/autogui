@@ -3,6 +3,7 @@ package org.autogui.swing.util;
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -256,34 +257,29 @@ public class ResizableFlowLayout implements LayoutManager {
         return new ResizedWidth(parent, false).getSize();
     }
 
+    public static final String RESIZABLE = "resizable";
+    public static final String FIXED = "";
+
     public void addLayoutComponent(String name, Component comp) {
+        setResizable(comp, Objects.equals(RESIZABLE, name));
     }
 
     public void removeLayoutComponent(Component comp) {
+        resizable.remove(comp);
     }
 
     public static void add(Container parent, Component comp, boolean resizable) {
-        parent.add(comp);
         LayoutManager m = parent.getLayout();
         ResizableFlowLayout rfl;
         if (!(m instanceof ResizableFlowLayout)) {
             rfl = new ResizableFlowLayout(true);
             parent.setLayout(rfl);
-        } else {
-            rfl = (ResizableFlowLayout) m;
         }
-        rfl.setResizable(comp, resizable);
+        parent.add(comp, resizable ? RESIZABLE : FIXED);
     }
 
     public static void remove(Container parent, Component comp) {
-        LayoutManager m = parent.getLayout();
-        if (m instanceof ResizableFlowLayout) {
-            ((ResizableFlowLayout) m).remove(comp);
-        }
-    }
-
-    public void remove(Component comp) {
-        resizable.remove(comp);
+        parent.remove(comp);
     }
 
     public <CT extends Container> LayoutAppender<CT> withContainer(CT parent) {
@@ -310,8 +306,7 @@ public class ResizableFlowLayout implements LayoutManager {
             return this;
         }
         public LayoutAppender<ContainerType> add(Component comp, boolean resizable) {
-            parent.add(comp);
-            layout.setResizable(comp, resizable);
+            parent.add(comp, resizable ? RESIZABLE : FIXED);
             return this;
         }
         public ContainerType getContainer() {

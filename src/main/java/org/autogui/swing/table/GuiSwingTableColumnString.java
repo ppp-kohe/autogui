@@ -368,6 +368,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             super(context, specifierManager);
             TextCellRenderer.setCellDefaultProperties(this);
             setBorder(BorderFactory.createEmptyBorder());
+            setOpaque(false); //experimentally off to skip SynthEditorPaneUI.update -> .paintRegion -> g.fillRect
             init();
         }
 

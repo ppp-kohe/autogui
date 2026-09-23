@@ -48,6 +48,21 @@ public class NimbusLookAndFeelCustomFlat extends NimbusLookAndFeel {
     public static int switcherPollingTime = 60_000;
 
     @Override
+    public String getName() {
+        return "Nimbus Custom Flat " + darkLight.name();
+    }
+
+    @Override
+    public String getID() {
+        return "NimbusCustomFlat" + darkLight.name();
+    }
+
+    @Override
+    public String getDescription() {
+        return "Nimbus Custom Flat " + darkLight.name();
+    }
+
+    @Override
     public void initialize() {
         super.initialize();
         synchronized (NimbusLookAndFeelCustomFlat.class) {
