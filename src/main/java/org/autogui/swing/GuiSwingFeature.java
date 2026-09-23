@@ -425,13 +425,13 @@ public interface GuiSwingFeature extends GuiSwingElement.FeatureCollection {
         return cont;
     }
 
-    abstract class Visitor {
+    class Visitor {
         public Visitor() {}
         public List<Object> stack = new ArrayList<>();
-        boolean visitBefore(Object next) {
+        public boolean visitBefore(Object next) {
             return true;
         }
-        boolean visitAfter(Object next) {
+        public boolean visitAfter(Object next) {
             return true;
         }
     }

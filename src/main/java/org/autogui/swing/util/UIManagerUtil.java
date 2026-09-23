@@ -676,7 +676,7 @@ public class UIManagerUtil {
                 String key = "defaultFont";
                 Font f = defaults.getFont(key);
                 String name = "Noto Sans JP";
-                if ((f == null || f.getFamily().equals("Yu Gothic UI"))) { //the default is too narrow. if it has the specified font, use the font
+                if ((f == null || f.getFamily().equals("Yu Gothic UI") ||  f.getFamily().equals("SansSerif"))) { //the default is too narrow. if it has the specified font, use the font
                     defaults.put(key, new Font(name, f == null ? Font.PLAIN : f.getStyle(), f == null ? 12 : f.getSize()));
                 }
             }
