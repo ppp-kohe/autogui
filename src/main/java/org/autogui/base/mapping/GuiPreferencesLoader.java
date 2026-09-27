@@ -275,7 +275,7 @@ public class GuiPreferencesLoader {
         }
     }
 
-    /////////////
+    //------------------
 
 
     public enum PrefsLoaderCommandArg {

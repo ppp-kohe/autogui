@@ -19,6 +19,8 @@ public class ValueListDemo {
         AutoGuiShell.get().showWindow(new ValueListDemo());
     }
 
+    public ValueListDemo() {}
+
     @GuiIncluded
     public List<Row> rows = new ArrayList<>();
 

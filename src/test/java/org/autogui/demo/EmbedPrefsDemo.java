@@ -18,6 +18,8 @@ public class EmbedPrefsDemo {
         AutoGuiShell.get().showWindow(new EmbedPrefsDemo());
     }
 
+    public EmbedPrefsDemo() {}
+
     EmbedPane comp;
     @GuiIncluded
     public EmbedPane component() {
@@ -38,6 +40,8 @@ public class EmbedPrefsDemo {
     public static class EmbedPane extends JComponent implements GuiPreferences.PreferencesJsonSupport {
         int count;
         Color color = Color.blue;
+        public EmbedPane() {}
+
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);

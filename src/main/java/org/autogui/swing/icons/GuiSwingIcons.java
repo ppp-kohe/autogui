@@ -289,7 +289,7 @@ public class GuiSwingIcons {
     }
 
 
-    /////////////////////////////
+    //--------------------------------------
 
     public Icon getAcceptIcon() { return getIcon("accept"); }
     public Icon getAddIcon() { return getIcon("add"); }

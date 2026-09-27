@@ -340,7 +340,7 @@ public class GuiSwingJsonTransfer {
         public void lostOwnership(Clipboard clipboard, Transferable contents) { }
     }
 
-    ////////////////////////////
+    //--------------------------------------
 
     /** a table menu composite for copying JSON values of target table-cells */
     public static class TableMenuCompositeJsonCopy implements ObjectTableColumn.TableMenuComposite {
@@ -586,7 +586,7 @@ public class GuiSwingJsonTransfer {
         }
     }
 
-    ////////////////////////////
+    //--------------------------------------
 
     /** a table menu composite for pasting JSON values of target table-cells */
     public static class TableMenuCompositeJsonPaste implements ObjectTableColumn.TableMenuComposite {

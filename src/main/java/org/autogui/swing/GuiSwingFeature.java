@@ -223,7 +223,7 @@ public interface GuiSwingFeature extends GuiSwingElement.FeatureCollection {
      */
     List<?> getSwingViewSubNodes();
 
-    ////////////////////////////////////////
+    //--------------------------------------
 
     enum TraversalOption {
         NonTop,
@@ -315,7 +315,7 @@ public interface GuiSwingFeature extends GuiSwingElement.FeatureCollection {
         }
     }
 
-    ////////////////////////////////////////
+    //--------------------------------------
 
     static <RetType> RetType traverseFindFirstIf(Object obj, Class<RetType> type, Predicate<RetType> predicate, TraversalOption... options) {
         return traverseFindFirst(obj, type,
@@ -393,7 +393,7 @@ public interface GuiSwingFeature extends GuiSwingElement.FeatureCollection {
         }
     }
 
-    ////////////////////////////////////////
+    //--------------------------------------
 
     static boolean walk(Object obj, Visitor visitor) {
         boolean cont = true;
@@ -436,7 +436,7 @@ public interface GuiSwingFeature extends GuiSwingElement.FeatureCollection {
         }
     }
 
-    ////////////////////////////////////////
+    //--------------------------------------
 
     static <RetType> RetType findFirstChildIf(Object obj, Class<RetType> type, Predicate<RetType> predicate, TraversalOption... options) {
         return findFirstChild(obj, type,
@@ -522,7 +522,7 @@ public interface GuiSwingFeature extends GuiSwingElement.FeatureCollection {
         }
     }
 
-    ////////////////////////////////////////
+    //--------------------------------------
 
     /**
      * traverse descendant components and call {@link GuiSwingFeature#saveSwingPreferences(GuiPreferences)} for each component.

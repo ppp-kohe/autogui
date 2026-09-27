@@ -32,28 +32,28 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
     GuiMappingContext context;
     GuiMappingContext propContext;
 
-    /// ///////
+    //------------------
 
     GuiTypeObject typeValues;
     TestValues values;
     GuiMappingContext valuesContext;
     GuiMappingContext valuesPropContext;
 
-    /// ///////
+    //------------------
 
     GuiTypeObject typeMatrix;
     TestMatrix matrix;
     GuiMappingContext matrixContext;
     GuiMappingContext matrixPropContext;
 
-    /// ///////
+    //------------------
 
     GuiTypeObject typeObjMatrix;
     TestObjMatrix objMatrix;
     GuiMappingContext objMatrixContext;
     GuiMappingContext objMatrixPropContext;
 
-    /// ///////
+    //------------------
 
     GuiSwingViewCollectionTable table;
 
@@ -64,6 +64,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
 
     @BeforeEach
     public void setUp() {
+        timeFactor = 0.3;
         builder = new GuiTypeBuilder();
         typeObject = (GuiTypeObject) builder.get(TestObj.class);
 
@@ -75,7 +76,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         GuiSwingMapperSet.getReprDefaultSet().match(context);
         propContext = context.getChildByName("value").getChildByName("List");
 
-        ////////
+        //------------------
 
         typeValues = (GuiTypeObject) builder.get(TestValues.class);
 
@@ -84,7 +85,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         GuiSwingMapperSet.getReprDefaultSet().match(valuesContext);
         valuesPropContext = valuesContext.getChildByName("value").getChildByName("List");
 
-        ////////
+        //------------------
 
         typeMatrix = (GuiTypeObject) builder.get(TestMatrix.class);
 
@@ -93,7 +94,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         GuiSwingMapperSet.getReprDefaultSet().match(matrixContext);
         matrixPropContext = matrixContext.getChildByName("value").getChildByName("List");
 
-        ////////
+        //------------------
 
         typeObjMatrix = (GuiTypeObject) builder.get(TestObjMatrix.class);
 
@@ -154,7 +155,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         }
     }
 
-    /// /////////////////////
+    //------------------
 
     @GuiIncluded
     public static class TestValues {
@@ -165,7 +166,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         }
     }
 
-    /// /////////////////////
+    //------------------
 
     @GuiIncluded
     public static class TestMatrix {
@@ -177,7 +178,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
     }
 
 
-    /// /////////////////////
+    //------------------
 
     @GuiIncluded
     public static class TestObjMatrix {
@@ -188,7 +189,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         }
     }
 
-    /// /////////////////////
+    //------------------
 
 
     public GuiSwingViewCollectionTable.CollectionTable create() {
@@ -223,7 +224,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         return view;
     }
 
-    /// /////////////////////
+    //------------------
 
 
     @Test
@@ -344,7 +345,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
         assertArrayEquals(new int[]{2, 2}, (int[]) items.get(3), "2nd row, 3rd col");
     }
 
-    /// ///////////////////////
+    //------------------
 
 
     @Test
@@ -381,7 +382,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
     }
 
 
-    /// ///////////////////////
+    //------------------
 
     @Test
     public void testViewCollectionUpdateMatrix() {
@@ -405,7 +406,7 @@ public class GuiSwingViewCollectionTableTest extends GuiSwingTestCase {
     }
 
 
-    /// ///////////////////////
+    //------------------
 
     @Test
     public void testViewCollectionUpdateObjMatrix() {

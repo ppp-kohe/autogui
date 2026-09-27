@@ -98,7 +98,7 @@ public class GuiReprValueEnumComboBoxTest {
                 "getBooleanValue with other string returns null");
     }
 
-    /// ///////
+    //------------------
 
     @Test
     public void testValueToJson() {

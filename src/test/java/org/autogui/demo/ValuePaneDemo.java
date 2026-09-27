@@ -57,6 +57,8 @@ public class ValuePaneDemo {
         protected Path path;
         protected Image image;
 
+        public NonEditablePane() {}
+
         @GuiIncluded(index = 1)
         @GuiInits(stringField = @GuiInitStringField(displayLines = 5))
         public String getStr() {
@@ -116,6 +118,8 @@ public class ValuePaneDemo {
 
     @GuiIncluded
     public static class EditablePane extends NonEditablePane {
+
+        public EditablePane() {}
 
         @GuiIncluded
         public void strAction() {

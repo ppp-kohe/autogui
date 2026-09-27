@@ -19,6 +19,8 @@ public class ManualLogScalingDemo {
 
     GuiSwingLogManager manager;
 
+    public ManualLogScalingDemo() {}
+
     JFrame frame;
     JLabel infoField;
     GuiSwingLogList list;

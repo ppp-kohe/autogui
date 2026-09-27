@@ -80,7 +80,7 @@ public class ObjectTableModel extends AbstractTableModel
         return table;
     }
 
-    ////////// columns
+    //-------------------------------------- columns
 
     @Override
     public String getColumnName(int column) {
@@ -157,7 +157,7 @@ public class ObjectTableModel extends AbstractTableModel
     }
 
 
-    //////////// table initialization
+    //-------------------------------------- table initialization
 
     public JScrollPane initTableWithScroll() {
         JTable table = new JTable(this, getColumnModel());
@@ -198,7 +198,7 @@ public class ObjectTableModel extends AbstractTableModel
         return scrollPane;
     }
 
-    //////////// task
+    //-------------------------------------- task
 
     public <RetType> ContextTaskResult<RetType> executeContextTask(Supplier<RetType> task,
                                                                    Consumer<ContextTaskResult<RetType>> afterTask) {
@@ -218,7 +218,7 @@ public class ObjectTableModel extends AbstractTableModel
         return runner.executeContextTask(column.isTaskRunnerUsedFor(task), task, afterTask);
     }
 
-    //////////// row
+    //-------------------------------------- row
 
     public void setSource(Supplier<Object> source) {
         this.source = source;
@@ -261,7 +261,7 @@ public class ObjectTableModel extends AbstractTableModel
         }
     }
 
-    //////////// values
+    //-------------------------------------- values
 
     /** the return value of {@link #buildDataArray(Runnable)} */
     public enum BuildResult {
@@ -410,7 +410,7 @@ public class ObjectTableModel extends AbstractTableModel
         }
     }
 
-    ///////////////////////
+    //--------------------------------------
 
 
     @Override
@@ -470,7 +470,7 @@ public class ObjectTableModel extends AbstractTableModel
         }
     }
 
-    ///////////////////////
+    //--------------------------------------
 
     /** executed under event thread */
     public void refreshData() {
@@ -578,7 +578,7 @@ public class ObjectTableModel extends AbstractTableModel
                 .getTableColumn().getCellEditor() != null;
     }
 
-    ///////////
+    //--------------------------------------
 
     public PopupMenuBuilder getBuilderForRowsOrCells(JTable table, List<ObjectTableColumn> cols, boolean row) {
         return new PopupCategorizedForRowsOrCells(() ->

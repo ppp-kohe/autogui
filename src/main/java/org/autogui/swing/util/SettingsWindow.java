@@ -142,7 +142,7 @@ public class SettingsWindow {
         void setup(JFrame window);
     }
 
-    ///////// header text:
+    //-------------------------------------- header text:
 
     /** a group of labels */
     public static class LabelGroup {
@@ -211,7 +211,7 @@ public class SettingsWindow {
         }
     }
 
-    ////////////// color chooser
+    //-------------------------------------- color chooser
 
     protected static ColorWindow colorWindow;
 

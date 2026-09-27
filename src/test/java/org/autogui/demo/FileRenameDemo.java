@@ -14,6 +14,8 @@ public class FileRenameDemo {
         AutoGuiShell.get().showWindow(new FileRenameDemo());
     }
 
+    public FileRenameDemo() {}
+
     File dir;
 
     @GuiIncluded public File getDir() { return dir; }

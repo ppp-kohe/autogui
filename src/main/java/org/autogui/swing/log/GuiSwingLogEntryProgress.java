@@ -226,7 +226,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             return progressTailPane;
         }
 
-        ///////////////
+        //--------------------------------------
 
 
         @Override
@@ -325,7 +325,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             }
         }
 
-        ///////////////
+        //--------------------------------------
 
 
         @Override
@@ -353,7 +353,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             }
         }
 
-        /////////////////
+        //--------------------------------------
 
 
         @Override
@@ -379,7 +379,7 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
             return TextCellRenderer.getSelectedTextForComposition(p, entireText, p.getSelections(), message, message2);
         }
 
-        /////////////////
+        //--------------------------------------
 
         public void interruptStopPressed() {
             if (stopPressedValue != null) {

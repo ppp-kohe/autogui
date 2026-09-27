@@ -547,7 +547,7 @@ public class GuiReprCollectionTable extends GuiReprValue {
         }
     }
 
-    ////////////////////////////////////
+    //------------------
 
     /** interface for actions which handle selected-rows;
      *    an actual implementation relies on a concrete GUI component */

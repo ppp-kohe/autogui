@@ -554,7 +554,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             viewClock.clear();
         }
 
-        /////////////////
+        //--------------------------------------
 
 
         public JToolBar getActionToolBar() {
@@ -1881,7 +1881,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                     .collect(Collectors.toList());
         }
 
-        ////////////
+        //--------------------------------------
 
         public void setupCompositeKeyMap() {
             existingShared = new LinkedHashSet<>();

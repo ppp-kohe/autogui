@@ -71,7 +71,7 @@ public class GuiSwingViewStringFieldTest extends GuiSwingTestCase {
         }
     }
 
-    /// ///////
+    //------------------
 
     public GuiSwingViewStringField.PropertyStringPane create() {
         JComponent c = field.createView(contextProp, GuiReprValue.getNoneSupplier());

@@ -17,6 +17,8 @@ public class EditorDemo {
     ContentPane contentPane = new ContentPane();
     StringBuilderPane builderPane = new StringBuilderPane();
 
+    public EditorDemo() {}
+
     @GuiIncluded(index = 0)
     public PlainPane getPlainPane() {
         return plainPane;
@@ -41,6 +43,8 @@ public class EditorDemo {
     public static class StyledPane {
         StyledDocument doc;
 
+        public StyledPane() {}
+
         @GuiIncluded
         public StyledDocument getDoc() {
             if (doc == null) {
@@ -48,13 +52,13 @@ public class EditorDemo {
             }
             return doc;
         }
-
-
     }
 
     @GuiIncluded
     public static class PlainPane {
         Document doc;
+
+        public PlainPane() {}
 
         @GuiIncluded
         public Document getDoc() {
@@ -69,6 +73,8 @@ public class EditorDemo {
     public static class ContentPane {
         AbstractDocument.Content content;
 
+        public ContentPane() {}
+
         @GuiIncluded
         public AbstractDocument.Content getContent() {
             if (content == null) {
@@ -81,6 +87,8 @@ public class EditorDemo {
     @GuiIncluded
     public static class StringBuilderPane {
         StringBuilder builder = new StringBuilder();
+
+        public StringBuilderPane() {}
 
         @GuiIncluded
         public StringBuilder getBuilder() {

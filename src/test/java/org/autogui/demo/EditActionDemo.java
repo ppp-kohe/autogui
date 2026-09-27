@@ -12,6 +12,8 @@ public class EditActionDemo {
         AutoGuiShell.get().showWindow(new EditActionDemo());
     }
 
+    public EditActionDemo() {}
+
     @GuiIncluded(action = true)
     public Message editMessage() {
         return new Message("Message");

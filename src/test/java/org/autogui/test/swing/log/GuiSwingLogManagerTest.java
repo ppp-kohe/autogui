@@ -347,7 +347,7 @@ public class GuiSwingLogManagerTest extends GuiSwingTestCase {
 
         run(() -> manager.logString("msg4"));
 
-        ////////////////////
+        //------------------
 
         es = runGet(() -> window.getList().getLogListModel().getEntries());
         assertEquals(6, es.size(), "after stop and a new log msg4");

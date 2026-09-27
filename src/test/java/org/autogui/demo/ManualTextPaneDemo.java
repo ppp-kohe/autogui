@@ -18,6 +18,8 @@ public class ManualTextPaneDemo {
 
     TextPaneBuilder builder;
 
+    public ManualTextPaneDemo() {}
+
     public void run() {
         frame = new JFrame("TextPaneExp");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

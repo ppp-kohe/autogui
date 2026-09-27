@@ -311,7 +311,7 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
 
         assertTrue(Duration.between(startTime, time1).compareTo(endTime) < 0, "str prop history time");
 
-        ///////////////////////
+        //------------------
 
         assertEquals("true", mapGet(obj, "world", "$history", "1", "value"), "bool prop history value is json string");
         assertEquals("1", mapGet(obj, "world", "$history", "1", "index"), "bool prop history index");
@@ -320,7 +320,7 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
 
         assertTrue(Duration.between(startTime, time2).compareTo(endTime) < 0, "str prop history time");
 
-        ///////////////////////
+        //------------------
 
         assertEquals("\"value3\"", mapGet(obj, "obj2", "TestSubObj", "value", "$history", "0", "value"), "sub-obj string prop history value is json string");
         assertEquals("0", mapGet(obj, "obj2", "TestSubObj", "value", "$history", "0", "index"), "sub-obj string prop history index");
@@ -329,7 +329,7 @@ public class GuiSwingViewObjectPaneTest extends GuiSwingTestCase {
 
         assertTrue(Duration.between(startTime, time3).compareTo(endTime) < 0, "str prop history time");
 
-        ///////////////////////
+        //------------------
 
         assertEquals("\"value4\"", mapGet(obj, "obj2", "TestSubObj", "value", "$history", "1", "value"), "sub-obj string prop history value is json string");
         assertEquals("1", mapGet(obj, "obj2", "TestSubObj", "value", "$history", "1", "index"), "sub-obj string prop history index");

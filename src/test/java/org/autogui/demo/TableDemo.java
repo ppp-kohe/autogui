@@ -12,6 +12,8 @@ public class TableDemo {
         AutoGuiShell.get().showWindow(new TableDemo());
     }
 
+    public TableDemo() {}
+
     @GuiIncluded public TableA tableA = new TableA();
     @GuiIncluded public TableB tableB = new TableB();
     @GuiIncluded public TableC tableC = new TableC();
@@ -20,10 +22,11 @@ public class TableDemo {
     @GuiIncluded public TableF tableF = new TableF();
     @GuiIncluded public TableG tableG = new TableG();
 
-    ///////////////////////////
+    //------------------
 
     @GuiIncluded(description = "List<V>")
     public static class TableA {
+        public TableA() {}
         @GuiIncluded public List<Float> listA = Arrays.asList(10f, 20f, 30f);
 
         @GuiIncluded public void actionA1(List<Float> l, String name) {
@@ -39,10 +42,11 @@ public class TableDemo {
         }
     }
 
-    ///////////////////////////
+    //------------------
 
     @GuiIncluded(description = "List<E>, E(V,V)")
     public static class TableB {
+        public TableB() {}
         @GuiIncluded public List<ElemB> listB = Arrays.asList(
                 new ElemB(10f), new ElemB(20f), new ElemB(30f));
 
@@ -79,10 +83,11 @@ public class TableDemo {
         }
     }
 
-    ///////////////////////////
+    //------------------
 
     @GuiIncluded(description = "List<List<V>>")
     public static class TableC {
+        public TableC() {}
         @GuiIncluded public List<List<Float>> listC = Arrays.asList(
                 Arrays.asList(10f, 11f, 12f),
                 Arrays.asList(20f, 21f, 22f, 23f),
@@ -103,10 +108,11 @@ public class TableDemo {
     }
 
 
-    ///////////////////////////
+    //------------------
 
     @GuiIncluded(description = "List<List<E>>, E(V)")
     public static class TableD {
+        public TableD() {}
         @GuiIncluded public List<List<ElemB>> listD = Arrays.asList(
                 Arrays.asList(new ElemB(10f), new ElemB(11f), new ElemB(12f), new ElemB(13f), new ElemB(14f)),
                 Arrays.asList(new ElemB(20f), new ElemB(21f), new ElemB(22f), new ElemB(23f)),
@@ -127,10 +133,11 @@ public class TableDemo {
     }
 
 
-    ///////////////////////////
+    //------------------
 
     @GuiIncluded(description = "List<E>, E(V,List<V>)")
     public static class TableE {
+        public TableE() {}
         @GuiIncluded public List<ElemE> listE = Arrays.asList(
                 new ElemE(10f, 11f, 12f, 13f, 14f),
                 new ElemE(20f, 21f, 22f, 23f),
@@ -183,10 +190,11 @@ public class TableDemo {
         }
     }
 
-    ///////////////////////////
+    //------------------
 
     @GuiIncluded(description = "List<E>, E(V,F) F(List<V>)")
     public static class TableF {
+        public TableF() {}
         @GuiIncluded public List<ElemF> listF = Arrays.asList(
                 new ElemF(10f, 11f, 12f, 13f, 14f),
                 new ElemF(20f, 21f, 22f, 23f),
@@ -237,10 +245,11 @@ public class TableDemo {
         }
     }
 
-    ///////////////////////////
+    //------------------
 
     @GuiIncluded(description = "List<E>, E(V,E(V))")
     public static class TableG {
+        public TableG() {}
         @GuiIncluded public List<ElemG> listG = Arrays.asList(
                 new ElemG(10f,11f), new ElemG(20f,21f), new ElemG(30f,31f));
 

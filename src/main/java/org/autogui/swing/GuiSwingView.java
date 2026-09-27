@@ -284,7 +284,7 @@ public interface GuiSwingView extends GuiSwingElement {
         };
     };
 
-    ///////////////////////////////
+    //--------------------------------------
 
     static <RetType extends Component> RetType findDescendantByType(Object obj, Class<RetType> type) {
         return findDescendantByType(obj, type, p -> true);
@@ -302,7 +302,7 @@ public interface GuiSwingView extends GuiSwingElement {
         return GuiSwingFeature.traverseFindFirstIf(obj, type, condition);
     }
 
-    ///////////////////////////////
+    //--------------------------------------
 
     /**
      * obtains context clock and set to the viewClock if the viewClock is older:
@@ -488,7 +488,7 @@ public interface GuiSwingView extends GuiSwingElement {
         GuiSwingFeature.traverse(pane, GuiSwingFeature.class, GuiSwingFeature::prepareForRefresh);
     }
 
-    /////////////////////////
+    //--------------------------------------
 
     /**
      * @param pane the method obtains static-methods from the pane.
@@ -561,8 +561,8 @@ public interface GuiSwingView extends GuiSwingElement {
 
     /** an action for refreshing the value of the context of the pane.
      * <p>
-     *  first it calls {@link GuiSwingView#prepareForRefresh(GuiSwingView.ValuePane)}
-     *      which traverses the target pane and calls {@link GuiSwingView.ValuePane#prepareForRefresh(GuiSwingView.ValuePane)} for each component.
+     *  first it calls {@link GuiSwingView#prepareForRefresh(GuiSwingFeature)}
+     *      which traverses the target pane and calls {@link GuiSwingFeature#prepareForRefresh()}  for each component.
      * <p>
      *  next clears values by {@link GuiMappingContext#clearSourceSubTree()} and calls {@link GuiMappingContext#updateSourceSubTree()}
      *     */
@@ -662,7 +662,7 @@ public interface GuiSwingView extends GuiSwingElement {
     }
 
 
-    ///////////////////////////
+    //--------------------------------------
 
     /**
      * set up the transfer handler for a component.
@@ -714,7 +714,7 @@ public interface GuiSwingView extends GuiSwingElement {
                 PopupExtension.getMenuShortcutKeyMask()), paste.getValue(Action.NAME));
     }
 
-    /////////////////////////////////
+    //--------------------------------------
 
     /** a factory interface for {@link GuiReprValue.ObjectSpecifier}.
      *   With regular(non-list) objects, it can be created by {@link #specifierManager(Supplier)} for a parent specifier,

@@ -78,7 +78,7 @@ public class GuiSwingViewEnumComboBoxTest extends GuiSwingTestCase {
         Hello, World
     }
 
-    /// //////////
+    //------------------
 
 
     public GuiSwingViewEnumComboBox.PropertyEnumComboBox create() {

@@ -110,7 +110,7 @@ public class GuiSwingTestCase {
         }
     }
 
-    /// ///////////////// popup-menu specific methods
+    //------------------ popup-menu specific methods
 
     public <ItemType extends PopupCategorized.CategorizedMenuItem> ItemType findMenuItem(
             Iterable<? extends PopupCategorized.CategorizedMenuItem> items,

@@ -241,7 +241,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             }
         }
 
-        //////////////////
+        //--------------------------------------
 
         public void expansionChanged() {
             if (lastValue instanceof GuiSwingLogEntryException) {
@@ -266,7 +266,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             }
         }
 
-        //////////////////
+        //--------------------------------------
 
         public void setSelection() {
             if (lastValue instanceof GuiSwingLogEntryException ex) {
@@ -308,7 +308,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             }
         }
 
-        ///////////////////
+        //--------------------------------------
 
 
         @Override
@@ -714,7 +714,7 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             append("\n", attrSet.defaultStyle);
         }
 
-        //////////////
+        //--------------------------------------
 
         public float[] getCollapsedSize() {
             int[] bs = getBorderSize();

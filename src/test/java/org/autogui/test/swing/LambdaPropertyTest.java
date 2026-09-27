@@ -47,7 +47,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         }
     }
 
-    /// /////////// String
+    //------------------ String
 
     String propString;
 
@@ -86,7 +86,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         assertEquals("update2", runGet(() -> pane.getField().getText()), "update2");
     }
 
-    /// /////////// Number
+    //------------------ Number
 
     int propInt;
 
@@ -120,7 +120,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         assertEquals(789, runGet(pane::getSwingViewValue));
     }
 
-    /// /////////// Label
+    //------------------ Label
 
     LambdaProperty.LambdaLabel createLabel() {
         LambdaProperty.LambdaLabel p = new LambdaProperty.LambdaLabel(this::getPropString);
@@ -143,7 +143,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         assertEquals("update", runGet(pane::getText), "update");
     }
 
-    /// /////////// Image
+    //------------------ Image
 
     Image propImage;
 
@@ -223,7 +223,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         assertEquals(i3, runGet(pane::getSwingViewValue));
     }
 
-    /// /////////// File
+    //------------------ File
 
     Path propFile;
 
@@ -265,7 +265,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         assertEquals(p3.toString(), runGet(() -> pane.getField().getText()));
     }
 
-    /// /////////// Enum
+    //------------------ Enum
 
     public enum TestEnum {
         Init,
@@ -310,7 +310,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         assertEquals(TestEnum.Update2, runGet(pane::getSelectedItem));
     }
 
-    /// /////////// Boolean
+    //------------------ Boolean
 
     boolean propBoolean;
 
@@ -348,7 +348,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
     }
 
 
-    /// /////////// Document
+    //------------------ Document
 
     StyledDocument propStyledDoc;
 
@@ -418,7 +418,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         assertEquals("new value", runGet(pane::getText), "new value");
     }
 
-    /// /////////// PlainDocument
+    //------------------ PlainDocument
 
     Document propPlainDoc;
 
@@ -460,7 +460,7 @@ public class LambdaPropertyTest extends GuiSwingTestCase {
         assertEquals(getPropPlainDoc(), runGet(pane::getDocument));
     }
 
-    /// /////////// List
+    //------------------ List
 
     public static class TestElem {
         String str;

@@ -487,7 +487,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
 
         /**
          * @param component the editor component, must be a {@link ValuePane}
-         * @param skipShutDown if true, {@link #shutdown()} process for the component will be skipped
+         * @param skipShutDown if true, shutdown process for the component will be skipped
          * @param specifierIndex optional specifier for row-index (nullable)
          */
         public ObjectTableCellEditor(JComponent component, boolean skipShutDown, SpecifierManagerIndex specifierIndex) {
@@ -1076,7 +1076,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         }
     }
 
-    ///////////////
+    //--------------------------------------
 
 
     @Override

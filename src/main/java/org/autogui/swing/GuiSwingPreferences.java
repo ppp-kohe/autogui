@@ -452,7 +452,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
         }
     }
 
-    /////////////
+    //--------------------------------------
 
     public GuiPreferences getLaunchPreferences() {
         return listModel.getLaunchPrefs();
@@ -466,7 +466,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
         return listModel.getName(prefs);
     }
 
-    /////////////
+    //--------------------------------------
 
     public static class PreferencesListModel extends AbstractTableModel {
         @Serial private static final long serialVersionUID = 1L;
@@ -753,7 +753,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
         }
     }
 
-    ///////////////////
+    //--------------------------------------
 
     public void doNewPrefs() {
         GuiPreferences rootPrefs = getRootContext().getPreferences();
@@ -1142,7 +1142,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
         }
     }
 
-    //////////
+    //--------------------------------------
 
     protected ScheduledTaskRunner<GuiSwingPrefsSupports.PreferencesUpdateEvent> updater;
 

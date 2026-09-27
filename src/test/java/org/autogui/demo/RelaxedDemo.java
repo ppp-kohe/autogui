@@ -7,6 +7,8 @@ public class RelaxedDemo {
         AutoGuiShell.showLive(new RelaxedDemo());
     }
 
+    public RelaxedDemo() {}
+
     String hello;
 
     void action() {

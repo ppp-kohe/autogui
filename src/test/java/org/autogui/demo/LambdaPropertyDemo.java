@@ -16,6 +16,8 @@ public class LambdaPropertyDemo {
 
     LambdaValuePane valuePane = new LambdaValuePane();
 
+    public LambdaPropertyDemo() {}
+
     @GuiIncluded(index = 1)
     public LambdaValuePane getValuePane() {
         return valuePane;
@@ -28,6 +30,8 @@ public class LambdaPropertyDemo {
         String strProp;
         boolean boolProp;
         int numProp;
+
+        public LambdaValuePane() {}
 
         @GuiIncluded
         public JComponent getComponent() {

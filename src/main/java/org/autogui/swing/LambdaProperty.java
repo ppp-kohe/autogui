@@ -201,7 +201,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
         }
     }
 
-    ////////////
+    //--------------------------------------
 
     /**
      * the lambda-based version of string-pane
@@ -450,7 +450,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             return columnContext;
         }
 
-        ///// boolean
+        //--------------------------------------// boolean
 
         public <E> LambdaCollectionTable addColumnBoolean(String name,
                                                           Function<E, Boolean> getter, BiConsumer<E, Boolean> setter) {
@@ -464,7 +464,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             return addColumnBoolean(name, (e) -> getter.get(), (e,v) -> setter.accept(v));
         }
 
-        ///// String
+        //--------------------------------------// String
 
         public <E> LambdaCollectionTable addColumnString(String name,
                                                          Function<E, String> getter, BiConsumer<E, String> setter) {
@@ -478,7 +478,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             return addColumnString(name, (e) -> getter.get(), (e,v) -> setter.accept(v));
         }
 
-        ///// Number
+        //--------------------------------------// Number
 
 
         public <E, T extends Number> LambdaCollectionTable addColumnNumber(String name, Class<T> numType,
@@ -493,7 +493,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             return addColumnNumber(name, numType, (e) -> getter.get(), (e,v) -> setter.accept(v));
         }
 
-        ///// Enum
+        //--------------------------------------// Enum
 
         public <E, T extends Enum<?>> LambdaCollectionTable addColumnEnum(String name, Class<T> enumType,
                                                                           Function<E, T> getter, BiConsumer<E, T> setter) {
@@ -507,7 +507,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             return addColumnEnum(name, enumType, (e) -> getter.get(), (e,v) -> setter.accept(v));
         }
 
-        ///// Path
+        //--------------------------------------// Path
 
         public <E> LambdaCollectionTable addColumnFilePath(String name,
                                                            Function<E, Path> getter, BiConsumer<E, Path> setter) {
@@ -521,7 +521,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             return addColumnFilePath(name, (e) -> getter.get(), (e,v) -> setter.accept(v));
         }
 
-        ///// Image
+        //--------------------------------------// Image
 
         public <E, T extends Image> LambdaCollectionTable addColumnImage(String name, Class<T> imageType,
                                                                          Function<E, T> getter, BiConsumer<E, T> setter) {
@@ -535,7 +535,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             return addColumnImage(name, imageType, (e) -> getter.get(), (e,v) -> setter.accept(v));
         }
 
-        //// label
+        //--------------------------------------/ label
 
         public <E> LambdaCollectionTable addColumnLabel(String name,
                                                           Function<E, ?> getter) {
@@ -549,7 +549,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
             return addColumnLabel(name, (e) -> getter.get());
         }
 
-        //// action
+        //--------------------------------------/ action
 
         public <E> LambdaCollectionTable addAction(String name, Consumer<List<E>> action) {
             GuiMappingContext context = getSwingViewContext().createChildCandidate(new GuiTypeMemberActionList(name,

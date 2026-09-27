@@ -158,7 +158,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         repaint();
     }
 
-    //////////
+    //--------------------------------------
 
     @Override
     public void addLogEntry(GuiLogEntry entry) {
@@ -226,7 +226,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         manager.clear();
     }
 
-    //// JList vs JTable
+    //--------------------------------------/ JList vs JTable
 
     public int rowAtPoint(Point p) {
         return this.locationToIndex(p);
@@ -260,7 +260,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         return getModel().getElementAt(row);
     }
 
-    /////////////// find
+    //-------------------------------------- find
 
     /** only update matching filter of existing renderer
      * @param str the searched text
@@ -277,7 +277,7 @@ public class GuiSwingLogList extends JList<GuiLogEntry> implements GuiSwingLogMa
         eventDispatcher.findTextAndScroll(str, forward);
     }
 
-    /////////////////
+    //--------------------------------------
 
     public List<String> getSelectedText() {
         return eventDispatcher.getSelectedText();

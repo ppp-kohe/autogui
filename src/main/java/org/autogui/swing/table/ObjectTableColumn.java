@@ -150,7 +150,7 @@ public class ObjectTableColumn implements GuiSwingElement.FeatureCollection {
     }
 
 
-    //////////////// setter for table column
+    //-------------------------------------- setter for table column
 
     public ObjectTableColumn withValueType(Class<?> valueType) {
         setValueType(valueType);
@@ -304,7 +304,7 @@ public class ObjectTableColumn implements GuiSwingElement.FeatureCollection {
         }
     }
 
-    ////////////////
+    //--------------------------------------
 
     public List<TableMenuComposite> getCompositesForRows() {
         return Collections.emptyList();
@@ -339,7 +339,7 @@ public class ObjectTableColumn implements GuiSwingElement.FeatureCollection {
     }
 
 
-    ////////////////
+    //--------------------------------------
 
     /**
      * a top-column displaying a row-index number
@@ -406,7 +406,7 @@ public class ObjectTableColumn implements GuiSwingElement.FeatureCollection {
         }
     }
 
-    ///////////////
+    //--------------------------------------
 
     public static <O,P> ObjectTableColumnLabel<O,P>  createLabel(String headerName, Function<O, P> getter) {
         return createLabel(headerName, getter, null);
@@ -465,7 +465,7 @@ public class ObjectTableColumn implements GuiSwingElement.FeatureCollection {
         }
     }
 
-    //////////////
+    //--------------------------------------
 
     /**
      * supporting value conversion like Path to File

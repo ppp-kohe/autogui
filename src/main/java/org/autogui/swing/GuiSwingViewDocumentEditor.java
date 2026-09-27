@@ -45,7 +45,7 @@ import java.util.function.Supplier;
  *       <li>As the delayed task,
  *       {@link #setSwingViewValueDocument(JEditorPane, GuiSwingView.SpecifierManager, GuiMappingContext, Object, Document, boolean, GuiTaskClock)}.
  *          is used. the method updates Document of the pane by {@link JEditorPane#setDocument(Document)}
- *             and calls {@link GuiSwingView.ValuePane#updateFromGui(ValuePane, Object, GuiTaskClock)} (if contextUpdate=true) </li>
+ *             and calls {@link GuiSwingView#updateFromGui(ValuePane, Object, GuiTaskClock)} (if contextUpdate=true) </li>
  *      </ul>
  *
  * <h2>history-value</h2>

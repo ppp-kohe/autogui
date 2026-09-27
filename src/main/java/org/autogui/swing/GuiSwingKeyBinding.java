@@ -46,7 +46,7 @@ public class GuiSwingKeyBinding {
         return new GuiSwingKeyBinding();
     }
 
-    /////////////////////////// for manual construction
+    //-------------------------------------- for manual construction
 
     /**
      * append a traversal function for setting focus action with a key-stroke for a specific component.
@@ -137,7 +137,7 @@ public class GuiSwingKeyBinding {
         return putKeyStroke(new KeyStrokeActionForFunction<>(c, PRECEDENCE_SET_INPUT_MAP, keyStroke, f));
     }
 
-    ///////////////////////////
+    //--------------------------------------
 
     public GuiSwingKeyBinding addTraverseFunctionDefault() {
         return addTraverseFunction((self, comp) -> traverseKeyBinding(comp, 0));

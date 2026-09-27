@@ -996,7 +996,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
     }
 
-    ///////////////////
+    //--------------------------------------
 
     public static class NumberSettingAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction,
         TableTargetColumnAction {

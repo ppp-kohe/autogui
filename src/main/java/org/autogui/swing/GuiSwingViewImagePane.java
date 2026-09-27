@@ -1021,7 +1021,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
-    ///////////////////////
+    //--------------------------------------
 
     public static class HistoryMenuImage extends GuiSwingHistoryMenu<Image, PropertyImagePane> {
         @Serial private static final long serialVersionUID = 1L;

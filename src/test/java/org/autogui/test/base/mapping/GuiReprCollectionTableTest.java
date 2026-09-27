@@ -85,7 +85,7 @@ public class GuiReprCollectionTableTest {
 
         contextObjChildProp = contextObjChild.getChildByName("prop");
 
-        //////////
+        //------------------
 
         contextValListListProp = contextObj.getChildByName("valueListList");
         contextValListList = contextValListListProp.getChildByName("List");
@@ -133,7 +133,7 @@ public class GuiReprCollectionTableTest {
         }
     }
 
-    /// ///////////// List<String>
+    //------------------ List<String>
 
     @Test
     public void testCollectionTableMatch() {
@@ -200,7 +200,7 @@ public class GuiReprCollectionTableTest {
                 "updateFromGui collection element with index spec updates an element");
     }
 
-    /// ///////////// List<TestReprColObj>
+    //------------------ List<TestReprColObj>
 
     @Test
     public void testCollectionTableMatchObj() {
@@ -289,7 +289,7 @@ public class GuiReprCollectionTableTest {
     }
 
 
-    /// ///////////// List<List<String>>
+    //------------------ List<List<String>>
 
     @Test
     public void testCollectionTableMatchListList() {

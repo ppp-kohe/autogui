@@ -48,20 +48,20 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     public static String MENU_SUB_CATEGORY_NEW = "new";
 
-    ///undo
+    //--------------------------------------undo
     public static String MENU_SUB_CATEGORY_UNDO = "undo";
     public static String MENU_SUB_CATEGORY_REDO = "redo";
 
-    ///edit
+    //--------------------------------------edit
     public static String MENU_SUB_CATEGORY_CUT = "cut";
     public static String MENU_SUB_CATEGORY_COPY = "copy";
     public static String MENU_SUB_CATEGORY_PASTE = "paste";
     public static String MENU_SUB_CATEGORY_DELETE = "delete";
 
-    ///select
+    //--------------------------------------select
     public static String MENU_SUB_CATEGORY_SELECT = "select";
 
-    ///transfer
+    //--------------------------------------transfer
     public static String MENU_SUB_CATEGORY_IMPORT = "import";
     public static String MENU_SUB_CATEGORY_EXPORT = "export";
 
@@ -308,7 +308,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         public void popupMenuCanceled(PopupMenuEvent e) { }
     }
 
-    ////////////////
+    //--------------------------------------
 
 
     public static Predicate<KeyEvent> getDefaultKeyMatcher() {
@@ -376,7 +376,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         }
     }
 
-    //////////////////
+    //--------------------------------------
 
     /** a default popup-menu factory creating a new popup and setting it to the component */
     public static class DefaultPopupGetter implements Supplier<JPopupMenu> {
@@ -553,7 +553,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
 
 
-    ////////////////
+    //--------------------------------------
 
     public void show(Component comp) {
         int x = comp.getWidth() / 2;
@@ -571,7 +571,7 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
         menuBuilder.buildWithClear(filter, menu.get());
     }
 
-    /////////////////
+    //--------------------------------------
 
     /**
      * a menu-selector by incremental key-typing

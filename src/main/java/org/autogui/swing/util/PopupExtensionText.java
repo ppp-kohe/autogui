@@ -67,7 +67,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     }
 
-    ////////////////
+    //--------------------------------------
 
     /** call {@link #show(Component, int, int)} with the bottom right position of the current text selection start
      * @param e the key-event
@@ -98,7 +98,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     }
 
 
-    ////////////////////
+    //--------------------------------------
 
 
     public static TextServiceDefaultMenu getServiceDefaultMenu(JTextComponent component) {
@@ -234,7 +234,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
-    //////////////
+    //--------------------------------------
 
     /**
      *
@@ -289,7 +289,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
 
     }
 
-    /////////////
+    //--------------------------------------
 
     @Override
     public void focusGained(FocusEvent e) {
@@ -321,7 +321,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     }
 
 
-    ///////////// text actions for a specific target
+    //-------------------------------------- text actions for a specific target
 
     /** the action for opening selection as a URL in a browser */
     public static class TextOpenBrowserAction extends AbstractAction
@@ -663,7 +663,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
-    //////// text action with history buffer
+    //-------------------------------------- text action with history buffer
 
     /** an abstract action for interacting with the history-buffer (kill-buffer) */
     public abstract static class TextAbstractHistoryAction extends AbstractAction {
@@ -928,7 +928,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
         }
     }
 
-    ////////////
+    //--------------------------------------
 
     public static Charset selectedCharset = StandardCharsets.UTF_8;
     protected static JComponent encodingPane;

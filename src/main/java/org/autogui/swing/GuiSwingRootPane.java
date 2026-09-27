@@ -770,7 +770,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         @SuppressWarnings("this-escape")
         public WindowMenuMinimizeAction() {
             putValue(NAME, "Minimize");
-            ///putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_M,
+            //--------------------------------------putValue(ACCELERATOR_KEY, PopupExtension.getKeyStroke(KeyEvent.VK_M,
             // PopupExtension.getMenuShortcutKeyMask()));
         }
 

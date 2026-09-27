@@ -73,7 +73,7 @@ public class GuiReprValueBooleanCheckBoxTest {
         assertNull(checkBox.getBooleanValue(null), "getBooleanValue with null returns null");
     }
 
-    /// ///////
+    //------------------
 
     @Test
     public void testValueToJson() {

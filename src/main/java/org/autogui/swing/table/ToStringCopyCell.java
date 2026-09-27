@@ -239,7 +239,7 @@ public class ToStringCopyCell {
         }
     }
 
-    ///////////////
+    //--------------------------------------
 
     public static TableMenuCompositeSharedToStringPaste pasteShared = new TableMenuCompositeSharedToStringPaste();
 

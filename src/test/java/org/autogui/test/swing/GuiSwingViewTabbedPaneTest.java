@@ -99,7 +99,7 @@ public class GuiSwingViewTabbedPaneTest extends GuiSwingTestCase {
         return GuiSwingView.findDescendantByType(comp, GuiSwingViewTabbedPane.ObjectTabbedPane.class);
     }
 
-    /// //////////////////////
+    //------------------
 
     @Test
     public void testTabPropUpdate() {

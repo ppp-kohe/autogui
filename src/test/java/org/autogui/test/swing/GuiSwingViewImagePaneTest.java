@@ -146,7 +146,7 @@ public class GuiSwingViewImagePaneTest extends GuiSwingTestCase {
         return imageFile;
     }
 
-    /// //////////////////
+    //------------------
 
     @Test
     public void testViewImageUpdate() {

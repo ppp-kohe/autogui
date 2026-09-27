@@ -73,7 +73,7 @@ public class GuiReprValueDocumentEditorTest extends GuiSwingTestCase {
 
         assertEquals("\n", content.getString(0, content.length()), "after second undo");
 
-        ////////////
+        //------------------
 
         e1 = referenceImpl.insertString(0, "hello\nworld");
         e2 = referenceImpl.insertString("hello\nworld".length(), "\n!!!");
@@ -99,7 +99,7 @@ public class GuiReprValueDocumentEditorTest extends GuiSwingTestCase {
 
         assertEquals("helorld\n123\n", content.getString(0, content.length()), "after remove");
 
-        /////////
+        //------------------
 
         referenceImpl.insertString(0, "hello\nworld\n123");
         referenceImpl.remove(3, 4);
@@ -125,7 +125,7 @@ public class GuiReprValueDocumentEditorTest extends GuiSwingTestCase {
 
         assertEquals("hello\nworld\n123\n", content.getString(0, content.length()), "after second undo");
 
-        ////////////
+        //------------------
 
         referenceImpl.insertString(0, "hello\nworld\n123");
         e1 = referenceImpl.remove(3, 4);
@@ -192,7 +192,7 @@ public class GuiReprValueDocumentEditorTest extends GuiSwingTestCase {
         assertEquals(content.length(), c.getOffset(), "after caret remove");
 
 
-        ///////////
+        //------------------
 
         c = referenceImpl.createPosition(1);
         referenceImpl.insertString(0, "hello\nworld");
@@ -255,7 +255,7 @@ public class GuiReprValueDocumentEditorTest extends GuiSwingTestCase {
         assertEquals(0, p1.getOffset());
         assertEquals(6, p2.getOffset());
 
-        /////////////////////
+        //------------------
 
         p1 = referenceImpl.createPosition(0);
         p2 = referenceImpl.createPosition(1);

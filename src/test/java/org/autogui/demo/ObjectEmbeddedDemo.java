@@ -18,6 +18,8 @@ public class ObjectEmbeddedDemo {
         SwingUtilities.invokeLater(new ObjectEmbeddedDemo()::run);
     }
 
+    public ObjectEmbeddedDemo() {}
+
     Hello hello;
     File openedFile;
 
@@ -90,6 +92,7 @@ public class ObjectEmbeddedDemo {
     public static class Hello {
         private File file;
         private Runnable fileCallback;
+        public Hello() {}
 
         @GuiIncluded
         public File getFile() {

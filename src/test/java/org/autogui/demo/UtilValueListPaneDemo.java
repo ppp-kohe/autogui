@@ -23,6 +23,8 @@ public class UtilValueListPaneDemo {
         AutoGuiShell.get().showWindow(new UtilValueListPaneDemo());
     }
 
+    public UtilValueListPaneDemo() {}
+
     private JComponent component;
     protected ValueListPaneForDemo listPane;
     @GuiIncluded

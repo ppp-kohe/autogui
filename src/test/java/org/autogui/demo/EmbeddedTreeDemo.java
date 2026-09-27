@@ -23,6 +23,8 @@ public class EmbeddedTreeDemo {
     DefaultTreeModel treeModel;
     MutableTreeNode root;
 
+    public EmbeddedTreeDemo() {}
+
     @GuiIncluded(description = "prefs package path separated by '/'. e.g. '/org/autogui/demo'")
     public String name = getClass().getPackage().getName().replace('.', '/');
 
@@ -147,6 +149,7 @@ public class EmbeddedTreeDemo {
 
     static class Renderer extends DefaultTreeCellRenderer {
         @Serial private static final long serialVersionUID = 1L;
+        Renderer() {}
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
             if (value instanceof DefaultMutableTreeNode) {

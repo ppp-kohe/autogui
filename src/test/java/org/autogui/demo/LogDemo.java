@@ -13,6 +13,8 @@ public class LogDemo {
         AutoGuiShell.get().showWindow(new LogDemo());
     }
 
+    public LogDemo() {}
+
     @GuiIncluded
     public StringBuilder message = new StringBuilder("Hello, world");
 

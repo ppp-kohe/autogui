@@ -177,7 +177,7 @@ public class GuiMappingContext {
         }
     }
 
-    ////////////////////
+    //------------------
 
     public GuiMappingContext(GuiTypeElement typeElement) {
         this(typeElement, null, null, NO_SOURCE);
@@ -337,7 +337,7 @@ public class GuiMappingContext {
         return !typeElement.getAcceleratorKeyStroke().isEmpty();
     }
 
-    ///////////////////////
+    //------------------
 
     public boolean isTypeElementProperty() {
         return typeElement instanceof GuiTypeMemberProperty;
@@ -408,7 +408,7 @@ public class GuiMappingContext {
         return (GuiTypeObject) typeElement;
     }
 
-    ///////////////////////
+    //------------------
 
     /** only set the source value
      * @param source  the source */
@@ -724,7 +724,7 @@ public class GuiMappingContext {
                 && getReprValue().isHistoryValueStored(this, value);
     }
 
-    //////////////////////
+    //------------------
 
     /**
      * flag for changing the type of {@link #taskRunner}:
@@ -863,7 +863,7 @@ public class GuiMappingContext {
                 + (!hasParent() ? "!" : "") + "[" + getChildren().size() + "]";
     }
 
-    ////////////////////////
+    //------------------
 
     /**
      * @param name the name
@@ -909,7 +909,7 @@ public class GuiMappingContext {
         }
     }
 
-    ////////////////////////
+    //------------------
 
     /**
      * set appropriate notifiers to the target if defined

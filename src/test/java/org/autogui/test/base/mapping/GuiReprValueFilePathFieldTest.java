@@ -77,7 +77,7 @@ public class GuiReprValueFilePathFieldTest {
         assertEquals(path, fld.toValueFromPath(contextPath, path), "toValueFromPath with Path context returns arg Path");
     }
 
-    /// ///////
+    //------------------
 
     @Test
     public void testValueToJson() {

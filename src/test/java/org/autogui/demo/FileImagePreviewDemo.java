@@ -25,6 +25,8 @@ public class FileImagePreviewDemo {
 
     protected Preview preview = new Preview();
 
+    public FileImagePreviewDemo() {}
+
     @GuiIncluded
     public Path getDir() {
         return dir;
@@ -49,6 +51,8 @@ public class FileImagePreviewDemo {
     @GuiIncluded
     public class FileList {
         protected List<FileItem> items = new ArrayList<>();
+
+        public FileList() {}
 
         public void update(Path dir) {
             try {
@@ -92,6 +96,8 @@ public class FileImagePreviewDemo {
     @GuiIncluded
     public static class Preview {
         Image image;
+
+        public Preview() {}
 
         public void setImage(Image image) {
             this.image = image;

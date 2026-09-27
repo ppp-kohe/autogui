@@ -1412,7 +1412,7 @@ public class GuiPreferences {
         }
     }
 
-    //////////////////
+    //------------------
 
     public Map<String,Object> toJson() {
         return ((GuiValueStoreOnMemory) copyOnMemoryAsRoot()

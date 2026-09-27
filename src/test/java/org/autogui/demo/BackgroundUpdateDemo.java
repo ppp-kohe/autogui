@@ -22,6 +22,8 @@ public class BackgroundUpdateDemo {
 
     Runnable notifier;
 
+    public BackgroundUpdateDemo() {}
+
     @GuiIncluded
     public List<BackgroundRun> getRunners() {
         return runners;

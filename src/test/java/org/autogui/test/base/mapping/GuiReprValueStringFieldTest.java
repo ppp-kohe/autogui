@@ -216,7 +216,7 @@ public class GuiReprValueStringFieldTest {
         assertNull(fld.getValueWithoutNoUpdate(contextValue, GuiMappingContext.NO_SOURCE, GuiReprValue.NONE), "getValueWithoutNoUpdate with no parent returns null");
     }
 
-    /// ///////
+    //------------------
 
     @Test
     public void testValueIsEditable() {
@@ -233,7 +233,7 @@ public class GuiReprValueStringFieldTest {
         assertFalse(fld.isEditable(contextReadOnly), "isEditable returns false for read-only prop");
     }
 
-    /// ///////
+    //------------------
 
     @Test
     public void testValueToJson() {
@@ -309,7 +309,6 @@ public class GuiReprValueStringFieldTest {
         assertNull(fld.fromHumanReadableString(contextValue, null), "fromHumanReadableString returns null for null");
     }
 
-    /// ///
 
     @Test
     public void testAddHistoryValueError() {

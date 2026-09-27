@@ -11,7 +11,8 @@ public class ImageFlipDemo {
     }
     BufferedImage image;
     File output = new File("output.png");
-    
+    public ImageFlipDemo() {}
+
     void flipY() {
         int w = image.getWidth();
         int h = image.getHeight();

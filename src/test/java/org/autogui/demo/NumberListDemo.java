@@ -17,6 +17,8 @@ public class NumberListDemo {
         AutoGuiShell.get().showWindow(new NumberListDemo());
     }
 
+    public NumberListDemo() {}
+
     @GuiIncluded(index = 1)
     public Integers integers = new Integers();
 
@@ -42,6 +44,7 @@ public class NumberListDemo {
         @GuiIncluded
         public List<Integer> integers = new ArrayList<>();
 
+        public Integers() {}
 
         @GuiIncluded
         public void add() {
@@ -108,6 +111,7 @@ public class NumberListDemo {
         @GuiIncluded
         public List<Double> doubles = new ArrayList<>();
 
+        public Floats() {}
 
         @GuiIncluded
         public void addFloats() {
@@ -197,6 +201,8 @@ public class NumberListDemo {
         @GuiIncluded
         public List<List<Float>> matrix = new ArrayList<>();
 
+        public Matrix() {}
+
         @GuiIncluded
         public void add() {
             for (int i = 0; i < height; ++i) {
@@ -241,6 +247,8 @@ public class NumberListDemo {
 
         @GuiIncluded
         public float[][] matrix = {};
+
+        public MatrixPrimitive() {}
 
         @GuiIncluded
         public void set() {

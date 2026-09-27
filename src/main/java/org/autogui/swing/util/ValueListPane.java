@@ -518,7 +518,7 @@ public abstract class ValueListPane<ValueType, PaneType extends JComponent> exte
         return list;
     }
 
-    /// selection
+    //-------------------------------------- selection
 
     public void selectionFlip(int n) {
         if (0 <= n && n <= getModel().getSize()) {

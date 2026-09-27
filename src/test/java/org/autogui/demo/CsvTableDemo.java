@@ -33,6 +33,8 @@ public class CsvTableDemo {
 
     String source = "https://www.data.jma.go.jp/stats/data/mdrr/tem_rct/alltable/mxtemsadext00_rct.csv";
 
+    public CsvTableDemo() {}
+
     @GuiIncluded
     public void setSource(String source) {
         this.source = source;

@@ -621,7 +621,7 @@ public class GuiReprValueNumberSpinnerTest {
         assertEquals(-1, GuiReprValueNumberSpinner.MINIMUM.compareTo(Double.POSITIVE_INFINITY), "-Inifity vs Double.Infinity");
     }
 
-    /// ////////
+    //------------------
 
     @Test
     public void testValueToJson() {

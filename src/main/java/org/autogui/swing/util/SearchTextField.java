@@ -554,7 +554,7 @@ public class SearchTextField extends JComponent {
         return isEnabled() && getField().isEnabled() && getField().isEditable();
     }
 
-    ////////////////////
+    //--------------------------------------
 
     /** After editing text or action performed, this method will be executed under the scheduler thread
      * @param events the accumulated events
@@ -901,7 +901,7 @@ public class SearchTextField extends JComponent {
             return (int) ((max - base) * p + base);
         }
 
-        //////////
+        //--------------------------------------
 
         public void setChild(JComponent comp) {
             focusBorder.setChild(comp);
@@ -913,7 +913,7 @@ public class SearchTextField extends JComponent {
             comp.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
         }
 
-        /////////
+        //--------------------------------------
 
         @Override
         public void paintComponent(Graphics g, Consumer<Graphics> originalPainter) {

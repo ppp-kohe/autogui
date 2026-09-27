@@ -149,7 +149,7 @@ public class TextCellRenderer<ValueType> extends JPanel
         super.setBackground(bg);
         this.originalBackground = bg;
     }
-    //////////////////////////////
+    //--------------------------------------
 
     /**
      * setting properties for renderers
@@ -542,7 +542,7 @@ public class TextCellRenderer<ValueType> extends JPanel
         }
     }
 
-    //////////////////////////////
+    //--------------------------------------
 
     @SuppressWarnings("unchecked")
     @Override
@@ -687,7 +687,7 @@ public class TextCellRenderer<ValueType> extends JPanel
         return size;
     }
 
-    //////////////////
+    //--------------------------------------
 
     /**
      * in the class, just call {@link #setFindHighlights()}
@@ -827,7 +827,7 @@ public class TextCellRenderer<ValueType> extends JPanel
         }
     }
 
-    //////////////////
+    //--------------------------------------
 
     /**
      * change selection range by mouse pressing, dragging or releasing.
@@ -949,7 +949,7 @@ public class TextCellRenderer<ValueType> extends JPanel
         }
     }
 
-    //////////////////
+    //--------------------------------------
 
     public float[] getBaseSize() {
         if (testImage == null) {
@@ -986,7 +986,7 @@ public class TextCellRenderer<ValueType> extends JPanel
                 insets.top + insets.bottom};
     }
 
-    /////////////////
+    //--------------------------------------
 
     public Color getSelectionBackground() {
         return selectionBackground;
