@@ -258,8 +258,8 @@ public interface GuiSwingFeature extends GuiSwingElement.FeatureCollection {
 
         Function<Object, Stream<?>> directChildGetter =
                 optionsSet.contains(TraversalOption.SameDisplay) ?
-                        GuiSwingFeature::directChildren :
-                        GuiSwingFeature::directChildrenSameDisplay;
+                        GuiSwingFeature::directChildrenSameDisplay :
+                        GuiSwingFeature::directChildren;
 
         if (optionsSet.contains(TraversalOption.VisitAfter)) {
             traverseChildrenVisitAfter(obj, taskActual, enteringPredicate.next(obj), directChildGetter);

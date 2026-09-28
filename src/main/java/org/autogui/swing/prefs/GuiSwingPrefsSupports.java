@@ -8,8 +8,7 @@ import org.autogui.swing.util.SettingsWindow;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
+import java.awt.event.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -246,8 +245,37 @@ public class GuiSwingPrefsSupports {
                 //we handle (0,0) as the null value: for multi-monitors, negative values can be possible for locations
                 Rectangle screen = getDeviceBoundsOrNull(x, y);
                 if (screen != null) {
-                    window.setLocation(new Point(x, y));
+                    var point = new  Point(x, y);
+                    if (window.isVisible()) {
+                        window.setLocation(point);
+                    } else {
+                        new WindowOneShotSetLocation(window, point);
+                    }
                 } //otherwise, changed devices: nothing happen
+            }
+        }
+
+
+        public static class WindowOneShotSetLocation extends ComponentAdapter {
+            protected Point location;
+            protected Window frame;
+
+            public WindowOneShotSetLocation(Window  w) {
+                this(w, w.getLocation());
+            }
+
+            public WindowOneShotSetLocation(Window  w, Point location) {
+                this.frame = w;
+                this.location = location;
+                w.addComponentListener(this);
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+                if (location != null) {
+                    frame.setLocation(location);
+                }
+                frame.removeComponentListener(this);
             }
         }
 

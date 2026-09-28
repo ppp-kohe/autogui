@@ -496,11 +496,11 @@ public class GuiSwingLogManager extends GuiLogManager {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            frame.setVisible(true);
             if (first && e.getSource() instanceof JComponent) {
                 frame.setLocationRelativeTo((JComponent) e.getSource());
             }
             first = false;
-            frame.setVisible(true);
         }
     }
 }

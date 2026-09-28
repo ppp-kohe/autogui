@@ -114,13 +114,13 @@ public class SettingsWindow {
     }
 
     public void show(JComponent sender) {
-        if (sender != null) {
-            window.setLocationRelativeTo(sender);
-        }
         if (settingSupport != null) {
             settingSupport.setup(window);
         }
         show();
+        if (sender != null) {
+            window.setLocationRelativeTo(sender);
+        }
     }
 
     public void show(String title, JComponent sender, JComponent contentPane) {
@@ -252,15 +252,15 @@ public class SettingsWindow {
 
         public void show(Component sender, Color color, Consumer<Color> callback) {
             this.callback = callback;
-            if (sender != null) {
-                window.setLocationRelativeTo(sender);
-            }
             if (color != null) {
                 updateDisabled = true;
                 colorChooser.setColor(color);
                 updateDisabled = false;
             }
             window.setVisible(true);
+            if (sender != null) {
+                window.setLocationRelativeTo(sender);
+            }
         }
 
         public JFrame getWindow() {

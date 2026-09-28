@@ -7,14 +7,13 @@ import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.swing.icons.GuiSwingIcons;
 import org.autogui.swing.table.GuiSwingTableColumnSet;
 import org.autogui.swing.util.PopupCategorized;
+import org.autogui.swing.util.PopupExtension;
 import org.autogui.swing.util.SwingDeferredRunner;
 import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.Serial;
 import java.util.*;
 import java.util.List;
@@ -410,6 +409,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
 
         protected GuiReprValue.ObjectSpecifier objectSpecifier;
         protected Object currentTarget;
+        protected boolean showen = false;
 
         public ResultActionEditFinish(GuiMappingContext actionContext, GuiMappingContext editorContext, JComponent rootPane) {
             this.actionContext = actionContext;
@@ -454,9 +454,15 @@ public class GuiSwingActionDefault implements GuiSwingAction {
                 var actionType = actionContext.getTypeElementAsAction();
                 JPanel buttonPane = new JPanel(new FlowLayout(FlowLayout.RIGHT));
                 if (actionType.getEditFeature().isEditedMethodTakingOk()) {
-                    buttonPane.add(new JButton(new EditFinishAction(false, this::finishEdit)));
+                    var cancelAction = new EditFinishAction(false, this::finishEdit);
+                    buttonPane.add(new JButton(cancelAction));
+                    content.getInputMap().put(PopupExtension.getKeyStroke(KeyEvent.VK_ESCAPE), "cancel");
+                    content.getActionMap().put("cancel", cancelAction);
                 }
-                buttonPane.add(new JButton(new EditFinishAction(true, this::finishEdit)));
+                var okAction = new EditFinishAction(true, this::finishEdit);
+                content.getInputMap().put(PopupExtension.getKeyStroke(KeyEvent.VK_ENTER), "ok");
+                content.getActionMap().put("ok", okAction);
+                buttonPane.add(new JButton(okAction));
                 content.add(buttonPane, BorderLayout.SOUTH);
             }
         }
@@ -472,13 +478,14 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         }
 
         protected void show(ActionEvent e) {
-            if (e != null && e.getSource() instanceof Component component) {
+            frame.setVisible(true);
+            if (e != null && e.getSource() instanceof Component component && !showen) { //after showen, move the location
+                showen = true;
                 var pos = component.getLocationOnScreen();
                 pos.x += (int) (component.getWidth() * 0.5);
                 pos.y += (int) (component.getHeight() * 0.7);
                 frame.setLocation(pos);
             }
-            frame.setVisible(true);
         }
 
         @Override
@@ -488,7 +495,9 @@ public class GuiSwingActionDefault implements GuiSwingAction {
 
         @Override
         public void shutdownSwingView() {
-            frame.dispose();
+            if (frame != null) {
+                frame.dispose();
+            }
             editorContext.shutdown();
         }
 
@@ -498,7 +507,9 @@ public class GuiSwingActionDefault implements GuiSwingAction {
                 actionContext.updateSourceFromRoot();
             }
             currentTarget = null;
-            frame.setVisible(false);
+            if (frame != null) {
+                frame.setVisible(false);
+            }
         }
 
         @Override
