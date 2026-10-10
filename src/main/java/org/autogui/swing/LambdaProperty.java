@@ -566,7 +566,7 @@ public class LambdaProperty<T> extends GuiTypeMemberProperty {
                 public void actionPerformed(ActionEvent e) {
                     setEnabled(false);
                     try {
-                        action.accept((List<E>) source.getSelectedItems());
+                        action.accept((List<E>) getSource().getSelectedItems());
                     } finally {
                         setEnabled(true);
                     }

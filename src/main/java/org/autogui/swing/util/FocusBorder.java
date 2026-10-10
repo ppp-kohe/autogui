@@ -85,7 +85,16 @@ public class FocusBorder implements Border {
         return c.isFocusOwner();
     }
 
-
+    /**
+     *
+     * @param g the graphics
+     * @param x stroke origin x
+     * @param y stroke origin y
+     * @param width stroke size width
+     * @param height stroke size height
+     * @param focusColor the color
+     * @since 1.9
+     */
     public void paintStrokesFocusColor(Graphics g, int x, int y, int width, int height, Color focusColor) {
         Color color2 = new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 150);
         paintStrokes(g, x, y, width, height, color2);

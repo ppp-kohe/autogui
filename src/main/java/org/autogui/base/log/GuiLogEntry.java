@@ -7,7 +7,8 @@ public interface GuiLogEntry {
         return false;
     }
 
-    /** @return if true, {@link #isActive()} can be true */
+    /** @return if true, {@link #isActive()} can be true
+     * @since 1.9 */
     default boolean canBeActive() {
         return false;
     }

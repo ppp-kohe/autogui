@@ -21,8 +21,13 @@ import java.util.concurrent.Callable;
  * an action can be selection-updater by attaching {@link GuiListSelectionUpdater}
  */
 public class GuiReprAction implements GuiRepresentation {
+    /** @since 1.9 */
     protected GuiRepresentation subRepresentation;
 
+    /**
+     * @param subRepresentation the sub-representation for the edit returned object
+     * @since 1.9
+     */
     public GuiReprAction(GuiRepresentation subRepresentation) {
         this.subRepresentation = subRepresentation;
     }
@@ -77,15 +82,16 @@ public class GuiReprAction implements GuiRepresentation {
     /** the action executor relying on {@link GuiMappingContext#execute(Callable)}.
      * @param context the context
      * @param targets  the targets
-     * @return results of each execution, might include null elements.
+     * @return pairs of a given target and a result of each execution, might include null results.
      * if some execution cause an exception, partially constructed results will be returned
      * */
-    public List<Object> executeActionForTargets(GuiMappingContext context, List<?> targets) {
-        List<Object> results = new ArrayList<>(targets.size());
+    public List<TargetAndResult> executeActionForTargets(GuiMappingContext context, List<?> targets) {
+        List<TargetAndResult> results = new ArrayList<>(targets.size());
         try {
             for (Object target : targets) {
-                results.add(target == null ? null :
-                        context.execute(() -> context.getTypeElementAsAction().execute(target)));
+                results.add(new TargetAndResult(target,
+                        target == null ? null :
+                            context.execute(() -> context.getTypeElementAsAction().execute(target))));
             }
             context.updateSourceFromRoot();
             return results;
@@ -95,11 +101,27 @@ public class GuiReprAction implements GuiRepresentation {
         }
     }
 
-    public void executedEditedAction(GuiMappingContext context, GuiReprValue.ObjectSpecifier targetSpecifier, Object editor, boolean ok) {
+    /**
+     * a record for returned pair of (target, result)
+     * @param target the execution target object
+     * @param result the returned value
+     * @since 1.9
+     */
+    public record TargetAndResult(Object target, Object result) {}
+
+    /**
+     *  executes the completion action via type's execution method
+     * @param context the context
+     * @param targetSpecifier the specifier
+     * @param editor the editor
+     * @param ok the completion condition specified by a user
+     * @since 1.9
+     */
+    public void executeCompleteEditAction(GuiMappingContext context, GuiReprValue.ObjectSpecifier targetSpecifier, Object editor, boolean ok) {
         try {
             Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), targetSpecifier);
             context.execute(() -> {
-                context.getTypeElementAsAction().executeEcited(target, editor, ok);
+                context.getTypeElementAsAction().executeCompleteEdit(target, editor, ok);
                 return null;
             });
         } catch (Throwable ex) {
@@ -181,10 +203,15 @@ public class GuiReprAction implements GuiRepresentation {
      * @since 1.9
      */
     public boolean isEditAction(GuiMappingContext context) {
-        return context.isTypeElementAction() && context.getTypeElementAsAction().getEditFeature() != null;
+        return context.isTypeElementAction() && context.getTypeElementAsAction().hasEditFeature();
     }
 
-    public boolean isEditActionWithEdited(GuiMappingContext context) {
-        return isEditAction(context) && context.getTypeElementAsAction().getEditFeature().hasEditedMethod();
+    /**
+     * @param context the target action context
+     * @return true if the action-type has an edit feature and it has a completion edit method.
+     * @since 1.9
+     */
+    public boolean isEditActionWithCompleteEdit(GuiMappingContext context) {
+        return isEditAction(context) && context.getTypeElementAsAction().getEditFeature().hasCompleteEditMethod();
     }
 }

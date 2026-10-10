@@ -99,6 +99,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         }
 
         /**
+         * a editor-pane for string-field
          * @since 1.9
          */
         public static class EditorPaneForPropertyString extends JEditorPane {
@@ -215,13 +216,14 @@ public class GuiSwingViewStringField implements GuiSwingView {
         }
 
         /**
+         * a scroll-pane for string-field
          * @since 1.9
          */
         public static class ScrollPaneForPropertyString extends JScrollPane {
             protected Supplier<HeightInfo> heightInfoSupplier;
             @SuppressWarnings("this-escape")
             public ScrollPaneForPropertyString(JComponent pane, Supplier<HeightInfo> heightSupplier) {
-                super(pane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                super(pane, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
                 this.heightInfoSupplier = heightSupplier;
                 setFocusable(false);
             }
@@ -245,6 +247,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         }
 
         /**
+         * internal height-info of string-field
          * @since 1.9
          */
         public static class HeightInfo implements Cloneable {
@@ -378,6 +381,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
         }
 
         /**
+         * {@link #setDisplayLines(int)}, called from {@link #init()}
          * @since 1.9
          */
         public void initDefaultDisplayLines() {
@@ -427,6 +431,11 @@ public class GuiSwingViewStringField implements GuiSwingView {
             revalidate();
             if (oldMultiline != multiline) {
                 switchMultilineAction.updateSelection();
+                if (scrollPane != null) {
+                    scrollPane.setVerticalScrollBarPolicy(multiline ?
+                            ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED :
+                            ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+                }
             }
             if ((oldMultiline != multiline || oldDisplayLines != displayLines)
                     && (!savingPrefsDisabled && prefsUpdater != null)) {
@@ -709,6 +718,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
     }
 
     /**
+     * the menu-item of "Multiline"
      * @since 1.9
      */
     public static class SwitchMultilineAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemActionCheck {
@@ -732,6 +742,7 @@ public class GuiSwingViewStringField implements GuiSwingView {
     }
 
     /**
+     * resizing handler for string-field
      * @since 1.9
      */
     public static class ResizeHeightMouseAdapter extends MouseAdapter {
@@ -798,6 +809,8 @@ public class GuiSwingViewStringField implements GuiSwingView {
     }
 
     /**
+     * preferences object for string-field.
+     *  it saves the display-lines property
      * @since 1.9
      */
     public static class PreferencesForStringField implements GuiSwingPrefsSupports.PreferencesByJsonEntry {

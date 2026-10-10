@@ -6,7 +6,7 @@ import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.base.type.GuiTypeObject;
 import org.autogui.swing.GuiSwingMapperSet;
-import org.autogui.swing.GuiSwingViewLabel;
+import org.autogui.swing.GuiSwingView;
 import org.autogui.swing.table.*;
 import org.autogui.swing.util.PopupExtension;
 import org.autogui.swing.util.PopupExtensionText;
@@ -187,14 +187,13 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
         withClipLock(() -> {
             runGet(this::createTable);
 
-            ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+            GuiSwingTableColumnString.MultilineColumnStringViewPane pane = (GuiSwingTableColumnString.MultilineColumnStringViewPane)
                     runGet(() -> objColumn.getTableColumn().getCellRenderer());
-            GuiSwingTableColumnString.MultilineColumnTextPane pane = (GuiSwingTableColumnString.MultilineColumnTextPane) renderer.getComponent();
             Action action = convertRowsAction(
                     findMenuItemAction(pane.getSwingStaticMenuItems(), PopupExtensionText.TextCopyAllAction.class));
             if (action == null) {
                 action = convertRowsAction(
-                        findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelToStringCopyAction.class));
+                        findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingView.ToStringCopyAction.class));
             }
 
             run(() -> table.addRowSelectionInterval(0, 0));
@@ -211,9 +210,8 @@ public class GuiSwingTableColumnStringTest extends GuiSwingTestCase {
         withClipLock(() -> {
             runGet(this::createTable);
 
-            ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
+            GuiSwingTableColumnString.MultilineColumnStringViewPane pane = (GuiSwingTableColumnString.MultilineColumnStringViewPane)
                     runGet(() -> objColumn.getTableColumn().getCellRenderer());
-            GuiSwingTableColumnString.MultilineColumnTextPane pane = (GuiSwingTableColumnString.MultilineColumnTextPane) renderer.getComponent();
 
             Action action = convertRowsAction(findMenuItemAction(pane.getSwingStaticMenuItems(), PopupExtensionText.TextPasteAllAction.class));
             if (action == null) {

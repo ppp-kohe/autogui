@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 /**
  * a table-column with additional info.
- *
  */
 public class ObjectTableColumn implements GuiSwingElement.FeatureCollection {
     protected TableColumn tableColumn;

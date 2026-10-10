@@ -38,7 +38,9 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         };
     }
 
+    /** @since 1.9 */
     protected PropertyChangeListener documentChangeListener;
+    /** @since 1.9 */
     protected PropertyChangeListener uiChangeListener;
 
     @SuppressWarnings("this-escape")
@@ -82,6 +84,10 @@ public class LineNumberPane extends JComponent implements DocumentListener {
         }
     }
 
+    /**
+     * set colors and font at initialization
+     * @since 1.9
+     */
     protected void initColor() {
         UIManagerUtil ui = UIManagerUtil.getInstance();
         setBackground(ui.getLabelBackground());
@@ -347,7 +353,7 @@ public class LineNumberPane extends JComponent implements DocumentListener {
             ex.printStackTrace();
         }
     }
-
+    /** @since 1.9 */
     protected Map<Font, Float> metricsCache = new HashMap<>();
 
     public void paintLine(Graphics2D g, int i, int lines, int selStart, int selEnd, int selfOffsetY, Color noOverlappingColor) throws Exception {
@@ -376,6 +382,13 @@ public class LineNumberPane extends JComponent implements DocumentListener {
                 y);
     }
 
+    /**
+     *
+     * @param lineNumBounds the line-nuber bounds
+     * @param lineStart the position at the document
+     * @return the height from  font attribute at the lineStart or the height of the lineNumber bounds
+     * @since 1.9
+     */
     protected float adjustY(Rectangle2D lineNumBounds, int lineStart) {
         Font font = null;
         if (field.getDocument() instanceof StyledDocument styledDoc) {

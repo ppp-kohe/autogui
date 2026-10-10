@@ -68,7 +68,7 @@ public class TableRowHeightFitter {
         }
     }
 
-    protected volatile ScheduledTaskRunner<RowHeightUpdate> columnEventHandler = new ScheduledTaskRunner<>(100, this::fitByEvent,
+    protected volatile ScheduledTaskRunner<RowHeightUpdate> columnEventHandler = new ScheduledTaskRunner<>(500, this::fitByEvent,
             Executors.newScheduledThreadPool(0)); //create another auto closing cached pool
 
     @SuppressWarnings("this-escape")
@@ -385,8 +385,10 @@ public class TableRowHeightFitter {
         //clear the custom specified minSize
         cellComp.setMinimumSize(null);
         cellComp.setSize(smallSize);
-        cellComp.paint(getGraphics());
-        Dimension size = cellComp.getMinimumSize();
+
+        //cellComp.paint(getGraphics());
+        //Dimension size = cellComp.getMinimumSize();
+        Dimension size = cellComp.getPreferredSize();
         return size.height;
     }
 }

@@ -199,6 +199,10 @@ public class SearchTextField extends JComponent {
         icon.setContentAreaFilled(false);
     }
 
+    /**
+     * initialize background-color called from {@link #init()}
+     * @since 1.9
+     */
     protected void initColor() {
         setBackgroundWithoutInit(UIManagerUtil.getInstance().getTextPaneBackground());
         if (icon != null) {
@@ -274,6 +278,10 @@ public class SearchTextField extends JComponent {
         setFocusable(false);
     }
 
+    /**
+     * initialize color-updater , called from {@link #init()}
+     * @since 1.9
+     */
     protected void initChange() {
         addPropertyChangeListener("UI", e ->
             initColor());

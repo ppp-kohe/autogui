@@ -17,8 +17,12 @@ import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.font.FontRenderContext;
+import java.awt.font.LineBreakMeasurer;
+import java.awt.font.TextLayout;
 import java.io.Serial;
 import java.nio.file.Path;
+import java.text.AttributedString;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -40,8 +44,11 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
                                           SpecifierManager parentSpecifier) {
         SpecifierManager valueSpecifier = new SpecifierManagerDefault(parentSpecifier::getSpecifier);
         return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
-                new MultilineColumnTextViewPane(context, valueSpecifier),
-                new MultilineColumnWrappingPane(new MultilineColumnTextPane(context, valueSpecifier).asEditorPane()))
+                //new MultilineColumnTextViewPane(context, valueSpecifier),
+                new MultilineColumnStringViewPane(context, valueSpecifier),
+                new ObjectTableColumnValue.ObjectTableCellEditor(
+                        new MultilineColumnWrappingPane(new MultilineColumnTextPane(context, valueSpecifier).asEditorPane()),
+                        false, rowSpecifier))
                 .withBorderType(ObjectTableColumnValue.CellBorderType.EditorPane)
 //        return new ObjectTableColumnValue(context, rowSpecifier, valueSpecifier,
 //                new ColumnTextPane(context, valueSpecifier),
@@ -61,21 +68,198 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
         @Override
         public List<CategorizedMenuItem> getSwingStaticMenuItems() {
             if (menuItems == null) {
-                menuItems = PopupCategorized.getMenuItems(Arrays.asList(
-                        infoLabel,
-                        new GuiSwingView.ContextRefreshAction(getSwingViewContext(), this),
-                        new GuiSwingHistoryMenu<>(this, getSwingViewContext()),
-                        new GuiSwingViewLabel.LabelToStringCopyAction(this),
-                        new LabelTextPasteAllAction(this),
-                        new LabelTextClearAction(this),
-                        new LabelTextLoadAction(this),
-                        new ColumnLabelTextSaveAction(this),
-                        new PopupExtensionText.TextOpenBrowserAction(this)
-                ), GuiSwingJsonTransfer.getActions(this, getSwingViewContext()));
+                menuItems = createViewMenuItems(this, infoLabel);
             }
             return menuItems;
         }
     }
+
+    /**
+     * custom text renderer for multiline strings.
+     *  the TextComponent based view seems not suitable for cell-rendering,
+     *  because of emoji caching mechanism.
+     *   As my obserbation, the Swing TextComponent constrcuts internal caches for rendering emojis when string contents are changed.
+     *   And frequent changing of the contents causes slowdown for rending table cells.
+     * @since 1.9
+     */
+    public static class MultilineColumnStringViewPane extends TextCellRenderer<String> implements GuiSwingView.ValuePane<String>,
+            ObjectTableColumn.PopupMenuBuilderSource, ObjectTableColumnValue.ObjectTableColumnCellView,
+            ObjectTableColumn.PopupMenuBuilderSourceForHeader, ObjectTableColumnValue.ObjectTableColumnValueRenderer {
+        protected GuiMappingContext context;
+        protected SpecifierManager specifierManager;
+        protected PopupExtension popup;
+        protected ObjectTableColumn ownerColumn;
+        protected MenuBuilder.MenuLabel infoLabel;
+        protected List<CategorizedMenuItem> menuItems;
+
+        public MultilineColumnStringViewPane(GuiMappingContext context, SpecifierManager specifierManager) {
+            this.context = context;
+            this.specifierManager = specifierManager;
+            infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
+            initPopup();
+            setOpaque(true); //background coloring
+        }
+
+        public void initPopup() {
+            popup = new PopupExtension(this, new PopupCategorized(this::getSwingStaticMenuItems));
+            setInheritsPopupMenu(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable tableNullable, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setProperty(tableNullable);
+            setCellTableColor(tableNullable, this, isSelected, hasFocus, row, column);
+            boolean forMouseEvents = setTableCellSelection(isSelected, row);
+
+            var col = tableNullable.getColumnModel().getColumn(column);
+            setSize(col.getWidth(), getHeight());
+
+            setValue((String) value, forMouseEvents);
+
+            //focus coloring
+            if (!TextCellRenderer.setCellTableBorder(tableNullable, this, isSelected, hasFocus, row, column)) {
+                TextCellRenderer.setCellBorderDefault(true, this, isSelected, hasFocus);
+            }
+            return this;
+        }
+
+        @Override
+        public List<?> getSwingViewSubNodes() {
+            return GuiSwingView.ValuePane.super.getSwingViewSubNodes();
+        }
+
+        @Override
+        public String getSwingViewValue() {
+            return getValue();
+        }
+
+        @Override
+        public void setSwingViewValue(String value) {
+            setValue(value, false);
+        }
+
+        @Override
+        public void setSwingViewValue(String value, GuiTaskClock clock) {
+            setSwingViewValue(value);
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(String value) {
+            setSwingViewValue(value);
+        }
+
+        @Override
+        public void setSwingViewValueWithUpdate(String value, GuiTaskClock clock) {
+            setSwingViewValue(value);
+        }
+
+        @Override
+        public List<CategorizedMenuItem> getSwingStaticMenuItems() {
+            if (this.menuItems == null) {
+                menuItems = createViewMenuItems(this, infoLabel);
+            }
+            return menuItems;
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getSwingMenuBuilder() {
+            return popup.getMenuBuilder();
+        }
+
+        @Override
+        public GuiMappingContext getSwingViewContext() {
+            return context;
+        }
+
+        @Override
+        public Consumer<Object> getMenuTargetPane() {
+            return v -> setSwingViewValue((String) v);
+        }
+
+        @Override
+        public GuiReprValue.ObjectSpecifier getSpecifier() {
+            return specifierManager.getSpecifier();
+        }
+
+        @Override
+        public PopupExtension.PopupMenuBuilder getMenuBuilder(JTable table) {
+            return ObjectTableColumnValue.getMenuBuilderForRenderer(table, getSwingMenuBuilder(), getOwnerColumn());
+        }
+
+        @Override
+        public List<CategorizedMenuItem> getHeaderMenuItems(JTable table) {
+            return List.of();
+        }
+
+        @Override
+        public JComponent getComponent() {
+            return this;
+        }
+
+        @Override
+        public void setOwnerColumn(ObjectTableColumn ownerColumn) {
+            this.ownerColumn = ownerColumn;
+        }
+
+        @Override
+        public ObjectTableColumn getOwnerColumn() {
+            return ownerColumn;
+        }
+
+        @Override
+        public void buildFromValue() {
+            /*
+             * use LineInfo but not it's attributedString :
+             *  an AttributedString is created as a whole text, and LineBreakMeasurer creates TextLayout objects from the string.
+             * LineInfo objects are used as holders for the TextLayout objects.
+             */
+            lines.clear();
+            getBaseSize();
+            Graphics2D g = testImage.createGraphics();
+            var frc = g.getFontRenderContext();
+            var insets = getInsets();
+            int maxWidth = Math.max(1, getWidth() - insets.left - insets.right);
+            if (!text.isEmpty()) {
+                splitLines(text, (lineIndex, i, line) -> {
+                    AttributedString a = new AttributedString(line);
+                    var iter = a.getIterator();
+                    var lineBreaker = new LineBreakMeasurer(iter, frc);
+                    lineBreaker.setPosition(iter.getBeginIndex());
+                    int from = lineBreaker.getPosition();
+                    while (from < iter.getEndIndex()) {
+                        TextLayout layout = lineBreaker.nextLayout(maxWidth);
+                        int to = lineBreaker.getPosition();
+                        lines.add(new LineInfo(layout, from, to));
+                        from = to;
+                    }
+                });
+            }
+            float[] size = paintOrLayoutComponentLines(g, false);
+            g.dispose();
+            setPreferredSize(new Dimension((int) size[0], (int) size[1]));
+        }
+
+        @Override
+        protected TextLayout createLayoutForPaintOrLayout(boolean paint, LineInfo line, FontRenderContext frc, Color foregroundColor, Color backgroundColor, Color selectionTextColor, Color selectionColor) {
+            return line.getCreatedLayout();
+        }
+    }
+
+    public static List<CategorizedMenuItem> createViewMenuItems(GuiSwingView.ValuePane<?> pane, MenuBuilder.MenuLabel infoLabel) {
+        var context = pane.getSwingViewContext();
+        return PopupCategorized.getMenuItems(List.of(
+                infoLabel,
+                new GuiSwingView.ContextRefreshAction(context, pane),
+                new GuiSwingView.ToStringCopyAction(pane, context),
+                new LabelTextPasteAllAction(pane),
+                new LabelTextClearAction(pane),
+                GuiSwingJsonTransfer.getActions(pane, context),
+                new PopupExtensionText.TextOpenBrowserAction(pane.asSwingViewComponent()),
+                new GuiSwingHistoryMenu<>(pane, context),
+                new LabelTextLoadAction(pane),
+                new ColumnLabelTextSaveAction(pane)));
+    }
+
 
     /**
      *

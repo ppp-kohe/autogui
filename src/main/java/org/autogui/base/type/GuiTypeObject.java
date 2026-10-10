@@ -56,6 +56,10 @@ public class GuiTypeObject extends GuiTypeValue {
                 .findFirst().orElse(null);
     }
 
+    /**
+     * @return the concatenamed stream of  properties and actions
+     * @since 1.9
+     */
     protected Stream<GuiTypeMember> memberStream() {
         return Stream.concat(getProperties().stream(), getActions().stream()); //notifiers are excluded
     }

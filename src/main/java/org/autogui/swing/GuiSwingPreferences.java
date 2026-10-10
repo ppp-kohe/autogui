@@ -163,6 +163,10 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
         void savePreferences(GuiPreferences prefs);
     }
 
+    /**
+     *  concreate impl. of {@link RootView}
+     * @since 1.9
+     */
     public static class RootViewComponent implements RootView {
         protected GuiMappingContext rootContext;
         protected JComponent rootComponent;

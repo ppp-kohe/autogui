@@ -300,7 +300,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
      * @param context the context
      * @param view the view
      * @param keyBinding the key-binding
-     * @param logStatus the flat for showing log-status
+     * @param logStatus the flag for showing log-status
      * @param settingsWindow  the setting window
      * @param prefsApplyOptions the options for prefs application
      * @throws HeadlessException if the runtime is headless
@@ -310,6 +310,25 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     public GuiSwingRootPane(GuiMappingContext context, GuiSwingView view, GuiSwingKeyBinding keyBinding,
                             boolean logStatus, SettingsWindow settingsWindow,
                             GuiSwingPrefsApplyOptions prefsApplyOptions) throws HeadlessException {
+        this(context, view, keyBinding, logStatus, settingsWindow, prefsApplyOptions, null);
+    }
+
+    /**
+     *
+     * @param context the context
+     * @param view the view
+     * @param keyBinding the key-binding
+     * @param logStatus the flag for showing log-status
+     * @param settingsWindow the seting window
+     * @param prefsApplyOptions the options for prefs application
+     * @param viewComponent the actual view-component
+     * @throws HeadlessException if the runtime is headless
+     * @since 1.9
+     */
+    @SuppressWarnings("this-escape")
+    public GuiSwingRootPane(GuiMappingContext context, GuiSwingView view, GuiSwingKeyBinding keyBinding,
+                            boolean logStatus, SettingsWindow settingsWindow,
+                            GuiSwingPrefsApplyOptions prefsApplyOptions, JComponent viewComponent) throws HeadlessException {
         setLayout(new BorderLayout());
         this.context = context;
         this.view = view;
@@ -317,6 +336,7 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
         this.logStatus = logStatus;
         this.settingsWindow = settingsWindow;
         this.prefsApplyOptions = prefsApplyOptions;
+        this.viewComponent = viewComponent;
         init();
     }
 
@@ -370,7 +390,9 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     protected void initViewComponent() {
-        viewComponent = view.createView(context, GuiSwingView.specifierManagerRoot());
+        if (view != null && viewComponent == null) {
+            viewComponent = view.createView(context, GuiSwingView.specifierManagerRoot());
+        }
     }
 
 

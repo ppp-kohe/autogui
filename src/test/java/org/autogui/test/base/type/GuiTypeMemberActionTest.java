@@ -81,14 +81,14 @@ public class GuiTypeMemberActionTest {
         public Example editObj;
         public boolean ok;
 
-        public void editedHello(Example e, boolean ok) {
+        public void completeEditHello(Example e, boolean ok) {
             this.editObj = e;
             this.ok = ok;
         }
 
         public Example worldObj;
 
-        public void editedWorld(Example e) {
+        public void completeEditWorld(Example e) {
             worldObj = e;
         }
     }
@@ -186,7 +186,7 @@ public class GuiTypeMemberActionTest {
 
 
     @Test
-    public void testEdited() throws Exception {
+    public void testCompleteEdit() throws Exception {
         ExampleAnnotated a = new ExampleAnnotated();
         Example e = new Example();
 
@@ -195,26 +195,26 @@ public class GuiTypeMemberActionTest {
         {
             m.setOwner(new GuiTypeObject(ExampleAnnotated.class));
 
-            m.setEditFeature(new GuiTypeMemberAction.EditFeature("editedHello", ExampleAnnotated.class.getMethod("editedHello", Example.class, boolean.class)));
+            m.setEditFeature(new GuiTypeMemberAction.EditFeature("completeEditHello", ExampleAnnotated.class.getMethod("completeEditHello", Example.class, boolean.class)));
 
-            m.executeEcited(a, e, true);
+            m.executeCompleteEdit(a, e, true);
 
-            assertTrue(m.getEditFeature().hasEditedMethod(), "has edited");
-            assertTrue(m.getEditFeature().isEditedMethodTakingOk(), "take ok");
-            assertEquals(List.of(retType), m.getChildren(), "chilren are edited-returned-type");
+            assertTrue(m.getEditFeature().hasCompleteEditMethod(), "has completeEdit");
+            assertTrue(m.getEditFeature().isCompleteEditMethodTakingOk(), "take ok");
+            assertEquals(List.of(retType), m.getChildren(), "chilren are completeEdit-returned-type");
 
-            assertEquals(e, a.editObj, "edited");
-            assertTrue(a.ok, "edited boolean");
+            assertEquals(e, a.editObj, "completeEdit");
+            assertTrue(a.ok, "completeEdit boolean");
         }
 
         var m2 = new GuiTypeMemberAction("editHello", new GuiTypeValue(Example.class), "editHello");
         {
             m2.setOwner(new GuiTypeObject(ExampleAnnotated.class));
-            m2.setEditFeature(new GuiTypeMemberAction.EditFeature("editedWorld", ExampleAnnotated.class.getMethod("editedWorld", Example.class)));
-            m2.executeEcited(a, e, true);
+            m2.setEditFeature(new GuiTypeMemberAction.EditFeature("completeEditWorld", ExampleAnnotated.class.getMethod("completeEditWorld", Example.class)));
+            m2.executeCompleteEdit(a, e, true);
 
-            assertFalse(m2.getEditFeature().isEditedMethodTakingOk(), "not take ok");
-            assertEquals(e, a.worldObj, "edited");
+            assertFalse(m2.getEditFeature().isCompleteEditMethodTakingOk(), "not take ok");
+            assertEquals(e, a.worldObj, "completeEdit");
         }
 
         var nm = new GuiTypeMemberAction("m", new GuiTypeValue(Object.class), "m");
@@ -224,9 +224,9 @@ public class GuiTypeMemberActionTest {
             //as edit
             nm.setEditFeature(new GuiTypeMemberAction.EditFeature());
 
-            assertFalse(nm.getEditFeature().hasEditedMethod(), "the method is marked as 'edit' but no 'edited'");
+            assertFalse(nm.getEditFeature().hasCompleteEditMethod(), "the method is marked as 'edit' but no 'completeEdit'");
 
-            nm.executeEcited(a, e, true); //nothing happen
+            nm.executeCompleteEdit(a, e, true); //nothing happen
         }
 
         var nef = new GuiTypeMemberAction("update", new GuiTypeValue(void.class), "update");
@@ -235,7 +235,7 @@ public class GuiTypeMemberActionTest {
 
             assertEquals(List.of(), nef.getChildren(), "no editFeature");
 
-            nef.executeEcited(a, e, true); //nothing happen
+            nef.executeCompleteEdit(a, e, true); //nothing happen
         }
     }
 
@@ -249,16 +249,16 @@ public class GuiTypeMemberActionTest {
         {
             m.setOwner(new GuiTypeObject(ExampleAnnotated.class));
 
-            m.setEditFeature(new GuiTypeMemberAction.EditFeature("editedHello"));
+            m.setEditFeature(new GuiTypeMemberAction.EditFeature("completeEditHello"));
 
-            m.executeEcited(a, e, true);
+            m.executeCompleteEdit(a, e, true);
 
-            assertTrue(m.hasEditedMethod(), "has edited");
-            assertTrue(m.getEditFeature().isEditedMethodTakingOk(), "take ok");
-            assertEquals(List.of(retType), m.getChildren(), "chilren are edited-returned-type");
+            assertTrue(m.hasCompleteEditMethod(), "has completeEdit");
+            assertTrue(m.getEditFeature().isCompleteEditMethodTakingOk(), "take ok");
+            assertEquals(List.of(retType), m.getChildren(), "chilren are completeEdit-returned-type");
 
-            assertEquals(e, a.editObj, "edited");
-            assertTrue(a.ok, "edited boolean");
+            assertEquals(e, a.editObj, "completeEdit");
+            assertTrue(a.ok, "completeEdit boolean");
         }
     }
 }

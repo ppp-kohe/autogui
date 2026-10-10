@@ -5,6 +5,7 @@ import org.autogui.base.mapping.*;
 import org.autogui.base.mapping.GuiMappingContext.GuiSourceValue;
 import org.autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import org.autogui.base.type.GuiTypeCollection;
+import org.autogui.swing.GuiSwingActionDefault;
 import org.autogui.swing.GuiSwingElement;
 import org.autogui.swing.GuiSwingMapperSet;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
@@ -30,7 +31,6 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.io.PrintStream;
 import java.io.Serial;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
@@ -259,27 +259,28 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
          * @param children children of the factory
          * @param selection a regular table selection which will be wrapped by
          *                  a sub-list based selection such as {@link TableSelectionSourceDynamicForList}
+         * @param mapperSet the view factory for edit-actions
          * @return created actions from {@link #getActionContexts()} and
          *     aggregation of recursive results of children
          */
         public List<Action> getActions(DynamicColumnFactory sender, List<DynamicColumnFactory> children,
-                                       TableTargetCell selection) {
+                                       TableTargetCell selection, GuiSwingMapperSet mapperSet) {
             return Stream.concat(
                         getActionContexts().stream()
-                            .map(a -> toAction(a, sender, children, selection))
+                            .map(a -> toAction(a, sender, children, selection, mapperSet))
                             .filter(Objects::nonNull),
                         children.stream()
-                            .flatMap(d -> d.getActions(selection).stream()))
+                            .flatMap(d -> d.getActions(selection, mapperSet).stream()))
                     .collect(Collectors.toList());
         }
 
         public TableSelectionListAction toAction(GuiMappingContext actionContext, DynamicColumnFactory sender,
                                List<DynamicColumnFactory> children,
-                               TableTargetCell selection) {
+                               TableTargetCell selection, GuiSwingMapperSet mapperSet) {
             if (actionContext.isReprAction()) {
-                return toActionForTarget(actionContext, sender, children, selection);
+                return toActionForTarget(actionContext, sender, children, selection, mapperSet);
             } else if (actionContext.isReprActionList()) {
-                return toActionForList(actionContext, sender, children, selection);
+                return toActionForList(actionContext, sender, children, selection, mapperSet);
             } else {
                 return null;
             }
@@ -287,9 +288,13 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
 
         public TableSelectionListAction toActionForTarget(GuiMappingContext actionContext, DynamicColumnFactory sender,
                                         List<DynamicColumnFactory> children,
-                                        TableTargetCell selection) {
-            return new TableSelectionAction(actionContext,
+                                        TableTargetCell selection, GuiSwingMapperSet mapperSet) {
+            var result = new TableSelectionAction(actionContext,
                         new TableSelectionSourceDynamic(getModel(), selection, sender, getTargetName(this.context)));
+
+            result.addActionResultHandlersForList(this.context, mapperSet);
+
+            return result;
         }
 
         /**
@@ -311,7 +316,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
          */
         public TableSelectionListAction toActionForList(GuiMappingContext actionContext, DynamicColumnFactory sender,
                                       List<DynamicColumnFactory> children,
-                                      TableTargetCell selection) {
+                                      TableTargetCell selection, GuiSwingMapperSet mapperSet) {
             List<DynamicColumnFactoryList> sourceFactories = children.stream()
                     .flatMap(f -> collectListActions(actionContext, f).stream())
                     .collect(Collectors.toList());
@@ -320,18 +325,23 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                 GuiReprActionList listAction = actionContext.getReprActionList();
                 GuiMappingContext listContext = list.getContext();
 
+                TableSelectionListDynamicAction result = null;
                 if (listAction.isSelectionRowIndicesAction(actionContext)) {
-                    return new TableSelectionListDynamicAction(actionContext,
+                    result = new TableSelectionListDynamicAction(actionContext,
                             new TableSelectionSourceDynamicForIndices(getModel(), selection, sender, sourceFactories));
 
                 } else if (listAction.isSelectionRowAndColumnIndicesAction(actionContext)) {
-                    return new TableSelectionListDynamicAction(actionContext,
+                    result = new TableSelectionListDynamicAction(actionContext,
                             new TableSelectionSourceDynamicForRowAndColumnIndices(getModel(), selection, sender, sourceFactories));
 
                 } else if (listAction.isSelectionAction(actionContext, listContext)) {
-                    return new TableSelectionListDynamicAction(actionContext,
+                    result = new TableSelectionListDynamicAction(actionContext,
                             new TableSelectionSourceDynamicForList(getModel(), selection, sender, sourceFactories));
                 }
+                if (result != null) {
+                    result.addActionResultHandlersForList(listContext, mapperSet);
+                }
+                return result;
             }
             return null;
         }
@@ -405,6 +415,40 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             } catch (Throwable ex) {
                 throw new RuntimeException(ex);
             }
+        }
+    }
+
+    /**
+     * a sub-class of {@link org.autogui.swing.GuiSwingActionDefault.ActionResultHandlerEditStarter}
+     *   for list selection actions
+     * @since 1.9
+     */
+    public static class ActionResultHandlerEditStarterForList extends GuiSwingActionDefault.ActionResultHandlerEditStarter {
+        protected Object currentCompletionTarget;
+        public ActionResultHandlerEditStarterForList(GuiMappingContext actionContext, GuiMappingContext editorContext, JComponent rootPane) {
+            super(actionContext, editorContext, rootPane);
+        }
+
+        @Override
+        protected void setupObject(GuiReprValue.ObjectSpecifier objectSpecifier, Object o) {
+            if (o instanceof List<?> list && !list.isEmpty())  {
+                o = list.getFirst();
+            }
+            if (o instanceof GuiReprAction.TargetAndResult(Object completionTarget, Object result)) {
+                currentCompletionTarget = completionTarget;
+                o = result;
+            }
+            super.setupObject(objectSpecifier, o);
+        }
+
+        @Override
+        protected void finishEditCurrentTarget(boolean ok, Object currentTarget) {
+            super.finishEditCurrentTarget(ok, currentTarget);
+            if (this.actionContext.isReprActionList() && this.actionContext.isReprActionOrActionListEditAction() &&
+                currentCompletionTarget != null) {
+                actionContext.getReprActionList().executeCompleteEditAction(actionContext, currentCompletionTarget, currentTarget, ok);
+            }
+            currentCompletionTarget = null;
         }
     }
 
@@ -485,15 +529,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                     throw new RuntimeException(ex);
                 }
             } else {
-                if (c instanceof Collection<?>) {
-                    return ((Collection<?>) c).size();
-                } else if (c != null && c.getClass().isArray()) {
-                    return Array.getLength(c);
-                } else if (c == null) {
-                    return 0;
-                } else {
-                    throw new IllegalArgumentException("getValueSize: " + c);
-                }
+                return GuiReprCollectionTable.getCollectionSizeFallback(c);
             }
         }
 
@@ -516,16 +552,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                     throw new RuntimeException(ex);
                 }
             } else {
-                if (c instanceof List<?>) {
-                    ((List<Object>) c).forEach(body);
-                } else if (c != null && c.getClass().isArray()) {
-                    int l = Array.getLength(c);
-                    for (int i = 0; i < l; ++i) {
-                        body.accept(Array.get(c, i));
-                    }
-                } else if (c != null) {
-                    throw new IllegalArgumentException("forEachValue " + c);
-                } //if c == null : nothing
+                GuiReprCollectionTable.forEachValueFallback(c, body);
             }
         }
 
@@ -546,15 +573,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                     throw new RuntimeException(ex);
                 }
             } else {
-                if (c instanceof List<?>) {
-                    return ((List<Object>) c).get(i);
-                } else if (c != null && c.getClass().isArray()) {
-                    return Array.get(c, i);
-                } else if (c != null) {
-                    throw new IllegalArgumentException("forEachValue " + c);
-                } else {
-                    return null;
-                }
+                return GuiReprCollectionTable.getValueAtFallback(c, i);
             }
         }
 
@@ -597,10 +616,10 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public List<Action> getActions(TableTargetCell selection) {
+        public List<Action> getActions(TableTargetCell selection, GuiSwingMapperSet mapperSet) {
             return getActions(this,
                     elementFactory == null ? Collections.emptyList() : Collections.singletonList(elementFactory),
-                    selection);
+                    selection, mapperSet);
         }
 
         @Override
@@ -699,7 +718,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
          * @return actions from registered rootActions
          */
         @GuiIncluded
-        public List<Action> getRootActions(TableTargetCell selection, TableSelectionSource tableSource) {
+        public List<Action> getRootActions(TableTargetCell selection, TableSelectionSource tableSource, GuiSwingMapperSet mapperSet) {
             GuiMappingContext tableOwner = context.getParent();
             SpecifierManager rootOwnerSpecifier;
             SpecifierManager tableOwnerSpecifier =
@@ -715,7 +734,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             DynamicColumnFactory rootOwner = new DynamicColumnFactoryComposite(
                     tableOwner, rootOwnerSpecifier, model); //create a temporary factory for root-list owner
             return rootActions.stream()
-                    .map(a -> withSelectionChange(toAction(a, rootOwner, Collections.singletonList(this), selection),
+                    .map(a -> withSelectionChange(toAction(a, rootOwner, Collections.singletonList(this), selection, mapperSet),
                             tableSource))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
@@ -801,8 +820,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public List<Action> getActions(TableTargetCell selection) {
-            return getActions(this, factories, selection);
+        public List<Action> getActions(TableTargetCell selection, GuiSwingMapperSet mapperSet) {
+            return getActions(this, factories, selection, mapperSet);
         }
 
         @Override
@@ -988,8 +1007,8 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
         }
 
         @Override
-        public List<Action> getActions(TableTargetCell selection) {
-            return factoryBase.getActions(this, Collections.emptyList(), selection);
+        public List<Action> getActions(TableTargetCell selection, GuiSwingMapperSet mapperSet) {
+            return factoryBase.getActions(this, Collections.emptyList(), selection, mapperSet);
         }
 
         @Override
@@ -1577,6 +1596,15 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             super(context, source);
         }
 
+        /**
+         *
+         * @param src the source list : supposes each element is a {@link TargetAndArgumentList}
+         * @param targetName  ignored
+         * @param targetSpec  ignored
+         * @return if the action-type is a selection-change (or returns a collection),
+         *     it will be <code>List&lt;Object&gt;</code> (it might contain nulls),
+         *     otherwise <code>List&lt;</code>{@link org.autogui.base.mapping.GuiReprAction.TargetAndResult}<code>&gt;</code> for the edit-action
+         */
         @Override
         protected Object actionPerformedBody(List<?> src, String targetName, GuiReprValue.ObjectSpecifier targetSpec) {
             List<Object> values = new ArrayList<>(src.size());
@@ -1586,12 +1614,17 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
                     context.getTypeElementAsActionList().getReturnType() instanceof GuiTypeCollection) {
                 expand = true;
             }
+            boolean selectionChange = isSelectionChange();
             GuiReprActionList action = context.getReprActionList();
             for (Object v : src) {
                 if (v instanceof TargetAndArgumentList ta) {
-                    Object ret = action.executeActionForList(context, ta.target, ta.argument, ta.targetName);
+                    GuiReprAction.TargetAndResult ret = action.executeActionForList(context, ta.target, ta.argument, ta.targetName);
                     if (expand) {
-                        values.addAll((Collection<?>) ret);
+                        if (ret.result() != null) {
+                            values.addAll((Collection<?>) ret.result());
+                        }
+                    } else if (selectionChange) {
+                        values.add(ret.result());
                     } else {
                         values.add(ret);
                     }

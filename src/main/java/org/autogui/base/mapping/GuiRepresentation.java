@@ -210,7 +210,7 @@ public interface GuiRepresentation {
                 createObjectPane(set),
                 createPropertyPane(set),
                 createAction(set),
-                createActionList());
+                createActionList(set));
 
         set.add(createValueLabel());
 
@@ -291,6 +291,12 @@ public interface GuiRepresentation {
     static GuiReprAction createAction() {
         return new GuiReprAction();
     }
+
+    /**
+     * @param owner the sub-representation for the action
+     * @return a new action
+     * @since 1.9
+     */
     static GuiReprAction createAction(GuiRepresentation owner) {
         return new GuiReprAction(owner);
     }
@@ -299,6 +305,16 @@ public interface GuiRepresentation {
     static GuiReprActionList createActionList() {
         return new GuiReprActionList();
     }
+
+    /**
+     * @param owner the sub-representation for the action
+     * @return a new action for lists
+     * @since 1.9
+     */
+    static GuiReprActionList createActionList(GuiRepresentation owner) {
+        return new GuiReprActionList(owner);
+    }
+
     /** @return new representation
      * @since 1.7 */
     static GuiReprValueLabel createValueLabel() {

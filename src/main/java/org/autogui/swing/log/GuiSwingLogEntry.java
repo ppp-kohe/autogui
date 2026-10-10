@@ -129,6 +129,12 @@ public interface GuiSwingLogEntry extends GuiLogEntry {
             return putAtWithExpand(key, keyToValue);
         }
 
+        /**
+         * @param existing the tested existing object
+         * @param given the given object
+         * @return existing == given
+         * @since 1.9
+         */
         protected boolean equalsKey(Object existing, Object given) {
             return existing == given;
         }

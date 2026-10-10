@@ -179,59 +179,61 @@ public class GuiTypeMemberAction extends GuiTypeMember {
     }
 
     /**
+     * the edit-feature object for an action;
+     *  containing info. about "completeN(T editor, boolean ok)"
      * @since 1.9
      */
     public static class EditFeature {
-        protected String editedMethodName;
-        protected Method editedMethod;
+        protected String completeEditMethodName;
+        protected Method completeEditMethod;
 
         public EditFeature() {
             this(null, null);
         }
 
         /**
-         * @param editedMethod a method called after editing
-         * @param editedMethodName the name of the editedMethod
+         * @param completeEditMethod a method called after editing
+         * @param completeEditMethodName the name of the completeEditMethod
          */
-        public EditFeature(String editedMethodName, Method editedMethod) {
-            this.editedMethodName = editedMethodName;
-            this.editedMethod = editedMethod;
+        public EditFeature(String completeEditMethodName, Method completeEditMethod) {
+            this.completeEditMethodName = completeEditMethodName;
+            this.completeEditMethod = completeEditMethod;
         }
 
-        public EditFeature(String editedMethodName) {
-            this(editedMethodName, null);
+        public EditFeature(String completeEditMethodName) {
+            this(completeEditMethodName, null);
         }
 
-        public boolean hasEditedMethod() {
-            return editedMethod != null && editedMethodName != null;
+        public boolean hasCompleteEditMethod() {
+            return completeEditMethod != null && completeEditMethodName != null;
         }
 
-        public boolean isEditedMethodTakingOk() {
-            return editedMethod != null && editedMethod.getParameterCount() == 2 && editedMethod.getParameterTypes()[1].equals(boolean.class);
+        public boolean isCompleteEditMethodTakingOk() {
+            return completeEditMethod != null && completeEditMethod.getParameterCount() == 2 && completeEditMethod.getParameterTypes()[1].equals(boolean.class);
         }
 
-        public String editedMethodName() {
-            return editedMethodName;
+        public String completeEditMethodName() {
+            return completeEditMethodName;
         }
 
-        public Method editedMethod() {
-            return editedMethod;
+        public Method completeEditMethod() {
+            return completeEditMethod;
         }
 
-        public void setEditedMethod(Method editedMethod) {
-            this.editedMethod = editedMethod;
+        public void setCompleteEditMethod(Method completeEditMethod) {
+            this.completeEditMethod = completeEditMethod;
         }
 
-        public boolean hasEditedMethodWithSet(GuiTypeMemberAction owner) {
-            return editedMethodWithSet(owner) != null;
+        public boolean hasCompleteEditMethodWithSet(GuiTypeMemberAction owner) {
+            return completeEditMethodWithSet(owner) != null;
         }
 
-        public Method editedMethodWithSet(GuiTypeMemberAction owner) {
-            if (editedMethodName != null && editedMethod == null) {
+        public Method completeEditMethodWithSet(GuiTypeMemberAction owner) {
+            if (completeEditMethodName != null && completeEditMethod == null) {
                 GuiTypeBuilder b = new GuiTypeBuilder();
-                editedMethod = owner.findOwnerMethod(editedMethodName, b::isEditedMethod);
+                completeEditMethod = owner.findOwnerMethod(completeEditMethodName, b::isCompleteEditMethod);
             }
-            return editedMethod;
+            return completeEditMethod;
         }
     }
 
@@ -244,25 +246,54 @@ public class GuiTypeMemberAction extends GuiTypeMember {
         }
     }
 
-    public boolean hasEditedMethod() {
-        return hasEditFeature() && getEditFeature().hasEditedMethodWithSet(this);
+    /**
+     * @return true if it {@link #hasEditFeature()} and it has the complete-edit method.
+     * @since 1.9
+     */
+    public boolean hasCompleteEditMethod() {
+        return hasEditFeature() && getEditFeature().hasCompleteEditMethodWithSet(this);
     }
 
-    public void executeEcited(Object target, Object editor, boolean ok) throws Exception {
-        if (editFeature != null && editFeature.hasEditedMethodWithSet(this)) {
-            if (editFeature.isEditedMethodTakingOk()) {
-                executeEditedWithOk(target, editor, ok, editFeature);
+    /**
+     * invokes the completion method with given arguments
+     * @param target the target object for the method
+     * @param editor  the editor argument
+     * @param ok the ok argument (or if the completion does not take the flag, ignores it)
+     * @throws Exception the execution might cause an exception
+     * @since 1.9
+     */
+    public void executeCompleteEdit(Object target, Object editor, boolean ok) throws Exception {
+        if (editFeature != null && editFeature.hasCompleteEditMethodWithSet(this)) {
+            if (editFeature.isCompleteEditMethodTakingOk()) {
+                executeCompleteEditWithOk(target, editor, ok, editFeature);
             } else {
-                executeEdited(target, editor, editFeature);
+                executeCompleteEdit(target, editor, editFeature);
             }
         }
     }
 
-    protected void executeEditedWithOk(Object target, Object editor, boolean ok, EditFeature f) throws Exception {
-        f.editedMethodWithSet(this).invoke(target, editor, ok);
+    /**
+     * invokes the completion method for the given feature with the OK flag
+     * @param target the target object for the method
+     * @param editor the editor argument
+     * @param ok the ok argument
+     * @param f the editor feature
+     * @throws Exception a caused exception
+     * @since 1.9
+     */
+    protected void executeCompleteEditWithOk(Object target, Object editor, boolean ok, EditFeature f) throws Exception {
+        f.completeEditMethodWithSet(this).invoke(target, editor, ok);
     }
 
-    protected void executeEdited(Object target, Object editor, EditFeature f) throws Exception {
-        f.editedMethodWithSet(this).invoke(target, editor);
+    /**
+     *  invokes the completion method for the given feature without the OK flag
+     * @param target  the target object for the method
+     * @param editor the editor argument
+     * @param f the editor feature
+     * @throws Exception a caused exception
+     * @since 1.9
+     */
+    protected void executeCompleteEdit(Object target, Object editor, EditFeature f) throws Exception {
+        f.completeEditMethodWithSet(this).invoke(target, editor);
     }
 }

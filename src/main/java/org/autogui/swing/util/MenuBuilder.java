@@ -180,6 +180,7 @@ public class MenuBuilder {
         protected String subCategory = "";
         protected JLabel label;
         protected String name;
+        /** @since 1.9 */
         protected UIManagerUtil.CachedColor disabledColor;
         @SuppressWarnings("this-escape")
         public MenuLabel(String name, String subCategory) {
@@ -193,6 +194,9 @@ public class MenuBuilder {
             this.subCategory = subCategory;
         }
 
+        /**
+         * @since 1.9
+         */
         protected void initLabel() {
             UIManagerUtil ui = UIManagerUtil.getInstance();
             int h = ui.getScaledSizeInt(1);

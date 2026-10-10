@@ -63,17 +63,38 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         SpecifierManager tableSpecifier = GuiSwingView.specifierManager(parentSpecifier);
         CollectionTable table = new CollectionTable(context, tableSpecifier);
         GuiSwingTableColumn.SpecifierManagerIndex rowSpecifier = table.getRowSpecifier();
-        List<Action> actions = new ArrayList<>();
 
+        List<Action> columnActions = new ArrayList<>();
         for (GuiMappingContext elementContext : context.getChildren()) {
             GuiSwingElement subView = columnMapperSet.viewTableColumn(elementContext);
             if (subView instanceof GuiSwingTableColumnSet columnSet) {
                 columnSet.createColumns(elementContext, table.getObjectTableModel().getColumns(), rowSpecifier, tableSpecifier, rowSpecifier);
 
-                actions.addAll(columnSet.createColumnActions(elementContext, table));
+                columnActions.addAll(columnSet.createColumnActions(elementContext, table));
             }
         }
 
+        var siblingActions = createViewSiblingActions(context, table);
+
+        var dynamicActions = table.getObjectTableModel().getColumns()
+                .getDynamicColumnsActions(new TableTargetCellForJTable(table), table, columnMapperSet);
+
+        List<Action> actions = new ArrayList<>();
+        actions.addAll(columnActions);
+        actions.addAll(siblingActions);
+        actions.addAll(dynamicActions);
+        return table.setupAfterAddingColumns(actions);
+    }
+
+    /**
+     *
+     * @param context the table context
+     * @param table the creating table
+     * @return actions for sibling context
+     * @since 1.9
+     */
+    protected List<Action> createViewSiblingActions(GuiMappingContext context, CollectionTable table) {
+        List<Action> actions = new ArrayList<>();
         if (context.hasParent()) {
             GuiMappingContext parent = context.getParent();
             if (parent.isTypeElementProperty() && parent.hasParent()) {
@@ -100,16 +121,17 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
                         if (createdAction != null) {
                             actions.add(createdAction);
                             createdAction.setSelectionChangeFactoryFromContext(context);
+
+                            var siblingView = columnMapperSet.view(siblingContext);
+                            if (siblingView instanceof GuiSwingAction action) {
+                                createdAction.addActionResultHandlers(action.getEditStart(siblingContext));
+                            }
                         }
                     }
                 }
             }
         }
-
-        actions.addAll(table.getObjectTableModel().getColumns()
-                .getDynamicColumnsActions(new TableTargetCellForJTable(table), table));
-
-        return table.setupAfterAddingColumns(actions);
+        return actions;
     }
 
     @Override
@@ -159,6 +181,8 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         protected boolean customRowHeightIndividual;
         /** @since 1.6 */
         protected RowHeightSetAction rowHeightSetAction;
+        /** @since 1.9 */
+        protected boolean painting;
 
 
         public CollectionTable(GuiMappingContext context, SpecifierManager specifierManager) {
@@ -186,12 +210,20 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         public void initColor() {
+            if (painting) {
+                return;
+            }
             UIManagerUtil u = UIManagerUtil.getInstance();
             //the returned color is not a UIResource; the color will be passed to cell components by ObjectTableColumnValue.setTableColor
             // and Nimbus LAF painter uses the background-color (if the color is a UIResource, it will be replaced by the style color)
             setBackground(u.getTableBackground());
             setForeground(u.getLabelForeground());
-            setGridColor(getAutoGridColor());
+
+            Color gridColor = getGridColor();
+            Color autoGridColor = getAutoGridColor();
+            if (!Objects.equals(gridColor, autoGridColor)) {
+                setGridColor(autoGridColor);
+            }
         }
 
         public void initName() {
@@ -752,10 +784,15 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         @Override
         protected void paintComponent(Graphics g) {
             initColor();
-            super.paintComponent(g);
-            if (customHighlighting) {
-                Graphics2D g2 = (Graphics2D) g;
-                paintSelectedRows(g2);
+            try {
+                painting = true;
+                super.paintComponent(g);
+                if (customHighlighting) {
+                    Graphics2D g2 = (Graphics2D) g;
+                    paintSelectedRows(g2);
+                }
+            } finally {
+                painting = false;
             }
         }
 

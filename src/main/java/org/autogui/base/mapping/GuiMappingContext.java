@@ -63,7 +63,7 @@ public class GuiMappingContext {
     protected ContextExecutorService taskRunner;
     protected GuiPreferences preferences;
     protected ScheduledTaskRunner<DelayedTask> delayedTaskRunner;
-
+    /** @since 1.9 */
     protected String name;
     protected String displayName;
     protected String iconName;
@@ -207,10 +207,19 @@ public class GuiMappingContext {
         setSource(source);
     }
 
+    /**
+     * @return {@link #copyDetachedTree(GuiMappingContext)} with null
+     * @since 1.9
+     */
     public GuiMappingContext copyDetachedTree() {
         return copyDetachedTree(null);
     }
 
+    /**
+     * @param newParent the parent context that the created context will be added
+     * @return a new context as a copy of this
+     * @since 1.9
+     */
     protected GuiMappingContext copyDetachedTree(GuiMappingContext newParent) {
         var context = new GuiMappingContext(typeElement, representation, newParent, NO_SOURCE);
         context.addToParent();
@@ -406,6 +415,26 @@ public class GuiMappingContext {
      */
     public GuiTypeObject getTypeElementObject() {
         return (GuiTypeObject) typeElement;
+    }
+
+    /**
+     * @param includeThis if true, the returned context can be this
+     * @return a {@link #isReprCollectionTable()} context or null
+     * @since 1.9
+     */
+    public GuiMappingContext getAscendantTableContext(boolean includeThis) {
+        GuiMappingContext parent = this;
+        if (!includeThis) {
+            parent = getParent();
+        }
+        while (parent != null && !parent.isReprCollectionTable()) {
+            parent = parent.getParent();
+        }
+        if (parent != null && parent.isReprCollectionTable()) {
+            return parent;
+        } else {
+            return null;
+        }
     }
 
     //------------------
@@ -680,6 +709,34 @@ public class GuiMappingContext {
 
     public boolean isReprActionList() {
         return getRepresentation() != null && getRepresentation() instanceof GuiReprActionList;
+    }
+
+    /**
+     * @return ture if an edit-action
+     * @since 1.9
+     */
+    public boolean isReprActionOrActionListEditAction() {
+        if (isReprAction()) {
+            return getReprAction().isEditAction(this);
+        } else if (isReprActionList()) {
+            return getReprActionList().isEditAction(this);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @return true if an edit-action and the action has completion action
+     * @since 1.9
+     */
+    public boolean isReprActionOrActionListEditWithCompleteEdit() {
+        if (isReprAction()) {
+            return getReprAction().isEditActionWithCompleteEdit(this);
+        } else if (isReprActionList()) {
+            return getReprActionList().isEditActionWithCompleteEdit(this);
+        } else {
+            return false;
+        }
     }
 
     public GuiReprAction getReprAction() {

@@ -36,6 +36,11 @@ public class GuiLogEntryProgress implements GuiLogEntry, Closeable {
         this(Instant.now(), Thread.currentThread());
     }
 
+    /**
+     * @param time the time
+     * @param thread the thread
+     * @since 1.9
+     */
     public GuiLogEntryProgress(Instant time, Thread thread) {
         this.thread = thread;
         this.time = time;

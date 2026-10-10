@@ -24,9 +24,9 @@ public class GuiTypeBuilder {
     /** for supporting {@link CharSequence}, extracting it from {@link #valueTypes}
      * @since 1.8 */
     protected List<Class<?>> valueInterfaceTypes;
-
-    public static final String PREFIX_EDIT = "edit";
-    public static final String PREFIX_EDITED = "edited";
+    /** the prefix of the complete action method
+     * @since 1.9*/
+    public static final String PREFIX_COMPLETE_EDIT = "complete";
 
     @SuppressWarnings("this-escape")
     public GuiTypeBuilder() {
@@ -233,8 +233,8 @@ public class GuiTypeBuilder {
     }
 
     private void addMethodToDefinition(Map<String, MemberDefinitions> definitionsMap, Method m) {
-        if (isEditedMethodPrefixed(m)) {
-            definitionsMap.computeIfAbsent(getMemberNameFromMethodEditedForActionEdit(m), MemberDefinitions::new).supplementaryMethods.add(m);
+        if (isCompleteEditMethodPrefixed(m)) {
+            definitionsMap.computeIfAbsent(getMemberNameFromMethodCompleteEditForActionEdit(m), MemberDefinitions::new).supplementaryMethods.add(m);
         } else {
             definitionsMap.computeIfAbsent(getMemberNameFromMethod(m), MemberDefinitions::new).methods.add(m);
         }
@@ -253,6 +253,8 @@ public class GuiTypeBuilder {
         public String name;
         public List<Method> methods = new ArrayList<>(3);
         public List<Field> fields = new ArrayList<>(1);
+        /**  releated methods for the named member; completion-methods
+         * @since 1.9 */
         public List<Method> supplementaryMethods = new ArrayList<>(1);
 
         public MemberDefinitions(String name) {
@@ -273,6 +275,11 @@ public class GuiTypeBuilder {
             return g;
         }
 
+        /**
+         * @param builder a test for selecting supplementry-methods
+         * @return the last element of supplementary methods
+         * @since 1.9
+         */
         public Method getLastSupplimentary(Predicate<Method> builder) {
             Method g = null;
             for (Method m : supplementaryMethods) {
@@ -337,12 +344,12 @@ public class GuiTypeBuilder {
         } else {
             for (Method method : definitions.methods) {
                 var name = getMemberNameFromMethodForAction(method);
-                boolean isEdit = isActionEditMethodPrefixed(method);
-                var editedMethod = isEdit ? definitions.getLastSupplimentary(this::isEditedMethodPrefixed) : null;
+                boolean isEdit = isActionEditMethod(method);
+                var completeEditMethod = isEdit ? definitions.getLastSupplimentary(this::isCompleteEditMethodPrefixed) : null;
                 if (isActionMethod(method)) {
-                    createMemberAction(objType, name, method, false, isEdit, editedMethod);
+                    createMemberAction(objType, name, method, false, isEdit, completeEditMethod);
                 } else if (isActionListMethod(method)) {
-                    createMemberAction(objType, name, method, true, isEdit, editedMethod);
+                    createMemberAction(objType, name, method, true, isEdit, completeEditMethod);
                 }
             }
         }
@@ -419,11 +426,11 @@ public class GuiTypeBuilder {
      * @param name the naame of the action (can be different from the method name)
      * @param method the method of the action
      * @param isList true if the method takes a list
-     * @param isEdit true if the method returns a editing object and "edit" method; then the editedMethod mgiht be not null
-     * @param editedMethod a supplementary "edited" method for an isEdit action
+     * @param isEdit true if the method returns a editing object and "edit" method; then the completeEditMethod mgiht be not null
+     * @param completeEditMethod a supplementary "completeEdit" method for an isEdit action
      * @since 1.9
      */
-    public void createMemberAction(GuiTypeObject objType, String name, Method method, boolean isList, boolean isEdit, Method editedMethod) {
+    public void createMemberAction(GuiTypeObject objType, String name, Method method, boolean isList, boolean isEdit, Method completeEditMethod) {
         GuiTypeMemberAction action;
         GuiTypeElement retType = get(method.getGenericReturnType());
         if (isList) {
@@ -434,7 +441,7 @@ public class GuiTypeBuilder {
             action = new GuiTypeMemberAction(name, retType, method);
         }
         if (isEdit) {
-            action.setEditFeature(new GuiTypeMemberAction.EditFeature(editedMethod == null ? null : editedMethod.getName(), editedMethod));
+            action.setEditFeature(new GuiTypeMemberAction.EditFeature(completeEditMethod == null ? null : completeEditMethod.getName(), completeEditMethod));
         }
         action.setOwner(objType);
         objType.getActions().add(action);
@@ -482,6 +489,14 @@ public class GuiTypeBuilder {
         return getNameFromAnnotationOr(m, Method::getName);
     }
 
+    /**
+     * @param element the tested member
+     * @param elementGetter the fallback function
+     * @return the non-empty {@link GuiIncluded#name()} or
+     *        the result of elementGetter(element)
+     * @param <TargetType> the target member that the annotation {@link GuiIncluded} attached to
+     * @since 1.9
+     */
     protected <TargetType extends AnnotatedElement> String getNameFromAnnotationOr(TargetType element, Function<TargetType, String> elementGetter) {
         GuiIncluded included = element.getAnnotation(GuiIncluded.class);
         if (included == null || included.name().isEmpty()) {
@@ -494,27 +509,22 @@ public class GuiTypeBuilder {
     /**
      *  There are 2 cases for the method:
      * <ol>
-     *  <li><code>  &#64;GuiIncluded(name="tgtAct") public void edited(R a)</code> : <code>"tgtAct"</code>.
-     *    The edit-method always needs to have the prefix "edit",
-     *      so if the edit-method has no GuiIncluded tag,
-     *       the member-name from the method name will be "edit..." that never match to the name unless it has the "edit" prefix.
+     *  <li><code>  &#64;GuiIncluded(name="tgtAct") public void completeSomething(R a)</code> : <code>"tgtAct"</code>.
      *  </li>
-     *  <li><code>  public void editedTgtAct(R a)</code> : <code>"editTgtAct"</code>
+     *  <li><code>  public void completeTgtAct(R a)</code> : <code>"tgtAct"</code>
      *  </li>
      * </ol>
-     * @param editedMethod the edited method; e.g. "void editTgtAct(R r)"
+     * @param completeEditMethod the complete method; e.g. "void completeTgtAct(R r)"
      * @return the member-name for the edit-method
      * @since 1.9
      */
-    public String getMemberNameFromMethodEditedForActionEdit(Method editedMethod) {
-        return getNameFromAnnotationOr(editedMethod, m -> {
-            var suffix = getNameSuffix(PREFIX_EDITED, m.getName());
+    public String getMemberNameFromMethodCompleteEditForActionEdit(Method completeEditMethod) {
+        return getNameFromAnnotationOr(completeEditMethod, m -> {
+            var suffix = getNameSuffix(PREFIX_COMPLETE_EDIT, m.getName());
             if (suffix == null) {
-                suffix = m.getName().equals(PREFIX_EDITED) ? "" : m.getName();
-            } else if (!suffix.isEmpty()) {
-                suffix = Character.toUpperCase(suffix.charAt(0)) + suffix.substring(1);
+                suffix = m.getName().equals(PREFIX_COMPLETE_EDIT) ? "" : m.getName();
             }
-            return PREFIX_EDIT + suffix;
+            return suffix;
         });
     }
 
@@ -559,14 +569,23 @@ public class GuiTypeBuilder {
 
     /**
      * @param m the tested method
-     * @return true if T m(), no annotation {@link GuiListSelectionUpdater} and {@link GuiIncluded#action()}==false (or no {@link GuiIncluded})
+     * @return true if T m(), no annotation {@link GuiListSelectionUpdater} and {@link GuiIncluded#action()}==false and {@link GuiIncluded#editor()}=false (or no {@link GuiIncluded})
      * @since 1.2
      */
     public boolean isAccessorMethod(Method m) {
         return m.getParameterCount() == 0 && !m.getReturnType().equals(void.class)
                 && !m.isAnnotationPresent(GuiListSelectionUpdater.class)
-                && (!m.isAnnotationPresent(GuiIncluded.class) || !m.getAnnotation(GuiIncluded.class).action());
+                && !isGuiIncludedAction(m);
                     //no @GuiIncluded or no @GuiIncluded(action=false)
+    }
+
+    private boolean isGuiIncludedAction(Method m) {
+        if (m.isAnnotationPresent(GuiIncluded.class)) {
+            var i = m.getAnnotation(GuiIncluded.class);
+            return i.action() || i.editor();
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -614,24 +633,21 @@ public class GuiTypeBuilder {
 
     /**
      * @param m tested method
-     * @return true if m is an edit action; an action method that has non-value and non-array returned type with the "edit" prefix
+     * @return true if m is an edit action; an action method that has non-value and non-array returned type with <code>&#64;GuiIncluded(editor=true)</code>
      * @since 1.9
      */
-    public boolean isActionEditMethodPrefixed(Method m) {
-        return isActionEditMethod(m) &&
-                m.getName().startsWith(PREFIX_EDIT); //not the property-name but the method-name has the prefix "edit"
-    }
     public boolean isActionEditMethod(Method m) {
-        return isActionMethod(m) &&
-                !isValueType(m.getReturnType()) && !m.getReturnType().isArray() && isIncludedClass(m.getReturnType());
+        return (isActionMethod(m) || isActionListMethod(m)) &&
+                !isValueType(m.getReturnType()) && !m.getReturnType().isArray() && isIncludedClass(m.getReturnType()) &&
+                m.isAnnotationPresent(GuiIncluded.class) && m.getAnnotation(GuiIncluded.class).editor();
     }
 
     /**
      * @param m tested method
-     * @return true if m is an edited method; void edited(R o) or void edited(R o, boolean ok)
+     * @return true if m is an completeEdit method; void completeEdit(R o) or void completeEdit(R o, boolean ok)
      * @since 1.9
      */
-    public boolean isEditedMethod(Method m) {
+    public boolean isCompleteEditMethod(Method m) {
         if ((m.getParameterCount() == 1 || m.getParameterCount() == 2) && m.getReturnType().equals(void.class)) {
             var pType = m.getParameterTypes()[0];
             return (!isValueType(pType) && !pType.isArray()) &&
@@ -640,8 +656,15 @@ public class GuiTypeBuilder {
             return false;
         }
     }
-    public boolean isEditedMethodPrefixed(Method m) {
-        return m.getName().startsWith(PREFIX_EDITED) && isEditedMethod(m);
+
+    /**
+     *
+     * @param m the tested method
+     * @return true if m {@link #isCompleteEditMethod(Method)} and m has the prefix {@link #PREFIX_COMPLETE_EDIT}
+     * @since 1.9
+     */
+    public boolean isCompleteEditMethodPrefixed(Method m) {
+        return m.getName().startsWith(PREFIX_COMPLETE_EDIT) && isCompleteEditMethod(m);
     }
 
     /** {@link Class},
@@ -724,11 +747,6 @@ public class GuiTypeBuilder {
                      cls.getName().startsWith("javax.") ||
                      cls.getName().startsWith("sun.") ||
                      cls.getName().startsWith("com.sun."));
-        }
-
-        @Override
-        public boolean isAccessorMethod(Method m) {
-            return super.isAccessorMethod(m) && !m.getName().startsWith(PREFIX_EDIT);
         }
 
         @Override

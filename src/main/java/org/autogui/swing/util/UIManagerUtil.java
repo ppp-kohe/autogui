@@ -493,7 +493,6 @@ public class UIManagerUtil {
      *     <li> if the parameter is <code>true</code>
      *        <ol>
      *          <li>try to load Flatlaf by {@link #installLookAndFeelFlatlaf()} </li>
-     *          <li>if the previous step failed, and if macOS environment and {@link OsVersion#isDarkTheme()}=false, use {@link UIManager#getSystemLookAndFeelClassName()},
      *          <li>otherwise, {@link #selectLookAndFeelFromSpecialName(String)} with {@code "nimbus-flat"}</li>
      *        </ol>
      *     </li>
@@ -506,8 +505,8 @@ public class UIManagerUtil {
     public String selectLookAndFeelDefault(boolean tryDarklaf) {
         if (tryDarklaf && installLookAndFeelFlatlaf()) {
             return null;
-        } else if (getOsVersion().isMacOS() && !getOsVersion().isDarkTheme()) {
-            return UIManager.getSystemLookAndFeelClassName();
+//        } else if (getOsVersion().isMacOS() && !getOsVersion().isDarkTheme()) {
+//            return UIManager.getSystemLookAndFeelClassName();
         } else {
             return selectLookAndFeelFromSpecialName(LOOK_AND_FEEL_VALUE_NIMBUS_CUSTOM);
         }
@@ -1031,10 +1030,20 @@ public class UIManagerUtil {
         }
     }
 
+    /**
+     * @param source the color source
+     * @return a cached color for the source
+     * @since 1.9
+     */
     public static CachedColor cachedColor(Supplier<Color> source) {
         return new CachedColor(source);
     }
 
+    /**
+     * @param source array of color sources
+     * @return cached-colors for source
+     * @since 1.9
+     */
     @SafeVarargs
     @SuppressWarnings({"unchecked", "varargs"})
     public static CachedColor[] cachedColors(Supplier<Color>... source) {
@@ -1043,6 +1052,11 @@ public class UIManagerUtil {
                 .toArray(CachedColor[]::new);
     }
 
+    /**
+     * @param colors tested color-caches
+     * @return true if one of colors updated. all elements are tested.
+     * @since 1.9
+     */
     public static boolean isUpdated(CachedColor... colors) {
         boolean updated = false;
         for (CachedColor color : colors) {
@@ -1053,6 +1067,10 @@ public class UIManagerUtil {
         return updated;
     }
 
+    /**
+     *  cached color with a source
+     * @since 1.9
+     */
     public static class CachedColor {
         protected Color color;
         protected int[] data;

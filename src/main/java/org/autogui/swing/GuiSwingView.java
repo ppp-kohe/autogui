@@ -234,6 +234,13 @@ public interface GuiSwingView extends GuiSwingElement {
                 p -> valuePredicate.test(p.getSwingViewValue()), GuiSwingFeature.TraversalOption.NonTop);
     }
 
+    /**
+     *
+     * @param target the root node
+     * @param name the context-name
+     * @return the first descendant value-pane matched by the context-name
+     * @since 1.9
+     */
     @SuppressWarnings("unchecked")
     static ValuePane<Object> getDescendantByName(Object target, String name) {
         return GuiSwingFeature.traverseFindFirstIf(target, ValuePane.class,
@@ -260,18 +267,44 @@ public interface GuiSwingView extends GuiSwingElement {
         return getActionDefault(target, e ->  e.getContext() != null && Objects.equals(e.getContext().getName(), name));
     }
 
+    /**
+     *
+     * @param target the parent pane
+     * @param context the searched context
+     * @return  the first child action of the context
+     * @since 1.9
+     */
     static GuiSwingActionDefault.ExecutionAction getActionByContext(Object target, GuiMappingContext context) {
         return getActionDefault(target, e ->  Objects.equals(e.getContext(), context));
     }
 
+    /**
+     *
+     * @param target the parent pane
+     * @param context the searched context
+     * @return the first descendant action of the context
+     * @since 1.9
+     */
     static GuiSwingActionDefault.ExecutionAction getDescendantActionByContext(Object target, GuiMappingContext context) {
         return GuiSwingFeature.traverseFindFirst(target, ValuePane.class, getActionMapper(e -> Objects.equals(e.getContext(), context)));
     }
 
+    /**
+     *
+     * @param target the parent pane
+     * @param predicate the tested predicate
+     * @return the first child action matched by the predicate
+     * @since 1.9
+     */
     static GuiSwingActionDefault.ExecutionAction getActionDefault(Object target, Predicate<GuiSwingActionDefault.ExecutionAction> predicate) {
         return GuiSwingFeature.findFirstChild(target, ValuePane.class, getActionMapper(predicate), GuiSwingFeature.TraversalOption.OncePertContext);
     }
 
+    /**
+     * @param predicate the test
+     * @return action testing and getter with listing menu-items
+     * @since 1.9
+     */
     @SuppressWarnings("rawtypes")
     private static Function<ValuePane, GuiSwingActionDefault.ExecutionAction> getActionMapper(Predicate<GuiSwingActionDefault.ExecutionAction> predicate) {
         return pane -> {
@@ -286,18 +319,52 @@ public interface GuiSwingView extends GuiSwingElement {
 
     //--------------------------------------
 
+    /**
+     *
+     * @param obj the parent component
+     * @param type the target type
+     * @return a first descendant  of the type (including obj)
+     * @param <RetType> the retruned component type
+     * @since 1.9
+     */
     static <RetType extends Component> RetType findDescendantByType(Object obj, Class<RetType> type) {
         return findDescendantByType(obj, type, p -> true);
     }
 
+    /**
+     *
+     * @param obj the parent component
+     * @param type the target type
+     * @param condition the tested condition
+     * @return a first descendant of the type with hoding the condition (including obj)
+     * @param <RetType> the returned compoent type
+     * @since 1.9
+     */
     static <RetType extends Component> RetType findDescendantByType(Object obj, Class<RetType> type, Predicate<RetType> condition) {
         return GuiSwingFeature.traverseFindFirstIf(obj, type, condition);
     }
 
+    /**
+     *
+     * @param obj the parent component
+     * @param type the target type
+     * @return a first descendant  of the type (including obj)
+     * @param <RetType> the returned value-pane type
+     * @since 1.9
+     */
     static <RetType extends ValuePane<?>> RetType findDescendantValuePaneByType(Object obj, Class<RetType> type) {
         return findDescendantValuePaneByType(obj, type, p -> true);
     }
 
+    /**
+     *
+     * @param obj the parent component
+     * @param type the target type
+     * @param condition the tested condition
+     * @return a first descendant of the type with hoding the condition (including obj)
+     * @param <RetType> the returned value-pane type
+     * @since 1.9
+     */
     static <RetType extends ValuePane<?>> RetType findDescendantValuePaneByType(Object obj, Class<RetType> type, Predicate<RetType> condition) {
         return GuiSwingFeature.traverseFindFirstIf(obj, type, condition);
     }

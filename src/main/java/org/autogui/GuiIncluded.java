@@ -38,6 +38,16 @@ import java.lang.annotation.Target;
  *
  *         &#64;{@link GuiIncluded}
  *         public void actionForSelectedRows(List&lt;Integer&gt; rows, String tableName) {...}
+ *
+ *         &#64;{@link GuiIncluded}(editor=true)
+ *         public E editorAction() {...}
+ *
+ *         &64;{@link GuiIncluded}
+ *         public void completeEditorAction(E e) {...}
+ *
+ *         &64;{@link GuiIncluded}
+ *         public void completeEditorAction(E e, boolean ok) {...}
+ *
  *     }
  *
  *     &#64;{@link GuiIncluded} //column class
@@ -152,4 +162,11 @@ public @interface GuiIncluded {
      * @since 1.2
      */
     boolean action() default false;
+
+    /**
+     * @return if true and the target returns an object type, the target is handled as an editor-action, not an accessor.
+     *   Note: editor=true means the target is a special kind of action even if action=false.
+     * @since 1.9
+     */
+    boolean editor() default false;
 }

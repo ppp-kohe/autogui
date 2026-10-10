@@ -79,11 +79,30 @@ import java.util.concurrent.Callable;
  *   </pre>
  */
 public class GuiReprActionList implements GuiRepresentation {
-    public GuiReprActionList() {}
+    /** @since 1.9 */
+    protected GuiRepresentation subRepresentation;
+
+    /**
+     * @param subRepresentation the sub-representation for edit-action feature
+     * @since 1.9
+     */
+    public GuiReprActionList(GuiRepresentation subRepresentation) {
+        this.subRepresentation = subRepresentation;
+    }
+
+    public GuiReprActionList() {
+        this(GuiRepresentation.NONE);
+    }
+
     @Override
     public boolean match(GuiMappingContext context) {
         if (context.isTypeElementActionList()) {
             context.setRepresentation(this);
+            for (GuiMappingContext child : context.createChildCandidates()) {
+                if (subRepresentation.match(child)) {
+                    child.addToParent();
+                }
+            }
             return true;
         } else {
             return false;
@@ -101,10 +120,10 @@ public class GuiReprActionList implements GuiRepresentation {
      * @param selection the parameter
      * @param targetName the name of the target list
      * @param targetSpecifier the specifier for the target object
-     * @return result of execution or null
+     * @return result of execution or null with target
      */
-    public Object executeActionForList(GuiMappingContext context, List<?> selection, String targetName, GuiReprValue.ObjectSpecifier targetSpecifier) {
-        Object result = null;
+    public GuiReprAction.TargetAndResult executeActionForList(GuiMappingContext context, List<?> selection, String targetName, GuiReprValue.ObjectSpecifier targetSpecifier) {
+        GuiReprAction.TargetAndResult result = null;
         try {
             Object target = context.getParentValuePane().getUpdatedValueWithoutNoUpdate(context.getParent(), GuiReprValue.NONE_WITH_CACHE);
             result = executeActionForList(context, target, selection, targetName);
@@ -114,7 +133,7 @@ public class GuiReprActionList implements GuiRepresentation {
         return result;
     }
 
-    public Object executeActionForList(GuiMappingContext context, Object target, List<?> selection, String targetName) {
+    public GuiReprAction.TargetAndResult executeActionForList(GuiMappingContext context, Object target, List<?> selection, String targetName) {
         Object result = null;
         try {
             if (context.getTypeElementAsActionList().isTakingTargetName()) {
@@ -126,10 +145,28 @@ public class GuiReprActionList implements GuiRepresentation {
         } catch (Throwable ex) {
             context.errorWhileUpdateSource(ex);
         }
-        return result;
+        return new GuiReprAction.TargetAndResult(target, result);
     }
 
-
+    /**
+     * @param context the action context
+     * @param target the target object for the edit completion method.
+     * @param editor the given editor
+     * @param ok the status set by a user
+     * @since 1.9
+     */
+    public void executeCompleteEditAction(GuiMappingContext context, Object target, Object editor, boolean ok) {
+        try {
+            var typeAction = context.getTypeElementAsAction();
+            context.execute(() -> {
+                typeAction.executeCompleteEdit(target, editor, ok);
+                return null;
+            });
+            context.updateSourceFromRoot(context);
+        } catch (Throwable ex) {
+            context.errorWhileUpdateSource(ex);
+        }
+    }
 
     @Override
     public Object toJson(GuiMappingContext context, Object source) {
@@ -244,12 +281,13 @@ public class GuiReprActionList implements GuiRepresentation {
      *     public Collection&lt;E&gt; select(...) { ... }
      * </pre>
      * @param context context of the action
-     * @param tableContext table context
+     * @param tableContext table context or null (if null, returns false)
      * @return true if matched
      */
     public static boolean isSelectionChangeActionForActions(GuiMappingContext context, GuiMappingContext tableContext) {
         return (context.isTypeElementAction() || context.isTypeElementActionList()) &&
                 context.getTypeElementAsAction().isSelectionChangeAction() &&
+                tableContext != null &&
                 isCollectionType(context.getTypeElementAsAction().getReturnType(),
                     tableContext.getTypeElementCollection().getElementType());
     }
@@ -298,5 +336,23 @@ public class GuiReprActionList implements GuiRepresentation {
     @Override
     public String toString() {
         return toStringHeader();
+    }
+
+    /**
+     * @param context the action context
+     * @return true if the type has edit feature
+     * @since 1.9
+     */
+    public boolean isEditAction(GuiMappingContext context) {
+        return context.isTypeElementActionList() && context.getTypeElementAsAction().hasEditFeature();
+    }
+
+    /**
+     * @param context the action context
+     * @return true if the type has edit feature and it has a completion method
+     * @since 1.9
+     */
+    public boolean isEditActionWithCompleteEdit(GuiMappingContext context) {
+        return isEditAction(context) && context.getTypeElementAsAction().getEditFeature().hasCompleteEditMethod();
     }
 }

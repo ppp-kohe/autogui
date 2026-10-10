@@ -28,6 +28,7 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
     protected boolean selected;
 
     protected Cache<float[]> rendererToSizeCache;
+    /**  @since 1.9 */
     protected Cache<String> rendererToFormattedString;
 
     public float[] sizeCache(Object r, Supplier<float[]> src) {
@@ -37,6 +38,12 @@ public class GuiSwingLogEntryString extends GuiLogEntryString implements GuiSwin
         return rendererToSizeCache.computeIfAbsent(r, _r -> src.get());
     }
 
+    /**
+     * @param r the key renderer
+     * @param src the source of the reutned string
+     * @return cached string for r or returend by the src
+     * @since 1.9
+     */
     public String formatByRenderer(Object r, Supplier<String> src) {
         if (rendererToFormattedString == null) {
             rendererToFormattedString = new Cache<>(3);

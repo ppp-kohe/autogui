@@ -6,6 +6,13 @@ import java.awt.desktop.AppForegroundEvent;
 import java.awt.desktop.AppForegroundListener;
 import java.util.function.Function;
 
+/**
+ * the polling based auto LAF switcher for {@link NimbusLookAndFeelCustomFlat}
+ * <pre>
+ *    new LookAndFeelThemeSwitcher(100_000).install()
+ * </pre>
+ * @since 1.9
+ */
 public class LookAndFeelThemeSwitcher implements AppForegroundListener {
     protected int pollingMillis;
 

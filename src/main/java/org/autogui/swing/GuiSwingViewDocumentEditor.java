@@ -265,6 +265,10 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
         }
 
+        /**
+         * @return a new installed line-number-pane
+         * @since 1.9
+         */
         protected LineNumberPane createLineNumberPane() {
             var p = new LineNumberPane(this);
             p.install();
@@ -399,6 +403,10 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
             return settingAction;
         }
 
+        /**
+         * @return a new installed line-number-pane
+         * @since 1.9
+         */
         protected LineNumberPane createLineNumberPane() {
             var p = new LineNumberPane(this);
             p.install();

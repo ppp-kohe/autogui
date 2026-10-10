@@ -4,10 +4,8 @@ import org.autogui.base.mapping.GuiMappingContext.GuiSourceValue;
 import org.autogui.base.type.*;
 
 import java.lang.reflect.Array;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -275,6 +273,61 @@ public class GuiReprCollectionTable extends GuiReprValue {
     public int getValueCollectionSize(GuiMappingContext context, GuiSourceValue collection, ObjectSpecifier specifier) throws Throwable {
         GuiTypeCollection collType = context.getTypeElementCollection();
         return context.execute(() -> collType.getSize(toSource(collection.getValue())));
+    }
+
+    /**
+     * @param c a collection object or an array object, or null
+     * @return  the size for the given collection, or 0 for null
+     * @since 1.9
+     */
+    public static int getCollectionSizeFallback(Object c) {
+        if (c instanceof Collection<?> collection) {
+            return collection.size();
+        } else if (c != null && c.getClass().isArray()) {
+            return Array.getLength(c);
+        } else if (c == null) {
+            return 0;
+        } else {
+            throw new IllegalArgumentException("getValueSize: " + c);
+        }
+    }
+
+    /**
+     * @param c the given list or an array, or null
+     * @param body the task for invoked for reach elements;
+     *             if c is null, nothing happens
+     * @since 1.9
+     */
+    public static void forEachValueFallback(Object c, Consumer<Object> body) {
+        if (c instanceof List<?> collection) {
+            collection.forEach(body);
+        } else if (c != null && c.getClass().isArray()) {
+            int l = Array.getLength(c);
+            for (int i = 0; i < l; ++i) {
+                body.accept(Array.get(c, i));
+            }
+        } else if (c != null) {
+            throw new IllegalArgumentException("forEachValue " + c);
+        } //if c == null : nothing
+    }
+
+    /**
+     *
+     * @param c a list or an array , or null
+     * @param i the index
+     * @return the element at i of the given collection, or null for c==null
+     * @since 1.9
+     */
+    public static Object getValueAtFallback(Object c, int i) {
+        if (c instanceof List<?> collection) {
+            return collection.get(i);
+        } else if (c != null && c.getClass().isArray()) {
+            return Array.get(c, i);
+        } else if (c != null) {
+            throw new IllegalArgumentException("forEachValue " + c);
+        } else {
+            return null;
+        }
     }
 
     @Override

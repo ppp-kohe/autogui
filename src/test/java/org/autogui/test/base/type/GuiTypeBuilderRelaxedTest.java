@@ -166,11 +166,12 @@ public class GuiTypeBuilderRelaxedTest {
             return "a";
         }
 
+        @GuiIncluded(editor = true)
         ExampleEditTarget edit() {
             return new ExampleEditTarget();
         }
 
-        void edited(ExampleEditTarget e, boolean ok) {
+        void completeEdit(ExampleEditTarget e, boolean ok) {
         }
 
         void action() {
@@ -219,8 +220,8 @@ public class GuiTypeBuilderRelaxedTest {
 
         var edit = typeObj.getActions().stream().filter(m -> m.getMethod().getName().equals("edit")).findFirst().orElse(null);
 
-        assertTrue(edit.hasEditedMethod(), "edited");
-        assertEquals("edited", edit.getEditFeature().editedMethod().getName(), "edited");
+        assertTrue(edit.hasCompleteEditMethod(), "completeEdit");
+        assertEquals("completeEdit", edit.getEditFeature().completeEditMethod().getName(), "completeEdit");
 
         var actionList = typeObj.getActions().stream().filter(m -> m.getMethod().getName().equals("actionList")).findFirst().orElse(null);
 

@@ -262,6 +262,15 @@ public class GuiLogManager {
         return logCreated(new GuiLogEntryException(ex));
     }
 
+    /**
+     * called from {@link #logError(Throwable)},
+     *    {@link #logProgress()}, {@link #logString(String)}, and so on;
+     *  a subclass can override the method.
+     * @param log the given entry
+     * @return the default impl. just returns the log
+     * @param <LogType> the created type
+     * @since 1.9
+     */
     protected <LogType extends GuiLogEntry> LogType logCreated(LogType log) {
         return log;
     }

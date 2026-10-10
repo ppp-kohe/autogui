@@ -255,7 +255,10 @@ public class GuiSwingPrefsSupports {
             }
         }
 
-
+        /**
+         * one-shot setter of the frame location as a listener
+         * @since 1.9
+         */
         public static class WindowOneShotSetLocation extends ComponentAdapter {
             protected Point location;
             protected Window frame;
@@ -264,6 +267,7 @@ public class GuiSwingPrefsSupports {
                 this(w, w.getLocation());
             }
 
+            @SuppressWarnings("this-escape")
             public WindowOneShotSetLocation(Window  w, Point location) {
                 this.frame = w;
                 this.location = location;

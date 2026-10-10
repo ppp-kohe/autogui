@@ -54,13 +54,13 @@ public class GuiTypeBuilderTest {
             return null;
         }
 
-        public void edited(Example e) {
+        public void completeEdit(Example e) {
         }
 
-        public void editedString(Example s) {
+        public void completeEditString(Example s) {
         }
 
-        public void editedStringWithOk(Example a, boolean ok) {
+        public void completeEditStringWithOk(Example a, boolean ok) {
         }
 
         public void methodFinishA(Example s) {
@@ -70,7 +70,7 @@ public class GuiTypeBuilderTest {
         }
 
         @GuiIncluded(name = "namedEditor")
-        public void editedNamed(Example s) {
+        public void completeEditNamed(Example s) {
         }
 
         public Example edit() {
@@ -85,6 +85,7 @@ public class GuiTypeBuilderTest {
             return null;
         }
 
+        @GuiIncluded(editor = true)
         public Example methodStartA() {
             return null;
         }
@@ -93,16 +94,17 @@ public class GuiTypeBuilderTest {
             return null;
         }
 
-        @GuiIncluded(index = 123)
+        @GuiIncluded(index = 123, editor = true)
         public Example editAnnotated() {
             return null;
         }
 
-        @GuiIncluded(action = true)
+        @GuiIncluded(editor = true)
         public Example editAction() {
             return null;
         }
 
+        @GuiIncluded(editor = true)
         public Example editList(List<String> list) {
             return null;
         }
@@ -285,13 +287,13 @@ public class GuiTypeBuilderTest {
             return "";
         }
 
-        @GuiIncluded(action = true, index = 1, name = "edt")
+        @GuiIncluded(editor = true, index = 1, name = "edt")
         public ExampleEditor edit() {
             return new ExampleEditor();
         }
 
         @GuiIncluded(name = "edt")
-        public void edited(ExampleEditor e) {
+        public void completeEdit(ExampleEditor e) {
         }
 
         @GuiIncluded(index = 10, name = "prp")
@@ -651,14 +653,14 @@ public class GuiTypeBuilderTest {
             var action = obj.getActions().get(1);
             var edit = obj.getActions().getFirst();
             assertEquals("action", action.getName(), "action");
-            assertEquals("edt", edit.getName(), "edited");
+            assertEquals("edt", edit.getName(), "completeEdit");
 
             assertEquals("action", action.getMethod().getName(), "action method");
             assertEquals("edit", edit.getMethod().getName(), "edit method");
 
-            assertTrue(edit.hasEditedMethod(), "has edited");
-            assertEquals("edited", edit.getEditFeature().editedMethodName(), "edited name");
-            assertEquals("edited", edit.getEditFeature().editedMethod().getName(), "edited method");
+            assertTrue(edit.hasCompleteEditMethod(), "has completeEdit");
+            assertEquals("completeEdit", edit.getEditFeature().completeEditMethodName(), "completeEdit name");
+            assertEquals("completeEdit", edit.getEditFeature().completeEditMethod().getName(), "completeEdit method");
         }
     }
 
@@ -805,14 +807,14 @@ public class GuiTypeBuilderTest {
 
         GuiTypeBuilder.MemberDefinitions m = new GuiTypeBuilder.MemberDefinitions("editAction");
         m.methods.add(Example.class.getMethod("editAction"));
-        m.supplementaryMethods.add(Example.class.getMethod("edited", Example.class));
+        m.supplementaryMethods.add(Example.class.getMethod("completeEdit", Example.class));
 
         builder.createMember(obj, m);
 
         var a = obj.getActions().getFirst();
         assertEquals("editAction", a.getName(), "name");
         assertEquals("editAction", a.getMethod().getName(), "created action");
-        assertEquals("edited", a.getEditFeature().editedMethod().getName(), "edited");
+        assertEquals("completeEdit", a.getEditFeature().completeEditMethod().getName(), "completeEdit");
     }
 
     @Test
@@ -897,9 +899,9 @@ public class GuiTypeBuilderTest {
     }
 
     @Test
-    public void testCreateMemberActionEdited() throws Exception {
+    public void testCreateMemberActionCompleteEdit() throws Exception {
         var obj = new GuiTypeObject(Example.class);
-        builder.createMemberAction(obj, "action", Example.class.getMethod("editAnnotated"), false, true, Example.class.getMethod("editedStringWithOk", Example.class, boolean.class));
+        builder.createMemberAction(obj, "action", Example.class.getMethod("editAnnotated"), false, true, Example.class.getMethod("completeEditStringWithOk", Example.class, boolean.class));
 
         var action = obj.getActions().getFirst();
         assertEquals(GuiTypeMemberAction.class, action.getClass(), "action type");
@@ -909,15 +911,15 @@ public class GuiTypeBuilderTest {
         assertEquals("editAnnotated", action.getMethod().getName(), "method");
         assertEquals(new GuiTypeObject(Example.class), action.getReturnType(), "rettype");
 
-        assertTrue(action.hasEditedMethod(), "feature");
-        assertEquals("editedStringWithOk", action.getEditFeature().editedMethodName(), "edited method");
-        assertEquals("editedStringWithOk", action.getEditFeature().editedMethod().getName(), "edited method");
+        assertTrue(action.hasCompleteEditMethod(), "feature");
+        assertEquals("completeEditStringWithOk", action.getEditFeature().completeEditMethodName(), "completeEdit method");
+        assertEquals("completeEditStringWithOk", action.getEditFeature().completeEditMethod().getName(), "completeEdit method");
     }
 
     @Test
-    public void testCreateMemberActionListEdited() throws Exception {
+    public void testCreateMemberActionListCompleteEdit() throws Exception {
         var obj = new GuiTypeObject(Example.class);
-        builder.createMemberAction(obj, "editList", Example.class.getMethod("editList", List.class), true, true, Example.class.getMethod("editedStringWithOk", Example.class, boolean.class));
+        builder.createMemberAction(obj, "editList", Example.class.getMethod("editList", List.class), true, true, Example.class.getMethod("completeEditStringWithOk", Example.class, boolean.class));
 
         var action = obj.getActions().getFirst();
         assertEquals(GuiTypeMemberActionList.class, action.getClass(), "action type");
@@ -926,9 +928,9 @@ public class GuiTypeBuilderTest {
         assertEquals("editList", action.getMethod().getName(), "method");
         assertEquals(new GuiTypeObject(Example.class), action.getReturnType(), "rettype");
 
-        assertTrue(action.hasEditedMethod(), "feature");
-        assertEquals("editedStringWithOk", action.getEditFeature().editedMethodName(), "edited method");
-        assertEquals("editedStringWithOk", action.getEditFeature().editedMethod().getName(), "edited method");
+        assertTrue(action.hasCompleteEditMethod(), "feature");
+        assertEquals("completeEditStringWithOk", action.getEditFeature().completeEditMethodName(), "completeEdit method");
+        assertEquals("completeEditStringWithOk", action.getEditFeature().completeEditMethod().getName(), "completeEdit method");
     }
 
 
@@ -984,12 +986,12 @@ public class GuiTypeBuilderTest {
     }
 
     @Test
-    public void testGetMemberNameFromMethodEditedForActionEdit() throws Exception {
-        assertEquals("editString", builder.getMemberNameFromMethodEditedForActionEdit(Example.class.getMethod("editedString", Example.class)), "editedX -> editX");
+    public void testGetMemberNameFromMethodCompleteEditForActionEdit() throws Exception {
+        assertEquals("editString", builder.getMemberNameFromMethodCompleteEditForActionEdit(Example.class.getMethod("completeEditString", Example.class)), "completeEditX -> editX");
 
-        assertEquals("edit", builder.getMemberNameFromMethodEditedForActionEdit(Example.class.getMethod("edited", Example.class)), "edited -> edit");
+        assertEquals("edit", builder.getMemberNameFromMethodCompleteEditForActionEdit(Example.class.getMethod("completeEdit", Example.class)), "completeEdit -> edit");
 
-        assertEquals("namedEditor", builder.getMemberNameFromMethodEditedForActionEdit(Example.class.getMethod("editedNamed", Example.class)), "edited with name=x -> x");
+        assertEquals("namedEditor", builder.getMemberNameFromMethodCompleteEditForActionEdit(Example.class.getMethod("completeEditNamed", Example.class)), "completeEdit with name=x -> x");
     }
 
     @Test
@@ -1046,31 +1048,24 @@ public class GuiTypeBuilderTest {
     }
 
     @Test
-    public void testIsActionEditMethodPrefixed() throws Exception {
-        assertTrue(builder.isActionEditMethodPrefixed(Example.class.getMethod("editString")), "edit");
-        assertFalse(builder.isActionEditMethodPrefixed(Example.class.getMethod("editNoIncluded")), "edit no included");
-        assertFalse(builder.isActionEditMethodPrefixed(Example.class.getMethod("methodStartA")), "edit");
-    }
-
-    @Test
     public void testIsActionEditMethod() throws Exception {
         assertTrue(builder.isActionEditMethod(Example.class.getMethod("methodStartA")), "edit");
         assertFalse(builder.isActionEditMethod(Example.class.getMethod("methodStartB")), "edit no included");
     }
 
     @Test
-    public void testIsEditedMethod() throws Exception {
-        assertTrue(builder.isEditedMethod(Example.class.getMethod("methodFinishA", Example.class)), "edited");
-        assertTrue(builder.isEditedMethod(Example.class.getMethod("methodFinishA", Example.class)), "edited");
-        assertFalse(builder.isEditedMethod(Example.class.getMethod("testListString")), "not edited");
+    public void testIsCompleteEditMethod() throws Exception {
+        assertTrue(builder.isCompleteEditMethod(Example.class.getMethod("methodFinishA", Example.class)), "completeEdit");
+        assertTrue(builder.isCompleteEditMethod(Example.class.getMethod("methodFinishA", Example.class)), "completeEdit");
+        assertFalse(builder.isCompleteEditMethod(Example.class.getMethod("testListString")), "not completeEdit");
     }
 
     @Test
-    public void testIsEditedMethodPrefixed() throws Exception {
-        assertTrue(builder.isEditedMethodPrefixed(Example.class.getMethod("editedString", Example.class)), "edited");
-        assertTrue(builder.isEditedMethodPrefixed(Example.class.getMethod("editedStringWithOk", Example.class, boolean.class)), "edited with ok");
-        assertFalse(builder.isEditedMethodPrefixed(Example.class.getMethod("methodFinishA", Example.class)), "no prefixed edited");
-        assertFalse(builder.isEditedMethodPrefixed(Example.class.getMethod("methodFinishB", Example.class, boolean.class)), "no prefixed edited with ok");
+    public void testIsCompleteEditMethodPrefixed() throws Exception {
+        assertTrue(builder.isCompleteEditMethodPrefixed(Example.class.getMethod("completeEditString", Example.class)), "completeEdit");
+        assertTrue(builder.isCompleteEditMethodPrefixed(Example.class.getMethod("completeEditStringWithOk", Example.class, boolean.class)), "completeEdit with ok");
+        assertFalse(builder.isCompleteEditMethodPrefixed(Example.class.getMethod("methodFinishA", Example.class)), "no prefixed completeEdit");
+        assertFalse(builder.isCompleteEditMethodPrefixed(Example.class.getMethod("methodFinishB", Example.class, boolean.class)), "no prefixed completeEdit with ok");
     }
 
     @Test

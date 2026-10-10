@@ -99,6 +99,9 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
         this.selected = selected;
     }
 
+    /**
+     * @since 1.9
+     */
     public static class LinesCache extends Cache<LinesCacheEntry> {
         public LinesCache() {
             super(5);
@@ -109,10 +112,19 @@ public class GuiSwingLogEntryException extends GuiLogEntryException implements G
             return Objects.equals(existing, given);
         }
     }
-
+    /** @since 1.9 */
     public record LinesCacheKey(Object renderer, String text) {}
+    /** @since 1.9 */
     public record LinesCacheEntry(int width, List<TextCellRenderer.LineInfo> lines) {}
 
+    /**
+     *
+     * @param renderer the key renderer
+     * @param text the key text
+     * @param builder the builder for lines
+     * @return a created entry or an exsiting cache.
+     * @since 1.9
+     */
     public LinesCacheEntry buildLines(Object renderer, String text, Function<List<TextCellRenderer.LineInfo>, Integer> builder) {
         return linesCache.computeIfAbsent(new LinesCacheKey(renderer, text),
                 _k -> {

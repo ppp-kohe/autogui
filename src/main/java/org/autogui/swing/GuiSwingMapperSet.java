@@ -232,7 +232,7 @@ public class GuiSwingMapperSet {
                 GuiRepresentation.createObjectPane(reprSet),
                 GuiRepresentation.createPropertyPane(reprSet),
                 GuiRepresentation.createAction(reprSet),
-                GuiRepresentation.createActionList());
+                GuiRepresentation.createActionList(reprSet));
 
         reprSet.add(GuiRepresentation.createValueLabel());
     }

@@ -549,17 +549,28 @@ public class TextCellRenderer<ValueType> extends JPanel
     public Component getTableCellRendererComponent(JTable tableNullable, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         setProperty(tableNullable);
         //setCellTableColor(tableNullable, this, false, hasFocus, row, column);
-        boolean forMouseEvents = row <= -1;
-        if (!forMouseEvents) {
-            this.selected = isSelected;
-            clearSelectionRange();
-        }
-
+        boolean forMouseEvents = setTableCellSelection(isSelected, row);
         setValue((ValueType) value, forMouseEvents);
 //        if (!TextCellRenderer.setCellTableBorder(tableNullable, this, isSelected, hasFocus, row, column)) {
 //            TextCellRenderer.setCellBorderDefault(true, this, isSelected, hasFocus);
 //        }
         return this;
+    }
+
+    /**
+     * set the selection flag, called from {@link #getTableCellRendererComponent(JTable, Object, boolean, boolean, int, int)}
+     * @param isSelected the selected flag
+     * @param row the target row
+     * @return the for-mouse-events flag: the row &lt;= -1
+     * @since 1.9
+     */
+    protected boolean setTableCellSelection(boolean isSelected, int row) {
+        boolean forMouseEvents = row <= -1;
+        if (!forMouseEvents) {
+            this.selected = isSelected;
+            clearSelectionRange();
+        }
+        return forMouseEvents;
     }
 
     /**
@@ -624,8 +635,44 @@ public class TextCellRenderer<ValueType> extends JPanel
      */
     public int buildLines(String text, List<LineInfo> lines) {
         lines.clear();
-        int i = 0;
-        int maxWidth = 0;
+        var p = new LineProcessorLineInfo(lines);
+        splitLines(text, p);
+        return p.maxWidth;
+    }
+
+    /** the line process functional interface
+     * @since 1.9 */
+    public interface LineProcessor {
+        void nextLine(int lineIndex, int i, String line);
+    }
+    /** concurete impl. of LineProcessor
+     * @since 1.9 */
+    public class LineProcessorLineInfo implements LineProcessor {
+        List<LineInfo> lines;
+        LineInfo prev;
+        public int maxWidth;
+
+        public LineProcessorLineInfo(List<LineInfo> lines) {
+            this.lines = lines;
+        }
+
+        @Override
+        public void nextLine(int lineIndex, int i, String line) {
+            var info = createLine(prev, lineIndex, i, line);
+            lines.add(info);
+            prev = info;
+            maxWidth = Math.max(maxWidth, info.getWidth());
+        }
+    }
+
+    /**
+     * the utility method for splitting text by newlines
+     * @param text the split text
+     * @param lineProcessor the processor
+     * @since 1.9
+     */
+    public void splitLines(String text, LineProcessor lineProcessor) {
+        int i;
         int lineIndex = 0;
         LineInfo prev = null;
         int lineStart = 0;
@@ -634,21 +681,15 @@ public class TextCellRenderer<ValueType> extends JPanel
             char c = text.charAt(i);
             if (c == '\n') {
                 var line = text.substring(lineStart, i);
-                LineInfo info = createLine(prev, lineIndex, i, line);
-                lines.add(info);
-                prev = info;
+                lineProcessor.nextLine(lineIndex, i, line);
                 lineIndex++;
-                maxWidth = Math.max(maxWidth, info.getWidth());
                 lineStart = i + 1;
             }
         }
         if (lineStart < len) {
             var line = text.substring(lineStart, i);
-            LineInfo info = createLine(prev, lineIndex, i, line);
-            lines.add(info);
-            maxWidth = Math.max(maxWidth, info.getWidth());
+            lineProcessor.nextLine(lineIndex, i, line);
         }
-        return maxWidth;
     }
 
     /**
@@ -1014,6 +1055,10 @@ public class TextCellRenderer<ValueType> extends JPanel
 
     protected Map<Color, Map<Color, Color>> textToBackToColor = new HashMap<>();
 
+    protected Color paintBackgroundColor() {
+        return originalBackground;
+    }
+
     /**
      * @param g the target graphics
      * @param paint if true, do drawing. if false, it just calculates the size
@@ -1028,7 +1073,7 @@ public class TextCellRenderer<ValueType> extends JPanel
 
         Graphics2D g2 = (Graphics2D) g;
         if (paint && isOpaque()) {
-            g2.setColor(originalBackground);
+            g2.setColor(paintBackgroundColor());
             g2.fillRect(0, 0, getWidth(), getHeight());
         }
         // super.paintComponent(g): do g.setColor(getBackground()) and g.fillRect(0, 0, w, h).
@@ -1055,11 +1100,8 @@ public class TextCellRenderer<ValueType> extends JPanel
         float lineWidthMax = 0;
         g2.translate(x, y);
         for (LineInfo line : lines) {
-            TextLayout l = paint ?
-                    line.getLayout(frc, this.selectionStart, this.selectionEnd,
-                        foregroundColor, backgroundColor, selectionTextColor, selectionColor, textToBackToColor) :
-                    new TextLayout(line.attributedString.getIterator(), frc);
-//            TextLayout l = line.getLayout(frc);
+            TextLayout l = createLayoutForPaintOrLayout(paint, line, frc,
+                    foregroundColor, backgroundColor, selectionTextColor, selectionColor);
 
             float ascent = l.getAscent();
             y += ascent;
@@ -1084,6 +1126,27 @@ public class TextCellRenderer<ValueType> extends JPanel
         }
         g2.translate(-x, -y);
         return new float[] { x + lineWidthMax + insets.right, y + insets.bottom};
+    }
+
+    /**
+     * called from {@link #paintOrLayoutComponentLines(Graphics, boolean)}
+     *   and obtains a text-layout object for the line
+     * @param paint the paint or layout mode
+     * @param line the source line
+     * @param frc the font rendering context
+     * @param foregroundColor the text color
+     * @param backgroundColor the background color
+     * @param selectionTextColor the selected text color
+     * @param selectionColor the selected background color
+     * @return obtaining text-layout from the line
+     * @since 1.9
+     */
+    protected TextLayout createLayoutForPaintOrLayout(boolean paint, LineInfo line, FontRenderContext frc,
+                                                      Color foregroundColor, Color backgroundColor, Color selectionTextColor, Color selectionColor) {
+        return paint ?
+                line.getLayout(frc, this.selectionStart, this.selectionEnd,
+                        foregroundColor, backgroundColor, selectionTextColor, selectionColor, textToBackToColor) :
+                line.createLayout(frc);
     }
 
     @Override
@@ -1235,13 +1298,36 @@ public class TextCellRenderer<ValueType> extends JPanel
         protected List<int[]> findRanges;
 
         public LineInfo(AttributedString attributedString, int start, int end) {
-            if (attributedString.getIterator().current() == CharacterIterator.DONE) {
-                //empty string cause an error at creating TextLayout
-                attributedString = new AttributedString(" ");
+            if (attributedString != null){
+                if (attributedString.getIterator().current() == CharacterIterator.DONE) {
+                    //empty string cause an error at creating TextLayout
+                    attributedString = new AttributedString(" ");
+                }
+                this.attributedString = attributedString;
             }
-            this.attributedString = attributedString;
             this.start = start;
             this.end = end;
+        }
+
+        /**
+         *
+         * @param layout the concrete layout
+         * @param start the start position
+         * @param end the end position
+         * @since 1.9
+         */
+        public LineInfo(TextLayout layout, int start, int end) {
+            this.layout = layout;
+            this.start = start;
+            this.end = end;
+        }
+
+        /**
+         * @return the layout
+         * @since 1.9
+         */
+        public TextLayout getCreatedLayout() {
+            return layout;
         }
 
         /**
@@ -1269,11 +1355,21 @@ public class TextCellRenderer<ValueType> extends JPanel
         public TextLayout getLayout(FontRenderContext frc) {
             if (layout == null) {
                 layoutState = Collections.emptyList();
-                layout = new TextLayout(attributedString.getIterator(), frc);
+                layout = createLayout(frc);
             } else {
                 //the empty state always included any other layoutState
             }
             return layout;
+        }
+
+        /**
+         *
+         * @param frc the font-render context for creation
+         * @return a concrete text-layout instance
+         * @since 1.9
+         */
+        public TextLayout createLayout(FontRenderContext frc) {
+            return new TextLayout(attributedString.getIterator(), frc);
         }
 
         public TextLayout getLayout(FontRenderContext frc, int selectionStart, int selectionEnd,

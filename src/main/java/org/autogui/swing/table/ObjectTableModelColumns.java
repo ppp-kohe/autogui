@@ -4,6 +4,7 @@ import org.autogui.base.mapping.GuiMappingContext;
 import org.autogui.base.mapping.GuiReprCollectionTable.TableTargetCell;
 import org.autogui.swing.GuiSwingElement;
 import org.autogui.swing.GuiSwingFeature;
+import org.autogui.swing.GuiSwingMapperSet;
 import org.autogui.swing.table.GuiSwingTableColumn.SpecifierManagerIndex;
 import org.autogui.swing.table.GuiSwingTableColumnSet.TableSelectionSource;
 import org.autogui.swing.table.ObjectTableColumn.TableMenuComposite;
@@ -136,9 +137,9 @@ public class ObjectTableModelColumns
                 dynamicColumns.getFirst();
     }
 
-    public List<Action> getDynamicColumnsActions(TableTargetCell selection, TableSelectionSource tableSource) {
+    public List<Action> getDynamicColumnsActions(TableTargetCell selection, TableSelectionSource tableSource, GuiSwingMapperSet mapperSet) {
         return dynamicColumns.stream()
-                .flatMap(d -> d.getDynamicColumnActions(selection, tableSource).stream())
+                .flatMap(d -> d.getDynamicColumnActions(selection, tableSource, mapperSet).stream())
                 .collect(Collectors.toList());
     }
 
@@ -415,13 +416,13 @@ public class ObjectTableModelColumns
             }
         }
 
-        public List<Action> getDynamicColumnActions(TableTargetCell selection, TableSelectionSource tableSource) {
+        public List<Action> getDynamicColumnActions(TableTargetCell selection, TableSelectionSource tableSource, GuiSwingMapperSet mapperSet) {
             List<Action> actions = new ArrayList<>();
             DynamicColumnFactory factory = getFactory();
-            if (factory instanceof DynamicColumnFactoryRoot) {
-                actions.addAll(((DynamicColumnFactoryRoot) factory).getRootActions(selection, tableSource));
+            if (factory instanceof DynamicColumnFactoryRoot factoryRoot) {
+                actions.addAll(factoryRoot.getRootActions(selection, tableSource, mapperSet));
             }
-            actions.addAll(factory.getActions(selection));
+            actions.addAll(factory.getActions(selection, mapperSet));
             return actions;
         }
     }
@@ -485,7 +486,7 @@ public class ObjectTableModelColumns
 
         Object getValue(Map<SpecifierManagerIndex, Integer> indexInjection);
 
-        List<Action> getActions(TableTargetCell selection);
+        List<Action> getActions(TableTargetCell selection, GuiSwingMapperSet mapperSet);
 
         boolean isStaticColumns();
 
@@ -506,7 +507,7 @@ public class ObjectTableModelColumns
     public interface DynamicColumnFactoryRoot {
         void addRootAction(GuiMappingContext actionContext);
 
-        List<Action> getRootActions(TableTargetCell cell, TableSelectionSource tableSource);
+        List<Action> getRootActions(TableTargetCell cell, TableSelectionSource tableSource, GuiSwingMapperSet mapperSet);
     }
 
     /**

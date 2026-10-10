@@ -50,6 +50,17 @@ public class ObjectTableColumnValue extends ObjectTableColumn
     protected boolean editorForColumnAlwaysApplying;
 
     /**
+     *  the interface for renderer holding the owner-column;
+     *  if the renderer of {@link ObjectTableColumnValue} implements the interface,
+     *    the column calls {@link #setOwnerColumn(ObjectTableColumn)} with the columns
+     * @since 1.9
+     */
+    public interface ObjectTableColumnValueRenderer {
+        ObjectTableColumn getOwnerColumn();
+        void setOwnerColumn(ObjectTableColumn ownerColumn);
+    }
+
+    /**
      * the representation of the context must be a subtype of {@link GuiReprValue}.
      * view must be a {@link ValuePane}
      * @param context the associated context
@@ -87,8 +98,8 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         getTableColumn().setMinWidth(size);
         getTableColumn().setHeaderValue(context.getDisplayName());
 
-        if (renderer instanceof ObjectTableCellRenderer) {
-            ((ObjectTableCellRenderer) renderer).setOwnerColumn(this);
+        if (renderer instanceof ObjectTableColumnValueRenderer r) {
+            r.setOwnerColumn(this);
         }
     }
 
@@ -363,7 +374,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
      * a cell renderer with {@link ValuePane}
      */
     public static class ObjectTableCellRenderer implements TableCellRenderer, PopupMenuBuilderSource, ObjectTableColumnCellView,
-        PopupMenuBuilderSourceForHeader {
+        PopupMenuBuilderSourceForHeader, ObjectTableColumnValueRenderer {
         protected JComponent component;
         protected ObjectTableColumn ownerColumn;
         protected SpecifierManagerIndex specifierIndex;
@@ -383,10 +394,12 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             return component;
         }
 
+        @Override
         public void setOwnerColumn(ObjectTableColumn ownerColumn) {
             this.ownerColumn = ownerColumn;
         }
 
+        @Override
         public ObjectTableColumn getOwnerColumn() {
             return ownerColumn;
         }
@@ -419,14 +432,7 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         @Override
         public PopupMenuBuilder getMenuBuilder(JTable table) {
             if (component instanceof ValuePane<?> valuePane) {
-                PopupMenuBuilder rendererPaneOriginalBuilder = valuePane.getSwingMenuBuilder();
-
-                if (rendererPaneOriginalBuilder instanceof PopupCategorized) {
-                    ((PopupCategorized) rendererPaneOriginalBuilder).setMenuBuilder(
-                            new ObjectTableModel.MenuBuilderWithEmptySeparator());
-                }
-
-                return new ObjectTableColumnActionBuilder(table, getOwnerColumn(), rendererPaneOriginalBuilder);
+                return getMenuBuilderForRenderer(table, valuePane.getSwingMenuBuilder(), getOwnerColumn());
             } else {
                 return null;
             }
@@ -442,6 +448,21 @@ public class ObjectTableColumnValue extends ObjectTableColumn
         public List<CategorizedMenuItem> getHeaderMenuItems(JTable table) {
             return PopupMenuBuilderSourceForHeader.getHeaderMenuItemsUnwrap(table, getComponent());
         }
+    }
+
+    /**
+     * provides the default implementation of  {@link ObjectTableCellRenderer#getMenuBuilder(JTable)}
+     * @param table the table
+     * @param rendererPaneOriginalBuilder the builder for the column-renderer
+     * @param ownerColumn the parent column
+     * @return a new {@link ObjectTableColumnActionBuilder}
+     * @since 1.9
+     */
+    public static PopupMenuBuilder getMenuBuilderForRenderer(JTable table, PopupMenuBuilder rendererPaneOriginalBuilder, ObjectTableColumn ownerColumn) {
+        if (rendererPaneOriginalBuilder instanceof PopupCategorized popupCategorized) {
+            popupCategorized.setMenuBuilder(new ObjectTableModel.MenuBuilderWithEmptySeparator());
+        }
+        return new ObjectTableColumnActionBuilder(table, ownerColumn, rendererPaneOriginalBuilder);
     }
 
 

@@ -50,6 +50,22 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
         bar.setMinimumSize(getPreferredSize());
     }
 
+    /**
+     * @return the glue compoennt
+     * @since 1.9
+     */
+    public Component getGlue() {
+        return glue;
+    }
+
+    /**
+     * @return invisible components
+     * @since 1.9
+     */
+    public List<InvisibleItem> getInvisibleComponents() {
+        return invisibleComponents;
+    }
+
     @Override
     public void ancestorMoved(HierarchyEvent e) {}
 
@@ -258,5 +274,34 @@ public class ToolBarHiddenMenu extends JButton implements HierarchyBoundsListene
         public int getIconHeight() {
             return (int) getIconHeightFloat();
         }
+    }
+
+    /**
+     * a utility method for listing components with the {@link ToolBarHiddenMenu}
+     * @param parent the parent component, e.g. a tool-bar
+     * @return direct children of the parent and expanded components in {@link ToolBarHiddenMenu}s
+     * @since 1.9
+     */
+    public static List<JComponent> listToolBarItemsWithHiddenMenu(JComponent parent) {
+        List<JComponent> result = new ArrayList<>();
+        List<ToolBarHiddenMenu> hiddenMenus = new ArrayList<>();
+        for (var comp : parent.getComponents()) {
+            if (comp instanceof ToolBarHiddenMenu menu) {
+                hiddenMenus.add(menu);
+                for (var inv : menu.getInvisibleComponents()) {
+                    if (inv.getToolBarComponent() != null) {
+                        result.add(inv.getToolBarComponent());
+                    }
+                }
+            } else if (comp instanceof JComponent jc) {
+                result.add(jc);
+            }
+        }
+        for (var hiddenMenu : hiddenMenus) { //exclude glues
+            if (hiddenMenu.getGlue() instanceof JComponent glueJ) {
+                result.remove(glueJ);
+            }
+        }
+        return result;
     }
 }

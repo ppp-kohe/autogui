@@ -76,6 +76,10 @@ public class SearchFilterTextField extends JComponent {
         painter = new SearchTextField.SearchBackgroundPainterBordered(this);
     }
 
+    /**
+     * initialize background-color called from {@link #init()}
+     * @since 1.9
+     */
     protected void initColor() {
         setBackground(UIManagerUtil.getInstance().getTextPaneBackground());
     }
@@ -99,6 +103,10 @@ public class SearchFilterTextField extends JComponent {
         add(textField, BorderLayout.CENTER);
     }
 
+    /**
+     * initialize color updater, called from {@link #init()}
+     * @since 1.9
+     */
     protected void initChange() {
         addPropertyChangeListener("UI", e -> initColor());
     }

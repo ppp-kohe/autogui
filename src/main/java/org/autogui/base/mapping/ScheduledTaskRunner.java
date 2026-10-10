@@ -58,6 +58,7 @@ public class ScheduledTaskRunner<EventType> {
      * @param delay the delay milliseconds for launching a task
      * @param consumer the actual task runner as taking accumulated events
      * @param executor the custom executor
+     * @since 1.9
      */
     public ScheduledTaskRunner(long delay, Consumer<List<EventType>> consumer, ScheduledExecutorService executor) {
         accumulatedEventsInit();

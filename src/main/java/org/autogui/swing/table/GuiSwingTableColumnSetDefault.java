@@ -10,12 +10,12 @@ import org.autogui.swing.table.GuiSwingTableColumnCollection.DynamicColumnFactor
 import org.autogui.swing.table.GuiSwingTableColumnCollection.ObjectTableColumnSizeConcrete;
 import org.autogui.swing.table.ObjectTableColumn.TableMenuComposite;
 import org.autogui.swing.table.ObjectTableModelColumns.DynamicColumnFactory;
-import org.autogui.swing.util.SwingDeferredRunner;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -140,28 +140,20 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         List<Action> actions = new ArrayList<>();
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement subView = columnMappingSet.viewTableColumn(subContext);
-            if (subView instanceof GuiSwingAction) {
+            if (subView instanceof GuiSwingAction action) {
                 TableSelectionAction a = new TableSelectionAction(subContext, source);
                 actions.add(a);
 
-                GuiMappingContext tableContext = getTableContext(context);
+                GuiMappingContext tableContext = context.getAscendantTableContext(false);
                 if (tableContext != null) { //table context
-                    a.setSelectionChangeFactoryFromContext(tableContext);
+                    a.addActionResultHandlersForList(tableContext, columnMappingSet);
                 }
 
-            } else if (subView instanceof GuiSwingTableColumnSet) {
-                actions.addAll(((GuiSwingTableColumnSet) subView).createColumnActions(subContext, source));
+            } else if (subView instanceof GuiSwingTableColumnSet subViewColSet) {
+                actions.addAll(subViewColSet.createColumnActions(subContext, source));
             }
         }
         return actions;
-    }
-
-    private GuiMappingContext getTableContext(GuiMappingContext context) {
-        GuiMappingContext tableContext = context.getParent();
-        while (tableContext != null && !tableContext.isReprCollectionTable()) {
-            tableContext = tableContext.getParent();
-        }
-        return tableContext;
     }
 
     /**
@@ -223,6 +215,22 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     }
 
     /**
+     * the execution-parameter with the aut-selection flag
+     * @since 1.9
+     */
+    public static class ExecutionActionParametersTableSelectionList extends GuiSwingActionDefault.ExecutionActionParameters {
+        protected boolean autoSelection;
+        public ExecutionActionParametersTableSelectionList(ActionEvent originalEvent, GuiReprValue.ObjectSpecifier specifier, boolean autoSelection) {
+            super(originalEvent, specifier);
+            this.autoSelection = autoSelection;
+        }
+
+        public boolean isAutoSelection() {
+            return autoSelection;
+        }
+    }
+
+    /**
      * an action for executing an {@link GuiReprActionList} with selected targets.
      *  an instance of the class is created by a collection-table instead of the column-set,
      *   because a list-action is created as a sibling node of the target collection;
@@ -246,17 +254,16 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
     public static class TableSelectionListAction extends GuiSwingActionDefault.ExecutionAction {
         @Serial private static final long serialVersionUID = 1L;
 
-        protected TableSelectionSource source;
-        protected Function<Object, TableSelectionChange> selectionChangeFactory;
-        protected boolean selectionChange;
+        protected ActionResultTableSelectionListActionSelectionChange selectionChange;
 
         @SuppressWarnings("this-escape")
         public TableSelectionListAction(GuiMappingContext context, TableSelectionSource source) {
             super(context, () -> GuiReprValue.NONE_WITH_CACHE); //unused specifier:
                                     // for spec path outside of List, NONE... can be used
                                     // for spec path inside of complex List<List<...E...>>, the spec will be used
-            this.source = source;
-            selectionChangeFactory = GuiSwingTableColumnSet::getNoChange;
+            selectionChange = new ActionResultTableSelectionListActionSelectionChange(context, source, GuiSwingTableColumnSet::getNoChange);
+            addActionResultHandlers(List.of(selectionChange));
+
             if (isAutomaticSelectionAction()) {
                 putValue(NAME, "*" + getValue(NAME));
                 String desc = (String) getValue(Action.SHORT_DESCRIPTION);
@@ -269,25 +276,27 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         }
 
         public TableSelectionSource getSource() {
-            return source;
+            return selectionChange.getTable();
         }
 
         public Function<Object, TableSelectionChange> getSelectionChangeFactory() {
-            return selectionChangeFactory;
+            return selectionChange.getConversion();
         }
 
         public boolean isSelectionChange() {
-            return selectionChange;
+            return selectionChange.isSelectionChange();
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            actionPerformedAround(false, this.targetSpecifier.getSpecifier(), e);
+            actionPerformedAround(
+                    new ExecutionActionParametersTableSelectionList(e, this.targetSpecifier.getSpecifier(), false));
         }
 
         @Override
         public void actionPerformedWithoutCheckingRunning(ActionEvent e) {
-            actionPerformedAroundWithoutCheckingRunning(false, this.targetSpecifier.getSpecifier(), e);
+            actionPerformedAroundWithoutCheckingRunning(
+                    new ExecutionActionParametersTableSelectionList(e, this.targetSpecifier.getSpecifier(), false));
         }
 
         /** action runner for automatic selection */
@@ -301,38 +310,36 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
          * @since 1.8
          */
         public void actionPerformedBySelection(ActionEvent e) {
-            actionPerformedAroundWithoutCheckingRunning(true,
-                    this.targetSpecifier.getSpecifier(), e);
+            actionPerformedAroundWithoutCheckingRunning(
+                    new ExecutionActionParametersTableSelectionList(e, this.targetSpecifier.getSpecifier(), true));
         }
 
         @Override
         public Object executeAction(GuiReprValue.ObjectSpecifier specifier, ActionEvent e) {
-            return actionPerformedAround(false, specifier, e);
+            return actionPerformedAround(new ExecutionActionParametersTableSelectionList(e, specifier, false));
         }
 
-        protected Object actionPerformedAround(boolean autoSelection, GuiReprValue.ObjectSpecifier targetSpec, ActionEvent e) {
+        protected Object actionPerformedAround(ExecutionActionParametersTableSelectionList parameters) {
             if (!running.getAndSet(true)) {
-                source.selectionActionPrepare();
-                return actionPerformedAroundWithoutCheckingRunning(autoSelection, targetSpec, e);
+                getSource().selectionActionPrepare();
+                return actionPerformedAroundWithoutCheckingRunning(parameters);
             } else {
                 System.err.printf("already running action \"%s\" \n", getValue(NAME));
                 return null;
             }
         }
 
-        public Object actionPerformedAroundWithoutCheckingRunning(boolean autoSelection, GuiReprValue.ObjectSpecifier targetSpec, ActionEvent e) {
-            List<?> selection = source.getSelectedItems();
-            String targetName = source.getTargetName();
+        public Object actionPerformedAroundWithoutCheckingRunning(ExecutionActionParametersTableSelectionList parameters) {
+            List<?> selection = getSource().getSelectedItems();
+            String targetName = getSource().getTargetName();
             Supplier<Object> body = () -> executeContextTask(
-                    () -> actionPerformedBody(selection, targetName, targetSpec),
+                    () -> actionPerformedBody(selection, targetName, parameters.getSpecifier()),
                     r -> {
                         running.set(false);
-                        r.executeIfPresent(
-                                ret -> SwingDeferredRunner.invokeLater(() ->
-                                        source.selectionActionFinished(autoSelection, selectionChangeFactory.apply(ret))));
+                        afterActionPerformedWithoutCheckingRunning(parameters, r);
                     });
-            if (!autoSelection && needToConfirm) {
-                return executeWithConfirmReturn(e, body, () -> {
+            if (!parameters.isAutoSelection() && needToConfirm) {
+                return executeWithConfirmReturn(parameters.getOriginalEvent(), body, () -> {
                     running.set(false);
                     return null;
                 });
@@ -343,8 +350,13 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
 
         protected Object actionPerformedBody(List<?> selection, String targetName, GuiReprValue.ObjectSpecifier targetSpec) {
             GuiMappingContext context = getContext();
-            return ((GuiReprActionList) context.getRepresentation())
+            var res = ((GuiReprActionList) context.getRepresentation())
                     .executeActionForList(context, selection, targetName, targetSpec);
+            if (isSelectionChange() && res != null) {
+                return res.result();
+            } else {
+                return res;
+            }
         }
 
         /**
@@ -357,11 +369,64 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         }
 
         public void setSelectionChangeFactory(Function<Object, TableSelectionChange> selectionChangeFactory) {
-            this.selectionChangeFactory = selectionChangeFactory;
+            selectionChange.setSelectionChangeFactory(selectionChangeFactory);
         }
 
         public void setSelectionChangeFactoryFromContext(GuiMappingContext tableContext) {
-            GuiMappingContext context = getContext();
+            selectionChange.setSelectionChangeFactoryFromContext(tableContext);
+        }
+
+        /**
+         * add a new {@link org.autogui.swing.table.GuiSwingTableColumnCollection.ActionResultHandlerEditStarterForList}
+         *   if the context has an editor action feature.
+         * @param tableContext the table-context
+         * @param mapperSet the view factory for the editor view.
+         * @since 1.9
+         */
+        public void addActionResultHandlersForList(GuiMappingContext tableContext, GuiSwingMapperSet mapperSet) {
+            setSelectionChangeFactoryFromContext(tableContext);
+            var actionContext = getContext();
+            if (actionContext.isReprActionOrActionListEditAction()) {
+                var editorContext = GuiSwingActionDefault.createEditorContext(actionContext);
+                if (mapperSet != null && mapperSet.view(editorContext) instanceof GuiSwingView paneSource) {
+                    addActionResultHandlers(List.of(
+                            new GuiSwingTableColumnCollection.ActionResultHandlerEditStarterForList(actionContext, editorContext,
+                                    paneSource.createView(editorContext, GuiSwingView.specifierManagerRoot()))));
+                }
+            }
+        }
+    }
+
+    /**
+     * the table-selection result action
+     * @since 1.9
+     */
+    public static class ActionResultTableSelectionListActionSelectionChange extends GuiSwingActionDefault.ActionResultTableSelectionConversion {
+        protected boolean selectionChange;
+
+        public ActionResultTableSelectionListActionSelectionChange(GuiMappingContext context, TableSelectionSource table, Function<Object, TableSelectionChange> conversion) {
+            super(context, table, conversion);
+            this.selectionChange = false;
+        }
+
+        public boolean isSelectionChange() {
+            return selectionChange;
+        }
+
+        @Override
+        protected boolean isAutoSelection(GuiSwingActionDefault.ExecutionActionParameters parameters) {
+            if (parameters instanceof ExecutionActionParametersTableSelectionList paramList) {
+                return paramList.isAutoSelection();
+            } else {
+                return false;
+            }
+        }
+
+        public void setSelectionChangeFactory(Function<Object, TableSelectionChange> selectionChangeFactory) {
+            this.conversion = selectionChangeFactory;
+        }
+
+        public void setSelectionChangeFactoryFromContext(GuiMappingContext tableContext) {
             if (context.isReprActionList()) {
                 GuiReprActionList listAction = context.getReprActionList();
                 if (listAction.isSelectionChangeRowIndicesAction(context)) { //even if the element type is Integer
@@ -395,6 +460,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
      *         public void action() { ... }
      *     }
      * </pre>
+     * {@link #isSelectionChange()} == true:
      * <pre>
      *     class E {
      *         ...
@@ -413,14 +479,14 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         @Override
         protected Object actionPerformedBody(List<?> selection, String targetName, GuiReprValue.ObjectSpecifier targetSpec) {
             GuiMappingContext context = getContext();
-            List<Object> os = ((GuiReprAction) context.getRepresentation())
+            List<GuiReprAction.TargetAndResult> os = ((GuiReprAction) context.getRepresentation())
                     .executeActionForTargets(context, selection);
 
-            if (selectionChange) {
+            if (isSelectionChange()) {
                 List<Object> flat = new ArrayList<>();
-                for (Object o : os) {
-                    if (o instanceof List<?>) {
-                        flat.addAll((List<?>) o);
+                for (GuiReprAction.TargetAndResult o : os) {
+                    if (o.result() instanceof Collection<?> resList) {
+                        flat.addAll(resList);
                     }
                 }
                 return flat;
