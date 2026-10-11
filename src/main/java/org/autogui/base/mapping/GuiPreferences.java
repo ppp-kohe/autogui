@@ -224,6 +224,22 @@ public class GuiPreferences {
     }
 
     /**
+     * @return list of names with from the root
+     * @since 1.9
+     */
+    public List<String> getPath() {
+        if (parent == null) {
+            return List.of(getName());
+        } else {
+            var parentPath = parent.getPath();
+            ArrayList<String> path = new ArrayList<>(parentPath.size() + 1);
+            path.addAll(parentPath);
+            path.add(getName());
+            return path;
+        }
+    }
+
+    /**
      * @param descendantContext a descendant context of the context returned by {@link #getContext()},
      *                           can be {@link #getContext()} itself
      * @return a descendant preference associated with the descendantContext

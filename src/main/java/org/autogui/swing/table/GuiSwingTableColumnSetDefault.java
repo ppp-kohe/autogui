@@ -390,8 +390,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
                 var editorContext = GuiSwingActionDefault.createEditorContext(actionContext);
                 if (mapperSet != null && mapperSet.view(editorContext) instanceof GuiSwingView paneSource) {
                     addActionResultHandlers(List.of(
-                            new GuiSwingTableColumnCollection.ActionResultHandlerEditStarterForList(actionContext, editorContext,
-                                    paneSource.createView(editorContext, GuiSwingView.specifierManagerRoot()))));
+                            new GuiSwingTableColumnCollection.ActionResultHandlerEditStarterForList(actionContext, editorContext, paneSource)));
                 }
             }
         }

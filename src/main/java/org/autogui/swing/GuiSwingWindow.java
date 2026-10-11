@@ -276,10 +276,22 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
 
     @Override
     public void loadPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
+        loadPreferences(prefs, options, true);
+    }
+
+    /**
+     * @param prefs the source prefs
+     * @param options the options
+     * @param recursive if true, call {@link org.autogui.swing.GuiSwingPreferences.RootView#loadPreferences(GuiPreferences, GuiSwingPrefsApplyOptions)} for contextRootPane
+     * @since 1.9
+     */
+    public void loadPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options, boolean recursive) {
         options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
         try {
             contextRootPane.withError(() -> options.apply(preferencesUpdater, prefs));
-            contextRootPane.loadPreferences(prefs, options);
+            if (recursive) {
+                contextRootPane.loadPreferences(prefs, options);
+            }
         } finally {
             options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
         }
@@ -287,8 +299,19 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
 
     @Override
     public void savePreferences(GuiPreferences prefs) {
+        savePreferences(prefs, true);
+    }
+
+    /**
+     * @param prefs the target prefs
+     * @param recursive if true, call {@link org.autogui.swing.GuiSwingPreferences.RootView#savePreferences(GuiPreferences)} for contextRootPane
+     * @since 1.9
+     */
+    public void savePreferences(GuiPreferences prefs, boolean recursive) {
         contextRootPane.withError(() -> preferencesUpdater.getPrefs().saveTo(prefs));
-        contextRootPane.savePreferences(prefs);
+        if (recursive) {
+            contextRootPane.savePreferences(prefs);
+        }
     }
 
     public GuiSwingView.ValuePane<Object> getViewValuePane() {

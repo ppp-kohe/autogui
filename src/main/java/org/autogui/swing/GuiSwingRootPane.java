@@ -623,6 +623,16 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
     @Override
     public void loadPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
+        loadPreferences(prefs, options, true);
+    }
+
+    /**
+     * @param prefs the given source prefs
+     * @param options options
+     * @param recursive if true, recursively laods prefs from the tree of viewComponent
+     * @since 1.9
+     */
+    public void loadPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options, boolean recursive) {
         options.begin(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
         try {
             withError(() -> options.apply(preferences.getPrefsWindowUpdater(), prefs));
@@ -633,10 +643,12 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
             });
             withError(() -> options.apply(fileDialogPreferencesUpdater, prefs));
 
-            if (viewComponent instanceof GuiSwingFeature valuePane) {
-                withError(() -> valuePane.loadSwingPreferences(prefs, options));
+            if (recursive) {
+                if (viewComponent instanceof GuiSwingFeature valuePane) {
+                    withError(() -> valuePane.loadSwingPreferences(prefs, options));
+                }
+                GuiSwingFeature.loadChildren(prefs, viewComponent, options);
             }
-            GuiSwingFeature.loadChildren(prefs, viewComponent, options);
         } finally {
             options.end(this, prefs, GuiSwingPrefsApplyOptions.PrefsApplyOptionsLoadingTargetType.View);
         }
@@ -652,6 +664,15 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
 
     @Override
     public void savePreferences(GuiPreferences prefs) {
+        savePreferences(prefs, true);
+    }
+
+    /**
+     * @param prefs the taget prefs
+     * @param recursive if true, recursively saves prefs the tree of viewComponent
+     * @since 1.9
+     */
+    public void savePreferences(GuiPreferences prefs, boolean recursive) {
         withError(() -> preferences.getPrefsWindowUpdater().getPrefs().saveTo(prefs));
         withError(() -> {
             if (logPreferencesUpdater != null) {
@@ -659,11 +680,12 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
             }
         });
         withError(() -> fileDialogPreferencesUpdater.getPrefs().saveTo(prefs));
-
-        if (viewComponent instanceof GuiSwingFeature valuePane) {
-            withError(() -> valuePane.saveSwingPreferences(prefs));
+        if (recursive) {
+            if (viewComponent instanceof GuiSwingFeature valuePane) {
+                withError(() -> valuePane.saveSwingPreferences(prefs));
+            }
+            GuiSwingFeature.saveChildren(prefs, viewComponent);
         }
-        GuiSwingFeature.saveChildren(prefs, viewComponent);
     }
 
     @SuppressWarnings("unchecked")

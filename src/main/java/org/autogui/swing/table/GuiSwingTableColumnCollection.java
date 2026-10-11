@@ -8,6 +8,7 @@ import org.autogui.base.type.GuiTypeCollection;
 import org.autogui.swing.GuiSwingActionDefault;
 import org.autogui.swing.GuiSwingElement;
 import org.autogui.swing.GuiSwingMapperSet;
+import org.autogui.swing.GuiSwingView;
 import org.autogui.swing.GuiSwingView.SpecifierManager;
 import org.autogui.swing.GuiSwingView.SpecifierManagerDefault;
 import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
@@ -425,6 +426,11 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
      */
     public static class ActionResultHandlerEditStarterForList extends GuiSwingActionDefault.ActionResultHandlerEditStarter {
         protected Object currentCompletionTarget;
+
+        public ActionResultHandlerEditStarterForList(GuiMappingContext actionContext, GuiMappingContext editorContext, GuiSwingView view) {
+            super(actionContext, editorContext, view);
+        }
+
         public ActionResultHandlerEditStarterForList(GuiMappingContext actionContext, GuiMappingContext editorContext, JComponent rootPane) {
             super(actionContext, editorContext, rootPane);
         }

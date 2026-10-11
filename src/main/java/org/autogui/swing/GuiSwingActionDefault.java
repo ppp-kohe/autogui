@@ -2,6 +2,7 @@ package org.autogui.swing;
 
 import org.autogui.GuiListSelectionUpdater;
 import org.autogui.base.mapping.GuiMappingContext;
+import org.autogui.base.mapping.GuiPreferences;
 import org.autogui.base.mapping.GuiReprAction;
 import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.swing.icons.GuiSwingIcons;
@@ -67,7 +68,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         if (mapperSet != null) {
             var editorContext = createEditorContext(context);
             if (editorContext != null && mapperSet.view(editorContext) instanceof GuiSwingView paneSource) {
-                return new ActionResultHandlerEditStarter(context, editorContext, paneSource.createView(editorContext, GuiSwingView.specifierManagerRoot()));
+                return new ActionResultHandlerEditStarter(context, editorContext, paneSource);
             }
         }
         return null;
@@ -468,24 +469,27 @@ public class GuiSwingActionDefault implements GuiSwingAction {
     public static class ActionResultHandlerEditStarter implements ActionResultHandler {
         protected GuiMappingContext actionContext;
         protected GuiMappingContext editorContext;
-        protected JComponent rootPane;
+        protected JComponent rootContentPane;
         protected JFrame frame;
+        protected GuiSwingRootPane rootPane;
 
         protected GuiReprValue.ObjectSpecifier objectSpecifier;
         protected Object currentTarget;
         protected boolean showen = false;
 
-        public ActionResultHandlerEditStarter(GuiMappingContext actionContext, GuiMappingContext editorContext, JComponent rootPane) {
+        public ActionResultHandlerEditStarter(GuiMappingContext actionContext, GuiMappingContext editorContext, GuiSwingView view) {
+            this(actionContext, editorContext, view.createView(editorContext, GuiSwingView.specifierManagerRoot()));
+        }
+
+        public ActionResultHandlerEditStarter(GuiMappingContext actionContext, GuiMappingContext editorContext, JComponent rootContentPane) {
             this.actionContext = actionContext;
             this.editorContext = editorContext;
-            this.rootPane = rootPane;
+            this.rootContentPane = rootContentPane;
+            initFrame();
         }
 
         @Override
         public void run(ExecutionActionParameters parameters, Object o) {
-            if (frame == null) {
-                initFrame();
-            }
             setupObject(parameters.getSpecifier(), o);
             show(parameters.getOriginalEvent());
         }
@@ -493,17 +497,12 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         protected void initFrame() {
             JPanel content = new JPanel(new BorderLayout());
             {
-                content.add(rootPane, BorderLayout.CENTER);
+                content.add(rootContentPane, BorderLayout.CENTER);
                 var s = UIManagerUtil.getInstance().getScaledSizeInt(5);
                 content.setBorder(BorderFactory.createEmptyBorder(s, s, s, s));
-
             }
-            frame = new ActionResultWindow(
-                    new GuiSwingRootPane(editorContext, null,
-                            GuiSwingKeyBinding.createWithDefaultExcluded(),
-                            false, null, //TODO
-                            new GuiSwingPrefsApplyOptions.PrefsApplyOptionsDefault(true, false),
-                            content));
+            rootPane = new ActionResultRootPane(editorContext, content);
+            frame = new ActionResultWindow(rootPane);
 
             initButtonPane(content);
             frame.addWindowListener(new WindowAdapter() {
@@ -552,7 +551,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
         @SuppressWarnings("unchecked")
         protected void setupObject(GuiReprValue.ObjectSpecifier objectSpecifier, Object o) {
             this.objectSpecifier = objectSpecifier;
-            if (rootPane instanceof GuiSwingView.ValuePane<?> vp) {
+            if (rootContentPane instanceof GuiSwingView.ValuePane<?> vp) {
                 var v = (GuiSwingView.ValuePane<Object>) vp;
                 v.setSwingViewValueWithUpdate(o);
             }
@@ -618,7 +617,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
 
         @Override
         public List<?> getSwingViewSubNodes() {
-            return List.of();
+            return List.of(frame);
         }
     }
 
@@ -653,5 +652,49 @@ public class GuiSwingActionDefault implements GuiSwingAction {
 
         @Override
         protected void initMenu() { }
+
+        @Override
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
+            loadPreferences(prefs, options, false);
+        }
+
+        @Override
+        public void saveSwingPreferences(GuiPreferences prefs) {
+            savePreferences(prefs, false);
+        }
+
+        @Override
+        public void loadPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
+            //nothing
+        }
+
+        @Override
+        public void savePreferences(GuiPreferences prefs) {
+            //nothing
+        }
+    }
+
+    /**
+     * root-pane for an editor object
+     * @since 1.9
+     */
+    public static class ActionResultRootPane extends GuiSwingRootPane {
+        public ActionResultRootPane(GuiMappingContext editorContext, JComponent content) {
+            super(editorContext, null,
+                    GuiSwingKeyBinding.createWithDefaultExcluded(),
+                    false, null, //TODO
+                    new GuiSwingPrefsApplyOptions.PrefsApplyOptionsDefault(true, false),
+                    content);
+        }
+
+        @Override
+        public void loadSwingPreferences(GuiPreferences prefs, GuiSwingPrefsApplyOptions options) {
+            super.loadPreferences(prefs, options, false);
+        }
+
+        @Override
+        public void saveSwingPreferences(GuiPreferences prefs) {
+            super.savePreferences(prefs, false);
+        }
     }
 }

@@ -221,6 +221,9 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             int maxWidth = Math.max(1, getWidth() - insets.left - insets.right);
             if (!text.isEmpty()) {
                 splitLines(text, (lineIndex, i, line) -> {
+                    if (line.isEmpty()) {
+                        line = " ";
+                    }
                     AttributedString a = new AttributedString(line);
                     var iter = a.getIterator();
                     var lineBreaker = new LineBreakMeasurer(iter, frc);

@@ -216,13 +216,19 @@ public class GuiMappingContext {
     }
 
     /**
-     * @param newParent the parent context that the created context will be added
+     * @param newParent the parent context that the created context will be added;
+     *                  or null. if null, the parent will not be changed (==this.parent) but not be added the copy as a child
      * @return a new context as a copy of this
      * @since 1.9
      */
     protected GuiMappingContext copyDetachedTree(GuiMappingContext newParent) {
+        if (newParent == null) {
+            newParent = this.getParent();
+        }
         var context = new GuiMappingContext(typeElement, representation, newParent, NO_SOURCE);
-        context.addToParent();
+        if (newParent != this) {
+            context.addToParent();
+        }
         for (GuiMappingContext child : getChildren()) {
             child.copyDetachedTree(context);
         }
