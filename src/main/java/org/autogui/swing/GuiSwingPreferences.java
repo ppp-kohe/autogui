@@ -276,7 +276,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
     }
 
     protected JComponent initContentTree() {
-        JTabbedPane viewPane = new JTabbedPane(JTabbedPane.BOTTOM);
+        JTabbedPane viewPane = new JTabbedPane(JTabbedPane.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT);
         {
             settingsPane = new JPanel(new BorderLayout());
             {

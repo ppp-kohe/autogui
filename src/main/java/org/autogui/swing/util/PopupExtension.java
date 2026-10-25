@@ -313,8 +313,6 @@ public class PopupExtension implements MouseListener, KeyListener, ActionListene
 
     public static Predicate<KeyEvent> getDefaultKeyMatcher() {
         return PopupExtensionText.getKeyCode(KeyEvent.VK_SPACE, KeyEvent.CTRL_DOWN_MASK)
-                .or(PopupExtensionText.getKeyCode(KeyEvent.VK_ENTER, KeyEvent.CTRL_DOWN_MASK))
-                .or(PopupExtensionText.getKeyCode(KeyEvent.VK_ENTER, getMenuShortcutKeyMask()))
                 .or(PopupExtensionText.getKeyCode(KeyEvent.VK_F5, 0));
     }
 

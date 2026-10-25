@@ -522,12 +522,31 @@ public class GuiSwingActionDefault implements GuiSwingAction {
 
                 if (actionType.getEditFeature().isCompleteEditMethodTakingOk()) {
                     var cancelAction = new EditFinishAction(false, this::finishEdit);
-                    buttonPane.add(new JButton(cancelAction));
-                    addAction("cancel", PopupExtension.getKeyStroke(KeyEvent.VK_ESCAPE), cancelAction);
+                    var cancelButton = new JButton(cancelAction);
+                    buttonPane.add(cancelButton);
+                    var cancelStroke = addAction("cancel", PopupExtension.getKeyStroke(
+                            KeyEvent.VK_DELETE, PopupExtension.getMenuShortcutKeyMask()), cancelAction);
+                    var cancelFocusStroke = addAction("focus-cancel", KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                            new AbstractAction() {
+                                {
+                                    putValue(NAME, "Focus Cancel");
+                                }
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    cancelButton.requestFocusInWindow();
+                                }
+                            });
+                    cancelButton.setToolTipText(keyStrokeString(cancelStroke) + " : Cancel,  " + keyStrokeString(cancelFocusStroke) + " : Focus");
+
+
                 }
                 var okAction = new EditFinishAction(true, this::finishEdit);
-                buttonPane.add(new JButton(okAction));
+                var okButton = new JButton(okAction);
+                buttonPane.add(okButton);
                 addAction("ok", PopupExtension.getKeyStroke(KeyEvent.VK_ENTER), okAction);
+                var okStrokeShift = addKeyStroke("ok", PopupExtension.getKeyStroke(KeyEvent.VK_ENTER,
+                        PopupExtension.getMenuShortcutKeyMask(), KeyEvent.SHIFT_DOWN_MASK));
+                okButton.setToolTipText(keyStrokeString(okStrokeShift)  + " : OK");
 
                 JPanel sepPane = new JPanel(new BorderLayout());
                 {
@@ -542,10 +561,20 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             }
         }
 
-        protected void addAction(String name, KeyStroke stroke, Action a) {
+        protected String keyStrokeString(KeyStroke stroke) {
+            return UIManagerUtil.getInstance().getOsVersion().getKeyStrokeString(stroke.getModifiers(), stroke.getKeyCode());
+        }
+
+        protected KeyStroke addKeyStroke(String name, KeyStroke stroke) {
             var root = frame.getRootPane();
             root.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, name);
-            root.getActionMap().put(name, a);
+            return stroke;
+        }
+
+        protected KeyStroke addAction(String name, KeyStroke stroke, Action a) {
+            var k = addKeyStroke(name, stroke);
+            frame.getRootPane().getActionMap().put(name, a);
+            return k;
         }
 
         @SuppressWarnings("unchecked")

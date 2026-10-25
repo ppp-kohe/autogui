@@ -67,7 +67,7 @@ public class GuiSwingViewTabbedPane extends GuiSwingViewObjectPane {
 
         @Override
         public void initContentPane() {
-            tabbedPane = new JTabbedPane();
+            tabbedPane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
             this.contentPane = tabbedPane;
             tabPreferencesUpdater = new TabPreferencesUpdater(context, this::getTabbedPane);
             tabbedPane.addChangeListener(tabPreferencesUpdater);
