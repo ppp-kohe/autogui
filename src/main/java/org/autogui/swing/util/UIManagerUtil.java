@@ -8,6 +8,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.font.TextLayout;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -888,13 +889,12 @@ public class UIManagerUtil {
         @Override
         public boolean isDarkTheme() {
             try {
-                String data = command("powershell.exe",
-                        "Get-ItemProperty",
-                        "-Path",
-                        "HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                        "-Name",
+                String data = commandByExecutableFile("C:\\Windows\\System32\\reg.exe",
+                        "query",
+                        "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                        "-v",
                         "AppsUseLightTheme");
-                return Pattern.compile("AppsUseLightTheme\\s*:\\s*0").matcher(data).find();
+                return !Pattern.compile("AppsUseLightTheme\\s*REG_DWORD\\s*0x1").matcher(data).find();
             } catch (Exception ex) {
                 return false;
             }
@@ -922,7 +922,7 @@ public class UIManagerUtil {
         public boolean isDarkTheme() {
             try {
                 //currently only support Gtk
-                return command("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme")
+                return commandByExecutableFile("/usr/bin/gsettings", "get", "org.gnome.desktop.interface", "gtk-theme")
                         .toLowerCase()
                         .contains("dark"); //'Yaru-dark' is the default dark theme?
             } catch (Exception ex) {
@@ -982,7 +982,7 @@ public class UIManagerUtil {
         @Override
         public boolean isDarkTheme() {
             try {
-                return command("defaults", "read", "-g", "AppleInterfaceStyle")
+                return commandByExecutableFile("/usr/bin/defaults", "read", "-g", "AppleInterfaceStyle")
                         .toLowerCase().trim()
                         .contains("dark");
             } catch (Exception ex) {
@@ -998,6 +998,21 @@ public class UIManagerUtil {
         @Override
         protected String getKeyStrokeStringJoin(List<String> words) {
             return String.join("", words);
+        }
+    }
+
+    /**
+     * call {@link #command(String...)} after checking the executable existance
+     * @param args a command line (length &gt;= 1), the first element is an absolute path to the executable
+     * @return the command output or "" if the executable is not an accessible file
+     * @since 1.9
+     */
+    public static String commandByExecutableFile(String... args) {
+        var exeFile = args[0];
+        if (!new File(exeFile).isFile()) {
+            return "";
+        } else {
+            return command(args);
         }
     }
 
