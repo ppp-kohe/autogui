@@ -82,10 +82,15 @@ public class GuiSwingTableColumnImage implements GuiSwingTableColumn {
         public void setImageWithoutContextUpdate(Image image) {
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
             this.image = image;
-            imageSize = img.getSize(context, image);
+            imageSize = image == null ? sizeImageNull() : img.getSize(context, image);
             setPreferredSizeFromImageSize();
             revalidate();
             repaint();
+        }
+
+        @Override
+        protected Dimension sizeImageNull() {
+            return new Dimension(32, 32);
         }
 
         @Override

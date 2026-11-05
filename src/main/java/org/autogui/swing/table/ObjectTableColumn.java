@@ -346,7 +346,7 @@ public class ObjectTableColumn implements GuiSwingElement.FeatureCollection {
     public static class ObjectTableColumnRowIndex extends ObjectTableColumn {
         @SuppressWarnings("this-escape")
         public ObjectTableColumnRowIndex() {
-            tableColumn = new TableColumn(0, UIManagerUtil.getInstance().getScaledSizeInt(64),
+            tableColumn = new TableColumn(0, UIManagerUtil.getInstance().getScaledSizeInt(92),
                     createRenderer(), null);
             tableColumn.setHeaderValue("#");
             setValueType(Number.class);

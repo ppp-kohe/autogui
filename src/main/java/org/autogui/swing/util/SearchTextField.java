@@ -880,15 +880,19 @@ public class SearchTextField extends JComponent {
         }
 
         public void initGradientColors() {
-            backgroundColor.isUpdated();
-            int gradMax = 3;
+            if (gradientColors == null || backgroundColor.isUpdated()) {
+                if (gradientColors == null) {
+                    backgroundColor.isUpdated(); //update cache
+                }
+                int gradMax = 3;
 
-            List<Color> cs = new ArrayList<>();
-            for (int i = 0; i < gradMax; ++i) {
-                float p = (((float) i + 1) / ((float) gradMax));
-                cs.add(getGradientColor(p));
+                List<Color> cs = new ArrayList<>();
+                for (int i = 0; i < gradMax; ++i) {
+                    float p = (((float) i + 1) / ((float) gradMax));
+                    cs.add(getGradientColor(p));
+                }
+                gradientColors = cs.toArray(new Color[0]);
             }
-            gradientColors = cs.toArray(new Color[0]);
         }
 
         public void initStrokes() {

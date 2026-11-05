@@ -128,6 +128,7 @@ public class ValueListDemo {
         public JComponent getComponent() {
             if (component == null) {
                 JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                pane.setPreferredSize(new Dimension(200, 100));
                 var btn = new JButton("Hello");
                 btn.addActionListener(e -> {
                     System.out.println("hello " + this);

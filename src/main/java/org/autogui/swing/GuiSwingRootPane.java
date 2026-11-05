@@ -8,10 +8,7 @@ import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.swing.log.GuiSwingLogManager;
 import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.prefs.GuiSwingPrefsSupports;
-import org.autogui.swing.util.MenuBuilder;
-import org.autogui.swing.util.PopupCategorized;
-import org.autogui.swing.util.PopupExtension;
-import org.autogui.swing.util.SettingsWindow;
+import org.autogui.swing.util.*;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
@@ -493,13 +490,17 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
      */
     protected void initDefaultSize() {
         var type = getSwingViewContext().getTypeElementValue();
+        Dimension prefSize = null;
         if (type != null) {
             var inits = type.getInits();
             int w = inits.window().width();
             int h = inits.window().height();
             if (w > 32 && h > 32) {
-                setPreferredSize(new Dimension(w, h));
+                prefSize = new Dimension(w, h);
             }
+        }
+        if (prefSize != null) {
+            setPreferredSize(prefSize);
         }
     }
 

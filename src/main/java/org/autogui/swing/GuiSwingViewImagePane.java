@@ -63,7 +63,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
      */
     public static class ImagePaneBase extends JComponent {
         protected Image image;
-        protected Dimension imageSize = new Dimension(1, 1);
+        protected Dimension imageSize = new Dimension(32, 32);
         protected ImageScale imageScale;
         protected ImageScaleFit imageScaleDefault;
         protected ImageScaleFit imageScaleFit;
@@ -90,11 +90,30 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         /** initializer */
         public void init() {
+            initSizeZero();
             initScale();
             initPopup();
             initDragScroll();
             initFocus();
         }
+
+        /**
+         * initialize image-size with {@link #sizeImageNull()}
+         * @since 1.9
+         */
+        protected void initSizeZero() {
+            imageSize = sizeImageNull();
+            setPreferredSizeFromImageSize();
+        }
+
+        /**
+         * initialize zero-size; the class zero
+         * @since 1.9
+         */
+        protected Dimension sizeImageNull() {
+            return new Dimension(256, 256);
+        }
+
         /** initializer for image-scaling */
         public void initScale() {
             imageScaleDefault = new ImageScaleFit(1f);
@@ -260,7 +279,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
          */
         public void setImage(Image image) {
             this.image = image;
-            imageSize = GuiReprValueImagePane.ImageSizeGetter.getSizeNonNull(image);
+            imageSize = image == null ? sizeImageNull() : GuiReprValueImagePane.ImageSizeGetter.getSizeNonNull(image);
             setPreferredSizeFromImageSize();
             revalidate();
             repaint();
@@ -268,7 +287,14 @@ public class GuiSwingViewImagePane implements GuiSwingView {
 
         /** call {@link #setPreferredSize(Dimension)} with imageSize */
         public void setPreferredSizeFromImageSize() {
-            setPreferredSize(imageSize);
+            UIManagerUtil u = UIManagerUtil.getInstance();
+            int imgW = u.getScaledSizeInt(imageSize.width);
+            int imgH = u.getScaledSizeInt(imageSize.height);
+            var nSize = sizeImageNull();
+            int nw = u.getScaledSizeInt(nSize.width);
+            int nh = u.getScaledSizeInt(nSize.height);
+            setPreferredSize(
+                    new Dimension(Math.max(imgW, nw), Math.max(imgH, nh)));
         }
 
         /** @return the image-scale object */
@@ -644,7 +670,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         public void setImageWithoutContextUpdate(Image image) {
             GuiReprValueImagePane img = (GuiReprValueImagePane) context.getRepresentation();
             this.image = image;
-            imageSize = img.getSize(context, image);
+            imageSize = image == null ? sizeImageNull() : img.getSize(context, image);
             updateScale();
         }
 

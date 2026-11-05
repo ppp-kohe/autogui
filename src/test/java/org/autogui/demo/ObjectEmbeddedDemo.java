@@ -40,7 +40,7 @@ public class ObjectEmbeddedDemo {
             frame.setJMenuBar(helloPane.getMenuBar());
              //you can obtain menu-bar
 
-            GuiSwingView.ValuePane<Object> filePane = GuiSwingView.getChildByName(helloPane, "file");
+            GuiSwingView.ValuePane<Object> filePane = GuiSwingView.getDescendantByName(helloPane, "file");
              // the created pane from the property
              System.err.println("filePane: " + filePane.getClass().getName());
 

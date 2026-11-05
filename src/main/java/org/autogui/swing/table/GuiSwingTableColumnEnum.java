@@ -12,6 +12,7 @@ import org.autogui.swing.table.ObjectTableColumnValue.ObjectTableCellEditor;
 import org.autogui.swing.table.ObjectTableColumnValue.ObjectTableCellRenderer;
 import org.autogui.swing.util.PopupCategorized;
 import org.autogui.swing.util.TextCellRenderer;
+import org.autogui.swing.util.UIManagerUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -53,6 +54,7 @@ public class GuiSwingTableColumnEnum implements GuiSwingTableColumn {
         public ColumnEnumPane(GuiMappingContext context, SpecifierManager specifierManager) {
             super(context, specifierManager);
             TextCellRenderer.setCellDefaultProperties(this);
+            setPreferredSize(UIManagerUtil.getInstance().getScaledSizeMaxDimension(super.getPreferredSize(), 72, 24));
         }
 
         @Override

@@ -101,7 +101,7 @@ public class GuiReprValueImagePane extends GuiReprValue {
     }
 
     public Dimension getSize(GuiMappingContext context, Image image) {
-        return ImageSizeGetter.getSizeNonNull(image);
+        return image == null ? new Dimension(32, 32) : ImageSizeGetter.getSizeNonNull(image);
     }
 
     /**

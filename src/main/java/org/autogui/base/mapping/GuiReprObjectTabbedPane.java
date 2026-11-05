@@ -41,15 +41,11 @@ public class GuiReprObjectTabbedPane extends GuiReprObjectPane {
     }
 
     public boolean isRecursiveRepr(GuiMappingContext context) {
-        GuiMappingContext parent = context;
-        while (parent.hasParent()) {
-            parent = parent.getParent();
-            if (parent.getRepresentation() != null &&
-                    parent.getRepresentation() instanceof GuiReprObjectTabbedPane) {
-                return true;
-            }
-        }
-        return false;
+        return context.getAscendant(c ->
+                c.getRepresentation() != null &&
+                c.getRepresentation() instanceof GuiReprObjectTabbedPane,
+                false, true)
+            != null;
     }
 
     /**

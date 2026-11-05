@@ -97,7 +97,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         List<Action> actions = new ArrayList<>();
         if (context.hasParent()) {
             GuiMappingContext parent = context.getParent();
-            if (parent.isTypeElementProperty() && parent.hasParent()) {
+            if (parent.isTypeElementProperty() && parent.hasParent() && !parent.isCopyRoot()) {
                 parent = parent.getParent();
             }
             for (GuiMappingContext siblingContext : parent.getChildren()) {
@@ -290,6 +290,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         public void initRowHeight() {
             setRowHeight(getRowHeight() + UIManagerUtil.getInstance().getScaledSizeInt(16)); //adding margin top+bottom: later ObjectTableModel.initTableRowHeight updates the value based on columns
             rowHeightSetAction = new RowHeightSetAction(this);
+            rowHeightSetAction.setRowHeightFitToContent(true); //the default settings is fit to contents
             initRowHeightDefault();
         }
 

@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.desktop.AppForegroundEvent;
 import java.awt.desktop.AppForegroundListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.util.function.Function;
 
 /**
@@ -13,7 +15,7 @@ import java.util.function.Function;
  * </pre>
  * @since 1.9
  */
-public class LookAndFeelThemeSwitcher implements AppForegroundListener {
+public class LookAndFeelThemeSwitcher implements AppForegroundListener, WindowFocusListener {
     protected int pollingMillis;
 
     protected boolean installed;
@@ -45,6 +47,7 @@ public class LookAndFeelThemeSwitcher implements AppForegroundListener {
             var desktop = Desktop.getDesktop();
             desktop.addAppEventListener(this);
             darkTheme = isDarkTheme();
+            installToRootFrame();
             if (pollingMillis > 0) {
                 pollingTimer = new Timer(pollingMillis, e -> updateThemeIfChangedAndInstalled());
                 pollingTimer.setRepeats(true);
@@ -53,11 +56,36 @@ public class LookAndFeelThemeSwitcher implements AppForegroundListener {
         }
     }
 
+    protected void installToRootFrame() {
+        for (var w : JWindow.getWindows()) {
+            if (w instanceof JFrame frame) {
+                installToRootFrame(frame);
+            }
+        }
+    }
+
+    protected void uninstallFromRootFrame() {
+        for (var w : JWindow.getWindows()) {
+            if (w instanceof JFrame frame) {
+                uninstallFromRootFrame(frame);
+            }
+        }
+    }
+
+    public void installToRootFrame(JFrame frame) {
+        frame.addWindowFocusListener(this);
+    }
+
+    public void uninstallFromRootFrame(JFrame frame) {
+        frame.removeWindowFocusListener(this);
+    }
+
     public synchronized void uninstall() {
         if (Desktop.isDesktopSupported() && installed) {
             installed = false;
             var desktop = Desktop.getDesktop();
             desktop.removeAppEventListener(this);
+            uninstallFromRootFrame();
             if (pollingTimer != null) {
                 pollingTimer.stop();
                 pollingTimer = null;
@@ -116,4 +144,16 @@ public class LookAndFeelThemeSwitcher implements AppForegroundListener {
         background = false;
         updateThemeIfChangedAndInstalled();
     }
+
+    @Override
+    public synchronized void windowLostFocus(WindowEvent e) {
+        background = true;
+    }
+
+    @Override
+    public synchronized void windowGainedFocus(WindowEvent e) {
+        background = false;
+        updateThemeIfChangedAndInstalled();
+    }
+
 }

@@ -77,7 +77,6 @@ public class ObjectTableColumnValue extends ObjectTableColumn
                                   SpecifierManager specifierManager, JComponent view, JComponent editorView) {
         this(context, specifierIndex, specifierManager, new ObjectTableCellRenderer(view, specifierIndex),
                 editorView == null ? null : new ObjectTableCellEditor(editorView, view == editorView, specifierIndex));
-        setRowHeight(view.getPreferredSize().height + UIManagerUtil.getInstance().getScaledSizeInt(4));
     }
 
     public ObjectTableColumnValue(GuiMappingContext context, SpecifierManagerIndex specifierIndex,
@@ -93,13 +92,30 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             this.contextIndex = ((GuiReprCollectionElement) parentRepr).getFixedColumnIndex(context.getParent(), context);
         }
 
+        int minSize = UIManagerUtil.getInstance().getScaledSizeInt(10);
         int size = UIManagerUtil.getInstance().getScaledSizeInt(32);
         setTableColumn(new TableColumn(0, size, renderer, editorForColumn()));
-        getTableColumn().setMinWidth(size);
+        getTableColumn().setMinWidth(minSize);
         getTableColumn().setHeaderValue(context.getDisplayName());
+        initSizeFromRenderer();
 
         if (renderer instanceof ObjectTableColumnValueRenderer r) {
             r.setOwnerColumn(this);
+        }
+    }
+
+    protected void initSizeFromRenderer() {
+        JComponent comp = null;
+        if (renderer instanceof ObjectTableColumnCellView r) {
+            comp = r.getComponent();
+        } else if (renderer instanceof JComponent renderComp) {
+            comp = renderComp;
+        }
+        if (comp != null) {
+            var prefSize = comp.getPreferredSize();
+            setRowHeight(prefSize.height + UIManagerUtil.getInstance().getScaledSizeInt(4));
+            getTableColumn().setWidth(Math.max(prefSize.width, comp.getPreferredSize().width));
+            getTableColumn().setPreferredWidth(Math.max(prefSize.width, comp.getPreferredSize().width));
         }
     }
 

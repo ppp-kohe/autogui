@@ -89,6 +89,11 @@ public class GuiSwingTableColumnFilePath implements GuiSwingTableColumn {
             super(context, specifierManager);
             filePathModel = new SearchTextFieldModelFilePathEmpty();
             TextCellRenderer.setCellDefaultProperties(this);
+            initPreferredSize();
+        }
+
+        protected void initPreferredSize() {
+            setPreferredSize(UIManagerUtil.getInstance().getScaledSizeMaxDimension(super.getPreferredSize(), 96, 24));
         }
 
         public void setTableColumn(TableColumn tableColumn) {

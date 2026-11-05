@@ -69,10 +69,29 @@ public class NimbusLookAndFeelCustomFlat extends NimbusLookAndFeel {
             var cls = getClass();
             if (getDarkLight().equals(DarkLight.System) && (switcher == null || Objects.equals(switcherClass, cls))) {
                 switcherClass = cls;
+                if (switcher != null) {
+                    switcher.uninstall();
+                }
                 switcher = new LookAndFeelThemeSwitcher(switcherPollingTime, b -> createAnotherInstance(cls));
                 switcher.install();
             }
         }
+    }
+
+    public static LookAndFeelThemeSwitcher getThemeSwitcher() {
+        synchronized (NimbusLookAndFeelCustomFlat.class) {
+            return switcher;
+        }
+    }
+
+    public static LookAndFeelThemeSwitcher installThemeSwitcherToFrameIfExists(JFrame frame) {
+        synchronized (NimbusLookAndFeelCustomFlat.class) {
+            if (switcher != null) {
+                switcher.installToRootFrame(frame);
+                return switcher;
+            }
+        }
+        return null;
     }
 
     public static LookAndFeel createAnotherInstance(Class<? extends LookAndFeel> cls) {

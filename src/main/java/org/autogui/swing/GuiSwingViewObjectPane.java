@@ -366,6 +366,10 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             pane.setBorder(BorderFactory.createEmptyBorder());
             pane.setDividerLocation(prevWidth / (prevWidth + nextWidth));
 
+            if (popup.getMenu() != null) {
+                pane.setComponentPopupMenu(popup.getMenu());
+            }
+
             this.splitPanes.add(pane);
 
             pane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, preferencesUpdater);

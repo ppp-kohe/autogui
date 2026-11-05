@@ -584,6 +584,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             if (rootContentPane instanceof GuiSwingView.ValuePane<?> vp) {
                 var v = (GuiSwingView.ValuePane<Object>) vp;
                 v.setSwingViewValueWithUpdate(o);
+                v.getSwingViewContext().updateSourceSubTree(); //directly update the view value over prefs loading without another event processing
             }
             this.currentTarget = o;
         }

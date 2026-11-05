@@ -426,6 +426,7 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
             var editor = settingsEditors.computeIfAbsent(prefs, this::createSettingsPane);
             settingsPane.removeAll();
             settingsPane.add(editor.getRootPane(), BorderLayout.CENTER);
+            SwingUtilities.updateComponentTreeUI(settingsPane); //support LAF change
             settingsPane.revalidate();
             settingsPane.repaint();
 

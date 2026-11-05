@@ -10,6 +10,7 @@ import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.Serial;
 import java.nio.file.Files;
@@ -80,7 +81,7 @@ public class SettingsWindow {
                         window.setVisible(false);
                     }
                 });
-    }
+    }  
 
     public static class SettingsFrame extends JFrame {
         @Serial private static final long serialVersionUID = 1L;
@@ -130,6 +131,9 @@ public class SettingsWindow {
     public void show(String title, JComponent sender, JComponent contentPane, SettingSupport settingSupport) {
         window.setTitle(title);
         window.setContentPane(contentPane);
+        if (contentPane != null) {
+            SwingUtilities.updateComponentTreeUI(contentPane);
+        }
         window.pack();
         this.settingSupport = settingSupport;
         show(sender);

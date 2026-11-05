@@ -342,6 +342,16 @@ public class UIManagerUtil {
         return (int) getScaledSizeFloat(n);
     }
 
+    /**
+     * @param dim the compared dimension
+     * @param width the another pre-scaled width
+     * @param height the another pre-scaled height
+     * @return a new dimension with max(getScaledSizeInt(width), dim.width), max(getScaledSizeInt(height), dim.height)
+     */
+    public Dimension getScaledSizeMaxDimension(Dimension dim, int width, int height) {
+        return new Dimension(Math.max(dim.width, getScaledSizeInt(width)), Math.max(dim.height, getScaledSizeInt(height)));
+    }
+
     public float getScaledSizeFloat(float n) {
         return ((float) getIconSize()) / 32f * n;
     }

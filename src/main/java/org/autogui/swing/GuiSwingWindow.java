@@ -6,9 +6,7 @@ import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.swing.prefs.GuiSwingPrefsApplyOptions;
 import org.autogui.swing.prefs.GuiSwingPrefsSupports;
-import org.autogui.swing.util.ApplicationIconGenerator;
-import org.autogui.swing.util.SettingsWindow;
-import org.autogui.swing.util.UIManagerUtil;
+import org.autogui.swing.util.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -229,8 +227,12 @@ public class GuiSwingWindow extends JFrame implements GuiSwingPreferences.RootVi
 
     public void setApplicationRoot(boolean applicationRoot) {
         //this.applicationRoot = applicationRoot;
+        var changed = (contextRootPane.isApplicationRoot() != applicationRoot);
         contextRootPane.setApplicationRoot(applicationRoot);
         updateAppIcon();
+        if (changed) {
+            NimbusLookAndFeelCustomFlat.installThemeSwitcherToFrameIfExists(this);
+        }
     }
 
     private void updateAppIcon() {

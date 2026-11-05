@@ -197,11 +197,14 @@ public class ResizableFlowLayout implements LayoutManager {
                 h = isHorizontal ? size.height : size.width;
             }
             c.setLocation(isHorizontal ? x : y, isHorizontal ? y : x);
+            Dimension minSize = c.getMinimumSize();
             if (isResizable(c)) {
-                w = ((int) ((resizedResSum / rw.resSum) * (isHorizontal ? size.getWidth() : size.getHeight())));
+                w = ((int) ((resizedResSum / rw.resSum) * (isHorizontal ?
+                        Math.max(minSize.getWidth(), size.getWidth()) :
+                        Math.max(minSize.getHeight(), size.getHeight()))));
             }
-            c.setSize(Math.max(c.getMinimumSize().width, (isHorizontal ? w : h)),
-                    Math.max(c.getMinimumSize().height, (isHorizontal ? h : w)));
+            c.setSize(Math.max(minSize.width, (isHorizontal ? w : h)),
+                    Math.max(minSize.height, (isHorizontal ? h : w)));
             x += isHorizontal ? c.getWidth() : c.getHeight();
         }
     }

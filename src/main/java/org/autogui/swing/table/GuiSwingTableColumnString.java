@@ -98,6 +98,7 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             infoLabel = GuiSwingContextInfo.get().getInfoLabel(context);
             initPopup();
             setOpaque(true); //background coloring
+            setPreferredSize(UIManagerUtil.getInstance().getScaledSizeMaxDimension(super.getPreferredSize(), 96, 24));
         }
 
         public void initPopup() {
@@ -112,9 +113,15 @@ public class GuiSwingTableColumnString implements GuiSwingTableColumn {
             boolean forMouseEvents = setTableCellSelection(isSelected, row);
 
             var col = tableNullable.getColumnModel().getColumn(column);
-            setSize(col.getWidth(), getHeight());
+            int minHNonZero = UIManagerUtil.getInstance().getScaledSizeInt(8);
+            Dimension size = new Dimension(col.getWidth(), Math.max(minHNonZero, getHeight()));
+            boolean changed = !Objects.equals(getSize(), size);
+            setSize(size);
 
-            setValue((String) value, forMouseEvents);
+            boolean set = setValue((String) value, forMouseEvents);
+            if (!set && changed) {
+                buildFromValue();
+            }
 
             //focus coloring
             if (!TextCellRenderer.setCellTableBorder(tableNullable, this, isSelected, hasFocus, row, column)) {

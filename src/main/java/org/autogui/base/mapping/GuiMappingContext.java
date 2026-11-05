@@ -9,6 +9,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -67,6 +68,11 @@ public class GuiMappingContext {
     protected String name;
     protected String displayName;
     protected String iconName;
+    /** indicates the context is a detached copy without adding a parent;
+     *   the context itself has the parent but the parent does not have the context as a child.
+     *   true if the context is created by {@link #copyDetachedTree(GuiMappingContext)} with null ({@link #copyDetachedTree()})
+     *  @since 1.9 */
+    protected boolean copyRoot;
 
     protected GuiTaskClock contextClock = new GuiTaskClock( false);
 
@@ -218,16 +224,20 @@ public class GuiMappingContext {
     /**
      * @param newParent the parent context that the created context will be added;
      *                  or null. if null, the parent will not be changed (==this.parent) but not be added the copy as a child
-     * @return a new context as a copy of this
+     * @return a new context as a copy of this; if the newParent == null, {@link #copyRoot}=true
      * @since 1.9
      */
     protected GuiMappingContext copyDetachedTree(GuiMappingContext newParent) {
+        boolean addToParent = true;
         if (newParent == null) {
             newParent = this.getParent();
+            addToParent = false;
         }
         var context = new GuiMappingContext(typeElement, representation, newParent, NO_SOURCE);
-        if (newParent != this) {
+        if (addToParent) {
             context.addToParent();
+        } else {
+            context.copyRoot = true;
         }
         for (GuiMappingContext child : getChildren()) {
             child.copyDetachedTree(context);
@@ -284,23 +294,51 @@ public class GuiMappingContext {
 
     public boolean isRecursive() {
         GuiTypeElement s = getTypeElement();
-        GuiMappingContext ctx = getParent();
+        return getAscendant(ctx ->
+                ctx.getTypeElement().equals(s) &&
+                !ctx.isReprCollectionElement(), // (Obj,ObjectPane) { (List,CollectionTable) { (Obj,CollectionElement()) } }
+                false, true)
+                != null;
+    }
+
+    /**
+     * Note if it needs to apply recrsive traversal operations, consider using {@link #getRoots()}
+     * @return the entire root, over parents of {@link #isCopyRoot()}=true
+     */
+    public GuiMappingContext getRoot() {
+        return getAscendant(c -> c.getParent() == null, true, false);
+    }
+
+    /**
+     * @return the actual entire root, and {@link #isCopyRoot()}=true
+     *  (the copyRoots are not a child of their parents, so traversal operations cannot be applied only if starts from the entire-root)
+     */
+    public List<GuiMappingContext> getRoots() {
+        GuiMappingContext ctx = this;
+        List<GuiMappingContext> list = new ArrayList<>();
         while (ctx != null) {
-            if (ctx.getTypeElement().equals(s) &&
-                    !ctx.isReprCollectionElement()) { // (Obj,ObjectPane) { (List,CollectionTable) { (Obj,CollectionElement()) } }
-                return true;
+            if (ctx.getParent() == null || ctx.isCopyRoot()) {
+                list.add(ctx);
             }
             ctx = ctx.getParent();
         }
-        return false;
+        return list.reversed();
     }
 
-    public GuiMappingContext getRoot() {
-        GuiMappingContext ctx = this;
-        while (ctx.hasParent()) {
-            ctx = ctx.getParent();
-        }
-        return ctx;
+    /**
+     * @return the {@link #copyRoot}
+     * @since 1.9
+     */
+    public boolean isCopyRoot() {
+        return copyRoot;
+    }
+
+    /**
+     * @return  {@link #copyRoot} = true or the no parent root
+     * @since 1.9
+     */
+    public GuiMappingContext getRootForCopy() {
+        return getAscendant(c -> c.getParent() == null || c.isCopyRoot(), true, true);
     }
 
     public boolean hasParent() {
@@ -429,18 +467,33 @@ public class GuiMappingContext {
      * @since 1.9
      */
     public GuiMappingContext getAscendantTableContext(boolean includeThis) {
-        GuiMappingContext parent = this;
-        if (!includeThis) {
+        return getAscendant(GuiMappingContext::isReprCollectionTable, includeThis, false);
+    }
+
+    /**
+     *
+     * @param condition the conditoin the result context needs to satisfy
+     * @param includeThis if true, the finding starts from this, otherwise {@link #getParent()}
+     * @param stopAtCopyRoot if true, adding the finding steps do not over the context of {@link #isCopyRoot()}=true;
+     *                        the result context might be {@link #isCopyRoot()}
+     * @return a parent context that satisfies the condition, or null
+     * @since 1.9
+     */
+    protected GuiMappingContext getAscendant(Predicate<GuiMappingContext> condition,
+                                             boolean includeThis, boolean stopAtCopyRoot) {
+        GuiMappingContext parent;
+        if (includeThis) {
+            parent = this;
+        } else {
             parent = getParent();
         }
-        while (parent != null && !parent.isReprCollectionTable()) {
+        while (parent != null && !condition.test(parent)) {
+            if (stopAtCopyRoot && parent.isCopyRoot()) {
+                break;
+            }
             parent = parent.getParent();
         }
-        if (parent != null && parent.isReprCollectionTable()) {
-            return parent;
-        } else {
-            return null;
-        }
+        return (parent != null && condition.test(parent)) ? parent : null;
     }
 
     //------------------
@@ -523,9 +576,9 @@ public class GuiMappingContext {
      *               and the process avoids to update the context.
      */
     public void updateSourceFromRoot(GuiMappingContext cause) {
-        GuiMappingContext ctx = getRoot();
+        var ctx = getRoots();
         List<GuiMappingContext> updated = new ArrayList<>();
-        ctx.collectUpdatedSource(cause, updated);
+        ctx.forEach(root -> root.collectUpdatedSource(cause, updated));
 
         updated.forEach(c -> c.sendUpdateToListeners(this));
     }
@@ -537,7 +590,7 @@ public class GuiMappingContext {
     }
 
     public void clearSourceSubTree() {
-        if (hasParent()) {
+        if (hasParent() && !isCopyRoot()) {
             getContextClock().increment();
             setSource(NO_SOURCE);
         }
@@ -826,7 +879,7 @@ public class GuiMappingContext {
     }
 
     public void shutdownAutoCloseable() {
-        GuiMappingContext root = getRoot();
+        GuiMappingContext root = getRootForCopy();
         root.shutdownAutoCloseableSubTree();
     }
 
@@ -838,7 +891,7 @@ public class GuiMappingContext {
     }
 
     public void shutdownTaskRunner() {
-        GuiMappingContext root = getRoot();
+        GuiMappingContext root = getRootForCopy();
         root.shutdownTaskRunnerSubTree();
     }
 
@@ -1048,7 +1101,8 @@ public class GuiMappingContext {
 
         public void runBody() {
             if (root) {
-                context.getRoot().clearSourceSubTree();
+                //the editor sub-window can update the parent window if the editor-object shares parent objects internal state.
+                context.getRoots().forEach(GuiMappingContext::clearSourceSubTree);
                 context.updateSourceFromRoot();
             } else {
                 context.clearSourceSubTree();

@@ -6,9 +6,9 @@ import org.autogui.swing.AutoGuiShell;
 import javax.swing.text.*;
 
 @GuiIncluded
-public class EditorDemo {
+public class DocumentEditorDemo {
     public static void main(String[] args) {
-        AutoGuiShell.get().showWindow(new EditorDemo());
+        AutoGuiShell.get().showWindow(new DocumentEditorDemo());
     }
 
 
@@ -17,7 +17,7 @@ public class EditorDemo {
     ContentPane contentPane = new ContentPane();
     StringBuilderPane builderPane = new StringBuilderPane();
 
-    public EditorDemo() {}
+    public DocumentEditorDemo() {}
 
     @GuiIncluded(index = 0)
     public PlainPane getPlainPane() {

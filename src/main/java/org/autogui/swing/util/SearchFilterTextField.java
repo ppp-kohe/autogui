@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 /**
  * a text-field for imeediate filtering data in text-components
  */
-public class SearchFilterTextField extends JComponent {
+public class SearchFilterTextField extends JPanel {
     @Serial private static final long serialVersionUID = 1L;
     protected JTextField textField;
     protected JButton iconButton;
@@ -91,7 +91,7 @@ public class SearchFilterTextField extends JComponent {
 
     protected void initField() {
         textField = new JTextField(20);
-        textField.setOpaque(true);
+        textField.setOpaque(false);
         textField.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e) { updateText(); }
             @Override public void removeUpdate(DocumentEvent e) { updateText(); }
@@ -108,7 +108,7 @@ public class SearchFilterTextField extends JComponent {
      * @since 1.9
      */
     protected void initChange() {
-        addPropertyChangeListener("UI", e -> initColor());
+        addPropertyChangeListener("UI", e -> initColor()); //note: JComponent do not cause UI changes, but JPanel can.
     }
 
     @Override
@@ -121,9 +121,16 @@ public class SearchFilterTextField extends JComponent {
 
     @Override
     protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
         painter.paintComponent(g);
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+        super.paintChildren(g);
+        //after rendering children, draws the placeholder over the field
         if (textField.getDocument().getLength() == 0 && !placeHolderText.isEmpty() &&
-            g instanceof Graphics2D g2) {
+                g instanceof Graphics2D g2) {
             var text = new TextLayout(placeHolderText, getTextField().getFont(), g2.getFontRenderContext());
             g2.setColor(Color.gray);
             var base = textField.getBounds();

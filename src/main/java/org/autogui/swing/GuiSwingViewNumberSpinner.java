@@ -1351,6 +1351,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
             initModelPreferencesUpdater();
             initSettingAction();
             super.initKeyBindingsForStaticMenuItems();
+            initPreferredSize();
         }
 
         @Override
@@ -1378,6 +1379,10 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
                 settingAction = new NumberSettingAction(context, this,
                         GuiSwingContextInfo.get().getInfoLabel(context), m);
             }
+        }
+
+        protected void initPreferredSize() {
+            setPreferredSize(UIManagerUtil.getInstance().getScaledSizeMaxDimension(super.getPreferredSize(), 92, 24));
         }
 
         public TypedSpinnerNumberModel getModelTyped() {
