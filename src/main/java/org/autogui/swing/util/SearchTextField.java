@@ -868,9 +868,6 @@ public class SearchTextField extends JComponent {
 
         protected void setToComponent() {
             component.setLayout(new BorderLayout());
-            UIManagerUtil ui = UIManagerUtil.getInstance();
-            int h = ui.getScaledSizeInt(5);
-            int w = ui.getScaledSizeInt(5);
             focusBorder = new FocusBorderForSearch(component);
             component.setBorder(focusBorder);
             focusColor = UIManagerUtil.cachedColor(SearchTextField::getFocusColor);

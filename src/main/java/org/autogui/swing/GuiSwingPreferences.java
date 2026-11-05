@@ -420,7 +420,6 @@ public class GuiSwingPreferences implements GuiPreferences.PreferencesStoreChang
         if (sels.length > 0) {
             lastSelection = sels;
         }
-        var t = GuiSwingPrefsTrees.getInstance();
         var prefs = getSelectedSavedPreferences();
         if (prefs != null) {
             prefs.load();

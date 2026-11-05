@@ -140,7 +140,7 @@ public class GuiSwingTableColumnSetDefault implements GuiSwingTableColumnSet {
         List<Action> actions = new ArrayList<>();
         for (GuiMappingContext subContext : context.getChildren()) {
             GuiSwingElement subView = columnMappingSet.viewTableColumn(subContext);
-            if (subView instanceof GuiSwingAction action) {
+            if (subView instanceof GuiSwingAction) {
                 TableSelectionAction a = new TableSelectionAction(subContext, source);
                 actions.add(a);
 

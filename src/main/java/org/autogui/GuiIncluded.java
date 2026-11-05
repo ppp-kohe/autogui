@@ -42,10 +42,10 @@ import java.lang.annotation.Target;
  *         &#64;{@link GuiIncluded}(editor=true)
  *         public E editorAction() {...}
  *
- *         &64;{@link GuiIncluded}
+ *         &#64;{@link GuiIncluded}
  *         public void completeEditorAction(E e) {...}
  *
- *         &64;{@link GuiIncluded}
+ *         &#64;{@link GuiIncluded}
  *         public void completeEditorAction(E e, boolean ok) {...}
  *
  *     }

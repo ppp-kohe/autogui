@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
@@ -337,6 +338,7 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
             ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
                     runGet(() -> objColumn.getTableColumn().getCellRenderer());
             GuiSwingTableColumnFilePath.ColumnFilePathPane pane = (GuiSwingTableColumnFilePath.ColumnFilePathPane) renderer.getComponent();
+            assertNotNull(pane);
 
             //JsonPaste action is not included in column actions. instead, use cell actions.
             List<PopupCategorized.CategorizedMenuItem> items = runGet(() -> model.getBuildersForRowsOrCells(table, Collections.singletonList(objColumn), false));
@@ -373,6 +375,7 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
             ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
                     runGet(() -> objColumn.getTableColumn().getCellRenderer());
             GuiSwingTableColumnFilePath.ColumnFilePathPane pane = (GuiSwingTableColumnFilePath.ColumnFilePathPane) renderer.getComponent();
+            assertNotNull(pane);
 
             //JsonPaste action is not included in column actions. instead, use cell actions.
             List<PopupCategorized.CategorizedMenuItem> items = runGet(() -> model.getBuildersForRowsOrCells(table, Collections.singletonList(objColumn), false));
@@ -416,6 +419,7 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
             ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
                     runGet(() -> objColumn.getTableColumn().getCellRenderer());
             GuiSwingTableColumnFilePath.ColumnFilePathPane pane = (GuiSwingTableColumnFilePath.ColumnFilePathPane) renderer.getComponent();
+            assertNotNull(pane);
 
             //JsonPaste action is not included in column actions. instead, use cell actions.
             List<PopupCategorized.CategorizedMenuItem> items = runGet(() -> model.getBuildersForRowsOrCells(table, Collections.singletonList(objColumn), false));
@@ -456,6 +460,7 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
             ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
                     runGet(() -> objColumn.getTableColumn().getCellRenderer());
             GuiSwingTableColumnFilePath.ColumnFilePathPane pane = (GuiSwingTableColumnFilePath.ColumnFilePathPane) renderer.getComponent();
+            assertNotNull(pane);
 
             //JsonPaste action is not included in column actions. instead, use cell actions.
             List<PopupCategorized.CategorizedMenuItem> items = runGet(() -> model.getBuildersForRowsOrCells(table, Collections.singletonList(objColumn), false));
@@ -538,6 +543,7 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
             ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
                     runGet(() -> objColumn.getTableColumn().getCellRenderer());
             GuiSwingTableColumnFilePath.ColumnFilePathPane pane = (GuiSwingTableColumnFilePath.ColumnFilePathPane) renderer.getComponent();
+            assertNotNull(pane);
 
             //JsonPaste action is not included in column actions. instead, use cell actions.
             List<PopupCategorized.CategorizedMenuItem> items = runGet(() -> model.getBuildersForRowsOrCells(table, Collections.singletonList(objColumn), false));
@@ -573,6 +579,7 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
             ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
                     runGet(() -> objColumn.getTableColumn().getCellRenderer());
             GuiSwingTableColumnFilePath.ColumnFilePathPane pane = (GuiSwingTableColumnFilePath.ColumnFilePathPane) renderer.getComponent();
+            assertNotNull(pane);
 
             //JsonPaste action is not included in column actions. instead, use cell actions.
             List<PopupCategorized.CategorizedMenuItem> items = runGet(() -> model.getBuildersForRowsOrCells(table, Collections.singletonList(objColumn), false));
@@ -603,6 +610,7 @@ public class GuiSwingTableColumnFilePathTest extends GuiSwingTestCase {
             ObjectTableColumnValue.ObjectTableCellRenderer renderer = (ObjectTableColumnValue.ObjectTableCellRenderer)
                     runGet(() -> objColumn.getTableColumn().getCellRenderer());
             GuiSwingTableColumnFilePath.ColumnFilePathPane pane = (GuiSwingTableColumnFilePath.ColumnFilePathPane) renderer.getComponent();
+            assertNotNull(pane);
 
             //JsonPaste action is not included in column actions. instead, use cell actions.
             List<PopupCategorized.CategorizedMenuItem> items = runGet(() -> model.getBuildersForRowsOrCells(table, Collections.singletonList(objColumn), false));

@@ -513,8 +513,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
     }
 
-    public static abstract class NumberSetAction extends AbstractAction
-            implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
+    public static abstract class NumberSetAction extends AbstractAction implements TableTargetColumnAction {
         @Serial private static final long serialVersionUID = 1L;
         protected ValuePane<Object> spinner;
         protected TypedSpinnerNumberModel model;
@@ -766,13 +765,13 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
         }
 
         @Override
-        @SuppressWarnings("rawtypes")
+        @SuppressWarnings({"rawtypes", "unchecked"})
         public Comparable getMaximum() {
             return (Comparable<?>) toNumber(super.getMaximum(), true);
         }
 
         @Override
-        @SuppressWarnings("rawtypes")
+        @SuppressWarnings({"rawtypes", "unchecked"})
         public Comparable getMinimum() {
             return (Comparable<?>) toNumber(super.getMinimum(), false);
         }
@@ -998,8 +997,7 @@ public class GuiSwingViewNumberSpinner implements GuiSwingView {
 
     //--------------------------------------
 
-    public static class NumberSettingAction extends AbstractAction implements PopupCategorized.CategorizedMenuItemAction,
-        TableTargetColumnAction {
+    public static class NumberSettingAction extends AbstractAction implements TableTargetColumnAction {
         @Serial private static final long serialVersionUID = 1L;
         protected NumberSettingPane pane;
         protected JPanel contentPane;

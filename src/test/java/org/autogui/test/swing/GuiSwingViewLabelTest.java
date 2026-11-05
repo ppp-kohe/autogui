@@ -163,7 +163,7 @@ public class GuiSwingViewLabelTest extends GuiSwingTestCase {
             GuiSwingViewLabel.LabelJsonSaveAction a = runGet(() -> findMenuItemAction(pane.getSwingStaticMenuItems(), GuiSwingViewLabel.LabelJsonSaveAction.class));
             Object json = runGet(() -> a.toCopiedJson(pane.getSwingViewValue()));
 
-            String copied = runGet(this::getClipboardText);
+            //String copied = runGet(this::getClipboardText);
             assertEquals("<hello>", json, "save toString JSON as String");
         });
     }

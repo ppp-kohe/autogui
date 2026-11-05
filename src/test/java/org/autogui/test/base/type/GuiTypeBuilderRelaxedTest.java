@@ -34,8 +34,12 @@ public class GuiTypeBuilderRelaxedTest {
         protected String prtProp;
         String prop;
         public String pubProp;
+        {
+            prvAction();
+        }
 
         private void prvAction() {
+            System.err.println("prvProp:" + prvProp);
         }
 
         protected void prtAction() {
@@ -62,6 +66,7 @@ public class GuiTypeBuilderRelaxedTest {
         String prop;
 
         void hello() {
+            prvAction();
         }
 
         public void world() {

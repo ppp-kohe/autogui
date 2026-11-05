@@ -144,7 +144,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
             implements GuiMappingContext.SourceUpdateListener, GuiSwingView.ValuePane<List<?>>,
                         GuiSwingTableColumnSet.TableSelectionSource, GuiSwingPrefsSupports.PreferencesUpdateSupport,
                         SettingsWindowClient {
-        private static final long sionUID = 1L;
         protected GuiMappingContext context;
         protected SpecifierManager specifierManager;
         protected List<?> source;
@@ -1662,7 +1661,6 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public void setJson(Object json) {
             if (json instanceof Map<?,?> map) {
                 GuiSwingPrefsSupports.setAsList(columnOrder, map, Integer.class, "columnOrder");
@@ -2232,7 +2230,7 @@ public class GuiSwingViewCollectionTable implements GuiSwingView {
         }
     }
 
-    public static class PopupExtensionCollectionColumnHeader extends PopupExtension implements MouseListener {
+    public static class PopupExtensionCollectionColumnHeader extends PopupExtension {
         /** @since 1.3 */
         protected Point targetPoint;
         protected TableColumn targetColumn;

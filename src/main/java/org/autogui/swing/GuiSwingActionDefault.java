@@ -481,6 +481,7 @@ public class GuiSwingActionDefault implements GuiSwingAction {
             this(actionContext, editorContext, view.createView(editorContext, GuiSwingView.specifierManagerRoot()));
         }
 
+        @SuppressWarnings("this-escape")
         public ActionResultHandlerEditStarter(GuiMappingContext actionContext, GuiMappingContext editorContext, JComponent rootContentPane) {
             this.actionContext = actionContext;
             this.editorContext = editorContext;

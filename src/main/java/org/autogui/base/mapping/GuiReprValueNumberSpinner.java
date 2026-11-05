@@ -125,7 +125,7 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
             case null -> {
                 return null;
             }
-            case String s when (numType instanceof NumberTypeBigDecimal numberTypeBigDecimal || numType instanceof NumberTypeBigInteger) -> {
+            case String s when (numType instanceof NumberTypeBigDecimal || numType instanceof NumberTypeBigInteger) -> {
                 String jsonStr = (String) json;
                 return numType.fromString(jsonStr);
             }

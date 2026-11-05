@@ -226,6 +226,8 @@ public class GuiTypeBuilderTest {
         }
 
         protected void methodSProtected() {
+            methodSPrivate();
+            System.err.println(fieldSPrivate);
         }
 
         private void methodSPrivate() {
@@ -253,9 +255,11 @@ public class GuiTypeBuilderTest {
         }
 
         protected void methodProtected() {
+            methodPrivate();
         }
 
         private void methodPrivate() {
+            System.err.println(fieldPrivate);
         }
 
         public int field;

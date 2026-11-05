@@ -116,8 +116,7 @@ public class GuiSwingJsonTransfer {
     }
 
     /** an action for copying a JSON value of the target component */
-    public static class JsonCopyAction extends GuiSwingTaskRunner.ContextAction implements TableTargetColumnAction,
-            PopupCategorized.CategorizedMenuItemAction  {
+    public static class JsonCopyAction extends GuiSwingTaskRunner.ContextAction implements TableTargetColumnAction  {
         @Serial private static final long serialVersionUID = 1L;
         protected GuiSwingView.ValuePane<?> component;
 
@@ -231,7 +230,7 @@ public class GuiSwingJsonTransfer {
     }
 
     /** an action for saving a JSON value to a file of the target component */
-    public static class JsonSaveAction extends JsonCopyAction implements PopupCategorized.CategorizedMenuItemAction {
+    public static class JsonSaveAction extends JsonCopyAction {
         @Serial private static final long serialVersionUID = 1L;
         public JsonSaveAction(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
             super(component, context);
@@ -269,7 +268,7 @@ public class GuiSwingJsonTransfer {
     }
 
     /** an action for loading a JSON value to a file of the target component */
-    public static class JsonLoadAction extends JsonPasteAction implements PopupCategorized.CategorizedMenuItemAction {
+    public static class JsonLoadAction extends JsonPasteAction {
         @Serial private static final long serialVersionUID = 1L;
         public JsonLoadAction(GuiSwingView.ValuePane<?> component, GuiMappingContext context) {
             super(component, context);
@@ -759,11 +758,6 @@ public class GuiSwingJsonTransfer {
                         r -> r.executeIfPresent(
                                 fl -> SwingDeferredRunner.invokeLater(() -> target.setCellValues(is, fl))));
             }
-        }
-
-        private boolean isRowSpecified(List<CellValue> updatedRow) {
-            return updatedRow.stream()
-                    .anyMatch(CellValueRowSpecified.class::isInstance); //all cells in the returned list has a same row
         }
 
         public List<CellValue> getCellsForRow(int rowIndex, Object rowJson) {

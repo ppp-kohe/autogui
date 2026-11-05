@@ -397,7 +397,7 @@ public class LineNumberPane extends JComponent implements DocumentListener {
                 style = styledDoc.getStyle(StyleContext.DEFAULT_STYLE);
             }
             if (style != null) {
-                int size = StyleConstants.getFontSize(style);
+                // int size = StyleConstants.getFontSize(style);
                 font = styledDoc.getFont(style);
             }
         } else {

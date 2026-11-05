@@ -11,7 +11,7 @@ import java.util.Objects;
  * </code>.
  *  the type is Collection, and its subtypes
  */
-public class GuiTypeCollection extends GuiTypeValue implements GuiTypeElement {
+public class GuiTypeCollection extends GuiTypeValue {
     protected GuiTypeElement elementType;
 
     public GuiTypeCollection(String name) {

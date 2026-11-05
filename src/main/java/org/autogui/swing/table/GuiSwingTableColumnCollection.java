@@ -474,7 +474,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
      */
     public static class DynamicColumnFactoryList extends DynamicColumnFactoryBase
             implements DynamicColumnFactory,
-                DynamicColumnHost, TableColumnHost {
+                DynamicColumnHost {
         protected DynamicColumnFactory elementFactory;
 
         public DynamicColumnFactoryList(GuiMappingContext context, SpecifierManager specifierManager,
@@ -539,7 +539,6 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             }
         }
 
-        @SuppressWarnings("unchecked")
         public void forEachValue(Object c, Consumer<Object> body) {
             SpecifierManagerIndex valueIndex = this.elementIndex;
             if (context.isReprCollectionTable()) {
@@ -562,7 +561,6 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
             }
         }
 
-        @SuppressWarnings("unchecked")
         public Object getValueAt(Object c, int i) {
             SpecifierManagerIndex valueIndex = this.elementIndex;
             if (context.isReprCollectionTable()) {
@@ -770,7 +768,7 @@ public class GuiSwingTableColumnCollection implements GuiSwingTableColumnDynamic
      */
     public static class DynamicColumnFactoryComposite extends DynamicColumnFactoryBase
             implements DynamicColumnFactory,
-                DynamicColumnHost, TableColumnHost {
+                DynamicColumnHost {
         protected List<DynamicColumnFactory> factories = new ArrayList<>();
 
         public DynamicColumnFactoryComposite(GuiMappingContext context,

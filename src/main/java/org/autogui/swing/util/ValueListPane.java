@@ -763,7 +763,6 @@ public abstract class ValueListPane<ValueType, PaneType extends JComponent> exte
         public Component findTargetComponent(Point p) {
             int min = Integer.MAX_VALUE;
             Component component = null;
-            int i = 0;
             for (var comp : getComponents()) {
                 var bounds = comp.getBounds();
                 if (bounds.contains(p)) {
@@ -775,7 +774,6 @@ public abstract class ValueListPane<ValueType, PaneType extends JComponent> exte
                     component = comp;
                     min = compDis;
                 }
-                ++i;
             }
             return component;
         }
@@ -826,7 +824,6 @@ public abstract class ValueListPane<ValueType, PaneType extends JComponent> exte
                     .mapToObj(model::getElementAt)
                     .map(Component.class::cast)
                     .toList();
-            var views = Arrays.asList(getComponents());
             ResizableFlowLayout layout = null;
             if (getLayout() instanceof ResizableFlowLayout l) {
                 layout = l;
@@ -1292,7 +1289,7 @@ public abstract class ValueListPane<ValueType, PaneType extends JComponent> exte
                     int i = -1;
                     if (loc instanceof JList.DropLocation listLoc) {
                         i = listLoc.getIndex();
-                    } else if (owner.getList() instanceof ValueListPane.ValueListContentPane<?,?> listPane) {
+                    } else if (owner.getList() instanceof ValueListPane.ValueListContentPane<?,?>) {
                         i = owner.getList().dropPositionIndex(loc.getDropPoint());
                     }
                     if (i >= 0) {

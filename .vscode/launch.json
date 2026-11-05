@@ -1,0 +1,189 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "type": "java",
+            "name": "BackgroundUpdateDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.BackgroundUpdateDemo",
+            "projectName": "autogui",
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "CsvTableDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.CsvTableDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "EditActionDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.EditActionDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "EditorDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.EditorDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "EmbedPrefsDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.EmbedPrefsDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "EmbeddedTreeDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.EmbeddedTreeDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "FileImagePreviewDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.FileImagePreviewDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "FileRenameDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.FileRenameDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "IconListDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.IconListDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "ImageFlipDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.ImageFlipDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "LambdaPropertyDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.LambdaPropertyDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "LogDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.LogDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "ManualLogScalingDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.ManualLogScalingDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "ManualTextPaneDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.ManualTextPaneDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "NumberListDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.NumberListDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "ObjectEmbeddedDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.ObjectEmbeddedDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "RelaxedDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.RelaxedDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "TableDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.TableDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "TableEmbedDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.TableEmbedDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "UtilValueListPaneDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.UtilValueListPaneDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "ValueListDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.ValueListDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "ValuePaneDemo",
+            "request": "launch",
+            "mainClass": "org.autogui.demo.ValuePaneDemo",
+            "projectName": "autogui", 
+            "classPaths": ["${workspaceFolder}/target/test-classes", "${workspaceFolder}/target/classes"]
+        },
+        {
+            "type": "java",
+            "name": "ApplicationIconGenerator",
+            "request": "launch",
+            "mainClass": "org.autogui/org.autogui.swing.util.ApplicationIconGenerator",
+            "projectName": "autogui"
+        }
+    ]
+}

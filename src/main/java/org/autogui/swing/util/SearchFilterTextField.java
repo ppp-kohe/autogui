@@ -277,7 +277,6 @@ public class SearchFilterTextField extends JComponent {
             String t = text.trim();
             match.removeAllResults();
             if (!t.isEmpty()) {
-                int i = 0;
                 List<int[]> pos = new ArrayList<>();
                 var pat = toPattern(t);
                 var matcher = pat.matcher(str);

@@ -212,7 +212,6 @@ public class GuiSwingViewDocumentEditor implements GuiSwingView {
      * @return always return a {@link Document}
      */
     public static Object getSwingViewValue(JEditorPane pane, GuiMappingContext context) {
-        GuiReprValueDocumentEditor doc = (GuiReprValueDocumentEditor) context.getRepresentation();
         return pane.getDocument();
     }
 

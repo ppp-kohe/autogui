@@ -432,16 +432,6 @@ public class UIManagerUtil {
         }
     }
 
-    private boolean isLookAndFeelSpecial(String laf) {
-        return (LOOK_AND_FEEL_VALUE_METAL.equals(laf) ||
-                 LOOK_AND_FEEL_VALUE_NIMBUS.equals(laf) ||
-                 LOOK_AND_FEEL_VALUE_SYSTEM.equals(laf) ||
-                 LOOK_AND_FEEL_VALUE_DEFAULT.equals(laf) ||
-                 LOOK_AND_FEEL_VALUE_DARKLAF.equals(laf) ||
-                 LOOK_AND_FEEL_VALUE_FLATLAF.equals(laf) ||
-                 LOOK_AND_FEEL_VALUE_DEFAULT_NO_DARKLAF.equals(laf));
-    }
-
     /**
      * <ul>
      * <li> {@code "metal"} =&gt; the class name of {@code MetalLookAndFeel} </li>
@@ -564,24 +554,6 @@ public class UIManagerUtil {
             return Class.forName(pack + ".FlatDarkLaf");
         } else {
             return Class.forName(pack + ".FlatLightLaf");
-        }
-    }
-    
-    //currently turned off:      * do <code>com.github.weisj.darklaf.LafManager.install(LafManager.themeForPreferredStyle(LafManager.getPreferredThemeStyle()))</code>
-    private boolean installLookAndFeelDarkLafOld() {
-        try {
-            String pack = "com.github.weisj.darklaf";
-            Class<?> lafManager = Class.forName(pack + ".LafManager");
-            Object style = lafManager.getMethod("getPreferredThemeStyle")
-                    .invoke(null);
-            Object theme = lafManager.getMethod("themeForPreferredStyle", Class.forName(pack + ".theme.info.PreferredThemeStyle"))
-                    .invoke(null, style);
-
-            lafManager.getMethod("install", Class.forName(pack + ".theme.Theme"))
-                    .invoke(null, theme);
-            return true;
-        } catch (Throwable ex) {
-            return false;
         }
     }
 
@@ -902,7 +874,7 @@ public class UIManagerUtil {
     }
 
     /**
-     * an OS version subclass for Windows
+     * an OS version subclass for Linux (Gnome)
      * @since 1.4
      */
     public static class OsVersionLinux extends OsVersion {
@@ -1060,7 +1032,7 @@ public class UIManagerUtil {
      * @since 1.9
      */
     @SafeVarargs
-    @SuppressWarnings({"unchecked", "varargs"})
+    @SuppressWarnings({"varargs"})
     public static CachedColor[] cachedColors(Supplier<Color>... source) {
         return Arrays.stream(source)
                 .map(UIManagerUtil::cachedColor)

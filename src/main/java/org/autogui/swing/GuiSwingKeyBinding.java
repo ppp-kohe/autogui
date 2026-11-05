@@ -761,7 +761,6 @@ public class GuiSwingKeyBinding {
         }
     }
 
-    @SuppressWarnings("deprecation")
     public static boolean checkMenuModifiersMask(int constKey, int testedMods) {
         return UIManagerUtil.checkMenuModifiersMask(constKey, testedMods);
     }

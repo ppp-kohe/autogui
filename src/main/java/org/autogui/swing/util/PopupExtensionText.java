@@ -1005,8 +1005,7 @@ public class PopupExtensionText extends PopupExtension implements FocusListener 
     }
 
     /** a file saving action */
-    public static class TextSaveAction extends TextLoadAction
-        implements PopupCategorized.CategorizedMenuItemAction {
+    public static class TextSaveAction extends TextLoadAction {
         @Serial private static final long serialVersionUID = 1L;
         public TextSaveAction(JTextComponent component) {
             super(component);

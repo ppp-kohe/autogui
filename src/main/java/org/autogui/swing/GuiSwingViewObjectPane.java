@@ -724,7 +724,6 @@ public class GuiSwingViewObjectPane implements GuiSwingView {
             }
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
             GuiSwingPrefsSupports.setAsList(splits, json, Map.class, PreferencesForSplitEntry::new);

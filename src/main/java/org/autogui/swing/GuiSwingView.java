@@ -550,7 +550,6 @@ public interface GuiSwingView extends GuiSwingElement {
      * a refresh-action calls the method in order to clear view-clocks of sub-panes
      * @param pane a root component
      */
-    @SuppressWarnings("rawtypes")
     static void prepareForRefresh(GuiSwingFeature pane) {
         GuiSwingFeature.traverse(pane, GuiSwingFeature.class, GuiSwingFeature::prepareForRefresh);
     }

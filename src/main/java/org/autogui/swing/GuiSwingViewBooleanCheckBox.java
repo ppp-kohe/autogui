@@ -266,8 +266,7 @@ public class GuiSwingViewBooleanCheckBox implements GuiSwingView {
         }
     }
 
-    public abstract static class BooleanSetAction extends AbstractAction implements
-            PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
+    public abstract static class BooleanSetAction extends AbstractAction implements TableTargetColumnAction {
         @Serial private static final long serialVersionUID = 1L;
 
         protected PropertyCheckBox pane;

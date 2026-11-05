@@ -62,36 +62,37 @@ public class GuiLogManager {
      * @return the created log entry
      *      */
     public GuiLogEntry log(Object... args) {
-        Formatter formatter = new Formatter();
-        boolean needSpace = false;
-        int idx = 0;
-        Throwable lastException = null;
-        for (Object arg : args) {
-            if (idx + 1 == args.length && arg instanceof Throwable) {
-                lastException = (Throwable) arg;
-                break;
+        try (Formatter formatter = new Formatter()) {
+            boolean needSpace = false;
+            int idx = 0;
+            Throwable lastException = null;
+            for (Object arg : args) {
+                if (idx + 1 == args.length && arg instanceof Throwable) {
+                    lastException = (Throwable) arg;
+                    break;
+                }
+                if (needSpace) {
+                    formatter.format(" %s", arg);
+                } else {
+                    formatter.format("%s", arg);
+                }
+                if (arg instanceof String str) {
+                    needSpace = !(!str.isEmpty() && isSymbol(str.charAt(str.length() - 1)));
+                } else {
+                    needSpace = true;
+                }
+                ++idx;
             }
-            if (needSpace) {
-                formatter.format(" %s", arg);
+            String str = formatter.toString();
+            if (str.isEmpty() && lastException != null) {
+                return logError(lastException);
+            } else if (lastException != null) {
+                GuiLogEntryString s = logString(str);
+                logError(lastException);
+                return s;
             } else {
-                formatter.format("%s", arg);
+                return logString(str);
             }
-            if (arg instanceof String str) {
-                needSpace = !(!str.isEmpty() && isSymbol(str.charAt(str.length() - 1)));
-            } else {
-                needSpace = true;
-            }
-            ++idx;
-        }
-        String str = formatter.toString();
-        if (str.isEmpty() && lastException != null) {
-            return logError(lastException);
-        } else if (lastException != null) {
-            GuiLogEntryString s = logString(str);
-            logError(lastException);
-            return s;
-        } else {
-            return logString(str);
         }
     }
 

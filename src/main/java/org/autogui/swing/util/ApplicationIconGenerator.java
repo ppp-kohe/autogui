@@ -348,10 +348,6 @@ public class ApplicationIconGenerator {
         return r.x + r.width;
     }
 
-    private float maxY(Rectangle2D.Float r) {
-        return r.y + r.height;
-    }
-
     public void drawShadow(Graphics2D g2, int shadowWidth, Shape shape, float alpha) {
         for (int i = shadowWidth; i > 0; i-=1) {
             float pct = ((float) shadowWidth - i) / ((float) shadowWidth);

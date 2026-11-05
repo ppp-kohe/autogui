@@ -305,7 +305,6 @@ public class GuiSwingPrefsTrees {
 
         protected void setNameInfo(String name) {
             AttributedString aStr = new AttributedString(name);
-            var u = UIManagerUtil.getInstance();
             var baseColor = getForeground();
             aStr.addAttribute(TextAttribute.FOREGROUND, colorFromHsb(0.7f, baseColor));
             nameInfo = new TextCellRenderer.LineInfo(aStr, 0, name.length());
@@ -314,7 +313,6 @@ public class GuiSwingPrefsTrees {
         protected void setEntryValueInfo(String entryValue) {
             if (entryValue != null) {
                 var aStr = new AttributedString(entryValue);
-                var u = UIManagerUtil.getInstance();
                 var baseColor = getForeground();
                 aStr.addAttribute(TextAttribute.FOREGROUND, colorFromHsb(0.55f, baseColor));
                 valueInfo = new TextCellRenderer.LineInfo(aStr, 0, entryValue.length());

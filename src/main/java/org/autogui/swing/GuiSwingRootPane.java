@@ -603,7 +603,6 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
      * <p>
      * The method does not intend to reuse the pane after cleaning up.
      */
-    @SuppressWarnings("rawtypes")
     public void cleanUp() {
         context.shutdown();
         GuiSwingFeature.traverse(viewComponent, GuiSwingFeature.class,
@@ -700,7 +699,6 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
      * the convenient method for refreshing the pane
      * @since 1.5
      */
-    @SuppressWarnings("rawtypes")
     public void refreshByContext() {
         GuiSwingFeature.traverse(viewComponent, GuiSwingFeature.class,
                 GuiSwingFeature::refreshByContext);

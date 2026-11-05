@@ -895,8 +895,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
     }
 
-    public static class ImageScaleOriginalSizeAction extends AbstractAction
-            implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
+    public static class ImageScaleOriginalSizeAction extends AbstractAction implements TableTargetColumnAction {
         @Serial private static final long serialVersionUID = 1L;
 
         protected ImagePaneBase pane;
@@ -1524,8 +1523,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
      * open the preview-window
      * @since 1.7
      */
-    public static class ImagePreviewAction extends AbstractAction
-        implements PopupCategorized.CategorizedMenuItemAction, TableTargetColumnAction {
+    public static class ImagePreviewAction extends AbstractAction implements TableTargetColumnAction {
         protected ImagePaneBase pane;
         protected JScrollPane scrollPane;
         protected PropertyImagePane owner;

@@ -14,7 +14,6 @@ import java.awt.font.TextLayout;
 import java.awt.geom.RoundRectangle2D;
 import java.io.Serial;
 import java.text.AttributedCharacterIterator;
-import java.text.AttributedString;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -454,7 +453,6 @@ public class GuiSwingLogEntryProgress extends GuiLogEntryProgress implements Gui
 
         @Override
         public LineInfo createLine(LineInfo prevLine, int lineIndex, int start, String line) {
-            AttributedString a = new AttributedString(line);
             if (lineIndex == 0) {
                 return GuiSwingLogEntryString.createLineHead(start, line, "]", timeStyle, followingLineStyle);
             } else {

@@ -599,7 +599,6 @@ public class GuiSwingTableModelCollection extends ObjectTableModel implements Gu
             return map;
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
             if (json instanceof Map<?,?> map) {
@@ -721,7 +720,6 @@ public class GuiSwingTableModelCollection extends ObjectTableModel implements Gu
             return map;
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
             if (json instanceof Map<?,?> map) {

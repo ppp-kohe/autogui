@@ -1066,7 +1066,6 @@ public class TextPaneBuilder implements SettingsWindow.SettingsWindowClientBase 
             var fontSize = getFontSize();
             var bold = isBold();
             var italic = isItalic();
-            var wrapText = isWrapText();
             var backgroundCustom = isBackgroundCustom();
             var foregroundCustom = isForegroundCustom();
             var backgroundColor = getBackgroundColor();

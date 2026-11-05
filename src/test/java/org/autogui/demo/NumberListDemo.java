@@ -157,7 +157,6 @@ public class NumberListDemo {
 
         @GuiIncluded
         public void delete(List<Integer> selectedIndexes, String propName) {
-            List<?> data;
             if (propName.equals("floats")) {
                 floats = IntStream.range(0, floats.size())
                         .filter(i -> !selectedIndexes.contains(i))

@@ -73,7 +73,6 @@ public class GuiSwingPrefsSupports {
      * @param <E> the element type
      * @since 1.7
      */
-    @SuppressWarnings("unchecked")
     public static <E> List<E> getAsListNonNull(Map<?, ?> map, Class<E> type, String key) {
         return getAsListNonNull(map.get(key), type);
     }
@@ -325,7 +324,6 @@ public class GuiSwingPrefsSupports {
             return map;
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
             if (json instanceof Map<?,?> map) {
@@ -512,7 +510,6 @@ public class GuiSwingPrefsSupports {
             return map;
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public void setJson(Object json) {
             if (json instanceof Map<?,?> map) {

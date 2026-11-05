@@ -68,7 +68,6 @@ public class TextCellRenderer<ValueType> extends JPanel
     }
 
     protected void initBorder() {
-        UIManagerUtil ui = UIManagerUtil.getInstance();
         setBorder(createBorder(7, 10, 7, 10));
     }
 
@@ -674,7 +673,6 @@ public class TextCellRenderer<ValueType> extends JPanel
     public void splitLines(String text, LineProcessor lineProcessor) {
         int i;
         int lineIndex = 0;
-        LineInfo prev = null;
         int lineStart = 0;
         int len;
         for (i = 0, len = text.length(); i < len; i++) {

@@ -8,7 +8,6 @@ import org.autogui.base.mapping.GuiReprValue;
 import org.autogui.base.type.GuiTypeBuilder;
 import org.autogui.base.type.GuiTypeObject;
 import org.autogui.swing.*;
-import org.autogui.swing.table.GuiSwingTableColumnCollection;
 import org.autogui.swing.util.ToolBarHiddenMenu;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

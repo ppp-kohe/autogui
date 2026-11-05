@@ -1503,7 +1503,7 @@ public class GuiPreferences {
         if (store == null) { //immutable
             return;
         }
-        var existingKeys = store.getKeys();
+        store.getKeys();
 
         for (Map.Entry<String,Object> e : json.entrySet()) {
             String key = e.getKey();

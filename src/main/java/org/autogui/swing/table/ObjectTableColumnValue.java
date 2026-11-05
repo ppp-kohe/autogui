@@ -540,7 +540,6 @@ public class ObjectTableColumnValue extends ObjectTableColumn
             }
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             if (specifierIndex != null) {
