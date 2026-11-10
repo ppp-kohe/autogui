@@ -588,7 +588,7 @@ public class GuiSwingViewImagePane implements GuiSwingView {
         }
 
         public void initDragDrop() {
-            GuiSwingView.setupTransferHandler(this, new ImageTransferHandler(this), KeyEvent.VK_SHIFT);
+            GuiSwingView.setupTransferHandler(this, new ImageTransferHandler(this), KeyEvent.VK_ALT);
         }
 
         @Override

@@ -23,6 +23,15 @@ public class GuiReprValueBooleanCheckBox extends GuiReprValue {
         }
     }
 
+    @Override
+    public Object toSource(Object o) {
+        if (o == null) {
+            return false;
+        } else {
+            return super.toSource(o);
+        }
+    }
+
     /**
      *
      * @param context a context holds the representation

@@ -91,6 +91,15 @@ public class GuiReprValueNumberSpinner extends GuiReprValue {
         }
     }
 
+    @Override
+    public Object toSource(Object o) {
+        if (o == null) {
+            return type.getZero();
+        } else {
+            return super.toSource(o);
+        }
+    }
+
     /**
      *
      * @param context a context holds the representation

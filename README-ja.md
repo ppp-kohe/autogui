@@ -27,9 +27,9 @@ cd autogui
 
 
 ```bash
-mvn package
-  # このコマンドは target/autogui-1.8.jar を生成します。
-mvn install
+./mvnw package
+  # このコマンドは target/autogui-1.9.jar を生成します。
+./mvnw install
   # このコマンドはビルドしたライブラリをローカルの他のプロジェクトで利用できるように配置します
 ```
 
@@ -44,7 +44,7 @@ mvn install
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.8</version>
+        <version>1.9</version>
     </dependency>
 ```
 
@@ -59,15 +59,15 @@ mvn install
 
 ## 簡単な利用方法の説明: jshellでのサンプル
 
-本ライブラリはJava 9以降にJDKに導入された標準のREPLツールである`jshell`コマンド上で利用することができます。
+本ライブラリはJDKのREPLツールである`jshell`コマンド上で利用することができます。
 利用するには、まず本ライブラリのjarファイルをクラスパスに含める必要があります。
 `jshell`では`/env -class-path <path/to/jar>`コマンドによりクラスパスに含めることができます。
 
 本ライブラリの`jshell`での具体的な利用手順は以下のようになります。
 
-1. ターミナルから[ソースからのビルド](#ソースからのビルド)で説明したように、`autogui`ディレクトリ直下に移動し、ビルドを行います。 (JDK, Git, Mavenがインストールされている環境を前提としています。)
+1. ターミナルから[ソースからのビルド](#ソースからのビルド)で説明したように、`autogui`ディレクトリ直下に移動し、ビルドを行います。 (JDK, Gitがインストールされている環境を前提としています。)
 2. `jshell`を起動します。
-3. `/env -class-path target/autogui-1.8.jar` を入力し、本ライブラリを利用可能にします。
+3. `/env -class-path target/autogui-1.9.jar` を入力し、本ライブラリを利用可能にします。
 4. 続けて以下のコードを入力します: `Hello`クラスが定義されます。
    ```java
    class Hello {
@@ -80,7 +80,7 @@ mvn install
 5. さらに以下の3行を入力します: 本ライブラリを利用しウィンドウが表示されます。
    ```java
    import org.autogui.swing.*;
-   Hello h = new Hello();
+   var h = new Hello();
    AutoGuiShell.showLive(h);
    ```
 
@@ -89,13 +89,13 @@ mvn install
 ```
 $ git clone https://github.com/ppp-kohe/autogui.git
 $ cd autogui
-$ mvn package
+$ ./mvnw package
 $ jshell
-|  Welcome to JShell -- Version 21.0.3
+|  Welcome to JShell -- Version 27.0.1.0.3
 |  For an introduction type: /help intro
 
 jshell> 
-/env -class-path target/autogui-1.8.jar
+/env -class-path target/autogui-1.9.jar
 
 class Hello {
    String value;
@@ -105,7 +105,7 @@ class Hello {
 }
 
 import org.autogui.swing.*;
-Hello h = new Hello();
+var h = new Hello();
 AutoGuiShell.showLive(h);
 ```
 
@@ -113,15 +113,15 @@ AutoGuiShell.showLive(h);
 その後、[`org.autogui.swing.AutoGuiShell.showLive(Object)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html#showLive(java.lang.Object)) の呼び出しを行います。これにより引数のオブジェクトからGUIウィンドウを生成して表示します。
 
 生成されたウィンドウには"Value"とラベルのついたテキストフィールドと、"Action"とラベルのついたツールバーボタンが表示されているはずです。
-テキストフィールドに文字列"hello, world"を入力し、ボタンをクリックすると、`jshell`のコンソールに"hello, world"が出力されるはずです。
+テキストフィールドに文字列"hello, world"を入力し、"Action"ボタンをクリックすると、`jshell`のコンソールに"hello, world"が出力されるはずです。
 
 <img src="docs/images/image-hello-h.png" srcset="docs/images/image-hello-h.png 1x, docs/images/image-hello.png 2x" alt="Hello">
 
-これは本ライブラリが、まず`value`インスタンスフィールドからテキストフィールドを作り出していることを意味します。
+これは本ライブラリが、まず`value`インスタンスフィールドからテキストフィールド"Value"を作り出していることを意味します。
 このフィールドの型である`String`によってコンポーネントの種類はテキストフィールドになります。
 ユーザーが生成されたウィンドウ上でテキストフィールドの文字列を編集した場合、本ライブラリは自動的に与えられたオブジェクト`h`のフィールドの値を入力された文字列に代入します。これは`jsehll> h.value`を実行することで確認することができるでしょう。
 
-また、メソッド`action`はツールバーのボタンのアクションに紐づきます。
+また、メソッド`action`はツールバーのボタン"Action"のアクションに紐づきます。
 ボタンをクリックすると与えられたオブジェクトに対してそのメソッドが実行されます。
 
 ## サンプルアプリケーション
@@ -129,7 +129,7 @@ AutoGuiShell.showLive(h);
 
 [`src/test/java/autogui/demo`](https://github.com/ppp-kohe/autogui/tree/master/src/test/java/org/autogui/demo)以下にサンプルアプリケーションのソースコードがあります。
 
-コマンド`mvn test-compile exec:java  -Dexec.classpathScope=test -Dexec.mainClass=...`によって上記のディレクトリにあるコードを実行することができます。
+コマンド`./mvnw test-compile exec:java  -Dexec.classpathScope=test -Dexec.mainClass=...`によって上記のディレクトリにあるコードを実行することができます。
 
 ### ImageFlipDemo
 
@@ -184,9 +184,9 @@ public class ImageFlipDemo {
 
 この表示されたウィンドウは以下のGUIコンポーネントを持ちます:
 
-* 画像を表示する*Image*ペイン: フィールド`BufferedImage image`から生成されます。画像ファイルをドラッグ&ドロップで入力データとして設定することができます。ドロップした画像は自動的に [`BufferedImage`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/image/BufferedImage.html) オブジェクトとして読み込まれペインに表示された後、フィールドに代入されます。
+* 画像を表示する*Image*ペイン: フィールド`BufferedImage image`から生成されます。画像ファイルをドラッグ&ドロップで入力データとして設定することができます。ドロップした画像は自動的に [`BufferedImage`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/image/BufferedImage.html) オブジェクトとして読み込まれペインに表示された後、フィールドに代入されます。
 * アクションボタン*Flip Y*: メソッド`void flipY()`から生成されます。画像をドロップして入力した後、ボタンをクリックすると画像がY方向で反転します。メソッドの実行で、生成された画像オブジェクト`newImage`が`image`フィールドに代入されます。メソッドの実行後、画像ペインは反転した画像を即座に表示するでしょう。
-* ファイル名テキストフィールド*Output*: フィールド`File output`から生成されます。このテキストフィールドは最初はフィールドの初期値"output.png"を表示します。テキストフィールドを編集するとフィールドの値が変更され、新しい[`File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html) を保持するようになります。
+* ファイル名テキストフィールド*Output*: フィールド`File output`から生成されます。このテキストフィールドは最初はフィールドの初期値"output.png"を表示します。テキストフィールドを編集するとフィールドの値が変更され、新しい[`File`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/File.html) を保持するようになります。
 * アクションボタン*Save*: メソッド`void save()`から生成されます。このアクションは反転した画像を新たなファイルとしてOutputフィールドに設定されたファイルへ書き出します。
 
 ### FileRenameDemo
@@ -201,7 +201,7 @@ mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autog
 
 <img src="docs/images/image-rename-demo-h.png" srcset="docs/images/image-rename-demo-h.png 1x, docs/images/image-rename-demo.png 2x" alt="ImageFlipDemo">
 
-利用方法としては、*Dir*フィールドにディレクトリをドラッグ&ドロップで設定すると、*Entries*テーブルにディレクトリの内容の一覧を表示します。
+利用方法としては、*Dir*フィールドにディレクトリをドラッグ&ドロップで設定すると、*Entries*テーブルにディレクトリの内容の一覧を表示します。*Rename*ボタンにより*New Name*カラムに設定された新しいファイル名で一覧のファイルが改名されます。*New Name*のファイル名はダブルクリックで手動で編集することもできます。
 
 ソースコードは下記のようになっています: 
 
@@ -209,33 +209,34 @@ mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autog
 package org.autogui.demo;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
+import org.autogui.base.annotation.GuiInitAction;
 import org.autogui.swing.AutoGuiShell;
 
 import java.io.File;
 import java.util.*;
 
-@GuiIncluded public class FileRenameDemo {
+@GuiIncluded
+public class FileRenameDemo {
     public static void main(String[] args) {
         AutoGuiShell.get().showWindow(new FileRenameDemo());
     }
+
+    public FileRenameDemo() {}
 
     File dir;
 
     @GuiIncluded public File getDir() { return dir; }
     @GuiIncluded public void setDir(File dir) {
-        boolean update = 
-             dir != null && !Objects.equals(this.dir, dir);
+        boolean update = dir != null && !Objects.equals(this.dir, dir);
         this.dir = dir;
         if (update && dir.isDirectory()) {
             List<RenameEntry> es = new ArrayList<>();
             int i = 0;
-            List<File> files = new ArrayList<>(
-                            Arrays.asList(dir.listFiles()));
+            List<File> files = new ArrayList<>(Arrays.asList(dir.listFiles()));
             files.sort(Comparator.naturalOrder());
             for (File file : files) {
-                es.add(new RenameEntry(file, 
-                  String.format("%03d-%s", 
-                                i, file.getName())));
+                es.add(new RenameEntry(file, String.format("%03d-%s", i, file.getName())));
                 ++i;
             }
             entries = es;
@@ -244,9 +245,7 @@ import java.util.*;
 
     List<RenameEntry> entries = new ArrayList<>();
 
-    @GuiIncluded public List<RenameEntry> getEntries() { 
-        return entries; 
-    }
+    @GuiIncluded public List<RenameEntry> getEntries() { return entries; }
 
     @GuiIncluded public static class RenameEntry {
         File file;
@@ -255,21 +254,15 @@ import java.util.*;
             this.file = file;
             this.newName = newName;
         }
-        @GuiIncluded public File getFile() {
-            return file;
-        }
-        @GuiIncluded public String getNewName() {
-            return newName; 
-        }
-        @GuiIncluded public void setNewName(String newName) {
-            this.newName = newName;
-        }
+        @GuiIncluded public File getFile() { return file; }
+        @GuiIncluded public String getNewName() { return newName; }
+        @GuiIncluded public void setNewName(String newName) { this.newName = newName; }
     }
 
+    @GuiInits(action = @GuiInitAction(confirm = true))
     @GuiIncluded public void rename() {
         for (RenameEntry e : entries) {
-            File newFile = new File(
-                e.getFile().getParentFile(), e.getNewName());
+            File newFile = new File(e.getFile().getParentFile(), e.getNewName());
             if (e.getFile().exists() && !newFile.exists()) {
                 e.getFile().renameTo(newFile);
             }
@@ -284,7 +277,7 @@ import java.util.*;
 * *Entries*テーブル: `getEntries()`メソッドで返される`List`から生成されます。さらにこのテーブルのカラムは`List`の要素型である`<RenameEntry>`の*File*と*New Name*プロパティから生成されます。
 テーブルの各行は`List`オブジェクトの各要素と対応します。
 ゲッターメソッドが返す`List`オブジェクトのアイデンティティが変化するとテーブルが変更されたとみなし、自動的にテーブルの行データの表示が更新されます。
-* *Rename*ボタン: `rename()`メソッドから生成され、すべてのエントリのファイル名を更新します。
+* *Rename*ボタン: `rename()`メソッドから生成され、すべてのエントリのファイル名を更新します。 (`rename()`メソッドには`@GuiInits`アノーテーションが付加されています。これはボタンを押したときに確認ダイアログを表示するための初期設定です。)
 
 本ライブラリのコレクションオブジェクトからのテーブルコンポーネント生成機能は特に強力で、アプリケーションの適用範囲がとても広くなります。
 
@@ -337,18 +330,18 @@ Strictモードは...
 
 ## モジュールでの利用
 
-Java 9以降に導入されたモジュールシステム上で本ライブラリを利用する場合、モジュールメンバーとして定義されたコードを本ライブラリに「公開(open)」する必要があります。これはライブラリがリフレクションAPIを通じて対象オブジェクトのコードにアクセスするためです。
+Java 9以降に導入されたモジュールシステム(JPMS)上で本ライブラリを利用する場合、モジュールメンバーとして定義されたコードを本ライブラリに「公開(open)」する必要があります。これはライブラリがリフレクションAPIを通じて対象オブジェクトのコードにアクセスするためです。
 名前付きモジュールにおいて、リフレクションAPIは*open*されたメンバーのみに限定して利用できます。
 
 本ライブラリのモジュール名は`org.autogui`です。以下の記述を`module-info.java`に追加する必要があります:
 
-1. `open`修飾子を利用したいモジュール宣言に追加する。もしくは、`exports`(または`opens`) <利用したいパッケージ> `to org.autogui;`　を追加する。
-2. `requires org.autogui;`
+1. `exports`(または`opens`) <利用したいパッケージ> `to org.autogui;`　を追加する。
+2. `requires org.autogui;`を追加する。
 
 
 ```java
 //自分の module-info.java の例
-open module your.module { //"open"を自分のモジュールyour.moduleに追加する, もしくは...
+module your.module { 
     exports your.pack to org.autogui; //自分のパッケージyour.packを本ライブラリに公開する
                                   //もしくは "opens your.pack to autogui;" でも可能
     
@@ -368,90 +361,98 @@ open module your.module { //"open"を自分のモジュールyour.moduleに追�
 
 * 基本的な値の型
   * [String text-field](#string-text-field): (文字列テキストフィールド) 
-    [`java.lang.String`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html) 
+    [`java.lang.String`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html) 
   * [File text-field](#file-text-field): (ファイルパステキストフィールド)
-    [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Path.html)  または
-    [`java.io.File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html)
+    [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html)  または
+    [`java.io.File`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/File.html)
   * [Number spinner](#number-spinner): (数値スピナー) 基本型の数値(`byte`, `short`, `int`, `long`, `float`, `double`) または
-    [`java.lang.Number`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Number.html)のサブタイプ
+    [`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html)のサブタイプ
   * [Boolean check-box](#boolean-check-box): (ブーリアンチェックボックス) `boolean` もしくは
-    [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html)
+    [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html)
   * [Enum pull-down menu](#enum-pull-down-menu): (列挙プルダウン) 
-    [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html)のサブタイプ (`enum`タイプ)
+    [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html)のサブタイプ (`enum`タイプ)
   * [Image pane](#image-pane): (画像ペイン)
-    [`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html)のサブタイプ
+    [`java.awt.Image`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/Image.html)のサブタイプ
   * [Document editor](#document-editor): (ドキュメントエディター)
-    [`java.lang.StringBuilder`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/StringBuilder.html) もしくは
-    [`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/Document.html)
+    [`java.lang.StringBuilder`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuilder.html) もしくは
+    [`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/text/Document.html)
   * [Embedded component](#embedded-component): (埋め込みコンポーネント) 
-    [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/JComponent.html)のサブタイプ
+    [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JComponent.html)のサブタイプ
 * [Object pane](#object-pane): (オブジェクトペイン) ユーザー定義のオブジェクト型で、複数のプロパティとアクションの組み合わせ
   * オブジェクトのプロパティ: `T getP() {...}`, `T p() {...}` (1.2-) , `void setP(T) {...}` , `T p;`
-      * もしすべてのメンバーが他のユーザー定義オブジェクトに関するものであれば、それらのオブジェクトはタブペインのタブに格納されます。
-  * アクションメソッド: `void m() {...}`
+    * [Object tabbed-pane](#object-tabbed-pane) : もしすべてのメンバーが他のユーザー定義オブジェクトに関するものであれば、それらのオブジェクトはタブペインのタブに格納されます。
+    * [Split pane](#split-pane) : もし複数のプロパティのサブペインがスクロールを持つ場合、分割ペインによって配置されます。
+  * [Action method](#action-method):　(アクションメソッド) `void m() {...}`
+    * [Editor action method](#editor-action-method): (エディターアクションメソッド) `@GuiIncluded(editor=true) T m() {...}` (1.9-)
 * [Collection table](#collection-table): (コレクションテーブル) 
-  [`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Collection.html)のサブタイプ、
+  [`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html)のサブタイプ、
    配列`E[]` 。カラムは要素型 `E`から生成されます。
   * カラム`E`の値型
       * 文字列カラム: 
-        [`java.lang.String`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html)
+        [`java.lang.String`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html)
       * ファイルカラム: 
-        [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Path.html) または
-        [`java.io.File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html)
+        [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html) または
+        [`java.io.File`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/File.html)
       * 数値カラム: 基本型の数値、もしくは
-        [`java.lang.Number`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Number.html)のサブタイプ
+        [`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html)のサブタイプ
       * ブーリアンカラム: `boolean` もしくは
-        [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html)
+        [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html)
       * 列挙カラム: 
-        [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html)のサブタイプ
+        [`java.lang.Enum`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html)のサブタイプ
       * 画像カラム: 
-        [`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html)のサブタイプ
-      * 埋め込みコンポーネントカラム:  [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/JComponent.html)のサブタイプ
+        [`java.awt.Image`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/Image.html)のサブタイプ
+      * 埋め込みコンポーネントカラム:  [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JComponent.html)のサブタイプ
   * [Object rows](#object-rows): (オブジェクト行)　ユーザー定義型のオブジェクトは、プロパティのメンバーによるカラムを組み合わせて生成する。 
   * 動的なコレクションテーブル: ネストした`Collection<Collection<E>>` か多次元配列 `E[][]`
 
 ### String text-field
 
-[`java.lang.String`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html) のプロパティはテキストフィールドに紐づきます。
+[`java.lang.String`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html) のプロパティはテキストフィールドに紐づきます。
 
 ```java
-  class Hello {
+  class HelloString {
       String prop;
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloString())
 ```
 
 <img src="docs/images/image-string-h.png" srcset="docs/images/image-string-h.png 1x, docs/images/image-string.png 2x" alt="String text-field">
 
+右端に表示されているアイコンはポップアップメニューを表示するボタンです。コンポーネントごとに異なるいくつかのメニュー項目を表示します。マウスの副ボタンでも表示できます。
+
+ポップアップメニューの中には*Multiline*というメニュー項目があり(1.9-以降)、テキストの複数行の編集を切り替えることができます。複数行の編集に切り替えると追加で表示されるアイコンをドラッグすることで表示行数を広げることができます。この状態では改行を含む文字列を編集してプロパティに設定できます。
+
+<img src="docs/images/image-string-multiline-h.png" srcset="docs/images/image-string-multiline-h.png 1x, docs/images/image-string-multiline.png 2x" alt="String text-field-multiline">
 
 ### File text-field
 
-[`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/nio/file/Path.html) もしくは
-[`java.io.File`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/File.html) のプロパティはファイルパス操作が可能なテキストフィールドに紐づきます。
+[`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html) もしくは
+[`java.io.File`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/File.html) のプロパティはファイルパス操作が可能なテキストフィールドに紐づきます。
 
 ```java
   import java.io.File;
-  class Hello {
+  class HelloFile {
       File prop;  
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloFile())
 ```
 
 <img src="docs/images/image-file-h.png" srcset="docs/images/image-file-h.png 1x, docs/images/image-file.png 2x" alt="File text-field">
 
+右端のアイコンにより表示されるポップアップメニューにはファイルパスを設定するための便利なメニュー項目が含まれています。
 
 ### Number spinner
 
 数値をあらわす基本型 (`byte`, `short`, `int`, `long`, `float` and `double`) や
-[`java.lang.Number`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Number.html) のサブタイプ、具体的には
-[`java.math.BigInteger`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/math/BigInteger.html) や  [`java.math.BigDecimal`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/math/BigDecimal.html) は数値のスピナーに紐づきます。
+[`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html) のサブタイプ、具体的には
+[`java.math.BigInteger`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigInteger.html) や  [`java.math.BigDecimal`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html) は数値のスピナーに紐づきます。
 
 
 ```java
-  class Hello {
+  class HelloNumber {
       int prop;
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloNumber())
 ```
 
 <img src="docs/images/image-number-h.png" srcset="docs/images/image-number-h.png 1x, docs/images/image-number.png 2x" alt="Number spinner">
@@ -459,14 +460,14 @@ open module your.module { //"open"を自分のモジュールyour.moduleに追�
 ### Boolean check-box
 
 真偽値の`boolean` または
-[`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Boolean.html) 
+[`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html) 
 はチェックボックスに紐づきます。
 
 ```java
-  class Hello {
+  class HelloBoolean {
       boolean prop;
   } 
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloBoolean())
 ```
 
 <img src="docs/images/image-boolean-h.png" srcset="docs/images/image-boolean-h.png 1x, docs/images/image-boolean.png 2x" alt="Boolean check-box">
@@ -474,7 +475,7 @@ open module your.module { //"open"を自分のモジュールyour.moduleに追�
 ### Enum pull-down menu
 
 `enum`型 (
-[`java.lang.Enum`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Enum.html) 
+[`java.lang.Enum`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html) 
 のサブタイプ) はプルダウンメニューに対応づきます。 (編集テキストフィールドがないコンボボックス).
 列挙型のメンバーがメニューアイテムになります。
 
@@ -482,39 +483,40 @@ open module your.module { //"open"を自分のモジュールyour.moduleに追�
   enum HelloEnum {
       Hello, World
   }
-  class Hello {
+  class HelloPulldown {
       HelloEnum prop = HelloEnum.Hello;
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloPulldown())
 ```
 
 <img src="docs/images/image-enum-h.png" srcset="docs/images/image-enum-h.png 1x, docs/images/image-enum.png 2x" alt="Enum combo-box">
 
-
 ### Image pane
 
-
-[`java.awt.Image`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/Image.html) もしくはそのサブタイプは画像のプレビューが可能なペインに紐づきます。
+[`java.awt.Image`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/Image.html) もしくはそのサブタイプは画像のプレビューが可能なペインに紐づきます。
 
 ```java
   import java.awt.*;
-  class Hello {
+  class HelloImage {
       Image prop;
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloImage())
 ```
 
 <img src="docs/images/image-image-h.png" srcset="docs/images/image-image-h.png 1x, docs/images/image-image.png 2x" alt="Image pane">
 
-このペインはドラッグ&ドロップをサポートし、Altを押しながらマウスホイールスクロールにより拡大縮小が可能です。
-コード上の画像の操作は[`java.awt.image.BufferedImage`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/image/BufferedImage.html) と
-[`javax.imageio.ImageIO`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/imageio/ImageIO.html)が便利です。
+このペインはドラッグ&ドロップをサポートします。ドラッグはAlt(Option)を押しながらマウスでドラッグすることで可能です。またAlt(Option)を押しながらマウスホイールスクロールにより拡大縮小が可能です。
+
+マウスの副ボタンクリックによるポップアップメニューにはサイズの調整を行うメニュー項目や画像を別ウィンドウでプレビューするメニュー項目があります。
+
+コード上の画像の操作は[`java.awt.image.BufferedImage`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/image/BufferedImage.html) と
+[`javax.imageio.ImageIO`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/imageio/ImageIO.html)が便利です。
 
 ```java
   import java.io.File;
   import java.awt.image.*;
   import javax.imageio.*;
-  class Hello {
+  class HelloImageSize {
       private File file;
       void setFile(File f) throws Exception {
           file = f;
@@ -529,30 +531,28 @@ open module your.module { //"open"を自分のモジュールyour.moduleに追�
           return prop == null ? 0 : prop.getHeight();
       }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloImageSize())
 ```
 
 <img src="docs/images/image-image-file-h.png" srcset="docs/images/image-image-file-h.png 1x, docs/images/image-image-file.png 2x" alt="Image dragging">
 
-
 ### Document editor
 
-[`java.lang.StringBuilder`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/StringBuilder.html)
+[`java.lang.StringBuilder`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/StringBuilder.html)
 もしくは
-[`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/Document.html) のサブタイプはテキストエディタに紐づきます。
+[`javax.swing.text.Document`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/text/Document.html) のサブタイプはテキストエディタに紐づきます。
 
 ```java
-  class Hello {
+  class HelloDocument {
       StringBuilder prop = new StringBuilder();
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloDocument())
 ```
 
 <img src="docs/images/image-document-h.png" srcset="docs/images/image-document-h.png 1x, docs/images/image-document.png 2x" alt="Document editor">
 
 プロパティ値の変更(ドキュメントオブジェクトのアイデンティティの変更)はエディタのドキュメントを置き換えることになります。
 したがって、このプロパティはユーザーの編集のために一貫した参照値を返す必要があります。
-
 
 #### ドキュメントプロパティの適切な利用方法
 
@@ -564,8 +564,15 @@ open module your.module { //"open"を自分のモジュールyour.moduleに追�
 Swingのドキュメントとテキスト編集コンポーネント群は、どうやらどんなドキュメントの変更もテキスト編集コンポーネント内で起こることを仮定しているように見えます。
 したがって、**ユーザー定義のコードで`StringBuilder`や`Document`のプロパティ値の内容を変種することは避けるべきです。**
 
-プロパティが[`javax.swing.text.StyledDocument`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/text/StyledDocument.html)型のサブタイプの場合、もしくは`StringBuilder`の場合は、エディタ上で(ドキュメント全体の)スタイルをコンテキストメニューから変更することができます。
+プロパティが[`javax.swing.text.StyledDocument`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/text/StyledDocument.html)型のサブタイプの場合、もしくは`StringBuilder`の場合は、エディタ上で(ドキュメント全体の)スタイルをコンテキストメニューから変更することができます。
 
+```java
+  import javax.swing.text.*;
+  class HelloStyledDocument {
+      StyledDocument prop = new DefaultStyledDocument();
+  }
+  org.autogui.swing.AutoGuiShell.showLive(new HelloStyledDocument())
+```
 
 <img src="docs/images/image-document-styled-h.png" srcset="docs/images/image-document-styled-h.png 1x, docs/images/image-document-styled.png 2x" alt="Document editor with styles">
 
@@ -574,7 +581,7 @@ Swingのドキュメントとテキスト編集コンポーネント群は、ど
 ユーザー定義のオブジェクトのクラスのプロパティはそのクラスのメンバーを組み合わせたペインに紐づきます。
 
 ```java
-  class Hello {
+  class HelloObject {
       String prop1;
       int prop2;
       E prop3 = new E();
@@ -588,7 +595,7 @@ Swingのドキュメントとテキスト編集コンポーネント群は、ど
           System.out.printf("E: %s\n", prop);
       }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloObject())
 ```
 
 <img src="docs/images/image-object-h.png" srcset="docs/images/image-object-h.png 1x, docs/images/image-object.png 2x" alt="Object pane">
@@ -616,9 +623,8 @@ Swingのドキュメントとテキスト編集コンポーネント群は、ど
 ユーザー定義のオブジェクトクラスはサブコンポーネントに紐づいたプロパティを持つことができます。
 ここで、*プロパティ*とは 1) アクセス可能なフィールド もしくは 2) ゲッターとセッターメソッドのペア として定義されます。
 
-
 ```java
-  class Hello {
+  class HelloProp {
       String prop1; 
       
       private String prop2 = "hello";
@@ -635,7 +641,7 @@ Swingのドキュメントとテキスト編集コンポーネント群は、ど
       boolean isFlag() { return flag; } //is...() for boolean
       void setFlag(boolean b) { flag = b; } 
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloProp())
 ```
 
 <img src="docs/images/image-prop-h.png" srcset="docs/images/image-prop-h.png 1x, docs/images/image-prop.png 2x" alt="Properties">
@@ -654,13 +660,11 @@ Swingのドキュメントとテキスト編集コンポーネント群は、ど
 セッターメソッド内のコードでは他のプロパティの値の変更を行うことができます。生成されたUIは自動的に変更されたプロパティを特定します。
 このUIの更新を実現するため、ゲッターメソッドは頻繁に呼び出されます。
 
-
 #### AutoCloseableサポート
 
-ユーザー定義のオブジェクトクラスが[`java.lang.AutoCloseable`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/AutoCloseable.html)インターフェースを実装する場合、そのオブジェクトの[`close()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/AutoCloseable.html#close())メソッドが対応するウィンドウを閉じた時に自動的に実行されます。
+ユーザー定義のオブジェクトクラスが[`java.lang.AutoCloseable`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html)インターフェースを実装する場合、そのオブジェクトの[`close()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html#close())メソッドが対応するウィンドウを閉じた時に自動的に実行されます。
 
 (なお`AutoGuiShell.showLive(o)` で生成されたウィンドウはウィンドウを閉じても自動的に呼び出しません。ウィンドウを完全に閉じるには[`cleanUp()`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/GuiSwingWindow.html#cleanUp())を利用してください。)
-
 
 #### アクションプロパティの組み合わせ
 
@@ -671,10 +675,9 @@ Swingのドキュメントとテキスト編集コンポーネント群は、ど
 
 この時、文字列のプロパティに紐づいたテキストフィールはそのメソッドに対応するボタンを内包します。
 
-
 ```java
 import java.util.regex.*;
-class PatternFind {
+class HelloPropAction {
     String text;
     String search;
     void searchAction() {
@@ -686,18 +689,17 @@ class PatternFind {
         }
     }
 }
-org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
+org.autogui.swing.AutoGuiShell.showLive(new HelloPropAction())
 ```
 
 <img src="docs/images/image-action-combination-h.png" srcset="docs/images/image-action-combination-h.png 1x, docs/images/image-action-combination.png 2x" alt="Action property combination">
-
 
 ### Object tabbed-pane
 
 ユーザー定義のオブジェクトがプロパティとして他のユーザー定義オブジェクト型のメンバーしか持たない場合、そのオブジェクトはタブペインに紐づきます。そしてメンバーのユーザー定義オブジェクトから生成されたペインが各タブに対応します。
 
 ```java
-  class Hello {
+  class HelloTab {
       Tab1 tab1 = new Tab1();
       Tab2 tab2 = new Tab2();
   }
@@ -707,22 +709,71 @@ org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
   class Tab2 {
       int prop;
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloTab())
 ```
 
 <img src="docs/images/image-tab-h.png" srcset="docs/images/image-tab-h.png 1x, docs/images/image-tab.png 2x" alt="Object tabbed-pane">
 
+#### Split pane
+
+[Object pane](#object-pane)のプロパティにスクロールビューを伴うサブペインが複数ある場合、それらは分割ペインによって配置されます。
+分割ペインは縦方向または横方向でサイズを調整するスライダーが表示されます。縦か横の方向は副ボタンクリックで表示されるポップアップメニューの項目*Flip Split Orienttion*で切り替えることができます。
+
+```java
+  import java.util.List;
+  import java.util.ArrayList;
+  import java.awt.image.*;
+  class HelloSplit {
+      BufferedImage image;
+      List<String> list = new ArrayList<>(List.of("a", "b", "c"));
+  }
+  org.autogui.swing.AutoGuiShell.showLive(new HelloSplit())
+```
+
+<img src="docs/images/image-split-h.png" srcset="docs/images/image-split-h.png 1x, docs/images/image-split.png 2x" alt="Split pane">
+
+#### Editor action method
+
+アクションメソッドはオブジェクトを返すことで、返されたオブジェクトに対応する新たな画面を表示することができます(1.9-)。これをエディターアクションメソッドを呼んでいます。エディターアクションメソッドも通常のアクションメソッドと同様にツールバーのボタンに対応します。
+
+エディターアクションメソッドの定義は、1.表示可能なオブジェクトを編集対象として返すこと、2.`@GuiIncluded`アノーテーションを付加して`editor=true`プロパティを設定することです。(これにより`get`のつかないゲッタープロパティメソッドと区別します。)
+
+返される表示可能なオブジェクトは`new`で作成する新たなインスタンスでも、既存のオブジェクトでも構いません。いずれにせよ新しいウィンドウが表示され、返されたオブジェクトに対応するペインが表示されます。
+
+本機能を"エディター"と呼ぶのは、編集完了のアクションメソッドをさらに定義できるためです。表示される新しいウィンドウ上でオブジェクトの編集を完了したときに特別なコールバックを追加アクションとして定義することができます。下記のように` complete`のプレフィックスを持ち、`void`を返すアクションメソッドと同じ名前のメソッドで、さらに引数に編集対象のオブジェクトの型を定義します。
+
+また編集完了のアクションメソッドには追加で`boolean`の引数を定義することもできます。これは編集完了の*OK*、*Cancel*ボタンを表示し、ボタンによってウィンドウを閉じ、明示的に編集完了アクションメソッドを実行できます。*OK*、*Cancel*はそれぞれこの`boolean`引数に`true`、`false`がそれぞれ設定されます。ウィンドウをクローズボタンにより閉じた場合は*Cancel*ボタンと同様です。`boolean`引数が定義されていなければ*OK*、*Cancel*ボタンは表示されず、ウィンドウを閉じた場合に編集完了のアクションメソッドが実行されます。
+
+
+```java
+import org.autogui.GuiIncluded;
+class HelloEditor {
+    @GuiIncluded(editor=true) Editor editor() {
+        return new Editor();
+    }
+
+    String result;
+
+    void completeEditor(Editor e, boolean ok) {
+        result = e.prop + ", ok=" + ok;
+    }
+}
+class Editor {
+    String prop;
+}
+org.autogui.swing.AutoGuiShell.showLive(new HelloEditor())
+```
+
+<img src="docs/images/image-action-editor-h.png" srcset="docs/images/image-action-editor-h.png 1x, docs/images/image-action-editor.png 2x" alt="Editor action method">
 
 ### Embedded component
 
-
-[`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/JComponent.html)のサブタイプはサブコンポーネントとして埋め込みのペインに紐づきます。
-
+[`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JComponent.html)のサブタイプはサブコンポーネントとして埋め込みのペインに紐づきます。
 
 ```java
   import java.awt.*;
   import javax.swing.*;
-  class Hello {
+  class HelloComponent {
       private JComponent value;
       JComponent getValue() {
           if (value == null) { 
@@ -739,7 +790,7 @@ org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
           return value;
       }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello());
+  org.autogui.swing.AutoGuiShell.showLive(new HelloComponent());
 ```
 
 <img src="docs/images/image-component-h.png" srcset="docs/images/image-component-h.png 1x, docs/images/image-component.png 2x" alt="Embedded component">
@@ -765,13 +816,13 @@ org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
 
 ### Collection table
 
-[`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/Collection.html)のサブタイプもしくは配列型`E[]`のプロパティはテーブルペインに紐づきます。
+[`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html)のサブタイプもしくは配列型`E[]`のプロパティはテーブルペインに紐づきます。
 テーブルのカラムは型引数`E`から生成されます。
 
-
 ```java
-  import java.util.*;
-  class Hello {
+  import java.util.List;
+  import java.util.ArrayList;
+  class HelloList {
       List<String> prop = new ArrayList<>();
       
       void add() {
@@ -779,7 +830,7 @@ org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
           prop = new ArrayList<>(prop); 
       }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloList())
 ```
 
 <img src="docs/images/image-collection-h.png" srcset="docs/images/image-collection-h.png 1x, docs/images/image-collection.png 2x" alt="Collection table">
@@ -790,10 +841,10 @@ org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
 
 `Collection<E>`の型引数`E`がユーザー定義のオブジェクトクラスの場合、テーブルのカラムはそのクラスのプロパティから生成されます。
 
-
 ```java
-   import java.util.*;
-   class Hello {
+   import java.util.List;
+   import java.util.ArrayList;
+   class HelloListColumn {
        List<Item> prop = new ArrayList<>();
        void add() {
            prop.add(new Item("hello " + prop.size(), (int) (Math.random() * 100)));
@@ -805,41 +856,41 @@ org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
        int num;
        Item(String n, int i) { this.name = n; this.num = i; }
    }
-   org.autogui.swing.AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new HelloListColumn())
 ```
 
 <img src="docs/images/image-collection-column-h.png" srcset="docs/images/image-collection-column-h.png 1x, docs/images/image-collection-column.png 2x" alt="Collection table with property columns">
 
 #### コレクションテーブルの選択行に対するアクション
 
-もし、型引数`E`のコレクションプロパティを定義するオブジェクトクラスがさらに別の[`java.util.List<E>`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/List.html)型の引数をとるメソッドを持つ場合、対応するテーブルはそのメソッドに紐づいたアクションボタンを持つツールバーを持つことになります。
+もし、型引数`E`のコレクションプロパティを定義するオブジェクトクラスがさらに別の[`java.util.List<E>`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html)型の引数をとるメソッドを持つ場合、対応するテーブルはそのメソッドに紐づいたアクションボタンを持つツールバーを持つことになります。
 このボタンはテーブル上で選択された行に対応する要素をリストとして引数に与えて
 メソッドを実行します。
 
 もし、コレクションの要素オブジェクトがアクションメソッドを持つ場合、その場合もテーブルがツールバーにメソッドに紐づいたボタンを持ちます。
 このボタンはテーブル上で選択された行に対応するオブジェクトそれぞれに対してメソッドを実行します。
 
-
 ```java
-   import java.util.*;
-   class Hello {
-       List<Item> prop = new ArrayList<>();
+   import java.util.List;
+   import java.util.ArrayList;
+   class HelloListAction {
+       List<ItemUpd> prop = new ArrayList<>();
        void add() {
-           prop.add(new Item("hello " + prop.size(), (int) (Math.random() * 100)));
+           prop.add(new ItemUpd("hello " + prop.size(), (int) (Math.random() * 100)));
            prop = new ArrayList<>(prop);
        }
-       void remove(List<Item> selectedItems) {
+       void remove(List<ItemUpd> selectedItems) {
            prop.removeAll(selectedItems);
            prop = new ArrayList<>(prop);
        }
    }
-   class Item {
+   class ItemUpd {
        String name;
        int num;
-       Item(String n, int i) { this.name = n; this.num = i; }
+       ItemUpd(String n, int i) { this.name = n; this.num = i; }
        void update() { ++num; }
    }
-   org.autogui.swing.AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new HelloListAction())
 ```
 
 <img src="docs/images/image-collection-action-h.png" srcset="docs/images/image-collection-action-h.png 1x, docs/images/image-collection-action.png 2x" alt="Collection table with actions">
@@ -855,34 +906,35 @@ org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
 ```java
 import java.util.*;
 import org.autogui.*;
-class Hello {
-    List<Item> prop = new ArrayList<>();
+class HelloListSelect {
+    List<ItemSel> prop = new ArrayList<>();
     void add() {
-        prop.add(new Item("Hello " + prop.size()));
+        prop.add(new ItemSel("Hello " + prop.size()));
         prop = new ArrayList<>(prop);
     }
     @GuiListSelectionUpdater
-    List<Item> selectTop() {
+    List<ItemSel> selectTop() {
         return Arrays.asList(prop.get(0));
     }
     @GuiListSelectionCallback
-    void selected(List<Item> items) {
+    void selected(List<ItemSel> items) {
         System.out.println("selected: " + items);
     }
 }
-class Item {
+class ItemSel {
     String name;
-    Item(String n) { this.name = n; }
-    public String toString() { return "Item(" + this.name + ")"; }
+    ItemSel(String n) { this.name = n; }
+    @GuiIncluded(false)
+    public String toString() { return "ItemSel(" + this.name + ")"; }
 }
-org.autogui.swing.AutoGuiShell.showLive(new Hello())
+org.autogui.swing.AutoGuiShell.showLive(new HelloListSelect())
 ```
 
 <img src="docs/images/image-collection-select-h.png" srcset="docs/images/image-collection-select-h.png 1x, docs/images/image-collection-select.png 2x" alt="Collection table with selection actions">
 
-上記の例で`List<Item> selectTop()`は`@GuiListSelectionUpdater`を付加しています。このメソッドはアクションボタン"Select Top"を生成し、実行すると`prop`テーブルの選択要素をリストの先頭の要素に(その要素のリストを返すことで)変更します。
+上記の例で`List<ItemSel> selectTop()`は`@GuiListSelectionUpdater`を付加しています。このメソッドはアクションボタン"Select Top"を生成し、実行すると`prop`テーブルの選択要素をリストの先頭の要素に(その要素のリストを返すことで)変更します。
 
-また、`void selected(List<Item> items)` は`@GuiListSelectionCallback` を付加しており、引数に要素のリストを受け取ります。このメソッドもアクションボタンになりますが、"*Selected"と先頭にマークが付き、`prop`テーブルの選択の変更により自動で実行されます。
+また、`void selected(List<ItemSel> items)` は`@GuiListSelectionCallback` を付加しており、引数に要素のリストを受け取ります。このメソッドもアクションボタンになりますが、"*Selected"と先頭にマークが付き、`prop`テーブルの選択の変更により自動で実行されます。
 
 これらの特別なメソッドの対象となるテーブルは、要素の型、すなわち `List<E>`の型引数`E`によって特定されます。もし2つ以上のテーブルが同一の要素型をこれらのメソッドで使っていたら、それらすべてのテーブルがメソッドにより操作されます。
 
@@ -890,7 +942,7 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 
 #### セルのサイズ変更
 
-生成されたテーブルにはカラムと行の表示サイズを変更する機能があり、テーブルヘッダーのポップアップメニュー(右クリックで開くコンテキストメニュー)から利用できます。
+生成されたテーブルにはカラムと行の表示サイズを変更する機能があり、テーブルヘッダーのポップアップメニュー(マウス副ボタンクリックで開くコンテキストメニュー)から利用できます。
 
 <img src="docs/images/image-collection-columnsize-h.png" srcset="docs/images/image-collection-columnsize-h.png 1x, docs/images/image-collection-columnsize.png 2x" alt="Collection table with setting column size">
 
@@ -919,7 +971,6 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
   }
 ```
 
-
 ### @GuiIncluded(index=...)による表示順の調整
 
 コンポーネントの表示順は[`@GuiIncluded(index=...)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html#index())アノーテーションにより調整できます。
@@ -927,7 +978,7 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 
 ```java
   import org.autogui.GuiIncluded;
-  class Hello {
+  class HelloOrder {
       @GuiIncluded(index=3) String prop1;
       @GuiIncluded(index=2) String prop2;
       
@@ -935,7 +986,7 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
       @GuiIncluded(index=1) String getProp3() { return prop3; } 
       void setProp3(String p) { prop3 = p; }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloOrder())
 ```
 
 <img src="docs/images/image-order-h.png" srcset="docs/images/image-order-h.png 1x, docs/images/image-order.png 2x" alt="Order of members">
@@ -948,9 +999,10 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 
 ```java
    import org.autogui.GuiIncluded;
-   class Hello {
+   class HelloTooltip {
        @GuiIncluded(description="component description") String prop;
    }
+   org.autogui.swing.AutoGuiShell.showLive(new HelloTooltip())
 ```
 
 <img src="docs/images/image-description-h.png" srcset="docs/images/image-description-h.png 1x, docs/images/image-description.png 2x" alt="Property description">
@@ -975,7 +1027,7 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 
 ```java
    import org.autogui.GuiIncluded;
-   class Hello {
+   class HelloKey {
        @GuiIncluded(keyStroke="L") String prop; 
        @GuiIncluded(keyStroke="T") void action() {
            System.out.println("action " + prop);
@@ -986,7 +1038,7 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
            System.out.println("action2");
        }
    }
-   org.autogui.swing.AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new HelloKey())
 ```
 <img src="docs/images/image-keystroke-h.png" srcset="docs/images/image-keystroke-h.png 1x, docs/images/image-keystroke.png 2x" alt="Key-binding">
 
@@ -1009,7 +1061,7 @@ import java.util.concurrent.*;
 import org.autogui.*;
 import java.time.*;
 
-class Hello implements AutoCloseable {
+class HelloNotify implements AutoCloseable {
    private ScheduledExecutorService service;
    private ScheduledFuture<?> task;
    
@@ -1019,7 +1071,7 @@ class Hello implements AutoCloseable {
    @GuiNotifierSetter 
    void setPropUpdater(Runnable r) { updater = r; }
    
-   Hello() {
+   HelloNotify() {
       service = Executors.newScheduledThreadPool(1);
       task = service.scheduleWithFixedDelay(this::update, 0, 3, TimeUnit.SECONDS);
    }
@@ -1034,7 +1086,7 @@ class Hello implements AutoCloseable {
        service.shutdownNow();
    }
 }
-org.autogui.swing.AutoGuiShell.showLive(new Hello())
+org.autogui.swing.AutoGuiShell.showLive(new HelloNotify())
 ```
 
 上記のサンプルはテキストフィールドを表示し、3秒ごとにそのテキスト表示を更新します。
@@ -1042,18 +1094,18 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 更新は`update()`メソッドで行われます。そこでは`prop`を時刻の文字列 [`Instant.now().toString()`](https://docs.oracle.com/en/java/javase/13/docs/api/java.base/java/time/Instant.html#now())  で更新し、`Runnable#run()`を呼び出すことでフィールドの変更を通知します。このRunnableは`setPropUpdater(Runnable)`で設定された、本ライブラリから与えられるオブジェクトをupdaterとして保持します。
 このセッターは`set<YourPropertyName>Updater`の名前の規則に従い`prop`フィールドを更新対象として指定しています。
 
-コンストラクタでは`update()`メソッドが定期的に実行されるようスケジュールされます。これは[`ScheduledExecutorService#scheduleWithFixedDelay(this::update, ...)` ](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html#scheduleWithFixedDelay(java.lang.Runnable,long,long,java.util.concurrent.TimeUnit))により`ScheduledFuture`タスクとして生成します。
+コンストラクタでは`update()`メソッドが定期的に実行されるようスケジュールされます。これは[`ScheduledExecutorService#scheduleWithFixedDelay(this::update, ...)` ](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html#scheduleWithFixedDelay(java.lang.Runnable,long,long,java.util.concurrent.TimeUnit))により`ScheduledFuture`タスクとして生成します。
 
 ## 初期設定の管理
 
 生成されたウィンドウは内包するサブコンポーネントに紐づくプロパティ値を保存して再利用する機能を持ちます。
-この機能は[`java.util.prefs`](https://docs.oracle.com/en/java/javase/11/docs/api/java.prefs/java/util/prefs/package-summary.html)を利用して実現します。
+この機能は[`java.util.prefs`](https://docs.oracle.com/en/java/javase/21/docs/api/java.prefs/java/util/prefs/package-summary.html)を利用して実現します。
 
 ```java
-   class Hello {
+   class HelloPref {
        String prop;
    }
-   org.autogui.swing.AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new HelloPref())
 ```
 
 本ライブラリでは、割り当てられたコンポーネントを通じて編集されたプロパティの値が初期設定として自動的に保存されます。
@@ -1086,15 +1138,14 @@ org.autogui.swing.AutoGuiShell.showLive(new Hello())
 [`GuiPreferencesLoader`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/mapping/GuiPreferencesLoader.html) クラスを利用することでGUIを使わないコードで初期設定の機能を利用することができます。
 
 ```java
-   var h = new Hello();
+   var h = new HelloPref();
    org.autogui.base.mapping.GuiPreferencesLoader.get()
      .withTypeBuilderRelaxed()
-     .withPrefsGetterByNameEquals("saved-prefs")
+     .withPrefsGetterByNameEquals("Saved-Prefs")
      .apply(h);
 
    h.prop //=> "Hello" 
 ```
-
 
 ### 埋め込みコンポーネントのカスタム初期設定
 
@@ -1109,7 +1160,7 @@ import org.autogui.base.mapping.GuiPreferences;
 import javax.swing.*;
 import java.util.*;
 
-class Hello { //オブジェクトペインの型
+class HelloPrefCustom { //オブジェクトペインの型
     MyPane pane;
     MyPane getPane() { //カスタムした型の埋め込みコンポーネントを返す
         if (pane == null) pane = new MyPane();
@@ -1128,13 +1179,11 @@ class MyPane extends JPanel
         return Map.of("myItem", data.getText());
     }
     @SuppressWarnings("unchecked")
-    public void setPrefsJson(Object v) { //初期設定ストアから復元されたデータを設定
-        if (v instanceof Map<?,?>) {
-            data.setText(((Map<String,String>) v).getOrDefault("myItem", ""));
-        }
+    public void setPrefsJson(Map<String,Object> v) { //初期設定ストアから復元されたデータを設定
+        data.setText(v.getOrDefault("myItem", "").toString());
     }
 }
-org.autogui.swing.AutoGuiShell.showLive(new Hello())
+org.autogui.swing.AutoGuiShell.showLive(new HelloPrefCustom())
 ```
 
 `getPrefsJson()`で返されるオブジェクトは単純なJSONの型の組み合わせでなければなりません(Map、List、String、Number、Boolean)。
@@ -1152,7 +1201,7 @@ import org.autogui.swing.AutoGuiShell;
 import javax.swing.text.*;
 
 @GuiInits(window = @GuiInitWindow(width = 400, height = 300))
-public class MyEditor {
+public class HelloConfirm {
     DefaultStyledDocument doc = new DefaultStyledDocument();
 
     @GuiInits(action = @GuiInitAction(confirm = true))
@@ -1160,7 +1209,7 @@ public class MyEditor {
         doc.replace(0, doc.getLength(), "", null);
     }
 }
-org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
+org.autogui.swing.AutoGuiShell.showLive(new HelloConfirm())
 ```
 
 上記のコードはテキストペインと"Clear"アクションボタンを持つウィンドウを表示しますが、ウィンドウの初期サイズが400 x 300に設定されます。そして"Clear"アクションボタンを押すと、アクション実行前に確認ダイアログを表示します。
@@ -1170,17 +1219,17 @@ org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
 これらはそれぞれクラスに付加された`@GuiInits(window = ...)`と、メソッドに付加された`@GuiInits(action = ...)`のデフォルト設定によるものです。
 `@GuiInits`アノーテーションはこの機能で設定可能なすべての項目をそのプロパティ(`window = ...`や`action = ...`)として定義しています。実際に定義可能な設定の項目は`@GuiInits`のプロパティに設定されるアノーテーション、`org.autogui.base.annotation`パッケージの`@GuiInitWindow`や`@GuiInitAction`に定義されています。
 
-| プロパティ                                                                                                                   | 　値型                                                                                                                                           | 　付加対象                                                     | 設定内容                               | 
-|------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------|
-| [`tabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tabbedPane())               | [`@GuiInitTabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTabbedPane.html)               | parent type of [object tabbed pane](#object-tabbed-pane)       | タブ化抑制                             | 
-| [`splitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#splitPane())                 | [`@GuiInitSplitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitSplitPane.html)                 | parent [object pane](#object-pane) type of splitted-components | 縦方向分割指定                         | 
-| [`window`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#window())                       | [`@GuiInitWindow`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitWindow.html)                       | root [object pane](#object-pane) type                          | サイズ                                 | 
-| [`table`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#table())                         | [`@GuiInitTable`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTable.html)                         | [Collection table](#collection-table) property                 | 行高さ指定、動的カラムリサイズ         | 
-| [`tableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumn())             | [`@GuiInitTableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumn.html)             | table column property                                          | カラム幅、ソート順                     | 
-| [`tableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumnString()) | [`@GuiInitTableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumnString.html) | table column string property                                   | エンターキー確定/改行切替              | 
-| [`numberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#numberSpinner())         | [`@GuiInitNumberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitNumberSpinner.html)         | [number property](#number-spinner)                             | フォーマット、最大、最小、ステップ設定 | 
-| [`action`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#action())                       | [`@GuiInitAction`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitAction.html)                       | [action method](#action-method)                                | 確認ダイアログ表示                     | 
-| [`stringField`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#stringField())             | [`@GuiInitStringField`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitStringField.html)             | [string text-field](#string-text-field)                        | 表示行数                               |
+| プロパティ                                                                                             |　値型                                                                                                                     |　付加対象                                                           | 設定内容                    | 
+| -                                                                                                    | -                                                                                                                        | -                                                                  | -                         |
+|        [`tabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tabbedPane())        |        [`@GuiInitTabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTabbedPane.html)        |  parent type of [object tabbed pane](#object-tabbed-pane)          | タブ化抑制                  | 
+|         [`splitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#splitPane())         |         [`@GuiInitSplitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitSplitPane.html)         |  parent [object pane](#object-pane) type of splitted-components    | 縦方向分割指定               | 
+|            [`window`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#window())            |            [`@GuiInitWindow`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitWindow.html)            |  root [object pane](#object-pane) type                             | サイズ                      | 
+|             [`table`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#table())             |             [`@GuiInitTable`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTable.html)             |  [Collection table](#collection-table) property                    | 行高さ指定、動的カラムリサイズ  | 
+|       [`tableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumn())       |       [`@GuiInitTableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumn.html)       |  table column property                                             | カラム幅、ソート順            | 
+| [`tableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumnString()) | [`@GuiInitTableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumnString.html) |  table column string property                                      | エンターキー確定/改行切替      | 
+|     [`numberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#numberSpinner())     |     [`@GuiInitNumberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitNumberSpinner.html)     |  [number property](#number-spinner)                                | フォーマット、最大、最小、ステップ設定 | 
+|            [`action`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#action())            |            [`@GuiInitAction`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitAction.html)            |  [action method](#action-method)                                   | 確認ダイアログ表示            | 
+|       [`stringField`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#stringField())       |       [`@GuiInitStringField`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitStringField.html)       |  [string text field](#string-text-field)                           | 表示行数                   | 
 
 ## ロギング
 
@@ -1193,8 +1242,8 @@ org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
 ### 文字列メッセージのログ
 
 生成されたウィンドウは
-[`System.err`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#err) と 
-[`System.out`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/System.html#out)を置き換えます。置き換えられたこれらのストリームからの出力はステータスバーとリストウィンドウにも表示されます。
+[`System.err`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/System.html#err) と 
+[`System.out`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/System.html#out)を置き換えます。置き換えられたこれらのストリームからの出力はステータスバーとリストウィンドウにも表示されます。
 
 この置き換えは[`GuiSwingLogManager#setupConsoleWithDefaultFlags()`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/log/GuiSwingLogManager.html#setupConsoleWithDefaultFlags)の実行で読み取られるシステムプロパティにより設定にできます。
 `-Dautogui.log.replaceErr=false -Dautogui.log.replaceOut=false`のようなVMオプションを追加することで無効にできます。
@@ -1203,7 +1252,7 @@ org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
 
   ```java
      import org.autogui.base.log.*;
-     class Hello {
+     class HelloLog {
          void action() {
              System.err.println("message");
              GuiLogManager.get().logString("string message");
@@ -1211,7 +1260,7 @@ org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
              GuiLogManager.get().logFormat("format message %d", 2);
          }
      }
-     org.autogui.swing.AutoGuiShell.showLive(new Hello());
+     org.autogui.swing.AutoGuiShell.showLive(new HelloLog());
   ```
 
 <img src="docs/images/image-log-string-h.png" srcset="docs/images/image-log-string-h.png 1x, docs/images/image-log-string.png 2x" alt="String message">
@@ -1228,7 +1277,7 @@ org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
 
 ```java
      import org.autogui.base.log.*;
-     class Hello {
+     class HelloProgress {
          void action()  {
              new Thread(this::m).start();
          }
@@ -1243,14 +1292,14 @@ org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
              }
          }
      }
-     org.autogui.swing.AutoGuiShell.showLive(new Hello());
+     org.autogui.swing.AutoGuiShell.showLive(new HelloProgress());
 ```
 
 <img src="docs/images/image-log-progress-h.png" srcset="docs/images/image-log-progress-h.png 1x, docs/images/image-log-progress.png 2x" alt="Progress">
 
-進捗バーの右側に表示されるボタンにより`logProgress()`を呼び出した[`Thread`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html)に割り込みを入れることができます。
-割り込みにより、スレッドがブロックする間[`InterruptedException`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/InterruptedException.html)が発生します。このブロックは[`Thread.sleep(n)`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#sleep(long))などで発生します。
-ブロッキングなしの実行コードについてはコード上で明示的に[`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#interrupted())を呼び出して割り込みが発生したかどうか明示的に確認する必要があります。
+進捗バーの右側に表示されるボタンにより`logProgress()`を呼び出した[`Thread`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html)に割り込みを入れることができます。
+割り込みにより、スレッドがブロックする間[`InterruptedException`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/InterruptedException.html)が発生します。このブロックは[`Thread.sleep(n)`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#sleep(long))などで発生します。
+ブロッキングなしの実行コードについてはコード上で明示的に[`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#interrupted())を呼び出して割り込みが発生したかどうか明示的に確認する必要があります。
 
 ### 例外のログ
 
@@ -1258,13 +1307,13 @@ org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
 
 ```java
    import org.autogui.base.log.*;
-   class Hello {
+   class HelloException {
        void action() {
            GuiLogManager.get().logError(new RuntimeException("error1"));
            throw new RuntimeException("error2");
        }
    }
-   org.autogui.swing.AutoGuiShell.showLive(new Hello());
+   org.autogui.swing.AutoGuiShell.showLive(new HelloException());
 ```
 
 <img src="docs/images/image-log-exception-h.png" srcset="docs/images/image-log-exception-h.png 1x, docs/images/image-log-exception.png 2x" alt="Progress">
@@ -1272,12 +1321,12 @@ org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
 ### 長時間のアクションと進捗バー
 
 GUIアクションの実行が極端に長くなった場合、(最大カウントのない)進捗バーを表示する独立したタスクとなります。停止ボタンは割り込みを発生させるので、
-[`InterruptedException`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/InterruptedException.html) もしくは
-[`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Thread.html#interrupted())で確認できます。
+[`InterruptedException`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/InterruptedException.html) もしくは
+[`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#interrupted())で確認できます。
 
 
 ```java
-  class Hello {
+  class HelloLongRun {
       void action() throws Exception {
           for (int i = 0; i < 100; ++i) {
               if (i % 10 == 0) System.err.println(i);
@@ -1286,7 +1335,7 @@ GUIアクションの実行が極端に長くなった場合、(最大カウン�
           System.err.println("finish");
       }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloLongRun())
 ```
 
 <img src="docs/images/image-log-longrunning-h.png" srcset="docs/images/image-log-longrunning-h.png 1x, docs/images/image-log-longrunning.png 2x" alt="Progress">
@@ -1303,11 +1352,8 @@ GUIアクションの実行が極端に長くなった場合、(最大カウン�
 `autogui.laf`プロパティにより設定するLAFを指定できます。JVMの起動オプションで`-Dautogui.laf=...`で設定可能です。このプロパティは下記の値をとります。なお対応するコードは
 [UIManagerUtil.selectLookAndFeelFromSpecialName(String)](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/util/UIManagerUtil.html#selectLookAndFeelFromSpecialName(java.lang.String))です。
 
-* 値設定なし、または空文字`""`か`default` 
-    1. 後述する[flatlafロード](#loading-flatlaf)を行を試す
-    2. MacOSで外観がダークでなければ`system`(システムデフォルトのLAF: AquaLookAndFeel)を適用する
-    3. 上記以外の場合[`nimbus-flat`](#nimbuslookandfeelcustomflat)を適用する
-* `default-no-darklaf` : `default`と同じだがflatlafロードは試さない
+* 値設定なし、または空文字`""`か`default`: [`nimbus-flat`](#nimbuslookandfeelcustomflat)を適用する
+* `default-darklaf` : まず[Loading flatlaf](#loading-flatlaf)を試し、失敗すれば[`nimbus-flat`](#nimbuslookandfeelcustomflat)を適用する
 * `metal`: `javax.swing.plaf.metal.MetalLookAndFeel`を適用する
 * `nimbus`: `javax.swing.plaf.nimbus.NimbusLookAndFeel`を適用する
 * `nimbus-flat`: 本ライブラリ独自の [`NimbusLookAndFeelCustomFlat`](#nimbuslookandfeelcustomflat)を適用する
@@ -1327,31 +1373,48 @@ GUIアクションの実行が極端に長くなった場合、(最大カウン�
 |:-----------------:|:----------------:|
 | <img src="docs/images/image-nimbus-flat-light.png" srcset="docs/images/image-nimbus-flat-light-h.png 1x, docs/images/image-nimbus-flat-light.png 2x" alt="NimbusLookAndFeelCustomFlatLight"> | <img src="docs/images/image-nimbus-flat-dark.png" srcset="docs/images/image-nimbus-flat-dark-h.png 1x, docs/images/image-nimbus-flat-dark.png 2x" alt="NimbusLookAndFeelCustomFlatDark"> |
 
-MacOSではJVMのオプション`-J-Dapple.awt.application.appearance=system`を追加することで、ダークモードのウィンドウタイトルバーを適用できます。
 
-GNOME(デフォルトのUbuntuなど)でのHiDPI環境では環境変数`GDK_SCALE=2`を指定することで適切な表示が得られる場合があります。
+`nimbus-flat` (1.9-)はシステムの状態に応じて上記の`nimbus-flat-light`, `nimbus-flat-dark`を動的に切り替えるテーマです。
+現在のJDKにはシステムのテーマの状態を判別したり切り替えの通知を受け取る機能はありません。
+そのため、`nimbus-flat`では定期的なコマンドの実行によって状態を判別し、切り替えます。
+具体的には以下の判別を行います。
+
+* macOS: `/usr/bin/defaults read -g AppleInterfaceStyle`の出力を小文字化し`dark`が含まれるかどうか
+* Linux(Gnome): `/usr/bin/gsettings get org.gnome.desktop.interface gtk-theme`の出力を小文字化し`dark`が含まれるかどうか
+* Windows: `C:\Windows\System32\reg.exe query HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize -v AppsUseLightTheme`の出力にパターン`AppsUseLightTheme\s*REG_DWORD\s*0x1`が含まれるかどうか
+
+上記のコマンドは極力安全性を確保するため絶対パスにより実行ファイルを指定しています。
+
+macOSではJVMのオプション`-Dapple.awt.application.appearance=system`を追加することで、ダークモードのウィンドウタイトルバーを適用できます。
+
+
+GNOME(デフォルトのUbuntuなど)でのHiDPI環境では環境変数`GDK_SCALE=2`または`-Dsun.java2d.uiScale=2.0`を指定することで適切な表示が得られる場合があります。
 
 ### Loading Flatlaf
 
-本ライブラリのデフォルトのLAF指定は暗黙のうちに[*flatlaf*](https://www.formdev.com/flatlaf/) (`com.formdev:flatlaf:3.6`により確認しています)が実行環境に含まれているかどうかをチェックし、OSの現在のテーマにあったルック&フィール(LAF)を自動的に適用します。このチェックと適用は単純に`Class.forName`を使ってリフレクションAPIにより実現しています。
+本ライブラリの`darklaf`指定は暗黙のうちに[*flatlaf*](https://www.formdev.com/flatlaf/) が実行環境に含まれているかどうかをチェックし、OSの現在のテーマにあったルック&フィール(LAF)を自動的に適用します。
+このチェックと適用は単純に`Class.forName`を使ってリフレクションAPIにより実現しており、モジュールパスを適切に設定する必要があります。
 
 <img src="docs/images/image-dark-h.png" srcset="docs/images/image-dark-h.png 1x, docs/images/image-dark.png 2x" alt="Progress">
 
 ### コード上の外観の制御
 
 [`AutoGuiShell`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html) クラスに定義されたメソッドを呼び出してLAFの設定を制御することができます。
-例えば`Hello`クラスのオブジェクトを起動する前に下記のようなコードでLAF設定を制御することができます。
+例えば`HelloLaf`クラスのオブジェクトを起動する前に下記のようなコードでLAF設定を制御することができます。
 
 ```java
-  AutoGuiShell.get()
-    .withLookAndFeelDefaultWithoutProp() //プロパティの設定を無効にし, nimbus-flatまたはflatlafを利用する
-    .showWindow(new Hello());
+  import org.autogui.*;
+  import org.autogui.swing.*;
+  @GuiIncluded public class HelloLaf {
+    @GuiIncluded public String prop;
+  }
 
   AutoGuiShell.get()
-    .withLookAndFeelDefaultNoFlatlafWithoutProp() //プロパティの設定を無効にし, nimbus-flatを利用する
-    .showWindow(new Hello());
+    .withLookAndFeelDefaultWithoutProp() //プロパティの設定を無効にし, nimbus-flatを利用する
+    .showWindow(new HelloLaf());
+
 
   AutoGuiShell.get()
     .withLookAndFeelSpecial("metal") //autogui.lafに"metal"を設定した場合と同様
-    .showWindow(new Hello());
+    .showWindow(new HelloLaf());
 ```

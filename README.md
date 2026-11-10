@@ -27,10 +27,10 @@ The project uses [apache-maven](http://maven.apache.org) and depends on a recent
 * -1.1.x : Java 8 or later
 
 ```bash
-mvn package
-  # the command will generate target/autogui-1.8.jar
+./mvnw package
+  # the command will generate target/autogui-1.9.jar
 
-mvn install
+./mvnw install
   # the command makes the built library available locally to other projects. 
 ```
 
@@ -45,7 +45,7 @@ To use the library in your apache-maven project, you can insert the following `d
     <dependency>
         <groupId>org.autogui</groupId>
         <artifactId>autogui</artifactId>
-        <version>1.8</version>
+        <version>1.9</version>
     </dependency>
 ```
 
@@ -60,15 +60,15 @@ The library jar is available from Maven Central Repository: [org.autogui:autogui
 
 ## Quick tutorial: A tiny example with jshell
 
-The library can be used with `jshell` that is the official REPL-tool bundled with JDK since Java 9.
+The library can be used with `jshell` that is the official JDK's REPL-tool.
 To use the library, you first need to include the jar file of the library to your class-path.
 In `jshell`, you can do that by `/env -class-path <path/to/jar>`.
 
 Simple steps for using the library with `jshell` is like following.
 
-1. In the terminal, as described in [Building from source](#building-from-source), move to the directory `autogui` and build the library. (supposing the environment JDK, Git and Maven are installed)
+1. In the terminal, as described in [Building from source](#building-from-source), move to the directory `autogui` and build the library. (supposing the environment JDK and Git are installed)
 2. start `jshell`
-3. type `/env -class-path target/autogui-1.8.jar` in order to enable accessing the library.
+3. type `/env -class-path target/autogui-1.9.jar` in order to enable accessing the library.
 4. next, type the following lines of code: it defines the class `Hello`.
    ```java
    class Hello {
@@ -81,7 +81,7 @@ Simple steps for using the library with `jshell` is like following.
 5. also, type the following 3 lines of code: it uses the library and a window will be displayed.
    ```java
    import org.autogui.swing.*;
-   Hello h = new Hello();
+   var h = new Hello();
    AutoGuiShell.showLive(h);
    ```
 
@@ -90,12 +90,14 @@ After following the steps above, the terminal should look something like this:
 ```
 $ git clone https://github.com/ppp-kohe/autogui.git
 $ cd autogui
-$ mvn package
+$ ./mvnw package
 $ jshell
-|  Welcome to JShell -- Version 21.0.3
+|  Welcome to JShell -- Version 27.0.1.0.3
 |  For an introduction type: /help intro
 
 jshell> 
+/env -class-path target/autogui-1.9.jar
+
 class Hello {
    String value;
    void action() {
@@ -103,10 +105,8 @@ class Hello {
    }
 }
 
-/env -class-path target/autogui-1.8.jar
-
 import org.autogui.swing.*;
-Hello h = new Hello();
+var h = new Hello();
 AutoGuiShell.showLive(h);
 ```
 
@@ -114,14 +114,14 @@ The above code defines the class `Hello` with an instance field and a method.
 After that, [`org.autogui.swing.AutoGuiShell.showLive(Object)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html#showLive(java.lang.Object)) starts creating a GUI window from the given object and shows the window.
 
 The created window will contain a text field labeled as "Value" and a button on the tool-bar labeled as "Action". 
-You can fill the text field with the string "hello, world" by typing the keyboard and click the button, then you will see "hello, world" on the console of `jshell`.
+You can fill the text field with the string "hello, world" by typing the keyboard and click the button "Action", then you will see "hello, world" on the console of `jshell`.
 
 <img src="docs/images/image-hello-h.png" srcset="docs/images/image-hello-h.png 1x, docs/images/image-hello.png 2x" alt="Hello">
 
-This means that the library creates the text field from the field `value`. The type of the field `String` specifies the type of the component as a text field. 
+This means that the library creates the text field "Value" from the field `value`. The type of the field `String` specifies the type of the component as a text field. 
 If you edit the text of the text field on the created window, the library automatically sets the value of the field of the given object `h` to the text input in the text field. This can be confirmed by `jshell> h.value`.
 
-Also, the method `action` is bound to the action of the button on the tool-bar. If you click the button, the method will be invoked with the given object.
+Also, the method `action` is bound to the action of the button "Action"  on the tool-bar. If you click the button, the method will be invoked with the given object.
 
 ## Example applications
 
@@ -204,7 +204,7 @@ The command will show a GUI window like the following image:
 <img src="docs/images/image-rename-demo-h.png" srcset="docs/images/image-rename-demo-h.png 1x, docs/images/image-rename-demo.png 2x" alt="ImageFlipDemo">
 
 You can drag & drop a directory to the *Dir* field and then listing files in the directory as the *Entries* table. 
-Note the *Rename* button actually changes names of the listed files to *New Name*s without any warning.
+Note the *Rename* button actually changes names of the listed files to *New Name*s. The file names in *New Name* can be edited by double-clicking cells.
 
 This is constructed from the following code:
 
@@ -212,33 +212,34 @@ This is constructed from the following code:
 package org.autogui.demo;
 
 import org.autogui.GuiIncluded;
+import org.autogui.GuiInits;
+import org.autogui.base.annotation.GuiInitAction;
 import org.autogui.swing.AutoGuiShell;
 
 import java.io.File;
 import java.util.*;
 
-@GuiIncluded public class FileRenameDemo {
+@GuiIncluded
+public class FileRenameDemo {
     public static void main(String[] args) {
         AutoGuiShell.get().showWindow(new FileRenameDemo());
     }
+
+    public FileRenameDemo() {}
 
     File dir;
 
     @GuiIncluded public File getDir() { return dir; }
     @GuiIncluded public void setDir(File dir) {
-        boolean update = 
-             dir != null && !Objects.equals(this.dir, dir);
+        boolean update = dir != null && !Objects.equals(this.dir, dir);
         this.dir = dir;
         if (update && dir.isDirectory()) {
             List<RenameEntry> es = new ArrayList<>();
             int i = 0;
-            List<File> files = new ArrayList<>(
-                            Arrays.asList(dir.listFiles()));
+            List<File> files = new ArrayList<>(Arrays.asList(dir.listFiles()));
             files.sort(Comparator.naturalOrder());
             for (File file : files) {
-                es.add(new RenameEntry(file, 
-                  String.format("%03d-%s", 
-                                i, file.getName())));
+                es.add(new RenameEntry(file, String.format("%03d-%s", i, file.getName())));
                 ++i;
             }
             entries = es;
@@ -247,9 +248,7 @@ import java.util.*;
 
     List<RenameEntry> entries = new ArrayList<>();
 
-    @GuiIncluded public List<RenameEntry> getEntries() { 
-        return entries; 
-    }
+    @GuiIncluded public List<RenameEntry> getEntries() { return entries; }
 
     @GuiIncluded public static class RenameEntry {
         File file;
@@ -258,21 +257,15 @@ import java.util.*;
             this.file = file;
             this.newName = newName;
         }
-        @GuiIncluded public File getFile() {
-            return file;
-        }
-        @GuiIncluded public String getNewName() {
-            return newName; 
-        }
-        @GuiIncluded public void setNewName(String newName) {
-            this.newName = newName;
-        }
+        @GuiIncluded public File getFile() { return file; }
+        @GuiIncluded public String getNewName() { return newName; }
+        @GuiIncluded public void setNewName(String newName) { this.newName = newName; }
     }
 
+    @GuiInits(action = @GuiInitAction(confirm = true))
     @GuiIncluded public void rename() {
         for (RenameEntry e : entries) {
-            File newFile = new File(
-                e.getFile().getParentFile(), e.getNewName());
+            File newFile = new File(e.getFile().getParentFile(), e.getNewName());
             if (e.getFile().exists() && !newFile.exists()) {
                 e.getFile().renameTo(newFile);
             }
@@ -284,7 +277,7 @@ import java.util.*;
 * In this demo, the library constructs GUI components by selecting only members attached the annotation `@GuiIncluded`. This is launched by `AutoGuiShell.get().showWindow(...)` as I call *strict mode*.
 * The file-path field *Dir*: When the user edits the field, the new text is set as `File` by invoking `setDir(File)`. The method loads files in the directory and constructs a new `ArrayList` object of `RenameEntry`. `RenameEntry` is the static nested class, and contains `File` and a new name prefixed with an index (by `String.format("%03d-%s",...)`).    The rewriting `entries = es;` will cause updating the table display.
 * The *Entries* table: constructed from the list returned by `getEntries()`. The table columns are defined by the properties *File* and *New Name* of the element type of the list `<RenameEntry>`. Each row of the table corresponds to each element of the list. The updating of the item size in the table will be caused by changing of the identity of the list object returned by the getter method.
-* The *Rename* button: created from the `rename()` method for renaming entries.
+* The *Rename* button: created from the `rename()` method for renaming entries. (The `rename()` method has the `@GuiInits` annotation. This is the preferences setting for displaying a confirmation dialog when the button is pressed.)
 
 The table component of collection objects in the library is so powerful to extend the usage of applications.
 
@@ -339,16 +332,16 @@ With `AutoGuiShell.get().showWindow(o)`, you will need to attach the annotation 
 
 ## Using from modules
 
-If your code for binding with the library is defined as a member of a module which is introduced since Java 9, you will need to open your code to the library. This is because the library relies on reflection APIs for accessing your code. In a named module, the reflection APIs are restricted to *open* members. 
+If your code for binding with the library is defined as a member of a module in JPMS which is introduced since Java 9, you will need to open your code to the library. This is because the library relies on reflection APIs for accessing your code. In a named module, the reflection APIs are restricted to *open* members. 
 
 The module name of the library is `org.autogui`. You will need to do the following steps in your `module-info.java` :
 
-1. add the `open` modifier to your module declaration, or `exports` (or `opens`) your packages  ` to org.autogui;`
+1. `exports` (or `opens`) your packages  ` to org.autogui;`
 2. `requires org.autogui;`
 
 ```java
 //your module-info.java
-open module your.module { //adds the "open" modifier to the your module, or...
+module your.module { 
     exports your.pack to org.autogui; //exports your package to the library.
                                   //you can also use "opens your.pack to autogui;"
     
@@ -384,8 +377,10 @@ The recent versions (1.2-) have the `module-info.class` and require Java 11 or l
     [`javax.swing.JComponent`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JComponent.html)
 * [Object pane](#object-pane): a user-defined object type with composition of properties and actions
   * Object properties: `T getP() {...}`, `T p() {...}` (1.2-) , `void setP(T) {...}` or `T p;`
-      * if all members are other user-defined objects, then the enclosing object will be bound to a tabbed-pane
-  * Action methods: `void m() {...}`
+      * [Object tabbed-pane](#object-tabbed-pane): if all members are other user-defined objects, then the enclosing object will be bound to a tabbed-pane
+      * [Split pane](#split-pane): if multiple properties have sub-panes that have scroll-views, those are arranged by split panes.
+  * [Action method](#action-method): `void m() {...}`
+      * [Editor action method](#editor-action-method): `@GuiIncluded(editor=true) T m() {...}` (1.9-)
 * [Collection table](#collection-table): a sub-type of 
   [`java.util.Collection<E>`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html)
   or an array `E[]` with columns based `E`
@@ -414,13 +409,20 @@ A property of
 will be bound to a text field.
 
 ```java
-  class Hello {
+  class HelloString {
       String prop;
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloString())
 ```
 
 <img src="docs/images/image-string-h.png" srcset="docs/images/image-string-h.png 1x, docs/images/image-string.png 2x" alt="String text-field">
+
+The icon displayed on the right side is a button to display the pop-up menu. It shows several menu items for each component. The menu can also be displayed as a secondary button on the mouse.
+
+The pop-up menu has the menu-item *Multiline* (1.9-) which allows users to switch between editing multiple lines of text. When switching to multiple-line editing, an additional icon will appear on the bottom-right cornar, and by dragging the icon, it allows users expand the number of displayed lines. In this state, users can edit a string that include line breaks and set it to the property.
+
+
+<img src="docs/images/image-string-multiline-h.png" srcset="docs/images/image-string-multiline-h.png 1x, docs/images/image-string-multiline.png 2x" alt="String text-field-multiline">
 
 ### File text-field
 
@@ -431,13 +433,15 @@ will be bound to a text field with an extension for file operations.
 
 ```java
   import java.io.File;
-  class Hello {
+  class HelloFile {
       File prop;  
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloFile())
 ```
 
 <img src="docs/images/image-file-h.png" srcset="docs/images/image-file-h.png 1x, docs/images/image-file.png 2x" alt="File text-field">
+
+The pop-up menu displayed by the icon on the right side contains convenient menu items for setting a file path.
 
 ### Number spinner
 
@@ -447,10 +451,10 @@ Numerical types includes primitive types (`byte`, `short`, `int`, `long`, `float
 [`java.math.BigInteger`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigInteger.html) and  [`java.math.BigDecimal`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html) 
 
 ```java
-  class Hello {
+  class HelloNumber {
       int prop;
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloNumber())
 ```
 
 <img src="docs/images/image-number-h.png" srcset="docs/images/image-number-h.png 1x, docs/images/image-number.png 2x" alt="Number spinner">
@@ -462,10 +466,10 @@ A property of `boolean` or
  will be bound to a check-box.
 
 ```java
-  class Hello {
+  class HelloBoolean {
       boolean prop;
   } 
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloBoolean())
 ```
 
 <img src="docs/images/image-boolean-h.png" srcset="docs/images/image-boolean-h.png 1x, docs/images/image-boolean.png 2x" alt="Boolean check-box">
@@ -481,10 +485,10 @@ Members of the enum becomes items of the menu.
   enum HelloEnum {
       Hello, World
   }
-  class Hello {
+  class HelloPulldown {
       HelloEnum prop = HelloEnum.Hello;
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloPulldown())
 ```
 
 <img src="docs/images/image-enum-h.png" srcset="docs/images/image-enum-h.png 1x, docs/images/image-enum.png 2x" alt="Enum combo-box">
@@ -497,15 +501,17 @@ A property of
 
 ```java
   import java.awt.*;
-  class Hello {
+  class HelloImage {
       Image prop;
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloImage())
 ```
 
 <img src="docs/images/image-image-h.png" srcset="docs/images/image-image-h.png 1x, docs/images/image-image.png 2x" alt="Image pane">
 
-The pane supports drag & drop and zooming by the mouse wheel with the Alt(option) key.
+The pane supports drag & drop and zooming.
+The dragging can be started with pressing the Alt(Option) key. Also the zooming can be done by the mouse wheel with the Alt(Option) key.
+
 For handling images in code, 
 [`java.awt.image.BufferedImage`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/image/BufferedImage.html) and 
 [`javax.imageio.ImageIO`](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/imageio/ImageIO.html)
@@ -515,7 +521,7 @@ are useful.
   import java.io.File;
   import java.awt.image.*;
   import javax.imageio.*;
-  class Hello {
+  class HelloImageSize {
       private File file;
       void setFile(File f) throws Exception {
           file = f;
@@ -530,7 +536,7 @@ are useful.
           return prop == null ? 0 : prop.getHeight();
       }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloImageSize())
 ```
 
 <img src="docs/images/image-image-file-h.png" srcset="docs/images/image-image-file-h.png 1x, docs/images/image-image-file.png 2x" alt="Image dragging">
@@ -544,10 +550,10 @@ or
 and its sub-type will be bound to a text-edit pane.
 
 ```java
-  class Hello {
+  class HelloDocument {
       StringBuilder prop = new StringBuilder();
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloDocument())
 ```
 
 <img src="docs/images/image-document-h.png" srcset="docs/images/image-document-h.png 1x, docs/images/image-document.png 2x" alt="Document editor">
@@ -571,6 +577,14 @@ When the type of the property is
 , its sub-type or `StringBuilder`, 
 the user can change its (global) style by settings from the context menu.
 
+```java
+  import javax.swing.text.*;
+  class HelloStyledDocument {
+      StyledDocument prop = new DefaultStyledDocument();
+  }
+  org.autogui.swing.AutoGuiShell.showLive(new HelloStyledDocument())
+```
+
 <img src="docs/images/image-document-styled-h.png" srcset="docs/images/image-document-styled-h.png 1x, docs/images/image-document-styled.png 2x" alt="Document editor with styles">
 
 ### Object pane
@@ -578,7 +592,7 @@ the user can change its (global) style by settings from the context menu.
 A property of a user-defined object class will be bound to a pane composing members of the class.
 
 ```java
-  class Hello {
+  class HelloObject {
       String prop1;
       int prop2;
       E prop3 = new E();
@@ -592,7 +606,7 @@ A property of a user-defined object class will be bound to a pane composing memb
           System.out.printf("E: %s\n", prop);
       }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloObject())
 ```
 
 <img src="docs/images/image-object-h.png" srcset="docs/images/image-object-h.png 1x, docs/images/image-object.png 2x" alt="Object pane">
@@ -616,14 +630,13 @@ The predefined set of icons and associated words can be viewed by running [`src/
  mvn test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=org.autogui.demo.IconListDemo
 ```
 
-
 #### Property definition 
 
 A user-defined object class has properties which are bound as sub-components.
 A *property* can be defined as 1) an accessible field definition or 2) a pair of getter and setter methods. 
 
 ```java
-  class Hello {
+  class HelloProp {
       String prop1; 
       
       private String prop2 = "hello";
@@ -640,7 +653,7 @@ A *property* can be defined as 1) an accessible field definition or 2) a pair of
       boolean isFlag() { return flag; } //is...() for boolean
       void setFlag(boolean b) { flag = b; } 
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloProp())
 ```
 
 <img src="docs/images/image-prop-h.png" srcset="docs/images/image-prop-h.png 1x, docs/images/image-prop.png 2x" alt="Properties">
@@ -655,8 +668,6 @@ If a property is defined only a getter method, then the property value becomes *
 
 In the setter method, the user code can cause modification of some other properties.
 The created UI automatically specifies changed properties of the object pane. In order to achieve the UI updating, a getter method will be called abruptly and frequently.
-
-
 
 #### AutoCloseable support
 
@@ -681,7 +692,7 @@ Then, the generated text-field for the property will contain the action button f
 
 ```java
 import java.util.regex.*;
-class PatternFind {
+class HelloPropAction {
     String text;
     String search;
     void searchAction() {
@@ -693,7 +704,7 @@ class PatternFind {
         }
     }
 }
-org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
+org.autogui.swing.AutoGuiShell.showLive(new HelloPropAction())
 ```
 
 <img src="docs/images/image-action-combination-h.png" srcset="docs/images/image-action-combination-h.png 1x, docs/images/image-action-combination.png 2x" alt="Action property combination">
@@ -704,7 +715,7 @@ org.autogui.swing.AutoGuiShell.showLive(new PatternFind())
 A user-defined object which has only properties of sub user-defined objects without other value properties will be bound to a tabbed-pane. Components of each tab in the tabbed-pane become the pane created from the sub objects.
 
 ```java
-  class Hello {
+  class HelloTab {
       Tab1 tab1 = new Tab1();
       Tab2 tab2 = new Tab2();
   }
@@ -714,12 +725,67 @@ A user-defined object which has only properties of sub user-defined objects with
   class Tab2 {
       int prop;
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloTab())
 ```
 
 <img src="docs/images/image-tab-h.png" srcset="docs/images/image-tab-h.png 1x, docs/images/image-tab.png 2x" alt="Object tabbed-pane">
 
+#### Split pane
 
+In the [Object pane](#object-pane), if there are multiple sub-pains that include scroll views of the properties,  they are arranged using split panes. The split pane displays a slider for adjusting the size in vertical or horizontal directions. You can switch between vertical and horizontal orientations using the *Flip Split Orientation* option in the pop-up menu that appears when you click the secondary button.
+
+```java
+  import java.util.List;
+  import java.util.ArrayList;
+  import java.awt.image.*;
+  class HelloSplit {
+      BufferedImage image;
+      List<String> list = new ArrayList<>(List.of("a", "b", "c"));
+  }
+  org.autogui.swing.AutoGuiShell.showLive(new HelloSplit())
+```
+
+<img src="docs/images/image-split-h.png" srcset="docs/images/image-split-h.png 1x, docs/images/image-split.png 2x" alt="Split pane">
+
+#### Editor action method
+
+An action method can return an object and the library can show a new window associated with the returned object (1.9-).
+We call the feature the editor action method.
+
+The definition of the editor action method is 1. to return the objects that can be displayed as the target for editing, and 2. to add an `@GuiIncluded` annotation with setting the `editor=true` property (This distinguishes it from getter properties without the `get` prefix.). 
+
+The displayed object returned can be a new instances created by `new` or an existing object. In either case, a new window will be displayed and it includes a pane corresponding to the returned object. 
+
+The feature includes allowing for further definition of editing completion action method, as reflecting the word "editor".
+You can define a callback that is called when an user has completed editing an object on the newly displayed window.
+As like the following code, the method should return `void` and have the `complete` prefix as following the same name as the action method, and also define the argument of the type of the target object. 
+
+Additionally, you can define a `boolean` argument for the editing completion action method.
+This allows you to display the *OK* and *Cancel* buttons for editing completion on the window, close the window based on the button, and explicitly execute the editing completion action method.
+The *OK* and *Cancel* buttons are set to `true` and `false` respectively for the `boolean` argument. When the window is closed using the close button, it behaves same as the *Cancel* button. 
+If the `boolean` argument is not defined, the *OK* and *Cancel* buttons will not be displayed, and the editing completion action method will be executed when the window is closed.
+  
+
+```java
+import org.autogui.GuiIncluded;
+class HelloEditor {
+    @GuiIncluded(editor=true) Editor editor() {
+        return new Editor();
+    }
+
+    String result;
+
+    void completeEditor(Editor e, boolean ok) {
+        result = e.prop + ", ok=" + ok;
+    }
+}
+class Editor {
+    String prop;
+}
+org.autogui.swing.AutoGuiShell.showLive(new HelloEditor())
+```
+
+<img src="docs/images/image-action-editor-h.png" srcset="docs/images/image-action-editor-h.png 1x, docs/images/image-action-editor.png 2x" alt="Editor action method">
 
 ### Embedded component
 
@@ -730,7 +796,7 @@ or its sub-type will be bound to a pane for embedding the property value as sub-
 ```java
   import java.awt.*;
   import javax.swing.*;
-  class Hello {
+  class HelloComponent {
       private JComponent value;
       JComponent getValue() {
           if (value == null) { 
@@ -747,7 +813,7 @@ or its sub-type will be bound to a pane for embedding the property value as sub-
           return value;
       }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello());
+  org.autogui.swing.AutoGuiShell.showLive(new HelloComponent());
 ```
 
 <img src="docs/images/image-component-h.png" srcset="docs/images/image-component-h.png 1x, docs/images/image-component.png 2x" alt="Embedded component">
@@ -782,8 +848,9 @@ its sub-type or an array type `E[]`  will be bound to a table pane.
 The column of the table will be created from the type-argument `E`.
 
 ```java
-  import java.util.*;
-  class Hello {
+  import java.util.List;
+  import java.util.ArrayList;
+  class HelloList {
       List<String> prop = new ArrayList<>();
       
       void add() {
@@ -791,7 +858,7 @@ The column of the table will be created from the type-argument `E`.
           prop = new ArrayList<>(prop); 
       }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloList())
 ```
 
 <img src="docs/images/image-collection-h.png" srcset="docs/images/image-collection-h.png 1x, docs/images/image-collection.png 2x" alt="Collection table">
@@ -803,8 +870,9 @@ The column of the table will be created from the type-argument `E`.
 If the type-argument`E` of `Collection<E>` is a user-defined object class, then columns of the  table are created from properties of the class.
 
 ```java
-   import java.util.*;
-   class Hello {
+   import java.util.List;
+   import java.util.ArrayList;
+   class HelloListColumn {
        List<Item> prop = new ArrayList<>();
        void add() {
            prop.add(new Item("hello " + prop.size(), (int) (Math.random() * 100)));
@@ -816,7 +884,7 @@ If the type-argument`E` of `Collection<E>` is a user-defined object class, then 
        int num;
        Item(String n, int i) { this.name = n; this.num = i; }
    }
-   org.autogui.swing.AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new HelloListColumn())
 ```
 
 <img src="docs/images/image-collection-column-h.png" srcset="docs/images/image-collection-column-h.png 1x, docs/images/image-collection-column.png 2x" alt="Collection table with property columns">
@@ -830,25 +898,26 @@ then the table has a button of a tool-bar for the method. The button executes th
 If the element object in the collection has an action-method, then the table has a button of a tool-bar for the method. The button executes the method for each objects of selected rows in the table.
 
 ```java
-   import java.util.*;
-   class Hello {
-       List<Item> prop = new ArrayList<>();
+   import java.util.List;
+   import java.util.ArrayList;
+   class HelloListAction {
+       List<ItemUpd> prop = new ArrayList<>();
        void add() {
-           prop.add(new Item("hello " + prop.size(), (int) (Math.random() * 100)));
+           prop.add(new ItemUpd("hello " + prop.size(), (int) (Math.random() * 100)));
            prop = new ArrayList<>(prop);
        }
-       void remove(List<Item> selectedItems) {
+       void remove(List<ItemUpd> selectedItems) {
            prop.removeAll(selectedItems);
            prop = new ArrayList<>(prop);
        }
    }
-   class Item {
+   class ItemUpd {
        String name;
        int num;
-       Item(String n, int i) { this.name = n; this.num = i; }
+       ItemUpd(String n, int i) { this.name = n; this.num = i; }
        void update() { ++num; }
    }
-   org.autogui.swing.AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new HelloListAction())
 ```
 
 <img src="docs/images/image-collection-action-h.png" srcset="docs/images/image-collection-action-h.png 1x, docs/images/image-collection-action.png 2x" alt="Collection table with actions">
@@ -865,34 +934,35 @@ There are two types of bindings:
 ```java
 import java.util.*;
 import org.autogui.*;
-class Hello {
-    List<Item> prop = new ArrayList<>();
+class HelloListSelect {
+    List<ItemSel> prop = new ArrayList<>();
     void add() {
-        prop.add(new Item("Hello " + prop.size()));
+        prop.add(new ItemSel("Hello " + prop.size()));
         prop = new ArrayList<>(prop);
     }
     @GuiListSelectionUpdater
-    List<Item> selectTop() {
+    List<ItemSel> selectTop() {
         return Arrays.asList(prop.get(0));
     }
     @GuiListSelectionCallback
-    void selected(List<Item> items) {
+    void selected(List<ItemSel> items) {
         System.out.println("selected: " + items);
     }
 }
-class Item {
+class ItemSel {
     String name;
-    Item(String n) { this.name = n; }
-    public String toString() { return "Item(" + this.name + ")"; }
+    ItemSel(String n) { this.name = n; }
+    @GuiIncluded(false)
+    public String toString() { return "ItemSel(" + this.name + ")"; }
 }
-org.autogui.swing.AutoGuiShell.showLive(new Hello())
+org.autogui.swing.AutoGuiShell.showLive(new HelloListSelect())
 ```
 
 <img src="docs/images/image-collection-select-h.png" srcset="docs/images/image-collection-select-h.png 1x, docs/images/image-collection-select.png 2x" alt="Collection table with selection actions">
 
-In the above example, `List<Item> selectTop()` has `@GuiListSelectionUpdater`. The method becomes the action button "Select Top" and it causes changing the selection in the table of `prop ` as selecting the top item in the list, which is returned by the method. 
+In the above example, `List<ItemSel> selectTop()` has `@GuiListSelectionUpdater`. The method becomes the action button "Select Top" and it causes changing the selection in the table of `prop ` as selecting the top item in the list, which is returned by the method. 
 
-And, `void selected(List<Item> items)` has `@GuiListSelectionCallback` and takes a list of items. The method also becomes the action button "*Selected", but the action of the button is automatically executed  by a selection change of the table of `prop`.
+And, `void selected(List<ItemSel> items)` has `@GuiListSelectionCallback` and takes a list of items. The method also becomes the action button "*Selected", but the action of the button is automatically executed  by a selection change of the table of `prop`.
 
 The target table of those special methods are specified by the item type, i.e. the type argument `E` of  `List<E>` . If two or more tables has the same item type of those methods, then all of the tables are affected by the methods.
 
@@ -900,8 +970,7 @@ As another special feature, both annotation types have the boolean argument `ind
 
 #### Changing cell sizes
 
-The created table has ability to change column and row sizes via the pop-up menu of the table-header.
-
+The created table has ability to change column and row sizes via the pop-up menu shown by clicking the secondary mouse button on the table-header.
 
 <img src="docs/images/image-collection-columnsize-h.png" srcset="docs/images/image-collection-columnsize-h.png 1x, docs/images/image-collection-columnsize.png 2x" alt="Collection table with setting column size">
 
@@ -938,7 +1007,7 @@ The default order is determined by names of the properties.
 
 ```java
   import org.autogui.GuiIncluded;
-  class Hello {
+  class HelloOrder {
       @GuiIncluded(index=3) String prop1;
       @GuiIncluded(index=2) String prop2;
       
@@ -946,7 +1015,7 @@ The default order is determined by names of the properties.
       @GuiIncluded(index=1) String getProp3() { return prop3; } 
       void setProp3(String p) { prop3 = p; }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloOrder())
 ```
 
 <img src="docs/images/image-order-h.png" srcset="docs/images/image-order-h.png 1x, docs/images/image-order.png 2x" alt="Order of members">
@@ -958,12 +1027,12 @@ For a pair of getter and setter, one of annotations attached to the members is a
 To display a tool-tip message for a member, you can use
 [`@GuiIncluded(description=...)`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiIncluded.html#description()). 
 
-
 ```java
    import org.autogui.GuiIncluded;
-   class Hello {
+   class HelloTooltip {
        @GuiIncluded(description="component description") String prop;
    }
+   org.autogui.swing.AutoGuiShell.showLive(new HelloTooltip())
 ```
 
 <img src="docs/images/image-description-h.png" srcset="docs/images/image-description-h.png 1x, docs/images/image-description.png 2x" alt="Property description">
@@ -989,7 +1058,7 @@ The library automatically sets shortcut keys for members based on their names.
 
 ```java
    import org.autogui.GuiIncluded;
-   class Hello {
+   class HelloKey {
        @GuiIncluded(keyStroke="L") String prop; 
        @GuiIncluded(keyStroke="T") void action() {
            System.out.println("action " + prop);
@@ -1000,7 +1069,7 @@ The library automatically sets shortcut keys for members based on their names.
            System.out.println("action2");
        }
    }
-   org.autogui.swing.AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new HelloKey())
 ```
 <img src="docs/images/image-keystroke-h.png" srcset="docs/images/image-keystroke-h.png 1x, docs/images/image-keystroke.png 2x" alt="Key-binding">
 
@@ -1023,7 +1092,7 @@ import java.util.concurrent.*;
 import org.autogui.*;
 import java.time.*;
 
-class Hello implements AutoCloseable {
+class HelloNotify implements AutoCloseable {
    private ScheduledExecutorService service;
    private ScheduledFuture<?> task;
    
@@ -1033,7 +1102,7 @@ class Hello implements AutoCloseable {
    @GuiNotifierSetter 
    void setPropUpdater(Runnable r) { updater = r; }
    
-   Hello() {
+   HelloNotify() {
       service = Executors.newScheduledThreadPool(1);
       task = service.scheduleWithFixedDelay(this::update, 0, 3, TimeUnit.SECONDS);
    }
@@ -1048,7 +1117,7 @@ class Hello implements AutoCloseable {
        service.shutdownNow();
    }
 }
-org.autogui.swing.AutoGuiShell.showLive(new Hello())
+org.autogui.swing.AutoGuiShell.showLive(new HelloNotify())
 ```
 
 The above example will show a text field that periodically updates its text as the current time every 3 seconds. 
@@ -1061,7 +1130,6 @@ In the constructor of the class, the `update()` method will be scheduled by
 [`ScheduledExecutorService#scheduleWithFixedDelay(this::update, ...)` ](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html#scheduleWithFixedDelay(java.lang.Runnable,long,long,java.util.concurrent.TimeUnit))
 method as a `ScheduledFuture` task.
 
-
 ## Preferences management
 
 The created window has ability to save and reuse a set of property-values of its binding sub-components.
@@ -1069,10 +1137,10 @@ This feature relies on
 [`java.util.prefs`](https://docs.oracle.com/en/java/javase/21/docs/api/java.prefs/java/util/prefs/package-summary.html).
 
 ```java
-   class Hello {
+   class HelloPref {
        String prop;
    }
-   org.autogui.swing.AutoGuiShell.showLive(new Hello())
+   org.autogui.swing.AutoGuiShell.showLive(new HelloPref())
 ```
 
 It automatically saves edited property-values through the binding components as preferences.
@@ -1105,16 +1173,14 @@ Also, the saved preferences will be listed as items in the *Apply Preferences* m
 Additionally, [`GuiPreferencesLoader`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/mapping/GuiPreferencesLoader.html) enables you to set properties saved by the feature to an object as non-GUI code.
 
 ```java
-   var h = new Hello();
+   var h = new HelloPref();
    org.autogui.base.mapping.GuiPreferencesLoader.get()
      .withTypeBuilderRelaxed()
-     .withPrefsGetterByNameEquals("saved-prefs")
+     .withPrefsGetterByNameEquals("Saved-Prefs")
      .apply(h);
 
    h.prop //=> "Hello" 
 ```
-
-
 
 ### Custom preferences for embedded components
 
@@ -1129,7 +1195,7 @@ import org.autogui.base.mapping.GuiPreferences;
 import javax.swing.*;
 import java.util.*;
 
-class Hello { //object-pane type
+class HelloPrefCustom { //object-pane type
     MyPane pane;
     MyPane getPane() { //embedded component returning a custom type
         if (pane == null) pane = new MyPane();
@@ -1148,22 +1214,20 @@ class MyPane extends JPanel
         return Map.of("myItem", data.getText());
     }
     @SuppressWarnings("unchecked")
-    public void setPrefsJson(Object v) { //set data from prefs-store
+    public void setPrefsJson(Map<String,Object> v) { //set data from prefs-store
         if (v instanceof Map<?,?>) {
-            data.setText(((Map<String,String>) v).getOrDefault("myItem", ""));
+            data.setText(v.getOrDefault("myItem", "").toString());
         }
     }
 }
-org.autogui.swing.AutoGuiShell.showLive(new Hello())
+org.autogui.swing.AutoGuiShell.showLive(new HelloPrefCustom())
 ```
 
 The returned object of `getPrefsJson()` must be one of simple JSON supported types (Map, List, String, Number, Boolean) and sufficiently small for storing preferences-store.
 
-
 ## Providing default setting values in code
 
 Since the version 1.8, the library introduces the annotation [`@GuiInits`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html) in order to enable providing the default values of several preferences of components in code.
-
 
 ```java
 import org.autogui.GuiIncluded;
@@ -1173,7 +1237,7 @@ import org.autogui.swing.AutoGuiShell;
 import javax.swing.text.*;
 
 @GuiInits(window = @GuiInitWindow(width = 400, height = 300))
-public class MyEditor {
+public class HelloConfirm {
     DefaultStyledDocument doc = new DefaultStyledDocument();
 
     @GuiInits(action = @GuiInitAction(confirm = true))
@@ -1181,7 +1245,7 @@ public class MyEditor {
         doc.replace(0, doc.getLength(), "", null);
     }
 }
-org.autogui.swing.AutoGuiShell.showLive(new MyEditor())
+org.autogui.swing.AutoGuiShell.showLive(new HelloConfirm())
 ```
 
 The above code will show a window with a text pane and the "Clear" aciton button, and the initial size of the window will become 300 x 400. 
@@ -1193,17 +1257,17 @@ Those effects are thanks to the default settings by both  `@GuiInits(window = ..
 The annotation `@GuiInits` has comprehensive definitions for all available items in this feature, as properties (like `window = ...` `action = ...`).
 The actional setting items are defined in the annotations set for the properties of `@GuiInits`, like `@GuiInitWindow` and `@GuiInitAction` in the package `org.autogui.base.annotation`.
 
-| Property                                                                                                                     | 　Value type                                                                                                                                     | 　Target                                                       | Setting items                                  | 
-|------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------|------------------------------------------------|
-| [`tabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tabbedPane())               | [`@GuiInitTabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTabbedPane.html)               | parent type of [object tabbed pane](#object-tabbed-pane)       | Suppressing tabbing                            | 
-| [`splitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#splitPane())                 | [`@GuiInitSplitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitSplitPane.html)                 | parent [object pane](#object-pane) type of splitted-components | Specifying  vertical orientaiton               | 
-| [`window`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#window())                       | [`@GuiInitWindow`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitWindow.html)                       | root [object pane](#object-pane) type                          | Size                                           | 
-| [`table`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#table())                         | [`@GuiInitTable`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTable.html)                         | [Collection table](#collection-table) property                 | Specifying row height, and dynamic column size | 
-| [`tableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumn())             | [`@GuiInitTableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumn.html)             | table column property                                          | Column width and sorting order                 | 
-| [`tableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumnString()) | [`@GuiInitTableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumnString.html) | table column string property                                   | Swinging enter-key input/inserting a new line  | 
-| [`numberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#numberSpinner())         | [`@GuiInitNumberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitNumberSpinner.html)         | [number property](#number-spinner)                             | Format, maximum, minimum and stepping size     | 
-| [`action`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#action())                       | [`@GuiInitAction`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitAction.html)                       | [action method](#action-method)                                | Displaying a confirmation dialog               | 
-| [`stringField`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#stringField())             | [`@GuiInitStringField`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitStringField.html)             | [string text-field](#string-text-field)                        | Displaying number of lines                     |
+| Property                                                                                             |　Value type                                                                                                              |　Target                                                             | Setting items                                     | 
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ | -                                                 |
+|        [`tabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tabbedPane())        |        [`@GuiInitTabbedPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTabbedPane.html)        |  parent type of [object tabbed pane](#object-tabbed-pane)          | Suppressing tabbing                               | 
+|         [`splitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#splitPane())         |         [`@GuiInitSplitPane`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitSplitPane.html)         |  parent [object pane](#object-pane) type of splitted-components    | Specifying  vertical orientaiton                  | 
+|            [`window`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#window())            |            [`@GuiInitWindow`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitWindow.html)            |  root [object pane](#object-pane) type                             | Size                                              | 
+|             [`table`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#table())             |             [`@GuiInitTable`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTable.html)             |  [Collection table](#collection-table) property                    | Specifying row height, and dynamic column size    | 
+|       [`tableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumn())       |       [`@GuiInitTableColumn`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumn.html)       |  table column property                                             | Column width and sorting order                    | 
+| [`tableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#tableColumnString()) | [`@GuiInitTableColumnString`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitTableColumnString.html) |  table column string property                                      | Swinging enter-key input/inserting a new line     | 
+|     [`numberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#numberSpinner())     |     [`@GuiInitNumberSpinner`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitNumberSpinner.html)     |  [number property](#number-spinner)                                | Format, maximum, minimum and stepping size        | 
+|            [`action`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#action())            |            [`@GuiInitAction`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitAction.html)            |  [action method](#action-method)                                   | Displaying a confirmation dialog                  | 
+|       [`stringField`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/GuiInits.html#stringField())       |       [`@GuiInitStringField`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/base/annotation/GuiInitStringField.html)       |  [string text field](#string-text-field)                           | Displaying lines                                  | 
 
 ## Logging 
 
@@ -1226,7 +1290,7 @@ Also, the user-code can directly show messages via
 
   ```java
      import org.autogui.base.log.*;
-     class Hello {
+     class HelloLog {
          void action() {
              System.err.println("message");
              GuiLogManager.get().logString("string message");
@@ -1234,7 +1298,7 @@ Also, the user-code can directly show messages via
              GuiLogManager.get().logFormat("format message %d", 2);
          }
      }
-     org.autogui.swing.AutoGuiShell.showLive(new Hello());
+     org.autogui.swing.AutoGuiShell.showLive(new HelloLog());
   ```
 
 <img src="docs/images/image-log-string-h.png" srcset="docs/images/image-log-string-h.png 1x, docs/images/image-log-string.png 2x" alt="String message">
@@ -1256,7 +1320,7 @@ The progress-bar can also show a message by
 
 ```java
      import org.autogui.base.log.*;
-     class Hello {
+     class HelloProgress {
          void action()  {
              new Thread(this::m).start();
          }
@@ -1271,7 +1335,7 @@ The progress-bar can also show a message by
              }
          }
      }
-     org.autogui.swing.AutoGuiShell.showLive(new Hello());
+     org.autogui.swing.AutoGuiShell.showLive(new HelloProgress());
 ```
 
 <img src="docs/images/image-log-progress-h.png" srcset="docs/images/image-log-progress-h.png 1x, docs/images/image-log-progress.png 2x" alt="Progress">
@@ -1295,13 +1359,13 @@ can explicitly display the given exception. The displayed exception becomes an i
 
 ```java
    import org.autogui.base.log.*;
-   class Hello {
+   class HelloException {
        void action() {
            GuiLogManager.get().logError(new RuntimeException("error1"));
            throw new RuntimeException("error2");
        }
    }
-   org.autogui.swing.AutoGuiShell.showLive(new Hello());
+   org.autogui.swing.AutoGuiShell.showLive(new HelloException());
 ```
 
 <img src="docs/images/image-log-exception-h.png" srcset="docs/images/image-log-exception-h.png 1x, docs/images/image-log-exception.png 2x" alt="Progress">
@@ -1313,7 +1377,7 @@ A long running action will be an independent task with displaying an indetermina
 [`Thread.interrupted()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#interrupted()). 
 
 ```java
-  class Hello {
+  class HelloLongRun {
       void action() throws Exception {
           for (int i = 0; i < 100; ++i) {
               if (i % 10 == 0) System.err.println(i);
@@ -1322,7 +1386,7 @@ A long running action will be an independent task with displaying an indetermina
           System.err.println("finish");
       }
   }
-  org.autogui.swing.AutoGuiShell.showLive(new Hello())
+  org.autogui.swing.AutoGuiShell.showLive(new HelloLongRun())
 ```
 
 <img src="docs/images/image-log-longrunning-h.png" srcset="docs/images/image-log-longrunning-h.png 1x, docs/images/image-log-longrunning.png 2x" alt="Progress">
@@ -1341,11 +1405,8 @@ The property can take the following values.
 Note [UIManagerUtil.selectLookAndFeelFromSpecialName(String)](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/util/UIManagerUtil.html#selectLookAndFeelFromSpecialName(java.lang.String)) is the corresponding code.
 
 
-* No value, the empty string `""`, or `default` 
-    1. [loading flatlaf](#loading-flatlaf), explained later
-    2. In MacOS, and if the current appearance is not dark, then it applies `system`(the system default LAF: AquaLookAndFeel)
-    3. Otherwise, it applies [`nimbus-flat`](#nimbuslookandfeelcustomflat)
-* `default-no-darklaf` : Same as `default`, except no-loading flatlaf
+* No value, the empty string `""`, or `default`: applying [`nimbus-flat`](#nimbuslookandfeelcustomflat)
+* `default-no-darklaf` : First, tries [loading flatlaf](#loading-flatlaf). If failed, it applies [`nimbus-flat`](#nimbuslookandfeelcustomflat)
 * `metal`: applies `javax.swing.plaf.metal.MetalLookAndFeel`
 * `nimbus`: applies `javax.swing.plaf.nimbus.NimbusLookAndFeel`
 * `nimbus-flat`: applies [`NimbusLookAndFeelCustomFlat`](#nimbuslookandfeelcustomflat), the original LAF in the library
@@ -1368,31 +1429,45 @@ Also, those styles can be specified by `nimbus-flat-light` and `nimbus-flat-dark
 |:-----------------:|:----------------:|
 | <img src="docs/images/image-nimbus-flat-light.png" srcset="docs/images/image-nimbus-flat-light-h.png 1x, docs/images/image-nimbus-flat-light.png 2x" alt="NimbusLookAndFeelCustomFlatLight"> | <img src="docs/images/image-nimbus-flat-dark.png" srcset="docs/images/image-nimbus-flat-dark-h.png 1x, docs/images/image-nimbus-flat-dark.png 2x" alt="NimbusLookAndFeelCustomFlatDark"> |
 
-In MacOS, you can apply the dark-mode aware windows by appending the JVM option `-J-Dapple.awt.application.appearance=system`.
+`nimbus-flat` (1.9-) is the theme for dynamically switching between the above `nimbus-flat-light` and `nimbus-flat-dark` by automatically checking the system status.
+Current JDK does not have ability to check the system theme status or receive notifications of switching the theme. 
+So `nimbus-flat` checks and switches the theme by periodic running of a commnd. 
+Concretely, it uses the following commands.
 
-In HiDPI GNOME environment (including the default Ubuntu), you might get suitable display with the environment variable `GDK_SCALE=2`. 
+* macOS: reading outputs of `/usr/bin/defaults read -g AppleInterfaceStyle` and checking `dark` is contained in the lower-cased outputs.
+* Linux(Gnome): reading outputs of `/usr/bin/gsettings get org.gnome.desktop.interface gtk-theme` and checking `dark` contained in the lower-cased outputs.
+* Windows: reading outputs of `C:\Windows\System32\reg.exe query HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize -v AppsUseLightTheme` and checking the pattern `AppsUseLightTheme\s*REG_DWORD\s*0x1` is found in the outputs.
+
+
+The above commands specify abosolute paths of executables for safety.
+
+In macOS, you can apply the dark-mode aware windows by appending the JVM option `-J-Dapple.awt.application.appearance=system`.
+
+In HiDPI GNOME environment (including the default Ubuntu), you might get suitable display with the environment variable `GDK_SCALE=2` or the property `-Dsun.java2d.uiScale=2.0`. 
 
 ### Loading Flatlaf
 
-The default specification of the library implicitly detects existence of [*flatlaf*](https://www.formdev.com/flatlaf/) (confirmed by `com.formdev:flatlaf:3.6`)  and applying its LAF with following the OS's current theme. The detection is simply done by accessing to the reflection Class object through `Class.forName`.
+The `darklaf` specification of the library implicitly detects existence of [*flatlaf*](https://www.formdev.com/flatlaf/) (confirmed by `com.formdev:flatlaf:3.6`)  and applying its LAF with following the OS's current theme. The detection is simply done by accessing to the reflection Class object through `Class.forName`, and so it needs to set the module-path properly.
 
 <img src="docs/images/image-dark-h.png" srcset="docs/images/image-dark-h.png 1x, docs/images/image-dark.png 2x" alt="Progress">
 
 ### Controlling appearance by code
 
 By calling a method defined in the class [`AutoGuiShell`](https://www.autogui.org/docs/apidocs/latest/org.autogui/org/autogui/swing/AutoGuiShell.html), you can control the LAF settings.
-For example, before running the object of the class `Hello`, the following code can control the LAF settings.
+For example, before running the object of the class `HelloLaf`, the following code can control the LAF settings.
 
 ```java
-  AutoGuiShell.get()
-    .withLookAndFeelDefaultWithoutProp() //diable settings by the property, and using nimbus-flat or flatlaf
-    .showWindow(new Hello());
+  import org.autogui.*;
+  import org.autogui.swing.*;
+  @GuiIncluded public class HelloLaf {
+    @GuiIncluded public String prop;
+  }
 
   AutoGuiShell.get()
-    .withLookAndFeelDefaultNoFlatlafWithoutProp() //disable settings by the property, and using nimbus-flat
-    .showWindow(new Hello());
+    .withLookAndFeelDefaultWithoutProp() //disable settings by the property, and using nimbus-flat
+    .showWindow(new HelloLaf());
 
   AutoGuiShell.get()
     .withLookAndFeelSpecial("metal") //same as set "metal" to the property "autogui.laf"
-    .showWindow(new Hello());
+    .showWindow(new HelloLaf());
 ```

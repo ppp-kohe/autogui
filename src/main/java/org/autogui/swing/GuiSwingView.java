@@ -208,6 +208,25 @@ public interface GuiSwingView extends GuiSwingElement {
         default boolean isSwingCurrentValueSupported() {
             return getSwingViewContext().isHistoryValueSupported();
         }
+
+        @Override
+        default Object getPrefsJsonSupported() {
+            Object o = this.getSwingViewValue();
+            if (o instanceof GuiPreferences.PreferencesJsonSupport j) {
+                return j.getPrefsJson();
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        default void setPrefsJsonSupported(Object json) {
+            Object o = this.getSwingViewValue();
+            if (o instanceof GuiPreferences.PreferencesJsonSupport j && json instanceof Map<?,?> map) {
+                j.setPrefsJson((Map<String,Object>) map);
+            }
+        }
     }
 
     /**
@@ -747,7 +766,7 @@ public interface GuiSwingView extends GuiSwingElement {
      *
      * @param component the target component
      * @param handler the transfer-handler to be set
-     * @param modifierKeys {@link KeyEvent#VK_SHIFT}, {@link KeyEvent#VK_META}, {@link KeyEvent#VK_ALT} or {@link KeyEvent#VK_ALT_GRAPH}
+     * @param modifierKeys <s>{@link KeyEvent#VK_SHIFT}</s>(macOS does not allow it) {@link KeyEvent#VK_META}, {@link KeyEvent#VK_ALT} or {@link KeyEvent#VK_ALT_GRAPH}
      * @since 1.5
      */
     static void setupTransferHandler(JComponent component, TransferHandler handler, Integer... modifierKeys) {
@@ -756,7 +775,6 @@ public interface GuiSwingView extends GuiSwingElement {
             List<Integer> ks = Arrays.asList(modifierKeys);
             InputEvent ie = e.getTriggerEvent();
             if (ks.isEmpty()
-                    || (ks.contains(KeyEvent.VK_SHIFT) && ie.isShiftDown())
                     || (ks.contains(KeyEvent.VK_META) && ie.isMetaDown())
                     || (ks.contains(KeyEvent.VK_ALT) && ie.isAltDown())
                     || (ks.contains(KeyEvent.VK_ALT_GRAPH) && ie.isAltGraphDown())) {

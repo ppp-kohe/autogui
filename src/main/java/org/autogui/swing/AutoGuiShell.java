@@ -134,9 +134,20 @@ public class AutoGuiShell {
     }
 
     /**
+     * @return specify the LAF as nimbus-flat; same as {@link #withLookAndFeelSpecial(String)} with {@link UIManagerUtil#LOOK_AND_FEEL_VALUE_DEFAULT_DARKLAF}.
+     *  this means that the LAF setting does not read the proeprty "autogui.laf" and also tries slient loading the Flatlaf library;
+     *   otherwise, currently nimbus-flat will be applied.
+     * @since 1.8
+     */
+    public AutoGuiShell withLookAndFeelDefaultFlatlafWithoutProp() {
+        return withLookAndFeelSpecial(UIManagerUtil.LOOK_AND_FEEL_VALUE_DEFAULT_DARKLAF);
+    }
+
+
+    /**
      * @return specify the LAF as nimbus-flat; same as {@link #withLookAndFeelSpecial(String)} with {@link UIManagerUtil#LOOK_AND_FEEL_VALUE_DEFAULT}.
      *  this means that the LAF setting does not read the proeprty "autogui.laf";
-     *   currently nimbus-flat will be applied, or will load and apply flatlaf if the code can access it.
+     *   currently nimbus-flat will be applied.
      * @since 1.8
      */
     public AutoGuiShell withLookAndFeelDefaultWithoutProp() {
