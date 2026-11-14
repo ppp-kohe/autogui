@@ -363,7 +363,7 @@ The recent versions (1.2-) have the `module-info.class` and require Java 11 or l
     [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html) or 
     [`java.io.File`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/File.html)
   * [Number spinner](#number-spinner): a primitive numeric(`byte`, `short`, `int`, `long`, `float` or `double`) or a sub-type of
-    [`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html)
+    [`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html) (The `Number` itself is not allowed)
   * [Boolean check-box](#boolean-check-box): `boolean` or 
     [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html)
   * [Enum pull-down menu](#enum-pull-down-menu): a sub-type of 
@@ -448,7 +448,7 @@ The pop-up menu displayed by the icon on the right side contains convenient menu
 A property of a numerical type will be bound to a number spinner. 
 Numerical types includes primitive types (`byte`, `short`, `int`, `long`, `float` and `double`) and sub-types of 
 [`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html) including 
-[`java.math.BigInteger`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigInteger.html) and  [`java.math.BigDecimal`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html) 
+[`java.math.BigInteger`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigInteger.html) and  [`java.math.BigDecimal`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html) (The `Number` itself is not allowed.).
 
 ```java
   class HelloNumber {

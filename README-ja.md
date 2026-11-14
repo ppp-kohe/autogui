@@ -366,7 +366,7 @@ module your.module {
     [`java.nio.file.Path`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Path.html)  または
     [`java.io.File`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/File.html)
   * [Number spinner](#number-spinner): (数値スピナー) 基本型の数値(`byte`, `short`, `int`, `long`, `float`, `double`) または
-    [`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html)のサブタイプ
+    [`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html)のサブタイプ(`Number`自体は不許可)
   * [Boolean check-box](#boolean-check-box): (ブーリアンチェックボックス) `boolean` もしくは
     [`java.lang.Boolean`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Boolean.html)
   * [Enum pull-down menu](#enum-pull-down-menu): (列挙プルダウン) 
@@ -445,7 +445,7 @@ module your.module {
 
 数値をあらわす基本型 (`byte`, `short`, `int`, `long`, `float` and `double`) や
 [`java.lang.Number`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Number.html) のサブタイプ、具体的には
-[`java.math.BigInteger`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigInteger.html) や  [`java.math.BigDecimal`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html) は数値のスピナーに紐づきます。
+[`java.math.BigInteger`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigInteger.html) や  [`java.math.BigDecimal`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html) は数値のスピナーに紐づきます。(`Number`自体は不許可)
 
 
 ```java
