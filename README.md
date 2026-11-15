@@ -1393,7 +1393,7 @@ A long running action will be an independent task with displaying an indetermina
 
 ## Setting appearance
 
-The current Swing GUI (in Java23) does not have automatic support of recent OS's dark-mode switching.
+The current Swing GUI (in Java27) does not have automatic support of recent OS's dark-mode switching.
 
 
 However, there are some custom look-and-feel (LAF) libraries for supporting dark-mode such as [darklaf](https://github.com/weisJ/darklaf) and 
@@ -1441,7 +1441,7 @@ Concretely, it uses the following commands.
 
 The above commands specify abosolute paths of executables for safety.
 
-In macOS, you can apply the dark-mode aware windows by appending the JVM option `-J-Dapple.awt.application.appearance=system`.
+In macOS, you can apply the dark-mode aware windows by appending the JVM option `-Dapple.awt.application.appearance=system`.
 
 In HiDPI GNOME environment (including the default Ubuntu), you might get suitable display with the environment variable `GDK_SCALE=2` or the property `-Dsun.java2d.uiScale=2.0`. 
 
