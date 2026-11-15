@@ -1069,7 +1069,7 @@ class HelloNotify implements AutoCloseable {
    
    private Runnable updater;
    @GuiNotifierSetter 
-   void setPropUpdater(Runnable r) { updater = r; }
+   void setPropNotifier(Runnable r) { updater = r; }
    
    HelloNotify() {
       service = Executors.newScheduledThreadPool(1);
