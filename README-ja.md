@@ -1413,8 +1413,12 @@ GNOME(デフォルトのUbuntuなど)でのHiDPI環境では環境変数`GDK_SCA
     .withLookAndFeelDefaultWithoutProp() //プロパティの設定を無効にし, nimbus-flatを利用する
     .showWindow(new HelloLaf());
 
-
   AutoGuiShell.get()
     .withLookAndFeelSpecial("metal") //autogui.lafに"metal"を設定した場合と同様
     .showWindow(new HelloLaf());
+
+  AutoGuiShell.get()
+    .withLookAndFeelNone() //プロパティの設定を無効にする
+    .showWindow(new HelloLaf());
+
 ```

@@ -1470,4 +1470,8 @@ For example, before running the object of the class `HelloLaf`, the following co
   AutoGuiShell.get()
     .withLookAndFeelSpecial("metal") //same as set "metal" to the property "autogui.laf"
     .showWindow(new HelloLaf());
+
+  AutoGuiShell.get()
+    .withLookAndFeelNone() //disable settings by the property
+    .showWindow(new HelloLaf());
 ```

@@ -362,19 +362,47 @@ public class GuiSwingRootPane extends JComponent implements GuiSwingPreferences.
     }
 
     protected void init() {
-        initTitle();
-        initToolTipManager();
-        initViewComponent();
-        initPrefs(); //read context, viewComponent
-        initKeyBinding();
-        initViewComponentSet();
-        initMenu();
-        initLog();
-        initFileDialogPrefsUpdater();
-        initContextUpdate(); //set context sources
-        initDefaultSize();
-        initPrefsLoad();  //may update properties of context sources
-        initSettingWindow();
+        initBegin();
+        try {
+            initTitle();
+            initToolTipManager();
+            initViewComponent();
+            initPrefs(); //read context, viewComponent
+            initKeyBinding();
+            initViewComponentSet();
+            initMenu();
+            initLog();
+            initFileDialogPrefsUpdater();
+            initContextUpdate(); //set context sources
+            initDefaultSize();
+            initPrefsLoad();  //may update properties of context sources
+            initSettingWindow();
+        } finally {
+            initEnd();
+        }
+    }
+
+    /**
+     * setting the entry read only of preferences to on
+     * @since 1.9
+     */
+    protected void initBegin() {
+        if (context != null && context.getPreferences() != null) {
+            context.getPreferences().setEntryReadOnly(true);
+        }
+    }
+
+    /**
+     * called from the finally block of {@link #init()};
+     *    setting the entry read only of preferences to off
+     * @since 1.9
+     */
+    protected void initEnd() {
+        var context = this.context;
+        if (context != null && context.getPreferences() != null) {
+            //updating process of some components runs in the event thread, so add the task to the queue of the event thread
+            SwingDeferredRunner.invokeLater(() -> context.getPreferences().setEntryReadOnly(false));
+        }
     }
 
     protected void initTitle() {

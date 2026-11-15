@@ -52,6 +52,9 @@ public class GuiPreferences {
     protected List<PreferencesStoreChangeListener> storeChangeListeners;
     /** @since 1.6 */
     protected PreferencesLock lock;
+    /** @since 1.9 */
+    protected boolean entryReadOnly;
+
     /** the key for the default {@link GuiPreferences} node under the root */
     public static final String KEY_DEFAULT = "$default";
     /** the key for {@link GuiPreferences#getCurrentValue()} */
@@ -885,6 +888,32 @@ public class GuiPreferences {
         }
     }
 
+    /**
+     * changes the entry read only status of the prefs subtree;
+     *   if true, nothing happens to {@link GuiValueStore#putString(String, String)} and {@link GuiValueStore#putInt(String, int)}.
+     *   Note: {@link GuiValueStore#remove(String)} and other operations are not prevented.
+     * @param readOnly if true, the entries of stores of the entire subtree become read-only
+     * @since 1.9
+     */
+    public void setEntryReadOnly(boolean readOnly) {
+        this.entryReadOnly = readOnly;
+    }
+
+    /**
+     * @return true if {@link #entryReadOnly} of one of this or upper prefs is true
+     * @since 1.9
+     */
+    public boolean isEntryReadOnly() {
+        GuiPreferences prefs = this;
+        while (prefs != null) {
+            if (prefs.entryReadOnly) {
+                return true;
+            }
+            prefs = prefs.getParent();
+        }
+        return false;
+    }
+
     /** the abstract definition of key-value store.
      *
      *  <ul>
@@ -948,6 +977,14 @@ public class GuiPreferences {
         public void flush() { }
 
         public abstract GuiValueStore copyInitAsRoot();
+
+        /**
+         * @return not preferences {@link GuiPreferences#isEntryReadOnly()}
+         * @since 1.9
+         */
+        protected boolean isEntryWritable() {
+            return preferences == null || !preferences.isEntryReadOnly();
+        }
     }
 
     /** the concrete implementation of the store by {@link Preferences} */
@@ -1014,9 +1051,13 @@ public class GuiPreferences {
 
         @Override
         public void putString(String key, String val) {
-            var storeKey = toStoreKey(key);
-            getOrCreateStore().put(storeKey, val);
-            if (preferences != null) { preferences.notifyStoreChange(key, val); }
+            if (isEntryWritable()) {
+                var storeKey = toStoreKey(key);
+                getOrCreateStore().put(storeKey, val);
+                if (preferences != null) {
+                    preferences.notifyStoreChange(key, val);
+                }
+            }
         }
 
         @Override
@@ -1026,9 +1067,13 @@ public class GuiPreferences {
 
         @Override
         public void putInt(String key, int val) {
-            var storeKey = toStoreKey(key);
-            withTry(key, () -> getOrCreateStore().putInt(storeKey, val));
-            if (preferences != null) { preferences.notifyStoreChange(key, val); }
+            if (isEntryWritable()) {
+                var storeKey = toStoreKey(key);
+                withTry(key, () -> getOrCreateStore().putInt(storeKey, val));
+                if (preferences != null) {
+                    preferences.notifyStoreChange(key, val);
+                }
+            }
         }
 
         @Override
@@ -1540,8 +1585,12 @@ public class GuiPreferences {
 
         @Override
         public void putString(String key, String val) {
-            values.put(key, val);
-            if (preferences != null) { preferences.notifyStoreChange(key, val); }
+            if (isEntryWritable()) {
+                values.put(key, val);
+                if (preferences != null) {
+                    preferences.notifyStoreChange(key, val);
+                }
+            }
         }
 
         @Override
@@ -1555,8 +1604,12 @@ public class GuiPreferences {
 
         @Override
         public void putInt(String key, int val) {
-            values.put(key, Integer.toString(val));
-            if (preferences != null) { preferences.notifyStoreChange(key, val); }
+            if (isEntryWritable()) {
+                values.put(key, Integer.toString(val));
+                if (preferences != null) {
+                    preferences.notifyStoreChange(key, val);
+                }
+            }
         }
 
         @Override

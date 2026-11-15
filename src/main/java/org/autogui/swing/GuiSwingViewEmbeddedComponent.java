@@ -243,5 +243,11 @@ public class GuiSwingViewEmbeddedComponent implements GuiSwingView {
                 this.initPrefsJson = json;
             }
         }
+
+        @Override
+        public void shutdownSwingView() {
+            saveSwingPreferences(getSwingViewContext().getPreferences());
+            ValuePane.super.shutdownSwingView();
+        }
     }
 }
